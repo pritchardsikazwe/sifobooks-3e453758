@@ -54,6 +54,13 @@ const sections: Section[] = [
     { title: "Leave", url: "/leave", icon: CalendarDays },
     { title: "Payroll", url: "/payroll", icon: Banknote },
   ]},
+  { label: "CRM", items: [
+    { title: "Leads", url: "/leads", icon: UserPlus },
+    { title: "Opportunities", url: "/opportunities", icon: Target },
+    { title: "Campaigns", url: "/campaigns", icon: Megaphone },
+    { title: "Complaints", url: "/complaints", icon: MessageSquareWarning },
+    { title: "CSAT", url: "/csat", icon: Star },
+  ]},
   { label: "Reports", items: [
     { title: "Reports", url: "/reports", icon: BarChart3 },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
