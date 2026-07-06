@@ -89,7 +89,17 @@ function DashboardPage() {
       if (data.currency) setCurrency(data.currency);
       if (data.business_name) setBusinessName(data.business_name);
       await loadStock();
+      // Pick up newly-created invoice from the full-page form
+      try {
+        const raw = sessionStorage.getItem("kopelacode.pendingInvoice");
+        if (raw) {
+          const inv = JSON.parse(raw) as Invoice;
+          sessionStorage.removeItem("kopelacode.pendingInvoice");
+          await addInvoice(inv);
+        }
+      } catch { /* noop */ }
     })();
+     
   }, [navigate]);
 
   const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -155,7 +165,8 @@ function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <AppNav />
-            <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} stock={stock} />
+            <Button asChild variant="outline"><Link to="/quotes/new"><FileText className="h-4 w-4" /> New quote</Link></Button>
+            <Button asChild><Link to="/invoices/new"><Plus className="h-4 w-4" /> New invoice</Link></Button>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>

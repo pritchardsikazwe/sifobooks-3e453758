@@ -18,10 +18,10 @@ const groups: (Group | Item)[] = [
   {
     label: "Sales", icon: BarChart3, items: [
       { label: "Invoices", to: "/dashboard", icon: FileText },
+      { label: "New Invoice", to: "/invoices/new", icon: Receipt },
+      { label: "Quotations", to: "/quotes/new", icon: FileText },
       { label: "Compliance", to: "/compliance", icon: ShieldCheck },
-      { label: "Quotes", soon: true },
       { label: "Customers", soon: true },
-      { label: "Receipts", icon: Receipt, soon: true },
     ],
   },
   {
