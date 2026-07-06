@@ -9,9 +9,10 @@ import { toast } from "sonner";
 
 type Props = {
   onCreated: (customer: { id: string; name: string; tpin: string | null; payment_terms_days: number }) => void;
+  trigger?: React.ReactNode;
 };
 
-export function QuickAddCustomer({ onCreated }: Props) {
+export function QuickAddCustomer({ onCreated, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({ name: "", email: "", phone: "", tpin: "", payment_terms_days: 30 });
