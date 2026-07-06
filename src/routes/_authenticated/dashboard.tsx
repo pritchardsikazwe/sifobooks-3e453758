@@ -89,7 +89,17 @@ function DashboardPage() {
       if (data.currency) setCurrency(data.currency);
       if (data.business_name) setBusinessName(data.business_name);
       await loadStock();
+      // Pick up newly-created invoice from the full-page form
+      try {
+        const raw = sessionStorage.getItem("kopelacode.pendingInvoice");
+        if (raw) {
+          const inv = JSON.parse(raw) as Invoice;
+          sessionStorage.removeItem("kopelacode.pendingInvoice");
+          await addInvoice(inv);
+        }
+      } catch { /* noop */ }
     })();
+     
   }, [navigate]);
 
   const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
