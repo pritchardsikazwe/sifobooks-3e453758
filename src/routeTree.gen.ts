@@ -43,6 +43,7 @@ import { Route as AuthenticatedBankingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
@@ -226,6 +227,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsTrialBalanceRoute =
+  AuthenticatedReportsTrialBalanceRouteImport.update({
+    id: '/trial-balance',
+    path: '/trial-balance',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsPnlRoute = AuthenticatedReportsPnlRouteImport.update({
   id: '/pnl',
   path: '/pnl',
@@ -294,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -334,6 +342,7 @@ export interface FileRoutesByTo {
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -376,6 +385,7 @@ export interface FileRoutesById {
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/quotes/new'
     | '/reports/balance-sheet'
     | '/reports/pnl'
+    | '/reports/trial-balance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -458,6 +469,7 @@ export interface FileRouteTypes {
     | '/quotes/new'
     | '/reports/balance-sheet'
     | '/reports/pnl'
+    | '/reports/trial-balance'
   id:
     | '__root__'
     | '/'
@@ -499,6 +511,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/balance-sheet'
     | '/_authenticated/reports/pnl'
+    | '/_authenticated/reports/trial-balance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -748,6 +761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/trial-balance': {
+      id: '/_authenticated/reports/trial-balance'
+      path: '/trial-balance'
+      fullPath: '/reports/trial-balance'
+      preLoaderRoute: typeof AuthenticatedReportsTrialBalanceRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/pnl': {
       id: '/_authenticated/reports/pnl'
       path: '/pnl'
@@ -827,11 +847,13 @@ const AuthenticatedQuotesRouteWithChildren =
 interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
+  AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
+  AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
 }
 
 const AuthenticatedReportsRouteWithChildren =
