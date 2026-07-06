@@ -1599,6 +1599,57 @@ export type Database = {
           },
         ]
       }
+      job_cards: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          id: string
+          job_number: string | null
+          labour_cost: number | null
+          notes: string | null
+          parts_cost: number | null
+          service_date: string
+          status: string
+          technician: string | null
+          total_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          job_number?: string | null
+          labour_cost?: number | null
+          notes?: string | null
+          parts_cost?: number | null
+          service_date?: string
+          status?: string
+          technician?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          job_number?: string | null
+          labour_cost?: number | null
+          notes?: string | null
+          parts_cost?: number | null
+          service_date?: string
+          status?: string
+          technician?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           created_at: string
@@ -2099,6 +2150,105 @@ export type Database = {
         }
         Relationships: []
       }
+      project_tasks: {
+        Row: {
+          actual_hours: number | null
+          assignee: string | null
+          created_at: string
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          notes: string | null
+          priority: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          assignee?: string | null
+          created_at?: string
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_hours?: number | null
+          assignee?: string | null
+          created_at?: string
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          actual_cost: number | null
+          budget: number | null
+          code: string | null
+          created_at: string
+          customer_id: string | null
+          end_date: string | null
+          id: string
+          manager: string | null
+          name: string
+          notes: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          budget?: number | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          end_date?: string | null
+          id?: string
+          manager?: string | null
+          name: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_cost?: number | null
+          budget?: number | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          end_date?: string | null
+          id?: string
+          manager?: string | null
+          name?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchase_order_items: {
         Row: {
           created_at: string
@@ -2396,6 +2546,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          id: string
+          opened_at: string
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          ticket_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          opened_at?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          ticket_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          opened_at?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          ticket_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       stock_adjustments: {
         Row: {
@@ -2703,6 +2904,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      time_entries: {
+        Row: {
+          billable: boolean
+          created_at: string
+          description: string | null
+          employee_id: string | null
+          hourly_rate: number | null
+          hours: number
+          id: string
+          project_id: string | null
+          task_id: string | null
+          updated_at: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          billable?: boolean
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+          work_date?: string
+        }
+        Update: {
+          billable?: boolean
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          hourly_rate?: number | null
+          hours?: number
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
