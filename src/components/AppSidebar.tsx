@@ -7,6 +7,7 @@ import {
   Boxes, BarChart3, ShieldCheck, Warehouse, ClipboardEdit,
   UserSquare, CalendarCheck, CalendarDays, Banknote,
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
+  UserPlus, Target, Megaphone, MessageSquareWarning, Star,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
