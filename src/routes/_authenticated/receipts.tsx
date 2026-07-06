@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
+import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -97,11 +98,21 @@ function ReceiptsPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>Receive payment</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-1"><Label>Customer *</Label>
-                <Select value={customerId} onValueChange={v => { setCustomerId(v); setInvoiceId(""); }}>
-                  <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
-                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label>Customer *</Label>
+                  <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
+                </div>
+                {customers.length === 0 ? (
+                  <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground text-center">
+                    No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above.
+                  </div>
+                ) : (
+                  <Select value={customerId} onValueChange={v => { setCustomerId(v); setInvoiceId(""); }}>
+                    <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
+                    <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-1"><Label>Apply to invoice (optional)</Label>
                 <Select value={invoiceId || "none"} onValueChange={v => setInvoiceId(v === "none" ? "" : v)}>
