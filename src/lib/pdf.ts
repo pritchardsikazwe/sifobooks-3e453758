@@ -36,7 +36,7 @@ export type PdfDoc = {
 
 const BRAND = "#0f4c5c";
 
-export function buildDocPdf(doc: PdfDoc) {
+export async function buildDocPdf(doc: PdfDoc) {
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
   const margin = 40;
