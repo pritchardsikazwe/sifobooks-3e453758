@@ -75,7 +75,18 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
       if (f.required && !form[f.name] && form[f.name] !== 0) return toast.error(`${f.label} is required`);
     }
     const payload: any = { ...form, user_id: u.user.id };
-    for (const f of fields) if (f.type === "number") payload[f.name] = Number(payload[f.name] ?? 0);
+    for (const f of fields) {
+      const v = payload[f.name];
+      if (f.type === "number") {
+        payload[f.name] = v === "" || v === null || v === undefined ? null : Number(v);
+      } else if (f.type === "date") {
+        if (v === "" || v === null || v === undefined) payload[f.name] = null;
+      } else if (f.type === "select") {
+        if (v === "" || v === undefined) payload[f.name] = null;
+      } else {
+        if (v === "") payload[f.name] = null;
+      }
+    }
     const res = editing
       ? await supabase.from(table as any).update(payload).eq("id", editing.id)
       : await supabase.from(table as any).insert(payload);
