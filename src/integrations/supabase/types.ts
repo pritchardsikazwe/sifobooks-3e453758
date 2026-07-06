@@ -2571,10 +2571,22 @@ export type Database = {
         Args: { _company: string; _user: string }
         Returns: boolean
       }
+      notify_once: {
+        Args: {
+          _key: string
+          _link: string
+          _message: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       recalc_invoice_balance: {
         Args: { _invoice_id: string }
         Returns: undefined
       }
+      run_notification_scans: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:
