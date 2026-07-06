@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/reports")({
@@ -15,6 +15,7 @@ const GROUPS = [
       { title: "Balance Sheet", desc: "Assets, liabilities, equity", icon: Scale, to: "/reports/balance-sheet" },
       { title: "Trial Balance", desc: "All accounts DR / CR totals", icon: BookOpenCheck, to: "/reports/trial-balance" },
       { title: "Cash Flow (simple)", desc: "Bank movements by month", icon: Wallet, to: "/reports/cash-flow" },
+      { title: "Accountant Pack (PDF)", desc: "P&L + Trial Balance + Balance Sheet", icon: FileDown, to: "/reports/accountant-pack" },
     ],
   },
   {
