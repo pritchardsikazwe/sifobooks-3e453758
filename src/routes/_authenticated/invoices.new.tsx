@@ -197,16 +197,20 @@ function NewInvoicePage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-24 sm:pb-0">
       <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
         <Button variant="outline" size="sm" onClick={() => router.history.back()} className="gap-1"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
-        {ActionButtons}
+        <div className="hidden sm:flex">{ActionButtons}</div>
+        <div className="sm:hidden flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => previewPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> Preview</Button>
+        </div>
       </div>
 
       <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="text-lg font-semibold">Invoice Generator</h1>
         </div>
+
 
         <div>
           <Label className="text-xs text-muted-foreground">Document Type</Label>
