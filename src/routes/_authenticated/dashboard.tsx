@@ -260,7 +260,7 @@ function StatCard({ icon, label, value, sub, tint }: { icon: React.ReactNode; la
   );
 }
 
-function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string }) {
+function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money, stock }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string; stock: StockPick[] }) {
   const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const [client, setClient] = useState("");
