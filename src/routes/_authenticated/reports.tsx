@@ -15,6 +15,7 @@ const GROUPS = [
       { title: "Balance Sheet", desc: "Assets, liabilities, equity", icon: Scale, to: "/reports/balance-sheet" },
       { title: "Trial Balance", desc: "All accounts DR / CR totals", icon: BookOpenCheck, to: "/reports/trial-balance" },
       { title: "Cash Flow (simple)", desc: "Bank movements by month", icon: Wallet, to: "/reports/cash-flow" },
+      { title: "Accountant Pack (PDF)", desc: "P&L + Trial Balance + Balance Sheet", icon: FileDown, to: "/reports/accountant-pack" },
     ],
   },
   {
