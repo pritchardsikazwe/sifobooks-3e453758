@@ -62,6 +62,13 @@ const sections: Section[] = [
     { title: "Complaints", url: "/complaints", icon: MessageSquareWarning },
     { title: "CSAT", url: "/csat", icon: Star },
   ]},
+  { label: "Projects & Service", items: [
+    { title: "Projects", url: "/projects", icon: Briefcase },
+    { title: "Project Tasks", url: "/project-tasks", icon: ListChecks },
+    { title: "Time Entries", url: "/time-entries", icon: Clock },
+    { title: "Service Tickets", url: "/service-tickets", icon: LifeBuoy },
+    { title: "Job Cards", url: "/job-cards", icon: Wrench },
+  ]},
   { label: "Reports", items: [
     { title: "Reports", url: "/reports", icon: BarChart3 },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
