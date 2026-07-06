@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
+import { previewPdf, downloadPdf, type PdfDoc } from "@/lib/pdf";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/quotes/new")({
   head: () => ({ meta: [{ title: "Quote Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
