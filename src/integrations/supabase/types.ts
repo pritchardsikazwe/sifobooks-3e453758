@@ -256,7 +256,11 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          matched_id: string | null
           matched_invoice: string | null
+          matched_type: string | null
+          reconciled: boolean
+          reconciled_at: string | null
           reference: string | null
           source_file: string | null
           txn_date: string
@@ -269,7 +273,11 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          matched_id?: string | null
           matched_invoice?: string | null
+          matched_type?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
           reference?: string | null
           source_file?: string | null
           txn_date: string
@@ -282,7 +290,11 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          matched_id?: string | null
           matched_invoice?: string | null
+          matched_type?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
           reference?: string | null
           source_file?: string | null
           txn_date?: string
