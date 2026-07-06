@@ -26,10 +26,25 @@ const nameSchema = z.string().trim().min(1, "Required").max(100);
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [tab, setTab] = useState<"signin" | "signup" | "reset">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const onReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null); setNotice(null);
+    const fd = new FormData(e.currentTarget);
+    const email = emailSchema.safeParse(fd.get("email"));
+    if (!email.success) return setError(email.error.issues[0].message);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) return setError(error.message);
+    setNotice("Check your email for a password reset link.");
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -104,7 +119,7 @@ function AuthPage() {
             <CardDescription>Manage invoices and stay fiscally compliant</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={tab} onValueChange={v => { setTab(v as "signin" | "signup"); setError(null); setNotice(null); }}>
+            <Tabs value={tab} onValueChange={v => { setTab(v as "signin" | "signup" | "reset"); setError(null); setNotice(null); }}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
                 <TabsTrigger value="signup">Sign up</TabsTrigger>
@@ -113,7 +128,13 @@ function AuthPage() {
               <TabsContent value="signin">
                 <form onSubmit={onSignIn} className="space-y-4 pt-4">
                   <div className="space-y-2"><Label htmlFor="si-email">Email</Label><Input id="si-email" name="email" type="email" autoComplete="email" required /></div>
-                  <div className="space-y-2"><Label htmlFor="si-pw">Password</Label><Input id="si-pw" name="password" type="password" autoComplete="current-password" required /></div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="si-pw">Password</Label>
+                      <button type="button" onClick={() => { setTab("reset"); setError(null); setNotice(null); }} className="text-xs text-primary hover:underline">Forgot password?</button>
+                    </div>
+                    <Input id="si-pw" name="password" type="password" autoComplete="current-password" required />
+                  </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   {notice && <p className="text-sm text-emerald-700">{notice}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />} Sign in</Button>
@@ -127,6 +148,20 @@ function AuthPage() {
                   <div className="space-y-2"><Label htmlFor="su-pw">Password</Label><Input id="su-pw" name="password" type="password" autoComplete="new-password" required minLength={8} /><p className="text-xs text-muted-foreground">At least 8 characters</p></div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />} Create account</Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="reset">
+                <form onSubmit={onReset} className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rp-email">Email</Label>
+                    <Input id="rp-email" name="email" type="email" autoComplete="email" required />
+                    <p className="text-xs text-muted-foreground">We'll email you a secure link to reset your password.</p>
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+                  <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />} Send reset link</Button>
+                  <button type="button" onClick={() => { setTab("signin"); setError(null); setNotice(null); }} className="w-full text-center text-sm text-muted-foreground hover:text-foreground">Back to sign in</button>
                 </form>
               </TabsContent>
             </Tabs>
