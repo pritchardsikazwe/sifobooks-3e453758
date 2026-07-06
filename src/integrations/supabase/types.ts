@@ -1192,6 +1192,39 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -2443,6 +2476,7 @@ export type Database = {
         | "purchaser"
         | "hr"
         | "viewer"
+        | "super_admin"
       company_role: "owner" | "admin" | "manager" | "staff" | "viewer"
     }
     CompositeTypes: {
@@ -2579,6 +2613,7 @@ export const Constants = {
         "purchaser",
         "hr",
         "viewer",
+        "super_admin",
       ],
       company_role: ["owner", "admin", "manager", "staff", "viewer"],
     },
