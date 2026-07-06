@@ -4,8 +4,9 @@ import {
   Home, Users, FileText, ReceiptText, CreditCard, Undo2,
   Truck, ShoppingCart, FileBox, Wallet,
   Landmark, BookOpen, BookText, PiggyBank,
-  Boxes, BarChart3, ClipboardList, ShieldCheck,
-  Settings, UserCog, Building2, LogOut, ChevronDown,
+  Boxes, BarChart3, ShieldCheck, Warehouse, ClipboardEdit,
+  UserSquare, CalendarCheck, CalendarDays, Banknote,
+  Settings, UserCog, Building2, Bell, LogOut,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -30,29 +31,38 @@ const sections: Section[] = [
     { title: "Receive Payments", url: "/receipts", icon: CreditCard },
   ]},
   { label: "Purchases", items: [
-    { title: "Suppliers", icon: Truck },
-    { title: "Purchase Orders", icon: ShoppingCart },
-    { title: "Bills", icon: FileBox },
-    { title: "Payments", url: "/banking", icon: Wallet },
+    { title: "Suppliers", url: "/suppliers", icon: Truck },
+    { title: "Purchase Orders", url: "/purchase-orders", icon: ShoppingCart },
+    { title: "Bills", url: "/bills", icon: FileBox },
+    { title: "Supplier Payments", url: "/bill-payments", icon: Wallet },
   ]},
   { label: "Finance", items: [
     { title: "Banking", url: "/banking", icon: Landmark },
-    { title: "Chart of Accounts", icon: BookOpen },
-    { title: "Journal Entries", icon: BookText },
-    { title: "Budgets", icon: PiggyBank },
+    { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
+    { title: "Journal Entries", url: "/journal-entries", icon: BookText },
+    { title: "Budgets", url: "/budgets", icon: PiggyBank },
   ]},
   { label: "Inventory", items: [
     { title: "Items", url: "/stock", icon: Boxes },
+    { title: "Warehouses", url: "/warehouses", icon: Warehouse },
+    { title: "Stock Adjustments", url: "/stock-adjustments", icon: ClipboardEdit },
+  ]},
+  { label: "HR & Payroll", items: [
+    { title: "Employees", url: "/employees", icon: UserSquare },
+    { title: "Attendance", url: "/attendance", icon: CalendarCheck },
+    { title: "Leave", url: "/leave", icon: CalendarDays },
+    { title: "Payroll", url: "/payroll", icon: Banknote },
   ]},
   { label: "Reports", items: [
-    { title: "Reports", icon: BarChart3 },
+    { title: "Reports", url: "/reports", icon: BarChart3 },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
-    { title: "Custom Reports", icon: ClipboardList },
   ]},
-  { label: "Setup", items: [
+  { label: "Admin", items: [
+    { title: "Admin Home", url: "/admin", icon: UserCog },
+    { title: "Company Setup", url: "/setup", icon: Building2 },
+    { title: "Audit Logs", url: "/audit-logs", icon: ShieldCheck },
+    { title: "Notifications", url: "/notifications", icon: Bell },
     { title: "Settings", url: "/setup", icon: Settings },
-    { title: "Users & Security", icon: UserCog },
-    { title: "Company Details", url: "/setup", icon: Building2 },
   ]},
 ];
 
