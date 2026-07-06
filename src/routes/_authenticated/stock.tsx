@@ -39,6 +39,7 @@ function StockPage() {
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [openNew, setOpenNew] = useState(false);
+  const [openImport, setOpenImport] = useState(false);
   const [moveFor, setMoveFor] = useState<Item | null>(null);
   const [q, setQ] = useState("");
 
