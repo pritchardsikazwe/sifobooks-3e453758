@@ -1455,6 +1455,48 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_periods: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          fiscal_year: number
+          id: string
+          notes: string | null
+          period_month: number | null
+          period_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          notes?: string | null
+          period_month?: number | null
+          period_type?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          notes?: string | null
+          period_month?: number | null
+          period_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -3028,6 +3070,8 @@ export type Database = {
         Args: { _req: string; _user: string }
         Returns: boolean
       }
+      close_month: { Args: { _month: number; _year: number }; Returns: Json }
+      close_year: { Args: { _year: number }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3053,6 +3097,10 @@ export type Database = {
       recalc_invoice_balance: {
         Args: { _invoice_id: string }
         Returns: undefined
+      }
+      reopen_period: {
+        Args: { _month: number; _period_type?: string; _year: number }
+        Returns: Json
       }
       run_notification_scans: { Args: never; Returns: Json }
     }
