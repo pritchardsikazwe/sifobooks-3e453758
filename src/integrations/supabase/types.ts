@@ -2443,6 +2443,7 @@ export type Database = {
         | "purchaser"
         | "hr"
         | "viewer"
+        | "super_admin"
       company_role: "owner" | "admin" | "manager" | "staff" | "viewer"
     }
     CompositeTypes: {
@@ -2579,6 +2580,7 @@ export const Constants = {
         "purchaser",
         "hr",
         "viewer",
+        "super_admin",
       ],
       company_role: ["owner", "admin", "manager", "staff", "viewer"],
     },
