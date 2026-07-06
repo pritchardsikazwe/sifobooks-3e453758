@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   Menu, LayoutGrid, BarChart3, ShoppingBag, Archive, FileText, Settings, LifeBuoy,
   ChevronDown, Box, Layers, Warehouse, LogOut, Landmark, ShieldCheck, Package, Receipt,
