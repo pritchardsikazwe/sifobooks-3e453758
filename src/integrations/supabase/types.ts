@@ -314,6 +314,50 @@ export type Database = {
           },
         ]
       }
+      customer_communications: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          customer_id: string
+          direction: string
+          id: string
+          occurred_at: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          customer_id: string
+          direction?: string
+          id?: string
+          occurred_at?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          customer_id?: string
+          direction?: string
+          id?: string
+          occurred_at?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_communications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           active: boolean
@@ -429,6 +473,144 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          hs_code: string | null
+          id: string
+          invoice_id: string
+          line_total: number
+          quantity: number
+          stock_item_id: string | null
+          unit_price: number
+          user_id: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          hs_code?: string | null
+          id?: string
+          invoice_id: string
+          line_total?: number
+          quantity?: number
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          hs_code?: string | null
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          quantity?: number
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_paid: number
+          balance_due: number
+          buyer_tpin: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          due_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          number: string
+          quote_id: string | null
+          seller_tpin: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          amount_paid?: number
+          balance_due?: number
+          buyer_tpin?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number: string
+          quote_id?: string | null
+          seller_tpin?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          amount_paid?: number
+          balance_due?: number
+          buyer_tpin?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number?: string
+          quote_id?: string | null
+          seller_tpin?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positions: {
         Row: {
           company_id: string
@@ -533,6 +715,185 @@ export type Database = {
           vat_registered?: boolean
         }
         Relationships: []
+      }
+      quote_items: {
+        Row: {
+          created_at: string
+          description: string
+          hs_code: string | null
+          id: string
+          line_total: number
+          quantity: number
+          quote_id: string
+          stock_item_id: string | null
+          unit_price: number
+          user_id: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          hs_code?: string | null
+          id?: string
+          line_total?: number
+          quantity?: number
+          quote_id: string
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          hs_code?: string | null
+          id?: string
+          line_total?: number
+          quantity?: number
+          quote_id?: string
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          converted_invoice_id: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+          vat_amount: number
+        }
+        Insert: {
+          converted_invoice_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+          vat_amount?: number
+        }
+        Update: {
+          converted_invoice_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          method: string
+          notes: string | null
+          number: string
+          receipt_date: string
+          reference: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          method?: string
+          notes?: string | null
+          number: string
+          receipt_date?: string
+          reference?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          method?: string
+          notes?: string | null
+          number?: string
+          receipt_date?: string
+          reference?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_items: {
         Row: {
@@ -681,7 +1042,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recalc_invoice_balance: {
+        Args: { _invoice_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
