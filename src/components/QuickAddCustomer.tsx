@@ -37,7 +37,7 @@ export function QuickAddCustomer({ onCreated, trigger }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" />New customer</Button>
+        {trigger ?? <Button type="button" variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" />New customer</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Quick add customer</DialogTitle></DialogHeader>
