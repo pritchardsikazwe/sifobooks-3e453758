@@ -74,6 +74,11 @@ function DashboardPage() {
   const [email, setEmail] = useState<string>("");
   const [stock, setStock] = useState<StockPick[]>([]);
 
+  const loadStock = async () => {
+    const { data } = await supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price, unit, quantity_on_hand");
+    setStock((data ?? []) as StockPick[]);
+  };
+
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -83,6 +88,7 @@ function DashboardPage() {
       if (!data?.onboarded) { navigate({ to: "/onboarding" }); return; }
       if (data.currency) setCurrency(data.currency);
       if (data.business_name) setBusinessName(data.business_name);
+      await loadStock();
     })();
   }, [navigate]);
 
