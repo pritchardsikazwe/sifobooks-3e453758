@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/sifobooks-logo.png";
 
 type Item = { title: string; url?: string; icon: any };
 type Section = { label: string; items: Item[] };
