@@ -26,10 +26,25 @@ const nameSchema = z.string().trim().min(1, "Required").max(100);
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [tab, setTab] = useState<"signin" | "signup" | "reset">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const onReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null); setNotice(null);
+    const fd = new FormData(e.currentTarget);
+    const email = emailSchema.safeParse(fd.get("email"));
+    if (!email.success) return setError(email.error.issues[0].message);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) return setError(error.message);
+    setNotice("Check your email for a password reset link.");
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
