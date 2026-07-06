@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, LogOut, Package, Plus, AlertTriangle, ArrowUpRight, ArrowDownRight, Sliders, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, LogOut, Package, Plus, AlertTriangle, ArrowUpRight, ArrowDownRight, Sliders, Trash2, Loader2, Upload, Download, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,7 @@ function StockPage() {
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [openNew, setOpenNew] = useState(false);
+  const [openImport, setOpenImport] = useState(false);
   const [moveFor, setMoveFor] = useState<Item | null>(null);
   const [q, setQ] = useState("");
 
@@ -93,6 +94,7 @@ function StockPage() {
           </div>
           <div className="flex items-center gap-2">
             <AppNav />
+            <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
             <NewItemDialog open={openNew} setOpen={setOpenNew} onCreated={load} />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
@@ -325,6 +327,200 @@ function MovementDialog({ item, onClose, onSaved }: { item: Item; onClose: () =>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save movement</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------- CSV bulk import ----------
+type ParsedRow = {
+  name: string; sku: string | null; hs_code: string | null;
+  tax_category: "standard" | "zero" | "exempt"; vat_rate: number;
+  unit: string; cost_price: number; sell_price: number;
+  quantity_on_hand: number; reorder_level: number;
+  _errors: string[];
+};
+
+const CSV_HEADERS = ["name","sku","hs_code","tax_category","vat_rate","unit","cost_price","sell_price","quantity_on_hand","reorder_level"];
+const SAMPLE_CSV = `${CSV_HEADERS.join(",")}
+Portland cement 50kg,CEM-50,2523.29,standard,16,bag,180,225,120,20
+Mealie meal 25kg,MM-25,1101.00,zero,0,bag,140,175,80,15
+Laptop - Dell Latitude,LAP-DL,8471.30,standard,16,each,14500,17900,6,2
+Consulting hours,SVC-PRO,SVC-PRO,standard,16,hour,0,850,0,0`;
+
+function parseCsv(text: string): ParsedRow[] {
+  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim().length > 0);
+  if (lines.length === 0) return [];
+  const splitLine = (l: string): string[] => {
+    const out: string[] = []; let cur = ""; let inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"') { if (inQ && l[i + 1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
+      else if (c === "," && !inQ) { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  };
+  const header = splitLine(lines[0]).map(h => h.toLowerCase());
+  const idx = (k: string) => header.indexOf(k);
+  const rows: ParsedRow[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitLine(lines[i]);
+    const errs: string[] = [];
+    const get = (k: string) => (idx(k) >= 0 ? cols[idx(k)] ?? "" : "");
+    const num = (k: string, def = 0) => {
+      const v = get(k);
+      if (v === "" || v == null) return def;
+      const n = Number(v);
+      if (Number.isNaN(n)) { errs.push(`${k} not a number`); return def; }
+      return n;
+    };
+    const name = get("name");
+    if (!name) errs.push("name required");
+    const taxRaw = (get("tax_category") || "standard").toLowerCase();
+    const tax = (["standard","zero","exempt"] as const).includes(taxRaw as any) ? (taxRaw as "standard"|"zero"|"exempt") : "standard";
+    if (get("tax_category") && tax !== taxRaw) errs.push("tax_category must be standard|zero|exempt");
+    rows.push({
+      name, sku: get("sku") || null, hs_code: get("hs_code") || null,
+      tax_category: tax, vat_rate: num("vat_rate", 16),
+      unit: get("unit") || "each",
+      cost_price: num("cost_price"), sell_price: num("sell_price"),
+      quantity_on_hand: num("quantity_on_hand"), reorder_level: num("reorder_level"),
+      _errors: errs,
+    });
+  }
+  return rows;
+}
+
+function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen: (v: boolean) => void; onImported: () => void }) {
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [fileName, setFileName] = useState<string>("");
+  const [importing, setImporting] = useState(false);
+
+  const reset = () => { setRows([]); setFileName(""); };
+
+  const onFile = async (file: File) => {
+    setFileName(file.name);
+    const text = await file.text();
+    const parsed = parseCsv(text);
+    setRows(parsed);
+    if (parsed.length === 0) toast.error("No rows found in the CSV.");
+  };
+
+  const downloadTemplate = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "kopelacode-stock-template.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const validRows = rows.filter(r => r._errors.length === 0);
+  const invalidRows = rows.length - validRows.length;
+
+  const doImport = async () => {
+    if (validRows.length === 0) return;
+    setImporting(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setImporting(false); return toast.error("Not signed in"); }
+    const payload = validRows.map(r => ({
+      user_id: u.user!.id,
+      name: r.name, sku: r.sku, hs_code: r.hs_code,
+      tax_category: r.tax_category, vat_rate: r.vat_rate, unit: r.unit,
+      cost_price: r.cost_price, sell_price: r.sell_price,
+      quantity_on_hand: r.quantity_on_hand, reorder_level: r.reorder_level,
+    }));
+    const { error } = await supabase.from("stock_items").insert(payload);
+    setImporting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Imported ${validRows.length} item${validRows.length > 1 ? "s" : ""}`);
+    reset(); setOpen(false); onImported();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) reset(); }}>
+      <DialogTrigger asChild><Button variant="outline"><Upload className="h-4 w-4" /> Import CSV</Button></DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" /> Bulk import stock items</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <div className="font-medium">Expected columns</div>
+            <div className="mt-1 font-mono text-xs text-muted-foreground break-all">{CSV_HEADERS.join(", ")}</div>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span><b>tax_category</b>: standard · zero · exempt</span>
+              <span>·</span>
+              <span><b>vat_rate</b>: 0–100 (percent)</span>
+              <span>·</span>
+              <span><b>hs_code</b>: e.g. 2523.29 or SVC-PRO</span>
+            </div>
+            <Button variant="link" size="sm" className="mt-1 h-auto p-0" onClick={downloadTemplate}>
+              <Download className="h-3 w-3" /> Download CSV template
+            </Button>
+          </div>
+
+          <label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center cursor-pointer hover:bg-muted/40">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <div className="text-sm font-medium">{fileName || "Click to choose a .csv file"}</div>
+            <div className="text-xs text-muted-foreground">First row must be the header</div>
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+          </label>
+
+          {rows.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  Parsed <b>{rows.length}</b> row{rows.length > 1 ? "s" : ""} — <span className="text-emerald-700">{validRows.length} ready</span>
+                  {invalidRows > 0 && <span className="text-destructive"> · {invalidRows} with errors</span>}
+                </div>
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-4">Name</TableHead>
+                      <TableHead>HS</TableHead>
+                      <TableHead>VAT</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r, i) => (
+                      <TableRow key={i} className={r._errors.length ? "bg-red-50/50" : ""}>
+                        <TableCell className="pl-4">
+                          <div className="font-medium">{r.name || <em className="text-muted-foreground">—</em>}</div>
+                          <div className="text-xs text-muted-foreground">{r.sku ?? ""}{r.sku ? " · " : ""}{r.unit}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{r.hs_code ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{r.vat_rate}% {r.tax_category}</TableCell>
+                        <TableCell className="text-right text-xs">{r.sell_price}</TableCell>
+                        <TableCell className="text-right text-xs">{r.quantity_on_hand}</TableCell>
+                        <TableCell>
+                          {r._errors.length === 0
+                            ? <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-xs">Ready</Badge>
+                            : <span className="text-xs text-destructive">{r._errors.join(", ")}</span>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={doImport} disabled={importing || validRows.length === 0}>
+            {importing && <Loader2 className="h-4 w-4 animate-spin" />}
+            Import {validRows.length > 0 ? `${validRows.length} item${validRows.length > 1 ? "s" : ""}` : ""}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
