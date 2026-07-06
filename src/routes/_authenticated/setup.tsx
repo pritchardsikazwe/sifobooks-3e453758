@@ -169,7 +169,7 @@ function ListTab<T extends Row>({ title, description, table, userId, companyId, 
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from(table).select("*").eq("company_id", companyId).order("created_at", { ascending: false });
-    setRows((data ?? []) as T[]);
+    setRows((data ?? []) as unknown as T[]);
     setLoading(false);
   };
   useEffect(() => { if (companyId) load(); }, [companyId]);
