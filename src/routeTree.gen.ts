@@ -48,6 +48,7 @@ import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './route
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
+import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_authenticated/reports.cash-flow'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
 import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './routes/_authenticated/reports.aged-receivables'
 import { Route as AuthenticatedReportsAgedPayablesRouteImport } from './routes/_authenticated/reports.aged-payables'
@@ -261,6 +262,12 @@ const AuthenticatedReportsInventoryValuationRoute =
     path: '/inventory-valuation',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsCashFlowRoute =
+  AuthenticatedReportsCashFlowRouteImport.update({
+    id: '/cash-flow',
+    path: '/cash-flow',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsBalanceSheetRoute =
   AuthenticatedReportsBalanceSheetRouteImport.update({
     id: '/balance-sheet',
@@ -337,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -383,6 +391,7 @@ export interface FileRoutesByTo {
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -431,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/_authenticated/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/_authenticated/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
+    | '/reports/cash-flow'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -525,6 +536,7 @@ export interface FileRouteTypes {
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
+    | '/reports/cash-flow'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -572,6 +584,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/aged-payables'
     | '/_authenticated/reports/aged-receivables'
     | '/_authenticated/reports/balance-sheet'
+    | '/_authenticated/reports/cash-flow'
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
@@ -861,6 +874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsInventoryValuationRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/cash-flow': {
+      id: '/_authenticated/reports/cash-flow'
+      path: '/cash-flow'
+      fullPath: '/reports/cash-flow'
+      preLoaderRoute: typeof AuthenticatedReportsCashFlowRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/balance-sheet': {
       id: '/_authenticated/reports/balance-sheet'
       path: '/balance-sheet'
@@ -948,6 +968,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
   AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
+  AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
@@ -960,6 +981,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsAgedReceivablesRoute:
     AuthenticatedReportsAgedReceivablesRoute,
   AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
+  AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
   AuthenticatedReportsInventoryValuationRoute:
     AuthenticatedReportsInventoryValuationRoute,
   AuthenticatedReportsPayrollSummaryRoute:
