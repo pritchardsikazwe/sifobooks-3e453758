@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/compliance")({
   head: () => ({
     meta: [
-      { title: "Statutory Compliance — Kopelacode" },
+      { title: "Statutory Compliance — SifoBooks" },
       { name: "robots", content: "noindex" },
     ],
   }),

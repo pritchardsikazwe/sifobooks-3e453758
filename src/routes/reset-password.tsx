@@ -11,8 +11,8 @@ import { Loader2 } from "lucide-react";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — Kopelacode" },
-      { name: "description", content: "Set a new password for your Kopelacode account." },
+      { title: "Reset password — SifoBooks" },
+      { name: "description", content: "Set a new password for your SifoBooks account." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -59,7 +59,7 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 block text-center text-sm text-muted-foreground hover:text-foreground">← Back to Kopelacode</Link>
+        <Link to="/" className="mb-6 block text-center text-sm text-muted-foreground hover:text-foreground">← Back to SifoBooks</Link>
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Set a new password</CardTitle>

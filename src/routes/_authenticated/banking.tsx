@@ -13,7 +13,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/banking")({
   head: () => ({
     meta: [
-      { title: "Banking — Kopelacode" },
+      { title: "Banking — SifoBooks" },
       { name: "robots", content: "noindex" },
     ],
   }),
