@@ -58,6 +58,7 @@ import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authentic
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
+import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
@@ -331,6 +332,12 @@ const AuthenticatedReportsTrialBalanceRoute =
     path: '/trial-balance',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsTaxSummaryRoute =
+  AuthenticatedReportsTaxSummaryRouteImport.update({
+    id: '/tax-summary',
+    path: '/tax-summary',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsSalesByCustomerRoute =
   AuthenticatedReportsSalesByCustomerRouteImport.update({
     id: '/sales-by-customer',
@@ -462,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesByTo {
@@ -524,6 +532,7 @@ export interface FileRoutesByTo {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesById {
@@ -588,6 +597,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRouteTypes {
@@ -652,6 +662,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/sales-by-customer'
+    | '/reports/tax-summary'
     | '/reports/trial-balance'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -714,6 +725,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/sales-by-customer'
+    | '/reports/tax-summary'
     | '/reports/trial-balance'
   id:
     | '__root__'
@@ -777,6 +789,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
     | '/_authenticated/reports/sales-by-customer'
+    | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
   fileRoutesById: FileRoutesById
 }
@@ -1132,6 +1145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsTrialBalanceRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/tax-summary': {
+      id: '/_authenticated/reports/tax-summary'
+      path: '/tax-summary'
+      fullPath: '/reports/tax-summary'
+      preLoaderRoute: typeof AuthenticatedReportsTaxSummaryRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/sales-by-customer': {
       id: '/_authenticated/reports/sales-by-customer'
       path: '/sales-by-customer'
@@ -1267,6 +1287,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
   AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
+  AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
 }
 
@@ -1285,6 +1306,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
   AuthenticatedReportsSalesByCustomerRoute:
     AuthenticatedReportsSalesByCustomerRoute,
+  AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
 }
 
@@ -1397,13 +1419,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

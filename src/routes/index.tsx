@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle2, ShieldCheck, Zap, BarChart3, Wallet,
   Users, FileText, ReceiptText, CreditCard, Truck, ShoppingCart, FileBox,
   Landmark, BookOpen, BookText, PiggyBank, Boxes, Warehouse, ClipboardEdit,
   UserSquare, CalendarCheck, CalendarDays, Banknote, Building2, Bell,
+  Phone, Mail, MessageCircle,
 } from "lucide-react";
+import logo from "@/assets/sifobooks-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -66,25 +69,53 @@ const STATS = [
   { value: "ZMW", label: "Native Currency" },
 ];
 
+const WHATSAPP = "260777204440";
+const PHONE = "+260777204440";
+const EMAIL = "sifonettechnologies@gmail.com";
+
+/** Reveal children on scroll using IntersectionObserver + animate-fade-in */
+function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }),
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms`, animationDelay: `${delay}ms` }}
+      className={`${shown ? "animate-fade-in opacity-100" : "opacity-0 translate-y-4"} transition-all duration-700 ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 grid place-items-center text-sm font-black text-slate-900">SB</div>
+          <Link to="/" className="flex items-center gap-2 hover-scale">
+            <img src={logo} alt="SifoBooks" className="h-9 w-9 object-contain" width={36} height={36} />
             <span className="text-xl font-black tracking-tight">SifoBooks</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold">
-            <a href="#modules" className="hover:text-emerald-600">Modules</a>
-            <a href="#features" className="hover:text-emerald-600">Features</a>
-            <a href="#compliance" className="hover:text-emerald-600">Compliance</a>
-            <a href="#pricing" className="hover:text-emerald-600">Pricing</a>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-bold">
+            <a href="#modules" className="hover:text-emerald-600 story-link">Modules</a>
+            <a href="#features" className="hover:text-emerald-600 story-link">Features</a>
+            <a href="#compliance" className="hover:text-emerald-600 story-link">Compliance</a>
+            <a href="#contact" className="hover:text-emerald-600 story-link">Contact</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link to="/auth"><Button variant="ghost" className="font-semibold">Sign in</Button></Link>
-            <Link to="/auth"><Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Get Started</Button></Link>
+            <Link to="/auth"><Button variant="ghost" className="font-bold">Sign in</Button></Link>
+            <Link to="/auth"><Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20">Get Started</Button></Link>
           </div>
         </div>
       </header>
@@ -92,33 +123,42 @@ function Landing() {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/20 via-background to-background" />
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-600 mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-black text-emerald-600 mb-8 animate-fade-in">
             <Zap className="h-3.5 w-3.5" /> BUILT FOR AFRICAN BUSINESSES · ZMW · TPIN · ZRA
           </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] mb-6">
+          <div className="animate-fade-in" style={{ animationDelay: "80ms" }}>
+            <img src={logo} alt="SifoBooks" className="mx-auto h-24 w-24 md:h-28 md:w-28 object-contain mb-6 drop-shadow-2xl" width={112} height={112} />
+          </div>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] mb-6 animate-fade-in" style={{ animationDelay: "120ms" }}>
             Run your <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 bg-clip-text text-transparent">entire business</span><br />
             from one place.
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 font-medium">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 font-bold animate-fade-in" style={{ animationDelay: "200ms" }}>
             Sales. Purchases. Inventory. Finance. HR. Payroll. Compliance.
-            <span className="block font-bold text-foreground mt-2">One bold accounting ERP.</span>
+            <span className="block font-black text-foreground mt-2">One bold accounting ERP.</span>
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/auth"><Button size="lg" className="h-14 px-8 text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+          <div className="flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: "280ms" }}>
+            <Link to="/auth"><Button size="lg" className="h-14 px-8 text-base font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-600/30 hover-scale">
               Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
             </Button></Link>
-            <a href="#modules"><Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold">
-              Explore Modules
-            </Button></a>
+            <a href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20to%20know%20more.`} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-black border-2 hover-scale">
+                <MessageCircle className="mr-2 h-5 w-5 text-emerald-600" /> Chat on WhatsApp
+              </Button>
+            </a>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mt-20">
-            {STATS.map(s => (
-              <div key={s.label} className="text-center">
-                <div className="text-4xl md:text-5xl font-black bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">{s.value}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">{s.label}</div>
-              </div>
+            {STATS.map((s, i) => (
+              <Reveal key={s.label} delay={i * 100}>
+                <div className="text-center">
+                  <div className="text-4xl md:text-5xl font-black bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">{s.value}</div>
+                  <div className="text-xs font-black uppercase tracking-widest text-muted-foreground mt-2">{s.label}</div>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -127,35 +167,41 @@ function Landing() {
       {/* MODULES */}
       <section id="modules" className="py-24 border-t border-border">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Complete Coverage</div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Every module you need.</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
-              Six departments. Twenty-four modules. Zero add-ons required.
-            </p>
-          </div>
+          <Reveal>
+            <div className="text-center mb-16">
+              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Complete Coverage</div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Every module you need.</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-bold">
+                Six departments. Twenty-four modules. Zero add-ons required.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="space-y-16">
-            {MODULES.map(group => (
-              <div key={group.section}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${group.color}`} />
-                  <h3 className="text-2xl md:text-3xl font-black tracking-tight">{group.section}</h3>
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{group.items.length} modules</span>
+            {MODULES.map((group) => (
+              <Reveal key={group.section}>
+                <div>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${group.color}`} />
+                    <h3 className="text-2xl md:text-3xl font-black tracking-tight">{group.section}</h3>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{group.items.length} modules</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {group.items.map((item, i) => (
+                      <Reveal key={item.title} delay={i * 80}>
+                        <Card className="p-6 hover:shadow-2xl hover:-translate-y-2 transition-all border-2 hover:border-emerald-500/50 group cursor-default h-full">
+                          <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${group.color} grid place-items-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform`}>
+                            <item.icon className="h-6 w-6 text-white" />
+                          </div>
+                          <div className="font-black text-lg mb-1">{item.title}</div>
+                          <div className="text-sm text-muted-foreground font-semibold">{item.desc}</div>
+                        </Card>
+                      </Reveal>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {group.items.map(item => (
-                    <Card key={item.title} className="p-6 hover:shadow-xl hover:-translate-y-1 transition-all border-2 hover:border-emerald-500/50 group cursor-default">
-                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${group.color} grid place-items-center mb-4 group-hover:scale-110 transition-transform`}>
-                        <item.icon className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="font-black text-lg mb-1">{item.title}</div>
-                      <div className="text-sm text-muted-foreground font-medium">{item.desc}</div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -164,23 +210,27 @@ function Landing() {
       {/* FEATURES */}
       <section id="features" className="py-24 border-t border-border bg-muted/30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Why SifoBooks</div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter">Built to move fast.</h2>
-          </div>
+          <Reveal>
+            <div className="text-center mb-16">
+              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Why SifoBooks</div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter">Built to move fast.</h2>
+            </div>
+          </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { icon: BarChart3, title: "Real-Time Dashboard", desc: "Cash flow, receivables, payables, KPIs — updated live as transactions post." },
               { icon: ShieldCheck, title: "Bank-Grade Security", desc: "Row-level security, audit trails, and role-based access on every record." },
               { icon: Zap, title: "Automatic Everything", desc: "Invoice balances, stock movements, and payroll calculations run themselves." },
-            ].map(f => (
-              <Card key={f.title} className="p-8 border-2">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 grid place-items-center mb-6">
-                  <f.icon className="h-7 w-7 text-emerald-600" />
-                </div>
-                <div className="text-2xl font-black mb-2">{f.title}</div>
-                <div className="text-muted-foreground font-medium">{f.desc}</div>
-              </Card>
+            ].map((f, i) => (
+              <Reveal key={f.title} delay={i * 120}>
+                <Card className="p-8 border-2 hover:border-emerald-500/50 hover:shadow-xl transition-all h-full">
+                  <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 grid place-items-center mb-6">
+                    <f.icon className="h-7 w-7 text-emerald-600" />
+                  </div>
+                  <div className="text-2xl font-black mb-2">{f.title}</div>
+                  <div className="text-muted-foreground font-semibold">{f.desc}</div>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -189,17 +239,72 @@ function Landing() {
       {/* COMPLIANCE */}
       <section id="compliance" className="py-24 border-t border-border">
         <div className="max-w-5xl mx-auto px-6 text-center">
-          <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Fully Compliant</div>
-          <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Zambian tax authorities. Handled.</h2>
-          <p className="text-lg text-muted-foreground font-medium mb-10 max-w-2xl mx-auto">
-            Native support for ZRA VAT, TPIN, PAYE brackets, NAPSA contributions, and NHIMA deductions.
-          </p>
+          <Reveal>
+            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Fully Compliant</div>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Zambian tax authorities. Handled.</h2>
+            <p className="text-lg text-muted-foreground font-bold mb-10 max-w-2xl mx-auto">
+              Native support for ZRA VAT, TPIN, PAYE brackets, NAPSA contributions, and NHIMA deductions.
+            </p>
+          </Reveal>
           <div className="flex flex-wrap justify-center gap-3">
-            {["ZRA VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "Withholding Tax"].map(tag => (
-              <div key={tag} className="rounded-full border-2 border-emerald-500/30 bg-emerald-500/5 px-5 py-2 text-sm font-black text-emerald-700 dark:text-emerald-400">
-                <CheckCircle2 className="inline h-4 w-4 mr-1.5 -mt-0.5" />{tag}
-              </div>
+            {["ZRA VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "Withholding Tax"].map((tag, i) => (
+              <Reveal key={tag} delay={i * 60}>
+                <div className="rounded-full border-2 border-emerald-500/30 bg-emerald-500/5 px-5 py-2 text-sm font-black text-emerald-700 dark:text-emerald-400 hover-scale">
+                  <CheckCircle2 className="inline h-4 w-4 mr-1.5 -mt-0.5" />{tag}
+                </div>
+              </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT */}
+      <section id="contact" className="py-24 border-t border-border bg-muted/30">
+        <div className="max-w-5xl mx-auto px-6">
+          <Reveal>
+            <div className="text-center mb-12">
+              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Talk to us</div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">We're one message away.</h2>
+              <p className="text-lg text-muted-foreground font-bold">Real humans. Same-day replies. In Lusaka, serving all of Zambia.</p>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Reveal delay={0}>
+              <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer">
+                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
+                  <div className="h-12 w-12 rounded-xl bg-emerald-500 grid place-items-center mb-4">
+                    <MessageCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-black text-lg">WhatsApp</div>
+                  <div className="font-bold text-emerald-600 mt-1 break-all">{PHONE}</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-2">Fastest replies · Mon–Sat</div>
+                </Card>
+              </a>
+            </Reveal>
+            <Reveal delay={100}>
+              <a href={`tel:${PHONE}`}>
+                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
+                  <div className="h-12 w-12 rounded-xl bg-blue-500 grid place-items-center mb-4">
+                    <Phone className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-black text-lg">Phone</div>
+                  <div className="font-bold text-blue-600 mt-1 break-all">{PHONE}</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-2">Call our support desk</div>
+                </Card>
+              </a>
+            </Reveal>
+            <Reveal delay={200}>
+              <a href={`mailto:${EMAIL}`}>
+                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
+                  <div className="h-12 w-12 rounded-xl bg-violet-500 grid place-items-center mb-4">
+                    <Mail className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-black text-lg">Email</div>
+                  <div className="font-bold text-violet-600 mt-1 break-all">{EMAIL}</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-2">Sales & billing enquiries</div>
+                </Card>
+              </a>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -207,15 +312,17 @@ function Landing() {
       {/* CTA */}
       <section id="pricing" className="py-24 border-t border-border">
         <div className="max-w-4xl mx-auto px-6">
-          <Card className="p-12 md:p-16 text-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-2xl">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Ready to take control?</h2>
-            <p className="text-xl font-medium opacity-90 mb-8">Get every module. One flat plan. Start today.</p>
-            <Link to="/auth">
-              <Button size="lg" className="h-14 px-10 text-base font-black bg-white text-emerald-700 hover:bg-white/90">
-                Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </Card>
+          <Reveal>
+            <Card className="p-12 md:p-16 text-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-2xl">
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Ready to take control?</h2>
+              <p className="text-xl font-bold opacity-90 mb-8">Get every module. One flat plan. Start today.</p>
+              <Link to="/auth">
+                <Button size="lg" className="h-14 px-10 text-base font-black bg-white text-emerald-700 hover:bg-white/90 hover-scale">
+                  Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </Card>
+          </Reveal>
         </div>
       </section>
 
@@ -223,17 +330,29 @@ function Landing() {
       <footer className="border-t border-border py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-gradient-to-br from-emerald-400 to-teal-600 grid place-items-center text-[10px] font-black text-slate-900">SB</div>
-            <span className="font-bold text-foreground">SifoBooks</span>
-            <span>© {new Date().getFullYear()} · Accounting ERP</span>
+            <img src={logo} alt="SifoBooks" className="h-6 w-6 object-contain" width={24} height={24} />
+            <span className="font-black text-foreground">SifoBooks</span>
+            <span className="font-semibold">© {new Date().getFullYear()} · Accounting ERP</span>
           </div>
-          <div className="flex gap-6 font-semibold">
-            <Link to="/auth" className="hover:text-foreground">Sign in</Link>
-            <a href="#modules" className="hover:text-foreground">Modules</a>
-            <a href="#compliance" className="hover:text-foreground">Compliance</a>
+          <div className="flex gap-6 font-bold">
+            <a href={`tel:${PHONE}`} className="hover:text-foreground">{PHONE}</a>
+            <a href={`mailto:${EMAIL}`} className="hover:text-foreground break-all">{EMAIL}</a>
           </div>
         </div>
       </footer>
+
+      {/* FLOATING WHATSAPP */}
+      <a
+        href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%20support%2C%20I%20need%20help.`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="WhatsApp support"
+        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-[#25D366] shadow-2xl grid place-items-center hover:scale-110 transition-transform animate-fade-in"
+        style={{ boxShadow: "0 10px 30px -5px rgba(37, 211, 102, 0.6)" }}
+      >
+        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
+        <MessageCircle className="h-7 w-7 text-white relative" />
+      </a>
     </div>
   );
 }

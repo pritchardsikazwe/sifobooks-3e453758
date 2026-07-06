@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown, Receipt } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/reports")({
@@ -30,6 +30,12 @@ const GROUPS = [
     items: [
       { title: "Sales by Customer", desc: "Revenue per customer", icon: FileText, to: "/reports/sales-by-customer" },
       { title: "Inventory Valuation", desc: "Stock on hand × cost", icon: Package, to: "/reports/inventory-valuation" },
+    ],
+  },
+  {
+    title: "Tax & Compliance",
+    items: [
+      { title: "Tax Summary (VAT)", desc: "Output vs Input VAT — ZRA ready", icon: Receipt, to: "/reports/tax-summary" },
     ],
   },
   {
