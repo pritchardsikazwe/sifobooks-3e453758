@@ -108,7 +108,21 @@ function DashboardPage() {
     return matchesQ && matchesF;
   });
 
-  const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
+  const addInvoice = async (inv: Invoice) => {
+    setInvoices(prev => [inv, ...prev]);
+    // Decrement stock for line items linked to stock
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const moves = inv.items.filter(i => i.stockItemId).map(i => ({
+      user_id: u.user!.id, item_id: i.stockItemId!, movement_type: "out" as const,
+      quantity: i.qty, reference: inv.number, note: `Invoice ${inv.number} — ${i.description}`,
+    }));
+    if (moves.length) {
+      const { error } = await supabase.from("stock_movements").insert(moves);
+      if (error) toast.error(`Stock update: ${error.message}`);
+      else { toast.success(`Stock updated for ${moves.length} item${moves.length > 1 ? "s" : ""}`); await loadStock(); }
+    }
+  };
   const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
   const submitToZra = (id: string) => {
     setInvoices(prev => prev.map(i => {
