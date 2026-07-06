@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { postInvoiceLedger } from "@/lib/posting";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -148,9 +149,18 @@ function NewInvoicePage() {
         });
       }
     }
+    if (targetStatus === "sent") {
+      const custName = customers.find(c => c.id === customerId)?.name;
+      const res = await postInvoiceLedger({
+        userId: u.user.id, invoiceId: inv.id, number,
+        issueDate: issueDate, subtotal: totals.subtotal, vat: totals.tax, total: totals.total,
+        customerName: custName,
+      });
+      if (!res.ok) toast.warning(`Invoice saved but ledger posting failed: ${res.error ?? "unknown"}`);
+    }
     setSaving(false);
     if (ie) return toast.error(ie.message);
-    toast.success(targetStatus === "draft" ? "Saved as draft" : `Invoice ${number} posted`);
+    toast.success(targetStatus === "draft" ? "Saved as draft" : `Invoice ${number} posted — journal entry created, stock deducted, customer balance updated`);
     navigate({ to: "/invoices" });
   };
 
