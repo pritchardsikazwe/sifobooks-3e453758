@@ -27,7 +27,7 @@ const sections: Section[] = [
     { title: "Customers", url: "/customers", icon: Users },
     { title: "Quotes", url: "/quotes", icon: FileText },
     { title: "Sales Invoices", url: "/invoices", icon: ReceiptText },
-    { title: "Credit Notes", icon: Undo2 },
+    { title: "Credit Notes", url: "/credit-notes", icon: Undo2 },
     { title: "Receive Payments", url: "/receipts", icon: CreditCard },
   ]},
   { label: "Purchases", items: [
