@@ -227,10 +227,13 @@ function NewQuotePage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-28 sm:pb-0">
       <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
         <Button variant="outline" size="sm" onClick={() => router.history.back()} className="gap-1"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
-        {ActionButtons}
+        <div className="hidden sm:flex">{ActionButtons}</div>
+        <div className="sm:hidden">
+          <Button variant="outline" size="sm" onClick={() => previewPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> Preview</Button>
+        </div>
       </div>
 
       <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4">
@@ -402,7 +405,14 @@ function NewQuotePage() {
           <SummaryRow label="Conversion Rate" value={`${currency} 1 = ${currency} 1`} muted />
         </div>
 
-        <div className="flex justify-end pt-2">{ActionButtons}</div>
+        <div className="hidden sm:flex justify-end pt-2">{ActionButtons}</div>
+      </div>
+
+      {/* Mobile sticky action bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg px-3 py-2 flex items-center gap-2">
+        <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1 text-xs">Draft</Button>
+        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 text-xs bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post</Button>
+        <Button onClick={() => submit("convert")} disabled={saving} className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Convert</Button>
       </div>
     </div>
   );
