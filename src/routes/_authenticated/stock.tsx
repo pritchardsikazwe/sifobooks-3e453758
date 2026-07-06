@@ -94,6 +94,7 @@ function StockPage() {
           </div>
           <div className="flex items-center gap-2">
             <AppNav />
+            <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
             <NewItemDialog open={openNew} setOpen={setOpenNew} onCreated={load} />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
