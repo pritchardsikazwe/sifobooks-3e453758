@@ -72,6 +72,7 @@ function DashboardPage() {
   const [currency, setCurrency] = useState("USD");
   const [businessName, setBusinessName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [stock, setStock] = useState<StockPick[]>([]);
 
   useEffect(() => {
     (async () => {
