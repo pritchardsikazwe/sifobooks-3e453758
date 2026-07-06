@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
+import { previewPdf, downloadPdf, type PdfDoc } from "@/lib/pdf";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -164,13 +166,35 @@ function NewInvoicePage() {
     navigate({ to: "/invoices" });
   };
 
+  const buildPdfDoc = (): PdfDoc => {
+    const customer = customers.find(c => c.id === customerId);
+    return {
+      kind: "Invoice", number, issueDate, dueDate, currency, taxInclusive,
+      company, customer, buyerTpin,
+      items: items.filter(i => (i.description.trim() || i.stockItemId) && i.qty > 0).map(i => {
+        const gross = i.qty * i.price;
+        const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
+        const net = Math.max(gross - disc, 0);
+        const lineTotal = taxInclusive ? net : net * (1 + i.vatRate / 100);
+        return {
+          description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "—",
+          qty: i.qty, price: i.price, discount: i.discount, discountType: i.discountType,
+          vatRate: i.vatRate, lineTotal,
+        };
+      }),
+      subtotal: totals.subtotal, tax: totals.tax, total: totals.total, notes,
+    };
+  };
+
   const ActionButtons = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
-      <Button variant="outline" onClick={() => toast.info("Preview coming next")}>Preview Invoice</Button>
+      <Button variant="outline" onClick={() => previewPdf(buildPdfDoc())}>Preview Invoice</Button>
+      <Button variant="outline" onClick={() => downloadPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
       <Button onClick={() => submit("sent")} disabled={saving} className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post Invoice</Button>
     </div>
   );
+
 
   return (
     <div className="min-h-screen bg-slate-50">
