@@ -371,20 +371,46 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money, stock }:
                 <Plus className="h-3 w-3" /> Add item
               </Button>
             </div>
-            <div className="space-y-2">
-              {items.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2">
-                  <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                  {zraEnabled && (
-                    <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
-                  )}
-                  <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                  <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
-                  <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+            <div className="space-y-3">
+              {items.map((item, idx) => {
+                const pickStock = (id: string) => {
+                  const s = stock.find(x => x.id === id);
+                  setItems(prev => prev.map((it, i) => i === idx ? {
+                    ...it, stockItemId: id, description: s?.name ?? it.description,
+                    hsCode: s?.hs_code ?? it.hsCode, price: Number(s?.sell_price ?? it.price),
+                  } : it));
+                };
+                return (
+                  <div key={idx} className="space-y-1 rounded-md border border-dashed p-2">
+                    {stock.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3 w-3 text-muted-foreground" />
+                        <Select value={item.stockItemId ?? ""} onValueChange={pickStock}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional) — autofills description, HS code, price" /></SelectTrigger>
+                          <SelectContent>
+                            {stock.map(s => (
+                              <SelectItem key={s.id} value={s.id} disabled={Number(s.quantity_on_hand) < item.qty}>
+                                {s.name}{s.sku ? ` · ${s.sku}` : ""} — {money(Number(s.sell_price))} · {Number(s.quantity_on_hand)} {s.unit} on hand
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-12 gap-2">
+                      <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
+                      {zraEnabled && (
+                        <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
+                      )}
+                      <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
+                      <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
+                      <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="space-y-1 border-t pt-3 text-sm">
               <div className="flex justify-end gap-4"><span className="text-muted-foreground">Subtotal</span><span>{money(subTotal)}</span></div>
