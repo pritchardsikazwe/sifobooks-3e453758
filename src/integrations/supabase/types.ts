@@ -604,6 +604,101 @@ export type Database = {
         }
         Relationships: []
       }
+      company_members: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invited_email: string | null
+          role: Database["public"]["Enums"]["company_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invited_email?: string | null
+          role?: Database["public"]["Enums"]["company_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invited_email?: string | null
+          role?: Database["public"]["Enums"]["company_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_subscriptions: {
+        Row: {
+          cancel_at: string | null
+          company_id: string
+          created_at: string
+          current_period_end: string
+          id: string
+          plan_id: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          company_id: string
+          created_at?: string
+          current_period_end?: string
+          id?: string
+          plan_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at?: string | null
+          company_id?: string
+          created_at?: string
+          current_period_end?: string
+          id?: string
+          plan_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_obligations: {
         Row: {
           amount: number | null
@@ -689,6 +784,129 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_note_items: {
+        Row: {
+          created_at: string
+          credit_note_id: string
+          description: string
+          id: string
+          line_total: number
+          quantity: number
+          stock_item_id: string | null
+          unit_price: number
+          user_id: string
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          credit_note_id: string
+          description: string
+          id?: string
+          line_total?: number
+          quantity?: number
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id: string
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          credit_note_id?: string
+          description?: string
+          id?: string
+          line_total?: number
+          quantity?: number
+          stock_item_id?: string | null
+          unit_price?: number
+          user_id?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_items_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          issue_date: string
+          notes: string | null
+          number: string
+          reason: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          issue_date?: string
+          notes?: string | null
+          number: string
+          reason?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          issue_date?: string
+          notes?: string | null
+          number?: string
+          reason?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1052,6 +1270,8 @@ export type Database = {
           updated_at: string
           user_id: string
           vat_amount: number
+          void_reason: string | null
+          voided_at: string | null
         }
         Insert: {
           amount_paid?: number
@@ -1073,6 +1293,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           vat_amount?: number
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Update: {
           amount_paid?: number
@@ -1094,6 +1316,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vat_amount?: number
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Relationships: [
           {
@@ -1703,6 +1927,8 @@ export type Database = {
           user_id: string
           valid_until: string | null
           vat_amount: number
+          void_reason: string | null
+          voided_at: string | null
         }
         Insert: {
           converted_invoice_id?: string | null
@@ -1720,6 +1946,8 @@ export type Database = {
           user_id: string
           valid_until?: string | null
           vat_amount?: number
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Update: {
           converted_invoice_id?: string | null
@@ -1737,6 +1965,8 @@ export type Database = {
           user_id?: string
           valid_until?: string | null
           vat_amount?: number
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Relationships: [
           {
@@ -1966,6 +2196,48 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          code: string
+          created_at: string
+          currency: string
+          features: Json
+          id: string
+          is_active: boolean
+          max_invoices: number | null
+          max_users: number
+          name: string
+          price_monthly: number
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          max_invoices?: number | null
+          max_users?: number
+          name: string
+          price_monthly?: number
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          max_invoices?: number | null
+          max_users?: number
+          name?: string
+          price_monthly?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -2153,6 +2425,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin: {
+        Args: { _company: string; _user: string }
+        Returns: boolean
+      }
       recalc_invoice_balance: {
         Args: { _invoice_id: string }
         Returns: undefined
@@ -2167,6 +2443,7 @@ export type Database = {
         | "purchaser"
         | "hr"
         | "viewer"
+      company_role: "owner" | "admin" | "manager" | "staff" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2303,6 +2580,7 @@ export const Constants = {
         "hr",
         "viewer",
       ],
+      company_role: ["owner", "admin", "manager", "staff", "viewer"],
     },
   },
 } as const

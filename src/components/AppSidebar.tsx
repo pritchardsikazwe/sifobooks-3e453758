@@ -6,7 +6,7 @@ import {
   Landmark, BookOpen, BookText, PiggyBank,
   Boxes, BarChart3, ShieldCheck, Warehouse, ClipboardEdit,
   UserSquare, CalendarCheck, CalendarDays, Banknote,
-  Settings, UserCog, Building2, Bell, LogOut,
+  Settings, UserCog, Building2, Bell, LogOut, Sparkles,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -27,7 +27,7 @@ const sections: Section[] = [
     { title: "Customers", url: "/customers", icon: Users },
     { title: "Quotes", url: "/quotes", icon: FileText },
     { title: "Sales Invoices", url: "/invoices", icon: ReceiptText },
-    { title: "Credit Notes", icon: Undo2 },
+    { title: "Credit Notes", url: "/credit-notes", icon: Undo2 },
     { title: "Receive Payments", url: "/receipts", icon: CreditCard },
   ]},
   { label: "Purchases", items: [
@@ -60,6 +60,7 @@ const sections: Section[] = [
   { label: "Admin", items: [
     { title: "Admin Home", url: "/admin", icon: UserCog },
     { title: "Company Setup", url: "/setup", icon: Building2 },
+    { title: "Subscription", url: "/subscription", icon: Sparkles },
     { title: "Audit Logs", url: "/audit-logs", icon: ShieldCheck },
     { title: "Notifications", url: "/notifications", icon: Bell },
     { title: "Settings", url: "/setup", icon: Settings },
