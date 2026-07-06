@@ -405,7 +405,14 @@ function NewQuotePage() {
           <SummaryRow label="Conversion Rate" value={`${currency} 1 = ${currency} 1`} muted />
         </div>
 
-        <div className="flex justify-end pt-2">{ActionButtons}</div>
+        <div className="hidden sm:flex justify-end pt-2">{ActionButtons}</div>
+      </div>
+
+      {/* Mobile sticky action bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg px-3 py-2 flex items-center gap-2">
+        <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1 text-xs">Draft</Button>
+        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 text-xs bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post</Button>
+        <Button onClick={() => submit("convert")} disabled={saving} className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Convert</Button>
       </div>
     </div>
   );
