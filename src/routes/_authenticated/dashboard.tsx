@@ -49,6 +49,11 @@ const sample: Invoice[] = [
 ];
 
 const totalOf = (inv: Invoice) => inv.items.reduce((s, i) => s + i.qty * i.price, 0);
+const totalWithVat = (inv: Invoice) => {
+  const sub = totalOf(inv);
+  const rate = inv.zra?.vatRate ?? 0;
+  return sub * (1 + rate / 100);
+};
 
 const statusStyles: Record<Status, string> = {
   paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
