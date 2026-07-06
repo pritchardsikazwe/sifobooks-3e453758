@@ -94,7 +94,7 @@ function NewInvoicePage() {
       if (i.stockItemId) {
         await supabase.from("stock_movements").insert({
           user_id: u.user.id, item_id: i.stockItemId, movement_type: "out",
-          quantity: i.qty, reason: `Invoice ${number}`,
+          quantity: i.qty, reference: number, note: `Invoice ${number}`,
         });
       }
     }
