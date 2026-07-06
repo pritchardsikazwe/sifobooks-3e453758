@@ -23,6 +23,7 @@ import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedReconciliationRouteImport } from './routes/_authenticated/reconciliation'
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
@@ -141,6 +142,12 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReconciliationRoute =
+  AuthenticatedReconciliationRouteImport.update({
+    id: '/reconciliation',
+    path: '/reconciliation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReceiptsRoute = AuthenticatedReceiptsRouteImport.update({
   id: '/receipts',
   path: '/receipts',
@@ -417,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
+  '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -476,6 +484,7 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
+  '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -537,6 +546,7 @@ export interface FileRoutesById {
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
+  '/_authenticated/reconciliation': typeof AuthenticatedReconciliationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/quotes'
     | '/receipts'
+    | '/reconciliation'
     | '/reports'
     | '/service-tickets'
     | '/setup'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/quotes'
     | '/receipts'
+    | '/reconciliation'
     | '/reports'
     | '/service-tickets'
     | '/setup'
@@ -717,6 +729,7 @@ export interface FileRouteTypes {
     | '/_authenticated/purchase-orders'
     | '/_authenticated/quotes'
     | '/_authenticated/receipts'
+    | '/_authenticated/reconciliation'
     | '/_authenticated/reports'
     | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
@@ -846,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reconciliation': {
+      id: '/_authenticated/reconciliation'
+      path: '/reconciliation'
+      fullPath: '/reconciliation'
+      preLoaderRoute: typeof AuthenticatedReconciliationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/receipts': {
@@ -1261,6 +1281,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
+  AuthenticatedReconciliationRoute: typeof AuthenticatedReconciliationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -1306,6 +1327,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
+  AuthenticatedReconciliationRoute: AuthenticatedReconciliationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
@@ -1330,13 +1352,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
