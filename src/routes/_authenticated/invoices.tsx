@@ -1,12 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, UserPlus, Calendar, FileText } from "lucide-react";
+import { Plus, Search, UserPlus, Calendar, FileText, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { voidInvoiceLedger } from "@/lib/posting";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/invoices")({
   head: () => ({ meta: [{ title: "Invoice Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -150,20 +154,24 @@ function InvoicesPage() {
                       <th className="text-right font-medium py-2 px-2">Total</th>
                       <th className="text-right font-medium py-2 px-2">Balance</th>
                       <th className="text-left font-medium py-2 px-2">Status</th>
+                      <th className="text-right font-medium py-2 px-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(i => {
                       const overdue = isOverdue(i);
                       return (
-                        <tr key={i.id} className="border-b last:border-0 hover:bg-slate-50">
+                        <tr key={i.id} className={`border-b last:border-0 hover:bg-slate-50 ${i.status === "voided" ? "opacity-50" : ""}`}>
                           <td className="py-2 px-2 font-mono text-xs">{i.number}</td>
                           <td className="py-2 px-2">{i.customers?.name ?? "—"}</td>
                           <td className="py-2 px-2 text-xs">{i.issue_date}</td>
                           <td className="py-2 px-2 text-xs">{i.due_date ?? "—"}</td>
                           <td className="py-2 px-2 text-right">{fmtMoney(i.total, i.currency)}</td>
                           <td className="py-2 px-2 text-right font-medium">{fmtMoney(i.balance_due, i.currency)}</td>
-                          <td className="py-2 px-2"><Status s={overdue ? "overdue" : i.status} /></td>
+                          <td className="py-2 px-2"><Status s={i.status === "voided" ? "voided" : overdue ? "overdue" : i.status} /></td>
+                          <td className="py-2 px-2 text-right">
+                            {i.status !== "voided" && <VoidInvoice invoice={i} onDone={load} />}
+                          </td>
                         </tr>
                       );
                     })}
@@ -194,4 +202,48 @@ function Status({ s }: { s: string }) {
     draft: "bg-slate-100 text-slate-700", cancelled: "bg-slate-100 text-slate-500",
   };
   return <span className={`px-2 py-0.5 rounded text-xs capitalize ${map[s] ?? "bg-slate-100"}`}>{s}</span>;
+}
+
+function VoidInvoice({ invoice, onDone }: { invoice: any; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setBusy(false); return; }
+    const res = await voidInvoiceLedger({
+      userId: u.user.id, invoiceId: invoice.id, number: invoice.number, reason,
+    });
+    setBusy(false);
+    if (!res.ok) return toast.error(res.error ?? "Void failed");
+    toast.success(`Invoice ${invoice.number} voided — stock restored, ledger reversed`);
+    setOpen(false); onDone();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 gap-1"><Ban className="h-3.5 w-3.5" /> Void</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Void invoice {invoice.number}?</DialogTitle></DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            This will restore inventory quantities, create a reversing journal entry, and mark the invoice as voided. This action is auditable but not undoable.
+          </div>
+          <div className="space-y-1"><Label>Reason (optional)</Label>
+            <Input value={reason} onChange={e => setReason(e.target.value)} placeholder="Duplicate entry, returned goods…" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={run} disabled={busy} className="bg-red-600 hover:bg-red-700">
+            {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Void invoice
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
