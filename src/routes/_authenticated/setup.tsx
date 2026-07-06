@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/setup")({
   component: SetupPage,
 });
 
-type Company = { id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; financial_year_start_month: number; base_currency: string; timezone: string };
+type Company = { id: string; user_id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string };
 
 function SetupPage() {
   const [userId, setUserId] = useState<string>("");
