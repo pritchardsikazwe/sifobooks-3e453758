@@ -37,6 +37,7 @@ const sections: Section[] = [
     { title: "Purchase Orders", url: "/purchase-orders", icon: ShoppingCart },
     { title: "Bills", url: "/bills", icon: FileBox },
     { title: "Supplier Payments", url: "/bill-payments", icon: Wallet },
+    { title: "Expense Categories", url: "/expense-rules", icon: Tags },
   ]},
   { label: "Finance", items: [
     { title: "Banking", url: "/banking", icon: Landmark },
