@@ -8,6 +8,7 @@ import {
   UserSquare, CalendarCheck, CalendarDays, Banknote,
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
   UserPlus, Target, Megaphone, MessageSquareWarning, Star,
+  Briefcase, ListChecks, Clock, LifeBuoy, Wrench,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -60,6 +61,13 @@ const sections: Section[] = [
     { title: "Campaigns", url: "/campaigns", icon: Megaphone },
     { title: "Complaints", url: "/complaints", icon: MessageSquareWarning },
     { title: "CSAT", url: "/csat", icon: Star },
+  ]},
+  { label: "Projects & Service", items: [
+    { title: "Projects", url: "/projects", icon: Briefcase },
+    { title: "Project Tasks", url: "/project-tasks", icon: ListChecks },
+    { title: "Time Entries", url: "/time-entries", icon: Clock },
+    { title: "Service Tickets", url: "/service-tickets", icon: LifeBuoy },
+    { title: "Job Cards", url: "/job-cards", icon: Wrench },
   ]},
   { label: "Reports", items: [
     { title: "Reports", url: "/reports", icon: BarChart3 },

@@ -14,16 +14,20 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
+import { Route as AuthenticatedTimeEntriesRouteImport } from './routes/_authenticated/time-entries'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
+import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -31,6 +35,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
+import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -86,6 +91,12 @@ const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
   path: '/warehouses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTimeEntriesRoute =
+  AuthenticatedTimeEntriesRouteImport.update({
+    id: '/time-entries',
+    path: '/time-entries',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -118,6 +129,12 @@ const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedServiceTicketsRoute =
+  AuthenticatedServiceTicketsRouteImport.update({
+    id: '/service-tickets',
+    path: '/service-tickets',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -137,6 +154,17 @@ const AuthenticatedPurchaseOrdersRoute =
   AuthenticatedPurchaseOrdersRouteImport.update({
     id: '/purchase-orders',
     path: '/purchase-orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProjectTasksRoute =
+  AuthenticatedProjectTasksRouteImport.update({
+    id: '/project-tasks',
+    path: '/project-tasks',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
@@ -177,6 +205,11 @@ const AuthenticatedJournalEntriesRoute =
     path: '/journal-entries',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJobCardsRoute = AuthenticatedJobCardsRouteImport.update({
+  id: '/job-cards',
+  path: '/job-cards',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -363,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
@@ -370,16 +404,20 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/project-tasks': typeof AuthenticatedProjectTasksRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
+  '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -416,6 +454,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
@@ -423,16 +462,20 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/project-tasks': typeof AuthenticatedProjectTasksRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
+  '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -471,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
@@ -478,16 +522,20 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
+  '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
+  '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
+  '/_authenticated/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -526,6 +574,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/invoices'
+    | '/job-cards'
     | '/journal-entries'
     | '/leads'
     | '/leave'
@@ -533,16 +582,20 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/opportunities'
     | '/payroll'
+    | '/project-tasks'
+    | '/projects'
     | '/purchase-orders'
     | '/quotes'
     | '/receipts'
     | '/reports'
+    | '/service-tickets'
     | '/setup'
     | '/stock'
     | '/stock-adjustments'
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
+    | '/time-entries'
     | '/warehouses'
     | '/customers/$id'
     | '/invoices/new'
@@ -579,6 +632,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/invoices'
+    | '/job-cards'
     | '/journal-entries'
     | '/leads'
     | '/leave'
@@ -586,16 +640,20 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/opportunities'
     | '/payroll'
+    | '/project-tasks'
+    | '/projects'
     | '/purchase-orders'
     | '/quotes'
     | '/receipts'
     | '/reports'
+    | '/service-tickets'
     | '/setup'
     | '/stock'
     | '/stock-adjustments'
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
+    | '/time-entries'
     | '/warehouses'
     | '/customers/$id'
     | '/invoices/new'
@@ -633,6 +691,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
     | '/_authenticated/invoices'
+    | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
@@ -640,16 +699,20 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
+    | '/_authenticated/project-tasks'
+    | '/_authenticated/projects'
     | '/_authenticated/purchase-orders'
     | '/_authenticated/quotes'
     | '/_authenticated/receipts'
     | '/_authenticated/reports'
+    | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
     | '/_authenticated/stock'
     | '/_authenticated/stock-adjustments'
     | '/_authenticated/subscription'
     | '/_authenticated/super-admin'
     | '/_authenticated/suppliers'
+    | '/_authenticated/time-entries'
     | '/_authenticated/warehouses'
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
@@ -709,6 +772,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/time-entries': {
+      id: '/_authenticated/time-entries'
+      path: '/time-entries'
+      fullPath: '/time-entries'
+      preLoaderRoute: typeof AuthenticatedTimeEntriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/suppliers': {
       id: '/_authenticated/suppliers'
       path: '/suppliers'
@@ -751,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/service-tickets': {
+      id: '/_authenticated/service-tickets'
+      path: '/service-tickets'
+      fullPath: '/service-tickets'
+      preLoaderRoute: typeof AuthenticatedServiceTicketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -777,6 +854,20 @@ declare module '@tanstack/react-router' {
       path: '/purchase-orders'
       fullPath: '/purchase-orders'
       preLoaderRoute: typeof AuthenticatedPurchaseOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/project-tasks': {
+      id: '/_authenticated/project-tasks'
+      path: '/project-tasks'
+      fullPath: '/project-tasks'
+      preLoaderRoute: typeof AuthenticatedProjectTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll': {
@@ -826,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/journal-entries'
       fullPath: '/journal-entries'
       preLoaderRoute: typeof AuthenticatedJournalEntriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/job-cards': {
+      id: '/_authenticated/job-cards'
+      path: '/job-cards'
+      fullPath: '/job-cards'
+      preLoaderRoute: typeof AuthenticatedJobCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/invoices': {
@@ -1129,6 +1227,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
+  AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
@@ -1136,16 +1235,20 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
+  AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
+  AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
+  AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
 
@@ -1168,6 +1271,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
+  AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
@@ -1175,16 +1279,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
+  AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
+  AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
+  AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
 
