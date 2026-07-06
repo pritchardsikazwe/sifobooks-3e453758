@@ -46,6 +46,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
+import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './routes/_authenticated/reports.aged-receivables'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -244,6 +245,12 @@ const AuthenticatedReportsBalanceSheetRoute =
     path: '/balance-sheet',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsAgedReceivablesRoute =
+  AuthenticatedReportsAgedReceivablesRouteImport.update({
+    id: '/aged-receivables',
+    path: '/aged-receivables',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -299,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
@@ -340,6 +348,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
@@ -383,6 +392,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/_authenticated/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/aged-receivables'
     | '/reports/balance-sheet'
     | '/reports/pnl'
     | '/reports/trial-balance'
@@ -467,6 +478,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/aged-receivables'
     | '/reports/balance-sheet'
     | '/reports/pnl'
     | '/reports/trial-balance'
@@ -509,6 +521,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/quotes/new'
+    | '/_authenticated/reports/aged-receivables'
     | '/_authenticated/reports/balance-sheet'
     | '/_authenticated/reports/pnl'
     | '/_authenticated/reports/trial-balance'
@@ -782,6 +795,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsBalanceSheetRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/aged-receivables': {
+      id: '/_authenticated/reports/aged-receivables'
+      path: '/aged-receivables'
+      fullPath: '/reports/aged-receivables'
+      preLoaderRoute: typeof AuthenticatedReportsAgedReceivablesRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/quotes/new': {
       id: '/_authenticated/quotes/new'
       path: '/new'
@@ -845,12 +865,15 @@ const AuthenticatedQuotesRouteWithChildren =
   AuthenticatedQuotesRoute._addFileChildren(AuthenticatedQuotesRouteChildren)
 
 interface AuthenticatedReportsRouteChildren {
+  AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
+  AuthenticatedReportsAgedReceivablesRoute:
+    AuthenticatedReportsAgedReceivablesRoute,
   AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
