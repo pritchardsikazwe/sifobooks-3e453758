@@ -25,6 +25,7 @@ import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -145,6 +146,12 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProjectTasksRoute =
+  AuthenticatedProjectTasksRouteImport.update({
+    id: '/project-tasks',
+    path: '/project-tasks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
   id: '/payroll',
   path: '/payroll',
@@ -376,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -430,6 +438,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -486,6 +495,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
+  '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/opportunities'
     | '/payroll'
+    | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
     | '/quotes'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/opportunities'
     | '/payroll'
+    | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
     | '/quotes'
@@ -651,6 +663,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
+    | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
     | '/_authenticated/purchase-orders'
     | '/_authenticated/quotes'
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/project-tasks': {
+      id: '/_authenticated/project-tasks'
+      path: '/project-tasks'
+      fullPath: '/project-tasks'
+      preLoaderRoute: typeof AuthenticatedProjectTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll': {
@@ -1155,6 +1175,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
+  AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
@@ -1195,6 +1216,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
+  AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
