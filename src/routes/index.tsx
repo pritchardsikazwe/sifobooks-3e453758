@@ -2,598 +2,238 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  ShieldCheck,
-  Zap,
-  Globe2,
-  BarChart3,
-  Wallet,
-  Bell,
-  Menu,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Twitter,
+  ArrowRight, CheckCircle2, ShieldCheck, Zap, BarChart3, Wallet,
+  Users, FileText, ReceiptText, CreditCard, Truck, ShoppingCart, FileBox,
+  Landmark, BookOpen, BookText, PiggyBank, Boxes, Warehouse, ClipboardEdit,
+  UserSquare, CalendarCheck, CalendarDays, Banknote, Building2, Bell,
 } from "lucide-react";
-import heroImg from "@/assets/hero-dashboard.jpg";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "SifoBooks — Accounting ERP for African Businesses" },
+      { name: "description", content: "SifoBooks is a complete accounting ERP — sales, purchases, inventory, finance, HR, payroll and tax compliance in one bold platform." },
+      { property: "og:title", content: "SifoBooks — Accounting ERP" },
+      { property: "og:description", content: "Run your entire business from one place. Sales, purchases, inventory, payroll, and ZRA compliance." },
+    ],
+  }),
   component: Landing,
 });
 
-const brands = ["Coca-Cola", "SANDVIK", "Adbims", "Dharti", "Zamtel", "Airtel"];
-
-const testimonials = [
-  {
-    company: "Coca-Cola Beverages Zambia",
-    quote:
-      "We partnered with SifoBooks to handle our invoice fiscalization needs in Zambia and have been very satisfied. Their platform keeps us fully compliant with ZRA through a seamless integration.",
-  },
-  {
-    company: "SANDVIK",
-    quote:
-      "SifoBooks's API made it simple to meet every ZRA compliance requirement without internal complexity. We confidently recommend them as a dependable fiscalization partner in Zambia.",
-  },
-  {
-    company: "Adbims Sales & Distribution",
-    quote:
-      "SifoBooks has been an incredible support company to us. Their response is always timely and we truly appreciate the dedication and support they provide.",
-  },
-  {
-    company: "Dharti Technology",
-    quote:
-      "In an era where digital transformation is a regulatory necessity, SifoBooks is an indispensable partner in navigating Zambia's e-invoicing landscape.",
-  },
+const MODULES = [
+  { section: "Sales", color: "from-emerald-500 to-teal-500", items: [
+    { icon: Users, title: "Customers", desc: "CRM with balances & comms history" },
+    { icon: FileText, title: "Quotes", desc: "Draft, send, approve, convert" },
+    { icon: ReceiptText, title: "Invoices", desc: "ZRA-ready with VAT & TPIN" },
+    { icon: CreditCard, title: "Receipts", desc: "Cash, mobile money, bank" },
+  ]},
+  { section: "Purchases", color: "from-blue-500 to-indigo-500", items: [
+    { icon: Truck, title: "Suppliers", desc: "Vendor master with balances" },
+    { icon: ShoppingCart, title: "Purchase Orders", desc: "Approve, track, receive" },
+    { icon: FileBox, title: "Bills", desc: "Match POs to supplier invoices" },
+    { icon: Wallet, title: "Supplier Payments", desc: "Bank, cash, cheque, MoMo" },
+  ]},
+  { section: "Finance", color: "from-violet-500 to-purple-500", items: [
+    { icon: Landmark, title: "Banking", desc: "Statements & reconciliation" },
+    { icon: BookOpen, title: "Chart of Accounts", desc: "Assets, liabilities, equity" },
+    { icon: BookText, title: "Journal Entries", desc: "Double-entry bookkeeping" },
+    { icon: PiggyBank, title: "Budgets", desc: "Plan vs. actual by dept" },
+  ]},
+  { section: "Inventory", color: "from-orange-500 to-red-500", items: [
+    { icon: Boxes, title: "Items", desc: "SKUs, HS codes, valuation" },
+    { icon: Warehouse, title: "Warehouses", desc: "Multi-location stock" },
+    { icon: ClipboardEdit, title: "Adjustments", desc: "Count, damage, transfer" },
+    { icon: BarChart3, title: "Reports", desc: "Live stock valuation" },
+  ]},
+  { section: "HR & Payroll", color: "from-pink-500 to-rose-500", items: [
+    { icon: UserSquare, title: "Employees", desc: "Full HR master file" },
+    { icon: CalendarCheck, title: "Attendance", desc: "Clock in/out tracking" },
+    { icon: CalendarDays, title: "Leave", desc: "Requests & approvals" },
+    { icon: Banknote, title: "Payroll", desc: "PAYE, NAPSA, NHIMA" },
+  ]},
+  { section: "Admin & Compliance", color: "from-amber-500 to-yellow-500", items: [
+    { icon: Building2, title: "Company Setup", desc: "Branches, departments, tax" },
+    { icon: ShieldCheck, title: "Compliance", desc: "ZRA, NAPSA obligations" },
+    { icon: Bell, title: "Notifications", desc: "Real-time alerts" },
+    { icon: ShieldCheck, title: "Audit Trail", desc: "Every action logged" },
+  ]},
 ];
 
-const posts = [
-  {
-    tag: "Guide",
-    title: "Integrating your ERP with SifoBooks",
-    excerpt: "A step-by-step walkthrough for connecting SAP, Odoo, and QuickBooks to the SifoBooks fiscal engine.",
-  },
-  {
-    tag: "Product",
-    title: "Unlimited invoices, one flat plan",
-    excerpt: "Introducing our new SifoBooks plan — send as many invoices as your business needs, no per-document fees.",
-  },
-  {
-    tag: "Compliance",
-    title: "What Zambia's e-invoice mandate means for you",
-    excerpt: "Everything African SMEs need to know about real-time fiscalization and staying ahead of tax authorities.",
-  },
+const STATS = [
+  { value: "24", label: "Modules" },
+  { value: "6", label: "Departments" },
+  { value: "100%", label: "ZRA Ready" },
+  { value: "ZMW", label: "Native Currency" },
 ];
 
 function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main>
-        <Hero />
-        <Brands />
-        <WhoWeAre />
-        <WhatWeDo />
-        <Testimonials />
-        <Blog />
-        <Growth />
-        <CTA />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-function Logo() {
-  return (
-    <Link to="/" className="flex items-center gap-2">
-      <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <span className="font-display text-lg font-bold">K</span>
-      </div>
-      <span className="font-display text-xl font-bold tracking-tight">
-        Kopela<span className="text-accent">code</span>
-      </span>
-    </Link>
-  );
-}
-
-function Header() {
-  return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="container-page flex h-16 items-center justify-between">
-        <Logo />
-        <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#solutions" className="hover:text-foreground">Solutions</a>
-          <a href="#about" className="hover:text-foreground">About</a>
-          <a href="#testimonials" className="hover:text-foreground">Customers</a>
-          <a href="#blog" className="hover:text-foreground">Blog</a>
-          <a href="#pricing" className="hover:text-foreground">Pricing</a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" className="hidden sm:inline-flex">
-            <Link to="/auth">Sign in</Link>
-          </Button>
-          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link to="/auth">Get started</Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{ background: "var(--gradient-hero)" }}
-      />
-      <div
-        aria-hidden
-        className="absolute -top-40 -right-40 -z-10 h-[500px] w-[500px] rounded-full opacity-40 blur-3xl"
-        style={{ background: "var(--gradient-brand)" }}
-      />
-      <div className="container-page grid gap-14 py-20 md:py-28 lg:grid-cols-2 lg:items-center">
-        <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-            What&apos;s new — Unlimited invoices with SifoBooks
+      {/* NAV */}
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 grid place-items-center text-sm font-black text-slate-900">SB</div>
+            <span className="text-xl font-black tracking-tight">SifoBooks</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold">
+            <a href="#modules" className="hover:text-emerald-600">Modules</a>
+            <a href="#features" className="hover:text-emerald-600">Features</a>
+            <a href="#compliance" className="hover:text-emerald-600">Compliance</a>
+            <a href="#pricing" className="hover:text-emerald-600">Pricing</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link to="/auth"><Button variant="ghost" className="font-semibold">Sign in</Button></Link>
+            <Link to="/auth"><Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Get Started</Button></Link>
           </div>
-          <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
-            Africa&apos;s No. 1 platform for{" "}
-            <span className="text-gradient-brand">fiscal compliance</span>.
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/20 via-background to-background" />
+        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-600 mb-8">
+            <Zap className="h-3.5 w-3.5" /> BUILT FOR AFRICAN BUSINESSES · ZMW · TPIN · ZRA
+          </div>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] mb-6">
+            Run your <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 bg-clip-text text-transparent">entire business</span><br />
+            from one place.
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            SifoBooks helps businesses in Africa manage everyday invoicing
-            with centralized invoice management and stay tax-compliant by
-            integrating directly with government tax authorities.
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 font-medium">
+            Sales. Purchases. Inventory. Finance. HR. Payroll. Compliance.
+            <span className="block font-bold text-foreground mt-2">One bold accounting ERP.</span>
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Book a demo <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline">
-              See solutions
-            </Button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/auth"><Button size="lg" className="h-14 px-8 text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+              Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+            </Button></Link>
+            <a href="#modules"><Button size="lg" variant="outline" className="h-14 px-8 text-base font-bold">
+              Explore Modules
+            </Button></a>
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            {["ZRA-certified", "Real-time fiscalization", "Free 14-day trial"].map((f) => (
-              <li key={f} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary" /> {f}
-              </li>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mt-20">
+            {STATS.map(s => (
+              <div key={s.label} className="text-center">
+                <div className="text-4xl md:text-5xl font-black bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">{s.value}</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">{s.label}</div>
+              </div>
             ))}
-          </ul>
-        </div>
-        <div className="relative">
-          <div
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-            style={{ boxShadow: "var(--shadow-glow)" }}
-          >
-            <img
-              src={heroImg}
-              alt="SifoBooks invoicing dashboard preview"
-              width={1600}
-              height={1200}
-              className="h-auto w-full"
-            />
           </div>
-          <FloatingStat
-            className="-left-4 top-8 md:-left-10"
-            icon={<Wallet className="h-4 w-4" />}
-            label="Paid this month"
-            value="ZMW 128,540"
-          />
-          <FloatingStat
-            className="-right-4 bottom-10 md:-right-8"
-            icon={<ShieldCheck className="h-4 w-4" />}
-            label="ZRA compliant"
-            value="100%"
-            accent
-          />
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function FloatingStat({
-  icon,
-  label,
-  value,
-  className = "",
-  accent = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  className?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={`absolute hidden items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex ${className}`}
-      style={{ boxShadow: "var(--shadow-card)" }}
-    >
-      <div
-        className={`grid h-8 w-8 place-items-center rounded-lg ${
-          accent ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"
-        }`}
-      >
-        {icon}
-      </div>
-      <div>
-        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-        <div className="text-sm font-semibold">{value}</div>
-      </div>
-    </div>
-  );
-}
-
-function Brands() {
-  return (
-    <section className="border-y border-border bg-surface/50 py-12">
-      <div className="container-page">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Trusted by global brands
-        </p>
-        <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 md:grid-cols-6">
-          {brands.map((b) => (
-            <div
-              key={b}
-              className="text-center font-display text-lg font-semibold text-muted-foreground/70 transition hover:text-foreground"
-            >
-              {b}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function WhoWeAre() {
-  return (
-    <section id="about" className="py-24">
-      <div className="container-page grid gap-14 lg:grid-cols-2 lg:items-center">
-        <div>
-          <SectionEyebrow>Who we are</SectionEyebrow>
-          <h2 className="mt-3 font-display text-3xl font-bold leading-tight md:text-5xl">
-            Simplifying invoicing, strengthening fiscal compliance.
-          </h2>
-          <p className="mt-5 max-w-lg text-muted-foreground">
-            SifoBooks simplifies invoicing for freelancers, small business
-            owners, and large enterprises — ensuring full tax compliance
-            through direct integration with government tax authorities.
-          </p>
-          <Button variant="link" className="mt-4 px-0 text-primary">
-            Learn more <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { icon: FileText, label: "Invoices sent", value: "2.4M+" },
-            { icon: Globe2, label: "Countries", value: "5" },
-            { icon: BarChart3, label: "Compliance rate", value: "99.9%" },
-            { icon: Zap, label: "Avg. fiscalization", value: "<2s" },
-          ].map(({ icon: Icon, label, value }) => (
-            <Card key={label} className="border-border/70 p-6">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="mt-4 font-display text-3xl font-bold">{value}</div>
-              <div className="text-sm text-muted-foreground">{label}</div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SectionEyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-      {children}
-    </span>
-  );
-}
-
-function WhatWeDo() {
-  return (
-    <section id="solutions" className="bg-surface py-24">
-      <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center">
-          <SectionEyebrow>What we do</SectionEyebrow>
-          <h2 className="mt-3 font-display text-3xl font-bold md:text-5xl">
-            One platform, many possibilities
-          </h2>
-        </div>
-        <div className="mt-14 grid gap-6 md:grid-cols-2">
-          <ProductCard
-            badge="For all business types"
-            title="SifoBooks"
-            description="Create, customize and send invoices in minutes. Track payments, manage expenses, get paid faster and stay compliant with tax authorities — all from one dashboard."
-            features={["Unlimited invoices", "Payment tracking", "Expense management", "Multi-currency"]}
-            icon={<FileText className="h-5 w-5" />}
-          />
-          <ProductCard
-            badge="For tax-compliant businesses"
-            title="EdgeComply"
-            description="Built for businesses operating in countries with e-invoice mandates. Live in Zambia with ZRA integration — offering real-time compliance, ERP integrations, alerts and fiscal device syncing."
-            features={["ZRA integration", "ERP connectors", "Real-time alerts", "Fiscal device sync"]}
-            icon={<ShieldCheck className="h-5 w-5" />}
-            accent
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProductCard({
-  badge,
-  title,
-  description,
-  features,
-  icon,
-  accent = false,
-}: {
-  badge: string;
-  title: string;
-  description: string;
-  features: string[];
-  icon: React.ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <Card className="group relative overflow-hidden border-border/70 p-8 transition hover:-translate-y-1 hover:shadow-lg">
-      <div
-        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
-          accent
-            ? "bg-accent/10 text-accent"
-            : "bg-primary/10 text-primary"
-        }`}
-      >
-        {icon}
-        {badge}
-      </div>
-      <h3 className="mt-5 font-display text-3xl font-bold">{title}</h3>
-      <p className="mt-3 text-muted-foreground">{description}</p>
-      <ul className="mt-6 grid grid-cols-2 gap-2 text-sm">
-        {features.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-foreground/80">
-            <CheckCircle2
-              className={`h-4 w-4 ${accent ? "text-accent" : "text-primary"}`}
-            />
-            {f}
-          </li>
-        ))}
-      </ul>
-      <Button variant="link" className={`mt-6 px-0 ${accent ? "text-accent" : "text-primary"}`}>
-        Learn more <ArrowRight className="ml-1 h-4 w-4" />
-      </Button>
-    </Card>
-  );
-}
-
-function Testimonials() {
-  return (
-    <section id="testimonials" className="py-24">
-      <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center">
-          <SectionEyebrow>Customer testimonials</SectionEyebrow>
-          <h2 className="mt-3 font-display text-3xl font-bold md:text-5xl">
-            Trusted by 200+ businesses across Africa
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Over 200+ businesses trust SifoBooks to keep them compliant. Here&apos;s what some of them have to say.
-          </p>
-        </div>
-        <div className="mt-14 grid gap-6 md:grid-cols-2">
-          {testimonials.map((t) => (
-            <Card key={t.company} className="border-border/70 p-8">
-              <div className="mb-4 flex gap-1 text-accent">
-                {"★★★★★"}
-              </div>
-              <p className="text-foreground/90">&ldquo;{t.quote}&rdquo;</p>
-              <div className="mt-6 border-t border-border pt-4 font-display font-semibold">
-                {t.company}
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Blog() {
-  return (
-    <section id="blog" className="bg-surface py-24">
-      <div className="container-page">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-xl">
-            <SectionEyebrow>From our blog</SectionEyebrow>
-            <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">
-              Latest news, technologies and resources from our team
-            </h2>
+      {/* MODULES */}
+      <section id="modules" className="py-24 border-t border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Complete Coverage</div>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Every module you need.</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
+              Six departments. Twenty-four modules. Zero add-ons required.
+            </p>
           </div>
-          <Button variant="outline">View all posts</Button>
-        </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {posts.map((p) => (
-            <Card
-              key={p.title}
-              className="group overflow-hidden border-border/70 p-0 transition hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div
-                className="h-40 w-full"
-                style={{ background: "var(--gradient-brand)", opacity: 0.9 }}
-              />
-              <div className="p-6">
-                <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                  {p.tag}
-                </span>
-                <h3 className="mt-3 font-display text-xl font-semibold leading-snug">
-                  {p.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">{p.excerpt}</p>
-                <div className="mt-4 inline-flex items-center text-sm font-medium text-primary">
-                  Read article <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
+
+          <div className="space-y-16">
+            {MODULES.map(group => (
+              <div key={group.section}>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${group.color}`} />
+                  <h3 className="text-2xl md:text-3xl font-black tracking-tight">{group.section}</h3>
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{group.items.length} modules</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {group.items.map(item => (
+                    <Card key={item.title} className="p-6 hover:shadow-xl hover:-translate-y-1 transition-all border-2 hover:border-emerald-500/50 group cursor-default">
+                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${group.color} grid place-items-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <item.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="font-black text-lg mb-1">{item.title}</div>
+                      <div className="text-sm text-muted-foreground font-medium">{item.desc}</div>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            </Card>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function Growth() {
-  return (
-    <section className="py-24">
-      <div className="container-page grid gap-12 lg:grid-cols-2 lg:items-center">
-        <div>
-          <SectionEyebrow>Why SifoBooks</SectionEyebrow>
-          <h2 className="mt-3 font-display text-3xl font-bold md:text-5xl">
-            Powering growth for businesses in Africa.
-          </h2>
-          <p className="mt-5 text-muted-foreground">
-            SifoBooks is a growth engine for innovative, forward-looking
-            organizations operating in Africa. Our system integrates with
-            government e-invoicing systems and supports businesses across
-            retail, hospitality, wholesale and manufacturing.
-          </p>
-          <p className="mt-4 text-muted-foreground">
-            As we grow, we&apos;re expanding to support other countries rolling
-            out fiscal reforms — helping businesses stay ahead of tax
-            compliance requirements across the continent.
-          </p>
+      {/* FEATURES */}
+      <section id="features" className="py-24 border-t border-border bg-muted/30">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Why SifoBooks</div>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter">Built to move fast.</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { icon: BarChart3, title: "Real-Time Dashboard", desc: "Cash flow, receivables, payables, KPIs — updated live as transactions post." },
+              { icon: ShieldCheck, title: "Bank-Grade Security", desc: "Row-level security, audit trails, and role-based access on every record." },
+              { icon: Zap, title: "Automatic Everything", desc: "Invoice balances, stock movements, and payroll calculations run themselves." },
+            ].map(f => (
+              <Card key={f.title} className="p-8 border-2">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 grid place-items-center mb-6">
+                  <f.icon className="h-7 w-7 text-emerald-600" />
+                </div>
+                <div className="text-2xl font-black mb-2">{f.title}</div>
+                <div className="text-muted-foreground font-medium">{f.desc}</div>
+              </Card>
+            ))}
+          </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            { icon: Zap, title: "Send in seconds", body: "Create and dispatch professional invoices with a couple of clicks." },
-            { icon: ShieldCheck, title: "Always compliant", body: "Live integrations with ZRA and other African revenue authorities." },
-            { icon: Bell, title: "Smart alerts", body: "Get notified about overdue invoices, failed fiscalizations and more." },
-            { icon: Globe2, title: "Multi-country ready", body: "Built for cross-border teams operating in multiple markets." },
-          ].map(({ icon: Icon, title, body }) => (
-            <Card key={title} className="border-border/70 p-6">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-accent/10 text-accent">
-                <Icon className="h-5 w-5" />
+      </section>
+
+      {/* COMPLIANCE */}
+      <section id="compliance" className="py-24 border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Fully Compliant</div>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Zambian tax authorities. Handled.</h2>
+          <p className="text-lg text-muted-foreground font-medium mb-10 max-w-2xl mx-auto">
+            Native support for ZRA VAT, TPIN, PAYE brackets, NAPSA contributions, and NHIMA deductions.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {["ZRA VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "Withholding Tax"].map(tag => (
+              <div key={tag} className="rounded-full border-2 border-emerald-500/30 bg-emerald-500/5 px-5 py-2 text-sm font-black text-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 className="inline h-4 w-4 mr-1.5 -mt-0.5" />{tag}
               </div>
-              <h4 className="mt-4 font-display text-lg font-semibold">{title}</h4>
-              <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CTA() {
-  return (
-    <section className="pb-24">
-      <div className="container-page">
-        <div
-          className="relative overflow-hidden rounded-3xl px-8 py-16 text-primary-foreground md:px-16 md:py-20"
-          style={{ background: "var(--gradient-brand)" }}
-        >
-          <div
-            aria-hidden
-            className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-2xl"
-          />
-          <div className="relative max-w-2xl">
-            <h2 className="font-display text-3xl font-bold leading-tight md:text-5xl">
-              Send invoices or get tax-compliant in minutes.
-            </h2>
-            <p className="mt-5 text-primary-foreground/90">
-              Whether you need an invoice app for day-to-day billing or an
-              integrated solution to stay compliant with tax authorities,
-              SifoBooks is your competitive advantage.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="bg-background text-foreground hover:bg-background/90">
-                Book a demo
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              >
-                See solutions
-              </Button>
-            </div>
+            ))}
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function Footer() {
-  const cols = [
-    {
-      title: "Company",
-      links: ["Home", "About", "Solutions", "Pricing", "Teams", "Careers"],
-    },
-    {
-      title: "Resources",
-      links: ["Blog", "Documentation", "Help Center", "FAQs"],
-    },
-    {
-      title: "Legal",
-      links: ["Privacy Policy", "Terms of Service", "Contact Us"],
-    },
-  ];
-  return (
-    <footer className="border-t border-border bg-surface">
-      <div className="container-page py-16">
-        <div className="grid gap-10 md:grid-cols-4">
-          <div>
-            <Logo />
-            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Get in touch or stay in the loop with company updates.
-            </p>
-            <div className="mt-5 flex gap-3">
-              {[Facebook, Instagram, Linkedin, Twitter].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground transition hover:border-primary hover:text-primary"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
+      {/* CTA */}
+      <section id="pricing" className="py-24 border-t border-border">
+        <div className="max-w-4xl mx-auto px-6">
+          <Card className="p-12 md:p-16 text-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-2xl">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Ready to take control?</h2>
+            <p className="text-xl font-medium opacity-90 mb-8">Get every module. One flat plan. Start today.</p>
+            <Link to="/auth">
+              <Button size="lg" className="h-14 px-10 text-base font-black bg-white text-emerald-700 hover:bg-white/90">
+                Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </Card>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-border py-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded bg-gradient-to-br from-emerald-400 to-teal-600 grid place-items-center text-[10px] font-black text-slate-900">SB</div>
+            <span className="font-bold text-foreground">SifoBooks</span>
+            <span>© {new Date().getFullYear()} · Accounting ERP</span>
           </div>
-          {cols.map((c) => (
-            <div key={c.title}>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider">
-                {c.title}
-              </h4>
-              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                {c.links.map((l) => (
-                  <li key={l}>
-                    <a href="#" className="hover:text-foreground">{l}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="flex gap-6 font-semibold">
+            <Link to="/auth" className="hover:text-foreground">Sign in</Link>
+            <a href="#modules" className="hover:text-foreground">Modules</a>
+            <a href="#compliance" className="hover:text-foreground">Compliance</a>
+          </div>
         </div>
-        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
-          <span>© {new Date().getFullYear()} SifoBooks. All rights reserved.</span>
-          <span>Made for Africa · Built for the world</span>
-        </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   );
 }
