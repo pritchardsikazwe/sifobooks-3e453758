@@ -17,6 +17,7 @@ import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
@@ -64,6 +65,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -91,9 +97,9 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
 } as any)
 const AuthenticatedInvoicesNewRoute =
   AuthenticatedInvoicesNewRouteImport.update({
-    id: '/invoices/new',
-    path: '/invoices/new',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
 const AuthenticatedCustomersIdRoute =
   AuthenticatedCustomersIdRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/compliance': typeof AuthenticatedComplianceRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/compliance': typeof AuthenticatedComplianceRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/compliance'
     | '/customers'
     | '/dashboard'
+    | '/invoices'
     | '/onboarding'
     | '/quotes'
     | '/setup'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/compliance'
     | '/customers'
     | '/dashboard'
+    | '/invoices'
     | '/onboarding'
     | '/quotes'
     | '/setup'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_authenticated/compliance'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/invoices'
     | '/_authenticated/onboarding'
     | '/_authenticated/quotes'
     | '/_authenticated/setup'
@@ -269,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices': {
+      id: '/_authenticated/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -306,10 +325,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/invoices/new': {
       id: '/_authenticated/invoices/new'
-      path: '/invoices/new'
+      path: '/new'
       fullPath: '/invoices/new'
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedInvoicesRoute
     }
     '/_authenticated/customers/$id': {
       id: '/_authenticated/customers/$id'
@@ -335,6 +354,19 @@ const AuthenticatedCustomersRouteWithChildren =
     AuthenticatedCustomersRouteChildren,
   )
 
+interface AuthenticatedInvoicesRouteChildren {
+  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
+}
+
+const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
+  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
+}
+
+const AuthenticatedInvoicesRouteWithChildren =
+  AuthenticatedInvoicesRoute._addFileChildren(
+    AuthenticatedInvoicesRouteChildren,
+  )
+
 interface AuthenticatedQuotesRouteChildren {
   AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
 }
@@ -351,11 +383,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
-  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -363,11 +395,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
-  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
