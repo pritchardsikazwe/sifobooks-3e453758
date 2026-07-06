@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
+import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 
 export const Route = createFileRoute("/_authenticated/quotes/new")({
   head: () => ({ meta: [{ title: "New quotation — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -86,12 +87,21 @@ function NewQuotePage() {
 
       <Card><CardHeader><CardTitle className="text-base">Client & validity</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2"><Label>Customer *</Label>
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
-              <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-            {customers.length === 0 && <p className="text-xs text-muted-foreground">No active customers. <Link to="/customers" className="underline">Add one</Link>.</p>}
+          <div className="space-y-2 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label>Customer *</Label>
+              <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
+            </div>
+            {customers.length === 0 ? (
+              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground text-center">
+                No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above to add one.
+              </div>
+            ) : (
+              <Select value={customerId} onValueChange={setCustomerId}>
+                <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
+                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
           </div>
           <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
           <div className="space-y-2"><Label>Valid until</Label><Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} /></div>
