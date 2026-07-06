@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,127 +8,136 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AppNav } from "@/components/AppNav";
-import type { LineItem, Quote } from "@/lib/invoice-types";
-import { PENDING_QUOTE_KEY } from "@/lib/invoice-types";
+import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/quotes/new")({
-  head: () => ({ meta: [{ title: "New quotation — Kopelacode" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "New quotation — EdgeCore" }, { name: "robots", content: "noindex" }] }),
   component: NewQuotePage,
 });
+
+type Line = { description: string; qty: number; price: number; vatRate: number; hsCode?: string; stockItemId?: string | null };
 
 function NewQuotePage() {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const in14 = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
-  const nextNumber = `QT-2026-${String(100 + Math.floor(Math.random() * 900)).padStart(4, "0")}`;
 
-  const [currency, setCurrency] = useState("USD");
-  const [client, setClient] = useState("");
-  const [email, setEmail] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [stock, setStock] = useState<any[]>([]);
+  const [customerId, setCustomerId] = useState<string>("");
+  const [currency, setCurrency] = useState("ZMW");
   const [issueDate, setIssueDate] = useState(today);
   const [validUntil, setValidUntil] = useState(in14);
-  const [status, setStatus] = useState<Quote["status"]>("draft");
-  const [items, setItems] = useState<LineItem[]>([{ description: "", qty: 1, price: 0 }]);
+  const [status, setStatus] = useState("draft");
+  const [items, setItems] = useState<Line[]>([{ description: "", qty: 1, price: 0, vatRate: 16 }]);
   const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from("profiles").select("currency").limit(1).maybeSingle().then(({ data }) => {
-      if (data?.currency) setCurrency(data.currency);
-    });
+    (async () => {
+      const [{ data: cs }, { data: si }, { data: co }] = await Promise.all([
+        supabase.from("customers").select("id, name").eq("active", true).order("name"),
+        supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price"),
+        supabase.from("companies").select("base_currency").maybeSingle(),
+      ]);
+      setCustomers(cs ?? []); setStock(si ?? []);
+      if (co?.base_currency) setCurrency(co.base_currency);
+    })();
   }, []);
 
-  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const subtotal = useMemo(() => items.reduce((s, i) => s + i.qty * i.price, 0), [items]);
+  const vat = useMemo(() => items.reduce((s, i) => s + i.qty * i.price * (i.vatRate / 100), 0), [items]);
+  const total = subtotal + vat;
 
-  const submit = () => {
-    if (!client.trim()) { toast.error("Client name is required"); return; }
-    const q: Quote = {
-      id: crypto.randomUUID(), number: nextNumber, client, email, issueDate, validUntil, status,
-      items: items.filter(i => i.description.trim()), notes,
-    };
-    try { sessionStorage.setItem(PENDING_QUOTE_KEY, JSON.stringify(q)); } catch { /* noop */ }
-    toast.success(`Quotation ${nextNumber} created`);
-    navigate({ to: "/dashboard" });
+  const pickStock = (idx: number, stockId: string) => {
+    const s = stock.find(x => x.id === stockId);
+    if (!s) return;
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, stockItemId: s.id, description: s.name, price: Number(s.sell_price), vatRate: Number(s.vat_rate), hsCode: s.hs_code ?? undefined } : it));
+  };
+
+  const submit = async () => {
+    if (!customerId) return toast.error("Select a customer");
+    const valid = items.filter(i => i.description.trim() && i.qty > 0);
+    if (valid.length === 0) return toast.error("Add at least one line item");
+    setSaving(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setSaving(false); return; }
+    const number = `QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const { data: q, error } = await supabase.from("quotes").insert({
+      user_id: u.user.id, customer_id: customerId, number, issue_date: issueDate, valid_until: validUntil,
+      status, currency, subtotal, vat_amount: vat, total, notes,
+    }).select().single();
+    if (error || !q) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
+    const { error: ie } = await supabase.from("quote_items").insert(valid.map(i => ({
+      user_id: u.user.id, quote_id: q.id, stock_item_id: i.stockItemId ?? null,
+      description: i.description, hs_code: i.hsCode ?? null,
+      quantity: i.qty, unit_price: i.price, vat_rate: i.vatRate, line_total: i.qty * i.price * (1 + i.vatRate / 100),
+    })));
+    setSaving(false);
+    if (ie) return toast.error(ie.message);
+    toast.success(`Quote ${number} saved`);
+    navigate({ to: "/quotes" });
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-4">
-            <AppNav />
-            <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Back
-            </Link>
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <Link to="/quotes" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back</Link>
+      <div><h1 className="text-2xl font-semibold flex items-center gap-2"><FileText className="h-6 w-6 text-emerald-600" /> New quotation</h1></div>
+
+      <Card><CardHeader><CardTitle className="text-base">Client & validity</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2"><Label>Customer *</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
+              <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            </Select>
+            {customers.length === 0 && <p className="text-xs text-muted-foreground">No active customers. <Link to="/customers" className="underline">Add one</Link>.</p>}
           </div>
-          <div className="text-xs text-muted-foreground">Draft · {nextNumber}</div>
-        </div>
-      </header>
+          <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Valid until</Label><Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Currency</Label><Input value={currency} onChange={e => setCurrency(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{["draft", "sent", "accepted", "declined"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
-            <FileText className="h-6 w-6 text-primary" /> Create quotation
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Send a proposal to a client with pricing valid for a set period.</p>
-        </div>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Client & validity</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Client name *</Label><Input value={client} onChange={e => setClient(e.target.value)} placeholder="Acme Corp" /></div>
-            <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="contact@acme.com" /></div>
-            <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Valid until</Label><Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} /></div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={v => setStatus(v as Quote["status"])}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="accepted">Accepted</SelectItem>
-                  <SelectItem value="declined">Declined</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Line items</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => setItems(prev => [...prev, { description: "", qty: 1, price: 0 }])}>
-              <Plus className="h-3 w-3" /> Add item
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {items.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2">
-                <Input className="col-span-12 sm:col-span-6" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                <Input className="col-span-4 sm:col-span-2" type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                <Input className="col-span-7 sm:col-span-3" type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
-                <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base">Line items</CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, vatRate: 16 }])}><Plus className="h-3 w-3 mr-1" /> Add</Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {items.map((it, idx) => (
+            <div key={idx} className="grid grid-cols-12 gap-2 items-start">
+              <div className="col-span-12 sm:col-span-5 space-y-1">
+                <Select value={it.stockItemId ?? ""} onValueChange={v => pickStock(idx, v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional)" /></SelectTrigger>
+                  <SelectContent>{stock.map(s => <SelectItem key={s.id} value={s.id}>{s.name} {s.sku ? `(${s.sku})` : ""}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="Description" value={it.description} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
               </div>
-            ))}
-            <div className="space-y-2">
-              <Label>Notes / terms</Label>
-              <textarea className="w-full min-h-24 rounded-md border bg-background p-2 text-sm" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Payment terms, delivery timeline, assumptions…" />
+              <Input className="col-span-3 sm:col-span-2" type="number" step="0.001" placeholder="Qty" value={it.qty} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, qty: Number(e.target.value) } : x))} />
+              <Input className="col-span-4 sm:col-span-2" type="number" step="0.01" placeholder="Price" value={it.price} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, price: Number(e.target.value) } : x))} />
+              <Input className="col-span-3 sm:col-span-2" type="number" step="0.1" placeholder="VAT %" value={it.vatRate} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, vatRate: Number(e.target.value) } : x))} />
+              <Button variant="ghost" size="icon" className="col-span-2 sm:col-span-1" onClick={() => setItems(p => p.filter((_, i) => i !== idx))} disabled={items.length === 1}><Trash2 className="h-4 w-4" /></Button>
             </div>
-            <div className="flex justify-end gap-4 text-base border-t pt-3">
-              <span className="text-muted-foreground">Total</span><span className="font-semibold">{money(total)}</span>
-            </div>
-          </CardContent>
-        </Card>
+          ))}
+          <div className="border-t pt-3 space-y-1 text-sm max-w-xs ml-auto">
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal, currency)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat, currency)}</span></div>
+            <div className="flex justify-between font-semibold text-base border-t pt-1"><span>Total</span><span>{fmtMoney(total, currency)}</span></div>
+          </div>
+          <div className="space-y-2"><Label>Notes / terms</Label><textarea className="w-full min-h-20 rounded-md border bg-background p-2 text-sm" value={notes} onChange={e => setNotes(e.target.value)} /></div>
+        </CardContent>
+      </Card>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Cancel</Button>
-          <Button onClick={submit} disabled={!client.trim()}>Save quotation</Button>
-        </div>
-      </main>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => navigate({ to: "/quotes" })}>Cancel</Button>
+        <Button onClick={submit} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Saving…" : "Save quotation"}</Button>
+      </div>
     </div>
   );
 }

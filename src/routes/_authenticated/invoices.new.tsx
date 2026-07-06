@@ -1,204 +1,178 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2, ShieldCheck, Package } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Plus, Trash2, ReceiptText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AppNav } from "@/components/AppNav";
-import { PENDING_INVOICE_KEY, type Invoice, type LineItem, type Status, type StockPick, type ZraInfo } from "@/lib/invoice-types";
+import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
-  head: () => ({ meta: [{ title: "New invoice — Kopelacode" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "New invoice — EdgeCore" }, { name: "robots", content: "noindex" }] }),
   component: NewInvoicePage,
 });
+
+type Line = { description: string; qty: number; price: number; vatRate: number; hsCode?: string; stockItemId?: string | null };
 
 function NewInvoicePage() {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-  const nextNumber = `INV-2026-${String(200 + Math.floor(Math.random() * 800)).padStart(4, "0")}`;
 
-  const [currency, setCurrency] = useState("USD");
-  const [stock, setStock] = useState<StockPick[]>([]);
-  const [client, setClient] = useState("");
-  const [email, setEmail] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [stock, setStock] = useState<any[]>([]);
+  const [customerId, setCustomerId] = useState<string>("");
+  const [currency, setCurrency] = useState("ZMW");
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(in30);
-  const [status, setStatus] = useState<Status>("draft");
-  const [items, setItems] = useState<LineItem[]>([{ description: "", qty: 1, price: 0, hsCode: "" }]);
-  const [zraEnabled, setZraEnabled] = useState(true);
-  const [invoiceType, setInvoiceType] = useState<ZraInfo["invoiceType"]>("normal");
-  const [vatRate, setVatRate] = useState<number>(16);
+  const [status, setStatus] = useState("sent");
+  const [items, setItems] = useState<Line[]>([{ description: "", qty: 1, price: 0, vatRate: 16 }]);
+  const [notes, setNotes] = useState("");
+  const [zraOn, setZraOn] = useState(true);
   const [sellerTpin, setSellerTpin] = useState("");
   const [buyerTpin, setBuyerTpin] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data: prof } = await supabase.from("profiles").select("currency, tpin").eq("id", u.user.id).maybeSingle();
-      if (prof?.currency) setCurrency(prof.currency);
-      if ((prof as any)?.tpin) setSellerTpin((prof as any).tpin);
-      const { data } = await supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price, unit, quantity_on_hand");
-      setStock((data ?? []) as StockPick[]);
+      const [{ data: cs }, { data: si }, { data: co }] = await Promise.all([
+        supabase.from("customers").select("id, name, tpin, payment_terms_days").eq("active", true).order("name"),
+        supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price"),
+        supabase.from("companies").select("base_currency, tpin").maybeSingle(),
+      ]);
+      setCustomers(cs ?? []); setStock(si ?? []);
+      if (co?.base_currency) setCurrency(co.base_currency);
+      if ((co as any)?.tpin) setSellerTpin((co as any).tpin);
     })();
   }, []);
 
-  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const subTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
-  const vatAmount = zraEnabled ? subTotal * (vatRate / 100) : 0;
-  const total = subTotal + vatAmount;
+  useEffect(() => {
+    const c = customers.find(x => x.id === customerId);
+    if (c) {
+      if (c.tpin) setBuyerTpin(c.tpin);
+      if (c.payment_terms_days) setDueDate(new Date(Date.now() + c.payment_terms_days * 864e5).toISOString().slice(0, 10));
+    }
+  }, [customerId, customers]);
 
-  const submit = () => {
-    if (!client.trim()) { toast.error("Client name is required"); return; }
-    const inv: Invoice = {
-      id: crypto.randomUUID(), number: nextNumber, client, email, issueDate, dueDate, status,
-      items: items.filter(i => i.description.trim()),
-      zra: zraEnabled ? { invoiceType, vatRate, sellerTpin, buyerTpin } : undefined,
-    };
-    try { sessionStorage.setItem(PENDING_INVOICE_KEY, JSON.stringify(inv)); } catch { /* noop */ }
-    toast.success(`Invoice ${nextNumber} created`);
-    navigate({ to: "/dashboard" });
+  const subtotal = useMemo(() => items.reduce((s, i) => s + i.qty * i.price, 0), [items]);
+  const vat = useMemo(() => zraOn ? items.reduce((s, i) => s + i.qty * i.price * (i.vatRate / 100), 0) : 0, [items, zraOn]);
+  const total = subtotal + vat;
+
+  const pickStock = (idx: number, stockId: string) => {
+    const s = stock.find(x => x.id === stockId);
+    if (!s) return;
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, stockItemId: s.id, description: s.name, price: Number(s.sell_price), vatRate: Number(s.vat_rate), hsCode: s.hs_code ?? undefined } : it));
+  };
+
+  const submit = async () => {
+    if (!customerId) return toast.error("Select a customer");
+    const valid = items.filter(i => i.description.trim() && i.qty > 0);
+    if (valid.length === 0) return toast.error("Add at least one line item");
+    setSaving(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setSaving(false); return; }
+    const number = `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const { data: inv, error } = await supabase.from("invoices").insert({
+      user_id: u.user.id, customer_id: customerId, number,
+      issue_date: issueDate, due_date: dueDate, status, currency,
+      subtotal, vat_amount: vat, total, notes,
+      seller_tpin: zraOn ? sellerTpin || null : null, buyer_tpin: zraOn ? buyerTpin || null : null,
+    }).select().single();
+    if (error || !inv) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
+    const { error: ie } = await supabase.from("invoice_items").insert(valid.map(i => ({
+      user_id: u.user.id, invoice_id: inv.id, stock_item_id: i.stockItemId ?? null,
+      description: i.description, hs_code: i.hsCode ?? null,
+      quantity: i.qty, unit_price: i.price, vat_rate: zraOn ? i.vatRate : 0,
+      line_total: i.qty * i.price * (1 + (zraOn ? i.vatRate : 0) / 100),
+    })));
+    // deduct stock
+    for (const i of valid) {
+      if (i.stockItemId) {
+        await supabase.from("stock_movements").insert({
+          user_id: u.user.id, item_id: i.stockItemId, movement_type: "out",
+          quantity: i.qty, reference: number, note: `Invoice ${number}`,
+        });
+      }
+    }
+    setSaving(false);
+    if (ie) return toast.error(ie.message);
+    toast.success(`Invoice ${number} saved`);
+    navigate({ to: "/invoices" });
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-4">
-            <AppNav />
-            <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Back to invoices
-            </Link>
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <Link to="/invoices" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back</Link>
+      <div><h1 className="text-2xl font-semibold flex items-center gap-2"><ReceiptText className="h-6 w-6 text-emerald-600" /> New invoice</h1></div>
+
+      <Card><CardHeader><CardTitle className="text-base">Customer & dates</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2"><Label>Customer *</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
+              <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
-          <div className="text-xs text-muted-foreground">Draft · {nextNumber}</div>
-        </div>
-      </header>
+          <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Due date</Label><Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Currency</Label><Input value={currency} onChange={e => setCurrency(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{["draft", "sent"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Create invoice</h1>
-          <p className="text-sm text-muted-foreground mt-1">Fill in client, line items, and ZRA Smart Invoice details, then save.</p>
-        </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-600" /> ZRA / VAT</CardTitle>
+          <div className="flex items-center gap-2 text-sm"><Switch checked={zraOn} onCheckedChange={setZraOn} /> {zraOn ? "Enabled" : "Disabled"}</div>
+        </CardHeader>
+        {zraOn && <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2"><Label>Seller TPIN</Label><Input value={sellerTpin} onChange={e => setSellerTpin(e.target.value)} placeholder="1000000000" /></div>
+          <div className="space-y-2"><Label>Buyer TPIN</Label><Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="1000000000" /></div>
+        </CardContent>}
+      </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Client & dates</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Client name *</Label><Input value={client} onChange={e => setClient(e.target.value)} placeholder="Acme Corp" /></div>
-            <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="billing@acme.com" /></div>
-            <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Due date</Label><Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={v => setStatus(v as Status)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-700" /> ZRA Smart Invoice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <label className="inline-flex items-center gap-2 text-sm mb-4">
-              <input type="checkbox" checked={zraEnabled} onChange={e => setZraEnabled(e.target.checked)} className="h-4 w-4" />
-              Enable ZRA compliance fields
-            </label>
-            {zraEnabled && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Invoice type</Label>
-                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as ZraInfo["invoiceType"])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normal sale</SelectItem>
-                      <SelectItem value="credit">Credit note</SelectItem>
-                      <SelectItem value="debit">Debit note</SelectItem>
-                      <SelectItem value="training">Training</SelectItem>
-                      <SelectItem value="export">Export (zero-rated)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2"><Label>VAT rate (%)</Label><Input type="number" min={0} max={100} step="0.5" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} /></div>
-                <div className="space-y-2"><Label>Seller TPIN</Label><Input value={sellerTpin} onChange={e => setSellerTpin(e.target.value)} placeholder="10 digits" maxLength={10} /></div>
-                <div className="space-y-2"><Label>Buyer TPIN</Label><Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="Optional" maxLength={10} /></div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base">Line items</CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, vatRate: 16 }])}><Plus className="h-3 w-3 mr-1" /> Add</Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {items.map((it, idx) => (
+            <div key={idx} className="grid grid-cols-12 gap-2 items-start">
+              <div className="col-span-12 sm:col-span-5 space-y-1">
+                <Select value={it.stockItemId ?? ""} onValueChange={v => pickStock(idx, v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional)" /></SelectTrigger>
+                  <SelectContent>{stock.map(s => <SelectItem key={s.id} value={s.id}>{s.name} {s.sku ? `(${s.sku})` : ""}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="Description" value={it.description} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Line items</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => setItems(prev => [...prev, { description: "", qty: 1, price: 0, hsCode: "" }])}>
-              <Plus className="h-3 w-3" /> Add item
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {items.map((item, idx) => {
-              const pickStock = (id: string) => {
-                const s = stock.find(x => x.id === id);
-                setItems(prev => prev.map((it, i) => i === idx ? {
-                  ...it, stockItemId: id, description: s?.name ?? it.description,
-                  hsCode: s?.hs_code ?? it.hsCode, price: Number(s?.sell_price ?? it.price),
-                } : it));
-              };
-              return (
-                <div key={idx} className="space-y-2 rounded-md border p-3">
-                  {stock.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Package className="h-3 w-3 text-muted-foreground" />
-                      <Select value={item.stockItemId ?? ""} onValueChange={pickStock}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional)" /></SelectTrigger>
-                        <SelectContent>
-                          {stock.map(s => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.name}{s.sku ? ` · ${s.sku}` : ""} — {money(Number(s.sell_price))} · {Number(s.quantity_on_hand)} {s.unit}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-12 gap-2">
-                    <Input className="col-span-12 sm:col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                    {zraEnabled && (
-                      <Input className="col-span-4 sm:col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
-                    )}
-                    <Input className={zraEnabled ? "col-span-3 sm:col-span-1" : "col-span-4 sm:col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                    <Input className={zraEnabled ? "col-span-4 sm:col-span-3" : "col-span-7 sm:col-span-4"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
-                    <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-            <div className="space-y-1 border-t pt-3 text-sm">
-              <div className="flex justify-end gap-4"><span className="text-muted-foreground">Subtotal</span><span>{money(subTotal)}</span></div>
-              {zraEnabled && <div className="flex justify-end gap-4"><span className="text-muted-foreground">VAT ({vatRate}%)</span><span>{money(vatAmount)}</span></div>}
-              <div className="flex justify-end gap-4 text-base"><span className="text-muted-foreground">Total</span><span className="font-semibold">{money(total)}</span></div>
+              <Input className="col-span-3 sm:col-span-2" type="number" step="0.001" placeholder="Qty" value={it.qty} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, qty: Number(e.target.value) } : x))} />
+              <Input className="col-span-4 sm:col-span-2" type="number" step="0.01" placeholder="Price" value={it.price} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, price: Number(e.target.value) } : x))} />
+              <Input className="col-span-3 sm:col-span-2" type="number" step="0.1" placeholder="VAT %" value={it.vatRate} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, vatRate: Number(e.target.value) } : x))} disabled={!zraOn} />
+              <Button variant="ghost" size="icon" className="col-span-2 sm:col-span-1" onClick={() => setItems(p => p.filter((_, i) => i !== idx))} disabled={items.length === 1}><Trash2 className="h-4 w-4" /></Button>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+          <div className="border-t pt-3 space-y-1 text-sm max-w-xs ml-auto">
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal, currency)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat, currency)}</span></div>
+            <div className="flex justify-between font-semibold text-base border-t pt-1"><span>Total</span><span>{fmtMoney(total, currency)}</span></div>
+          </div>
+          <div className="space-y-2"><Label>Notes</Label><textarea className="w-full min-h-20 rounded-md border bg-background p-2 text-sm" value={notes} onChange={e => setNotes(e.target.value)} /></div>
+        </CardContent>
+      </Card>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Cancel</Button>
-          <Button onClick={submit} disabled={!client.trim()}>Save invoice</Button>
-        </div>
-      </main>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => navigate({ to: "/invoices" })}>Cancel</Button>
+        <Button onClick={submit} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Saving…" : "Save invoice"}</Button>
+      </div>
     </div>
   );
 }

@@ -15,12 +15,17 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
+import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
+import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
 import { Route as AuthenticatedBankingRouteImport } from './routes/_authenticated/banking'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
+import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -51,14 +56,34 @@ const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReceiptsRoute = AuthenticatedReceiptsRouteImport.update({
+  id: '/receipts',
+  path: '/receipts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuotesRoute = AuthenticatedQuotesRouteImport.update({
+  id: '/quotes',
+  path: '/quotes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedComplianceRoute = AuthenticatedComplianceRouteImport.update({
@@ -72,15 +97,21 @@ const AuthenticatedBankingRoute = AuthenticatedBankingRouteImport.update({
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
-  id: '/quotes/new',
-  path: '/quotes/new',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
 const AuthenticatedInvoicesNewRoute =
   AuthenticatedInvoicesNewRouteImport.update({
-    id: '/invoices/new',
-    path: '/invoices/new',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedInvoicesRoute,
+  } as any)
+const AuthenticatedCustomersIdRoute =
+  AuthenticatedCustomersIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -89,10 +120,15 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/banking': typeof AuthenticatedBankingRoute
   '/compliance': typeof AuthenticatedComplianceRoute
+  '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/quotes': typeof AuthenticatedQuotesRouteWithChildren
+  '/receipts': typeof AuthenticatedReceiptsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
+  '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
 }
@@ -102,10 +138,15 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/banking': typeof AuthenticatedBankingRoute
   '/compliance': typeof AuthenticatedComplianceRoute
+  '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/quotes': typeof AuthenticatedQuotesRouteWithChildren
+  '/receipts': typeof AuthenticatedReceiptsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
+  '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
 }
@@ -117,10 +158,15 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/banking': typeof AuthenticatedBankingRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
+  '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
+  '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
+  '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
 }
@@ -132,10 +178,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/banking'
     | '/compliance'
+    | '/customers'
     | '/dashboard'
+    | '/invoices'
     | '/onboarding'
+    | '/quotes'
+    | '/receipts'
     | '/setup'
     | '/stock'
+    | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
   fileRoutesByTo: FileRoutesByTo
@@ -145,10 +196,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/banking'
     | '/compliance'
+    | '/customers'
     | '/dashboard'
+    | '/invoices'
     | '/onboarding'
+    | '/quotes'
+    | '/receipts'
     | '/setup'
     | '/stock'
+    | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
   id:
@@ -159,10 +215,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/banking'
     | '/_authenticated/compliance'
+    | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/invoices'
     | '/_authenticated/onboarding'
+    | '/_authenticated/quotes'
+    | '/_authenticated/receipts'
     | '/_authenticated/setup'
     | '/_authenticated/stock'
+    | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/quotes/new'
   fileRoutesById: FileRoutesById
@@ -218,6 +279,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/receipts': {
+      id: '/_authenticated/receipts'
+      path: '/receipts'
+      fullPath: '/receipts'
+      preLoaderRoute: typeof AuthenticatedReceiptsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quotes': {
+      id: '/_authenticated/quotes'
+      path: '/quotes'
+      fullPath: '/quotes'
+      preLoaderRoute: typeof AuthenticatedQuotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -225,11 +300,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices': {
+      id: '/_authenticated/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customers': {
+      id: '/_authenticated/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/compliance': {
@@ -248,41 +337,90 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/quotes/new': {
       id: '/_authenticated/quotes/new'
-      path: '/quotes/new'
+      path: '/new'
       fullPath: '/quotes/new'
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedQuotesRoute
     }
     '/_authenticated/invoices/new': {
       id: '/_authenticated/invoices/new'
-      path: '/invoices/new'
+      path: '/new'
       fullPath: '/invoices/new'
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedInvoicesRoute
+    }
+    '/_authenticated/customers/$id': {
+      id: '/_authenticated/customers/$id'
+      path: '/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof AuthenticatedCustomersIdRouteImport
+      parentRoute: typeof AuthenticatedCustomersRoute
     }
   }
 }
 
+interface AuthenticatedCustomersRouteChildren {
+  AuthenticatedCustomersIdRoute: typeof AuthenticatedCustomersIdRoute
+}
+
+const AuthenticatedCustomersRouteChildren: AuthenticatedCustomersRouteChildren =
+  {
+    AuthenticatedCustomersIdRoute: AuthenticatedCustomersIdRoute,
+  }
+
+const AuthenticatedCustomersRouteWithChildren =
+  AuthenticatedCustomersRoute._addFileChildren(
+    AuthenticatedCustomersRouteChildren,
+  )
+
+interface AuthenticatedInvoicesRouteChildren {
+  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
+}
+
+const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
+  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
+}
+
+const AuthenticatedInvoicesRouteWithChildren =
+  AuthenticatedInvoicesRoute._addFileChildren(
+    AuthenticatedInvoicesRouteChildren,
+  )
+
+interface AuthenticatedQuotesRouteChildren {
+  AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
+}
+
+const AuthenticatedQuotesRouteChildren: AuthenticatedQuotesRouteChildren = {
+  AuthenticatedQuotesNewRoute: AuthenticatedQuotesNewRoute,
+}
+
+const AuthenticatedQuotesRouteWithChildren =
+  AuthenticatedQuotesRoute._addFileChildren(AuthenticatedQuotesRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBankingRoute: typeof AuthenticatedBankingRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
+  AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
+  AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
-  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
-  AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBankingRoute: AuthenticatedBankingRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
+  AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
+  AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
-  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
-  AuthenticatedQuotesNewRoute: AuthenticatedQuotesNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
