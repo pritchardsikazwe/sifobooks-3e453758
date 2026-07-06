@@ -33,6 +33,12 @@ const GROUPS = [
     ],
   },
   {
+    title: "Tax & Compliance",
+    items: [
+      { title: "Tax Summary (VAT)", desc: "Output vs Input VAT — ZRA ready", icon: Receipt, to: "/reports/tax-summary" },
+    ],
+  },
+  {
     title: "HR",
     items: [
       { title: "Payroll Summary", desc: "PAYE, NAPSA, NHIMA, net pay", icon: Banknote, to: "/reports/payroll-summary" },
