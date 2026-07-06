@@ -44,6 +44,7 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
+import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
@@ -237,6 +238,12 @@ const AuthenticatedReportsTrialBalanceRoute =
     path: '/trial-balance',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsSalesByCustomerRoute =
+  AuthenticatedReportsSalesByCustomerRouteImport.update({
+    id: '/sales-by-customer',
+    path: '/sales-by-customer',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsPnlRoute = AuthenticatedReportsPnlRouteImport.update({
   id: '/pnl',
   path: '/pnl',
@@ -333,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesByTo {
@@ -378,6 +386,7 @@ export interface FileRoutesByTo {
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRoutesById {
@@ -425,6 +434,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
 }
 export interface FileRouteTypes {
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
+    | '/reports/sales-by-customer'
     | '/reports/trial-balance'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -517,6 +528,7 @@ export interface FileRouteTypes {
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
+    | '/reports/sales-by-customer'
     | '/reports/trial-balance'
   id:
     | '__root__'
@@ -563,6 +575,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
+    | '/_authenticated/reports/sales-by-customer'
     | '/_authenticated/reports/trial-balance'
   fileRoutesById: FileRoutesById
 }
@@ -820,6 +833,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsTrialBalanceRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/sales-by-customer': {
+      id: '/_authenticated/reports/sales-by-customer'
+      path: '/sales-by-customer'
+      fullPath: '/reports/sales-by-customer'
+      preLoaderRoute: typeof AuthenticatedReportsSalesByCustomerRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/pnl': {
       id: '/_authenticated/reports/pnl'
       path: '/pnl'
@@ -931,6 +951,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
+  AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
 }
 
@@ -944,6 +965,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsPayrollSummaryRoute:
     AuthenticatedReportsPayrollSummaryRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
+  AuthenticatedReportsSalesByCustomerRoute:
+    AuthenticatedReportsSalesByCustomerRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
 }
 
