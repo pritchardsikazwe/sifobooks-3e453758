@@ -102,6 +102,14 @@ function DashboardPage() {
 
   const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
   const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
+  const submitToZra = (id: string) => {
+    setInvoices(prev => prev.map(i => {
+      if (i.id !== id || !i.zra) return i;
+      const ref = `ZRA${Date.now().toString().slice(-10)}`;
+      toast.success(`Submitted to ZRA Smart Invoice — Ref ${ref}`);
+      return { ...i, zra: { ...i.zra, submittedRef: ref, submittedAt: new Date().toISOString() } };
+    }));
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
