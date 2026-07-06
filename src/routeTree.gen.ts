@@ -39,6 +39,7 @@ import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
@@ -230,6 +231,12 @@ const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedExpenseRulesRoute =
+  AuthenticatedExpenseRulesRouteImport.update({
+    id: '/expense-rules',
+    path: '/expense-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEmployeesRoute = AuthenticatedEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -416,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
+  '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -477,6 +485,7 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
+  '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -540,6 +549,7 @@ export interface FileRoutesById {
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
+  '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -603,6 +613,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/dashboard'
     | '/employees'
+    | '/expense-rules'
     | '/invoices'
     | '/job-cards'
     | '/journal-entries'
@@ -664,6 +675,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/dashboard'
     | '/employees'
+    | '/expense-rules'
     | '/invoices'
     | '/job-cards'
     | '/journal-entries'
@@ -726,6 +738,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
+    | '/_authenticated/expense-rules'
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
@@ -984,6 +997,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/expense-rules': {
+      id: '/_authenticated/expense-rules'
+      path: '/expense-rules'
+      fullPath: '/expense-rules'
+      preLoaderRoute: typeof AuthenticatedExpenseRulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/employees': {
@@ -1289,6 +1309,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
+  AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
@@ -1335,6 +1356,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
+  AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
