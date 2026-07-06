@@ -314,3 +314,65 @@ function Field({ label, children, className }: { label: string; children: React.
     </div>
   );
 }
+
+function LogoUploader({ company, onChange }: { company: Company; onChange: (url: string | null) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!company.logo_url) { setPreview(null); return; }
+      const { data } = await supabase.storage.from("company-logos").createSignedUrl(company.logo_url, 3600);
+      if (!cancelled) setPreview(data?.signedUrl ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [company.logo_url]);
+
+  const upload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) return toast.error("Max 2 MB");
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${company.user_id}/${company.id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("company-logos").upload(path, file, { upsert: true });
+    if (upErr) { setUploading(false); return toast.error(upErr.message); }
+    if (company.logo_url) await supabase.storage.from("company-logos").remove([company.logo_url]);
+    const { error: dbErr } = await supabase.from("companies").update({ logo_url: path }).eq("id", company.id);
+    setUploading(false);
+    if (dbErr) return toast.error(dbErr.message);
+    onChange(path);
+    toast.success("Logo updated");
+  };
+
+  const remove = async () => {
+    if (!company.logo_url) return;
+    await supabase.storage.from("company-logos").remove([company.logo_url]);
+    await supabase.from("companies").update({ logo_url: null }).eq("id", company.id);
+    onChange(null);
+    toast.success("Logo removed");
+  };
+
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-lg border border-dashed border-slate-300 bg-slate-50">
+      <div className="h-20 w-20 rounded-lg bg-white border flex items-center justify-center overflow-hidden shrink-0">
+        {preview ? <img src={preview} alt="Company logo" className="h-full w-full object-contain" /> : <Building2 className="h-8 w-8 text-slate-300" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold">Company Logo</div>
+        <div className="text-xs text-muted-foreground">PNG, JPG or SVG. Max 2 MB. Appears on invoices, quotes and PDFs.</div>
+        <div className="flex items-center gap-2 mt-2">
+          <label className="inline-flex">
+            <input type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); }} />
+            <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer ${uploading ? "bg-slate-200 text-slate-500" : "bg-[#0f4c5c] text-white hover:bg-[#0c3f4c]"}`}>
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+              {company.logo_url ? "Replace logo" : "Upload logo"}
+            </span>
+          </label>
+          {company.logo_url && <Button size="sm" variant="ghost" onClick={remove} className="h-7 text-xs text-red-600">Remove</Button>}
+        </div>
+      </div>
+    </div>
+  );
+}
