@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_actions: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          level: number
+          notes: string | null
+          request_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          level: number
+          notes?: string | null
+          request_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          notes?: string | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_actions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_hierarchies: {
         Row: {
           approver_role: string
@@ -60,6 +98,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      approval_requests: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string
+          currency: string
+          current_level: number
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          description: string | null
+          id: string
+          max_level: number
+          module: string
+          reference_id: string | null
+          reference_number: string | null
+          reference_type: string
+          requested_by: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          current_level?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          description?: string | null
+          id?: string
+          max_level?: number
+          module: string
+          reference_id?: string | null
+          reference_number?: string | null
+          reference_type: string
+          requested_by: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          current_level?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          description?: string | null
+          id?: string
+          max_level?: number
+          module?: string
+          reference_id?: string | null
+          reference_number?: string | null
+          reference_type?: string
+          requested_by?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       attendance: {
         Row: {
@@ -2451,6 +2555,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approver_role_for_request: { Args: { _req: string }; Returns: string }
+      can_act_on_request: {
+        Args: { _req: string; _user: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
