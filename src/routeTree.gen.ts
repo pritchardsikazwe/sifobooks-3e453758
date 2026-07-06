@@ -43,6 +43,7 @@ import { Route as AuthenticatedBankingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -224,6 +225,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsPnlRoute = AuthenticatedReportsPnlRouteImport.update({
+  id: '/pnl',
+  path: '/pnl',
+  getParentRoute: () => AuthenticatedReportsRoute,
+} as any)
 const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -268,7 +274,7 @@ export interface FileRoutesByFullPath {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
-  '/reports': typeof AuthenticatedReportsRoute
+  '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/pnl': typeof AuthenticatedReportsPnlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -306,7 +313,7 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
-  '/reports': typeof AuthenticatedReportsRoute
+  '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/pnl': typeof AuthenticatedReportsPnlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -346,7 +354,7 @@ export interface FileRoutesById {
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
-  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
@@ -357,6 +365,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/pnl'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/pnl'
   id:
     | '__root__'
     | '/'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/quotes/new'
+    | '/_authenticated/reports/pnl'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -723,6 +735,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/pnl': {
+      id: '/_authenticated/reports/pnl'
+      path: '/pnl'
+      fullPath: '/reports/pnl'
+      preLoaderRoute: typeof AuthenticatedReportsPnlRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/quotes/new': {
       id: '/_authenticated/quotes/new'
       path: '/new'
@@ -785,6 +804,17 @@ const AuthenticatedQuotesRouteChildren: AuthenticatedQuotesRouteChildren = {
 const AuthenticatedQuotesRouteWithChildren =
   AuthenticatedQuotesRoute._addFileChildren(AuthenticatedQuotesRouteChildren)
 
+interface AuthenticatedReportsRouteChildren {
+  AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
+}
+
+const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
+  AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
+}
+
+const AuthenticatedReportsRouteWithChildren =
+  AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
@@ -808,7 +838,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
-  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
@@ -841,7 +871,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
-  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
