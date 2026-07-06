@@ -59,6 +59,7 @@ const sections: Section[] = [
   ]},
   { label: "Admin", items: [
     { title: "Admin Home", url: "/admin", icon: UserCog },
+    { title: "Approvals", url: "/approvals", icon: Inbox },
     { title: "Super Admin", url: "/super-admin", icon: ShieldAlert },
     { title: "Company Setup", url: "/setup", icon: Building2 },
     { title: "Subscription", url: "/subscription", icon: Sparkles },
