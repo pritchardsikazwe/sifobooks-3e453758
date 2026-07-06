@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Landmark, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Landmark, ShieldCheck, Package } from "lucide-react";
 
 const links = [
   { to: "/dashboard",  label: "Invoices",   icon: LayoutDashboard },
+  { to: "/stock",      label: "Stock",      icon: Package },
   { to: "/banking",    label: "Banking",    icon: Landmark },
   { to: "/compliance", label: "Compliance", icon: ShieldCheck },
 ] as const;

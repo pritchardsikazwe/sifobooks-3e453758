@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut, ShieldCheck, QrCode } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut, ShieldCheck, QrCode, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Status = "paid" | "pending" | "overdue" | "draft";
-type LineItem = { description: string; qty: number; price: number; hsCode?: string };
+type LineItem = { description: string; qty: number; price: number; hsCode?: string; stockItemId?: string | null };
+type StockPick = { id: string; name: string; sku: string | null; hs_code: string | null; vat_rate: number; sell_price: number; unit: string; quantity_on_hand: number };
 type ZraInfo = {
   invoiceType: "normal" | "credit" | "debit" | "training" | "export";
   vatRate: number; // percent
@@ -71,6 +72,12 @@ function DashboardPage() {
   const [currency, setCurrency] = useState("USD");
   const [businessName, setBusinessName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [stock, setStock] = useState<StockPick[]>([]);
+
+  const loadStock = async () => {
+    const { data } = await supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price, unit, quantity_on_hand");
+    setStock((data ?? []) as StockPick[]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -81,6 +88,7 @@ function DashboardPage() {
       if (!data?.onboarded) { navigate({ to: "/onboarding" }); return; }
       if (data.currency) setCurrency(data.currency);
       if (data.business_name) setBusinessName(data.business_name);
+      await loadStock();
     })();
   }, [navigate]);
 
@@ -100,7 +108,21 @@ function DashboardPage() {
     return matchesQ && matchesF;
   });
 
-  const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
+  const addInvoice = async (inv: Invoice) => {
+    setInvoices(prev => [inv, ...prev]);
+    // Decrement stock for line items linked to stock
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const moves = inv.items.filter(i => i.stockItemId).map(i => ({
+      user_id: u.user!.id, item_id: i.stockItemId!, movement_type: "out" as const,
+      quantity: i.qty, reference: inv.number, note: `Invoice ${inv.number} — ${i.description}`,
+    }));
+    if (moves.length) {
+      const { error } = await supabase.from("stock_movements").insert(moves);
+      if (error) toast.error(`Stock update: ${error.message}`);
+      else { toast.success(`Stock updated for ${moves.length} item${moves.length > 1 ? "s" : ""}`); await loadStock(); }
+    }
+  };
   const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
   const submitToZra = (id: string) => {
     setInvoices(prev => prev.map(i => {
@@ -133,7 +155,7 @@ function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <AppNav />
-            <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} />
+            <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} stock={stock} />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
@@ -238,7 +260,7 @@ function StatCard({ icon, label, value, sub, tint }: { icon: React.ReactNode; la
   );
 }
 
-function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string }) {
+function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money, stock }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string; stock: StockPick[] }) {
   const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const [client, setClient] = useState("");
@@ -349,20 +371,46 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open
                 <Plus className="h-3 w-3" /> Add item
               </Button>
             </div>
-            <div className="space-y-2">
-              {items.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2">
-                  <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                  {zraEnabled && (
-                    <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
-                  )}
-                  <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                  <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
-                  <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+            <div className="space-y-3">
+              {items.map((item, idx) => {
+                const pickStock = (id: string) => {
+                  const s = stock.find(x => x.id === id);
+                  setItems(prev => prev.map((it, i) => i === idx ? {
+                    ...it, stockItemId: id, description: s?.name ?? it.description,
+                    hsCode: s?.hs_code ?? it.hsCode, price: Number(s?.sell_price ?? it.price),
+                  } : it));
+                };
+                return (
+                  <div key={idx} className="space-y-1 rounded-md border border-dashed p-2">
+                    {stock.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3 w-3 text-muted-foreground" />
+                        <Select value={item.stockItemId ?? ""} onValueChange={pickStock}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional) — autofills description, HS code, price" /></SelectTrigger>
+                          <SelectContent>
+                            {stock.map(s => (
+                              <SelectItem key={s.id} value={s.id} disabled={Number(s.quantity_on_hand) < item.qty}>
+                                {s.name}{s.sku ? ` · ${s.sku}` : ""} — {money(Number(s.sell_price))} · {Number(s.quantity_on_hand)} {s.unit} on hand
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-12 gap-2">
+                      <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
+                      {zraEnabled && (
+                        <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
+                      )}
+                      <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
+                      <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
+                      <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="space-y-1 border-t pt-3 text-sm">
               <div className="flex justify-end gap-4"><span className="text-muted-foreground">Subtotal</span><span>{money(subTotal)}</span></div>

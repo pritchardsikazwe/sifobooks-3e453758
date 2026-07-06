@@ -115,7 +115,9 @@ export type Database = {
           phone: string | null
           tax_id: string | null
           team_size: string | null
+          tpin: string | null
           updated_at: string
+          vat_registered: boolean
         }
         Insert: {
           business_name?: string | null
@@ -130,7 +132,9 @@ export type Database = {
           phone?: string | null
           tax_id?: string | null
           team_size?: string | null
+          tpin?: string | null
           updated_at?: string
+          vat_registered?: boolean
         }
         Update: {
           business_name?: string | null
@@ -145,9 +149,109 @@ export type Database = {
           phone?: string | null
           tax_id?: string | null
           team_size?: string | null
+          tpin?: string | null
           updated_at?: string
+          vat_registered?: boolean
         }
         Relationships: []
+      }
+      stock_items: {
+        Row: {
+          cost_price: number
+          created_at: string
+          description: string | null
+          hs_code: string | null
+          id: string
+          name: string
+          quantity_on_hand: number
+          reorder_level: number
+          sell_price: number
+          sku: string | null
+          tax_category: string
+          unit: string
+          updated_at: string
+          user_id: string
+          vat_rate: number
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          hs_code?: string | null
+          id?: string
+          name: string
+          quantity_on_hand?: number
+          reorder_level?: number
+          sell_price?: number
+          sku?: string | null
+          tax_category?: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+          vat_rate?: number
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          hs_code?: string | null
+          id?: string
+          name?: string
+          quantity_on_hand?: number
+          reorder_level?: number
+          sell_price?: number
+          sku?: string | null
+          tax_category?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          movement_type: string
+          note: string | null
+          quantity: number
+          reference: string | null
+          unit_cost: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          movement_type: string
+          note?: string | null
+          quantity: number
+          reference?: string | null
+          unit_cost?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          movement_type?: string
+          note?: string | null
+          quantity?: number
+          reference?: string | null
+          unit_cost?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
