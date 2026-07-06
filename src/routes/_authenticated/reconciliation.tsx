@@ -45,6 +45,36 @@ type Candidate = {
 
 type Scored = { c: Candidate; score: number; exact: boolean; near: boolean };
 
+type ParsedRow = {
+  txn_date: string;
+  description: string;
+  amount: number;
+  reference: string | null;
+  balance: number | null;
+};
+
+type MapField = "date" | "description" | "amount" | "amount_in" | "amount_out" | "reference" | "balance" | "ignore";
+
+const FIELD_LABELS: Record<MapField, string> = {
+  date: "Date",
+  description: "Description",
+  amount: "Amount (signed)",
+  amount_in: "Amount In / Credit",
+  amount_out: "Amount Out / Debit",
+  reference: "Reference",
+  balance: "Balance",
+  ignore: "— Ignore —",
+};
+
+function dedupKey(r: { txn_date: string; amount: number; description: string; reference: string | null }): string {
+  return [
+    r.txn_date,
+    Number(r.amount).toFixed(2),
+    (r.description || "").toLowerCase().trim().replace(/\s+/g, " "),
+    (r.reference || "").toLowerCase().trim(),
+  ].join("|");
+}
+
 function Reconciliation() {
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -52,16 +82,22 @@ function Reconciliation() {
   const [to, setTo] = useState(today.toISOString().slice(0, 10));
   const [status, setStatus] = useState<"all" | "unreconciled" | "reconciled">("unreconciled");
   const [search, setSearch] = useState("");
-  const [amountTol, setAmountTol] = useState(0.5); // absolute currency units
-  const [dateTol, setDateTol] = useState(3);       // days
+  const [amountTol, setAmountTol] = useState(0.5);
+  const [dateTol, setDateTol] = useState(3);
   const [txns, setTxns] = useState<Txn[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [matchTxn, setMatchTxn] = useState<Txn | null>(null);
+
+  // CSV import state
   const [importOpen, setImportOpen] = useState(false);
   const [csvText, setCsvText] = useState("");
   const [importing, setImporting] = useState(false);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvBody, setCsvBody] = useState<string[][]>([]);
+  const [mapping, setMapping] = useState<MapField[]>([]);
+  const [hasHeader, setHasHeader] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -181,56 +217,146 @@ function Reconciliation() {
     load();
   };
 
-  // ---- CSV import ----
-  const parseCsv = (text: string): { rows: any[]; errors: string[] } => {
-    const errors: string[] = [];
-    const rows: any[] = [];
-    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-    if (!lines.length) return { rows, errors: ["CSV is empty"] };
-    const header = splitCsvLine(lines[0]).map(h => h.trim().toLowerCase());
-    const need = ["date", "description", "amount"];
-    for (const n of need) if (!header.includes(n)) errors.push(`Missing required column: ${n}`);
-    if (errors.length) return { rows, errors };
-    const iDate = header.indexOf("date");
-    const iDesc = header.indexOf("description");
-    const iAmt = header.indexOf("amount");
-    const iRef = header.indexOf("reference");
-    const iBal = header.indexOf("balance");
-    for (let i = 1; i < lines.length; i++) {
-      const cols = splitCsvLine(lines[i]);
-      const rawDate = (cols[iDate] ?? "").trim();
-      const date = normalizeDate(rawDate);
-      if (!date) { errors.push(`Line ${i + 1}: invalid date "${rawDate}"`); continue; }
-      const amt = Number((cols[iAmt] ?? "").replace(/,/g, "").replace(/[^\d.\-]/g, ""));
-      if (!isFinite(amt)) { errors.push(`Line ${i + 1}: invalid amount`); continue; }
-      rows.push({
-        txn_date: date,
-        description: cols[iDesc]?.trim() ?? "",
-        amount: amt,
-        reference: iRef >= 0 ? (cols[iRef]?.trim() || null) : null,
-        balance: iBal >= 0 && cols[iBal] ? Number((cols[iBal] ?? "").replace(/,/g, "").replace(/[^\d.\-]/g, "")) : null,
-        source_file: "csv-import",
-      });
-    }
-    return { rows, errors };
+  // ---- CSV parsing + column mapping ----
+  const openImport = () => {
+    setCsvText("");
+    setCsvHeaders([]);
+    setCsvBody([]);
+    setMapping([]);
+    setHasHeader(true);
+    setImportOpen(true);
   };
 
+  const guessMapping = (headers: string[]): MapField[] => {
+    return headers.map(h => {
+      const k = h.toLowerCase().trim();
+      if (/(^|\b)(date|txn.?date|posting.?date|value.?date|transaction.?date)/.test(k)) return "date";
+      if (/(desc|narration|details|particulars|memo|payee)/.test(k)) return "description";
+      if (/(ref|reference|check|cheque|txn.?id|transaction.?id)/.test(k)) return "reference";
+      if (/(balance|running)/.test(k)) return "balance";
+      if (/(credit|deposit|money.?in|paid.?in|cr\b|amount.?in|inflow)/.test(k)) return "amount_in";
+      if (/(debit|withdrawal|money.?out|paid.?out|dr\b|amount.?out|outflow)/.test(k)) return "amount_out";
+      if (/^(amount|amt|value)$/.test(k) || /amount/.test(k)) return "amount";
+      return "ignore";
+    });
+  };
+
+  const parseRaw = (text: string) => {
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (!lines.length) { setCsvHeaders([]); setCsvBody([]); setMapping([]); return; }
+    const rows = lines.map(splitCsvLine);
+    const width = Math.max(...rows.map(r => r.length));
+    const padded = rows.map(r => { while (r.length < width) r.push(""); return r; });
+    if (hasHeader) {
+      const headers = padded[0].map(h => h.trim());
+      setCsvHeaders(headers);
+      setCsvBody(padded.slice(1));
+      setMapping(prev => prev.length === headers.length ? prev : guessMapping(headers));
+    } else {
+      const headers = Array.from({ length: width }, (_, i) => `Column ${i + 1}`);
+      setCsvHeaders(headers);
+      setCsvBody(padded);
+      setMapping(prev => prev.length === headers.length ? prev : Array(width).fill("ignore"));
+    }
+  };
+
+  useEffect(() => { if (csvText) parseRaw(csvText); /* eslint-disable-next-line */ }, [csvText, hasHeader]);
+
+  const preview = useMemo(() => {
+    const rows: ParsedRow[] = [];
+    const errors: string[] = [];
+    const dupInFile: number[] = [];
+    if (!mapping.length || !csvBody.length) return { rows, errors, dupInFile };
+    const idx = (f: MapField) => mapping.indexOf(f);
+    const iDate = idx("date");
+    const iDesc = idx("description");
+    const iAmt = idx("amount");
+    const iIn = idx("amount_in");
+    const iOut = idx("amount_out");
+    const iRef = idx("reference");
+    const iBal = idx("balance");
+    if (iDate < 0) errors.push("Map a Date column");
+    if (iAmt < 0 && (iIn < 0 && iOut < 0)) errors.push("Map an Amount column (or both In and Out)");
+    if (errors.length) return { rows, errors, dupInFile };
+    const seen = new Set<string>();
+    csvBody.forEach((cols, i) => {
+      const rawDate = (cols[iDate] ?? "").trim();
+      const date = normalizeDate(rawDate);
+      if (!date) { errors.push(`Row ${i + 1}: invalid date "${rawDate}"`); return; }
+      let amt = 0;
+      if (iAmt >= 0) {
+        amt = parseNum(cols[iAmt]);
+      } else {
+        const inn = iIn >= 0 ? parseNum(cols[iIn]) : 0;
+        const out = iOut >= 0 ? parseNum(cols[iOut]) : 0;
+        amt = inn - out;
+      }
+      if (!isFinite(amt)) { errors.push(`Row ${i + 1}: invalid amount`); return; }
+      const row: ParsedRow = {
+        txn_date: date,
+        description: iDesc >= 0 ? (cols[iDesc] ?? "").trim() : "",
+        amount: amt,
+        reference: iRef >= 0 ? ((cols[iRef] ?? "").trim() || null) : null,
+        balance: iBal >= 0 && cols[iBal] ? parseNum(cols[iBal]) : null,
+      };
+      const k = dedupKey(row);
+      if (seen.has(k)) { dupInFile.push(i); return; }
+      seen.add(k);
+      rows.push(row);
+    });
+    return { rows, errors, dupInFile };
+  }, [csvBody, mapping]);
+
+  const [existingKeys, setExistingKeys] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!preview.rows.length) { setExistingKeys(null); return; }
+    const dates = preview.rows.map(r => r.txn_date).sort();
+    const minD = dates[0];
+    const maxD = dates[dates.length - 1];
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("bank_transactions")
+        .select("txn_date, amount, description, reference")
+        .gte("txn_date", minD).lte("txn_date", maxD);
+      if (cancelled) return;
+      const set = new Set<string>();
+      (data ?? []).forEach((r: any) => set.add(dedupKey({
+        txn_date: r.txn_date, amount: Number(r.amount ?? 0),
+        description: r.description ?? "", reference: r.reference ?? null,
+      })));
+      setExistingKeys(set);
+    })();
+    return () => { cancelled = true; };
+  }, [preview.rows]);
+
+  const previewStats = useMemo(() => {
+    const rows = preview.rows;
+    if (!existingKeys) return { newRows: rows, dupExisting: 0 };
+    const newRows: ParsedRow[] = [];
+    let dup = 0;
+    for (const r of rows) {
+      if (existingKeys.has(dedupKey(r))) dup++;
+      else newRows.push(r);
+    }
+    return { newRows, dupExisting: dup };
+  }, [preview.rows, existingKeys]);
+
   const importCsv = async () => {
-    const { rows, errors } = parseCsv(csvText);
-    if (errors.length) return toast.error(errors.slice(0, 3).join("\n"));
-    if (!rows.length) return toast.error("No rows parsed");
+    if (preview.errors.length) return toast.error(preview.errors.slice(0, 3).join(" · "));
+    const rows = previewStats.newRows;
+    if (!rows.length) return toast.error("Nothing new to import — all rows are duplicates.");
     setImporting(true);
     const { data: u } = await supabase.auth.getUser();
     const userId = u.user?.id;
     if (!userId) { setImporting(false); return toast.error("Not signed in"); }
-    const payload = rows.map(r => ({ ...r, user_id: userId }));
+    const payload = rows.map(r => ({ ...r, user_id: userId, source_file: "csv-import" }));
     const { error } = await supabase.from("bank_transactions").insert(payload);
     setImporting(false);
     if (error) return toast.error(error.message);
-    toast.success(`Imported ${rows.length} transactions`);
+    const skipped = preview.rows.length - rows.length + preview.dupInFile.length;
+    toast.success(`Imported ${rows.length} · Skipped ${skipped} duplicate${skipped === 1 ? "" : "s"}`);
     setImportOpen(false);
     setCsvText("");
-    // Expand range if imported rows fall outside current view
     const dates = rows.map(r => r.txn_date).sort();
     if (dates[0] < from) setFrom(dates[0]);
     if (dates[dates.length - 1] > to) setTo(dates[dates.length - 1]);
@@ -249,7 +375,7 @@ function Reconciliation() {
             <p className="text-sm text-muted-foreground">Match bank/cash transactions to receipts, bills, and journal entries.</p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setImportOpen(true)}>
+        <Button variant="outline" onClick={openImport}>
           <Upload className="h-4 w-4 mr-2" />Import CSV
         </Button>
       </div>
@@ -405,40 +531,97 @@ function Reconciliation() {
       </Dialog>
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader><DialogTitle>Import bank statement (CSV)</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="text-xs text-muted-foreground">
-              Required columns (case-insensitive): <code>date</code>, <code>description</code>, <code>amount</code>.
-              Optional: <code>reference</code>, <code>balance</code>. Positive = money in, negative = money out.
-              Dates accepted: YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY.
+              Upload or paste your bank CSV. Any column layout works — map fields in step 2.
+              Duplicates (same date, amount, description &amp; reference) are automatically skipped so re-imports are safe.
             </div>
-            <Input type="file" accept=".csv,text/csv" onChange={async e => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              setCsvText(await f.text());
-            }} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input type="file" accept=".csv,text/csv" onChange={async e => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                setCsvText(await f.text());
+              }} />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={hasHeader} onChange={e => setHasHeader(e.target.checked)} />
+                First row is header
+              </label>
+            </div>
             <Textarea
-              rows={10}
-              placeholder="Or paste CSV content here…&#10;date,description,amount,reference&#10;2026-01-05,Standard Chartered POS,-450.00,POS12345"
+              rows={6}
+              placeholder="Or paste CSV content here…"
               value={csvText}
               onChange={e => setCsvText(e.target.value)}
               className="font-mono text-xs"
             />
-            {csvText && (() => {
-              const { rows, errors } = parseCsv(csvText);
-              return (
-                <div className="text-xs">
-                  <div>Parsed: <b>{rows.length}</b> row(s)</div>
-                  {errors.length > 0 && <div className="text-amber-700">Issues: {errors.slice(0, 3).join(" · ")}{errors.length > 3 ? "…" : ""}</div>}
+
+            {csvHeaders.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-sm font-medium">Column mapping</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {csvHeaders.map((h, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs">
+                      <div className="w-40 truncate font-mono px-2 py-1 rounded bg-muted" title={h}>{h || `Column ${i + 1}`}</div>
+                      <span className="text-muted-foreground">→</span>
+                      <Select value={mapping[i] ?? "ignore"} onValueChange={v => {
+                        setMapping(m => { const n = [...m]; n[i] = v as MapField; return n; });
+                      }}>
+                        <SelectTrigger className="h-8 flex-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(FIELD_LABELS) as MapField[]).map(f => (
+                            <SelectItem key={f} value={f}>{FIELD_LABELS[f]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
                 </div>
-              );
-            })()}
+
+                <div className="rounded-md border p-3 bg-muted/40 space-y-1 text-xs">
+                  <div className="flex flex-wrap gap-3">
+                    <span>Parsed: <b>{preview.rows.length}</b></span>
+                    <span>New to import: <b className="text-emerald-700">{previewStats.newRows.length}</b></span>
+                    <span>Duplicates in file: <b className="text-amber-700">{preview.dupInFile.length}</b></span>
+                    <span>Already in database: <b className="text-amber-700">{previewStats.dupExisting}</b></span>
+                  </div>
+                  {preview.errors.length > 0 && (
+                    <div className="text-red-700">Issues: {preview.errors.slice(0, 3).join(" · ")}{preview.errors.length > 3 ? "…" : ""}</div>
+                  )}
+                </div>
+
+                {previewStats.newRows.length > 0 && (
+                  <div className="max-h-56 overflow-auto border rounded-md">
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Date</TableHead><TableHead>Description</TableHead>
+                        <TableHead>Ref</TableHead><TableHead className="text-right">Amount</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {previewStats.newRows.slice(0, 10).map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell>{r.txn_date}</TableCell>
+                            <TableCell className="max-w-[280px] truncate">{r.description}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{r.reference}</TableCell>
+                            <TableCell className={`text-right font-mono ${r.amount < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(r.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                        {previewStats.newRows.length > 10 && (
+                          <TableRow><TableCell colSpan={4} className="text-center text-xs text-muted-foreground">…and {previewStats.newRows.length - 10} more</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancel</Button>
-            <Button onClick={importCsv} disabled={importing || !csvText.trim()}>
-              {importing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Import
+            <Button onClick={importCsv} disabled={importing || !previewStats.newRows.length || preview.errors.length > 0}>
+              {importing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Import {previewStats.newRows.length || ""}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -463,6 +646,13 @@ function splitCsvLine(line: string): string[] {
   return out;
 }
 
+function parseNum(s: string | undefined): number {
+  if (!s) return 0;
+  const cleaned = s.replace(/,/g, "").replace(/[()]/g, m => m === "(" ? "-" : "").replace(/[^\d.\-]/g, "");
+  const n = Number(cleaned);
+  return isFinite(n) ? n : 0;
+}
+
 function normalizeDate(s: string): string | null {
   if (!s) return null;
   const iso = /^(\d{4})-(\d{2})-(\d{2})/;
@@ -471,7 +661,6 @@ function normalizeDate(s: string): string | null {
   if (slash) {
     let [, a, b, c] = slash;
     if (c.length === 2) c = "20" + c;
-    // Assume DD/MM/YYYY if first part > 12
     const first = Number(a), second = Number(b);
     const dd = first > 12 ? first : second > 12 ? second : first;
     const mm = first > 12 ? second : second > 12 ? first : second;
