@@ -24,10 +24,19 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Status = "paid" | "pending" | "overdue" | "draft";
-type LineItem = { description: string; qty: number; price: number };
+type LineItem = { description: string; qty: number; price: number; hsCode?: string };
+type ZraInfo = {
+  invoiceType: "normal" | "credit" | "debit" | "training" | "export";
+  vatRate: number; // percent
+  sellerTpin: string;
+  buyerTpin: string;
+  submittedRef?: string; // ZRA reference after mock submission
+  submittedAt?: string;
+};
 type Invoice = {
   id: string; number: string; client: string; email: string;
   issueDate: string; dueDate: string; status: Status; items: LineItem[];
+  zra?: ZraInfo;
 };
 
 const sample: Invoice[] = [
