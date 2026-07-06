@@ -25,17 +25,22 @@ import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
+import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedCsatRouteImport } from './routes/_authenticated/csat'
 import { Route as AuthenticatedCreditNotesRouteImport } from './routes/_authenticated/credit-notes'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
+import { Route as AuthenticatedComplaintsRouteImport } from './routes/_authenticated/complaints'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
+import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
 import { Route as AuthenticatedBillPaymentsRouteImport } from './routes/_authenticated/bill-payments'
@@ -139,6 +144,12 @@ const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
   path: '/payroll',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOpportunitiesRoute =
+  AuthenticatedOpportunitiesRouteImport.update({
+    id: '/opportunities',
+    path: '/opportunities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -153,6 +164,11 @@ const AuthenticatedNotificationsRoute =
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedJournalEntriesRoute =
@@ -181,6 +197,11 @@ const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCsatRoute = AuthenticatedCsatRouteImport.update({
+  id: '/csat',
+  path: '/csat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCreditNotesRoute =
   AuthenticatedCreditNotesRouteImport.update({
     id: '/credit-notes',
@@ -192,12 +213,22 @@ const AuthenticatedComplianceRoute = AuthenticatedComplianceRouteImport.update({
   path: '/compliance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedComplaintsRoute = AuthenticatedComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChartOfAccountsRoute =
   AuthenticatedChartOfAccountsRouteImport.update({
     id: '/chart-of-accounts',
     path: '/chart-of-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
   id: '/budgets',
   path: '/budgets',
@@ -322,17 +353,22 @@ export interface FileRoutesByFullPath {
   '/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
+  '/csat': typeof AuthenticatedCsatRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -370,17 +406,22 @@ export interface FileRoutesByTo {
   '/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
+  '/csat': typeof AuthenticatedCsatRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -420,17 +461,22 @@ export interface FileRoutesById {
   '/_authenticated/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/_authenticated/complaints': typeof AuthenticatedComplaintsRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
   '/_authenticated/credit-notes': typeof AuthenticatedCreditNotesRoute
+  '/_authenticated/csat': typeof AuthenticatedCsatRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
@@ -470,17 +516,22 @@ export interface FileRouteTypes {
     | '/bill-payments'
     | '/bills'
     | '/budgets'
+    | '/campaigns'
     | '/chart-of-accounts'
+    | '/complaints'
     | '/compliance'
     | '/credit-notes'
+    | '/csat'
     | '/customers'
     | '/dashboard'
     | '/employees'
     | '/invoices'
     | '/journal-entries'
+    | '/leads'
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opportunities'
     | '/payroll'
     | '/purchase-orders'
     | '/quotes'
@@ -518,17 +569,22 @@ export interface FileRouteTypes {
     | '/bill-payments'
     | '/bills'
     | '/budgets'
+    | '/campaigns'
     | '/chart-of-accounts'
+    | '/complaints'
     | '/compliance'
     | '/credit-notes'
+    | '/csat'
     | '/customers'
     | '/dashboard'
     | '/employees'
     | '/invoices'
     | '/journal-entries'
+    | '/leads'
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opportunities'
     | '/payroll'
     | '/purchase-orders'
     | '/quotes'
@@ -567,17 +623,22 @@ export interface FileRouteTypes {
     | '/_authenticated/bill-payments'
     | '/_authenticated/bills'
     | '/_authenticated/budgets'
+    | '/_authenticated/campaigns'
     | '/_authenticated/chart-of-accounts'
+    | '/_authenticated/complaints'
     | '/_authenticated/compliance'
     | '/_authenticated/credit-notes'
+    | '/_authenticated/csat'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
     | '/_authenticated/invoices'
     | '/_authenticated/journal-entries'
+    | '/_authenticated/leads'
     | '/_authenticated/leave'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
+    | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/purchase-orders'
     | '/_authenticated/quotes'
@@ -725,6 +786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPayrollRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/opportunities': {
+      id: '/_authenticated/opportunities'
+      path: '/opportunities'
+      fullPath: '/opportunities'
+      preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -744,6 +812,13 @@ declare module '@tanstack/react-router' {
       path: '/leave'
       fullPath: '/leave'
       preLoaderRoute: typeof AuthenticatedLeaveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/journal-entries': {
@@ -781,6 +856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/csat': {
+      id: '/_authenticated/csat'
+      path: '/csat'
+      fullPath: '/csat'
+      preLoaderRoute: typeof AuthenticatedCsatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/credit-notes': {
       id: '/_authenticated/credit-notes'
       path: '/credit-notes'
@@ -795,11 +877,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComplianceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/complaints': {
+      id: '/_authenticated/complaints'
+      path: '/complaints'
+      fullPath: '/complaints'
+      preLoaderRoute: typeof AuthenticatedComplaintsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chart-of-accounts': {
       id: '/_authenticated/chart-of-accounts'
       path: '/chart-of-accounts'
       fullPath: '/chart-of-accounts'
       preLoaderRoute: typeof AuthenticatedChartOfAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/campaigns': {
+      id: '/_authenticated/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/budgets': {
@@ -1023,17 +1119,22 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillPaymentsRoute: typeof AuthenticatedBillPaymentsRoute
   AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
+  AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
+  AuthenticatedComplaintsRoute: typeof AuthenticatedComplaintsRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
   AuthenticatedCreditNotesRoute: typeof AuthenticatedCreditNotesRoute
+  AuthenticatedCsatRoute: typeof AuthenticatedCsatRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
@@ -1057,17 +1158,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillPaymentsRoute: AuthenticatedBillPaymentsRoute,
   AuthenticatedBillsRoute: AuthenticatedBillsRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
+  AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
+  AuthenticatedComplaintsRoute: AuthenticatedComplaintsRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
   AuthenticatedCreditNotesRoute: AuthenticatedCreditNotesRoute,
+  AuthenticatedCsatRoute: AuthenticatedCsatRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,

@@ -592,6 +592,51 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          actual_cost: number | null
+          budget: number | null
+          channel: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          budget?: number | null
+          channel?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_cost?: number | null
+          budget?: number | null
+          channel?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chart_of_accounts: {
         Row: {
           account_code: string
@@ -802,6 +847,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      complaints: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          id: string
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       compliance_obligations: {
         Row: {
@@ -1014,6 +1104,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      csat_responses: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          response_date: string
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          response_date?: string
+          score: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          response_date?: string
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       customer_communications: {
         Row: {
@@ -1563,6 +1689,54 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string | null
+          estimated_value: number | null
+          id: string
+          name: string
+          notes: string | null
+          owner: string | null
+          phone: string | null
+          source: string | null
+          stage: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          estimated_value?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          owner?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          estimated_value?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          owner?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leave_requests: {
         Row: {
           approved_at: string | null
@@ -1648,6 +1822,54 @@ export type Database = {
           read?: boolean | null
           title?: string
           type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      opportunities: {
+        Row: {
+          amount: number | null
+          created_at: string
+          customer_id: string | null
+          expected_close_date: string | null
+          id: string
+          lead_id: string | null
+          name: string
+          notes: string | null
+          owner: string | null
+          probability: number | null
+          stage: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          customer_id?: string | null
+          expected_close_date?: string | null
+          id?: string
+          lead_id?: string | null
+          name: string
+          notes?: string | null
+          owner?: string | null
+          probability?: number | null
+          stage?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          customer_id?: string | null
+          expected_close_date?: string | null
+          id?: string
+          lead_id?: string | null
+          name?: string
+          notes?: string | null
+          owner?: string | null
+          probability?: number | null
+          stage?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
