@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,11 +11,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Invoice Dashboard — Kopelacode" },
-      { name: "description", content: "Manage invoices, track payments, and monitor fiscal compliance in one dashboard." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -22,18 +22,10 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 type Status = "paid" | "pending" | "overdue" | "draft";
-
 type LineItem = { description: string; qty: number; price: number };
-
 type Invoice = {
-  id: string;
-  number: string;
-  client: string;
-  email: string;
-  issueDate: string;
-  dueDate: string;
-  status: Status;
-  items: LineItem[];
+  id: string; number: string; client: string; email: string;
+  issueDate: string; dueDate: string; status: Status; items: LineItem[];
 };
 
 const sample: Invoice[] = [
@@ -46,7 +38,6 @@ const sample: Invoice[] = [
 ];
 
 const totalOf = (inv: Invoice) => inv.items.reduce((s, i) => s + i.qty * i.price, 0);
-const money = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const statusStyles: Record<Status, string> = {
   paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -56,10 +47,28 @@ const statusStyles: Record<Status, string> = {
 };
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>(sample);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Status | "all">("all");
   const [open, setOpen] = useState(false);
+  const [currency, setCurrency] = useState("USD");
+  const [businessName, setBusinessName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      setEmail(u.user.email ?? "");
+      const { data } = await supabase.from("profiles").select("onboarded, currency, business_name").eq("id", u.user.id).maybeSingle();
+      if (!data?.onboarded) { navigate({ to: "/onboarding" }); return; }
+      if (data.currency) setCurrency(data.currency);
+      if (data.business_name) setBusinessName(data.business_name);
+    })();
+  }, [navigate]);
+
+  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const stats = useMemo(() => {
     const total = invoices.reduce((s, i) => s + totalOf(i), 0);
@@ -78,20 +87,30 @@ function DashboardPage() {
   const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
   const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Back
+              <ArrowLeft className="h-4 w-4" /> Home
             </Link>
             <div>
-              <h1 className="text-xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Invoice Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Manage billing and fiscal compliance</p>
+              <h1 className="text-xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+                {businessName || "Invoice Dashboard"}
+              </h1>
+              <p className="text-xs text-muted-foreground">{email}</p>
             </div>
           </div>
-          <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} />
+          <div className="flex items-center gap-2">
+            <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} />
+            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
+          </div>
         </div>
       </header>
 
@@ -146,9 +165,7 @@ function DashboardPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{inv.issueDate}</TableCell>
                     <TableCell className="text-muted-foreground">{inv.dueDate}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusStyles[inv.status]}>{inv.status}</Badge>
-                    </TableCell>
+                    <TableCell><Badge variant="outline" className={statusStyles[inv.status]}>{inv.status}</Badge></TableCell>
                     <TableCell className="text-right font-medium">{money(totalOf(inv))}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => removeInvoice(inv.id)} aria-label="Delete invoice">
@@ -158,9 +175,7 @@ function DashboardPage() {
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -186,7 +201,7 @@ function StatCard({ icon, label, value, sub, tint }: { icon: React.ReactNode; la
   );
 }
 
-function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string }) {
+function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string }) {
   const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   const [client, setClient] = useState("");
@@ -206,9 +221,7 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber }: { open: boole
   const submit = () => {
     if (!client.trim()) return;
     onCreate({
-      id: crypto.randomUUID(),
-      number: nextNumber,
-      client, email, issueDate, dueDate, status,
+      id: crypto.randomUUID(), number: nextNumber, client, email, issueDate, dueDate, status,
       items: items.filter(i => i.description.trim()),
     });
     reset();
@@ -217,9 +230,7 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber }: { open: boole
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <Button><Plus className="h-4 w-4" /> New invoice</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild><Button><Plus className="h-4 w-4" /> New invoice</Button></DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create invoice <span className="ml-2 text-sm font-normal text-muted-foreground">{nextNumber}</span></DialogTitle>
