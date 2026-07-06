@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut, ShieldCheck, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AppNav } from "@/components/AppNav";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -22,10 +24,19 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Status = "paid" | "pending" | "overdue" | "draft";
-type LineItem = { description: string; qty: number; price: number };
+type LineItem = { description: string; qty: number; price: number; hsCode?: string };
+type ZraInfo = {
+  invoiceType: "normal" | "credit" | "debit" | "training" | "export";
+  vatRate: number; // percent
+  sellerTpin: string;
+  buyerTpin: string;
+  submittedRef?: string; // ZRA reference after mock submission
+  submittedAt?: string;
+};
 type Invoice = {
   id: string; number: string; client: string; email: string;
   issueDate: string; dueDate: string; status: Status; items: LineItem[];
+  zra?: ZraInfo;
 };
 
 const sample: Invoice[] = [
@@ -38,6 +49,11 @@ const sample: Invoice[] = [
 ];
 
 const totalOf = (inv: Invoice) => inv.items.reduce((s, i) => s + i.qty * i.price, 0);
+const totalWithVat = (inv: Invoice) => {
+  const sub = totalOf(inv);
+  const rate = inv.zra?.vatRate ?? 0;
+  return sub * (1 + rate / 100);
+};
 
 const statusStyles: Record<Status, string> = {
   paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -86,6 +102,14 @@ function DashboardPage() {
 
   const addInvoice = (inv: Invoice) => setInvoices(prev => [inv, ...prev]);
   const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
+  const submitToZra = (id: string) => {
+    setInvoices(prev => prev.map(i => {
+      if (i.id !== id || !i.zra) return i;
+      const ref = `ZRA${Date.now().toString().slice(-10)}`;
+      toast.success(`Submitted to ZRA Smart Invoice — Ref ${ref}`);
+      return { ...i, zra: { ...i.zra, submittedRef: ref, submittedAt: new Date().toISOString() } };
+    }));
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -108,6 +132,7 @@ function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <AppNav />
             <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
@@ -148,11 +173,11 @@ function DashboardPage() {
                 <TableRow>
                   <TableHead className="pl-6">Number</TableHead>
                   <TableHead>Client</TableHead>
-                  <TableHead>Issued</TableHead>
                   <TableHead>Due</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>ZRA</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,10 +188,22 @@ function DashboardPage() {
                       <div>{inv.client}</div>
                       <div className="text-xs text-muted-foreground">{inv.email}</div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{inv.issueDate}</TableCell>
                     <TableCell className="text-muted-foreground">{inv.dueDate}</TableCell>
                     <TableCell><Badge variant="outline" className={statusStyles[inv.status]}>{inv.status}</Badge></TableCell>
-                    <TableCell className="text-right font-medium">{money(totalOf(inv))}</TableCell>
+                    <TableCell>
+                      {inv.zra?.submittedRef ? (
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700" title={`Submitted ${inv.zra.submittedAt}`}>
+                          <QrCode className="h-3 w-3" /> {inv.zra.submittedRef}
+                        </Badge>
+                      ) : inv.zra ? (
+                        <Button size="sm" variant="outline" onClick={() => submitToZra(inv.id)}>
+                          <ShieldCheck className="h-3 w-3" /> Submit to ZRA
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">{money(totalWithVat(inv))}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => removeInvoice(inv.id)} aria-label="Delete invoice">
                         <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -175,7 +212,7 @@ function DashboardPage() {
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -209,20 +246,30 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(in30);
   const [status, setStatus] = useState<Status>("draft");
-  const [items, setItems] = useState<LineItem[]>([{ description: "", qty: 1, price: 0 }]);
+  const [items, setItems] = useState<LineItem[]>([{ description: "", qty: 1, price: 0, hsCode: "" }]);
+  // ZRA Smart Invoice
+  const [zraEnabled, setZraEnabled] = useState(true);
+  const [invoiceType, setInvoiceType] = useState<ZraInfo["invoiceType"]>("normal");
+  const [vatRate, setVatRate] = useState<number>(16);
+  const [sellerTpin, setSellerTpin] = useState("");
+  const [buyerTpin, setBuyerTpin] = useState("");
 
   const reset = () => {
     setClient(""); setEmail(""); setIssueDate(today); setDueDate(in30); setStatus("draft");
-    setItems([{ description: "", qty: 1, price: 0 }]);
+    setItems([{ description: "", qty: 1, price: 0, hsCode: "" }]);
+    setZraEnabled(true); setInvoiceType("normal"); setVatRate(16); setSellerTpin(""); setBuyerTpin("");
   };
 
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const subTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const vatAmount = zraEnabled ? subTotal * (vatRate / 100) : 0;
+  const total = subTotal + vatAmount;
 
   const submit = () => {
     if (!client.trim()) return;
     onCreate({
       id: crypto.randomUUID(), number: nextNumber, client, email, issueDate, dueDate, status,
       items: items.filter(i => i.description.trim()),
+      zra: zraEnabled ? { invoiceType, vatRate, sellerTpin, buyerTpin } : undefined,
     });
     reset();
     setOpen(false);
@@ -255,28 +302,72 @@ function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money }: { open
             </div>
           </div>
 
+          {/* ZRA Smart Invoice section */}
+          <div className="rounded-lg border bg-emerald-50/40 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-700" />
+                <div>
+                  <div className="text-sm font-semibold">ZRA Smart Invoice</div>
+                  <div className="text-xs text-muted-foreground">Zambia Revenue Authority compliance fields</div>
+                </div>
+              </div>
+              <label className="inline-flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={zraEnabled} onChange={e => setZraEnabled(e.target.checked)} className="h-4 w-4" />
+                Enable
+              </label>
+            </div>
+            {zraEnabled && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Invoice type</Label>
+                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as ZraInfo["invoiceType"])}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal sale</SelectItem>
+                      <SelectItem value="credit">Credit note</SelectItem>
+                      <SelectItem value="debit">Debit note</SelectItem>
+                      <SelectItem value="training">Training</SelectItem>
+                      <SelectItem value="export">Export (zero-rated)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>VAT rate (%)</Label>
+                  <Input type="number" min={0} max={100} step="0.5" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} />
+                </div>
+                <div className="space-y-2"><Label>Seller TPIN</Label><Input value={sellerTpin} onChange={e => setSellerTpin(e.target.value)} placeholder="10 digits" maxLength={10} /></div>
+                <div className="space-y-2"><Label>Buyer TPIN</Label><Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="Optional" maxLength={10} /></div>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Line items</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setItems(prev => [...prev, { description: "", qty: 1, price: 0 }])}>
+              <Label>Line items{zraEnabled && " (with HS codes)"}</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setItems(prev => [...prev, { description: "", qty: 1, price: 0, hsCode: "" }])}>
                 <Plus className="h-3 w-3" /> Add item
               </Button>
             </div>
             <div className="space-y-2">
               {items.map((item, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2">
-                  <Input className="col-span-6" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                  <Input className="col-span-2" type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                  <Input className="col-span-3" type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
+                  <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
+                  {zraEnabled && (
+                    <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
+                  )}
+                  <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
+                  <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
                   <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end border-t pt-3 text-sm">
-              <div className="text-muted-foreground">Total:&nbsp;</div>
-              <div className="font-semibold">{money(total)}</div>
+            <div className="space-y-1 border-t pt-3 text-sm">
+              <div className="flex justify-end gap-4"><span className="text-muted-foreground">Subtotal</span><span>{money(subTotal)}</span></div>
+              {zraEnabled && <div className="flex justify-end gap-4"><span className="text-muted-foreground">VAT ({vatRate}%)</span><span>{money(vatAmount)}</span></div>}
+              <div className="flex justify-end gap-4 text-base"><span className="text-muted-foreground">Total</span><span className="font-semibold">{money(total)}</span></div>
             </div>
           </div>
         </div>

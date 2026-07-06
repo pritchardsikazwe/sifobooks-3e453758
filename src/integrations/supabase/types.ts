@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transactions: {
+        Row: {
+          amount: number
+          balance: number | null
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          matched_invoice: string | null
+          reference: string | null
+          source_file: string | null
+          txn_date: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance?: number | null
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          matched_invoice?: string | null
+          reference?: string | null
+          source_file?: string | null
+          txn_date: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance?: number | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          matched_invoice?: string | null
+          reference?: string | null
+          source_file?: string | null
+          txn_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      compliance_obligations: {
+        Row: {
+          amount: number | null
+          body: string
+          created_at: string
+          due_date: string
+          id: string
+          notes: string | null
+          obligation_type: string
+          period: string
+          reference: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          body: string
+          created_at?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          obligation_type: string
+          period: string
+          reference?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          body?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          obligation_type?: string
+          period?: string
+          reference?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           business_name: string | null
