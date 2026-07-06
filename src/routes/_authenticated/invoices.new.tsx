@@ -1,8 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, ReceiptText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,41 +12,65 @@ import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
-  head: () => ({ meta: [{ title: "New invoice — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: NewInvoicePage,
 });
 
-type Line = { description: string; qty: number; price: number; vatRate: number; hsCode?: string; stockItemId?: string | null };
+type Line = {
+  stockItemId?: string | null;
+  description: string;
+  warehouseId?: string | null;
+  qty: number;
+  price: number;
+  discount: number;
+  discountType: "%" | "ZMW";
+  taxCode: "A" | "B" | "C" | "E";
+  vatRate: number;
+};
+
+const TAX_RATES: Record<string, number> = { A: 16, B: 0, C: 0, E: 0 };
 
 function NewInvoicePage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
 
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [stock, setStock] = useState<any[]>([]);
-  const [customerId, setCustomerId] = useState<string>("");
-  const [currency, setCurrency] = useState("ZMW");
+  const [docType, setDocType] = useState("normal");
+  const [layout, setLayout] = useState("modern");
+  const [number, setNumber] = useState("INV1");
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(in30);
-  const [status, setStatus] = useState("sent");
-  const [items, setItems] = useState<Line[]>([{ description: "", qty: 1, price: 0, vatRate: 16 }]);
-  const [notes, setNotes] = useState("");
-  const [zraOn, setZraOn] = useState(true);
-  const [sellerTpin, setSellerTpin] = useState("");
+  const [currency, setCurrency] = useState("ZMW");
+  const [taxInclusive, setTaxInclusive] = useState(true);
+  const [recurring, setRecurring] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
   const [buyerTpin, setBuyerTpin] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [stock, setStock] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [company, setCompany] = useState<any>(null);
+
+  const [items, setItems] = useState<Line[]>([
+    { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 },
+  ]);
 
   useEffect(() => {
     (async () => {
-      const [{ data: cs }, { data: si }, { data: co }] = await Promise.all([
-        supabase.from("customers").select("id, name, tpin, payment_terms_days").eq("active", true).order("name"),
-        supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price"),
-        supabase.from("companies").select("base_currency, tpin").maybeSingle(),
+      const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
+        supabase.from("customers").select("id, name, tpin, payment_terms_days, address").eq("active", true).order("name"),
+        supabase.from("stock_items").select("id, name, sku, vat_rate, sell_price"),
+        supabase.from("warehouses").select("id, name"),
+        supabase.from("companies").select("*").maybeSingle(),
+        supabase.from("invoices").select("*", { count: "exact", head: true }),
       ]);
-      setCustomers(cs ?? []); setStock(si ?? []);
+      setCustomers(cs ?? []); setStock(si ?? []); setWarehouses(wh ?? []); setCompany(co ?? null);
       if (co?.base_currency) setCurrency(co.base_currency);
-      if ((co as any)?.tpin) setSellerTpin((co as any).tpin);
+      setNumber(`INV${((count ?? 0) + 1)}`);
     })();
   }, []);
 
@@ -59,38 +82,64 @@ function NewInvoicePage() {
     }
   }, [customerId, customers]);
 
-  const subtotal = useMemo(() => items.reduce((s, i) => s + i.qty * i.price, 0), [items]);
-  const vat = useMemo(() => zraOn ? items.reduce((s, i) => s + i.qty * i.price * (i.vatRate / 100), 0) : 0, [items, zraOn]);
-  const total = subtotal + vat;
+  const totals = useMemo(() => {
+    let subtotal = 0, tax = 0;
+    for (const it of items) {
+      const gross = it.qty * it.price;
+      const disc = it.discountType === "%" ? gross * (it.discount / 100) : it.discount;
+      const net = Math.max(gross - disc, 0);
+      const rate = it.vatRate / 100;
+      if (taxInclusive) {
+        const base = net / (1 + rate);
+        subtotal += base;
+        tax += net - base;
+      } else {
+        subtotal += net;
+        tax += net * rate;
+      }
+    }
+    return { subtotal, tax, total: subtotal + tax };
+  }, [items, taxInclusive]);
 
   const pickStock = (idx: number, stockId: string) => {
     const s = stock.find(x => x.id === stockId);
     if (!s) return;
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, stockItemId: s.id, description: s.name, price: Number(s.sell_price), vatRate: Number(s.vat_rate), hsCode: s.hs_code ?? undefined } : it));
+    setItems(prev => prev.map((it, i) => i === idx ? {
+      ...it, stockItemId: s.id, description: s.name,
+      price: Number(s.sell_price), vatRate: Number(s.vat_rate ?? 16),
+    } : it));
   };
 
-  const submit = async () => {
+  const updateRow = (idx: number, patch: Partial<Line>) =>
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
+
+  const submit = async (targetStatus: "draft" | "sent") => {
     if (!customerId) return toast.error("Select a customer");
-    const valid = items.filter(i => i.description.trim() && i.qty > 0);
-    if (valid.length === 0) return toast.error("Add at least one line item");
+    const valid = items.filter(i => (i.description.trim() || i.stockItemId) && i.qty > 0 && i.price > 0);
+    if (valid.length === 0) return toast.error("Add at least one line item with price");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
-    const number = `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+
     const { data: inv, error } = await supabase.from("invoices").insert({
       user_id: u.user.id, customer_id: customerId, number,
-      issue_date: issueDate, due_date: dueDate, status, currency,
-      subtotal, vat_amount: vat, total, notes,
-      seller_tpin: zraOn ? sellerTpin || null : null, buyer_tpin: zraOn ? buyerTpin || null : null,
+      issue_date: issueDate, due_date: dueDate, status: targetStatus, currency,
+      subtotal: totals.subtotal, vat_amount: totals.tax, total: totals.total, notes,
+      seller_tpin: company?.tpin ?? null, buyer_tpin: buyerTpin || null,
     }).select().single();
     if (error || !inv) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
-    const { error: ie } = await supabase.from("invoice_items").insert(valid.map(i => ({
-      user_id: u.user.id, invoice_id: inv.id, stock_item_id: i.stockItemId ?? null,
-      description: i.description, hs_code: i.hsCode ?? null,
-      quantity: i.qty, unit_price: i.price, vat_rate: zraOn ? i.vatRate : 0,
-      line_total: i.qty * i.price * (1 + (zraOn ? i.vatRate : 0) / 100),
-    })));
-    // deduct stock
+
+    const { error: ie } = await supabase.from("invoice_items").insert(valid.map(i => {
+      const gross = i.qty * i.price;
+      const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
+      const net = Math.max(gross - disc, 0);
+      const line = taxInclusive ? net : net * (1 + i.vatRate / 100);
+      return {
+        user_id: u.user.id, invoice_id: inv.id, stock_item_id: i.stockItemId ?? null,
+        description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
+        quantity: i.qty, unit_price: i.price, vat_rate: i.vatRate, line_total: line,
+      };
+    }));
     for (const i of valid) {
       if (i.stockItemId) {
         await supabase.from("stock_movements").insert({
@@ -101,89 +150,256 @@ function NewInvoicePage() {
     }
     setSaving(false);
     if (ie) return toast.error(ie.message);
-    toast.success(`Invoice ${number} saved`);
+    toast.success(targetStatus === "draft" ? "Saved as draft" : `Invoice ${number} posted`);
     navigate({ to: "/invoices" });
   };
 
+  const ActionButtons = (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
+      <Button variant="outline" onClick={() => toast.info("Preview coming next")}>Preview Invoice</Button>
+      <Button onClick={() => submit("sent")} disabled={saving} className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post Invoice</Button>
+    </div>
+  );
+
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <Link to="/invoices" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back</Link>
-      <div><h1 className="text-2xl font-semibold flex items-center gap-2"><ReceiptText className="h-6 w-6 text-emerald-600" /> New invoice</h1></div>
-
-      <Card><CardHeader><CardTitle className="text-base">Customer & dates</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <div className="flex items-center justify-between">
-              <Label>Customer *</Label>
-              <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
-            </div>
-            {customers.length === 0 ? (
-              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground text-center">
-                No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above to add one.
-              </div>
-            ) : (
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
-                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
-            )}
-          </div>
-          <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
-          <div className="space-y-2"><Label>Due date</Label><Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
-          <div className="space-y-2"><Label>Currency</Label><Input value={currency} onChange={e => setCurrency(e.target.value)} /></div>
-          <div className="space-y-2"><Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{["draft", "sent"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-600" /> ZRA / VAT</CardTitle>
-          <div className="flex items-center gap-2 text-sm"><Switch checked={zraOn} onCheckedChange={setZraOn} /> {zraOn ? "Enabled" : "Disabled"}</div>
-        </CardHeader>
-        {zraOn && <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2"><Label>Seller TPIN</Label><Input value={sellerTpin} onChange={e => setSellerTpin(e.target.value)} placeholder="1000000000" /></div>
-          <div className="space-y-2"><Label>Buyer TPIN</Label><Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="1000000000" /></div>
-        </CardContent>}
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base">Line items</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, vatRate: 16 }])}><Plus className="h-3 w-3 mr-1" /> Add</Button>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {items.map((it, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-              <div className="col-span-12 sm:col-span-5 space-y-1">
-                <Select value={it.stockItemId ?? ""} onValueChange={v => pickStock(idx, v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional)" /></SelectTrigger>
-                  <SelectContent>{stock.map(s => <SelectItem key={s.id} value={s.id}>{s.name} {s.sku ? `(${s.sku})` : ""}</SelectItem>)}</SelectContent>
-                </Select>
-                <Input placeholder="Description" value={it.description} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
-              </div>
-              <Input className="col-span-3 sm:col-span-2" type="number" step="0.001" placeholder="Qty" value={it.qty} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, qty: Number(e.target.value) } : x))} />
-              <Input className="col-span-4 sm:col-span-2" type="number" step="0.01" placeholder="Price" value={it.price} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, price: Number(e.target.value) } : x))} />
-              <Input className="col-span-3 sm:col-span-2" type="number" step="0.1" placeholder="VAT %" value={it.vatRate} onChange={e => setItems(p => p.map((x, i) => i === idx ? { ...x, vatRate: Number(e.target.value) } : x))} disabled={!zraOn} />
-              <Button variant="ghost" size="icon" className="col-span-2 sm:col-span-1" onClick={() => setItems(p => p.filter((_, i) => i !== idx))} disabled={items.length === 1}><Trash2 className="h-4 w-4" /></Button>
-            </div>
-          ))}
-          <div className="border-t pt-3 space-y-1 text-sm max-w-xs ml-auto">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal, currency)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat, currency)}</span></div>
-            <div className="flex justify-between font-semibold text-base border-t pt-1"><span>Total</span><span>{fmtMoney(total, currency)}</span></div>
-          </div>
-          <div className="space-y-2"><Label>Notes</Label><textarea className="w-full min-h-20 rounded-md border bg-background p-2 text-sm" value={notes} onChange={e => setNotes(e.target.value)} /></div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => navigate({ to: "/invoices" })}>Cancel</Button>
-        <Button onClick={submit} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Saving…" : "Save invoice"}</Button>
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
+        <Button variant="outline" size="sm" onClick={() => router.history.back()} className="gap-1"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
+        {ActionButtons}
       </div>
+
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-lg font-semibold">Invoice Generator</h1>
+        </div>
+
+        <div>
+          <Label className="text-xs text-muted-foreground">Document Type</Label>
+          <Select value={docType} onValueChange={setDocType}>
+            <SelectTrigger className="mt-1 max-w-xs bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal Invoice</SelectItem>
+              <SelectItem value="recurring">Recurring Invoice</SelectItem>
+              <SelectItem value="credit">Credit Note</SelectItem>
+              <SelectItem value="proforma">Proforma</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Invoice Information */}
+        <Section title="INVOICE INFORMATION" action={<button className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+          <Field label="Invoice Number">
+            <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-slate-50" />
+          </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Issued Date">
+              <div className="relative">
+                <CalIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} className="pl-9" />
+              </div>
+            </Field>
+            <Field label="Due Date">
+              <div className="relative">
+                <CalIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="pl-9" />
+              </div>
+            </Field>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Invoice Layout">
+              <Select value={layout} onValueChange={setLayout}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="modern">Modern Invoice</SelectItem>
+                  <SelectItem value="classic">Classic Invoice</SelectItem>
+                  <SelectItem value="minimal">Minimal Invoice</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Currency">
+              <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-slate-50" />
+              <div className="text-right"><button className="text-xs text-[#0f4c5c] font-medium underline mt-1">Set Exchange Rate</button></div>
+            </Field>
+          </div>
+        </Section>
+
+        {/* Customer Information */}
+        <Section title="CUSTOMER INFORMATION">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Customer" action={
+              <QuickAddCustomer
+                trigger={<button type="button" className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
+                onCreated={c => { setCustomers(p => [...p, c]); setCustomerId(c.id); }}
+              />
+            }>
+              {customers.length === 0 ? (
+                <div className="rounded border border-dashed p-3 text-xs text-muted-foreground">No customers. Click <b>New</b> to add one.</div>
+              ) : (
+                <Select value={customerId} onValueChange={setCustomerId}>
+                  <SelectTrigger><SelectValue placeholder="Select Customer" /></SelectTrigger>
+                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
+            </Field>
+            <Field label="VAT Reference">
+              <Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="Enter VAT" />
+            </Field>
+          </div>
+          <div className="flex items-center justify-between border-t pt-3">
+            <span className="text-xs font-medium text-muted-foreground">CUSTOMER ADDRESS</span>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">Show <Switch checked={showAddress} onCheckedChange={setShowAddress} /></label>
+          </div>
+        </Section>
+
+        {/* Recurring toggle strip */}
+        <div className="bg-white rounded-lg border px-4 py-3 flex items-center justify-between">
+          <span className="text-sm font-medium">Make this a recurring invoice?</span>
+          <Switch checked={recurring} onCheckedChange={setRecurring} />
+        </div>
+
+        {/* Invoice Items */}
+        <div className="bg-white rounded-lg border">
+          <div className="flex items-center justify-between px-4 py-3 border-b flex-wrap gap-2">
+            <span className="text-xs font-semibold text-muted-foreground tracking-wide">INVOICE ITEMS</span>
+            <label className="flex items-center gap-2 text-xs">
+              <span className={taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
+              <Switch checked={taxInclusive} onCheckedChange={setTaxInclusive} />
+              <span className={!taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
+            </label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-xs text-muted-foreground">
+                <tr>
+                  <th className="text-left font-medium p-2 min-w-[160px]">Item/Service</th>
+                  <th className="text-left font-medium p-2 min-w-[160px]">Description</th>
+                  <th className="text-left font-medium p-2 min-w-[130px]">Warehouse</th>
+                  <th className="text-left font-medium p-2 w-20">Qty</th>
+                  <th className="text-left font-medium p-2 w-28">Unit Price</th>
+                  <th className="text-left font-medium p-2 w-32">Discount</th>
+                  <th className="text-left font-medium p-2 w-24">Tax Code</th>
+                  <th className="p-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((it, idx) => (
+                  <tr key={idx} className="border-b last:border-0">
+                    <td className="p-2">
+                      <Select value={it.stockItemId ?? ""} onValueChange={v => pickStock(idx, v)}>
+                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select Item/S..." /></SelectTrigger>
+                        <SelectContent>{stock.map(s => <SelectItem key={s.id} value={s.id}>{s.name}{s.sku ? ` (${s.sku})` : ""}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2"><Input value={it.description} onChange={e => updateRow(idx, { description: e.target.value })} className="h-9" /></td>
+                    <td className="p-2">
+                      <Select value={it.warehouseId ?? ""} onValueChange={v => updateRow(idx, { warehouseId: v })}>
+                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select iter..." /></SelectTrigger>
+                        <SelectContent>{warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2"><Input type="number" value={it.qty} onChange={e => updateRow(idx, { qty: Number(e.target.value) })} className="h-9" /></td>
+                    <td className="p-2"><Input type="number" step="0.01" value={it.price || ""} onChange={e => updateRow(idx, { price: Number(e.target.value) })} className={`h-9 ${!it.price ? "border-red-300" : ""}`} /></td>
+                    <td className="p-2">
+                      <div className="flex gap-1">
+                        <Input type="number" value={it.discount} onChange={e => updateRow(idx, { discount: Number(e.target.value) })} className="h-9" />
+                        <Select value={it.discountType} onValueChange={(v: any) => updateRow(idx, { discountType: v })}>
+                          <SelectTrigger className="h-9 w-16 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="%">%</SelectItem><SelectItem value="ZMW">ZMW</SelectItem></SelectContent>
+                        </Select>
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <Select value={it.taxCode} onValueChange={(v: any) => updateRow(idx, { taxCode: v, vatRate: TAX_RATES[v] })}>
+                        <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A (16%)</SelectItem>
+                          <SelectItem value="B">B (0%)</SelectItem>
+                          <SelectItem value="C">C (Exempt)</SelectItem>
+                          <SelectItem value="E">E (Export)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-2 text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setItems(p => p.filter((_, i) => i !== idx))} disabled={items.length === 1}><Trash2 className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 border-t">
+            <button onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}
+              className="text-sm text-[#0f4c5c] font-medium inline-flex items-center gap-1">
+              <Plus className="h-4 w-4" /> Add Item
+            </button>
+          </div>
+        </div>
+
+        {/* Bank Details */}
+        <Section title="BANK DETAILS" action={<button className="text-xs text-[#0f4c5c] font-medium">Edit</button>}>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div>Account Name: {company?.name ?? "—"}</div>
+            <div>Account Number: {company?.bank_account_number ?? "—"}</div>
+            <div>Bank Name: {company?.bank_name ?? "—"}</div>
+          </div>
+        </Section>
+
+        {/* Notes */}
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-2">NOTES</div>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Enter payment memo or additional notes..."
+            className="w-full min-h-20 rounded-md border bg-background p-2 text-sm"
+          />
+        </div>
+
+        {/* Summary */}
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">SUMMARY</div>
+          <SummaryRow label="Subtotal" value={fmtMoney(totals.subtotal, currency)} />
+          <SummaryRow label="Tax" value={fmtMoney(totals.tax, currency)} />
+          <SummaryRow label="Total Price" value={fmtMoney(totals.total, currency)} strong />
+          <SummaryRow label="Conversion Rate" value={`${currency} 1 = ${currency} 1`} muted />
+        </div>
+
+        <div className="flex justify-end pt-2">{ActionButtons}</div>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-lg border p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold text-muted-foreground tracking-wide">{title}</div>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children, action }: { label: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, strong, muted }: { label: string; value: string; strong?: boolean; muted?: boolean }) {
+  return (
+    <div className={`flex justify-between py-2 border-b last:border-0 text-sm ${strong ? "font-semibold" : ""} ${muted ? "text-muted-foreground" : ""}`}>
+      <span className={muted ? "" : "text-muted-foreground"}>{label}</span>
+      <span className={strong ? "text-foreground" : ""}>{value}</span>
     </div>
   );
 }
