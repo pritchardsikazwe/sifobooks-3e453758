@@ -119,6 +119,7 @@ function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <AppNav />
             <NewInvoiceDialog open={open} setOpen={setOpen} onCreate={addInvoice} nextNumber={`INV-2026-${String(143 + (invoices.length - sample.length)).padStart(4, "0")}`} money={money} />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
