@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Status = "paid" | "pending" | "overdue" | "draft";
-type LineItem = { description: string; qty: number; price: number; hsCode?: string };
+type LineItem = { description: string; qty: number; price: number; hsCode?: string; stockItemId?: string | null };
+type StockPick = { id: string; name: string; sku: string | null; hs_code: string | null; vat_rate: number; sell_price: number; unit: string; quantity_on_hand: number };
 type ZraInfo = {
   invoiceType: "normal" | "credit" | "debit" | "training" | "export";
   vatRate: number; // percent
