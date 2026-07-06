@@ -37,6 +37,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedCreditNotesRouteImport } from './routes/_authenticated/credit-notes'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
+import { Route as AuthenticatedComplaintsRouteImport } from './routes/_authenticated/complaints'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
@@ -206,6 +207,11 @@ const AuthenticatedComplianceRoute = AuthenticatedComplianceRouteImport.update({
   path: '/compliance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedComplaintsRoute = AuthenticatedComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChartOfAccountsRoute =
   AuthenticatedChartOfAccountsRouteImport.update({
     id: '/chart-of-accounts',
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
+  '/_authenticated/complaints': typeof AuthenticatedComplaintsRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
   '/_authenticated/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
@@ -500,6 +509,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/campaigns'
     | '/chart-of-accounts'
+    | '/complaints'
     | '/compliance'
     | '/credit-notes'
     | '/customers'
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/campaigns'
     | '/chart-of-accounts'
+    | '/complaints'
     | '/compliance'
     | '/credit-notes'
     | '/customers'
@@ -603,6 +614,7 @@ export interface FileRouteTypes {
     | '/_authenticated/budgets'
     | '/_authenticated/campaigns'
     | '/_authenticated/chart-of-accounts'
+    | '/_authenticated/complaints'
     | '/_authenticated/compliance'
     | '/_authenticated/credit-notes'
     | '/_authenticated/customers'
@@ -846,6 +858,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComplianceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/complaints': {
+      id: '/_authenticated/complaints'
+      path: '/complaints'
+      fullPath: '/complaints'
+      preLoaderRoute: typeof AuthenticatedComplaintsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chart-of-accounts': {
       id: '/_authenticated/chart-of-accounts'
       path: '/chart-of-accounts'
@@ -1083,6 +1102,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
+  AuthenticatedComplaintsRoute: typeof AuthenticatedComplaintsRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
   AuthenticatedCreditNotesRoute: typeof AuthenticatedCreditNotesRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
@@ -1120,6 +1140,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
+  AuthenticatedComplaintsRoute: AuthenticatedComplaintsRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
   AuthenticatedCreditNotesRoute: AuthenticatedCreditNotesRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
