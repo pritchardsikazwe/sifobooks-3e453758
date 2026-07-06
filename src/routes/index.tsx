@@ -111,9 +111,11 @@ function Header() {
           <a href="#pricing" className="hover:text-foreground">Pricing</a>
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="hidden sm:inline-flex">Sign in</Button>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-            Book a demo
+          <Button asChild variant="ghost" className="hidden sm:inline-flex">
+            <Link to="/auth">Sign in</Link>
+          </Button>
+          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Link to="/auth">Get started</Link>
           </Button>
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
