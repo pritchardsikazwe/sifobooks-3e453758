@@ -43,6 +43,7 @@ const sections: Section[] = [
     { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
     { title: "Journal Entries", url: "/journal-entries", icon: BookText },
     { title: "Budgets", url: "/budgets", icon: PiggyBank },
+    { title: "Period Close", url: "/period-close", icon: CalendarClock },
   ]},
   { label: "Inventory", items: [
     { title: "Items", url: "/stock", icon: Boxes },
