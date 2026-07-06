@@ -35,6 +35,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
+import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -204,6 +205,11 @@ const AuthenticatedJournalEntriesRoute =
     path: '/journal-entries',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJobCardsRoute = AuthenticatedJobCardsRouteImport.update({
+  id: '/job-cards',
+  path: '/job-cards',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -390,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
@@ -447,6 +454,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
@@ -506,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
@@ -565,6 +574,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/invoices'
+    | '/job-cards'
     | '/journal-entries'
     | '/leads'
     | '/leave'
@@ -622,6 +632,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/invoices'
+    | '/job-cards'
     | '/journal-entries'
     | '/leads'
     | '/leave'
@@ -680,6 +691,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
     | '/_authenticated/invoices'
+    | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
@@ -905,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/journal-entries'
       fullPath: '/journal-entries'
       preLoaderRoute: typeof AuthenticatedJournalEntriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/job-cards': {
+      id: '/_authenticated/job-cards'
+      path: '/job-cards'
+      fullPath: '/job-cards'
+      preLoaderRoute: typeof AuthenticatedJobCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/invoices': {
@@ -1208,6 +1227,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
+  AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
@@ -1251,6 +1271,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
+  AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
