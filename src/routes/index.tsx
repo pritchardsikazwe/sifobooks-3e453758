@@ -57,7 +57,7 @@ const posts = [
   {
     tag: "Product",
     title: "Unlimited invoices, one flat plan",
-    excerpt: "Introducing our new EdgeCore plan — send as many invoices as your business needs, no per-document fees.",
+    excerpt: "Introducing our new SifoBooks plan — send as many invoices as your business needs, no per-document fees.",
   },
   {
     tag: "Compliance",
@@ -143,7 +143,7 @@ function Hero() {
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-            What&apos;s new — Unlimited invoices with EdgeCore
+            What&apos;s new — Unlimited invoices with SifoBooks
           </div>
           <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
             Africa&apos;s No. 1 platform for{" "}
@@ -317,7 +317,7 @@ function WhatWeDo() {
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           <ProductCard
             badge="For all business types"
-            title="EdgeCore"
+            title="SifoBooks"
             description="Create, customize and send invoices in minutes. Track payments, manage expenses, get paid faster and stay compliant with tax authorities — all from one dashboard."
             features={["Unlimited invoices", "Payment tracking", "Expense management", "Multi-currency"]}
             icon={<FileText className="h-5 w-5" />}

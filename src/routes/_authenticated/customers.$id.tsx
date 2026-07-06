@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/customers/$id")({
-  head: () => ({ meta: [{ title: "Customer — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Customer — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: CustomerDetail,
 });
 

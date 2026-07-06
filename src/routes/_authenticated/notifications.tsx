@@ -3,7 +3,7 @@ import { Bell } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Notifications — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Notifications"

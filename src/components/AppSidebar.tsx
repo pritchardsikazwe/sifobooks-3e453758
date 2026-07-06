@@ -105,7 +105,7 @@ export function AppSidebar() {
           <div className="h-8 w-8 rounded-md bg-gradient-to-br from-emerald-400 to-teal-500 grid place-items-center text-[10px] font-bold text-slate-900">EC</div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="text-lg font-bold tracking-tight text-emerald-400 leading-none">EdgeCore</div>
+              <div className="text-lg font-bold tracking-tight text-emerald-400 leading-none">SifoBooks</div>
               <div className="text-[11px] text-white/60 truncate mt-0.5">{subtitle}</div>
             </div>
           )}

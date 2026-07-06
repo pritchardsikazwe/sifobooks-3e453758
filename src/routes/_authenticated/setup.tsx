@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { monthName } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/setup")({
-  head: () => ({ meta: [{ title: "Company Setup — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Company Setup — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: SetupPage,
 });
 

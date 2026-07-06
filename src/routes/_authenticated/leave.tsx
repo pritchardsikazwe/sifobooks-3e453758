@@ -3,7 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 
 export const Route = createFileRoute("/_authenticated/leave")({
-  head: () => ({ meta: [{ title: "Leave Requests — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Leave Requests — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Leave Requests"

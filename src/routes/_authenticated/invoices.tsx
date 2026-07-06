@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/invoices")({
-  head: () => ({ meta: [{ title: "Invoices — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Invoices — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: InvoicesPage,
 });
 

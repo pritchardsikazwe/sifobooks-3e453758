@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/quotes")({
-  head: () => ({ meta: [{ title: "Quotes — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Quotes — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: QuotesPage,
 });
 

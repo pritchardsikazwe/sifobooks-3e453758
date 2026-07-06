@@ -4,7 +4,7 @@ import { SimpleCrud } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/bill-payments")({
-  head: () => ({ meta: [{ title: "Supplier Payments — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Supplier Payments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Supplier Payments"

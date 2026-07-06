@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Summary — EdgeCore Operations" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Summary — SifoBooks Operations" }, { name: "robots", content: "noindex" }] }),
   component: DashboardPage,
 });
 
