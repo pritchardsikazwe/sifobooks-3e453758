@@ -160,11 +160,11 @@ function DashboardPage() {
                 <TableRow>
                   <TableHead className="pl-6">Number</TableHead>
                   <TableHead>Client</TableHead>
-                  <TableHead>Issued</TableHead>
                   <TableHead>Due</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>ZRA</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,10 +175,22 @@ function DashboardPage() {
                       <div>{inv.client}</div>
                       <div className="text-xs text-muted-foreground">{inv.email}</div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{inv.issueDate}</TableCell>
                     <TableCell className="text-muted-foreground">{inv.dueDate}</TableCell>
                     <TableCell><Badge variant="outline" className={statusStyles[inv.status]}>{inv.status}</Badge></TableCell>
-                    <TableCell className="text-right font-medium">{money(totalOf(inv))}</TableCell>
+                    <TableCell>
+                      {inv.zra?.submittedRef ? (
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700" title={`Submitted ${inv.zra.submittedAt}`}>
+                          <QrCode className="h-3 w-3" /> {inv.zra.submittedRef}
+                        </Badge>
+                      ) : inv.zra ? (
+                        <Button size="sm" variant="outline" onClick={() => submitToZra(inv.id)}>
+                          <ShieldCheck className="h-3 w-3" /> Submit to ZRA
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">{money(totalWithVat(inv))}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => removeInvoice(inv.id)} aria-label="Delete invoice">
                         <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -187,7 +199,7 @@ function DashboardPage() {
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
