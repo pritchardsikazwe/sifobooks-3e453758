@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/reports")({
