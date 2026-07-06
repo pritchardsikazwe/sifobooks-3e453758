@@ -6,7 +6,7 @@ import {
   Landmark, BookOpen, BookText, PiggyBank,
   Boxes, BarChart3, ShieldCheck, Warehouse, ClipboardEdit,
   UserSquare, CalendarCheck, CalendarDays, Banknote,
-  Settings, UserCog, Building2, Bell, LogOut, Sparkles,
+  Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
