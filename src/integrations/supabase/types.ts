@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_hierarchies: {
+        Row: {
+          approver_role: string
+          company_id: string
+          created_at: string
+          id: string
+          level: number
+          max_amount: number | null
+          min_amount: number | null
+          module: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approver_role: string
+          company_id: string
+          created_at?: string
+          id?: string
+          level?: number
+          max_amount?: number | null
+          min_amount?: number | null
+          module: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approver_role?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          max_amount?: number | null
+          min_amount?: number | null
+          module?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_hierarchies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transactions: {
         Row: {
           amount: number
@@ -53,6 +100,128 @@ export type Database = {
           source_file?: string | null
           txn_date?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      branches: {
+        Row: {
+          active: boolean
+          address: string | null
+          city: string | null
+          code: string | null
+          company_id: string
+          created_at: string
+          id: string
+          manager_name: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          manager_name?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          manager_name?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          base_currency: string
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          financial_year_start_month: number
+          id: string
+          is_primary: boolean
+          logo_url: string | null
+          name: string
+          phone: string | null
+          timezone: string
+          tpin: string | null
+          trading_name: string | null
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+          vat_registered: boolean
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          base_currency?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          financial_year_start_month?: number
+          id?: string
+          is_primary?: boolean
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          timezone?: string
+          tpin?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          base_currency?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          financial_year_start_month?: number
+          id?: string
+          is_primary?: boolean
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          timezone?: string
+          tpin?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          website?: string | null
         }
         Relationships: []
       }
@@ -100,6 +269,216 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      cost_centres: {
+        Row: {
+          annual_budget: number | null
+          code: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annual_budget?: number | null
+          code?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annual_budget?: number | null
+          code?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centres_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          active: boolean
+          address: string | null
+          city: string | null
+          company_id: string | null
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          credit_limit: number | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_terms_days: number
+          phone: string | null
+          tpin: string | null
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          city?: string | null
+          company_id?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_terms_days?: number
+          phone?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          city?: string | null
+          company_id?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_terms_days?: number
+          phone?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          manager_name: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_name?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_name?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          company_id: string
+          created_at: string
+          department_id: string | null
+          description: string | null
+          id: string
+          level: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "positions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -249,6 +628,50 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_settings: {
+        Row: {
+          applies_to: string
+          company_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          rate: number
+          tax_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applies_to?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          rate?: number
+          tax_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applies_to?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          rate?: number
+          tax_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

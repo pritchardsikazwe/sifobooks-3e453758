@@ -1,440 +1,369 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Trash2, ArrowLeft, LogOut, ShieldCheck, QrCode, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Landmark, Receipt, Users, ArrowUpRight, ArrowDownRight, FileText, Package, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AppNav } from "@/components/AppNav";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({
-    meta: [
-      { title: "Invoice Dashboard — Kopelacode" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Summary — EdgeCore Operations" }, { name: "robots", content: "noindex" }] }),
   component: DashboardPage,
 });
 
-type Status = "paid" | "pending" | "overdue" | "draft";
-type LineItem = { description: string; qty: number; price: number; hsCode?: string; stockItemId?: string | null };
-type StockPick = { id: string; name: string; sku: string | null; hs_code: string | null; vat_rate: number; sell_price: number; unit: string; quantity_on_hand: number };
-type ZraInfo = {
-  invoiceType: "normal" | "credit" | "debit" | "training" | "export";
-  vatRate: number; // percent
-  sellerTpin: string;
-  buyerTpin: string;
-  submittedRef?: string; // ZRA reference after mock submission
-  submittedAt?: string;
-};
-type Invoice = {
-  id: string; number: string; client: string; email: string;
-  issueDate: string; dueDate: string; status: Status; items: LineItem[];
-  zra?: ZraInfo;
-};
-
-const sample: Invoice[] = [
-  { id: "1", number: "INV-2026-0142", client: "Zamtel Networks", email: "ap@zamtel.co.zm", issueDate: "2026-06-18", dueDate: "2026-07-18", status: "paid", items: [{ description: "Fiscal integration — Q2", qty: 1, price: 4800 }] },
-  { id: "2", number: "INV-2026-0141", client: "Airtel Africa", email: "billing@airtel.africa", issueDate: "2026-06-22", dueDate: "2026-07-22", status: "pending", items: [{ description: "EdgeCore licenses", qty: 25, price: 120 }] },
-  { id: "3", number: "INV-2026-0140", client: "Dharti Logistics", email: "finance@dharti.co.ke", issueDate: "2026-05-30", dueDate: "2026-06-30", status: "overdue", items: [{ description: "Compliance audit", qty: 1, price: 2400 }, { description: "Advisory hours", qty: 8, price: 150 }] },
-  { id: "4", number: "INV-2026-0139", client: "Adbims Ltd", email: "hello@adbims.ng", issueDate: "2026-06-28", dueDate: "2026-07-28", status: "pending", items: [{ description: "Monthly platform fee", qty: 1, price: 899 }] },
-  { id: "5", number: "INV-2026-0138", client: "SANDVIK SA", email: "za-ap@sandvik.com", issueDate: "2026-06-15", dueDate: "2026-07-15", status: "paid", items: [{ description: "Enterprise onboarding", qty: 1, price: 12000 }] },
-  { id: "6", number: "INV-2026-0137", client: "Coca-Cola Beverages", email: "vendors@ccba.co.za", issueDate: "2026-07-01", dueDate: "2026-08-01", status: "draft", items: [{ description: "Custom reporting module", qty: 1, price: 6500 }] },
-];
-
-const totalOf = (inv: Invoice) => inv.items.reduce((s, i) => s + i.qty * i.price, 0);
-const totalWithVat = (inv: Invoice) => {
-  const sub = totalOf(inv);
-  const rate = inv.zra?.vatRate ?? 0;
-  return sub * (1 + rate / 100);
-};
-
-const statusStyles: Record<Status, string> = {
-  paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
-  overdue: "bg-red-100 text-red-800 border-red-200",
-  draft: "bg-slate-100 text-slate-700 border-slate-200",
-};
+type Txn = { id: string; txn_date: string; description: string; amount: number; reference: string | null; category: string | null };
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<Invoice[]>(sample);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<Status | "all">("all");
-  const [open, setOpen] = useState(false);
-  const [currency, setCurrency] = useState("USD");
-  const [businessName, setBusinessName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [stock, setStock] = useState<StockPick[]>([]);
-
-  const loadStock = async () => {
-    const { data } = await supabase.from("stock_items").select("id, name, sku, hs_code, vat_rate, sell_price, unit, quantity_on_hand");
-    setStock((data ?? []) as StockPick[]);
-  };
+  const [greeting, setGreeting] = useState("Good day");
+  const [firstName, setFirstName] = useState("");
+  const [currency, setCurrency] = useState("ZMW");
+  const [companyName, setCompanyName] = useState("");
+  const [txns, setTxns] = useState<Txn[]>([]);
+  const [stockCount, setStockCount] = useState(0);
+  const [stockValue, setStockValue] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      setEmail(u.user.email ?? "");
-      const { data } = await supabase.from("profiles").select("onboarded, currency, business_name").eq("id", u.user.id).maybeSingle();
-      if (!data?.onboarded) { navigate({ to: "/onboarding" }); return; }
-      if (data.currency) setCurrency(data.currency);
-      if (data.business_name) setBusinessName(data.business_name);
-      await loadStock();
-      // Pick up newly-created invoice from the full-page form
-      try {
-        const raw = sessionStorage.getItem("kopelacode.pendingInvoice");
-        if (raw) {
-          const inv = JSON.parse(raw) as Invoice;
-          sessionStorage.removeItem("kopelacode.pendingInvoice");
-          await addInvoice(inv);
-        }
-      } catch { /* noop */ }
+      const [{ data: prof }, { data: comp }, { data: tx }, { data: stk }, { count: custCount }] = await Promise.all([
+        supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
+        supabase.from("companies").select("name, trading_name, base_currency").eq("user_id", u.user.id).maybeSingle(),
+        supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(500),
+        supabase.from("stock_items").select("quantity_on_hand, sell_price"),
+        supabase.from("customers").select("*", { count: "exact", head: true }),
+      ]);
+      if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
+      setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
+      if (comp) { setCurrency(comp.base_currency || "ZMW"); setCompanyName(comp.trading_name || comp.name); }
+      setTxns((tx ?? []) as Txn[]);
+      setStockCount((stk ?? []).length);
+      setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
+      setCustomerCount(custCount ?? 0);
+      setLoading(false);
     })();
-     
   }, [navigate]);
 
-  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
   const stats = useMemo(() => {
-    const total = invoices.reduce((s, i) => s + totalOf(i), 0);
-    const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + totalOf(i), 0);
-    const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + totalOf(i), 0);
-    const overdue = invoices.filter(i => i.status === "overdue").reduce((s, i) => s + totalOf(i), 0);
-    return { total, paid, pending, overdue, count: invoices.length };
-  }, [invoices]);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const monthTx = txns.filter(t => t.txn_date >= monthStart);
+    const revenue = monthTx.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+    const expenses = monthTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+    const netProfit = revenue - expenses;
+    const cashAtBank = txns.reduce((s, t) => s + Number(t.amount), 0);
+    return { revenue, expenses, netProfit, cashAtBank };
+  }, [txns]);
 
-  const filtered = invoices.filter(i => {
-    const matchesQ = !q || i.client.toLowerCase().includes(q.toLowerCase()) || i.number.toLowerCase().includes(q.toLowerCase());
-    const matchesF = filter === "all" || i.status === filter;
-    return matchesQ && matchesF;
-  });
+  const chart = useMemo(() => {
+    // 12 buckets across current month, cumulative-in vs cumulative-out per bucket
+    const now = new Date();
+    const daysIn = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const buckets = 12;
+    const bucketSize = daysIn / buckets;
+    const data = Array.from({ length: buckets }, (_, i) => ({ label: `${Math.round((i + 1) * bucketSize)}`, in: 0, out: 0 }));
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    txns.forEach(t => {
+      const d = new Date(t.txn_date);
+      if (d < monthStart) return;
+      const day = d.getDate();
+      const idx = Math.min(buckets - 1, Math.floor((day - 1) / bucketSize));
+      if (Number(t.amount) > 0) data[idx].in += Number(t.amount);
+      else data[idx].out += Math.abs(Number(t.amount));
+    });
+    return data;
+  }, [txns]);
 
-  const addInvoice = async (inv: Invoice) => {
-    setInvoices(prev => [inv, ...prev]);
-    // Decrement stock for line items linked to stock
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const moves = inv.items.filter(i => i.stockItemId).map(i => ({
-      user_id: u.user!.id, item_id: i.stockItemId!, movement_type: "out" as const,
-      quantity: i.qty, reference: inv.number, note: `Invoice ${inv.number} — ${i.description}`,
-    }));
-    if (moves.length) {
-      const { error } = await supabase.from("stock_movements").insert(moves);
-      if (error) toast.error(`Stock update: ${error.message}`);
-      else { toast.success(`Stock updated for ${moves.length} item${moves.length > 1 ? "s" : ""}`); await loadStock(); }
-    }
-  };
-  const removeInvoice = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
-  const submitToZra = (id: string) => {
-    setInvoices(prev => prev.map(i => {
-      if (i.id !== id || !i.zra) return i;
-      const ref = `ZRA${Date.now().toString().slice(-10)}`;
-      toast.success(`Submitted to ZRA Smart Invoice — Ref ${ref}`);
-      return { ...i, zra: { ...i.zra, submittedRef: ref, submittedAt: new Date().toISOString() } };
-    }));
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  };
+  const maxChart = Math.max(1, ...chart.map(c => Math.max(c.in, c.out)));
+  const recent = txns.slice(0, 6);
+  const money = (n: number) => fmtMoney(n, currency);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Home
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
-                {businessName || "Invoice Dashboard"}
-              </h1>
-              <p className="text-xs text-muted-foreground">{email}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AppNav />
-            <Button asChild variant="outline"><Link to="/quotes/new"><FileText className="h-4 w-4" /> New quote</Link></Button>
-            <Button asChild><Link to="/invoices/new"><Plus className="h-4 w-4" /> New invoice</Link></Button>
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
+    <div className="px-6 py-6 space-y-6">
+      {/* Greeting */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            {greeting}, {firstName || "there"} <span>👋</span>
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">{companyName ? `${companyName} — here's how your business is doing.` : "Here's how your business is doing."}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm">
+            {new Date().toLocaleDateString("en-ZM", { month: "long", year: "numeric" })}
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Total billed" value={money(stats.total)} sub={`${stats.count} invoices`} tint="bg-primary/10 text-primary" />
-          <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Paid" value={money(stats.paid)} sub="Collected" tint="bg-emerald-100 text-emerald-700" />
-          <StatCard icon={<Clock className="h-4 w-4" />} label="Pending" value={money(stats.pending)} sub="Awaiting payment" tint="bg-amber-100 text-amber-700" />
-          <StatCard icon={<AlertCircle className="h-4 w-4" />} label="Overdue" value={money(stats.overdue)} sub="Needs follow-up" tint="bg-red-100 text-red-700" />
-        </div>
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <KpiCard label="Revenue" value={money(stats.revenue)} delta={null} icon={TrendingUp} tint="text-emerald-600" bg="bg-emerald-50" />
+        <KpiCard label="Expenses" value={money(stats.expenses)} delta={null} icon={Receipt} tint="text-rose-600" bg="bg-rose-50" />
+        <KpiCard label="Net Profit" value={money(stats.netProfit)} delta={null} icon={TrendingUp} tint={stats.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"} bg={stats.netProfit >= 0 ? "bg-emerald-50" : "bg-rose-50"} />
+        <KpiCard label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} tint="text-sky-600" bg="bg-sky-50" />
+        <KpiCard label="Receivables" value={money(0)} delta={null} icon={ArrowUpRight} tint="text-amber-600" bg="bg-amber-50" />
+        <KpiCard label="Payables" value={money(0)} delta={null} icon={ArrowDownRight} tint="text-violet-600" bg="bg-violet-50" />
+      </div>
 
-        <Card className="mt-8">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> Invoices</CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search client or number…" className="pl-8 sm:w-64" />
-              </div>
-              <Select value={filter} onValueChange={v => setFilter(v as Status | "all")}>
-                <SelectTrigger className="sm:w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Row: Cash Flow + Income/Expense donut + Bank Accounts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <Card className="lg:col-span-6">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-semibold">Cash Flow Overview</CardTitle>
+            <span className="text-xs text-slate-500">This Month</span>
           </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-6">Number</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>ZRA</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-24"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(inv => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="pl-6 font-medium">{inv.number}</TableCell>
-                    <TableCell>
-                      <div>{inv.client}</div>
-                      <div className="text-xs text-muted-foreground">{inv.email}</div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{inv.dueDate}</TableCell>
-                    <TableCell><Badge variant="outline" className={statusStyles[inv.status]}>{inv.status}</Badge></TableCell>
-                    <TableCell>
-                      {inv.zra?.submittedRef ? (
-                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700" title={`Submitted ${inv.zra.submittedAt}`}>
-                          <QrCode className="h-3 w-3" /> {inv.zra.submittedRef}
-                        </Badge>
-                      ) : inv.zra ? (
-                        <Button size="sm" variant="outline" onClick={() => submitToZra(inv.id)}>
-                          <ShieldCheck className="h-3 w-3" /> Submit to ZRA
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{money(totalWithVat(inv))}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => removeInvoice(inv.id)} aria-label="Delete invoice">
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No invoices match your filters.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <CardContent>
+            <div className="h-[220px] flex items-end gap-1.5">
+              {chart.map((c, i) => (
+                <div key={i} className="flex-1 flex flex-col justify-end gap-0.5 items-center h-full">
+                  <div className="w-full bg-emerald-500/80 rounded-t-sm transition-all" style={{ height: `${(c.in / maxChart) * 80}%` }} title={`In: ${money(c.in)}`} />
+                  <div className="w-full bg-rose-400/80 rounded-t-sm transition-all" style={{ height: `${(c.out / maxChart) * 80}%` }} title={`Out: ${money(c.out)}`} />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-emerald-500" /> Cash In</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-rose-400" /> Cash Out</span>
+            </div>
           </CardContent>
         </Card>
-      </main>
+
+        <Card className="lg:col-span-3">
+          <CardHeader><CardTitle className="text-base font-semibold">Income & Expense</CardTitle></CardHeader>
+          <CardContent className="flex flex-col items-center">
+            <Donut revenue={stats.revenue} expenses={stats.expenses} />
+            <div className="mt-4 w-full space-y-2 text-sm">
+              <Row dot="bg-emerald-500" label="Revenue" value={money(stats.revenue)} />
+              <Row dot="bg-rose-500" label="Expenses" value={money(stats.expenses)} />
+              <Row dot="bg-sky-500" label="Net" value={money(stats.netProfit)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-semibold">Bank Accounts</CardTitle>
+            <Link to="/banking" className="text-xs text-emerald-600 hover:underline">View All</Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loading ? (
+              <div className="text-sm text-slate-400">Loading…</div>
+            ) : txns.length === 0 ? (
+              <EmptyMini label="No bank data yet" cta="Import statement" to="/banking" />
+            ) : (
+              <div className="space-y-3">
+                <BankRow name="Primary Account" balance={money(stats.cashAtBank)} status="Reconciled" />
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Balance</span>
+                  <span className="text-sm font-bold">{money(stats.cashAtBank)}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row: Aged Receivables + Aged Payables + Top Expenses */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <AgedCard title="Aged Receivables" empty />
+        <AgedCard title="Aged Payables" empty />
+        <Card className="lg:col-span-4">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-semibold">Top Expenses</CardTitle>
+            <span className="text-xs text-slate-500">This Month</span>
+          </CardHeader>
+          <CardContent>
+            <TopExpenses txns={txns} money={money} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row: Recent Transactions + Business Snapshot */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <Card className="lg:col-span-8">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-semibold">Recent Transactions</CardTitle>
+            <Link to="/banking" className="text-xs text-emerald-600 hover:underline">View All</Link>
+          </CardHeader>
+          <CardContent className="px-0">
+            {recent.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <p className="text-sm text-slate-500">No transactions yet.</p>
+                <Button asChild size="sm" variant="outline" className="mt-3"><Link to="/banking">Import bank statement</Link></Button>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="text-xs text-slate-500 border-b">
+                  <tr><th className="text-left font-medium px-6 py-2">Date</th><th className="text-left font-medium py-2">Reference</th><th className="text-left font-medium py-2">Description</th><th className="text-left font-medium py-2">Type</th><th className="text-right font-medium px-6 py-2">Amount</th></tr>
+                </thead>
+                <tbody>
+                  {recent.map(t => (
+                    <tr key={t.id} className="border-b last:border-0">
+                      <td className="px-6 py-2.5 text-slate-600">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short", year: "numeric" })}</td>
+                      <td className="py-2.5 text-slate-600">{t.reference || "—"}</td>
+                      <td className="py-2.5 font-medium text-slate-800">{t.description}</td>
+                      <td className="py-2.5"><Badge variant="outline" className={t.amount >= 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}>{t.amount >= 0 ? "In" : "Out"}</Badge></td>
+                      <td className={`px-6 py-2.5 text-right font-semibold ${t.amount >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{money(Math.abs(t.amount))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-4">
+          <CardHeader><CardTitle className="text-base font-semibold">Business Snapshot</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3">
+            <Snap icon={FileText} label="Invoices" value="0" tint="bg-emerald-50 text-emerald-600" />
+            <Snap icon={CreditCard} label="Payments In" value={money(stats.revenue)} tint="bg-sky-50 text-sky-600" small />
+            <Snap icon={Package} label="Stock Items" value={String(stockCount)} tint="bg-amber-50 text-amber-600" />
+            <Snap icon={Users} label="Customers" value={String(customerCount)} tint="bg-violet-50 text-violet-600" />
+            <Snap icon={TrendingDown} label="Stock Value" value={money(stockValue)} tint="bg-rose-50 text-rose-600" small />
+            <Snap icon={TrendingUp} label="Net Profit" value={money(stats.netProfit)} tint={stats.netProfit >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"} small />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, sub, tint }: { icon: React.ReactNode; label: string; value: string; sub: string; tint: string }) {
+function KpiCard({ label, value, icon: Icon, tint, bg }: { label: string; value: string; delta: string | null; icon: any; tint: string; bg: string }) {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${tint}`}>{icon}</span>
+    <Card className="shadow-sm">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+          <span className={`inline-grid h-7 w-7 place-items-center rounded-md ${bg} ${tint}`}><Icon className="h-3.5 w-3.5" /></span>
         </div>
-        <div className="mt-3 text-2xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{value}</div>
-        <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
+        <div className={`mt-2 text-lg font-bold tracking-tight ${tint}`}>{value}</div>
+        <div className="mt-1 text-[11px] text-slate-400">This month</div>
       </CardContent>
     </Card>
   );
 }
 
-function NewInvoiceDialog({ open, setOpen, onCreate, nextNumber, money, stock }: { open: boolean; setOpen: (v: boolean) => void; onCreate: (i: Invoice) => void; nextNumber: string; money: (n: number) => string; stock: StockPick[] }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-  const [client, setClient] = useState("");
-  const [email, setEmail] = useState("");
-  const [issueDate, setIssueDate] = useState(today);
-  const [dueDate, setDueDate] = useState(in30);
-  const [status, setStatus] = useState<Status>("draft");
-  const [items, setItems] = useState<LineItem[]>([{ description: "", qty: 1, price: 0, hsCode: "" }]);
-  // ZRA Smart Invoice
-  const [zraEnabled, setZraEnabled] = useState(true);
-  const [invoiceType, setInvoiceType] = useState<ZraInfo["invoiceType"]>("normal");
-  const [vatRate, setVatRate] = useState<number>(16);
-  const [sellerTpin, setSellerTpin] = useState("");
-  const [buyerTpin, setBuyerTpin] = useState("");
-
-  const reset = () => {
-    setClient(""); setEmail(""); setIssueDate(today); setDueDate(in30); setStatus("draft");
-    setItems([{ description: "", qty: 1, price: 0, hsCode: "" }]);
-    setZraEnabled(true); setInvoiceType("normal"); setVatRate(16); setSellerTpin(""); setBuyerTpin("");
-  };
-
-  const subTotal = items.reduce((s, i) => s + i.qty * i.price, 0);
-  const vatAmount = zraEnabled ? subTotal * (vatRate / 100) : 0;
-  const total = subTotal + vatAmount;
-
-  const submit = () => {
-    if (!client.trim()) return;
-    onCreate({
-      id: crypto.randomUUID(), number: nextNumber, client, email, issueDate, dueDate, status,
-      items: items.filter(i => i.description.trim()),
-      zra: zraEnabled ? { invoiceType, vatRate, sellerTpin, buyerTpin } : undefined,
-    });
-    reset();
-    setOpen(false);
-  };
-
+function Donut({ revenue, expenses }: { revenue: number; expenses: number }) {
+  const total = Math.max(1, revenue + expenses);
+  const rev = (revenue / total) * 100;
+  const net = revenue - expenses;
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild><Button><Plus className="h-4 w-4" /> New invoice</Button></DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create invoice <span className="ml-2 text-sm font-normal text-muted-foreground">{nextNumber}</span></DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Client name</Label><Input value={client} onChange={e => setClient(e.target.value)} placeholder="Acme Corp" /></div>
-            <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="billing@acme.com" /></div>
-            <div className="space-y-2"><Label>Issue date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Due date</Label><Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={v => setStatus(v as Status)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+    <div className="relative h-32 w-32">
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(0.94 0.02 20)" strokeWidth="3.5" />
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(0.65 0.18 145)" strokeWidth="3.5" strokeDasharray={`${rev} 100`} />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">
+        <div>
+          <div className="text-[10px] text-slate-500">Net</div>
+          <div className={`text-sm font-bold ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{net >= 0 ? "+" : ""}{Math.round((net / Math.max(1, revenue)) * 100)}%</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          {/* ZRA Smart Invoice section */}
-          <div className="rounded-lg border bg-emerald-50/40 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-700" />
-                <div>
-                  <div className="text-sm font-semibold">ZRA Smart Invoice</div>
-                  <div className="text-xs text-muted-foreground">Zambia Revenue Authority compliance fields</div>
-                </div>
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={zraEnabled} onChange={e => setZraEnabled(e.target.checked)} className="h-4 w-4" />
-                Enable
-              </label>
-            </div>
-            {zraEnabled && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Invoice type</Label>
-                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as ZraInfo["invoiceType"])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normal sale</SelectItem>
-                      <SelectItem value="credit">Credit note</SelectItem>
-                      <SelectItem value="debit">Debit note</SelectItem>
-                      <SelectItem value="training">Training</SelectItem>
-                      <SelectItem value="export">Export (zero-rated)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>VAT rate (%)</Label>
-                  <Input type="number" min={0} max={100} step="0.5" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} />
-                </div>
-                <div className="space-y-2"><Label>Seller TPIN</Label><Input value={sellerTpin} onChange={e => setSellerTpin(e.target.value)} placeholder="10 digits" maxLength={10} /></div>
-                <div className="space-y-2"><Label>Buyer TPIN</Label><Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="Optional" maxLength={10} /></div>
-              </div>
-            )}
-          </div>
+function Row({ dot, label, value }: { dot: string; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-2 text-slate-600"><span className={`h-2 w-2 rounded-full ${dot}`} />{label}</span>
+      <span className="font-semibold text-slate-800">{value}</span>
+    </div>
+  );
+}
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Line items{zraEnabled && " (with HS codes)"}</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setItems(prev => [...prev, { description: "", qty: 1, price: 0, hsCode: "" }])}>
-                <Plus className="h-3 w-3" /> Add item
-              </Button>
+function BankRow({ name, balance, status }: { name: string; balance: string; status: string }) {
+  return (
+    <div className="flex items-start justify-between">
+      <div>
+        <div className="text-sm font-medium text-slate-800">{name}</div>
+        <div className="text-xs text-slate-500 mt-0.5">{balance}</div>
+      </div>
+      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">{status}</Badge>
+    </div>
+  );
+}
+
+function EmptyMini({ label, cta, to }: { label: string; cta: string; to: string }) {
+  return (
+    <div className="text-center py-6">
+      <p className="text-sm text-slate-400 mb-2">{label}</p>
+      <Button asChild size="sm" variant="outline"><Link to={to}>{cta}</Link></Button>
+    </div>
+  );
+}
+
+function AgedCard({ title, empty }: { title: string; empty: boolean }) {
+  const buckets = [
+    { label: "0 - 30 Days", tint: "bg-emerald-500" },
+    { label: "31 - 60 Days", tint: "bg-amber-500" },
+    { label: "61 - 90 Days", tint: "bg-orange-500" },
+    { label: "90+ Days", tint: "bg-rose-500" },
+  ];
+  return (
+    <Card className="lg:col-span-4">
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <span className="text-xs text-emerald-600 cursor-default">View Report</span>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          {buckets.map(b => (
+            <div key={b.label}>
+              <div className="text-slate-500 mb-1">{b.label}</div>
+              <div className="font-semibold text-slate-700">{empty ? "—" : ""}</div>
             </div>
-            <div className="space-y-3">
-              {items.map((item, idx) => {
-                const pickStock = (id: string) => {
-                  const s = stock.find(x => x.id === id);
-                  setItems(prev => prev.map((it, i) => i === idx ? {
-                    ...it, stockItemId: id, description: s?.name ?? it.description,
-                    hsCode: s?.hs_code ?? it.hsCode, price: Number(s?.sell_price ?? it.price),
-                  } : it));
-                };
-                return (
-                  <div key={idx} className="space-y-1 rounded-md border border-dashed p-2">
-                    {stock.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Package className="h-3 w-3 text-muted-foreground" />
-                        <Select value={item.stockItemId ?? ""} onValueChange={pickStock}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pick from stock (optional) — autofills description, HS code, price" /></SelectTrigger>
-                          <SelectContent>
-                            {stock.map(s => (
-                              <SelectItem key={s.id} value={s.id} disabled={Number(s.quantity_on_hand) < item.qty}>
-                                {s.name}{s.sku ? ` · ${s.sku}` : ""} — {money(Number(s.sell_price))} · {Number(s.quantity_on_hand)} {s.unit} on hand
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-12 gap-2">
-                      <Input className="col-span-5" placeholder="Description" value={item.description} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))} />
-                      {zraEnabled && (
-                        <Input className="col-span-2" placeholder="HS code" value={item.hsCode ?? ""} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, hsCode: e.target.value } : it))} />
-                      )}
-                      <Input className={zraEnabled ? "col-span-1" : "col-span-2"} type="number" min={1} value={item.qty} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) } : it))} />
-                      <Input className={zraEnabled ? "col-span-3" : "col-span-5"} type="number" min={0} step="0.01" value={item.price} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, price: Number(e.target.value) } : it))} />
-                      <Button type="button" variant="ghost" size="icon" className="col-span-1" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} disabled={items.length === 1}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="space-y-1 border-t pt-3 text-sm">
-              <div className="flex justify-end gap-4"><span className="text-muted-foreground">Subtotal</span><span>{money(subTotal)}</span></div>
-              {zraEnabled && <div className="flex justify-end gap-4"><span className="text-muted-foreground">VAT ({vatRate}%)</span><span>{money(vatAmount)}</span></div>}
-              <div className="flex justify-end gap-4 text-base"><span className="text-muted-foreground">Total</span><span className="font-semibold">{money(total)}</span></div>
-            </div>
+          ))}
+        </div>
+        <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+          {buckets.map(b => <div key={b.label} className={`${b.tint} opacity-30`} style={{ width: "25%" }} />)}
+        </div>
+        {empty && <p className="text-xs text-slate-400 mt-3">No open invoices yet.</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TopExpenses({ txns, money }: { txns: Txn[]; money: (n: number) => string }) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const grouped = new Map<string, number>();
+  txns.filter(t => t.amount < 0 && t.txn_date >= monthStart).forEach(t => {
+    const k = t.category || t.description.split(" ").slice(0, 2).join(" ");
+    grouped.set(k, (grouped.get(k) || 0) + Math.abs(Number(t.amount)));
+  });
+  const rows = [...grouped.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  if (rows.length === 0) return <p className="text-sm text-slate-400 py-6 text-center">No expenses this month.</p>;
+  return (
+    <div className="space-y-2.5">
+      {rows.map(([k, v]) => (
+        <div key={k} className="text-sm">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-slate-700 truncate max-w-[60%]">{k}</span>
+            <span className="font-semibold text-slate-800">{money(v)}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div className="h-full bg-sky-500" style={{ width: `${(v / max) * 100}%` }} />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!client.trim()}>Create invoice</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      ))}
+    </div>
+  );
+}
+
+function Snap({ icon: Icon, label, value, tint, small }: { icon: any; label: string; value: string; tint: string; small?: boolean }) {
+  return (
+    <div className="rounded-lg border bg-white p-3">
+      <div className={`inline-grid h-7 w-7 place-items-center rounded-md ${tint} mb-2`}><Icon className="h-3.5 w-3.5" /></div>
+      <div className="text-[11px] text-slate-500">{label}</div>
+      <div className={`font-bold text-slate-800 ${small ? "text-sm" : "text-lg"}`}>{value}</div>
+    </div>
   );
 }
