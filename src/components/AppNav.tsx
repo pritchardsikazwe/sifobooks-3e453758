@@ -142,7 +142,7 @@ function UserFooter() {
   const [email, setEmail] = useState<string>("");
   const [name, setName] = useState<string>("Account");
 
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const u = data.user;
       if (u) {
@@ -151,8 +151,7 @@ function UserFooter() {
         setName(n || (u.email ?? "").split("@")[0]);
       }
     });
-    return undefined as unknown as ReactNode;
-  });
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
