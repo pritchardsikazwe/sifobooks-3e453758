@@ -124,7 +124,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r bg-[oklch(0.16_0.02_220)] text-white [&_[data-sidebar=sidebar]]:bg-[oklch(0.16_0.02_220)]">
       <SidebarHeader className="border-b border-white/10 px-4 py-4 bg-[oklch(0.16_0.02_220)]">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-emerald-400 to-teal-500 grid place-items-center text-[10px] font-bold text-slate-900">SB</div>
+          <img src={logo} alt="SifoBooks" className="h-8 w-8 rounded-md object-contain bg-white/95 p-0.5" width={32} height={32} />
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-lg font-bold tracking-tight text-emerald-400 leading-none">SifoBooks</div>
