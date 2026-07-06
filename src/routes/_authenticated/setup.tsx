@@ -95,8 +95,9 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
   };
   return (
     <Card>
-      <CardHeader><CardTitle>Company Profile</CardTitle><CardDescription>Your legal and contact details for invoices and compliance.</CardDescription></CardHeader>
+      <CardHeader><CardTitle>Company Profile</CardTitle><CardDescription>Your legal, contact and branding details for invoices and compliance.</CardDescription></CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2"><LogoUploader company={c} onChange={(url) => { const next = { ...c, logo_url: url }; setC(next); onSaved(next); }} /></div>
         <Field label="Legal name"><Input value={c.name} onChange={e => setC({ ...c, name: e.target.value })} /></Field>
         <Field label="Trading name"><Input value={c.trading_name ?? ""} onChange={e => setC({ ...c, trading_name: e.target.value })} /></Field>
         <Field label="TPIN"><Input value={c.tpin ?? ""} onChange={e => setC({ ...c, tpin: e.target.value })} placeholder="10-digit TPIN" /></Field>
