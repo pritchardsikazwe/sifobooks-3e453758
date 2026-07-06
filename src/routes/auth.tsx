@@ -13,8 +13,8 @@ import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, Building2, U
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Kopelacode" },
-      { name: "description", content: "Sign in or create your Kopelacode account to manage invoices and fiscal compliance." },
+      { title: "Sign in — SifoBooks" },
+      { name: "description", content: "Sign in or create your SifoBooks account to manage invoices and fiscal compliance." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -97,11 +97,11 @@ function AuthPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg">
         <Link to="/" className="mb-6 block text-center text-sm text-muted-foreground hover:text-foreground">
-          ← Back to Kopelacode
+          ← Back to SifoBooks
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Welcome to Kopelacode</CardTitle>
+            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Welcome to SifoBooks</CardTitle>
             <CardDescription>Manage invoices and stay fiscally compliant</CardDescription>
           </CardHeader>
           <CardContent>
@@ -268,7 +268,7 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
 
       {step === 1 && (
         <div className="space-y-3">
-          <div className="space-y-2"><Label>Business name</Label><Input value={f.business_name} onChange={e => set("business_name", e.target.value)} placeholder="Kopelacode Trading Ltd" /></div>
+          <div className="space-y-2"><Label>Business name</Label><Input value={f.business_name} onChange={e => set("business_name", e.target.value)} placeholder="SifoBooks Trading Ltd" /></div>
           <div className="space-y-2">
             <Label>Country</Label>
             <Select value={f.country} onValueChange={v => set("country", v)}>

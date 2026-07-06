@@ -3,7 +3,7 @@ import { ClipboardEdit } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 
 export const Route = createFileRoute("/_authenticated/stock-adjustments")({
-  head: () => ({ meta: [{ title: "Stock Adjustments — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Stock Adjustments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Stock Adjustments"

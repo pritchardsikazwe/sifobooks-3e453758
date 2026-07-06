@@ -3,7 +3,7 @@ import { BookOpen } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 
 export const Route = createFileRoute("/_authenticated/chart-of-accounts")({
-  head: () => ({ meta: [{ title: "Chart of Accounts — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Chart of Accounts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Chart of Accounts"

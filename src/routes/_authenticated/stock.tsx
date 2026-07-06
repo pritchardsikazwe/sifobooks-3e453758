@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
     meta: [
-      { title: "Stock — Kopelacode" },
+      { title: "Stock — SifoBooks" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -413,7 +413,7 @@ function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen
     const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "kopelacode-stock-template.csv"; a.click();
+    a.href = url; a.download = "sifobooks-stock-template.csv"; a.click();
     URL.revokeObjectURL(url);
   };
 

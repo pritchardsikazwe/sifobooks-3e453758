@@ -3,7 +3,7 @@ import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknot
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/reports")({
-  head: () => ({ meta: [{ title: "Reports — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Reports — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: ReportsPage,
 });
 

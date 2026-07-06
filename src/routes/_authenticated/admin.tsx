@@ -3,7 +3,7 @@ import { UserCog, ShieldCheck, Bell, Building2, Users2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">

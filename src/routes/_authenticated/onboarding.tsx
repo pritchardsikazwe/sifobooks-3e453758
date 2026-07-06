@@ -12,7 +12,7 @@ import { Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Set up your account — Kopelacode" },
+      { title: "Set up your account — SifoBooks" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -59,7 +59,7 @@ function OnboardingPage() {
   const steps = [
     { title: "Your business", desc: "Tell us who you're invoicing under" },
     { title: "Billing basics", desc: "Currency and tax identification" },
-    { title: "About your team", desc: "So we can tailor Kopelacode for you" },
+    { title: "About your team", desc: "So we can tailor SifoBooks for you" },
   ];
 
   const canNext =

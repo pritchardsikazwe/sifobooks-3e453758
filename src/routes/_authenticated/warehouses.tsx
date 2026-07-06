@@ -3,7 +3,7 @@ import { Warehouse } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 
 export const Route = createFileRoute("/_authenticated/warehouses")({
-  head: () => ({ meta: [{ title: "Warehouses — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Warehouses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       title="Warehouses"

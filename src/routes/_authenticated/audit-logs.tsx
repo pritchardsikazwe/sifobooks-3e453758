@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/audit-logs")({
-  head: () => ({ meta: [{ title: "Audit Logs — EdgeCore" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Audit Logs — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: AuditLogsPage,
 });
 

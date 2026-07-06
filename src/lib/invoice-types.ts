@@ -16,8 +16,8 @@ export type Invoice = {
 
 export type StockPick = { id: string; name: string; sku: string | null; hs_code: string | null; vat_rate: number; sell_price: number; unit: string; quantity_on_hand: number };
 
-export const PENDING_INVOICE_KEY = "kopelacode.pendingInvoice";
-export const PENDING_QUOTE_KEY = "kopelacode.pendingQuote";
+export const PENDING_INVOICE_KEY = "sifobooks.pendingInvoice";
+export const PENDING_QUOTE_KEY = "sifobooks.pendingQuote";
 
 export type Quote = {
   id: string; number: string; client: string; email: string;
