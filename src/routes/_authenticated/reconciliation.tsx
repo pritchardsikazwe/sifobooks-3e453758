@@ -536,7 +536,51 @@ function Reconciliation() {
         </CardContent>
       </Card>
 
+      <Dialog open={!!allocTxn} onOpenChange={o => !o && setAllocTxn(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Allocate & post to ledger</DialogTitle></DialogHeader>
+          {allocTxn && (
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-md bg-muted">
+                <div className="font-medium">{allocTxn.description}</div>
+                <div className="text-xs text-muted-foreground">{allocTxn.txn_date} · {allocTxn.reference} · <span className="font-mono">{fmt(Number(allocTxn.amount))}</span></div>
+              </div>
+              <div>
+                <Label>Counter account ({Number(allocTxn.amount) > 0 ? "credit — revenue/other income" : "debit — expense/asset"})</Label>
+                <Select value={allocAccountId} onValueChange={setAllocAccountId}>
+                  <SelectTrigger><SelectValue placeholder="Pick account" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {accounts
+                      .filter(a => a.account_code !== "1000")
+                      .map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.account_code} — {a.account_name} <span className="text-xs text-muted-foreground">({a.account_type})</span>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Memo</Label>
+                <Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Description on the journal entry" />
+              </div>
+              <div className="text-xs text-muted-foreground rounded border border-emerald-200 bg-emerald-50 p-2">
+                Posts a journal entry against Cash &amp; Bank (1000) and marks this transaction reconciled. Reports (P&amp;L, Trial Balance, Balance Sheet) update instantly.
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
+            <Button onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+              {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Post to Ledger
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!matchTxn} onOpenChange={o => !o && setMatchTxn(null)}>
+
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Match transaction</DialogTitle></DialogHeader>
           {matchTxn && (
