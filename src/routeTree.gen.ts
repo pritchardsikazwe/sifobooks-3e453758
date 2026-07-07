@@ -57,7 +57,9 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
+import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
@@ -327,11 +329,23 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedQuotesIndexRoute =
+  AuthenticatedQuotesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedQuotesRoute,
+  } as any)
 const AuthenticatedInvoicesIndexRoute =
   AuthenticatedInvoicesIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedInvoicesRoute,
+  } as any)
+const AuthenticatedCustomersIndexRoute =
+  AuthenticatedCustomersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
 const AuthenticatedReportsTrialBalanceRoute =
   AuthenticatedReportsTrialBalanceRouteImport.update({
@@ -478,7 +492,9 @@ export interface FileRoutesByFullPath {
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/quotes/': typeof AuthenticatedQuotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -498,7 +514,6 @@ export interface FileRoutesByTo {
   '/compliance': typeof AuthenticatedComplianceRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/csat': typeof AuthenticatedCsatRoute
-  '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
@@ -514,7 +529,6 @@ export interface FileRoutesByTo {
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
-  '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
@@ -541,7 +555,9 @@ export interface FileRoutesByTo {
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
+  '/quotes': typeof AuthenticatedQuotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -607,7 +623,9 @@ export interface FileRoutesById {
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -673,7 +691,9 @@ export interface FileRouteTypes {
     | '/reports/sales-by-customer'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/customers/'
     | '/invoices/'
+    | '/quotes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -693,7 +713,6 @@ export interface FileRouteTypes {
     | '/compliance'
     | '/credit-notes'
     | '/csat'
-    | '/customers'
     | '/dashboard'
     | '/employees'
     | '/expense-rules'
@@ -709,7 +728,6 @@ export interface FileRouteTypes {
     | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
-    | '/quotes'
     | '/receipts'
     | '/reconciliation'
     | '/reports'
@@ -736,7 +754,9 @@ export interface FileRouteTypes {
     | '/reports/sales-by-customer'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/customers'
     | '/invoices'
+    | '/quotes'
   id:
     | '__root__'
     | '/'
@@ -801,7 +821,9 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/sales-by-customer'
     | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
+    | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
+    | '/_authenticated/quotes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1149,12 +1171,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/quotes/': {
+      id: '/_authenticated/quotes/'
+      path: '/'
+      fullPath: '/quotes/'
+      preLoaderRoute: typeof AuthenticatedQuotesIndexRouteImport
+      parentRoute: typeof AuthenticatedQuotesRoute
+    }
     '/_authenticated/invoices/': {
       id: '/_authenticated/invoices/'
       path: '/'
       fullPath: '/invoices/'
       preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
+    }
+    '/_authenticated/customers/': {
+      id: '/_authenticated/customers/'
+      path: '/'
+      fullPath: '/customers/'
+      preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
+      parentRoute: typeof AuthenticatedCustomersRoute
     }
     '/_authenticated/reports/trial-balance': {
       id: '/_authenticated/reports/trial-balance'
@@ -1259,11 +1295,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedCustomersRouteChildren {
   AuthenticatedCustomersIdRoute: typeof AuthenticatedCustomersIdRoute
+  AuthenticatedCustomersIndexRoute: typeof AuthenticatedCustomersIndexRoute
 }
 
 const AuthenticatedCustomersRouteChildren: AuthenticatedCustomersRouteChildren =
   {
     AuthenticatedCustomersIdRoute: AuthenticatedCustomersIdRoute,
+    AuthenticatedCustomersIndexRoute: AuthenticatedCustomersIndexRoute,
   }
 
 const AuthenticatedCustomersRouteWithChildren =
@@ -1288,10 +1326,12 @@ const AuthenticatedInvoicesRouteWithChildren =
 
 interface AuthenticatedQuotesRouteChildren {
   AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
+  AuthenticatedQuotesIndexRoute: typeof AuthenticatedQuotesIndexRoute
 }
 
 const AuthenticatedQuotesRouteChildren: AuthenticatedQuotesRouteChildren = {
   AuthenticatedQuotesNewRoute: AuthenticatedQuotesNewRoute,
+  AuthenticatedQuotesIndexRoute: AuthenticatedQuotesIndexRoute,
 }
 
 const AuthenticatedQuotesRouteWithChildren =
