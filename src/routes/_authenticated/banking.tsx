@@ -29,7 +29,9 @@ type Txn = {
   id: string; txn_date: string; description: string; amount: number;
   balance: number | null; reference: string | null; category: string | null;
   matched_invoice: string | null; source_file: string | null;
+  reconciled?: boolean; matched_type?: string | null; matched_id?: string | null;
 };
+type Account = { id: string; account_code: string; account_name: string; account_type: string };
 
 function BankingPage() {
   const navigate = useNavigate();
@@ -39,6 +41,20 @@ function BankingPage() {
   const [currency, setCurrency] = useState("USD");
   const [businessName, setBusinessName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "unreconciled" | "reconciled">("all");
+  const [dirFilter, setDirFilter] = useState<"all" | "in" | "out">("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  // Allocate & Post
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [allocTxn, setAllocTxn] = useState<Txn | null>(null);
+  const [allocAccountId, setAllocAccountId] = useState("");
+  const [allocMemo, setAllocMemo] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
 
   const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
