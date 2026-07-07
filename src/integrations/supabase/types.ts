@@ -760,6 +760,7 @@ export type Database = {
           email: string | null
           financial_year_start_month: number
           id: string
+          industry: string | null
           is_primary: boolean
           logo_url: string | null
           name: string
@@ -782,6 +783,7 @@ export type Database = {
           email?: string | null
           financial_year_start_month?: number
           id?: string
+          industry?: string | null
           is_primary?: boolean
           logo_url?: string | null
           name: string
@@ -804,6 +806,7 @@ export type Database = {
           email?: string | null
           financial_year_start_month?: number
           id?: string
+          industry?: string | null
           is_primary?: boolean
           logo_url?: string | null
           name?: string
@@ -853,6 +856,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_modules: {
+        Row: {
+          company_id: string
+          config: Json
+          created_at: string
+          id: string
+          installed_at: string
+          module_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          config?: Json
+          created_at?: string
+          id?: string
+          installed_at?: string
+          module_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          installed_at?: string
+          module_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_modules_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
