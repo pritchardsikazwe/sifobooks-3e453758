@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
+import { ShareDoc } from "@/components/ShareDoc";
 
 export const Route = createFileRoute("/_authenticated/quotes/")({
   head: () => ({ meta: [{ title: "Quote Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -211,8 +212,10 @@ function QuotesPage() {
                               <ArrowRightCircle className="h-3 w-3 mr-1" /> To invoice
                             </Button>
                           )}
+                          <ShareDoc kind="quote" id={q.id} docNumber={q.number} />
                           <Button size="icon" variant="ghost" onClick={() => remove(q.id)}><Trash2 className="h-4 w-4" /></Button>
                         </td>
+
                       </tr>
                     ))}
                   </tbody>
