@@ -2,6 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Truck } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+
+const COLOR: Record<string, string> = {
+  active: "bg-emerald-100 text-emerald-700",
+  inactive: "bg-slate-100 text-slate-700",
+  on_hold: "bg-amber-100 text-amber-700",
+};
 
 export const Route = createFileRoute("/_authenticated/suppliers")({
   head: () => ({ meta: [{ title: "Suppliers — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -11,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
       icon={Truck}
       table="suppliers"
       orderBy={{ column: "name" }}
-      searchKeys={["name", "supplier_code", "email", "tpin"]}
+      searchKeys={["name", "supplier_code", "email", "tpin", "phone"]}
+      statusField="status"
       columns={[
         { key: "supplier_code", header: "Code" },
         { key: "name", header: "Name" },
@@ -19,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
         { key: "phone", header: "Phone" },
         { key: "tpin", header: "TPIN" },
         { key: "current_balance", header: "Balance", render: r => fmtMoney(r.current_balance ?? 0) },
-        { key: "status", header: "Status" },
+        { key: "status", header: "Status", render: r => <Badge className={COLOR[r.status] ?? ""} variant="secondary">{r.status}</Badge> },
       ]}
       fields={[
         { name: "supplier_code", label: "Supplier Code" },

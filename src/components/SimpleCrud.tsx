@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Loader2, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,15 @@ export type Column = {
   className?: string;
 };
 
+export type RowAction = {
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  show?: (row: any) => boolean;
+  run: (row: any, reload: () => Promise<void>) => Promise<void> | void;
+  variant?: "default" | "outline" | "ghost" | "secondary" | "destructive";
+  className?: string;
+};
+
 type Props = {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -37,9 +46,17 @@ type Props = {
   searchKeys?: string[];
   orderBy?: { column: string; ascending?: boolean };
   headerExtra?: React.ReactNode;
+  rowActions?: RowAction[];
+  /** Column name to auto-build a status filter from (uses select options). */
+  statusField?: string;
+  /** Extra dropdown filters (name → options); filters rows client-side. */
+  extraFilters?: { name: string; label: string; options: { value: string; label: string }[] }[];
 };
 
-export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra }: Props) {
+export function SimpleCrud({
+  title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
+  rowActions, statusField, extraFilters = [],
+}: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -47,6 +64,15 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
   const [editing, setEditing] = useState<any | null>(null);
   const initial = useMemo(() => Object.fromEntries(fields.map(f => [f.name, f.defaultValue ?? (f.type === "number" ? 0 : "")])), [fields]);
   const [form, setForm] = useState<Record<string, any>>(initial);
+  const [statusVal, setStatusVal] = useState<string>("__all");
+  const [filterVals, setFilterVals] = useState<Record<string, string>>({});
+
+  // Auto-detect status options from the field definition
+  const statusOptions = useMemo(() => {
+    if (!statusField) return null;
+    const f = fields.find(x => x.name === statusField);
+    return f?.options ?? null;
+  }, [statusField, fields]);
 
   const load = async () => {
     setLoading(true);
@@ -59,7 +85,15 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
   };
   useEffect(() => { load(); }, []);
 
-  const filtered = rows.filter(r => !q || searchKeys.some(k => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase())));
+  const filtered = rows.filter(r => {
+    if (q && !searchKeys.some(k => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) return false;
+    if (statusField && statusVal !== "__all" && String(r[statusField] ?? "") !== statusVal) return false;
+    for (const f of extraFilters) {
+      const v = filterVals[f.name];
+      if (v && v !== "__all" && String(r[f.name] ?? "") !== v) return false;
+    }
+    return true;
+  });
 
   const openNew = () => { setEditing(null); setForm(initial); setOpen(true); };
   const openEdit = (r: any) => {
@@ -113,18 +147,36 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
         </div>
         <div className="flex items-center gap-2">
           {headerExtra}
-          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />New</Button>
+          <Button onClick={openNew} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-2" />New</Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[220px] max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
             </div>
-            <div className="text-sm text-muted-foreground ml-auto">{filtered.length} record(s)</div>
+            {statusOptions && (
+              <Select value={statusVal} onValueChange={setStatusVal}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">All statuses</SelectItem>
+                  {statusOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {extraFilters.map(f => (
+              <Select key={f.name} value={filterVals[f.name] ?? "__all"} onValueChange={v => setFilterVals(s => ({ ...s, [f.name]: v }))}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">All {f.label.toLowerCase()}</SelectItem>
+                  {f.options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ))}
+            <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
           </div>
         </CardHeader>
         <CardContent>
@@ -133,32 +185,43 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Icon className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <div>No records yet. Click "New" to add one.</div>
+              <div>{rows.length === 0 ? "No records yet. Click \"New\" to add one." : "No records match your filters."}</div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.map(c => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
-                  <TableHead className="w-24 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(r => (
-                  <TableRow key={r.id}>
-                    {columns.map(c => (
-                      <TableCell key={c.key} className={c.className}>
-                        {c.render ? c.render(r) : String(r[c.key] ?? "-")}
-                      </TableCell>
-                    ))}
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </TableCell>
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {columns.map(c => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map(r => (
+                    <TableRow key={r.id}>
+                      {columns.map(c => (
+                        <TableCell key={c.key} className={c.className}>
+                          {c.render ? c.render(r) : String(r[c.key] ?? "-")}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right whitespace-nowrap">
+                        {rowActions?.filter(a => !a.show || a.show(r)).map((a, i) => {
+                          const Ico = a.icon;
+                          return (
+                            <Button key={i} size="sm" variant={a.variant ?? "outline"} className={`mr-1 ${a.className ?? ""}`}
+                              onClick={async () => { await a.run(r, load); }}>
+                              {Ico && <Ico className="h-3.5 w-3.5 mr-1" />}{a.label}
+                            </Button>
+                          );
+                        })}
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -191,10 +254,18 @@ export function SimpleCrud({ title, icon: Icon, table, columns, fields, searchKe
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>{editing ? "Save" : "Create"}</Button>
+            <Button onClick={save} className="bg-emerald-600 hover:bg-emerald-700">{editing ? "Save" : "Create"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
+}
+
+/** Helper: mark a record as posted (or set any status). */
+export async function updateStatus(table: string, id: string, status: string) {
+  const { error } = await supabase.from(table as any).update({ status }).eq("id", id);
+  if (error) { toast.error(error.message); return false; }
+  toast.success(`Marked ${status}`);
+  return true;
 }

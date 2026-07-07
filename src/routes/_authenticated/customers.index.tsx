@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
@@ -31,6 +32,8 @@ function CustomersPage() {
   const [balances, setBalances] = useState<Record<string, Balance>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [balanceFilter, setBalanceFilter] = useState<"all" | "with_balance" | "overdue">("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState<Partial<Customer>>({ name: "", payment_terms_days: 30, active: true, country: "Zambia" });
@@ -57,14 +60,19 @@ function CustomersPage() {
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase().trim();
-    if (!s) return rows;
-    return rows.filter(r =>
-      r.name.toLowerCase().includes(s) ||
-      (r.email ?? "").toLowerCase().includes(s) ||
-      (r.phone ?? "").toLowerCase().includes(s) ||
-      (r.tpin ?? "").toLowerCase().includes(s)
-    );
-  }, [rows, q]);
+    return rows.filter(r => {
+      if (statusFilter === "active" && !r.active) return false;
+      if (statusFilter === "inactive" && r.active) return false;
+      const b = balances[r.id];
+      if (balanceFilter === "with_balance" && !(b?.balance > 0)) return false;
+      if (balanceFilter === "overdue" && !(b?.overdue > 0)) return false;
+      if (!s) return true;
+      return r.name.toLowerCase().includes(s) ||
+        (r.email ?? "").toLowerCase().includes(s) ||
+        (r.phone ?? "").toLowerCase().includes(s) ||
+        (r.tpin ?? "").toLowerCase().includes(s);
+    });
+  }, [rows, q, statusFilter, balanceFilter, balances]);
 
   const openNew = () => { setEditing(null); setForm({ name: "", payment_terms_days: 30, active: true, country: "Zambia" }); setOpen(true); };
   const openEdit = (c: Customer) => { setEditing(c); setForm(c); setOpen(true); };
@@ -136,9 +144,28 @@ function CustomersPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="relative max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search name, email, phone, TPIN…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search name, email, phone, TPIN…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={v => setStatusFilter(v as any)}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active only</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={balanceFilter} onValueChange={v => setBalanceFilter(v as any)}>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All balances</SelectItem>
+                <SelectItem value="with_balance">With balance</SelectItem>
+                <SelectItem value="overdue">Overdue only</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
           </div>
         </CardHeader>
         <CardContent>
