@@ -39,13 +39,34 @@ function AfsPage() {
         .gte("entry_date", `${year}-01-01`).lte("entry_date", `${year}-12-31`),
     ]);
     setCompany(comp);
-    setAccounts(coa ?? []);
+    let coaRows = coa ?? [];
+    // Auto-map any unmapped accounts on first load so every tenant sees a populated AFS.
+    const unmappedRows = coaRows.filter((a: any) => !a.reporting_group);
+    if (unmappedRows.length) {
+      const updates = unmappedRows
+        .map((a: any) => ({ id: a.id, g: suggestGroup(a.account_name, a.account_type) }))
+        .filter((u) => u.g);
+      if (updates.length) {
+        await Promise.all(
+          updates.map((u) => supabase.from("chart_of_accounts").update({ reporting_group: u.g }).eq("id", u.id)),
+        );
+        coaRows = coaRows.map((a: any) => {
+          const u = updates.find((x) => x.id === a.id);
+          return u ? { ...a, reporting_group: u.g } : a;
+        });
+      }
+    }
+    setAccounts(coaRows);
     const ids = (entries ?? []).map((e: any) => e.id);
     if (ids.length) {
       const { data: jl } = await supabase.from("journal_lines")
         .select("debit,credit,account:account_id(account_code,account_name,account_type,reporting_group)")
         .in("entry_id", ids);
-      setLines(jl ?? []);
+      // Reflect any freshly-mapped groups onto the loaded journal lines.
+      const groupByCode = new Map(coaRows.map((a: any) => [a.account_code, a.reporting_group]));
+      setLines((jl ?? []).map((l: any) => l.account
+        ? { ...l, account: { ...l.account, reporting_group: l.account.reporting_group ?? groupByCode.get(l.account.account_code) ?? null } }
+        : l));
     } else setLines([]);
     setLoading(false);
   };
