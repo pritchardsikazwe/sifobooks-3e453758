@@ -70,6 +70,7 @@ import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_auth
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
 import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './routes/_authenticated/reports.aged-receivables'
 import { Route as AuthenticatedReportsAgedPayablesRouteImport } from './routes/_authenticated/reports.aged-payables'
+import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authenticated/reports.afs'
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
@@ -406,6 +407,11 @@ const AuthenticatedReportsAgedPayablesRoute =
     path: '/aged-payables',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsAfsRoute = AuthenticatedReportsAfsRouteImport.update({
+  id: '/afs',
+  path: '/afs',
+  getParentRoute: () => AuthenticatedReportsRoute,
+} as any)
 const AuthenticatedReportsAccountantPackRoute =
   AuthenticatedReportsAccountantPackRouteImport.update({
     id: '/accountant-pack',
@@ -482,6 +488,7 @@ export interface FileRoutesByFullPath {
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
+  '/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
@@ -545,6 +552,7 @@ export interface FileRoutesByTo {
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
+  '/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
@@ -613,6 +621,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
+  '/_authenticated/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/_authenticated/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/_authenticated/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
@@ -681,6 +690,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/quotes/new'
     | '/reports/accountant-pack'
+    | '/reports/afs'
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
@@ -744,6 +754,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/quotes/new'
     | '/reports/accountant-pack'
+    | '/reports/afs'
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
@@ -811,6 +822,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/new'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/accountant-pack'
+    | '/_authenticated/reports/afs'
     | '/_authenticated/reports/aged-payables'
     | '/_authenticated/reports/aged-receivables'
     | '/_authenticated/reports/balance-sheet'
@@ -1262,6 +1274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsAgedPayablesRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/afs': {
+      id: '/_authenticated/reports/afs'
+      path: '/afs'
+      fullPath: '/reports/afs'
+      preLoaderRoute: typeof AuthenticatedReportsAfsRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/accountant-pack': {
       id: '/_authenticated/reports/accountant-pack'
       path: '/accountant-pack'
@@ -1339,6 +1358,7 @@ const AuthenticatedQuotesRouteWithChildren =
 
 interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsAccountantPackRoute: typeof AuthenticatedReportsAccountantPackRoute
+  AuthenticatedReportsAfsRoute: typeof AuthenticatedReportsAfsRoute
   AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
   AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
@@ -1354,6 +1374,7 @@ interface AuthenticatedReportsRouteChildren {
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsAccountantPackRoute:
     AuthenticatedReportsAccountantPackRoute,
+  AuthenticatedReportsAfsRoute: AuthenticatedReportsAfsRoute,
   AuthenticatedReportsAgedPayablesRoute: AuthenticatedReportsAgedPayablesRoute,
   AuthenticatedReportsAgedReceivablesRoute:
     AuthenticatedReportsAgedReceivablesRoute,
@@ -1479,13 +1500,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
