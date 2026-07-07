@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
+import { ShareDoc } from "@/components/ShareDoc";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
@@ -169,7 +170,7 @@ function ReceiptsPage() {
                 <TableCell className="font-mono text-xs">{r.invoices?.number ?? <span className="text-muted-foreground">Unallocated</span>}</TableCell>
                 <TableCell className="text-xs capitalize">{r.method.replace("_", " ")}</TableCell>
                 <TableCell className="text-right font-medium text-emerald-700">{fmtMoney(r.amount, r.currency)}</TableCell>
-                <TableCell><Button size="icon" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                <TableCell className="text-right"><div className="inline-flex items-center gap-1"><ShareDoc kind="receipt" id={r.id} docNumber={r.number} /><Button size="icon" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button></div></TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>}

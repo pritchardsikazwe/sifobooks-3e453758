@@ -14,7 +14,7 @@ export type PdfLine = {
 };
 
 export type PdfDoc = {
-  kind: "Invoice" | "Quote";
+  kind: "Invoice" | "Quote" | "Credit Note" | "Receipt";
   number: string;
   issueDate: string;
   dueDate?: string;       // invoice

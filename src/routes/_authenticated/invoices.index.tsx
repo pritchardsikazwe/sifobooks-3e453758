@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { voidInvoiceLedger } from "@/lib/posting";
+import { ShareDoc } from "@/components/ShareDoc";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
@@ -170,8 +171,12 @@ function InvoicesPage() {
                           <td className="py-2 px-2 text-right font-medium">{fmtMoney(i.balance_due, i.currency)}</td>
                           <td className="py-2 px-2"><Status s={i.status === "voided" ? "voided" : overdue ? "overdue" : i.status} /></td>
                           <td className="py-2 px-2 text-right">
-                            {i.status !== "voided" && <VoidInvoice invoice={i} onDone={load} />}
+                            <div className="inline-flex items-center gap-1">
+                              <ShareDoc kind="invoice" id={i.id} docNumber={i.number} />
+                              {i.status !== "voided" && <VoidInvoice invoice={i} onDone={load} />}
+                            </div>
                           </td>
+
                         </tr>
                       );
                     })}

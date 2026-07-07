@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postCreditNoteLedger } from "@/lib/posting";
+import { ShareDoc } from "@/components/ShareDoc";
 
 export const Route = createFileRoute("/_authenticated/credit-notes")({
   head: () => ({ meta: [{ title: "Credit Notes — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -131,7 +132,9 @@ function CreditNotesPage() {
                         <td className="py-2 px-2 text-right font-medium">{fmtMoney(r.total, r.currency)}</td>
                         <td className="py-2 px-2"><span className={`px-2 py-0.5 rounded text-xs capitalize ${r.status === "posted" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>{r.status}</span></td>
                         <td className="py-2 px-2 text-right">
-                          <Button size="icon" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                         <ShareDoc kind="credit_note" id={r.id} docNumber={r.number} />
+                         <Button size="icon" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4" /></Button>
+
                         </td>
                       </tr>
                     ))}
