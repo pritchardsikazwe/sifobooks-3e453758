@@ -25,9 +25,9 @@ async function loadDoc(kind: ShareDocKind, id: string): Promise<PdfDoc | null> {
     if (!inv) return null;
     const { data: items } = await supabase.from("invoice_items").select("*").eq("invoice_id", id);
     return {
-      kind: "Invoice", number: inv.number, issueDate: inv.issue_date, dueDate: inv.due_date,
-      currency: inv.currency, taxInclusive: true, company: co, customer: inv.customers,
-      buyerTpin: inv.buyer_tpin, notes: inv.notes ?? undefined,
+      kind: "Invoice", number: inv.number, issueDate: inv.issue_date, dueDate: inv.due_date ?? undefined,
+      currency: inv.currency, taxInclusive: true, company: co as any, customer: inv.customers as any,
+      buyerTpin: inv.buyer_tpin ?? undefined, notes: inv.notes ?? undefined,
       items: (items ?? []).map(mapLine),
       subtotal: Number(inv.subtotal ?? 0), tax: Number(inv.vat_amount ?? 0), total: Number(inv.total ?? 0),
     };
@@ -38,7 +38,7 @@ async function loadDoc(kind: ShareDocKind, id: string): Promise<PdfDoc | null> {
     const { data: items } = await supabase.from("quote_items").select("*").eq("quote_id", id);
     return {
       kind: "Quote", number: q.number, issueDate: q.issue_date, validUntil: q.valid_until ?? undefined,
-      currency: q.currency, taxInclusive: true, company: co, customer: q.customers,
+      currency: q.currency, taxInclusive: true, company: co as any, customer: q.customers as any,
       buyerTpin: (q as any).buyer_tpin, notes: q.notes ?? undefined,
       items: (items ?? []).map(mapLine),
       subtotal: Number(q.subtotal ?? 0), tax: Number(q.vat_amount ?? 0), total: Number(q.total ?? 0),
@@ -50,7 +50,7 @@ async function loadDoc(kind: ShareDocKind, id: string): Promise<PdfDoc | null> {
     const { data: items } = await supabase.from("credit_note_items").select("*").eq("credit_note_id", id);
     return {
       kind: "Credit Note", number: cn.number, issueDate: cn.issue_date,
-      currency: cn.currency, taxInclusive: true, company: co, customer: cn.customers,
+      currency: cn.currency, taxInclusive: true, company: co as any, customer: cn.customers as any,
       notes: cn.reason ?? undefined,
       items: (items ?? []).map(mapLine),
       subtotal: Number(cn.subtotal ?? 0), tax: Number(cn.vat_amount ?? 0), total: Number(cn.total ?? 0),
@@ -63,7 +63,7 @@ async function loadDoc(kind: ShareDocKind, id: string): Promise<PdfDoc | null> {
     kind: "Receipt", number: (r as any).number ?? r.id.slice(0, 8),
     issueDate: (r as any).receipt_date ?? (r as any).payment_date ?? new Date().toISOString().slice(0, 10),
     currency: (r as any).currency ?? co?.base_currency ?? "ZMW", taxInclusive: true,
-    company: co, customer: (r as any).customers,
+    company: co as any, customer: (r as any).customers,
     notes: (r as any).note ?? undefined,
     items: [{
       description: `Payment received${(r as any).invoices?.number ? ` — Invoice ${(r as any).invoices.number}` : ""}`,
