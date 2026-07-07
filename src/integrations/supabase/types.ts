@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      afs_reports: {
+        Row: {
+          ai_cashflow: string | null
+          ai_strategy: string | null
+          ai_summary: string | null
+          ai_variance: string | null
+          created_at: string
+          currency: string | null
+          fiscal_year: number
+          id: string
+          payload: Json
+          period_end: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_cashflow?: string | null
+          ai_strategy?: string | null
+          ai_summary?: string | null
+          ai_variance?: string | null
+          created_at?: string
+          currency?: string | null
+          fiscal_year: number
+          id?: string
+          payload: Json
+          period_end: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_cashflow?: string | null
+          ai_strategy?: string | null
+          ai_summary?: string | null
+          ai_variance?: string | null
+          created_at?: string
+          currency?: string | null
+          fiscal_year?: number
+          id?: string
+          payload?: Json
+          period_end?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       approval_actions: {
         Row: {
           action: string
@@ -654,11 +699,14 @@ export type Database = {
           account_code: string
           account_name: string
           account_type: string
+          afs_note: string | null
           created_at: string
           description: string | null
           id: string
           is_active: boolean | null
           parent_id: string | null
+          reporting_class: string | null
+          reporting_group: string | null
           updated_at: string
           user_id: string
         }
@@ -666,11 +714,14 @@ export type Database = {
           account_code: string
           account_name: string
           account_type: string
+          afs_note?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean | null
           parent_id?: string | null
+          reporting_class?: string | null
+          reporting_group?: string | null
           updated_at?: string
           user_id: string
         }
@@ -678,11 +729,14 @@ export type Database = {
           account_code?: string
           account_name?: string
           account_type?: string
+          afs_note?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean | null
           parent_id?: string | null
+          reporting_class?: string | null
+          reporting_group?: string | null
           updated_at?: string
           user_id?: string
         }
