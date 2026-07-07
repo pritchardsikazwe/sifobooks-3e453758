@@ -2183,49 +2183,76 @@ export type Database = {
           allowances: number | null
           basic_salary: number | null
           created_at: string
+          days_worked: number | null
+          deductions: Json
+          earnings: Json
           employee_id: string
           gross_pay: number | null
           id: string
+          loan_balance: number | null
           napsa: number | null
           net_pay: number | null
           nhima: number | null
+          notes: string | null
           other_deductions: number | null
           overtime: number | null
+          overtime_hours: number | null
           paye: number | null
           payroll_run_id: string
           user_id: string
+          ytd_napsa: number | null
+          ytd_paye: number | null
+          ytd_taxable: number | null
         }
         Insert: {
           allowances?: number | null
           basic_salary?: number | null
           created_at?: string
+          days_worked?: number | null
+          deductions?: Json
+          earnings?: Json
           employee_id: string
           gross_pay?: number | null
           id?: string
+          loan_balance?: number | null
           napsa?: number | null
           net_pay?: number | null
           nhima?: number | null
+          notes?: string | null
           other_deductions?: number | null
           overtime?: number | null
+          overtime_hours?: number | null
           paye?: number | null
           payroll_run_id: string
           user_id: string
+          ytd_napsa?: number | null
+          ytd_paye?: number | null
+          ytd_taxable?: number | null
         }
         Update: {
           allowances?: number | null
           basic_salary?: number | null
           created_at?: string
+          days_worked?: number | null
+          deductions?: Json
+          earnings?: Json
           employee_id?: string
           gross_pay?: number | null
           id?: string
+          loan_balance?: number | null
           napsa?: number | null
           net_pay?: number | null
           nhima?: number | null
+          notes?: string | null
           other_deductions?: number | null
           overtime?: number | null
+          overtime_hours?: number | null
           paye?: number | null
           payroll_run_id?: string
           user_id?: string
+          ytd_napsa?: number | null
+          ytd_paye?: number | null
+          ytd_taxable?: number | null
         }
         Relationships: [
           {
