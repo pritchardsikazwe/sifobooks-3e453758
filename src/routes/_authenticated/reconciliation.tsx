@@ -138,6 +138,47 @@ function Reconciliation() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [from, to]);
 
+  useEffect(() => {
+    (async () => {
+      const [{ data: acc }, { data: rl }] = await Promise.all([
+        supabase.from("chart_of_accounts").select("id, account_code, account_name, account_type").eq("is_active", true).order("account_code"),
+        supabase.from("expense_category_rules").select("id, pattern, account_id"),
+      ]);
+      setAccounts(acc ?? []);
+      setRules((rl as any) ?? []);
+    })();
+  }, []);
+
+  const openAllocate = (t: Txn) => {
+    setAllocTxn(t);
+    setAllocMemo(t.description ?? "");
+    // suggest via rules
+    const desc = (t.description ?? "").toLowerCase();
+    const hit = rules.find(r => r.pattern && desc.includes(r.pattern.toLowerCase()));
+    if (hit) { setAllocAccountId(hit.account_id); return; }
+    // fallback: revenue for inflow, expense for outflow
+    const wantType = Number(t.amount) > 0 ? "revenue" : "expense";
+    const pick = accounts.find(a => a.account_type === wantType);
+    setAllocAccountId(pick?.id ?? "");
+  };
+
+  const runAllocate = async () => {
+    if (!allocTxn || !allocAccountId) return toast.error("Pick an account");
+    setBusy(allocTxn.id);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setBusy(null); return; }
+    const res = await postBankAllocation({
+      userId: u.user.id, txn: allocTxn, accountId: allocAccountId, memo: allocMemo,
+    });
+    setBusy(null);
+    if (!res.ok) return toast.error(res.error ?? "Failed");
+    toast.success(res.alreadyPosted ? "Already posted" : "Posted to ledger & reconciled");
+    setAllocTxn(null);
+    load();
+  };
+
+
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return txns.filter(t => {
