@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Scale, Link2, Unlink, CheckCircle2, Loader2, Search, Upload, AlertTriangle } from "lucide-react";
+import { Scale, Link2, Unlink, CheckCircle2, Loader2, Search, Upload, AlertTriangle, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { postBankAllocation } from "@/lib/bank-posting";
+
 
 export const Route = createFileRoute("/_authenticated/reconciliation")({
   head: () => ({
@@ -90,6 +92,13 @@ function Reconciliation() {
   const [busy, setBusy] = useState<string | null>(null);
   const [matchTxn, setMatchTxn] = useState<Txn | null>(null);
 
+  // Allocate & post to ledger
+  const [allocTxn, setAllocTxn] = useState<Txn | null>(null);
+  const [allocAccountId, setAllocAccountId] = useState<string>("");
+  const [allocMemo, setAllocMemo] = useState<string>("");
+  const [accounts, setAccounts] = useState<{ id: string; account_code: string; account_name: string; account_type: string }[]>([]);
+  const [rules, setRules] = useState<{ id: string; pattern: string; account_id: string }[]>([]);
+
   // CSV import state
   const [importOpen, setImportOpen] = useState(false);
   const [csvText, setCsvText] = useState("");
@@ -98,6 +107,7 @@ function Reconciliation() {
   const [csvBody, setCsvBody] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<MapField[]>([]);
   const [hasHeader, setHasHeader] = useState(true);
+
 
   const load = async () => {
     setLoading(true);
