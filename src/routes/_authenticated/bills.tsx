@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileBox } from "lucide-react";
-import { SimpleCrud } from "@/components/SimpleCrud";
+import { FileBox, CheckCircle2 } from "lucide-react";
+import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+
+const COLOR: Record<string, string> = {
+  unpaid: "bg-amber-100 text-amber-700",
+  partial: "bg-blue-100 text-blue-700",
+  paid: "bg-emerald-100 text-emerald-700",
+  overdue: "bg-red-100 text-red-700",
+};
 
 export const Route = createFileRoute("/_authenticated/bills")({
   head: () => ({ meta: [{ title: "Bills — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -12,14 +20,23 @@ export const Route = createFileRoute("/_authenticated/bills")({
       table="bills"
       orderBy={{ column: "bill_date", ascending: false }}
       searchKeys={["bill_number", "supplier_invoice_number"]}
+      statusField="status"
       columns={[
         { key: "bill_number", header: "Bill #" },
         { key: "supplier_invoice_number", header: "Supplier Inv #" },
         { key: "bill_date", header: "Date" },
         { key: "due_date", header: "Due" },
-        { key: "status", header: "Status" },
+        { key: "status", header: "Status", render: r => <Badge className={COLOR[r.status] ?? ""} variant="secondary">{r.status}</Badge> },
         { key: "total", header: "Total", render: r => fmtMoney(r.total ?? 0) },
         { key: "balance_due", header: "Balance", render: r => fmtMoney(r.balance_due ?? 0) },
+      ]}
+      rowActions={[
+        {
+          label: "Mark Paid", icon: CheckCircle2, variant: "outline",
+          className: "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
+          show: r => r.status !== "paid",
+          run: async (r, reload) => { if (await updateStatus("bills", r.id, "paid")) reload(); },
+        },
       ]}
       fields={[
         { name: "bill_number", label: "Bill Number", required: true },
