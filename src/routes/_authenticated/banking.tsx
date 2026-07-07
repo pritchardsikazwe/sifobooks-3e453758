@@ -72,10 +72,49 @@ function BankingPage() {
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       if (prof.currency) setCurrency(prof.currency);
       if (prof.business_name) setBusinessName(prof.business_name);
+      const { data: acc } = await supabase.from("chart_of_accounts").select("id, account_code, account_name, account_type").eq("is_active", true).order("account_code");
+      setAccounts((acc ?? []) as Account[]);
       await load();
       setLoading(false);
     })();
   }, [navigate]);
+
+  const openAllocate = (t: Txn) => {
+    setAllocTxn(t);
+    setAllocMemo(t.description ?? "");
+    const wantType = Number(t.amount) > 0 ? "revenue" : "expense";
+    const pick = accounts.find(a => a.account_type === wantType && a.account_code !== "1000");
+    setAllocAccountId(pick?.id ?? "");
+  };
+
+  const runAllocate = async () => {
+    if (!allocTxn || !allocAccountId) return toast.error("Pick an account");
+    setBusy(allocTxn.id);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setBusy(null); return; }
+    const res = await postBankAllocation({ userId: u.user.id, txn: allocTxn, accountId: allocAccountId, memo: allocMemo });
+    setBusy(null);
+    if (!res.ok) return toast.error(res.error ?? "Failed");
+    toast.success(res.alreadyPosted ? "Already posted" : "Posted to ledger & reconciled");
+    setAllocTxn(null);
+    await load();
+  };
+
+  const filtered = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    return txns.filter(t => {
+      if (statusFilter === "unreconciled" && t.reconciled) return false;
+      if (statusFilter === "reconciled" && !t.reconciled) return false;
+      if (dirFilter === "in" && !(Number(t.amount) > 0)) return false;
+      if (dirFilter === "out" && !(Number(t.amount) < 0)) return false;
+      if (dateFrom && t.txn_date < dateFrom) return false;
+      if (dateTo && t.txn_date > dateTo) return false;
+      if (!s) return true;
+      return (t.description ?? "").toLowerCase().includes(s) ||
+        (t.reference ?? "").toLowerCase().includes(s) ||
+        (t.category ?? "").toLowerCase().includes(s);
+    });
+  }, [txns, search, statusFilter, dirFilter, dateFrom, dateTo]);
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
