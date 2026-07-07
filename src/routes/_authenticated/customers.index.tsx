@@ -144,9 +144,28 @@ function CustomersPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="relative max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search name, email, phone, TPIN…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search name, email, phone, TPIN…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={v => setStatusFilter(v as any)}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active only</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={balanceFilter} onValueChange={v => setBalanceFilter(v as any)}>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All balances</SelectItem>
+                <SelectItem value="with_balance">With balance</SelectItem>
+                <SelectItem value="overdue">Overdue only</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
           </div>
         </CardHeader>
         <CardContent>
