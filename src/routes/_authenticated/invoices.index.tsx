@@ -12,7 +12,7 @@ import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { voidInvoiceLedger } from "@/lib/posting";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/invoices")({
+export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({ meta: [{ title: "Invoice Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: InvoicesPage,
 });

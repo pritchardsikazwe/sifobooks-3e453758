@@ -38,7 +38,6 @@ import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
-import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -57,6 +56,7 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
@@ -227,11 +227,6 @@ const AuthenticatedJobCardsRoute = AuthenticatedJobCardsRouteImport.update({
   path: '/job-cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
-  id: '/invoices',
-  path: '/invoices',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedExpenseRulesRoute =
   AuthenticatedExpenseRulesRouteImport.update({
     id: '/expense-rules',
@@ -326,6 +321,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvoicesIndexRoute =
+  AuthenticatedInvoicesIndexRouteImport.update({
+    id: '/invoices/',
+    path: '/invoices/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsTrialBalanceRoute =
   AuthenticatedReportsTrialBalanceRouteImport.update({
     id: '/trial-balance',
@@ -398,9 +399,9 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
 } as any)
 const AuthenticatedInvoicesNewRoute =
   AuthenticatedInvoicesNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedInvoicesRoute,
+    id: '/invoices/new',
+    path: '/invoices/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCustomersIdRoute =
   AuthenticatedCustomersIdRouteImport.update({
@@ -431,7 +432,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
-  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -471,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/invoices/': typeof AuthenticatedInvoicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -494,7 +495,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
-  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -534,6 +534,7 @@ export interface FileRoutesByTo {
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/invoices': typeof AuthenticatedInvoicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -559,7 +560,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
-  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
@@ -599,6 +599,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -624,7 +625,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/expense-rules'
-    | '/invoices'
     | '/job-cards'
     | '/journal-entries'
     | '/leads'
@@ -664,6 +664,7 @@ export interface FileRouteTypes {
     | '/reports/sales-by-customer'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/invoices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -687,7 +688,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/expense-rules'
-    | '/invoices'
     | '/job-cards'
     | '/journal-entries'
     | '/leads'
@@ -727,6 +727,7 @@ export interface FileRouteTypes {
     | '/reports/sales-by-customer'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/invoices'
   id:
     | '__root__'
     | '/'
@@ -751,7 +752,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
-    | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
@@ -791,6 +791,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/sales-by-customer'
     | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
+    | '/_authenticated/invoices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1005,13 +1006,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/invoices': {
-      id: '/_authenticated/invoices'
-      path: '/invoices'
-      fullPath: '/invoices'
-      preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/expense-rules': {
       id: '/_authenticated/expense-rules'
       path: '/expense-rules'
@@ -1138,6 +1132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices/': {
+      id: '/_authenticated/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/trial-balance': {
       id: '/_authenticated/reports/trial-balance'
       path: '/trial-balance'
@@ -1224,10 +1225,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/invoices/new': {
       id: '/_authenticated/invoices/new'
-      path: '/new'
+      path: '/invoices/new'
       fullPath: '/invoices/new'
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
-      parentRoute: typeof AuthenticatedInvoicesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/customers/$id': {
       id: '/_authenticated/customers/$id'
@@ -1251,19 +1252,6 @@ const AuthenticatedCustomersRouteChildren: AuthenticatedCustomersRouteChildren =
 const AuthenticatedCustomersRouteWithChildren =
   AuthenticatedCustomersRoute._addFileChildren(
     AuthenticatedCustomersRouteChildren,
-  )
-
-interface AuthenticatedInvoicesRouteChildren {
-  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
-}
-
-const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
-  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
-}
-
-const AuthenticatedInvoicesRouteWithChildren =
-  AuthenticatedInvoicesRoute._addFileChildren(
-    AuthenticatedInvoicesRouteChildren,
   )
 
 interface AuthenticatedQuotesRouteChildren {
@@ -1332,7 +1320,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
-  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
@@ -1358,6 +1345,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
+  AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
+  AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1379,7 +1368,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
-  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
@@ -1405,6 +1393,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
+  AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
+  AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1419,13 +1409,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
