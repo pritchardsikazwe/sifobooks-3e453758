@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Scale, Link2, Unlink, CheckCircle2, Loader2, Search, Upload, AlertTriangle } from "lucide-react";
+import { Scale, Link2, Unlink, CheckCircle2, Loader2, Search, Upload, AlertTriangle, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { postBankAllocation } from "@/lib/bank-posting";
+
 
 export const Route = createFileRoute("/_authenticated/reconciliation")({
   head: () => ({
@@ -90,6 +92,13 @@ function Reconciliation() {
   const [busy, setBusy] = useState<string | null>(null);
   const [matchTxn, setMatchTxn] = useState<Txn | null>(null);
 
+  // Allocate & post to ledger
+  const [allocTxn, setAllocTxn] = useState<Txn | null>(null);
+  const [allocAccountId, setAllocAccountId] = useState<string>("");
+  const [allocMemo, setAllocMemo] = useState<string>("");
+  const [accounts, setAccounts] = useState<{ id: string; account_code: string; account_name: string; account_type: string }[]>([]);
+  const [rules, setRules] = useState<{ id: string; pattern: string; account_id: string }[]>([]);
+
   // CSV import state
   const [importOpen, setImportOpen] = useState(false);
   const [csvText, setCsvText] = useState("");
@@ -98,6 +107,7 @@ function Reconciliation() {
   const [csvBody, setCsvBody] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<MapField[]>([]);
   const [hasHeader, setHasHeader] = useState(true);
+
 
   const load = async () => {
     setLoading(true);
@@ -127,6 +137,47 @@ function Reconciliation() {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [from, to]);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: acc }, { data: rl }] = await Promise.all([
+        supabase.from("chart_of_accounts").select("id, account_code, account_name, account_type").eq("is_active", true).order("account_code"),
+        supabase.from("expense_category_rules").select("id, pattern, account_id"),
+      ]);
+      setAccounts(acc ?? []);
+      setRules((rl as any) ?? []);
+    })();
+  }, []);
+
+  const openAllocate = (t: Txn) => {
+    setAllocTxn(t);
+    setAllocMemo(t.description ?? "");
+    // suggest via rules
+    const desc = (t.description ?? "").toLowerCase();
+    const hit = rules.find(r => r.pattern && desc.includes(r.pattern.toLowerCase()));
+    if (hit) { setAllocAccountId(hit.account_id); return; }
+    // fallback: revenue for inflow, expense for outflow
+    const wantType = Number(t.amount) > 0 ? "revenue" : "expense";
+    const pick = accounts.find(a => a.account_type === wantType);
+    setAllocAccountId(pick?.id ?? "");
+  };
+
+  const runAllocate = async () => {
+    if (!allocTxn || !allocAccountId) return toast.error("Pick an account");
+    setBusy(allocTxn.id);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setBusy(null); return; }
+    const res = await postBankAllocation({
+      userId: u.user.id, txn: allocTxn, accountId: allocAccountId, memo: allocMemo,
+    });
+    setBusy(null);
+    if (!res.ok) return toast.error(res.error ?? "Failed");
+    toast.success(res.alreadyPosted ? "Already posted" : "Posted to ledger & reconciled");
+    setAllocTxn(null);
+    load();
+  };
+
+
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -462,7 +513,12 @@ function Reconciliation() {
                           : top?.near ? <Badge variant="outline" className="border-amber-500 text-amber-700 gap-1"><AlertTriangle className="h-3 w-3" />Near-match — review</Badge>
                           : <Badge variant="outline">Open</Badge>}
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
+                      <TableCell className="text-right space-x-1">
+                        {!t.reconciled && (
+                          <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => openAllocate(t)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                            <BookOpen className="h-3 w-3 mr-1" />Post
+                          </Button>
+                        )}
                         <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => setMatchTxn(t)}>
                           <Link2 className="h-3 w-3 mr-1" />Match
                         </Button>
@@ -470,6 +526,7 @@ function Reconciliation() {
                           {t.reconciled ? <><Unlink className="h-3 w-3 mr-1" />Unreconcile</> : <><CheckCircle2 className="h-3 w-3 mr-1" />Mark</>}
                         </Button>
                       </TableCell>
+
                     </TableRow>
                   );
                 })}
@@ -479,7 +536,51 @@ function Reconciliation() {
         </CardContent>
       </Card>
 
+      <Dialog open={!!allocTxn} onOpenChange={o => !o && setAllocTxn(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Allocate & post to ledger</DialogTitle></DialogHeader>
+          {allocTxn && (
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-md bg-muted">
+                <div className="font-medium">{allocTxn.description}</div>
+                <div className="text-xs text-muted-foreground">{allocTxn.txn_date} · {allocTxn.reference} · <span className="font-mono">{fmt(Number(allocTxn.amount))}</span></div>
+              </div>
+              <div>
+                <Label>Counter account ({Number(allocTxn.amount) > 0 ? "credit — revenue/other income" : "debit — expense/asset"})</Label>
+                <Select value={allocAccountId} onValueChange={setAllocAccountId}>
+                  <SelectTrigger><SelectValue placeholder="Pick account" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {accounts
+                      .filter(a => a.account_code !== "1000")
+                      .map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.account_code} — {a.account_name} <span className="text-xs text-muted-foreground">({a.account_type})</span>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Memo</Label>
+                <Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Description on the journal entry" />
+              </div>
+              <div className="text-xs text-muted-foreground rounded border border-emerald-200 bg-emerald-50 p-2">
+                Posts a journal entry against Cash &amp; Bank (1000) and marks this transaction reconciled. Reports (P&amp;L, Trial Balance, Balance Sheet) update instantly.
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
+            <Button onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+              {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Post to Ledger
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!matchTxn} onOpenChange={o => !o && setMatchTxn(null)}>
+
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Match transaction</DialogTitle></DialogHeader>
           {matchTxn && (
