@@ -82,6 +82,7 @@ const sections: Section[] = [
     { title: "Approvals", url: "/approvals", icon: Inbox },
     { title: "Super Admin", url: "/super-admin", icon: ShieldAlert },
     { title: "Company Setup", url: "/setup", icon: Building2 },
+    { title: "Industry & Modules", url: "/industry", icon: Sparkles },
     { title: "Subscription", url: "/subscription", icon: Sparkles },
     { title: "Audit Logs", url: "/audit-logs", icon: ShieldCheck },
     { title: "Notifications", url: "/notifications", icon: Bell },
