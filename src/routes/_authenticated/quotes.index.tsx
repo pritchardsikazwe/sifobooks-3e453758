@@ -10,7 +10,7 @@ import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
 
-export const Route = createFileRoute("/_authenticated/quotes")({
+export const Route = createFileRoute("/_authenticated/quotes/")({
   head: () => ({ meta: [{ title: "Quote Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: QuotesPage,
 });
