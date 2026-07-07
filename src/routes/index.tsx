@@ -164,6 +164,50 @@ function Landing() {
         </div>
       </section>
 
+      {/* SHORTCUTS — pic tiles wired to live pages */}
+      <section id="shortcuts" className="py-20 border-t border-border bg-muted/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <Reveal>
+            <div className="text-center mb-12">
+              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Jump right in</div>
+              <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-3">Your daily shortcuts.</h2>
+              <p className="text-base text-muted-foreground font-bold">One click to the live page. Sign-in required first time.</p>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {[
+              { to: "/dashboard", icon: BarChart3, label: "Dashboard", tint: "from-emerald-500 to-teal-500", desc: "Live KPIs" },
+              { to: "/quotes/new", icon: FileText, label: "Create a Quote", tint: "from-blue-500 to-indigo-500", desc: "Send a quotation" },
+              { to: "/invoices/new", icon: ReceiptText, label: "Create an Invoice", tint: "from-emerald-500 to-cyan-500", desc: "Bill your customer" },
+              { to: "/receipts", icon: CreditCard, label: "Customer Receipts", tint: "from-teal-500 to-emerald-600", desc: "Receive money" },
+              { to: "/credit-notes", icon: FileText, label: "Credit Note", tint: "from-pink-500 to-rose-500", desc: "Refund a customer" },
+              { to: "/bills", icon: FileBox, label: "Supplier Bill", tint: "from-orange-500 to-red-500", desc: "Enter supplier invoices" },
+              { to: "/bill-payments", icon: Wallet, label: "Supplier Payments", tint: "from-amber-500 to-orange-500", desc: "Pay your supplier" },
+              { to: "/banking", icon: Landmark, label: "Import Bank", tint: "from-violet-500 to-purple-500", desc: "Import statements" },
+              { to: "/reconciliation", icon: Wallet, label: "Reconcile & Post", tint: "from-purple-500 to-fuchsia-500", desc: "Match & post to ledger" },
+              { to: "/journal-entries", icon: BookText, label: "Journal Entries", tint: "from-indigo-500 to-blue-500", desc: "Double-entry" },
+              { to: "/customers", icon: Users, label: "Customers", tint: "from-emerald-500 to-teal-500", desc: "CRM & balances" },
+              { to: "/suppliers", icon: Truck, label: "Suppliers", tint: "from-blue-500 to-indigo-500", desc: "Vendor master" },
+              { to: "/stock", icon: Boxes, label: "Items & Stock", tint: "from-orange-500 to-red-500", desc: "SKUs & valuation" },
+              { to: "/reports", icon: BarChart3, label: "Reports", tint: "from-emerald-600 to-teal-600", desc: "P&L, TB, BS, Tax" },
+              { to: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts", tint: "from-slate-500 to-slate-700", desc: "Ledger setup" },
+            ].map((s, i) => (
+              <Reveal key={s.to + s.label} delay={i * 40}>
+                <Link to={s.to as any}>
+                  <Card className="p-4 h-full border-2 hover:border-emerald-500/60 hover:shadow-xl hover:-translate-y-1 transition-all group text-center">
+                    <div className={`mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br ${s.tint} grid place-items-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg`}>
+                      <s.icon className="h-7 w-7 text-white" />
+                    </div>
+                    <div className="font-black text-sm">{s.label}</div>
+                    <div className="text-xs text-muted-foreground font-semibold mt-1">{s.desc}</div>
+                  </Card>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* MODULES */}
       <section id="modules" className="py-24 border-t border-border">
         <div className="max-w-7xl mx-auto px-6">
