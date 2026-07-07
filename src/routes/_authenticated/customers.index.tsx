@@ -32,6 +32,8 @@ function CustomersPage() {
   const [balances, setBalances] = useState<Record<string, Balance>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [balanceFilter, setBalanceFilter] = useState<"all" | "with_balance" | "overdue">("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState<Partial<Customer>>({ name: "", payment_terms_days: 30, active: true, country: "Zambia" });
