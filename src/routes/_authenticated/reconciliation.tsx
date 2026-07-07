@@ -513,7 +513,12 @@ function Reconciliation() {
                           : top?.near ? <Badge variant="outline" className="border-amber-500 text-amber-700 gap-1"><AlertTriangle className="h-3 w-3" />Near-match — review</Badge>
                           : <Badge variant="outline">Open</Badge>}
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
+                      <TableCell className="text-right space-x-1">
+                        {!t.reconciled && (
+                          <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => openAllocate(t)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                            <BookOpen className="h-3 w-3 mr-1" />Post
+                          </Button>
+                        )}
                         <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => setMatchTxn(t)}>
                           <Link2 className="h-3 w-3 mr-1" />Match
                         </Button>
@@ -521,6 +526,7 @@ function Reconciliation() {
                           {t.reconciled ? <><Unlink className="h-3 w-3 mr-1" />Unreconcile</> : <><CheckCircle2 className="h-3 w-3 mr-1" />Mark</>}
                         </Button>
                       </TableCell>
+
                     </TableRow>
                   );
                 })}
