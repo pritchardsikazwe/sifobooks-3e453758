@@ -60,14 +60,19 @@ function CustomersPage() {
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase().trim();
-    if (!s) return rows;
-    return rows.filter(r =>
-      r.name.toLowerCase().includes(s) ||
-      (r.email ?? "").toLowerCase().includes(s) ||
-      (r.phone ?? "").toLowerCase().includes(s) ||
-      (r.tpin ?? "").toLowerCase().includes(s)
-    );
-  }, [rows, q]);
+    return rows.filter(r => {
+      if (statusFilter === "active" && !r.active) return false;
+      if (statusFilter === "inactive" && r.active) return false;
+      const b = balances[r.id];
+      if (balanceFilter === "with_balance" && !(b?.balance > 0)) return false;
+      if (balanceFilter === "overdue" && !(b?.overdue > 0)) return false;
+      if (!s) return true;
+      return r.name.toLowerCase().includes(s) ||
+        (r.email ?? "").toLowerCase().includes(s) ||
+        (r.phone ?? "").toLowerCase().includes(s) ||
+        (r.tpin ?? "").toLowerCase().includes(s);
+    });
+  }, [rows, q, statusFilter, balanceFilter, balances]);
 
   const openNew = () => { setEditing(null); setForm({ name: "", payment_terms_days: 30, active: true, country: "Zambia" }); setOpen(true); };
   const openEdit = (c: Customer) => { setEditing(c); setForm(c); setOpen(true); };
