@@ -63,10 +63,12 @@ import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
+import { Route as AuthenticatedReportsSupplierStatementRouteImport } from './routes/_authenticated/reports.supplier-statement'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
+import { Route as AuthenticatedReportsCustomerStatementRouteImport } from './routes/_authenticated/reports.customer-statement'
 import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_authenticated/reports.cash-flow'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
 import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './routes/_authenticated/reports.aged-receivables'
@@ -366,6 +368,12 @@ const AuthenticatedReportsTaxSummaryRoute =
     path: '/tax-summary',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsSupplierStatementRoute =
+  AuthenticatedReportsSupplierStatementRouteImport.update({
+    id: '/supplier-statement',
+    path: '/supplier-statement',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsSalesByCustomerRoute =
   AuthenticatedReportsSalesByCustomerRouteImport.update({
     id: '/sales-by-customer',
@@ -387,6 +395,12 @@ const AuthenticatedReportsInventoryValuationRoute =
   AuthenticatedReportsInventoryValuationRouteImport.update({
     id: '/inventory-valuation',
     path: '/inventory-valuation',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsCustomerStatementRoute =
+  AuthenticatedReportsCustomerStatementRouteImport.update({
+    id: '/customer-statement',
+    path: '/customer-statement',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
 const AuthenticatedReportsCashFlowRoute =
@@ -500,10 +514,12 @@ export interface FileRoutesByFullPath {
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -565,10 +581,12 @@ export interface FileRoutesByTo {
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
@@ -635,10 +653,12 @@ export interface FileRoutesById {
   '/_authenticated/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/_authenticated/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/_authenticated/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/_authenticated/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -705,10 +725,12 @@ export interface FileRouteTypes {
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
     | '/reports/cash-flow'
+    | '/reports/customer-statement'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/sales-by-customer'
+    | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
     | '/customers/'
@@ -770,10 +792,12 @@ export interface FileRouteTypes {
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
     | '/reports/cash-flow'
+    | '/reports/customer-statement'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/sales-by-customer'
+    | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
     | '/customers'
@@ -839,10 +863,12 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/aged-receivables'
     | '/_authenticated/reports/balance-sheet'
     | '/_authenticated/reports/cash-flow'
+    | '/_authenticated/reports/customer-statement'
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
     | '/_authenticated/reports/sales-by-customer'
+    | '/_authenticated/reports/supplier-statement'
     | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
     | '/_authenticated/customers/'
@@ -1237,6 +1263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsTaxSummaryRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/supplier-statement': {
+      id: '/_authenticated/reports/supplier-statement'
+      path: '/supplier-statement'
+      fullPath: '/reports/supplier-statement'
+      preLoaderRoute: typeof AuthenticatedReportsSupplierStatementRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/sales-by-customer': {
       id: '/_authenticated/reports/sales-by-customer'
       path: '/sales-by-customer'
@@ -1263,6 +1296,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory-valuation'
       fullPath: '/reports/inventory-valuation'
       preLoaderRoute: typeof AuthenticatedReportsInventoryValuationRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/customer-statement': {
+      id: '/_authenticated/reports/customer-statement'
+      path: '/customer-statement'
+      fullPath: '/reports/customer-statement'
+      preLoaderRoute: typeof AuthenticatedReportsCustomerStatementRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
     '/_authenticated/reports/cash-flow': {
@@ -1382,10 +1422,12 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
   AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
+  AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
   AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
+  AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
 }
@@ -1399,6 +1441,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsAgedReceivablesRoute,
   AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
   AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
+  AuthenticatedReportsCustomerStatementRoute:
+    AuthenticatedReportsCustomerStatementRoute,
   AuthenticatedReportsInventoryValuationRoute:
     AuthenticatedReportsInventoryValuationRoute,
   AuthenticatedReportsPayrollSummaryRoute:
@@ -1406,6 +1450,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
   AuthenticatedReportsSalesByCustomerRoute:
     AuthenticatedReportsSalesByCustomerRoute,
+  AuthenticatedReportsSupplierStatementRoute:
+    AuthenticatedReportsSupplierStatementRoute,
   AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
 }

@@ -76,6 +76,8 @@ const sections: Section[] = [
   { label: "Reports", items: [
     { title: "Reports", url: "/reports", icon: BarChart3 },
     { title: "Trial Balance", url: "/reports/trial-balance", icon: BookText },
+    { title: "Customer Statement", url: "/reports/customer-statement", icon: Users },
+    { title: "Supplier Statement", url: "/reports/supplier-statement", icon: Truck },
     { title: "Annual Financial Statements", url: "/reports/afs", icon: Sparkles },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
   ]},

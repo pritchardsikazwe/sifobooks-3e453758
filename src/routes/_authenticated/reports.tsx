@@ -24,6 +24,8 @@ const GROUPS = [
     items: [
       { title: "Aged Receivables", desc: "Outstanding customer invoices", icon: Users, to: "/reports/aged-receivables" },
       { title: "Aged Payables", desc: "Outstanding supplier bills", icon: Truck, to: "/reports/aged-payables" },
+      { title: "Customer Statement", desc: "Per-customer ledger + PDF", icon: Users, to: "/reports/customer-statement" },
+      { title: "Supplier Statement", desc: "Per-supplier ledger + PDF", icon: Truck, to: "/reports/supplier-statement" },
     ],
   },
   {
