@@ -22,7 +22,6 @@ import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_aut
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedReconciliationRouteImport } from './routes/_authenticated/reconciliation'
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
@@ -58,6 +57,7 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
@@ -147,11 +147,6 @@ const AuthenticatedServiceTicketsRoute =
     path: '/service-tickets',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedReconciliationRoute =
   AuthenticatedReconciliationRouteImport.update({
     id: '/reconciliation',
@@ -338,6 +333,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsIndexRoute =
+  AuthenticatedReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedQuotesIndexRoute =
   AuthenticatedQuotesIndexRouteImport.update({
     id: '/',
@@ -358,85 +359,85 @@ const AuthenticatedCustomersIndexRoute =
   } as any)
 const AuthenticatedReportsTrialBalanceRoute =
   AuthenticatedReportsTrialBalanceRouteImport.update({
-    id: '/trial-balance',
-    path: '/trial-balance',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/trial-balance',
+    path: '/reports/trial-balance',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsTaxSummaryRoute =
   AuthenticatedReportsTaxSummaryRouteImport.update({
-    id: '/tax-summary',
-    path: '/tax-summary',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/tax-summary',
+    path: '/reports/tax-summary',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsSupplierStatementRoute =
   AuthenticatedReportsSupplierStatementRouteImport.update({
-    id: '/supplier-statement',
-    path: '/supplier-statement',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/supplier-statement',
+    path: '/reports/supplier-statement',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsSalesByCustomerRoute =
   AuthenticatedReportsSalesByCustomerRouteImport.update({
-    id: '/sales-by-customer',
-    path: '/sales-by-customer',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/sales-by-customer',
+    path: '/reports/sales-by-customer',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsPnlRoute = AuthenticatedReportsPnlRouteImport.update({
-  id: '/pnl',
-  path: '/pnl',
-  getParentRoute: () => AuthenticatedReportsRoute,
+  id: '/reports/pnl',
+  path: '/reports/pnl',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsPayrollSummaryRoute =
   AuthenticatedReportsPayrollSummaryRouteImport.update({
-    id: '/payroll-summary',
-    path: '/payroll-summary',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/payroll-summary',
+    path: '/reports/payroll-summary',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsInventoryValuationRoute =
   AuthenticatedReportsInventoryValuationRouteImport.update({
-    id: '/inventory-valuation',
-    path: '/inventory-valuation',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/inventory-valuation',
+    path: '/reports/inventory-valuation',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsCustomerStatementRoute =
   AuthenticatedReportsCustomerStatementRouteImport.update({
-    id: '/customer-statement',
-    path: '/customer-statement',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/customer-statement',
+    path: '/reports/customer-statement',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsCashFlowRoute =
   AuthenticatedReportsCashFlowRouteImport.update({
-    id: '/cash-flow',
-    path: '/cash-flow',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/cash-flow',
+    path: '/reports/cash-flow',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsBalanceSheetRoute =
   AuthenticatedReportsBalanceSheetRouteImport.update({
-    id: '/balance-sheet',
-    path: '/balance-sheet',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/balance-sheet',
+    path: '/reports/balance-sheet',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsAgedReceivablesRoute =
   AuthenticatedReportsAgedReceivablesRouteImport.update({
-    id: '/aged-receivables',
-    path: '/aged-receivables',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/aged-receivables',
+    path: '/reports/aged-receivables',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsAgedPayablesRoute =
   AuthenticatedReportsAgedPayablesRouteImport.update({
-    id: '/aged-payables',
-    path: '/aged-payables',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/aged-payables',
+    path: '/reports/aged-payables',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsAfsRoute = AuthenticatedReportsAfsRouteImport.update({
-  id: '/afs',
-  path: '/afs',
-  getParentRoute: () => AuthenticatedReportsRoute,
+  id: '/reports/afs',
+  path: '/reports/afs',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsAccountantPackRoute =
   AuthenticatedReportsAccountantPackRouteImport.update({
-    id: '/accountant-pack',
-    path: '/accountant-pack',
-    getParentRoute: () => AuthenticatedReportsRoute,
+    id: '/reports/accountant-pack',
+    path: '/reports/accountant-pack',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   id: '/new',
@@ -495,7 +496,6 @@ export interface FileRoutesByFullPath {
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
-  '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
@@ -525,6 +525,7 @@ export interface FileRoutesByFullPath {
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
+  '/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -562,7 +563,6 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
-  '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
@@ -592,6 +592,7 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -634,7 +635,6 @@ export interface FileRoutesById {
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
   '/_authenticated/reconciliation': typeof AuthenticatedReconciliationRoute
-  '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
@@ -664,6 +664,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
+  '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -706,7 +707,6 @@ export interface FileRouteTypes {
     | '/quotes'
     | '/receipts'
     | '/reconciliation'
-    | '/reports'
     | '/service-tickets'
     | '/setup'
     | '/stock'
@@ -736,6 +736,7 @@ export interface FileRouteTypes {
     | '/customers/'
     | '/invoices/'
     | '/quotes/'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -773,7 +774,6 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/receipts'
     | '/reconciliation'
-    | '/reports'
     | '/service-tickets'
     | '/setup'
     | '/stock'
@@ -803,6 +803,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/invoices'
     | '/quotes'
+    | '/reports'
   id:
     | '__root__'
     | '/'
@@ -844,7 +845,6 @@ export interface FileRouteTypes {
     | '/_authenticated/quotes'
     | '/_authenticated/receipts'
     | '/_authenticated/reconciliation'
-    | '/_authenticated/reports'
     | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
     | '/_authenticated/stock'
@@ -874,6 +874,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/quotes/'
+    | '/_authenticated/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -974,13 +975,6 @@ declare module '@tanstack/react-router' {
       path: '/service-tickets'
       fullPath: '/service-tickets'
       preLoaderRoute: typeof AuthenticatedServiceTicketsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reconciliation': {
@@ -1228,6 +1222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/': {
+      id: '/_authenticated/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/quotes/': {
       id: '/_authenticated/quotes/'
       path: '/'
@@ -1251,101 +1252,101 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/reports/trial-balance': {
       id: '/_authenticated/reports/trial-balance'
-      path: '/trial-balance'
+      path: '/reports/trial-balance'
       fullPath: '/reports/trial-balance'
       preLoaderRoute: typeof AuthenticatedReportsTrialBalanceRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/tax-summary': {
       id: '/_authenticated/reports/tax-summary'
-      path: '/tax-summary'
+      path: '/reports/tax-summary'
       fullPath: '/reports/tax-summary'
       preLoaderRoute: typeof AuthenticatedReportsTaxSummaryRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/supplier-statement': {
       id: '/_authenticated/reports/supplier-statement'
-      path: '/supplier-statement'
+      path: '/reports/supplier-statement'
       fullPath: '/reports/supplier-statement'
       preLoaderRoute: typeof AuthenticatedReportsSupplierStatementRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/sales-by-customer': {
       id: '/_authenticated/reports/sales-by-customer'
-      path: '/sales-by-customer'
+      path: '/reports/sales-by-customer'
       fullPath: '/reports/sales-by-customer'
       preLoaderRoute: typeof AuthenticatedReportsSalesByCustomerRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/pnl': {
       id: '/_authenticated/reports/pnl'
-      path: '/pnl'
+      path: '/reports/pnl'
       fullPath: '/reports/pnl'
       preLoaderRoute: typeof AuthenticatedReportsPnlRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/payroll-summary': {
       id: '/_authenticated/reports/payroll-summary'
-      path: '/payroll-summary'
+      path: '/reports/payroll-summary'
       fullPath: '/reports/payroll-summary'
       preLoaderRoute: typeof AuthenticatedReportsPayrollSummaryRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/inventory-valuation': {
       id: '/_authenticated/reports/inventory-valuation'
-      path: '/inventory-valuation'
+      path: '/reports/inventory-valuation'
       fullPath: '/reports/inventory-valuation'
       preLoaderRoute: typeof AuthenticatedReportsInventoryValuationRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/customer-statement': {
       id: '/_authenticated/reports/customer-statement'
-      path: '/customer-statement'
+      path: '/reports/customer-statement'
       fullPath: '/reports/customer-statement'
       preLoaderRoute: typeof AuthenticatedReportsCustomerStatementRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/cash-flow': {
       id: '/_authenticated/reports/cash-flow'
-      path: '/cash-flow'
+      path: '/reports/cash-flow'
       fullPath: '/reports/cash-flow'
       preLoaderRoute: typeof AuthenticatedReportsCashFlowRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/balance-sheet': {
       id: '/_authenticated/reports/balance-sheet'
-      path: '/balance-sheet'
+      path: '/reports/balance-sheet'
       fullPath: '/reports/balance-sheet'
       preLoaderRoute: typeof AuthenticatedReportsBalanceSheetRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/aged-receivables': {
       id: '/_authenticated/reports/aged-receivables'
-      path: '/aged-receivables'
+      path: '/reports/aged-receivables'
       fullPath: '/reports/aged-receivables'
       preLoaderRoute: typeof AuthenticatedReportsAgedReceivablesRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/aged-payables': {
       id: '/_authenticated/reports/aged-payables'
-      path: '/aged-payables'
+      path: '/reports/aged-payables'
       fullPath: '/reports/aged-payables'
       preLoaderRoute: typeof AuthenticatedReportsAgedPayablesRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/afs': {
       id: '/_authenticated/reports/afs'
-      path: '/afs'
+      path: '/reports/afs'
       fullPath: '/reports/afs'
       preLoaderRoute: typeof AuthenticatedReportsAfsRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/accountant-pack': {
       id: '/_authenticated/reports/accountant-pack'
-      path: '/accountant-pack'
+      path: '/reports/accountant-pack'
       fullPath: '/reports/accountant-pack'
       preLoaderRoute: typeof AuthenticatedReportsAccountantPackRouteImport
-      parentRoute: typeof AuthenticatedReportsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/quotes/new': {
       id: '/_authenticated/quotes/new'
@@ -1415,50 +1416,6 @@ const AuthenticatedQuotesRouteChildren: AuthenticatedQuotesRouteChildren = {
 const AuthenticatedQuotesRouteWithChildren =
   AuthenticatedQuotesRoute._addFileChildren(AuthenticatedQuotesRouteChildren)
 
-interface AuthenticatedReportsRouteChildren {
-  AuthenticatedReportsAccountantPackRoute: typeof AuthenticatedReportsAccountantPackRoute
-  AuthenticatedReportsAfsRoute: typeof AuthenticatedReportsAfsRoute
-  AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
-  AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
-  AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
-  AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
-  AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
-  AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
-  AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
-  AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
-  AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
-  AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
-  AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
-  AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
-}
-
-const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
-  AuthenticatedReportsAccountantPackRoute:
-    AuthenticatedReportsAccountantPackRoute,
-  AuthenticatedReportsAfsRoute: AuthenticatedReportsAfsRoute,
-  AuthenticatedReportsAgedPayablesRoute: AuthenticatedReportsAgedPayablesRoute,
-  AuthenticatedReportsAgedReceivablesRoute:
-    AuthenticatedReportsAgedReceivablesRoute,
-  AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
-  AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
-  AuthenticatedReportsCustomerStatementRoute:
-    AuthenticatedReportsCustomerStatementRoute,
-  AuthenticatedReportsInventoryValuationRoute:
-    AuthenticatedReportsInventoryValuationRoute,
-  AuthenticatedReportsPayrollSummaryRoute:
-    AuthenticatedReportsPayrollSummaryRoute,
-  AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
-  AuthenticatedReportsSalesByCustomerRoute:
-    AuthenticatedReportsSalesByCustomerRoute,
-  AuthenticatedReportsSupplierStatementRoute:
-    AuthenticatedReportsSupplierStatementRoute,
-  AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
-  AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
-}
-
-const AuthenticatedReportsRouteWithChildren =
-  AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
@@ -1495,7 +1452,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
   AuthenticatedReconciliationRoute: typeof AuthenticatedReconciliationRoute
-  AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
@@ -1505,6 +1461,21 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
+  AuthenticatedReportsAccountantPackRoute: typeof AuthenticatedReportsAccountantPackRoute
+  AuthenticatedReportsAfsRoute: typeof AuthenticatedReportsAfsRoute
+  AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
+  AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
+  AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
+  AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
+  AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
+  AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
+  AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
+  AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
+  AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
+  AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
+  AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
+  AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
+  AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1543,7 +1514,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
   AuthenticatedReconciliationRoute: AuthenticatedReconciliationRoute,
-  AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
@@ -1553,6 +1523,28 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
+  AuthenticatedReportsAccountantPackRoute:
+    AuthenticatedReportsAccountantPackRoute,
+  AuthenticatedReportsAfsRoute: AuthenticatedReportsAfsRoute,
+  AuthenticatedReportsAgedPayablesRoute: AuthenticatedReportsAgedPayablesRoute,
+  AuthenticatedReportsAgedReceivablesRoute:
+    AuthenticatedReportsAgedReceivablesRoute,
+  AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
+  AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
+  AuthenticatedReportsCustomerStatementRoute:
+    AuthenticatedReportsCustomerStatementRoute,
+  AuthenticatedReportsInventoryValuationRoute:
+    AuthenticatedReportsInventoryValuationRoute,
+  AuthenticatedReportsPayrollSummaryRoute:
+    AuthenticatedReportsPayrollSummaryRoute,
+  AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
+  AuthenticatedReportsSalesByCustomerRoute:
+    AuthenticatedReportsSalesByCustomerRoute,
+  AuthenticatedReportsSupplierStatementRoute:
+    AuthenticatedReportsSupplierStatementRoute,
+  AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
+  AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
+  AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1567,13 +1559,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
