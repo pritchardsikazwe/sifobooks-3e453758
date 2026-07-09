@@ -58,6 +58,7 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
@@ -338,6 +339,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsIndexRoute =
+  AuthenticatedReportsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedQuotesIndexRoute =
   AuthenticatedQuotesIndexRouteImport.update({
     id: '/',
@@ -525,6 +532,7 @@ export interface FileRoutesByFullPath {
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
+  '/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -562,7 +570,6 @@ export interface FileRoutesByTo {
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
-  '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
@@ -592,6 +599,7 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -664,6 +672,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
+  '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -736,6 +745,7 @@ export interface FileRouteTypes {
     | '/customers/'
     | '/invoices/'
     | '/quotes/'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -773,7 +783,6 @@ export interface FileRouteTypes {
     | '/purchase-orders'
     | '/receipts'
     | '/reconciliation'
-    | '/reports'
     | '/service-tickets'
     | '/setup'
     | '/stock'
@@ -803,6 +812,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/invoices'
     | '/quotes'
+    | '/reports'
   id:
     | '__root__'
     | '/'
@@ -874,6 +884,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/quotes/'
+    | '/_authenticated/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1228,6 +1239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/': {
+      id: '/_authenticated/reports/'
+      path: '/'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/quotes/': {
       id: '/_authenticated/quotes/'
       path: '/'
@@ -1430,6 +1448,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
+  AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
@@ -1454,6 +1473,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsSupplierStatementRoute,
   AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
+  AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
 }
 
 const AuthenticatedReportsRouteWithChildren =
