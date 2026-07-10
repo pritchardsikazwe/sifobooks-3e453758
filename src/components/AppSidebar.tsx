@@ -8,7 +8,7 @@ import {
   UserSquare, CalendarCheck, CalendarDays, Banknote,
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
   UserPlus, Target, Megaphone, MessageSquareWarning, Star,
-  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags,
+  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
