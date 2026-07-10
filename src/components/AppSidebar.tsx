@@ -80,6 +80,9 @@ const sections: Section[] = [
     { title: "Customer Statement", url: "/reports/customer-statement", icon: Users },
     { title: "Supplier Statement", url: "/reports/supplier-statement", icon: Truck },
     { title: "Annual Financial Statements", url: "/reports/afs", icon: Sparkles },
+    { title: "VAT Return (VAT 3)", url: "/reports/vat-return", icon: Receipt },
+    { title: "Income Tax Computation", url: "/reports/income-tax", icon: Receipt },
+    { title: "Turnover Tax", url: "/reports/turnover-tax", icon: Receipt },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
   ]},
   { label: "Admin", items: [
