@@ -271,14 +271,53 @@ function GenerateRun({ userId, onDone }: { userId: string; onDone: () => void })
       const { data } = await supabase.from("employees").select("*").eq("user_id", userId).eq("status", "active").order("first_name");
       const emps = (data ?? []) as Employee[];
       setEmployees(emps);
+
+      // Pull timesheet / attendance for the selected month so overtime & bonus
+      // auto-fill from live data. Standard hours per month assumed 176.
+      const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+      const monthEnd = new Date(year, month, 0).toISOString().slice(0, 10);
+      const [{ data: timeRows }, { data: attRows }] = await Promise.all([
+        supabase.from("time_entries").select("employee_id,hours,work_date,billable")
+          .eq("user_id", userId).gte("work_date", monthStart).lte("work_date", monthEnd),
+        supabase.from("attendance").select("employee_id,attendance_date,hours_worked,status")
+          .eq("user_id", userId).gte("attendance_date", monthStart).lte("attendance_date", monthEnd),
+      ]);
+      const otHours: Record<string, number> = {};
+      const holHours: Record<string, number> = {};
+      const absent: Record<string, number> = {};
+      const daysWorked: Record<string, number> = {};
+      const STD_HOURS_PER_DAY = 8;
+      const hourlyOf = (basic: number) => basic / 176;
+      for (const t of timeRows ?? []) {
+        const h = Number((t as any).hours ?? 0);
+        const overtime = Math.max(0, h - STD_HOURS_PER_DAY);
+        if (overtime > 0) otHours[(t as any).employee_id] = (otHours[(t as any).employee_id] ?? 0) + overtime;
+      }
+      for (const a of attRows ?? []) {
+        const eid = (a as any).employee_id; if (!eid) continue;
+        if ((a as any).status === "absent") absent[eid] = (absent[eid] ?? 0) + 1;
+        else if ((a as any).status === "holiday") holHours[eid] = (holHours[eid] ?? 0) + Number((a as any).hours_worked ?? STD_HOURS_PER_DAY);
+        else if ((a as any).status === "present" || (a as any).status === "late") daysWorked[eid] = (daysWorked[eid] ?? 0) + 1;
+      }
+
       const seed: typeof overrides = {};
       for (const e of emps) {
-        seed[e.id] = { basic: Number(e.basic_salary ?? 0), utility: 0, housing: 0, transport: 0, overtime: 0, shift: 0, bonus: 0, loan: 0, advances: 0, other_ded: 0, include: true };
+        const basic = Number(e.basic_salary ?? 0);
+        const hr = hourlyOf(basic);
+        const ot = (otHours[e.id] ?? 0) * hr * 1.5;   // 1.5× for overtime
+        const hol = (holHours[e.id] ?? 0) * hr * 2;    // 2× for holidays
+        const absDays = absent[e.id] ?? 0;
+        const absDeduction = absDays * STD_HOURS_PER_DAY * hr;
+        seed[e.id] = {
+          basic, utility: 0, housing: 0, transport: 0,
+          overtime: +ot.toFixed(2), shift: +hol.toFixed(2), bonus: 0,
+          loan: 0, advances: 0, other_ded: +absDeduction.toFixed(2), include: true,
+        };
       }
       setOverrides(seed);
       setLoading(false);
     })();
-  }, [userId]);
+  }, [userId, year, month]);
 
   const preview = useMemo(() => {
     return employees.map(e => {
