@@ -40,6 +40,7 @@ import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
+import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -62,6 +63,8 @@ import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
+import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
+import { Route as AuthenticatedReportsTurnoverTaxRouteImport } from './routes/_authenticated/reports.turnover-tax'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSupplierStatementRouteImport } from './routes/_authenticated/reports.supplier-statement'
@@ -69,6 +72,7 @@ import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './route
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
+import { Route as AuthenticatedReportsIncomeTaxRouteImport } from './routes/_authenticated/reports.income-tax'
 import { Route as AuthenticatedReportsCustomerStatementRouteImport } from './routes/_authenticated/reports.customer-statement'
 import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_authenticated/reports.cash-flow'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
@@ -245,6 +249,11 @@ const AuthenticatedIndustryRoute = AuthenticatedIndustryRouteImport.update({
   path: '/industry',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedExpenseRulesRoute =
   AuthenticatedExpenseRulesRouteImport.update({
     id: '/expense-rules',
@@ -363,6 +372,18 @@ const AuthenticatedCustomersIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
+const AuthenticatedReportsVatReturnRoute =
+  AuthenticatedReportsVatReturnRouteImport.update({
+    id: '/vat-return',
+    path: '/vat-return',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsTurnoverTaxRoute =
+  AuthenticatedReportsTurnoverTaxRouteImport.update({
+    id: '/turnover-tax',
+    path: '/turnover-tax',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsTrialBalanceRoute =
   AuthenticatedReportsTrialBalanceRouteImport.update({
     id: '/trial-balance',
@@ -402,6 +423,12 @@ const AuthenticatedReportsInventoryValuationRoute =
   AuthenticatedReportsInventoryValuationRouteImport.update({
     id: '/inventory-valuation',
     path: '/inventory-valuation',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsIncomeTaxRoute =
+  AuthenticatedReportsIncomeTaxRouteImport.update({
+    id: '/income-tax',
+    path: '/income-tax',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
 const AuthenticatedReportsCustomerStatementRoute =
@@ -485,6 +512,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
+  '/expenses': typeof AuthenticatedExpensesRoute
   '/industry': typeof AuthenticatedIndustryRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
@@ -522,6 +550,7 @@ export interface FileRoutesByFullPath {
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -529,6 +558,8 @@ export interface FileRoutesByFullPath {
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
@@ -555,6 +586,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
+  '/expenses': typeof AuthenticatedExpensesRoute
   '/industry': typeof AuthenticatedIndustryRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -589,6 +621,7 @@ export interface FileRoutesByTo {
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -596,6 +629,8 @@ export interface FileRoutesByTo {
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
@@ -625,6 +660,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
+  '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
@@ -662,6 +698,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/_authenticated/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/_authenticated/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/_authenticated/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -669,6 +706,8 @@ export interface FileRoutesById {
   '/_authenticated/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
+  '/_authenticated/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
@@ -698,6 +737,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/expense-rules'
+    | '/expenses'
     | '/industry'
     | '/invoices'
     | '/job-cards'
@@ -735,6 +775,7 @@ export interface FileRouteTypes {
     | '/reports/balance-sheet'
     | '/reports/cash-flow'
     | '/reports/customer-statement'
+    | '/reports/income-tax'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -742,6 +783,8 @@ export interface FileRouteTypes {
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/reports/turnover-tax'
+    | '/reports/vat-return'
     | '/customers/'
     | '/invoices/'
     | '/quotes/'
@@ -768,6 +811,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/employees'
     | '/expense-rules'
+    | '/expenses'
     | '/industry'
     | '/job-cards'
     | '/journal-entries'
@@ -802,6 +846,7 @@ export interface FileRouteTypes {
     | '/reports/balance-sheet'
     | '/reports/cash-flow'
     | '/reports/customer-statement'
+    | '/reports/income-tax'
     | '/reports/inventory-valuation'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -809,6 +854,8 @@ export interface FileRouteTypes {
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
+    | '/reports/turnover-tax'
+    | '/reports/vat-return'
     | '/customers'
     | '/invoices'
     | '/quotes'
@@ -837,6 +884,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
+    | '/_authenticated/expenses'
     | '/_authenticated/industry'
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
@@ -874,6 +922,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/balance-sheet'
     | '/_authenticated/reports/cash-flow'
     | '/_authenticated/reports/customer-statement'
+    | '/_authenticated/reports/income-tax'
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
@@ -881,6 +930,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/supplier-statement'
     | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
+    | '/_authenticated/reports/turnover-tax'
+    | '/_authenticated/reports/vat-return'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/quotes/'
@@ -1113,6 +1164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndustryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/expenses': {
+      id: '/_authenticated/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/expense-rules': {
       id: '/_authenticated/expense-rules'
       path: '/expense-rules'
@@ -1267,6 +1325,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedCustomersRoute
     }
+    '/_authenticated/reports/vat-return': {
+      id: '/_authenticated/reports/vat-return'
+      path: '/vat-return'
+      fullPath: '/reports/vat-return'
+      preLoaderRoute: typeof AuthenticatedReportsVatReturnRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/turnover-tax': {
+      id: '/_authenticated/reports/turnover-tax'
+      path: '/turnover-tax'
+      fullPath: '/reports/turnover-tax'
+      preLoaderRoute: typeof AuthenticatedReportsTurnoverTaxRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/trial-balance': {
       id: '/_authenticated/reports/trial-balance'
       path: '/trial-balance'
@@ -1314,6 +1386,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory-valuation'
       fullPath: '/reports/inventory-valuation'
       preLoaderRoute: typeof AuthenticatedReportsInventoryValuationRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/income-tax': {
+      id: '/_authenticated/reports/income-tax'
+      path: '/income-tax'
+      fullPath: '/reports/income-tax'
+      preLoaderRoute: typeof AuthenticatedReportsIncomeTaxRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
     '/_authenticated/reports/customer-statement': {
@@ -1441,6 +1520,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
   AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
   AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
+  AuthenticatedReportsIncomeTaxRoute: typeof AuthenticatedReportsIncomeTaxRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
@@ -1448,6 +1528,8 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
+  AuthenticatedReportsTurnoverTaxRoute: typeof AuthenticatedReportsTurnoverTaxRoute
+  AuthenticatedReportsVatReturnRoute: typeof AuthenticatedReportsVatReturnRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
 }
 
@@ -1462,6 +1544,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
   AuthenticatedReportsCustomerStatementRoute:
     AuthenticatedReportsCustomerStatementRoute,
+  AuthenticatedReportsIncomeTaxRoute: AuthenticatedReportsIncomeTaxRoute,
   AuthenticatedReportsInventoryValuationRoute:
     AuthenticatedReportsInventoryValuationRoute,
   AuthenticatedReportsPayrollSummaryRoute:
@@ -1473,6 +1556,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsSupplierStatementRoute,
   AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
+  AuthenticatedReportsTurnoverTaxRoute: AuthenticatedReportsTurnoverTaxRoute,
+  AuthenticatedReportsVatReturnRoute: AuthenticatedReportsVatReturnRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
 }
 
@@ -1498,6 +1583,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
+  AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
@@ -1546,6 +1632,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
+  AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
