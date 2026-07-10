@@ -38,7 +38,10 @@ const GROUPS = [
   {
     title: "Tax & Compliance",
     items: [
+      { title: "VAT Return (VAT 3)", desc: "Input / Output registers + net payable", icon: Receipt, to: "/reports/vat-return" },
       { title: "Tax Summary (VAT)", desc: "Output vs Input VAT — ZRA ready", icon: Receipt, to: "/reports/tax-summary" },
+      { title: "Income Tax Computation", desc: "PBT → taxable → CIT (30% / mining)", icon: Receipt, to: "/reports/income-tax" },
+      { title: "Turnover Tax", desc: "5% of gross turnover (below VAT threshold)", icon: Receipt, to: "/reports/turnover-tax" },
     ],
   },
   {

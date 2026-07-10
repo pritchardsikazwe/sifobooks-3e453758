@@ -8,7 +8,7 @@ import {
   UserSquare, CalendarCheck, CalendarDays, Banknote,
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
   UserPlus, Target, Megaphone, MessageSquareWarning, Star,
-  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags,
+  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -38,6 +38,7 @@ const sections: Section[] = [
     { title: "Purchase Orders", url: "/purchase-orders", icon: ShoppingCart },
     { title: "Bills", url: "/bills", icon: FileBox },
     { title: "Supplier Payments", url: "/bill-payments", icon: Wallet },
+    { title: "Expenses", url: "/expenses", icon: Receipt },
     { title: "Expense Categories", url: "/expense-rules", icon: Tags },
   ]},
   { label: "Finance", items: [
@@ -79,6 +80,9 @@ const sections: Section[] = [
     { title: "Customer Statement", url: "/reports/customer-statement", icon: Users },
     { title: "Supplier Statement", url: "/reports/supplier-statement", icon: Truck },
     { title: "Annual Financial Statements", url: "/reports/afs", icon: Sparkles },
+    { title: "VAT Return (VAT 3)", url: "/reports/vat-return", icon: Receipt },
+    { title: "Income Tax Computation", url: "/reports/income-tax", icon: Receipt },
+    { title: "Turnover Tax", url: "/reports/turnover-tax", icon: Receipt },
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
   ]},
   { label: "Admin", items: [

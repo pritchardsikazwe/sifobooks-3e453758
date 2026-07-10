@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BookText, CheckCircle2, XCircle } from "lucide-react";
+import { BookText, CheckCircle2, XCircle, Undo2 } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { reverseJournalEntry } from "@/lib/reversal";
+import { toast } from "sonner";
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700",
@@ -41,6 +43,16 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
           className: "border-red-300 text-red-700 hover:bg-red-50",
           show: r => r.status === "posted",
           run: async (r, reload) => { if (confirm("Void this entry?") && await updateStatus("journal_entries", r.id, "void")) reload(); },
+        },
+        {
+          label: "Reverse", icon: Undo2, variant: "outline",
+          className: "border-amber-300 text-amber-700 hover:bg-amber-50",
+          show: r => r.status === "posted" && !r.reversed_by,
+          run: async (r, reload) => {
+            if (!confirm(`Reverse entry ${r.entry_number}? This creates a mirror journal entry cancelling all lines.`)) return;
+            try { await reverseJournalEntry(r.id); toast.success("Reversed"); reload(); }
+            catch (e: any) { toast.error(e.message); }
+          },
         },
       ]}
       fields={[

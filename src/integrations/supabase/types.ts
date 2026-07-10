@@ -1579,6 +1579,72 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          bank_account_id: string | null
+          category: string | null
+          created_at: string
+          expense_account_id: string | null
+          expense_date: string
+          expense_number: string | null
+          id: string
+          journal_entry_id: string | null
+          notes: string | null
+          payment_method: string
+          reference: string | null
+          reversed_by: string | null
+          status: string
+          supplier_id: string | null
+          total: number
+          updated_at: string
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          amount?: number
+          bank_account_id?: string | null
+          category?: string | null
+          created_at?: string
+          expense_account_id?: string | null
+          expense_date?: string
+          expense_number?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          reference?: string | null
+          reversed_by?: string | null
+          status?: string
+          supplier_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string | null
+          category?: string | null
+          created_at?: string
+          expense_account_id?: string | null
+          expense_date?: string
+          expense_number?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          reference?: string | null
+          reversed_by?: string | null
+          status?: string
+          supplier_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           category: string
@@ -1857,6 +1923,8 @@ export type Database = {
           entry_number: string
           id: string
           reference: string | null
+          reversal_of: string | null
+          reversed_by: string | null
           status: string
           total_credit: number | null
           total_debit: number | null
@@ -1870,6 +1938,8 @@ export type Database = {
           entry_number: string
           id?: string
           reference?: string | null
+          reversal_of?: string | null
+          reversed_by?: string | null
           status?: string
           total_credit?: number | null
           total_debit?: number | null
@@ -1883,6 +1953,8 @@ export type Database = {
           entry_number?: string
           id?: string
           reference?: string | null
+          reversal_of?: string | null
+          reversed_by?: string | null
           status?: string
           total_credit?: number | null
           total_debit?: number | null
