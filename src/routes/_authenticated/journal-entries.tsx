@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BookText, CheckCircle2, XCircle } from "lucide-react";
+import { BookText, CheckCircle2, XCircle, Undo2 } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { reverseJournalEntry } from "@/lib/reversal";
+import { toast } from "sonner";
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700",
