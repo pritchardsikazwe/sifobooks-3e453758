@@ -1417,6 +1417,7 @@ export type Database = {
           bank_name: string | null
           basic_salary: number | null
           branch_id: string | null
+          contract_end_date: string | null
           created_at: string
           date_of_birth: string | null
           department_id: string | null
@@ -1428,11 +1429,15 @@ export type Database = {
           gender: string | null
           hire_date: string | null
           id: string
+          job_description: string | null
           last_name: string
+          leave_days_entitlement: number | null
           manager_id: string | null
+          marital_status: string | null
           napsa_number: string | null
           national_id: string | null
           nhima_number: string | null
+          num_children: number | null
           phone: string | null
           position_id: string | null
           status: string | null
@@ -1447,6 +1452,7 @@ export type Database = {
           bank_name?: string | null
           basic_salary?: number | null
           branch_id?: string | null
+          contract_end_date?: string | null
           created_at?: string
           date_of_birth?: string | null
           department_id?: string | null
@@ -1458,11 +1464,15 @@ export type Database = {
           gender?: string | null
           hire_date?: string | null
           id?: string
+          job_description?: string | null
           last_name: string
+          leave_days_entitlement?: number | null
           manager_id?: string | null
+          marital_status?: string | null
           napsa_number?: string | null
           national_id?: string | null
           nhima_number?: string | null
+          num_children?: number | null
           phone?: string | null
           position_id?: string | null
           status?: string | null
@@ -1477,6 +1487,7 @@ export type Database = {
           bank_name?: string | null
           basic_salary?: number | null
           branch_id?: string | null
+          contract_end_date?: string | null
           created_at?: string
           date_of_birth?: string | null
           department_id?: string | null
@@ -1488,11 +1499,15 @@ export type Database = {
           gender?: string | null
           hire_date?: string | null
           id?: string
+          job_description?: string | null
           last_name?: string
+          leave_days_entitlement?: number | null
           manager_id?: string | null
+          marital_status?: string | null
           napsa_number?: string | null
           national_id?: string | null
           nhima_number?: string | null
+          num_children?: number | null
           phone?: string | null
           position_id?: string | null
           status?: string | null
@@ -2252,16 +2267,24 @@ export type Database = {
       }
       payslips: {
         Row: {
+          absentism: number | null
+          advances: number | null
           allowances: number | null
           basic_salary: number | null
+          bonus: number | null
           created_at: string
           days_worked: number | null
           deductions: Json
           earnings: Json
           employee_id: string
           gross_pay: number | null
+          housing_allowance: number | null
           id: string
+          late_reporting: number | null
+          leave_days_taken: number | null
+          leave_pay: number | null
           loan_balance: number | null
+          loan_recovery: number | null
           napsa: number | null
           net_pay: number | null
           nhima: number | null
@@ -2271,22 +2294,33 @@ export type Database = {
           overtime_hours: number | null
           paye: number | null
           payroll_run_id: string
+          shift_differential: number | null
+          transport_allowance: number | null
           user_id: string
+          utility_allowance: number | null
           ytd_napsa: number | null
           ytd_paye: number | null
           ytd_taxable: number | null
         }
         Insert: {
+          absentism?: number | null
+          advances?: number | null
           allowances?: number | null
           basic_salary?: number | null
+          bonus?: number | null
           created_at?: string
           days_worked?: number | null
           deductions?: Json
           earnings?: Json
           employee_id: string
           gross_pay?: number | null
+          housing_allowance?: number | null
           id?: string
+          late_reporting?: number | null
+          leave_days_taken?: number | null
+          leave_pay?: number | null
           loan_balance?: number | null
+          loan_recovery?: number | null
           napsa?: number | null
           net_pay?: number | null
           nhima?: number | null
@@ -2296,22 +2330,33 @@ export type Database = {
           overtime_hours?: number | null
           paye?: number | null
           payroll_run_id: string
+          shift_differential?: number | null
+          transport_allowance?: number | null
           user_id: string
+          utility_allowance?: number | null
           ytd_napsa?: number | null
           ytd_paye?: number | null
           ytd_taxable?: number | null
         }
         Update: {
+          absentism?: number | null
+          advances?: number | null
           allowances?: number | null
           basic_salary?: number | null
+          bonus?: number | null
           created_at?: string
           days_worked?: number | null
           deductions?: Json
           earnings?: Json
           employee_id?: string
           gross_pay?: number | null
+          housing_allowance?: number | null
           id?: string
+          late_reporting?: number | null
+          leave_days_taken?: number | null
+          leave_pay?: number | null
           loan_balance?: number | null
+          loan_recovery?: number | null
           napsa?: number | null
           net_pay?: number | null
           nhima?: number | null
@@ -2321,7 +2366,10 @@ export type Database = {
           overtime_hours?: number | null
           paye?: number | null
           payroll_run_id?: string
+          shift_differential?: number | null
+          transport_allowance?: number | null
           user_id?: string
+          utility_allowance?: number | null
           ytd_napsa?: number | null
           ytd_paye?: number | null
           ytd_taxable?: number | null

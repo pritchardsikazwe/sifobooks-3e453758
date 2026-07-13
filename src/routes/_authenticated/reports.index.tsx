@@ -48,6 +48,7 @@ const GROUPS = [
     title: "HR",
     items: [
       { title: "Payroll Summary", desc: "PAYE, NAPSA, NHIMA, net pay", icon: Banknote, to: "/reports/payroll-summary" },
+      { title: "Payroll Schedules", desc: "Register, Bank, PAYE, NAPSA, NHIMA, OT, Leave", icon: Banknote, to: "/reports/payroll-schedules" },
     ],
   },
 ];
