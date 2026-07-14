@@ -3370,12 +3370,17 @@ export type Database = {
     }
     Functions: {
       approver_role_for_request: { Args: { _req: string }; Returns: string }
+      auto_match_bank_transactions: { Args: never; Returns: Json }
       can_act_on_request: {
         Args: { _req: string; _user: string }
         Returns: boolean
       }
       close_month: { Args: { _month: number; _year: number }; Returns: Json }
       close_year: { Args: { _year: number }; Returns: Json }
+      ensure_account: {
+        Args: { _code: string; _name: string; _type: string; _uid: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3398,6 +3403,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      post_bill: { Args: { _bill_id: string }; Returns: string }
+      post_expense: { Args: { _expense_id: string }; Returns: string }
+      post_receipt: { Args: { _receipt_id: string }; Returns: string }
+      rebuild_ledgers: { Args: never; Returns: Json }
       recalc_invoice_balance: {
         Args: { _invoice_id: string }
         Returns: undefined
