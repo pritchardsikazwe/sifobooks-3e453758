@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown, Receipt, Sparkles } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, Wallet, Users, Truck, Package, Banknote, Scale, BookOpenCheck, FileDown, Receipt, Sparkles, RefreshCw, Link2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/reports/")({
   head: () => ({ meta: [{ title: "Reports — SifoBooks" }, { name: "robots", content: "noindex" }] }),
