@@ -58,13 +58,42 @@ const GROUPS = [
 ];
 
 function ReportsHub() {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const rebuild = async () => {
+    setBusy("rebuild");
+    const { data, error } = await supabase.rpc("rebuild_ledgers");
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    const d = data as any;
+    toast.success(`Posted ${d?.bills_posted ?? 0} bills, ${d?.receipts_posted ?? 0} receipts, ${d?.expenses_posted ?? 0} expenses`);
+  };
+  const automatch = async () => {
+    setBusy("match");
+    const { data, error } = await supabase.rpc("auto_match_bank_transactions");
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    const d = data as any;
+    toast.success(`Matched ${d?.invoice_matches ?? 0} invoices and ${d?.bill_matches ?? 0} bills from bank`);
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-6xl">
-      <div className="flex items-center gap-3">
-        <BarChart3 className="h-6 w-6 text-emerald-600" />
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Reports</h1>
-          <p className="text-sm text-slate-500">Live figures from posted transactions — export any report to CSV.</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-6 w-6 text-emerald-600" />
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Reports</h1>
+            <p className="text-sm text-slate-500">Live figures from posted transactions — export any report to CSV.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={rebuild} disabled={!!busy} variant="outline" size="sm">
+            <RefreshCw className={`h-4 w-4 mr-2 ${busy==="rebuild"?"animate-spin":""}`} />Rebuild ledgers
+          </Button>
+          <Button onClick={automatch} disabled={!!busy} variant="outline" size="sm">
+            <Link2 className={`h-4 w-4 mr-2 ${busy==="match"?"animate-spin":""}`} />Auto-match bank
+          </Button>
         </div>
       </div>
 
@@ -72,6 +101,7 @@ function ReportsHub() {
         <div key={g.title}>
           <h2 className="text-xs uppercase tracking-wider text-slate-500 mb-2">{g.title}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
             {g.items.map((r) => (
               <Link key={r.title} to={r.to as any} className="block">
                 <Card className="p-4 hover:shadow-md hover:border-emerald-400 transition-all h-full">
