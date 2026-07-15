@@ -18,6 +18,7 @@ const GROUPS = [
       { title: "Profit & Loss", desc: "Revenue, expenses, net profit", icon: TrendingUp, to: "/reports/pnl" },
       { title: "Balance Sheet", desc: "Assets, liabilities, equity", icon: Scale, to: "/reports/balance-sheet" },
       { title: "Trial Balance", desc: "All accounts DR / CR totals", icon: BookOpenCheck, to: "/reports/trial-balance" },
+      { title: "Account Transactions", desc: "Per-account ledger with opening / closing", icon: BookOpenCheck, to: "/reports/account-transactions" },
       { title: "Cash Flow (simple)", desc: "Bank movements by month", icon: Wallet, to: "/reports/cash-flow" },
       { title: "Accountant Pack (PDF)", desc: "P&L + Trial Balance + Balance Sheet", icon: FileDown, to: "/reports/accountant-pack" },
       { title: "Annual Financial Statements", desc: "IFRS-SME AFS pack + AI narrative", icon: Sparkles, to: "/reports/afs" },
