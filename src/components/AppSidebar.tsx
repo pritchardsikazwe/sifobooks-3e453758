@@ -8,7 +8,7 @@ import {
   UserSquare, CalendarCheck, CalendarDays, Banknote,
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
   UserPlus, Target, Megaphone, MessageSquareWarning, Star,
-  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt,
+  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt, Coins,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -48,6 +48,7 @@ const sections: Section[] = [
     { title: "Journal Entries", url: "/journal-entries", icon: BookText },
     { title: "Budgets", url: "/budgets", icon: PiggyBank },
     { title: "Period Close", url: "/period-close", icon: CalendarClock },
+    { title: "Exchange Rates", url: "/fx-rates", icon: Coins },
   ]},
   { label: "Inventory", items: [
     { title: "Items", url: "/stock", icon: Boxes },
