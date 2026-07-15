@@ -82,6 +82,7 @@ import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './route
 import { Route as AuthenticatedReportsAgedPayablesRouteImport } from './routes/_authenticated/reports.aged-payables'
 import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authenticated/reports.afs'
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
+import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -485,6 +486,12 @@ const AuthenticatedReportsAccountantPackRoute =
     path: '/accountant-pack',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsAccountTransactionsRoute =
+  AuthenticatedReportsAccountTransactionsRouteImport.update({
+    id: '/account-transactions',
+    path: '/account-transactions',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -557,6 +564,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
   '/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
@@ -630,6 +638,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
   '/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
@@ -709,6 +718,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
+  '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
   '/_authenticated/reports/afs': typeof AuthenticatedReportsAfsRoute
   '/_authenticated/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
@@ -788,6 +798,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/account-transactions'
     | '/reports/accountant-pack'
     | '/reports/afs'
     | '/reports/aged-payables'
@@ -861,6 +872,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/quotes/new'
+    | '/reports/account-transactions'
     | '/reports/accountant-pack'
     | '/reports/afs'
     | '/reports/aged-payables'
@@ -939,6 +951,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/quotes/new'
+    | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
     | '/_authenticated/reports/afs'
     | '/_authenticated/reports/aged-payables'
@@ -1483,6 +1496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsAccountantPackRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/account-transactions': {
+      id: '/_authenticated/reports/account-transactions'
+      path: '/account-transactions'
+      fullPath: '/reports/account-transactions'
+      preLoaderRoute: typeof AuthenticatedReportsAccountTransactionsRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/quotes/new': {
       id: '/_authenticated/quotes/new'
       path: '/new'
@@ -1552,6 +1572,7 @@ const AuthenticatedQuotesRouteWithChildren =
   AuthenticatedQuotesRoute._addFileChildren(AuthenticatedQuotesRouteChildren)
 
 interface AuthenticatedReportsRouteChildren {
+  AuthenticatedReportsAccountTransactionsRoute: typeof AuthenticatedReportsAccountTransactionsRoute
   AuthenticatedReportsAccountantPackRoute: typeof AuthenticatedReportsAccountantPackRoute
   AuthenticatedReportsAfsRoute: typeof AuthenticatedReportsAfsRoute
   AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
@@ -1574,6 +1595,8 @@ interface AuthenticatedReportsRouteChildren {
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
+  AuthenticatedReportsAccountTransactionsRoute:
+    AuthenticatedReportsAccountTransactionsRoute,
   AuthenticatedReportsAccountantPackRoute:
     AuthenticatedReportsAccountantPackRoute,
   AuthenticatedReportsAfsRoute: AuthenticatedReportsAfsRoute,

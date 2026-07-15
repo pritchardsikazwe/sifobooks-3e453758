@@ -652,6 +652,13 @@ export type Database = {
             foreignKeyName: "budgets_account_id_fkey"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "budgets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "chart_of_accounts"
             referencedColumns: ["id"]
           },
@@ -756,6 +763,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chart_of_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
           {
             foreignKeyName: "chart_of_accounts_parent_id_fkey"
             columns: ["parent_id"]
@@ -1607,6 +1621,13 @@ export type Database = {
             foreignKeyName: "expense_category_rules_account_id_fkey"
             columns: ["account_id"]
             isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "expense_category_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
             referencedRelation: "chart_of_accounts"
             referencedColumns: ["id"]
           },
@@ -2079,6 +2100,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
           {
             foreignKeyName: "journal_lines_account_id_fkey"
             columns: ["account_id"]
@@ -3450,7 +3478,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      account_balances: {
+        Row: {
+          account_code: string | null
+          account_id: string | null
+          account_name: string | null
+          account_type: string | null
+          balance: number | null
+          entry_count: number | null
+          total_credit: number | null
+          total_debit: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approver_role_for_request: { Args: { _req: string }; Returns: string }
@@ -3492,6 +3533,7 @@ export type Database = {
         Returns: undefined
       }
       post_bill: { Args: { _bill_id: string }; Returns: string }
+      post_bill_payment: { Args: { _payment_id: string }; Returns: string }
       post_expense: { Args: { _expense_id: string }; Returns: string }
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
       rebuild_ledgers: { Args: never; Returns: Json }
