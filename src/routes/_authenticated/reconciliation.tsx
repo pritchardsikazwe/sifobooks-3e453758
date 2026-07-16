@@ -172,7 +172,7 @@ function Reconciliation() {
     });
     setBusy(null);
     if (!res.ok) return toast.error(res.error ?? "Failed");
-    toast.success(res.alreadyPosted ? "Already posted" : "Posted to ledger & reconciled");
+    toast.success("Posted to ledger & reconciled");
     setAllocTxn(null);
     load();
   };

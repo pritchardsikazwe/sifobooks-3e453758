@@ -293,8 +293,94 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_allocations: {
+        Row: {
+          allocated_at: string
+          allocated_by: string | null
+          amount: number
+          bank_txn_id: string
+          created_at: string
+          id: string
+          is_reversed: boolean
+          journal_entry_id: string | null
+          memo: string | null
+          reference: string | null
+          reversal_entry_id: string | null
+          reverse_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          target_id: string | null
+          target_ref: string | null
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          allocated_at?: string
+          allocated_by?: string | null
+          amount: number
+          bank_txn_id: string
+          created_at?: string
+          id?: string
+          is_reversed?: boolean
+          journal_entry_id?: string | null
+          memo?: string | null
+          reference?: string | null
+          reversal_entry_id?: string | null
+          reverse_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          target_id?: string | null
+          target_ref?: string | null
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          allocated_at?: string
+          allocated_by?: string | null
+          amount?: number
+          bank_txn_id?: string
+          created_at?: string
+          id?: string
+          is_reversed?: boolean
+          journal_entry_id?: string | null
+          memo?: string | null
+          reference?: string | null
+          reversal_entry_id?: string | null
+          reverse_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          target_id?: string | null
+          target_ref?: string | null
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_allocations_bank_txn_id_fkey"
+            columns: ["bank_txn_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_allocations_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_allocations_reversal_entry_id_fkey"
+            columns: ["reversal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transactions: {
         Row: {
+          allocated_amount: number
           amount: number
           balance: number | null
           category: string | null
@@ -303,6 +389,7 @@ export type Database = {
           description: string
           exchange_rate: number
           id: string
+          last_allocated_at: string | null
           matched_id: string | null
           matched_invoice: string | null
           matched_type: string | null
@@ -310,10 +397,12 @@ export type Database = {
           reconciled_at: string | null
           reference: string | null
           source_file: string | null
+          status: string
           txn_date: string
           user_id: string
         }
         Insert: {
+          allocated_amount?: number
           amount: number
           balance?: number | null
           category?: string | null
@@ -322,6 +411,7 @@ export type Database = {
           description: string
           exchange_rate?: number
           id?: string
+          last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
@@ -329,10 +419,12 @@ export type Database = {
           reconciled_at?: string | null
           reference?: string | null
           source_file?: string | null
+          status?: string
           txn_date: string
           user_id: string
         }
         Update: {
+          allocated_amount?: number
           amount?: number
           balance?: number | null
           category?: string | null
@@ -341,6 +433,7 @@ export type Database = {
           description?: string
           exchange_rate?: number
           id?: string
+          last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
@@ -348,6 +441,7 @@ export type Database = {
           reconciled_at?: string | null
           reference?: string | null
           source_file?: string | null
+          status?: string
           txn_date?: string
           user_id?: string
         }
@@ -3537,12 +3631,20 @@ export type Database = {
       post_expense: { Args: { _expense_id: string }; Returns: string }
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
       rebuild_ledgers: { Args: never; Returns: Json }
+      recalc_bank_txn_allocation: {
+        Args: { _txn_id: string }
+        Returns: undefined
+      }
       recalc_invoice_balance: {
         Args: { _invoice_id: string }
         Returns: undefined
       }
       reopen_period: {
         Args: { _month: number; _period_type?: string; _year: number }
+        Returns: Json
+      }
+      reverse_bank_allocation: {
+        Args: { _alloc_id: string; _reason?: string }
         Returns: Json
       }
       run_notification_scans: { Args: never; Returns: Json }
