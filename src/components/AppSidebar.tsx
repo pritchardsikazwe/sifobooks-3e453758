@@ -9,6 +9,7 @@ import {
   Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
   UserPlus, Target, Megaphone, MessageSquareWarning, Star,
   Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt, Coins,
+  GraduationCap, ShoppingBag, BookOpen as BookIcon,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
