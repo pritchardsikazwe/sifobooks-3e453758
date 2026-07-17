@@ -1910,6 +1910,66 @@ export type Database = {
         }
         Relationships: []
       }
+      imprest_register: {
+        Row: {
+          amount_issued: number
+          amount_returned: number
+          amount_spent: number
+          bank_account_id: string | null
+          created_at: string
+          date_issued: string
+          id: string
+          imprest_no: string
+          journal_entry_id: string | null
+          notes: string | null
+          officer_name: string
+          purpose: string | null
+          receipt_url: string | null
+          retirement_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_issued?: number
+          amount_returned?: number
+          amount_spent?: number
+          bank_account_id?: string | null
+          created_at?: string
+          date_issued?: string
+          id?: string
+          imprest_no: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          officer_name: string
+          purpose?: string | null
+          receipt_url?: string | null
+          retirement_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_issued?: number
+          amount_returned?: number
+          amount_spent?: number
+          bank_account_id?: string | null
+          created_at?: string
+          date_issued?: string
+          id?: string
+          imprest_no?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          officer_name?: string
+          purpose?: string | null
+          receipt_url?: string | null
+          retirement_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -3099,6 +3159,75 @@ export type Database = {
           },
         ]
       }
+      school_grants: {
+        Row: {
+          approved_amount: number
+          attachment_url: string | null
+          bank_account_id: string | null
+          created_at: string
+          currency: string | null
+          date_received: string | null
+          fiscal_year: number | null
+          funding_institution: string | null
+          grant_name: string
+          grant_ref: string | null
+          id: string
+          journal_entry_id: string | null
+          notes: string | null
+          purpose: string | null
+          quarter: string | null
+          received_amount: number
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_amount?: number
+          attachment_url?: string | null
+          bank_account_id?: string | null
+          created_at?: string
+          currency?: string | null
+          date_received?: string | null
+          fiscal_year?: number | null
+          funding_institution?: string | null
+          grant_name: string
+          grant_ref?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          purpose?: string | null
+          quarter?: string | null
+          received_amount?: number
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_amount?: number
+          attachment_url?: string | null
+          bank_account_id?: string | null
+          created_at?: string
+          currency?: string | null
+          date_received?: string | null
+          fiscal_year?: number | null
+          funding_institution?: string | null
+          grant_name?: string
+          grant_ref?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          purpose?: string | null
+          quarter?: string | null
+          received_amount?: number
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_tickets: {
         Row: {
           assigned_to: string | null
@@ -3350,6 +3479,56 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_quotations: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          id: string
+          is_selected: boolean
+          notes: string | null
+          quote_date: string | null
+          quoted_amount: number
+          request_id: string | null
+          supplier_id: string | null
+          supplier_name: string
+          user_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_selected?: boolean
+          notes?: string | null
+          quote_date?: string | null
+          quoted_amount?: number
+          request_id?: string | null
+          supplier_id?: string | null
+          supplier_name: string
+          user_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_selected?: boolean
+          notes?: string | null
+          quote_date?: string | null
+          quoted_amount?: number
+          request_id?: string | null
+          supplier_id?: string | null
+          supplier_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_quotations_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "teaching_material_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -3457,6 +3636,74 @@ export type Database = {
           },
         ]
       }
+      teaching_material_requests: {
+        Row: {
+          actual_cost: number | null
+          approved_by: string | null
+          category: string
+          created_at: string
+          estimated_cost: number
+          grant_id: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          quantity: number
+          request_date: string
+          request_no: string
+          requested_by: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          approved_by?: string | null
+          category?: string
+          created_at?: string
+          estimated_cost?: number
+          grant_id?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          request_date?: string
+          request_no: string
+          requested_by?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_cost?: number | null
+          approved_by?: string | null
+          category?: string
+          created_at?: string
+          estimated_cost?: number
+          grant_id?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          request_date?: string
+          request_no?: string
+          requested_by?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teaching_material_requests_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "school_grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           billable: boolean
@@ -3499,6 +3746,48 @@ export type Database = {
           updated_at?: string
           user_id?: string
           work_date?: string
+        }
+        Relationships: []
+      }
+      tuckshop_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          journal_entry_id: string | null
+          notes: string | null
+          payment_method: string | null
+          quantity: number | null
+          txn_date: string
+          txn_type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          quantity?: number | null
+          txn_date?: string
+          txn_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          quantity?: number | null
+          txn_date?: string
+          txn_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3570,6 +3859,118 @@ export type Database = {
           },
         ]
       }
+      workshop_allowances: {
+        Row: {
+          allowance_type: string | null
+          amount: number
+          created_at: string
+          id: string
+          journal_entry_id: string | null
+          paid: boolean
+          paid_date: string | null
+          payment_method: string | null
+          recipient_name: string
+          role: string | null
+          user_id: string
+          workshop_id: string | null
+        }
+        Insert: {
+          allowance_type?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          journal_entry_id?: string | null
+          paid?: boolean
+          paid_date?: string | null
+          payment_method?: string | null
+          recipient_name: string
+          role?: string | null
+          user_id: string
+          workshop_id?: string | null
+        }
+        Update: {
+          allowance_type?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          journal_entry_id?: string | null
+          paid?: boolean
+          paid_date?: string | null
+          payment_method?: string | null
+          recipient_name?: string
+          role?: string | null
+          user_id?: string
+          workshop_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_allowances_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workshops: {
+        Row: {
+          actual_spent: number
+          budget: number
+          created_at: string
+          end_date: string | null
+          grant_id: string | null
+          id: string
+          notes: string | null
+          participants_count: number | null
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+          venue: string | null
+          workshop_name: string
+        }
+        Insert: {
+          actual_spent?: number
+          budget?: number
+          created_at?: string
+          end_date?: string | null
+          grant_id?: string | null
+          id?: string
+          notes?: string | null
+          participants_count?: number | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          venue?: string | null
+          workshop_name: string
+        }
+        Update: {
+          actual_spent?: number
+          budget?: number
+          created_at?: string
+          end_date?: string | null
+          grant_id?: string | null
+          id?: string
+          notes?: string | null
+          participants_count?: number | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          venue?: string | null
+          workshop_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshops_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "school_grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       account_balances: {
@@ -3626,10 +4027,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      post_allowance: { Args: { _id: string }; Returns: string }
       post_bill: { Args: { _bill_id: string }; Returns: string }
       post_bill_payment: { Args: { _payment_id: string }; Returns: string }
       post_expense: { Args: { _expense_id: string }; Returns: string }
+      post_imprest: { Args: { _id: string }; Returns: string }
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
+      post_school_grant: { Args: { _id: string }; Returns: string }
+      post_tuckshop: { Args: { _id: string }; Returns: string }
       rebuild_ledgers: { Args: never; Returns: Json }
       recalc_bank_txn_allocation: {
         Args: { _txn_id: string }
