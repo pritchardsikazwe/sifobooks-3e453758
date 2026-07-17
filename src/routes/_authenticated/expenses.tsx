@@ -14,6 +14,7 @@ import { Receipt, Plus, Loader2, Undo2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { reverseJournalEntry } from "@/lib/reversal";
+import { ExportMenu } from "@/lib/exports";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -80,7 +81,10 @@ function ExpensesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2"><Receipt className="h-6 w-6 text-emerald-600" /> Expenses</h1>
           <p className="text-sm text-slate-500 mt-1">Record cash/bank expenses. Each posted expense creates a journal entry and can be reversed if wrong.</p>
         </div>
-        <NewExpenseDialog open={open} setOpen={setOpen} userId={userId} accounts={accounts} onSaved={load} />
+        <div className="flex items-center gap-2">
+          <ExportMenu rows={rows.map(r => ({ Date: r.expense_date, Number: r.expense_number ?? "", Category: r.category ?? "", Payment: r.payment_method, Reference: r.reference ?? "", Net: r.amount, VAT: r.vat_amount, Total: r.total, Status: r.status }))} filename="expenses" title="Expenses" />
+          <NewExpenseDialog open={open} setOpen={setOpen} userId={userId} accounts={accounts} onSaved={load} />
+        </div>
       </div>
 
       <Card className="mb-4">
