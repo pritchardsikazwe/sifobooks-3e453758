@@ -41,7 +41,7 @@ function Page() {
     setRows((data ?? []) as any);
     const { data: qs } = await supabase.from("supplier_quotations").select("*").eq("user_id", u.user.id);
     const grouped: Record<string, any[]> = {};
-    for (const row of qs ?? []) { (grouped[row.request_id] ||= []).push(row); }
+    for (const row of qs ?? []) { if (!row.request_id) continue; (grouped[row.request_id] ||= []).push(row); }
     setQuotes(grouped);
     setLoading(false);
   };

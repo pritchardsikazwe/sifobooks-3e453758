@@ -42,7 +42,7 @@ function Page() {
     setRows((data ?? []) as any);
     const { data: al } = await supabase.from("workshop_allowances").select("*").eq("user_id", u.user.id);
     const grouped: Record<string, any[]> = {};
-    for (const row of al ?? []) { (grouped[row.workshop_id] ||= []).push(row); }
+    for (const row of al ?? []) { if (!row.workshop_id) continue; (grouped[row.workshop_id] ||= []).push(row); }
     setAllowances(grouped);
     setLoading(false);
   };
