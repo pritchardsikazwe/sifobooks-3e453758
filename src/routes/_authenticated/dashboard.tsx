@@ -1,18 +1,28 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, Wallet, Landmark, Receipt, Users, ArrowUpRight, ArrowDownRight, FileText, Package, CreditCard } from "lucide-react";
+import {
+  TrendingUp, Wallet, Landmark, Receipt, Users, FileText, Package, CreditCard,
+  ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Plus, Search, Bell,
+  Settings as SettingsIcon, Banknote, BookText, Truck, Boxes, ClipboardList,
+} from "lucide-react";
+import {
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
+  PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
+} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Summary — SifoBooks Operations" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: DashboardPage,
 });
 
 type Txn = { id: string; txn_date: string; description: string; amount: number; reference: string | null; category: string | null };
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -24,6 +34,10 @@ function DashboardPage() {
   const [stockCount, setStockCount] = useState(0);
   const [stockValue, setStockValue] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
+  const [supplierCount, setSupplierCount] = useState(0);
+  const [invoiceCount, setInvoiceCount] = useState(0);
+  const [receivables, setReceivables] = useState(0);
+  const [payables, setPayables] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,12 +46,16 @@ function DashboardPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      const [{ data: prof }, { data: comp }, { data: tx }, { data: stk }, { count: custCount }] = await Promise.all([
+      const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
+             { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
         supabase.from("companies").select("name, trading_name, base_currency").eq("user_id", u.user.id).maybeSingle(),
-        supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(500),
+        supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
         supabase.from("stock_items").select("quantity_on_hand, sell_price"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
+        supabase.from("suppliers").select("*", { count: "exact", head: true }),
+        supabase.from("invoices").select("total, balance_due, status"),
+        supabase.from("bills").select("total, balance_due, status"),
       ]);
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
@@ -46,6 +64,10 @@ function DashboardPage() {
       setStockCount((stk ?? []).length);
       setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
       setCustomerCount(custCount ?? 0);
+      setSupplierCount(suppCount ?? 0);
+      setInvoiceCount((invs ?? []).length);
+      setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
+      setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
       setLoading(false);
     })();
   }, [navigate]);
@@ -58,312 +80,289 @@ function DashboardPage() {
     const expenses = monthTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const netProfit = revenue - expenses;
     const cashAtBank = txns.reduce((s, t) => s + Number(t.amount), 0);
-    return { revenue, expenses, netProfit, cashAtBank };
+    // MoM deltas
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lm = txns.filter(t => { const d = new Date(t.txn_date); return d >= lastMonthStart && d <= lastMonthEnd; });
+    const lmRev = lm.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+    const lmExp = lm.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+    const pct = (curr: number, prev: number) => prev === 0 ? 0 : ((curr - prev) / prev) * 100;
+    return { revenue, expenses, netProfit, cashAtBank,
+      revDelta: pct(revenue, lmRev), expDelta: pct(expenses, lmExp),
+      netDelta: pct(netProfit, lmRev - lmExp) };
   }, [txns]);
 
-  const chart = useMemo(() => {
-    // 12 buckets across current month, cumulative-in vs cumulative-out per bucket
+  // 12-month series
+  const monthlySeries = useMemo(() => {
     const now = new Date();
-    const daysIn = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const buckets = 12;
-    const bucketSize = daysIn / buckets;
-    const data = Array.from({ length: buckets }, (_, i) => ({ label: `${Math.round((i + 1) * bucketSize)}`, in: 0, out: 0 }));
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    txns.forEach(t => {
-      const d = new Date(t.txn_date);
-      if (d < monthStart) return;
-      const day = d.getDate();
-      const idx = Math.min(buckets - 1, Math.floor((day - 1) / bucketSize));
-      if (Number(t.amount) > 0) data[idx].in += Number(t.amount);
-      else data[idx].out += Math.abs(Number(t.amount));
+    const arr = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS[d.getMonth()], income: 0, expenses: 0, net: 0 };
     });
-    return data;
+    const map = new Map(arr.map(a => [a.key, a]));
+    txns.forEach(t => {
+      const d = new Date(t.txn_date); const k = `${d.getFullYear()}-${d.getMonth()}`;
+      const b = map.get(k); if (!b) return;
+      if (t.amount > 0) b.income += Number(t.amount); else b.expenses += Math.abs(Number(t.amount));
+    });
+    arr.forEach(a => { a.net = a.income - a.expenses; });
+    return arr;
   }, [txns]);
 
-  const maxChart = Math.max(1, ...chart.map(c => Math.max(c.in, c.out)));
-  const recent = txns.slice(0, 6);
+  const cashFlowSeries = useMemo(() => {
+    let bal = 0;
+    return monthlySeries.map(m => { bal += m.net; return { label: m.label, balance: bal, in: m.income, out: m.expenses }; });
+  }, [monthlySeries]);
+
+  const categoryData = useMemo(() => {
+    const map = new Map<string, number>();
+    txns.filter(t => t.amount > 0).forEach(t => {
+      const k = t.category || "Uncategorized";
+      map.set(k, (map.get(k) || 0) + Number(t.amount));
+    });
+    return Array.from(map.entries()).slice(0, 5).map(([name, value]) => ({ name, value }));
+  }, [txns]);
+
   const money = (n: number) => fmtMoney(n, currency);
+  const recent = txns.slice(0, 8);
 
   return (
-    <div className="px-6 py-6 space-y-6">
-      {/* Greeting */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            {greeting}, {firstName || "there"} <span>👋</span>
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">{companyName ? `${companyName} — here's how your business is doing.` : "Here's how your business is doing."}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm">
-            {new Date().toLocaleDateString("en-ZM", { month: "long", year: "numeric" })}
+    <div className="min-h-screen bg-[oklch(0.14_0.02_240)] text-slate-100 -m-0">
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 backdrop-blur-xl bg-[oklch(0.16_0.02_240)]/80 border-b border-white/10 px-4 sm:px-6 py-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 text-white font-bold">S</div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold truncate">{greeting}, {firstName || "there"} 👋</div>
+              <div className="text-[11px] text-white/50 truncate">{companyName || "SifoBooks"} · {new Date().toLocaleDateString("en-ZM", { day:"numeric", month:"short", year:"numeric" })}</div>
+            </div>
+          </div>
+          <div className="flex-1 min-w-[180px] max-w-md hidden md:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+              <Input placeholder="Search invoices, customers, accounts…" className="pl-9 h-9 bg-white/5 border-white/10 text-slate-100 placeholder:text-white/30" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20"><Link to="/invoices/new"><Plus className="h-4 w-4 mr-1" /> New</Link></Button>
+            <Button asChild size="icon" variant="ghost" className="h-9 w-9 text-white/70 hover:bg-white/10 hover:text-white"><Link to="/notifications"><Bell className="h-4 w-4" /></Link></Button>
+            <Button asChild size="icon" variant="ghost" className="h-9 w-9 text-white/70 hover:bg-white/10 hover:text-white"><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <KpiCard label="Revenue" value={money(stats.revenue)} delta={null} icon={TrendingUp} tint="text-emerald-600" bg="bg-emerald-50" />
-        <KpiCard label="Expenses" value={money(stats.expenses)} delta={null} icon={Receipt} tint="text-rose-600" bg="bg-rose-50" />
-        <KpiCard label="Net Profit" value={money(stats.netProfit)} delta={null} icon={TrendingUp} tint={stats.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"} bg={stats.netProfit >= 0 ? "bg-emerald-50" : "bg-rose-50"} />
-        <KpiCard label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} tint="text-sky-600" bg="bg-sky-50" />
-        <KpiCard label="Receivables" value={money(0)} delta={null} icon={ArrowUpRight} tint="text-amber-600" bg="bg-amber-50" />
-        <KpiCard label="Payables" value={money(0)} delta={null} icon={ArrowDownRight} tint="text-violet-600" bg="bg-violet-50" />
-      </div>
+      <div className="px-4 sm:px-6 py-6 space-y-6">
+        {/* KPI cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+          <GradientKpi label="Revenue" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} gradient="from-emerald-400 to-teal-600" />
+          <GradientKpi label="Expenses" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} gradient="from-rose-400 to-pink-600" invert />
+          <GradientKpi label="Net Profit" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} gradient="from-violet-400 to-indigo-600" />
+          <GradientKpi label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} gradient="from-sky-400 to-blue-600" />
+          <GradientKpi label="Receivables" value={money(receivables)} delta={null} icon={ArrowUpRight} gradient="from-amber-400 to-orange-600" invert />
+          <GradientKpi label="Payables" value={money(payables)} delta={null} icon={ArrowDownRight} gradient="from-fuchsia-400 to-purple-600" invert />
+          <GradientKpi label="Customers" value={String(customerCount)} delta={null} icon={Users} gradient="from-cyan-400 to-sky-600" />
+          <GradientKpi label="Inventory" value={money(stockValue)} delta={null} icon={Package} gradient="from-lime-400 to-green-600" />
+        </div>
 
-      {/* Row: Cash Flow + Income/Expense donut + Bank Accounts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <Card className="lg:col-span-6">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base font-semibold">Cash Flow Overview</CardTitle>
-            <span className="text-xs text-slate-500">This Month</span>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[220px] flex items-end gap-1.5">
-              {chart.map((c, i) => (
-                <div key={i} className="flex-1 flex flex-col justify-end gap-0.5 items-center h-full">
-                  <div className="w-full bg-emerald-500/80 rounded-t-sm transition-all" style={{ height: `${(c.in / maxChart) * 80}%` }} title={`In: ${money(c.in)}`} />
-                  <div className="w-full bg-rose-400/80 rounded-t-sm transition-all" style={{ height: `${(c.out / maxChart) * 80}%` }} title={`Out: ${money(c.out)}`} />
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-emerald-500" /> Cash In</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-rose-400" /> Cash Out</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Charts row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <GlassCard className="lg:col-span-5" title="Sales by Month" subtitle="Last 12 months">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={monthlySeries}>
+                <defs>
+                  <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#0d9488" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                <YAxis stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+                <Bar dataKey="income" fill="url(#gRev)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </GlassCard>
 
-        <Card className="lg:col-span-3">
-          <CardHeader><CardTitle className="text-base font-semibold">Income & Expense</CardTitle></CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Donut revenue={stats.revenue} expenses={stats.expenses} />
-            <div className="mt-4 w-full space-y-2 text-sm">
-              <Row dot="bg-emerald-500" label="Revenue" value={money(stats.revenue)} />
-              <Row dot="bg-rose-500" label="Expenses" value={money(stats.expenses)} />
-              <Row dot="bg-sky-500" label="Net" value={money(stats.netProfit)} />
-            </div>
-          </CardContent>
-        </Card>
+          <GlassCard className="lg:col-span-4" title="Income vs Expenses" subtitle="Trend">
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={monthlySeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                <YAxis stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+                <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }} />
+                <Line type="monotone" dataKey="income" stroke="#34d399" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="expenses" stroke="#fb7185" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </GlassCard>
 
-        <Card className="lg:col-span-3">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base font-semibold">Bank Accounts</CardTitle>
-            <Link to="/banking" className="text-xs text-emerald-600 hover:underline">View All</Link>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {loading ? (
-              <div className="text-sm text-slate-400">Loading…</div>
-            ) : txns.length === 0 ? (
-              <EmptyMini label="No bank data yet" cta="Import statement" to="/banking" />
+          <GlassCard className="lg:col-span-3" title="Cash Flow" subtitle="Cumulative balance">
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={cashFlowSeries}>
+                <defs>
+                  <linearGradient id="gCash" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" fontSize={11} />
+                <YAxis hide />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+                <Area type="monotone" dataKey="balance" stroke="#38bdf8" strokeWidth={2.5} fill="url(#gCash)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </GlassCard>
+        </div>
+
+        {/* Charts row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <GlassCard className="lg:col-span-4" title="Revenue Categories" subtitle="Top 5">
+            {categoryData.length === 0 ? (
+              <EmptyState label="No categorised income yet" />
             ) : (
-              <div className="space-y-3">
-                <BankRow name="Primary Account" balance={money(stats.cashAtBank)} status="Reconciled" />
-                <div className="pt-3 border-t flex items-center justify-between">
-                  <span className="text-sm font-medium">Total Balance</span>
-                  <span className="text-sm font-bold">{money(stats.cashAtBank)}</span>
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={categoryData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={3}>
+                    {categoryData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+                  <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }} />
+                </PieChart>
+              </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </GlassCard>
 
-      {/* Row: Aged Receivables + Aged Payables + Top Expenses */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <AgedCard title="Aged Receivables" empty />
-        <AgedCard title="Aged Payables" empty />
-        <Card className="lg:col-span-4">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base font-semibold">Top Expenses</CardTitle>
-            <span className="text-xs text-slate-500">This Month</span>
-          </CardHeader>
-          <CardContent>
-            <TopExpenses txns={txns} money={money} />
-          </CardContent>
-        </Card>
-      </div>
+          <GlassCard className="lg:col-span-4" title="Quick Actions" subtitle="Post transactions">
+            <div className="grid grid-cols-2 gap-2">
+              <QuickTile to="/invoices/new" icon={FileText} label="Invoice" gradient="from-emerald-500 to-teal-600" />
+              <QuickTile to="/quotes/new" icon={ClipboardList} label="Quote" gradient="from-sky-500 to-blue-600" />
+              <QuickTile to="/receipts" icon={CreditCard} label="Receipt" gradient="from-violet-500 to-indigo-600" />
+              <QuickTile to="/expenses" icon={Receipt} label="Expense" gradient="from-rose-500 to-pink-600" />
+              <QuickTile to="/bills" icon={FileText} label="Bill" gradient="from-amber-500 to-orange-600" />
+              <QuickTile to="/purchase-orders" icon={ShoppingCart} label="PO" gradient="from-fuchsia-500 to-purple-600" />
+              <QuickTile to="/banking" icon={Landmark} label="Deposit" gradient="from-cyan-500 to-sky-600" />
+              <QuickTile to="/journal-entries" icon={BookText} label="Journal" gradient="from-lime-500 to-green-600" />
+            </div>
+          </GlassCard>
 
-      {/* Row: Recent Transactions + Business Snapshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <Card className="lg:col-span-8">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base font-semibold">Recent Transactions</CardTitle>
-            <Link to="/banking" className="text-xs text-emerald-600 hover:underline">View All</Link>
-          </CardHeader>
-          <CardContent className="px-0">
-            {recent.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="text-sm text-slate-500">No transactions yet.</p>
-                <Button asChild size="sm" variant="outline" className="mt-3"><Link to="/banking">Import bank statement</Link></Button>
-              </div>
-            ) : (
+          <GlassCard className="lg:col-span-4" title="Summary" subtitle="Modules">
+            <div className="space-y-2">
+              <SummaryRow icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" tint="text-sky-400" />
+              <SummaryRow icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" tint="text-amber-400" />
+              <SummaryRow icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" tint="text-rose-400" />
+              <SummaryRow icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" tint="text-lime-400" />
+              <SummaryRow icon={Banknote} label="Payroll" value="Manage" to="/payroll" tint="text-violet-400" />
+              <SummaryRow icon={Truck} label="Suppliers" value={String(supplierCount)} to="/suppliers" tint="text-fuchsia-400" />
+              <SummaryRow icon={Wallet} label="Invoices" value={String(invoiceCount)} to="/invoices" tint="text-emerald-400" />
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Recent activity */}
+        <GlassCard title="Recent Activity" subtitle="Latest bank transactions" action={<Link to="/banking" className="text-xs text-emerald-400 hover:underline">View all</Link>}>
+          {loading ? <div className="py-8 text-center text-white/40">Loading…</div>
+          : recent.length === 0 ? <EmptyState label="No transactions yet. Import a bank statement to get started." cta="Import statement" to="/banking" />
+          : (
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-xs text-slate-500 border-b">
-                  <tr><th className="text-left font-medium px-6 py-2">Date</th><th className="text-left font-medium py-2">Reference</th><th className="text-left font-medium py-2">Description</th><th className="text-left font-medium py-2">Type</th><th className="text-right font-medium px-6 py-2">Amount</th></tr>
+                <thead className="text-[11px] uppercase tracking-widest text-white/40 border-b border-white/10">
+                  <tr><th className="text-left py-2 pr-3">Date</th><th className="text-left py-2 pr-3">Description</th><th className="text-left py-2 pr-3">Reference</th><th className="text-left py-2 pr-3">Category</th><th className="text-right py-2">Amount</th></tr>
                 </thead>
                 <tbody>
                   {recent.map(t => (
-                    <tr key={t.id} className="border-b last:border-0">
-                      <td className="px-6 py-2.5 text-slate-600">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short", year: "numeric" })}</td>
-                      <td className="py-2.5 text-slate-600">{t.reference || "—"}</td>
-                      <td className="py-2.5 font-medium text-slate-800">{t.description}</td>
-                      <td className="py-2.5"><Badge variant="outline" className={t.amount >= 0 ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}>{t.amount >= 0 ? "In" : "Out"}</Badge></td>
-                      <td className={`px-6 py-2.5 text-right font-semibold ${t.amount >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{money(Math.abs(t.amount))}</td>
+                    <tr key={t.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                      <td className="py-2.5 pr-3 text-white/60 whitespace-nowrap">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}</td>
+                      <td className="py-2.5 pr-3 font-medium truncate max-w-xs">{t.description}</td>
+                      <td className="py-2.5 pr-3 text-white/50 text-xs">{t.reference || "—"}</td>
+                      <td className="py-2.5 pr-3 text-white/60 text-xs">{t.category || "—"}</td>
+                      <td className={`py-2.5 text-right font-semibold whitespace-nowrap ${t.amount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-4">
-          <CardHeader><CardTitle className="text-base font-semibold">Business Snapshot</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
-            <Snap icon={FileText} label="Invoices" value="0" tint="bg-emerald-50 text-emerald-600" />
-            <Snap icon={CreditCard} label="Payments In" value={money(stats.revenue)} tint="bg-sky-50 text-sky-600" small />
-            <Snap icon={Package} label="Stock Items" value={String(stockCount)} tint="bg-amber-50 text-amber-600" />
-            <Snap icon={Users} label="Customers" value={String(customerCount)} tint="bg-violet-50 text-violet-600" />
-            <Snap icon={TrendingDown} label="Stock Value" value={money(stockValue)} tint="bg-rose-50 text-rose-600" small />
-            <Snap icon={TrendingUp} label="Net Profit" value={money(stats.netProfit)} tint={stats.netProfit >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"} small />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function KpiCard({ label, value, icon: Icon, tint, bg }: { label: string; value: string; delta: string | null; icon: any; tint: string; bg: string }) {
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
-          <span className={`inline-grid h-7 w-7 place-items-center rounded-md ${bg} ${tint}`}><Icon className="h-3.5 w-3.5" /></span>
-        </div>
-        <div className={`mt-2 text-lg font-bold tracking-tight ${tint}`}>{value}</div>
-        <div className="mt-1 text-[11px] text-slate-400">This month</div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Donut({ revenue, expenses }: { revenue: number; expenses: number }) {
-  const total = Math.max(1, revenue + expenses);
-  const rev = (revenue / total) * 100;
-  const net = revenue - expenses;
-  return (
-    <div className="relative h-32 w-32">
-      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-        <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(0.94 0.02 20)" strokeWidth="3.5" />
-        <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(0.65 0.18 145)" strokeWidth="3.5" strokeDasharray={`${rev} 100`} />
-      </svg>
-      <div className="absolute inset-0 grid place-items-center text-center">
-        <div>
-          <div className="text-[10px] text-slate-500">Net</div>
-          <div className={`text-sm font-bold ${net >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{net >= 0 ? "+" : ""}{Math.round((net / Math.max(1, revenue)) * 100)}%</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Row({ dot, label, value }: { dot: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="flex items-center gap-2 text-slate-600"><span className={`h-2 w-2 rounded-full ${dot}`} />{label}</span>
-      <span className="font-semibold text-slate-800">{value}</span>
-    </div>
-  );
-}
-
-function BankRow({ name, balance, status }: { name: string; balance: string; status: string }) {
-  return (
-    <div className="flex items-start justify-between">
-      <div>
-        <div className="text-sm font-medium text-slate-800">{name}</div>
-        <div className="text-xs text-slate-500 mt-0.5">{balance}</div>
-      </div>
-      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">{status}</Badge>
-    </div>
-  );
-}
-
-function EmptyMini({ label, cta, to }: { label: string; cta: string; to: string }) {
-  return (
-    <div className="text-center py-6">
-      <p className="text-sm text-slate-400 mb-2">{label}</p>
-      <Button asChild size="sm" variant="outline"><Link to={to}>{cta}</Link></Button>
-    </div>
-  );
-}
-
-function AgedCard({ title, empty }: { title: string; empty: boolean }) {
-  const buckets = [
-    { label: "0 - 30 Days", tint: "bg-emerald-500" },
-    { label: "31 - 60 Days", tint: "bg-amber-500" },
-    { label: "61 - 90 Days", tint: "bg-orange-500" },
-    { label: "90+ Days", tint: "bg-rose-500" },
-  ];
-  return (
-    <Card className="lg:col-span-4">
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
-        <span className="text-xs text-emerald-600 cursor-default">View Report</span>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          {buckets.map(b => (
-            <div key={b.label}>
-              <div className="text-slate-500 mb-1">{b.label}</div>
-              <div className="font-semibold text-slate-700">{empty ? "—" : ""}</div>
             </div>
-          ))}
-        </div>
-        <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
-          {buckets.map(b => <div key={b.label} className={`${b.tint} opacity-30`} style={{ width: "25%" }} />)}
-        </div>
-        {empty && <p className="text-xs text-slate-400 mt-3">No open invoices yet.</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-function TopExpenses({ txns, money }: { txns: Txn[]; money: (n: number) => string }) {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const grouped = new Map<string, number>();
-  txns.filter(t => t.amount < 0 && t.txn_date >= monthStart).forEach(t => {
-    const k = t.category || t.description.split(" ").slice(0, 2).join(" ");
-    grouped.set(k, (grouped.get(k) || 0) + Math.abs(Number(t.amount)));
-  });
-  const rows = [...grouped.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const max = Math.max(1, ...rows.map(r => r[1]));
-  if (rows.length === 0) return <p className="text-sm text-slate-400 py-6 text-center">No expenses this month.</p>;
-  return (
-    <div className="space-y-2.5">
-      {rows.map(([k, v]) => (
-        <div key={k} className="text-sm">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-slate-700 truncate max-w-[60%]">{k}</span>
-            <span className="font-semibold text-slate-800">{money(v)}</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-            <div className="h-full bg-sky-500" style={{ width: `${(v / max) * 100}%` }} />
-          </div>
-        </div>
-      ))}
+          )}
+        </GlassCard>
+      </div>
     </div>
   );
 }
 
-function Snap({ icon: Icon, label, value, tint, small }: { icon: any; label: string; value: string; tint: string; small?: boolean }) {
+const DONUT_COLORS = ["#34d399", "#38bdf8", "#a78bfa", "#fbbf24", "#fb7185"];
+const tooltipStyle = { background: "oklch(0.2 0.02 240)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 12 };
+
+function GradientKpi({ label, value, delta, icon: Icon, gradient, invert }: { label: string; value: string; delta: number | null; icon: any; gradient: string; invert?: boolean }) {
+  const up = delta != null && delta >= 0;
+  const good = invert ? !up : up;
   return (
-    <div className="rounded-lg border bg-white p-3">
-      <div className={`inline-grid h-7 w-7 place-items-center rounded-md ${tint} mb-2`}><Icon className="h-3.5 w-3.5" /></div>
-      <div className="text-[11px] text-slate-500">{label}</div>
-      <div className={`font-bold text-slate-800 ${small ? "text-sm" : "text-lg"}`}>{value}</div>
+    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 shadow-lg transition-transform hover:scale-[1.03] hover:shadow-2xl cursor-default`}>
+      <div className="absolute inset-0 bg-black/10" />
+      <div className="relative">
+        <div className="flex items-start justify-between">
+          <span className="text-[10px] uppercase tracking-widest text-white/80 font-semibold">{label}</span>
+          <div className="h-8 w-8 grid place-items-center rounded-lg bg-white/20 backdrop-blur-sm"><Icon className="h-4 w-4 text-white" /></div>
+        </div>
+        <div className="mt-3 text-xl sm:text-2xl font-bold text-white truncate">{value}</div>
+        {delta !== null && (
+          <div className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${good ? "bg-white/25 text-white" : "bg-black/30 text-white"}`}>
+            {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(delta).toFixed(1)}% <span className="text-white/70 font-normal">vs last month</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GlassCard({ children, className = "", title, subtitle, action }: { children: React.ReactNode; className?: string; title?: string; subtitle?: string; action?: React.ReactNode }) {
+  return (
+    <Card className={`bg-white/5 border-white/10 backdrop-blur-xl text-slate-100 shadow-xl ${className}`}>
+      {title && (
+        <div className="flex items-start justify-between p-4 pb-2">
+          <div>
+            <div className="text-sm font-semibold">{title}</div>
+            {subtitle && <div className="text-[11px] text-white/50 mt-0.5">{subtitle}</div>}
+          </div>
+          {action}
+        </div>
+      )}
+      <div className="p-4 pt-2">{children}</div>
+    </Card>
+  );
+}
+
+function QuickTile({ to, icon: Icon, label, gradient }: { to: string; icon: any; label: string; gradient: string }) {
+  return (
+    <Link to={to} className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} p-3 text-white shadow-md transition-transform hover:scale-[1.05] hover:shadow-lg`}>
+      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+      <div className="relative flex flex-col items-center gap-1.5">
+        <Icon className="h-5 w-5" />
+        <span className="text-xs font-semibold">{label}</span>
+      </div>
+    </Link>
+  );
+}
+
+function SummaryRow({ icon: Icon, label, value, to, tint }: { icon: any; label: string; value: string; to: string; tint: string }) {
+  return (
+    <Link to={to} className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-white/5 transition-colors">
+      <div className={`h-8 w-8 shrink-0 grid place-items-center rounded-lg bg-white/5 ${tint}`}><Icon className="h-4 w-4" /></div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">{label}</div>
+      </div>
+      <div className="text-sm font-bold text-white/90 whitespace-nowrap">{value}</div>
+    </Link>
+  );
+}
+
+function EmptyState({ label, cta, to }: { label: string; cta?: string; to?: string }) {
+  return (
+    <div className="py-8 text-center">
+      <p className="text-sm text-white/40 mb-3">{label}</p>
+      {cta && to && <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950"><Link to={to}>{cta}</Link></Button>}
     </div>
   );
 }
