@@ -41,9 +41,10 @@ function ExpensesPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     setUserId(u.user.id);
+    // Rely on RLS to scope to current company/user — showing every expense the user can see.
     const [{ data: ex }, { data: acc }] = await Promise.all([
-      supabase.from("expenses").select("*").eq("user_id", u.user.id).order("expense_date", { ascending: false }),
-      supabase.from("chart_of_accounts").select("id,account_code,account_name,account_type").eq("user_id", u.user.id).eq("is_active", true).order("account_code"),
+      supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
+      supabase.from("chart_of_accounts").select("id,account_code,account_name,account_type").eq("is_active", true).order("account_code"),
     ]);
     setRows((ex ?? []) as any);
     setAccounts((acc ?? []) as any);

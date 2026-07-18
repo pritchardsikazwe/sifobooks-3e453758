@@ -1,43 +1,41 @@
-# SifoBooks Modular ERP — Delivery Plan
+# Plan — Dashboard Redesign + Reports/Expenses Fixes
 
-The core accounting engine (GL, CoA, AR, AP, Banking, Payroll, Tax, Reports, AFS, Multi-company, Audit trail, Roles) already exists in the app. This plan wires the **Industry Module** layer on top so each tenant only sees what it needs, and gets its industry-specific CoA and tables auto-installed.
+This is a very large scope. I'll ship it in three tight phases so each phase is fully working before the next, rather than half-finishing everything.
 
-## Phase 1 — Foundations (this turn)
+## Phase 1 (this turn) — Reports & Expenses fixes for Design Links
 
-1. `industries` registry (code file, not DB): id, label, icon, description, list of module keys, default CoA additions, default document prefixes.
-2. DB: add `industry` (text) to `companies`; new table `company_modules` (company_id, module_key, installed_at, config jsonb) with RLS.
-3. Setup wizard step "Choose industry" added to `/setup` — grid of 19 industries, multi-select modules per industry, "Install" button.
-4. Installer service `installIndustry(companyId, industryId)`:
-   - inserts missing CoA rows (idempotent by account_code)
-   - inserts `company_modules` rows
-   - seeds default document numbering rows
-   - is safe to re-run.
-5. Sidebar/nav filters modules: hide routes whose module isn't installed for the active company; "+ Add module" entry links back to the wizard.
+Goal: you can print/export every report and see all posted expenses.
 
-## Phase 2 — First four industry modules (next turn, on approval)
+1. **Expenses page** — currently filters by `created_by = auth.uid()`, which hides expenses posted by other users in the same company. Switch to company-scoped query (via `company_id` of active company) so every posted expense shows.
+2. **Universal PDF/Excel/CSV export** — add `ExportMenu` to the six list pages still missing it: Customers, Suppliers, Invoices, Bills, Expenses, Cashbook (banking). Reports pages already have CSV; add a **Print / PDF** button to every report (Trial Balance, P&L, Balance Sheet, Cash Flow, VAT, Customer/Supplier Statement, AFS, Payroll Schedules, Tax reports, Account Transactions).
+3. **Design Links data sanity** — run `rebuild_ledgers()` + `auto_match_bank_transactions()` server-side so all posted docs hit the GL and reports show real figures.
 
-Deliver actual functional module UI + tables for the four highest-value industries first. Each includes: list/CRUD pages, transactions that post to the core GL, and one industry dashboard.
+## Phase 2 (next turn) — Dashboard visual redesign
 
-1. **School** — students, guardians, classes, fees invoices → AR, receipts → cashbook.
-2. **Pharmacy / Retail POS** — items with batch + expiry, POS screen, sale → revenue+VAT+COGS journal.
-3. **Lending / Microfinance** — borrowers, loans, repayment schedule, interest accrual JEs.
-4. **Property Management** — properties, tenants, leases, monthly rent invoicing.
+Goal: `/dashboard` matches the attached reference in layout, colors, and interactivity.
 
-## Phase 3 — Remaining industries (subsequent turns)
+- Dark navy shell (`oklch(0.16 0.02 220)`) with emerald accent (already the sidebar palette — extend to dashboard).
+- **Top bar**: Search, Company selector, Branch selector, Date-range picker, Notifications, Settings, User profile, Theme switch.
+- **Filter row**: All Branches / Projects / Customers / Salespersons / Currencies / Tax Types / Payment Methods + Reset.
+- **KPI cards (8)** with gradient backgrounds, sparkline, MoM % delta, hover-lift: Revenue, Expenses, Net Profit, Cash, Bank, Customers, Inventory Value, Outstanding AR.
+- **Charts row 1**: Sales by Month (bar), Income vs Expenses (line), Cash Flow (area).
+- **Charts row 2**: Sales by Category (donut), Top Customers (h-bars), Payment Method (donut), Revenue by Branch (stacked).
+- **Summary cards**: Banking, Receivables, Payables, Inventory, Payroll, Compliance, Calendar — each with a coloured CTA button routing to the module.
+- **Right-side Quick Actions panel**: New Invoice / Quote / Payment / Expense / PO / Bill / Deposit / Journal — coloured tiles.
+- **Recent Activities** timeline at the bottom (invoices, payments, expenses, POs, bank txns, customers) pulled live.
+- Framer-motion fade/scale on load, hover-scale-105, ripple on click.
 
-Law firm, phone shop, manufacturing, transport, fleet, car hire, hire-purchase, land installments, hotel, restaurant, NGO, church, construction, agriculture, fuel station, hardware, courier, mining, security, salon, clinic, insurance broker, consultancy, SACCO. Each follows the same shape: registry entry → installer CoA seed → module tables → routes + dashboard tile.
+## Phase 3 (later turn) — Mobile + polish
 
-## Phase 4 — Marketplace surface
-
-`/marketplace` page listing all industry modules with install / uninstall, per-company. Reuses the installer.
+- Mobile: opens on dashboard (no sidebar), swipeable KPI carousel, bottom nav, FAB `+`.
+- Recharts responsive containers, drill-down clicks route to matching report.
+- Glassmorphism cards, soft shadows, 16–20px radii tokenised in `styles.css`.
 
 ## Technical notes
 
-- One shared `journal_entries` / `journal_lines` engine — every industry transaction posts here so all reports (P&L, BS, TB, AFS, ratios, AI narrative) already work for every industry.
-- `company_modules` is the single source of truth for "is this feature on?". A `useInstalledModules()` hook powers nav + route guards.
-- Industry CoA additions live in `src/lib/industries/*.ts` and are declarative — one file per industry.
-- Existing routes (invoices, bills, customers, banking, reports, AFS) stay for every industry as the "General Business" default.
+- All colors go through `styles.css` tokens; no hard-coded `text-white`/`bg-black`.
+- Chart data via existing report libs (`src/lib/reports.ts`, `afs.ts`) — no new server functions needed for Phase 2.
+- Existing modules, routes, sidebar, and business logic remain untouched. Only `/dashboard` visuals change in Phase 2.
+- Export helper `ExportMenu` already exists (`src/lib/exports.tsx`) — Phase 1 just wires it in.
 
-## Ask
-
-Approve **Phase 1** and I ship it now. Phase 2–4 land in follow-up turns so each stays reviewable. If you'd rather I compress Phases 1+2 into a single larger turn, say "do phases 1 and 2".
+Reply **"go"** to run Phase 1 now, or tell me to reorder (e.g. "do dashboard first").
