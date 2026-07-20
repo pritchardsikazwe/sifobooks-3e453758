@@ -50,6 +50,8 @@ const sections: Section[] = [
     { title: "Recon Sessions", url: "/reconciliation-sessions", icon: Scale },
     { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
     { title: "Journal Entries", url: "/journal-entries", icon: BookText },
+    { title: "Opening Balances", url: "/opening-balances", icon: Sparkles },
+    { title: "Fixed Assets", url: "/fixed-assets", icon: Landmark },
     { title: "Budgets", url: "/budgets", icon: PiggyBank },
     { title: "Period Close", url: "/period-close", icon: CalendarClock },
     { title: "Exchange Rates", url: "/fx-rates", icon: Coins },
@@ -93,7 +95,7 @@ const sections: Section[] = [
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
   ]},
   { label: "School ERP", items: [
-    { title: "Grants", url: "/school-grants", icon: Landmark },
+    { title: "Grants & Donor Funds", url: "/school-grants", icon: Landmark },
     { title: "Teaching Materials", url: "/teaching-materials", icon: BookIcon },
     { title: "Workshops & Allowances", url: "/workshops", icon: GraduationCap },
     { title: "Imprest Register", url: "/imprest", icon: Wallet },

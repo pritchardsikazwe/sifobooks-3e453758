@@ -37,6 +37,7 @@ import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authent
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_authenticated/opening-balances'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
@@ -47,6 +48,7 @@ import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
 import { Route as AuthenticatedFxRatesRouteImport } from './routes/_authenticated/fx-rates'
+import { Route as AuthenticatedFixedAssetsRouteImport } from './routes/_authenticated/fixed-assets'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
@@ -246,6 +248,12 @@ const AuthenticatedOpportunitiesRoute =
     path: '/opportunities',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOpeningBalancesRoute =
+  AuthenticatedOpeningBalancesRouteImport.update({
+    id: '/opening-balances',
+    path: '/opening-balances',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -298,6 +306,12 @@ const AuthenticatedFxRatesRoute = AuthenticatedFxRatesRouteImport.update({
   path: '/fx-rates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFixedAssetsRoute =
+  AuthenticatedFixedAssetsRouteImport.update({
+    id: '/fixed-assets',
+    path: '/fixed-assets',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -587,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
@@ -597,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -672,6 +688,7 @@ export interface FileRoutesByTo {
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
@@ -681,6 +698,7 @@ export interface FileRoutesByTo {
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -757,6 +775,7 @@ export interface FileRoutesById {
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/_authenticated/fx-rates': typeof AuthenticatedFxRatesRoute
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
@@ -767,6 +786,7 @@ export interface FileRoutesById {
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -845,6 +865,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/expense-rules'
     | '/expenses'
+    | '/fixed-assets'
     | '/fx-rates'
     | '/imprest'
     | '/industry'
@@ -855,6 +876,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opening-balances'
     | '/opportunities'
     | '/payroll'
     | '/period-close'
@@ -930,6 +952,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/expense-rules'
     | '/expenses'
+    | '/fixed-assets'
     | '/fx-rates'
     | '/imprest'
     | '/industry'
@@ -939,6 +962,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opening-balances'
     | '/opportunities'
     | '/payroll'
     | '/period-close'
@@ -1014,6 +1038,7 @@ export interface FileRouteTypes {
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
     | '/_authenticated/expenses'
+    | '/_authenticated/fixed-assets'
     | '/_authenticated/fx-rates'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
@@ -1024,6 +1049,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leave'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
+    | '/_authenticated/opening-balances'
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/period-close'
@@ -1281,6 +1307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/opening-balances': {
+      id: '/_authenticated/opening-balances'
+      path: '/opening-balances'
+      fullPath: '/opening-balances'
+      preLoaderRoute: typeof AuthenticatedOpeningBalancesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -1349,6 +1382,13 @@ declare module '@tanstack/react-router' {
       path: '/fx-rates'
       fullPath: '/fx-rates'
       preLoaderRoute: typeof AuthenticatedFxRatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fixed-assets': {
+      id: '/_authenticated/fixed-assets'
+      path: '/fixed-assets'
+      fullPath: '/fixed-assets'
+      preLoaderRoute: typeof AuthenticatedFixedAssetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/expenses': {
@@ -1807,6 +1847,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedFixedAssetsRoute: typeof AuthenticatedFixedAssetsRoute
   AuthenticatedFxRatesRoute: typeof AuthenticatedFxRatesRoute
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
@@ -1817,6 +1858,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedOpeningBalancesRoute: typeof AuthenticatedOpeningBalancesRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
@@ -1865,6 +1907,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedFixedAssetsRoute: AuthenticatedFixedAssetsRoute,
   AuthenticatedFxRatesRoute: AuthenticatedFxRatesRoute,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
@@ -1875,6 +1918,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedOpeningBalancesRoute: AuthenticatedOpeningBalancesRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,

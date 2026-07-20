@@ -2102,6 +2102,87 @@ export type Database = {
         }
         Relationships: []
       }
+      fixed_assets: {
+        Row: {
+          accumulated_depreciation: number
+          accumulated_depreciation_code: string | null
+          asset_account_code: string | null
+          asset_number: string
+          book_value: number
+          category: string | null
+          condition: string | null
+          cost: number
+          created_at: string
+          depreciation_expense_code: string | null
+          description: string
+          disposal_date: string | null
+          disposal_proceeds: number | null
+          id: string
+          location: string | null
+          method: string
+          notes: string | null
+          purchase_date: string
+          salvage_value: number
+          status: string
+          supplier: string | null
+          updated_at: string
+          useful_life_years: number
+          user_id: string
+        }
+        Insert: {
+          accumulated_depreciation?: number
+          accumulated_depreciation_code?: string | null
+          asset_account_code?: string | null
+          asset_number: string
+          book_value?: number
+          category?: string | null
+          condition?: string | null
+          cost?: number
+          created_at?: string
+          depreciation_expense_code?: string | null
+          description: string
+          disposal_date?: string | null
+          disposal_proceeds?: number | null
+          id?: string
+          location?: string | null
+          method?: string
+          notes?: string | null
+          purchase_date: string
+          salvage_value?: number
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+          useful_life_years?: number
+          user_id: string
+        }
+        Update: {
+          accumulated_depreciation?: number
+          accumulated_depreciation_code?: string | null
+          asset_account_code?: string | null
+          asset_number?: string
+          book_value?: number
+          category?: string | null
+          condition?: string | null
+          cost?: number
+          created_at?: string
+          depreciation_expense_code?: string | null
+          description?: string
+          disposal_date?: string | null
+          disposal_proceeds?: number | null
+          id?: string
+          location?: string | null
+          method?: string
+          notes?: string | null
+          purchase_date?: string
+          salvage_value?: number
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+          useful_life_years?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       fx_rates: {
         Row: {
           as_of_date: string
@@ -4408,6 +4489,10 @@ export type Database = {
       post_allowance: { Args: { _id: string }; Returns: string }
       post_bill: { Args: { _bill_id: string }; Returns: string }
       post_bill_payment: { Args: { _payment_id: string }; Returns: string }
+      post_depreciation: {
+        Args: { _month: number; _year: number }
+        Returns: Json
+      }
       post_expense: { Args: { _expense_id: string }; Returns: string }
       post_imprest: { Args: { _id: string }; Returns: string }
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
