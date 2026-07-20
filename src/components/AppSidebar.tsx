@@ -95,7 +95,7 @@ const sections: Section[] = [
     { title: "Compliance", url: "/compliance", icon: ShieldCheck },
   ]},
   { label: "School ERP", items: [
-    { title: "Grants", url: "/school-grants", icon: Landmark },
+    { title: "Grants & Donor Funds", url: "/school-grants", icon: Landmark },
     { title: "Teaching Materials", url: "/teaching-materials", icon: BookIcon },
     { title: "Workshops & Allowances", url: "/workshops", icon: GraduationCap },
     { title: "Imprest Register", url: "/imprest", icon: Wallet },
