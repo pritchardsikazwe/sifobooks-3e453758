@@ -44,6 +44,8 @@ const sections: Section[] = [
   ]},
   { label: "Finance", items: [
     { title: "Banking", url: "/banking", icon: Landmark },
+    { title: "Bank Accounts", url: "/bank-accounts", icon: Landmark },
+    { title: "Bank Rules", url: "/bank-rules", icon: Sparkles },
     { title: "Reconciliation", url: "/reconciliation", icon: Scale },
     { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
     { title: "Journal Entries", url: "/journal-entries", icon: BookText },
@@ -51,6 +53,7 @@ const sections: Section[] = [
     { title: "Period Close", url: "/period-close", icon: CalendarClock },
     { title: "Exchange Rates", url: "/fx-rates", icon: Coins },
   ]},
+
   { label: "Inventory", items: [
     { title: "Items", url: "/stock", icon: Boxes },
     { title: "Warehouses", url: "/warehouses", icon: Warehouse },
