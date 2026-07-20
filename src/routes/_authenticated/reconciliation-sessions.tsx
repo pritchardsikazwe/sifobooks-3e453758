@@ -1,0 +1,363 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Lock, Plus, RefreshCw, CheckCircle2, AlertTriangle, ArrowLeft, Scale } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/reconciliation-sessions")({
+  head: () => ({
+    meta: [
+      { title: "Reconciliation Sessions" },
+      { name: "description", content: "Formal bank reconciliation sessions with statement balance, book balance, and audit locking." },
+    ],
+  }),
+  component: ReconciliationSessions,
+});
+
+type Session = {
+  id: string;
+  bank_account_id: string | null;
+  statement_date: string;
+  statement_start_date: string | null;
+  statement_balance: number;
+  opening_balance: number;
+  book_balance: number;
+  cleared_deposits: number;
+  cleared_payments: number;
+  difference: number;
+  status: "draft" | "completed" | "locked";
+  notes: string | null;
+  locked_at: string | null;
+};
+
+type BankAccount = { id: string; name: string; account_number: string | null; currency: string | null };
+
+type Txn = {
+  id: string;
+  txn_date: string;
+  description: string | null;
+  amount: number;
+  reference: string | null;
+  reconciled: boolean;
+  bank_account_id: string | null;
+  cleared_in_session?: boolean;
+};
+
+const fmt = (n: number) => (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function ReconciliationSessions() {
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openNew, setOpenNew] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // New session form
+  const [nBank, setNBank] = useState<string>("");
+  const [nStart, setNStart] = useState("");
+  const [nEnd, setNEnd] = useState(new Date().toISOString().slice(0, 10));
+  const [nOpening, setNOpening] = useState("0");
+  const [nStatement, setNStatement] = useState("0");
+  const [nNotes, setNNotes] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: acc }, { data: ss }] = await Promise.all([
+      supabase.from("bank_accounts").select("id, name, account_number, currency").order("name"),
+      supabase.from("reconciliation_sessions").select("*").order("statement_date", { ascending: false }),
+    ]);
+    setAccounts((acc as BankAccount[]) || []);
+    setSessions((ss as Session[]) || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const createSession = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Sign in required"); return; }
+    if (!nEnd) { toast.error("Statement date required"); return; }
+    const { data, error } = await supabase.from("reconciliation_sessions").insert({
+      user_id: u.user.id,
+      bank_account_id: nBank || null,
+      statement_date: nEnd,
+      statement_start_date: nStart || null,
+      opening_balance: Number(nOpening) || 0,
+      statement_balance: Number(nStatement) || 0,
+      notes: nNotes || null,
+    }).select("id").single();
+    if (error) { toast.error(error.message); return; }
+    toast.success("Session created");
+    setOpenNew(false);
+    await load();
+    setActiveId(data!.id);
+  };
+
+  if (activeId) {
+    return <SessionDetail id={activeId} onBack={() => { setActiveId(null); load(); }} />;
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Scale className="h-6 w-6" /> Reconciliation Sessions</h1>
+          <p className="text-sm text-muted-foreground">Formal statement-vs-book reconciliation with audit locking.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild><Link to="/reconciliation">Quick Match</Link></Button>
+          <Button onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> New Session</Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Sessions</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Statement Date</TableHead>
+                  <TableHead>Bank Account</TableHead>
+                  <TableHead className="text-right">Opening</TableHead>
+                  <TableHead className="text-right">Statement</TableHead>
+                  <TableHead className="text-right">Book</TableHead>
+                  <TableHead className="text-right">Difference</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sessions.length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No sessions yet. Create one to start a formal reconciliation.</TableCell></TableRow>
+                )}
+                {sessions.map(s => {
+                  const acc = accounts.find(a => a.id === s.bank_account_id);
+                  const balanced = Math.abs(s.difference) < 0.01;
+                  return (
+                    <TableRow key={s.id} className="cursor-pointer" onClick={() => setActiveId(s.id)}>
+                      <TableCell>{s.statement_date}</TableCell>
+                      <TableCell>{acc?.name || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="text-right">{fmt(s.opening_balance)}</TableCell>
+                      <TableCell className="text-right">{fmt(s.statement_balance)}</TableCell>
+                      <TableCell className="text-right">{fmt(s.book_balance)}</TableCell>
+                      <TableCell className={`text-right ${balanced ? "text-emerald-600" : "text-amber-600"}`}>{fmt(s.difference)}</TableCell>
+                      <TableCell>
+                        {s.status === "locked" ? <Badge variant="default" className="bg-emerald-600"><Lock className="h-3 w-3 mr-1" /> Locked</Badge>
+                          : s.status === "completed" ? <Badge variant="secondary">Completed</Badge>
+                          : <Badge variant="outline">Draft</Badge>}
+                      </TableCell>
+                      <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={openNew} onOpenChange={setOpenNew}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>New Reconciliation Session</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Bank Account</Label>
+              <Select value={nBank} onValueChange={setNBank}>
+                <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name} {a.account_number ? `(${a.account_number})` : ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Period Start</Label><Input type="date" value={nStart} onChange={e => setNStart(e.target.value)} /></div>
+              <div><Label>Statement Date *</Label><Input type="date" value={nEnd} onChange={e => setNEnd(e.target.value)} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Opening Balance</Label><Input type="number" step="0.01" value={nOpening} onChange={e => setNOpening(e.target.value)} /></div>
+              <div><Label>Closing Statement Balance *</Label><Input type="number" step="0.01" value={nStatement} onChange={e => setNStatement(e.target.value)} /></div>
+            </div>
+            <div><Label>Notes</Label><Textarea value={nNotes} onChange={e => setNNotes(e.target.value)} rows={2} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenNew(false)}>Cancel</Button>
+            <Button onClick={createSession}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SessionDetail({ id, onBack }: { id: string; onBack: () => void }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [txns, setTxns] = useState<Txn[]>([]);
+  const [clearedIds, setClearedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data: s } = await supabase.from("reconciliation_sessions").select("*").eq("id", id).single();
+    if (!s) { setLoading(false); return; }
+    setSession(s as Session);
+
+    let q = supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, reconciled, bank_account_id")
+      .lte("txn_date", s.statement_date).order("txn_date");
+    if (s.bank_account_id) q = q.eq("bank_account_id", s.bank_account_id);
+    if (s.statement_start_date) q = q.gte("txn_date", s.statement_start_date);
+    const { data: t } = await q;
+    setTxns((t as Txn[]) || []);
+
+    const { data: lines } = await supabase.from("reconciliation_lines").select("bank_txn_id, cleared").eq("session_id", id);
+    setClearedIds(new Set((lines || []).filter((l: { cleared: boolean }) => l.cleared).map((l: { bank_txn_id: string }) => l.bank_txn_id)));
+    setLoading(false);
+  }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = (txnId: string) => {
+    if (session?.status === "locked") return;
+    setClearedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(txnId)) next.delete(txnId); else next.add(txnId);
+      return next;
+    });
+  };
+
+  const summary = useMemo(() => {
+    const opening = Number(session?.opening_balance || 0);
+    const stmt = Number(session?.statement_balance || 0);
+    let dep = 0, pay = 0;
+    for (const t of txns) {
+      if (!clearedIds.has(t.id)) continue;
+      const a = Number(t.amount) || 0;
+      if (a > 0) dep += a; else pay += -a;
+    }
+    const book = opening + dep - pay;
+    const diff = stmt - book;
+    return { opening, stmt, dep, pay, book, diff, balanced: Math.abs(diff) < 0.01 };
+  }, [txns, clearedIds, session]);
+
+  const saveLines = async () => {
+    if (!session) return;
+    setSaving(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setSaving(false); return; }
+    // Wipe and re-insert current selection
+    await supabase.from("reconciliation_lines").delete().eq("session_id", id);
+    if (clearedIds.size > 0) {
+      const rows = Array.from(clearedIds).map(txnId => ({
+        user_id: u.user!.id, session_id: id, bank_txn_id: txnId, cleared: true,
+      }));
+      const { error } = await supabase.from("reconciliation_lines").insert(rows);
+      if (error) { toast.error(error.message); setSaving(false); return; }
+    }
+    const { error: rerr } = await supabase.rpc("compute_reconciliation", { _session_id: id });
+    if (rerr) toast.error(rerr.message); else toast.success("Saved");
+    setSaving(false);
+    load();
+  };
+
+  const lock = async () => {
+    await saveLines();
+    const { error } = await supabase.rpc("lock_reconciliation", { _session_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Reconciliation locked");
+    load();
+  };
+
+  const del = async () => {
+    if (!confirm("Delete this session? Linked transactions will be un-cleared.")) return;
+    const { error } = await supabase.from("reconciliation_sessions").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted");
+    onBack();
+  };
+
+  if (loading || !session) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+
+  const locked = session.status === "locked";
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
+          <div>
+            <h1 className="text-2xl font-bold">Reconciliation — {session.statement_date}</h1>
+            <p className="text-sm text-muted-foreground">Tick each transaction that appears on the bank statement.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {!locked && <Button variant="outline" onClick={saveLines} disabled={saving}><RefreshCw className="h-4 w-4 mr-1" /> Save</Button>}
+          {!locked && <Button onClick={lock} disabled={!summary.balanced || saving} className="bg-emerald-600 hover:bg-emerald-700"><Lock className="h-4 w-4 mr-1" /> Lock</Button>}
+          {!locked && <Button variant="destructive" onClick={del}>Delete</Button>}
+          {locked && <Badge className="bg-emerald-600"><Lock className="h-3 w-3 mr-1" /> Locked {session.locked_at?.slice(0,10)}</Badge>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Opening</div><div className="text-lg font-semibold">{fmt(summary.opening)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Cleared Deposits</div><div className="text-lg font-semibold text-emerald-600">+{fmt(summary.dep)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Cleared Payments</div><div className="text-lg font-semibold text-rose-600">−{fmt(summary.pay)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Book Balance</div><div className="text-lg font-semibold">{fmt(summary.book)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Statement</div><div className="text-lg font-semibold">{fmt(summary.stmt)}</div></CardContent></Card>
+        <Card className={summary.balanced ? "border-emerald-500" : "border-amber-500"}>
+          <CardContent className="pt-4">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              {summary.balanced ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <AlertTriangle className="h-3 w-3 text-amber-600" />} Difference
+            </div>
+            <div className={`text-lg font-semibold ${summary.balanced ? "text-emerald-600" : "text-amber-600"}`}>{fmt(summary.diff)}</div>
+          </CardContent></Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Transactions up to {session.statement_date}</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">Clear</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Reference</TableHead>
+                <TableHead className="text-right">Deposit</TableHead>
+                <TableHead className="text-right">Payment</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {txns.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No transactions in this period.</TableCell></TableRow>}
+              {txns.map(t => {
+                const a = Number(t.amount) || 0;
+                return (
+                  <TableRow key={t.id}>
+                    <TableCell><Checkbox checked={clearedIds.has(t.id)} disabled={locked} onCheckedChange={() => toggle(t.id)} /></TableCell>
+                    <TableCell>{t.txn_date}</TableCell>
+                    <TableCell className="max-w-md truncate">{t.description}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{t.reference}</TableCell>
+                    <TableCell className="text-right text-emerald-600">{a > 0 ? fmt(a) : ""}</TableCell>
+                    <TableCell className="text-right text-rose-600">{a < 0 ? fmt(-a) : ""}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {session.notes && <Card><CardHeader><CardTitle className="text-sm">Notes</CardTitle></CardHeader><CardContent className="text-sm whitespace-pre-wrap">{session.notes}</CardContent></Card>}
+    </div>
+  );
+}

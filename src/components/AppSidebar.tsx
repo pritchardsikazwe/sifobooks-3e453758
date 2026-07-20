@@ -47,6 +47,7 @@ const sections: Section[] = [
     { title: "Bank Accounts", url: "/bank-accounts", icon: Landmark },
     { title: "Bank Rules", url: "/bank-rules", icon: Sparkles },
     { title: "Reconciliation", url: "/reconciliation", icon: Scale },
+    { title: "Recon Sessions", url: "/reconciliation-sessions", icon: Scale },
     { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
     { title: "Journal Entries", url: "/journal-entries", icon: BookText },
     { title: "Budgets", url: "/budgets", icon: PiggyBank },
