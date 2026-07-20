@@ -293,11 +293,78 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          company_id: string | null
+          created_at: string
+          currency: string
+          gl_account_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          opening_balance: number
+          opening_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          opening_balance?: number
+          opening_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          opening_balance?: number
+          opening_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "bank_accounts_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_allocations: {
         Row: {
           allocated_at: string
           allocated_by: string | null
           amount: number
+          bank_account_id: string | null
           bank_txn_id: string
           created_at: string
           id: string
@@ -318,6 +385,7 @@ export type Database = {
           allocated_at?: string
           allocated_by?: string | null
           amount: number
+          bank_account_id?: string | null
           bank_txn_id: string
           created_at?: string
           id?: string
@@ -338,6 +406,7 @@ export type Database = {
           allocated_at?: string
           allocated_by?: string | null
           amount?: number
+          bank_account_id?: string | null
           bank_txn_id?: string
           created_at?: string
           id?: string
@@ -355,6 +424,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bank_allocations_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_allocations_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_running_balance"
+            referencedColumns: ["bank_account_id"]
+          },
           {
             foreignKeyName: "bank_allocations_bank_txn_id_fkey"
             columns: ["bank_txn_id"]
@@ -378,11 +461,139 @@ export type Database = {
           },
         ]
       }
+      bank_documents: {
+        Row: {
+          bank_account_id: string | null
+          bank_txn_id: string | null
+          file_name: string | null
+          file_path: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          bank_txn_id?: string | null
+          file_name?: string | null
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_at?: string
+          user_id?: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          bank_txn_id?: string | null
+          file_name?: string | null
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_documents_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_documents_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_running_balance"
+            referencedColumns: ["bank_account_id"]
+          },
+          {
+            foreignKeyName: "bank_documents_bank_txn_id_fkey"
+            columns: ["bank_txn_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_rules: {
+        Row: {
+          auto_apply: boolean
+          created_at: string
+          direction: string | null
+          hits: number
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          match_type: string
+          name: string
+          pattern: string
+          priority: number
+          suggested_account_id: string | null
+          suggested_target_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_apply?: boolean
+          created_at?: string
+          direction?: string | null
+          hits?: number
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          match_type?: string
+          name: string
+          pattern: string
+          priority?: number
+          suggested_account_id?: string | null
+          suggested_target_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          auto_apply?: boolean
+          created_at?: string
+          direction?: string | null
+          hits?: number
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          match_type?: string
+          name?: string
+          pattern?: string
+          priority?: number
+          suggested_account_id?: string | null
+          suggested_target_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_rules_suggested_account_id_fkey"
+            columns: ["suggested_account_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "bank_rules_suggested_account_id_fkey"
+            columns: ["suggested_account_id"]
+            isOneToOne: false
+            referencedRelation: "chart_of_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transactions: {
         Row: {
           allocated_amount: number
           amount: number
           balance: number | null
+          bank_account_id: string | null
           category: string | null
           created_at: string
           currency: string
@@ -405,6 +616,7 @@ export type Database = {
           allocated_amount?: number
           amount: number
           balance?: number | null
+          bank_account_id?: string | null
           category?: string | null
           created_at?: string
           currency?: string
@@ -427,6 +639,7 @@ export type Database = {
           allocated_amount?: number
           amount?: number
           balance?: number | null
+          bank_account_id?: string | null
           category?: string | null
           created_at?: string
           currency?: string
@@ -445,7 +658,22 @@ export type Database = {
           txn_date?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_running_balance"
+            referencedColumns: ["bank_account_id"]
+          },
+        ]
       }
       bill_items: {
         Row: {
@@ -3987,8 +4215,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_running_balance: {
+        Row: {
+          bank_account_id: string | null
+          currency: string | null
+          current_balance: number | null
+          name: string | null
+          unallocated_count: number | null
+          unreconciled_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          bank_account_id?: string | null
+          currency?: string | null
+          current_balance?: never
+          name?: string | null
+          unallocated_count?: never
+          unreconciled_count?: never
+          user_id?: string | null
+        }
+        Update: {
+          bank_account_id?: string | null
+          currency?: string | null
+          current_balance?: never
+          name?: string | null
+          unallocated_count?: never
+          unreconciled_count?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      apply_bank_rules: { Args: never; Returns: Json }
       approver_role_for_request: { Args: { _req: string }; Returns: string }
       auto_match_bank_transactions: { Args: never; Returns: Json }
       can_act_on_request: {

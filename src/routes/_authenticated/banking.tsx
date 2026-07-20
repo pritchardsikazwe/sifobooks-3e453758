@@ -260,12 +260,15 @@ function BankingPage() {
               <p className="mt-1 text-xs text-muted-foreground">Allocate transactions to accounts. Partial allocations stay Partial until fully cleared. Reverse any allocation with a reason — nothing is deleted.</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Link to="/bank-accounts"><Button variant="outline"><Landmark className="h-4 w-4 mr-2" />Accounts</Button></Link>
+              <Link to="/bank-rules"><Button variant="outline"><CheckCircle2 className="h-4 w-4 mr-2" />Rules</Button></Link>
               <Link to="/reconciliation"><Button variant="outline"><Scale className="h-4 w-4 mr-2" />Reconciliation</Button></Link>
               <input ref={fileRef} type="file" accept=".csv,.ofx,.qfx,text/csv" hidden onChange={onFile} />
               <Button onClick={() => fileRef.current?.click()} disabled={importing} className="bg-emerald-600 hover:bg-emerald-700">
                 {importing ? <><FileUp className="h-4 w-4 animate-pulse mr-2" /> Importing…</> : <><Upload className="h-4 w-4 mr-2" /> Import statement</>}
               </Button>
             </div>
+
           </CardHeader>
 
           <CardContent className="space-y-4">
