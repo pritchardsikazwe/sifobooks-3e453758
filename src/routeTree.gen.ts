@@ -37,6 +37,7 @@ import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authent
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_authenticated/opening-balances'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
@@ -245,6 +246,12 @@ const AuthenticatedOpportunitiesRoute =
   AuthenticatedOpportunitiesRouteImport.update({
     id: '/opportunities',
     path: '/opportunities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOpeningBalancesRoute =
+  AuthenticatedOpeningBalancesRouteImport.update({
+    id: '/opening-balances',
+    path: '/opening-balances',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
@@ -605,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -690,6 +698,7 @@ export interface FileRoutesByTo {
   '/leave': typeof AuthenticatedLeaveRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -777,6 +786,7 @@ export interface FileRoutesById {
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -866,6 +876,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opening-balances'
     | '/opportunities'
     | '/payroll'
     | '/period-close'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/notifications'
     | '/onboarding'
+    | '/opening-balances'
     | '/opportunities'
     | '/payroll'
     | '/period-close'
@@ -1037,6 +1049,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leave'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
+    | '/_authenticated/opening-balances'
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/period-close'
@@ -1292,6 +1305,13 @@ declare module '@tanstack/react-router' {
       path: '/opportunities'
       fullPath: '/opportunities'
       preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/opening-balances': {
+      id: '/_authenticated/opening-balances'
+      path: '/opening-balances'
+      fullPath: '/opening-balances'
+      preLoaderRoute: typeof AuthenticatedOpeningBalancesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/onboarding': {
@@ -1838,6 +1858,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedOpeningBalancesRoute: typeof AuthenticatedOpeningBalancesRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
@@ -1897,6 +1918,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedOpeningBalancesRoute: AuthenticatedOpeningBalancesRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
