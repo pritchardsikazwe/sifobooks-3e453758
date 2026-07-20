@@ -3387,6 +3387,123 @@ export type Database = {
           },
         ]
       }
+      reconciliation_lines: {
+        Row: {
+          bank_txn_id: string
+          cleared: boolean
+          created_at: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          bank_txn_id: string
+          cleared?: boolean
+          created_at?: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          bank_txn_id?: string
+          cleared?: boolean
+          created_at?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_lines_bank_txn_id_fkey"
+            columns: ["bank_txn_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_lines_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_sessions: {
+        Row: {
+          bank_account_id: string | null
+          book_balance: number
+          cleared_deposits: number
+          cleared_payments: number
+          created_at: string
+          difference: number
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          notes: string | null
+          opening_balance: number
+          statement_balance: number
+          statement_date: string
+          statement_start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          book_balance?: number
+          cleared_deposits?: number
+          cleared_payments?: number
+          created_at?: string
+          difference?: number
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          notes?: string | null
+          opening_balance?: number
+          statement_balance?: number
+          statement_date: string
+          statement_start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          book_balance?: number
+          cleared_deposits?: number
+          cleared_payments?: number
+          created_at?: string
+          difference?: number
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          notes?: string | null
+          opening_balance?: number
+          statement_balance?: number
+          statement_date?: string
+          statement_start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_sessions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_sessions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_running_balance"
+            referencedColumns: ["bank_account_id"]
+          },
+        ]
+      }
       school_grants: {
         Row: {
           approved_amount: number
@@ -4256,6 +4373,7 @@ export type Database = {
       }
       close_month: { Args: { _month: number; _year: number }; Returns: Json }
       close_year: { Args: { _year: number }; Returns: Json }
+      compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
       ensure_account: {
         Args: { _code: string; _name: string; _type: string; _uid: string }
         Returns: string
@@ -4275,6 +4393,7 @@ export type Database = {
         Args: { _company: string; _user: string }
         Returns: boolean
       }
+      lock_reconciliation: { Args: { _session_id: string }; Returns: Json }
       notify_once: {
         Args: {
           _key: string
