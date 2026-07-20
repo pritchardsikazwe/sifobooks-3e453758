@@ -47,6 +47,7 @@ import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
 import { Route as AuthenticatedFxRatesRouteImport } from './routes/_authenticated/fx-rates'
+import { Route as AuthenticatedFixedAssetsRouteImport } from './routes/_authenticated/fixed-assets'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
@@ -298,6 +299,12 @@ const AuthenticatedFxRatesRoute = AuthenticatedFxRatesRouteImport.update({
   path: '/fx-rates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFixedAssetsRoute =
+  AuthenticatedFixedAssetsRouteImport.update({
+    id: '/fixed-assets',
+    path: '/fixed-assets',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -587,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
@@ -672,6 +680,7 @@ export interface FileRoutesByTo {
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
@@ -757,6 +766,7 @@ export interface FileRoutesById {
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/_authenticated/fx-rates': typeof AuthenticatedFxRatesRoute
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
@@ -845,6 +855,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/expense-rules'
     | '/expenses'
+    | '/fixed-assets'
     | '/fx-rates'
     | '/imprest'
     | '/industry'
@@ -930,6 +941,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/expense-rules'
     | '/expenses'
+    | '/fixed-assets'
     | '/fx-rates'
     | '/imprest'
     | '/industry'
@@ -1014,6 +1026,7 @@ export interface FileRouteTypes {
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
     | '/_authenticated/expenses'
+    | '/_authenticated/fixed-assets'
     | '/_authenticated/fx-rates'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
@@ -1349,6 +1362,13 @@ declare module '@tanstack/react-router' {
       path: '/fx-rates'
       fullPath: '/fx-rates'
       preLoaderRoute: typeof AuthenticatedFxRatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fixed-assets': {
+      id: '/_authenticated/fixed-assets'
+      path: '/fixed-assets'
+      fullPath: '/fixed-assets'
+      preLoaderRoute: typeof AuthenticatedFixedAssetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/expenses': {
@@ -1807,6 +1827,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedFixedAssetsRoute: typeof AuthenticatedFixedAssetsRoute
   AuthenticatedFxRatesRoute: typeof AuthenticatedFxRatesRoute
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
@@ -1865,6 +1886,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedFixedAssetsRoute: AuthenticatedFixedAssetsRoute,
   AuthenticatedFxRatesRoute: AuthenticatedFxRatesRoute,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
