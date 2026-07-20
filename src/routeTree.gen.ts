@@ -61,6 +61,8 @@ import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
 import { Route as AuthenticatedBillPaymentsRouteImport } from './routes/_authenticated/bill-payments'
 import { Route as AuthenticatedBankingRouteImport } from './routes/_authenticated/banking'
+import { Route as AuthenticatedBankRulesRouteImport } from './routes/_authenticated/bank-rules'
+import { Route as AuthenticatedBankAccountsRouteImport } from './routes/_authenticated/bank-accounts'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
@@ -368,6 +370,17 @@ const AuthenticatedBankingRoute = AuthenticatedBankingRouteImport.update({
   path: '/banking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBankRulesRoute = AuthenticatedBankRulesRouteImport.update({
+  id: '/bank-rules',
+  path: '/bank-rules',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBankAccountsRoute =
+  AuthenticatedBankAccountsRouteImport.update({
+    id: '/bank-accounts',
+    path: '/bank-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAuditLogsRoute = AuthenticatedAuditLogsRouteImport.update({
   id: '/audit-logs',
   path: '/audit-logs',
@@ -550,6 +563,8 @@ export interface FileRoutesByFullPath {
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/bank-accounts': typeof AuthenticatedBankAccountsRoute
+  '/bank-rules': typeof AuthenticatedBankRulesRoute
   '/banking': typeof AuthenticatedBankingRoute
   '/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/bills': typeof AuthenticatedBillsRoute
@@ -633,6 +648,8 @@ export interface FileRoutesByTo {
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/bank-accounts': typeof AuthenticatedBankAccountsRoute
+  '/bank-rules': typeof AuthenticatedBankRulesRoute
   '/banking': typeof AuthenticatedBankingRoute
   '/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/bills': typeof AuthenticatedBillsRoute
@@ -714,6 +731,8 @@ export interface FileRoutesById {
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/_authenticated/bank-accounts': typeof AuthenticatedBankAccountsRoute
+  '/_authenticated/bank-rules': typeof AuthenticatedBankRulesRoute
   '/_authenticated/banking': typeof AuthenticatedBankingRoute
   '/_authenticated/bill-payments': typeof AuthenticatedBillPaymentsRoute
   '/_authenticated/bills': typeof AuthenticatedBillsRoute
@@ -799,6 +818,8 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/attendance'
     | '/audit-logs'
+    | '/bank-accounts'
+    | '/bank-rules'
     | '/banking'
     | '/bill-payments'
     | '/bills'
@@ -882,6 +903,8 @@ export interface FileRouteTypes {
     | '/approvals'
     | '/attendance'
     | '/audit-logs'
+    | '/bank-accounts'
+    | '/bank-rules'
     | '/banking'
     | '/bill-payments'
     | '/bills'
@@ -962,6 +985,8 @@ export interface FileRouteTypes {
     | '/_authenticated/approvals'
     | '/_authenticated/attendance'
     | '/_authenticated/audit-logs'
+    | '/_authenticated/bank-accounts'
+    | '/_authenticated/bank-rules'
     | '/_authenticated/banking'
     | '/_authenticated/bill-payments'
     | '/_authenticated/bills'
@@ -1411,6 +1436,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bank-rules': {
+      id: '/_authenticated/bank-rules'
+      path: '/bank-rules'
+      fullPath: '/bank-rules'
+      preLoaderRoute: typeof AuthenticatedBankRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bank-accounts': {
+      id: '/_authenticated/bank-accounts'
+      path: '/bank-accounts'
+      fullPath: '/bank-accounts'
+      preLoaderRoute: typeof AuthenticatedBankAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audit-logs': {
       id: '/_authenticated/audit-logs'
       path: '/audit-logs'
@@ -1731,6 +1770,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
   AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
+  AuthenticatedBankAccountsRoute: typeof AuthenticatedBankAccountsRoute
+  AuthenticatedBankRulesRoute: typeof AuthenticatedBankRulesRoute
   AuthenticatedBankingRoute: typeof AuthenticatedBankingRoute
   AuthenticatedBillPaymentsRoute: typeof AuthenticatedBillPaymentsRoute
   AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
@@ -1786,6 +1827,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
   AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
+  AuthenticatedBankAccountsRoute: AuthenticatedBankAccountsRoute,
+  AuthenticatedBankRulesRoute: AuthenticatedBankRulesRoute,
   AuthenticatedBankingRoute: AuthenticatedBankingRoute,
   AuthenticatedBillPaymentsRoute: AuthenticatedBillPaymentsRoute,
   AuthenticatedBillsRoute: AuthenticatedBillsRoute,
