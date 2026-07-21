@@ -595,6 +595,7 @@ export type Database = {
           balance: number | null
           bank_account_id: string | null
           category: string | null
+          charge_code: string | null
           created_at: string
           currency: string
           description: string
@@ -604,6 +605,7 @@ export type Database = {
           matched_id: string | null
           matched_invoice: string | null
           matched_type: string | null
+          payee: string | null
           reconciled: boolean
           reconciled_at: string | null
           reference: string | null
@@ -618,6 +620,7 @@ export type Database = {
           balance?: number | null
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           description: string
@@ -627,6 +630,7 @@ export type Database = {
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
+          payee?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
           reference?: string | null
@@ -641,6 +645,7 @@ export type Database = {
           balance?: number | null
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           description?: string
@@ -650,6 +655,7 @@ export type Database = {
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
+          payee?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
           reference?: string | null
