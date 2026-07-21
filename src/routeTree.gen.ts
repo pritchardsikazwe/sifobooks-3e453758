@@ -59,6 +59,7 @@ import { Route as AuthenticatedCreditNotesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
 import { Route as AuthenticatedComplaintsRouteImport } from './routes/_authenticated/complaints'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
+import { Route as AuthenticatedCashbookRouteImport } from './routes/_authenticated/cashbook'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
@@ -365,6 +366,11 @@ const AuthenticatedChartOfAccountsRoute =
     path: '/chart-of-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCashbookRoute = AuthenticatedCashbookRouteImport.update({
+  id: '/cashbook',
+  path: '/cashbook',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
   id: '/campaigns',
   path: '/campaigns',
@@ -591,6 +597,7 @@ export interface FileRoutesByFullPath {
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/cashbook': typeof AuthenticatedCashbookRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
@@ -679,6 +686,7 @@ export interface FileRoutesByTo {
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/cashbook': typeof AuthenticatedCashbookRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
@@ -765,6 +773,7 @@ export interface FileRoutesById {
   '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
+  '/_authenticated/cashbook': typeof AuthenticatedCashbookRoute
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/complaints': typeof AuthenticatedComplaintsRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
@@ -855,6 +864,7 @@ export interface FileRouteTypes {
     | '/bills'
     | '/budgets'
     | '/campaigns'
+    | '/cashbook'
     | '/chart-of-accounts'
     | '/complaints'
     | '/compliance'
@@ -943,6 +953,7 @@ export interface FileRouteTypes {
     | '/bills'
     | '/budgets'
     | '/campaigns'
+    | '/cashbook'
     | '/chart-of-accounts'
     | '/complaints'
     | '/compliance'
@@ -1028,6 +1039,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bills'
     | '/_authenticated/budgets'
     | '/_authenticated/campaigns'
+    | '/_authenticated/cashbook'
     | '/_authenticated/chart-of-accounts'
     | '/_authenticated/complaints'
     | '/_authenticated/compliance'
@@ -1461,6 +1473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChartOfAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cashbook': {
+      id: '/_authenticated/cashbook'
+      path: '/cashbook'
+      fullPath: '/cashbook'
+      preLoaderRoute: typeof AuthenticatedCashbookRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/campaigns': {
       id: '/_authenticated/campaigns'
       path: '/campaigns'
@@ -1837,6 +1856,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
+  AuthenticatedCashbookRoute: typeof AuthenticatedCashbookRoute
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedComplaintsRoute: typeof AuthenticatedComplaintsRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
@@ -1897,6 +1917,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillsRoute: AuthenticatedBillsRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
+  AuthenticatedCashbookRoute: AuthenticatedCashbookRoute,
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedComplaintsRoute: AuthenticatedComplaintsRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
@@ -1958,13 +1979,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
