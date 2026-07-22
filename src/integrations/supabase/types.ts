@@ -297,6 +297,7 @@ export type Database = {
         Row: {
           account_number: string | null
           bank_name: string | null
+          cashbook_type: string
           company_id: string | null
           created_at: string
           currency: string
@@ -313,6 +314,7 @@ export type Database = {
         Insert: {
           account_number?: string | null
           bank_name?: string | null
+          cashbook_type?: string
           company_id?: string | null
           created_at?: string
           currency?: string
@@ -329,6 +331,7 @@ export type Database = {
         Update: {
           account_number?: string | null
           bank_name?: string | null
+          cashbook_type?: string
           company_id?: string | null
           created_at?: string
           currency?: string
@@ -596,16 +599,20 @@ export type Database = {
           bank_account_id: string | null
           category: string | null
           charge_code: string | null
+          cost_centre: string | null
           created_at: string
           currency: string
           description: string
           exchange_rate: number
+          fund_source: string | null
           id: string
           last_allocated_at: string | null
           matched_id: string | null
           matched_invoice: string | null
           matched_type: string | null
           payee: string | null
+          project_ref: string | null
+          receipt_no: string | null
           reconciled: boolean
           reconciled_at: string | null
           reference: string | null
@@ -613,6 +620,7 @@ export type Database = {
           status: string
           txn_date: string
           user_id: string
+          voucher_no: string | null
         }
         Insert: {
           allocated_amount?: number
@@ -621,16 +629,20 @@ export type Database = {
           bank_account_id?: string | null
           category?: string | null
           charge_code?: string | null
+          cost_centre?: string | null
           created_at?: string
           currency?: string
           description: string
           exchange_rate?: number
+          fund_source?: string | null
           id?: string
           last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
           payee?: string | null
+          project_ref?: string | null
+          receipt_no?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
           reference?: string | null
@@ -638,6 +650,7 @@ export type Database = {
           status?: string
           txn_date: string
           user_id: string
+          voucher_no?: string | null
         }
         Update: {
           allocated_amount?: number
@@ -646,16 +659,20 @@ export type Database = {
           bank_account_id?: string | null
           category?: string | null
           charge_code?: string | null
+          cost_centre?: string | null
           created_at?: string
           currency?: string
           description?: string
           exchange_rate?: number
+          fund_source?: string | null
           id?: string
           last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
           payee?: string | null
+          project_ref?: string | null
+          receipt_no?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
           reference?: string | null
@@ -663,6 +680,7 @@ export type Database = {
           status?: string
           txn_date?: string
           user_id?: string
+          voucher_no?: string | null
         }
         Relationships: [
           {

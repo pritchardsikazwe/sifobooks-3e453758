@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
       orderBy={{ column: "entry_date", ascending: false }}
       searchKeys={["entry_number", "reference", "description"]}
       statusField="status"
+      dateField="entry_date"
       columns={[
         { key: "entry_number", header: "Entry #" },
         { key: "entry_date", header: "Date" },

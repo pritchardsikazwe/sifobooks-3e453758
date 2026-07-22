@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/bills")({
       orderBy={{ column: "bill_date", ascending: false }}
       searchKeys={["bill_number", "supplier_invoice_number"]}
       statusField="status"
+      dateField="bill_date"
       columns={[
         { key: "bill_number", header: "Bill #" },
         { key: "supplier_invoice_number", header: "Supplier Inv #" },

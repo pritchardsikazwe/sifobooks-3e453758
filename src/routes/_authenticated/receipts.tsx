@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ShareDoc } from "@/components/ShareDoc";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { ExportMenu } from "@/lib/exports";
+import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -29,6 +31,8 @@ function ReceiptsPage() {
   const [open, setOpen] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const filteredReceipts = useMemo(() => receipts.filter(r => inRange(r.receipt_date, range)), [receipts, range]);
   const [customerId, setCustomerId] = useState("");
   const [invoiceId, setInvoiceId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
@@ -94,6 +98,9 @@ function ReceiptsPage() {
           <h1 className="text-2xl font-semibold flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> Receipts</h1>
           <p className="text-sm text-muted-foreground">Capture customer payments — invoice balances update automatically.</p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter value={range} onChange={setRange} compact />
+          <ExportMenu filename="receipts" title="Receipts" rows={filteredReceipts.map(r => ({ Number: r.number, Date: r.receipt_date, Customer: r.customers?.name ?? "", Invoice: r.invoices?.number ?? "", Method: r.method, Reference: r.reference ?? "", Amount: r.amount }))} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" /> Receive payment</Button></DialogTrigger>
           <DialogContent>
@@ -140,6 +147,7 @@ function ReceiptsPage() {
             <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Capture"}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {overdue.length > 0 && (
@@ -155,14 +163,14 @@ function ReceiptsPage() {
         <CardHeader><CardTitle className="text-base">History</CardTitle></CardHeader>
         <CardContent>
           {loading ? <div className="py-8 text-center text-muted-foreground">Loading…</div> :
-          receipts.length === 0 ? <div className="py-12 text-center text-muted-foreground">No receipts yet. Capture the first payment above.</div> :
+          filteredReceipts.length === 0 ? <div className="py-12 text-center text-muted-foreground">No receipts in this range.</div> :
           <Table>
             <TableHeader><TableRow>
               <TableHead>#</TableHead><TableHead>Date</TableHead><TableHead>Customer</TableHead>
               <TableHead>Invoice</TableHead><TableHead>Method</TableHead>
               <TableHead className="text-right">Amount</TableHead><TableHead></TableHead>
             </TableRow></TableHeader>
-            <TableBody>{receipts.map(r => (
+            <TableBody>{filteredReceipts.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-xs">{r.number}</TableCell>
                 <TableCell className="text-xs">{r.receipt_date}</TableCell>

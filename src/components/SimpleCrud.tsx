@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
+import { ExportMenu } from "@/lib/exports";
 
 export type Field = {
   name: string;
@@ -51,11 +53,15 @@ type Props = {
   statusField?: string;
   /** Extra dropdown filters (name → options); filters rows client-side. */
   extraFilters?: { name: string; label: string; options: { value: string; label: string }[] }[];
+  /** Column to filter with the From/To date range picker (all time by default). */
+  dateField?: string;
+  /** Enable CSV / Excel / PDF export of the currently filtered rows. */
+  exportable?: boolean;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
-  rowActions, statusField, extraFilters = [],
+  rowActions, statusField, extraFilters = [], dateField, exportable = true,
 }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +72,8 @@ export function SimpleCrud({
   const [form, setForm] = useState<Record<string, any>>(initial);
   const [statusVal, setStatusVal] = useState<string>("__all");
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+
 
   // Auto-detect status options from the field definition
   const statusOptions = useMemo(() => {
@@ -92,8 +100,15 @@ export function SimpleCrud({
       const v = filterVals[f.name];
       if (v && v !== "__all" && String(r[f.name] ?? "") !== v) return false;
     }
+    if (dateField && !inRange(r[dateField], range)) return false;
     return true;
   });
+
+  const exportRows = useMemo(() => filtered.map(r => {
+    const o: Record<string, any> = {};
+    for (const c of columns) o[c.header] = r[c.key] ?? "";
+    return o;
+  }), [filtered, columns]);
 
   const openNew = () => { setEditing(null); setForm(initial); setOpen(true); };
   const openEdit = (r: any) => {
@@ -147,6 +162,7 @@ export function SimpleCrud({
         </div>
         <div className="flex items-center gap-2">
           {headerExtra}
+          {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
           <Button onClick={openNew} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-2" />New</Button>
         </div>
       </div>
@@ -176,6 +192,7 @@ export function SimpleCrud({
                 </SelectContent>
               </Select>
             ))}
+            {dateField && <DateRangeFilter value={range} onChange={setRange} compact />}
             <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
           </div>
         </CardHeader>

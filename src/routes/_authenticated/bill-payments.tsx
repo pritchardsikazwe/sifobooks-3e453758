@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
       table="bill_payments"
       orderBy={{ column: "payment_date", ascending: false }}
       searchKeys={["payment_number", "reference"]}
+      dateField="payment_date"
       columns={[
         { key: "payment_number", header: "Payment #" },
         { key: "payment_date", header: "Date" },

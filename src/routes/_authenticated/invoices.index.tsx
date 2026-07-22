@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, UserPlus, Calendar, FileText, Ban, Loader2 } from "lucide-react";
+import { Plus, Search, UserPlus, FileText, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,8 @@ import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { voidInvoiceLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
 import { toast } from "sonner";
+import { ExportMenu } from "@/lib/exports";
+import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({ meta: [{ title: "Invoice Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -27,6 +29,8 @@ function InvoicesPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sort, setSort] = useState<"new" | "old">("new");
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+
 
   const load = async () => {
     setLoading(true);
@@ -49,6 +53,7 @@ function InvoicesPage() {
   const filtered = useMemo(() => {
     const s = q.toLowerCase().trim();
     let list = rows.filter(i => {
+      if (!inRange(i.issue_date, range)) return false;
       if (statusFilter !== "all") {
         if (statusFilter === "overdue" ? !isOverdue(i) : i.status !== statusFilter) return false;
       }
@@ -57,7 +62,7 @@ function InvoicesPage() {
     });
     list = [...list].sort((a, b) => sort === "new" ? (b.issue_date > a.issue_date ? 1 : -1) : (a.issue_date > b.issue_date ? 1 : -1));
     return list;
-  }, [rows, q, statusFilter, sort]);
+  }, [rows, q, statusFilter, sort, range]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -84,7 +89,10 @@ function InvoicesPage() {
             <h1 className="text-xl font-semibold">Invoice Manager</h1>
             <p className="text-sm text-muted-foreground">An intuitive way to see all your general invoices for quick access</p>
           </div>
-          <Button variant="outline" className="gap-2"><Calendar className="h-4 w-4" /> Pick Date</Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <DateRangeFilter value={range} onChange={setRange} compact />
+            <ExportMenu filename="invoices" title="Invoices" rows={filtered.map(i => ({ Number: i.number, Customer: i.customers?.name ?? "", Issued: i.issue_date, Due: i.due_date ?? "", Total: i.total, Balance: i.balance_due, Status: i.status, Currency: i.currency ?? "ZMW" }))} />
+          </div>
         </div>
 
         {/* KPI cards */}
