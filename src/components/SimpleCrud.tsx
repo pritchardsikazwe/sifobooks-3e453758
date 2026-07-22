@@ -72,6 +72,8 @@ export function SimpleCrud({
   const [form, setForm] = useState<Record<string, any>>(initial);
   const [statusVal, setStatusVal] = useState<string>("__all");
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+
 
   // Auto-detect status options from the field definition
   const statusOptions = useMemo(() => {
