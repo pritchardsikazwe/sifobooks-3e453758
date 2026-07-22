@@ -53,11 +53,15 @@ type Props = {
   statusField?: string;
   /** Extra dropdown filters (name → options); filters rows client-side. */
   extraFilters?: { name: string; label: string; options: { value: string; label: string }[] }[];
+  /** Column to filter with the From/To date range picker (all time by default). */
+  dateField?: string;
+  /** Enable CSV / Excel / PDF export of the currently filtered rows. */
+  exportable?: boolean;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
-  rowActions, statusField, extraFilters = [],
+  rowActions, statusField, extraFilters = [], dateField, exportable = true,
 }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
