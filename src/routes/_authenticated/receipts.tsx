@@ -163,14 +163,14 @@ function ReceiptsPage() {
         <CardHeader><CardTitle className="text-base">History</CardTitle></CardHeader>
         <CardContent>
           {loading ? <div className="py-8 text-center text-muted-foreground">Loading…</div> :
-          receipts.length === 0 ? <div className="py-12 text-center text-muted-foreground">No receipts yet. Capture the first payment above.</div> :
+          filteredReceipts.length === 0 ? <div className="py-12 text-center text-muted-foreground">No receipts in this range.</div> :
           <Table>
             <TableHeader><TableRow>
               <TableHead>#</TableHead><TableHead>Date</TableHead><TableHead>Customer</TableHead>
               <TableHead>Invoice</TableHead><TableHead>Method</TableHead>
               <TableHead className="text-right">Amount</TableHead><TableHead></TableHead>
             </TableRow></TableHeader>
-            <TableBody>{receipts.map(r => (
+            <TableBody>{filteredReceipts.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-xs">{r.number}</TableCell>
                 <TableCell className="text-xs">{r.receipt_date}</TableCell>
