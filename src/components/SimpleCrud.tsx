@@ -162,6 +162,7 @@ export function SimpleCrud({
         </div>
         <div className="flex items-center gap-2">
           {headerExtra}
+          {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
           <Button onClick={openNew} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-2" />New</Button>
         </div>
       </div>
