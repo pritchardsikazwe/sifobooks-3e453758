@@ -147,6 +147,7 @@ function ReceiptsPage() {
             <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Capture"}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {overdue.length > 0 && (
