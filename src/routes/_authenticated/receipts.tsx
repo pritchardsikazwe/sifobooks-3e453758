@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ShareDoc } from "@/components/ShareDoc";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { ExportMenu } from "@/lib/exports";
+import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -29,6 +31,8 @@ function ReceiptsPage() {
   const [open, setOpen] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const filteredReceipts = useMemo(() => receipts.filter(r => inRange(r.receipt_date, range)), [receipts, range]);
   const [customerId, setCustomerId] = useState("");
   const [invoiceId, setInvoiceId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
@@ -94,6 +98,9 @@ function ReceiptsPage() {
           <h1 className="text-2xl font-semibold flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> Receipts</h1>
           <p className="text-sm text-muted-foreground">Capture customer payments — invoice balances update automatically.</p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter value={range} onChange={setRange} compact />
+          <ExportMenu filename="receipts" title="Receipts" rows={filteredReceipts.map(r => ({ Number: r.number, Date: r.receipt_date, Customer: r.customers?.name ?? "", Invoice: r.invoices?.number ?? "", Method: r.method, Reference: r.reference ?? "", Amount: r.amount }))} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" /> Receive payment</Button></DialogTrigger>
           <DialogContent>

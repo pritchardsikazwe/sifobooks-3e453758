@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { reverseJournalEntry } from "@/lib/reversal";
 import { ExportMenu } from "@/lib/exports";
+import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -35,6 +36,8 @@ function ExpensesPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const filtered = useMemo(() => rows.filter(r => inRange(r.expense_date, range)), [rows, range]);
 
   const load = async () => {
     setLoading(true);
@@ -54,9 +57,9 @@ function ExpensesPage() {
 
   const totals = useMemo(() => {
     const t = { amount: 0, vat: 0, total: 0, count: 0 };
-    for (const r of rows) if (r.status !== "reversed") { t.amount += Number(r.amount); t.vat += Number(r.vat_amount); t.total += Number(r.total); t.count++; }
+    for (const r of filtered) if (r.status !== "reversed") { t.amount += Number(r.amount); t.vat += Number(r.vat_amount); t.total += Number(r.total); t.count++; }
     return t;
-  }, [rows]);
+  }, [filtered]);
 
   const reverseExpense = async (r: Expense) => {
     if (r.status === "reversed") return;
@@ -82,8 +85,9 @@ function ExpensesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2"><Receipt className="h-6 w-6 text-emerald-600" /> Expenses</h1>
           <p className="text-sm text-slate-500 mt-1">Record cash/bank expenses. Each posted expense creates a journal entry and can be reversed if wrong.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu rows={rows.map(r => ({ Date: r.expense_date, Number: r.expense_number ?? "", Category: r.category ?? "", Payment: r.payment_method, Reference: r.reference ?? "", Net: r.amount, VAT: r.vat_amount, Total: r.total, Status: r.status }))} filename="expenses" title="Expenses" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter value={range} onChange={setRange} compact />
+          <ExportMenu rows={filtered.map(r => ({ Date: r.expense_date, Number: r.expense_number ?? "", Category: r.category ?? "", Payment: r.payment_method, Reference: r.reference ?? "", Net: r.amount, VAT: r.vat_amount, Total: r.total, Status: r.status }))} filename="expenses" title="Expenses" />
           <NewExpenseDialog open={open} setOpen={setOpen} userId={userId} accounts={accounts} onSaved={load} />
         </div>
       </div>
@@ -101,7 +105,7 @@ function ExpensesPage() {
         <CardHeader className="pb-2"><CardTitle>All expenses</CardTitle><CardDescription>Latest first.</CardDescription></CardHeader>
         <CardContent>
           {loading ? <div className="py-8 text-center text-slate-400"><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Loading…</div>
-            : rows.length === 0 ? <div className="py-10 text-center text-slate-400">No expenses yet. Click "New Expense" to record one.</div>
+            : filtered.length === 0 ? <div className="py-10 text-center text-slate-400">No expenses in this range.</div>
             : (
               <div className="rounded-md border overflow-hidden">
                 <Table>
@@ -112,7 +116,7 @@ function ExpensesPage() {
                     <TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead />
                   </TableRow></TableHeader>
                   <TableBody>
-                    {rows.map(r => (
+                    {filtered.map(r => (
                       <TableRow key={r.id} className={r.status === "reversed" ? "opacity-50" : ""}>
                         <TableCell>{r.expense_date}</TableCell>
                         <TableCell className="font-mono text-xs">{r.expense_number}</TableCell>
