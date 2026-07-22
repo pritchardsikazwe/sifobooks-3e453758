@@ -100,8 +100,15 @@ export function SimpleCrud({
       const v = filterVals[f.name];
       if (v && v !== "__all" && String(r[f.name] ?? "") !== v) return false;
     }
+    if (dateField && !inRange(r[dateField], range)) return false;
     return true;
   });
+
+  const exportRows = useMemo(() => filtered.map(r => {
+    const o: Record<string, any> = {};
+    for (const c of columns) o[c.header] = r[c.key] ?? "";
+    return o;
+  }), [filtered, columns]);
 
   const openNew = () => { setEditing(null); setForm(initial); setOpen(true); };
   const openEdit = (r: any) => {
