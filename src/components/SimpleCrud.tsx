@@ -192,6 +192,7 @@ export function SimpleCrud({
                 </SelectContent>
               </Select>
             ))}
+            {dateField && <DateRangeFilter value={range} onChange={setRange} compact />}
             <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
           </div>
         </CardHeader>
