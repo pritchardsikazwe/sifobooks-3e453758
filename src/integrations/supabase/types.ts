@@ -3609,6 +3609,36 @@ export type Database = {
           },
         ]
       }
+      role_module_permissions: {
+        Row: {
+          can_manage: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          module_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       school_grants: {
         Row: {
           approved_amount: number
@@ -4540,6 +4570,14 @@ export type Database = {
         Returns: Json
       }
       run_notification_scans: { Args: never; Returns: Json }
+      user_can_manage_module: {
+        Args: { _module_key: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_view_module: {
+        Args: { _module_key: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
