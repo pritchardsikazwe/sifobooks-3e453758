@@ -49,7 +49,21 @@ export function AppSidebar() {
     navigate({ to: "/auth", replace: true });
   };
 
-  const soon = (t: string) => toast.info(`${t} — coming soon`);
+  const { installed } = useInstalledModules();
+
+  const sections = useMemo(() => {
+    const groups: { label: ModuleCategory; items: { title: string; url: string; icon: any }[] }[] = [];
+    for (const cat of CATEGORY_ORDER) {
+      const items: { title: string; url: string; icon: any }[] = [];
+      for (const m of MODULES) {
+        if (m.category !== cat) continue;
+        if (!installed.has(m.key)) continue;
+        for (const r of m.routes) items.push({ title: r.title, url: r.url, icon: iconFor(r.iconName) });
+      }
+      if (items.length > 0) groups.push({ label: cat, items });
+    }
+    return groups;
+  }, [installed]);
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-[oklch(0.16_0.02_220)] text-white [&_[data-sidebar=sidebar]]:bg-[oklch(0.16_0.02_220)]">
@@ -78,25 +92,15 @@ export function AppSidebar() {
               <SidebarMenu>
                 {section.items.map(item => {
                   const Icon = item.icon;
-                  const active = item.url && currentPath === item.url;
+                  const active = currentPath === item.url;
                   const baseCls = "text-white/80 hover:bg-white/10 hover:text-white data-[active=true]:bg-emerald-500/15 data-[active=true]:text-emerald-300 data-[active=true]:font-semibold";
-                  if (item.url) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={!!active} className={baseCls} tooltip={item.title}>
-                          <Link to={item.url}>
-                            <Icon className="h-4 w-4" />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  }
                   return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton onClick={() => soon(item.title)} className={`${baseCls} text-white/50`} tooltip={item.title}>
-                        <Icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton asChild isActive={active} className={baseCls} tooltip={item.title}>
+                        <Link to={item.url}>
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -106,6 +110,7 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
 
       <SidebarFooter className="border-t border-white/10 bg-[oklch(0.16_0.02_220)] p-3">
         <div className="flex items-center gap-2">
