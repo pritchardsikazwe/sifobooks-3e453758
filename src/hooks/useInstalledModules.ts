@@ -24,14 +24,22 @@ export function useInstalledModules() {
     setCompanyId(cid);
 
     const explicit = new Set<string>();
+    const suppressed = new Set<string>();
     if (cid) {
       const { data: rows } = await supabase
         .from("company_modules").select("module_key").eq("company_id", cid);
-      (rows ?? []).forEach(r => explicit.add(r.module_key));
+      (rows ?? []).forEach(r => {
+        const k = r.module_key;
+        if (k.startsWith("__off__:")) suppressed.add(k.slice("__off__:".length));
+        else explicit.add(k);
+      });
     }
-    // Merge with defaults/core
     const merged = new Set<string>();
-    MODULES.forEach(m => { if (isModuleInstalled(m.key, explicit)) merged.add(m.key); });
+    MODULES.forEach(m => {
+      if (m.core) { merged.add(m.key); return; }
+      if (suppressed.has(m.key)) return;
+      if (isModuleInstalled(m.key, explicit)) merged.add(m.key);
+    });
     setInstalled(merged);
     setLoading(false);
   }, []);

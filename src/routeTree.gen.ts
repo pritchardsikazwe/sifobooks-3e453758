@@ -40,6 +40,7 @@ import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_authenticated/opening-balances'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
@@ -266,6 +267,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
@@ -617,6 +623,7 @@ export interface FileRoutesByFullPath {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
@@ -704,6 +711,7 @@ export interface FileRoutesByTo {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
@@ -793,6 +801,7 @@ export interface FileRoutesById {
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
+  '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/opening-balances': typeof AuthenticatedOpeningBalancesRoute
@@ -884,6 +893,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/modules'
     | '/notifications'
     | '/onboarding'
     | '/opening-balances'
@@ -971,6 +981,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/modules'
     | '/notifications'
     | '/onboarding'
     | '/opening-balances'
@@ -1059,6 +1070,7 @@ export interface FileRouteTypes {
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
+    | '/_authenticated/modules'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
     | '/_authenticated/opening-balances'
@@ -1338,6 +1350,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/modules': {
+      id: '/_authenticated/modules'
+      path: '/modules'
+      fullPath: '/modules'
+      preLoaderRoute: typeof AuthenticatedModulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leave': {
@@ -1876,6 +1895,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
+  AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOpeningBalancesRoute: typeof AuthenticatedOpeningBalancesRoute
@@ -1937,6 +1957,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
+  AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOpeningBalancesRoute: AuthenticatedOpeningBalancesRoute,
