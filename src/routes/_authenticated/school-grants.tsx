@@ -15,9 +15,11 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 
+import { RequireModule } from "@/components/RequireModule";
+
 export const Route = createFileRoute("/_authenticated/school-grants")({
   head: () => ({ meta: [{ title: "School Grants — SifoBooks" }] }),
-  component: Page,
+  component: () => <RequireModule moduleKey="school_erp"><Page /></RequireModule>,
 });
 
 type Grant = any;
