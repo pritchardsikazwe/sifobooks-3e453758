@@ -1,79 +1,59 @@
-# SifoBooks Accounting Engine Upgrade
 
-Enterprise-grade banking, journals, cashbooks, posting, and reports. Sized in 5 phases so each ships working before the next begins.
+## Goal
 
-## What already exists (won't rebuild)
-- Bills / Receipts / Expenses auto-posting via triggers → GL
-- `bank_allocations` with partial splits + reversal
-- `auto_match_bank_transactions()` amount/date matcher
-- `journal_entries` + `journal_lines` + `reverse_bank_allocation`
-- Trial Balance, P&L, Balance Sheet, Cash Flow, VAT, AFS, Payroll schedules, Statements
-- Period close (`close_month`, `close_year`, `reopen_period`)
-- Multi-currency `fx_rates` + `fx_rate()` helper
-- Imprest register with retirement
-- Universal `ExportMenu` (CSV / Excel / PDF)
+Make every module (School ERP, NGO, Mining, Payroll extras, etc.) installable/uninstallable per tenant. Sidebar hides anything not installed. Then deepen RBAC, Inventory, Payroll and Leave.
 
-## Phase 1 — Banking depth (this turn)
+## Phase 1 — Module registry + sidebar gating (ship first)
 
-**DB migration**
-- `bank_accounts` table: name, bank_name, account_number, currency, opening_balance, opening_date, gl_account_id, is_active, notes. Linked to `company_id`.
-- Add `bank_account_id` to `bank_transactions` + `bank_allocations` (backfill existing rows to a default "Default Bank" account per user).
-- `bank_documents` table for attachments (uses existing `company-logos` bucket pattern → new `bank-documents` bucket).
-- `bank_rules` table: description_pattern, contains/regex, suggested_account_id, auto_apply. Consumed by matcher.
-- Extend `auto_match_bank_transactions()` to (a) apply learned rules first, (b) fall back to amount+date match.
-- `bank_running_balance` view: opening + cumulative debit/credit per bank_account_id ordered by date.
+**Central module registry** in `src/lib/modules.ts`:
+- Defines every module: `key`, `label`, `category`, `routes[]`, `default_installed` (only Core/Finance/Sales/Purchases true; School ERP, NGO, Mining, Compliance-extras = false).
+- Groups: Core, Finance, Sales, Purchases, Inventory, HR & Payroll, Projects, School ERP, NGO, Mining, Compliance, Admin.
 
-**UI**
-- `banking.tsx` split into tabs: **Accounts** (CRUD + opening balance) · **Transactions** (existing + filter by account, date, ref, amount) · **Import** (existing CSV + new OFX parser) · **Rules** (create/edit smart matching rules) · **Reconcile** (moved from `reconciliation.tsx`).
-- Bank dashboard card at top: total balance across accounts, unmatched count, pending recon count, recent 5 deposits/payments.
-- Transaction row: attach document button → uploads to storage, links via `bank_documents`.
+**Data**: reuse existing `company_modules` table.
+- Seed nothing new server-side; a hook computes "installed = row exists OR module.default_installed".
+- Add `useInstalledModules()` hook (React Query) returning a `Set<string>`.
 
-**Public tenants benefit**: any company adds unlimited bank accounts, imports OFX, teaches rules once → future ZESCO/MTN/etc auto-match.
+**Sidebar** (`src/components/AppSidebar.tsx`):
+- Rebuild items from the registry, filtered by installed set. School ERP group hidden until installed.
+- Empty groups collapse away.
 
-## Phase 2 — Reconciliation workflow (next turn)
+**Modules admin page** `src/routes/_authenticated/modules.tsx`:
+- Card grid grouped by category with Install/Uninstall toggle per module.
+- Uses `installIndustry`/`uninstallModule` helpers (already exist) — extend to accept module key without industry.
+- Route-guard wrapper `<RequireModule moduleKey="school_erp">` for route pages, redirects to /modules with toast if not installed.
 
-**DB**
-- `bank_reconciliations` table: bank_account_id, statement_date, statement_balance, system_balance, difference, status (draft/completed/locked), locked_at, locked_by.
-- `bank_reconciliation_lines` linking reconciled `bank_transactions` to a recon session.
+## Phase 2 — Roles & Permissions
 
-**UI**
-- Professional recon screen: Statement Balance − Outstanding Deposits + Outstanding Payments = Adjusted Balance vs System Balance = Difference.
-- Lock button (posts summary JE stamp, marks lines immutable). Reopen requires `admin` role via `has_role`.
-- Reports: Bank Reconciliation Statement (PDF), Outstanding Payments, Outstanding Deposits, Unpresented Cheques.
+- Extend `app_role` enum (already has super_admin/admin) with: `accountant`, `hr`, `sales`, `viewer`.
+- New table `role_permissions(role, permission)` seeded with a matrix (module_key + action: view/create/edit/delete/approve).
+- Helper `has_permission(user, module, action)` SQL fn + `usePermission()` hook.
+- Admin page `/roles`: assign users to roles, edit permission matrix (super_admin only).
+- Sidebar/actions gated by permission (hide edit buttons without `edit`).
 
-## Phase 3 — Journal & Cashbook
+## Phase 3 — Inventory enhancements
 
-**Journals**
-- Add `journal_type` enum column: general/cash/bank/sales/purchase/adjustment/opening/depreciation/tax/payroll.
-- Journal editor: multi-line form, live DR=CR validator, required description, attach supporting doc, save draft → post workflow.
-- Recurring journals table (frequency, next_run_date, template lines) + nightly `pg_cron` job.
+- Add columns: `barcode`, `sku`, `warehouse_id`, `avg_cost`, `last_cost` to `stock_items` (some exist).
+- Live stock valuation per warehouse (view).
+- Reorder alerts already exist via notifications — surface a dashboard widget.
+- Stock transfer between warehouses (new form).
+- Bulk import CSV.
 
-**Cashbook**
-- `cash_accounts` table (Main / Petty / Branch / POS) — mirrors bank accounts but GL-mapped to cash.
-- Cash In / Cash Out / Transfer / Adjustment forms → auto JE.
-- Cashbook report per account with running balance.
-- Petty cash reimbursement flow reusing Imprest.
+## Phase 4 — Payroll + Leave
 
-## Phase 4 — Reports & Drill-down
-
-- **General Ledger**: full account activity report, filter by date/account, click line → open source document (bill/receipt/expense/journal).
-- **Cash Position**: today's opening + inflows − outflows = closing per account.
-- **Journal Register**: filter by type/status/date + posted vs draft tabs.
-- Drill-down chain wired: P&L line → account transactions → source doc.
-- Every report gets Print + PDF + Excel + CSV via existing `ExportMenu` + `ReportShell`.
-
-## Phase 5 — Dashboard, guardrails, POS sync
-
-- **Accounting Health card** on `/dashboard`: green=reconciled, amber=pending, red=posting errors count.
-- **Error prevention**: DB triggers block unbalanced JE post, duplicate reference within 24h, negative cash if account flag set. Friendly toast messages.
-- **POS offline sync stub**: `sync_queue` table + `POST /api/public/pos-sync` route with HMAC signature — accepts batched POS sales, deduplicates by client_uuid, posts to bills/receipts/inventory.
+- Payroll: add fields Overtime hrs, Shift, Sunday hrs, PSPF, Gratuity, Long Service, Terminal Benefits (columns to `payslips`); update `computePayslip`.
+- Leave: accrual engine (monthly cron via `run_notification_scans`-style RPC), balance per employee (`leave_balances` table), auto-decrement on approved requests, calendar view.
+- Approval workflow already exists; wire `leave_requests` into `approval_requests`.
 
 ## Technical notes
-- All new tables: RLS `auth.uid() = user_id`, GRANT to authenticated + service_role, `company_id` scoping where multi-tenant.
-- Backfill existing `bank_transactions` on migration so no data lost.
-- Posting functions stay `SECURITY DEFINER` for reliability.
-- OFX parser is a small pure-TS routine (~80 lines) — no new dep needed beyond existing `xlsx`.
-- No breaking changes to existing routes; new capabilities are additive.
+
+- All migrations follow CREATE TABLE + GRANT + RLS + POLICY order.
+- No route file for a module is deleted; only sidebar visibility + route guard change.
+- School ERP routes (`school-grants`, `teaching-materials`, `workshops`, `tuckshop`, `imprest`) become gated by `school_erp` module.
+- NGO shows only if `ngo` module installed; Mining only if `mining` installed.
 
 ## Delivery order
-Reply **"go phase 1"** and I ship Banking depth (bank accounts, OFX import, smart rules, document attach, dashboard card). Each subsequent phase ships on the next "go".
+
+1. Phase 1 (module registry, sidebar, /modules page, School ERP hidden by default) — this turn.
+2. Phase 2–4 in follow-up turns after you confirm Phase 1 looks right.
+
+Reply **go** to ship Phase 1 now.
