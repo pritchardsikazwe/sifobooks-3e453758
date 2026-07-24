@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/sifobooks-logo.png";
 import { MODULES, CATEGORY_ORDER, type ModuleCategory } from "@/lib/modules";
 import { useInstalledModules } from "@/hooks/useInstalledModules";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const LogOut = Icons.LogOut;
 
@@ -50,6 +51,7 @@ export function AppSidebar() {
   };
 
   const { installed } = useInstalledModules();
+  const { canView } = usePermissions();
 
   const sections = useMemo(() => {
     const groups: { label: ModuleCategory; items: { title: string; url: string; icon: any }[] }[] = [];
@@ -58,12 +60,13 @@ export function AppSidebar() {
       for (const m of MODULES) {
         if (m.category !== cat) continue;
         if (!installed.has(m.key)) continue;
+        if (!canView(m.key)) continue;
         for (const r of m.routes) items.push({ title: r.title, url: r.url, icon: iconFor(r.iconName) });
       }
       if (items.length > 0) groups.push({ label: cat, items });
     }
     return groups;
-  }, [installed]);
+  }, [installed, canView]);
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-[oklch(0.16_0.02_220)] text-white [&_[data-sidebar=sidebar]]:bg-[oklch(0.16_0.02_220)]">
