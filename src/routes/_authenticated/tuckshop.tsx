@@ -14,9 +14,11 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 
+import { RequireModule } from "@/components/RequireModule";
+
 export const Route = createFileRoute("/_authenticated/tuckshop")({
   head: () => ({ meta: [{ title: "Tuckshop POS — SifoBooks" }] }),
-  component: Page,
+  component: () => <RequireModule moduleKey="school_erp"><Page /></RequireModule>,
 });
 
 function Page() {
