@@ -1,119 +1,23 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import {
-  Home, Users, FileText, ReceiptText, CreditCard, Undo2,
-  Truck, ShoppingCart, FileBox, Wallet,
-  Landmark, BookOpen, BookText, PiggyBank,
-  Boxes, BarChart3, ShieldCheck, Warehouse, ClipboardEdit,
-  UserSquare, CalendarCheck, CalendarDays, Banknote,
-  Settings, UserCog, Building2, Bell, LogOut, Sparkles, ShieldAlert, Inbox,
-  UserPlus, Target, Megaphone, MessageSquareWarning, Star,
-  Briefcase, ListChecks, Clock, LifeBuoy, Wrench, CalendarClock, Scale, Tags, Receipt, Coins,
-  GraduationCap, ShoppingBag, BookOpen as BookIcon,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import * as Icons from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/sifobooks-logo.png";
+import { MODULES, CATEGORY_ORDER, type ModuleCategory } from "@/lib/modules";
+import { useInstalledModules } from "@/hooks/useInstalledModules";
 
-type Item = { title: string; url?: string; icon: any };
-type Section = { label: string; items: Item[] };
+const LogOut = Icons.LogOut;
 
-const sections: Section[] = [
-  { label: "Home", items: [
-    { title: "Summary", url: "/dashboard", icon: Home },
-  ]},
-  { label: "Sales", items: [
-    { title: "Customers", url: "/customers", icon: Users },
-    { title: "Quotes", url: "/quotes", icon: FileText },
-    { title: "Sales Invoices", url: "/invoices", icon: ReceiptText },
-    { title: "Credit Notes", url: "/credit-notes", icon: Undo2 },
-    { title: "Receive Payments", url: "/receipts", icon: CreditCard },
-  ]},
-  { label: "Purchases", items: [
-    { title: "Suppliers", url: "/suppliers", icon: Truck },
-    { title: "Purchase Orders", url: "/purchase-orders", icon: ShoppingCart },
-    { title: "Bills", url: "/bills", icon: FileBox },
-    { title: "Supplier Payments", url: "/bill-payments", icon: Wallet },
-    { title: "Expenses", url: "/expenses", icon: Receipt },
-    { title: "Expense Categories", url: "/expense-rules", icon: Tags },
-  ]},
-  { label: "Finance", items: [
-    { title: "Banking", url: "/banking", icon: Landmark },
-    { title: "Bank Accounts", url: "/bank-accounts", icon: Landmark },
-    { title: "Bank Rules", url: "/bank-rules", icon: Sparkles },
-    { title: "Reconciliation", url: "/reconciliation", icon: Scale },
-    { title: "Recon Sessions", url: "/reconciliation-sessions", icon: Scale },
-    { title: "Chart of Accounts", url: "/chart-of-accounts", icon: BookOpen },
-    { title: "Journal Entries", url: "/journal-entries", icon: BookText },
-    { title: "Cashbook", url: "/cashbook", icon: BookText },
-    { title: "Opening Balances", url: "/opening-balances", icon: Sparkles },
-    { title: "Fixed Assets", url: "/fixed-assets", icon: Landmark },
-    { title: "Budgets", url: "/budgets", icon: PiggyBank },
-    { title: "Period Close", url: "/period-close", icon: CalendarClock },
-    { title: "Exchange Rates", url: "/fx-rates", icon: Coins },
-  ]},
+function iconFor(name?: string): any {
+  if (!name) return Icons.Circle;
+  return (Icons as any)[name] ?? (Icons as any)[name.replace("Icon", "")] ?? Icons.Circle;
+}
 
-  { label: "Inventory", items: [
-    { title: "Items", url: "/stock", icon: Boxes },
-    { title: "Warehouses", url: "/warehouses", icon: Warehouse },
-    { title: "Stock Adjustments", url: "/stock-adjustments", icon: ClipboardEdit },
-  ]},
-  { label: "HR & Payroll", items: [
-    { title: "Employees", url: "/employees", icon: UserSquare },
-    { title: "Attendance", url: "/attendance", icon: CalendarCheck },
-    { title: "Leave", url: "/leave", icon: CalendarDays },
-    { title: "Payroll", url: "/payroll", icon: Banknote },
-    { title: "Payroll Schedules", url: "/reports/payroll-schedules", icon: Banknote },
-  ]},
-  { label: "CRM", items: [
-    { title: "Leads", url: "/leads", icon: UserPlus },
-    { title: "Opportunities", url: "/opportunities", icon: Target },
-    { title: "Campaigns", url: "/campaigns", icon: Megaphone },
-    { title: "Complaints", url: "/complaints", icon: MessageSquareWarning },
-    { title: "CSAT", url: "/csat", icon: Star },
-  ]},
-  { label: "Projects & Service", items: [
-    { title: "Projects", url: "/projects", icon: Briefcase },
-    { title: "Project Tasks", url: "/project-tasks", icon: ListChecks },
-    { title: "Time Entries", url: "/time-entries", icon: Clock },
-    { title: "Service Tickets", url: "/service-tickets", icon: LifeBuoy },
-    { title: "Job Cards", url: "/job-cards", icon: Wrench },
-  ]},
-  { label: "Reports", items: [
-    { title: "Reports", url: "/reports", icon: BarChart3 },
-    { title: "Trial Balance", url: "/reports/trial-balance", icon: BookText },
-    { title: "Customer Statement", url: "/reports/customer-statement", icon: Users },
-    { title: "Supplier Statement", url: "/reports/supplier-statement", icon: Truck },
-    { title: "Annual Financial Statements", url: "/reports/afs", icon: Sparkles },
-    { title: "VAT Return (VAT 3)", url: "/reports/vat-return", icon: Receipt },
-    { title: "Income Tax Computation", url: "/reports/income-tax", icon: Receipt },
-    { title: "Turnover Tax", url: "/reports/turnover-tax", icon: Receipt },
-    { title: "Compliance", url: "/compliance", icon: ShieldCheck },
-  ]},
-  { label: "School ERP", items: [
-    { title: "Grants & Donor Funds", url: "/school-grants", icon: Landmark },
-    { title: "Teaching Materials", url: "/teaching-materials", icon: BookIcon },
-    { title: "Workshops & Allowances", url: "/workshops", icon: GraduationCap },
-    { title: "Imprest Register", url: "/imprest", icon: Wallet },
-    { title: "Tuckshop POS", url: "/tuckshop", icon: ShoppingBag },
-  ]},
-  { label: "Admin", items: [
-    { title: "Admin Home", url: "/admin", icon: UserCog },
-    { title: "Approvals", url: "/approvals", icon: Inbox },
-    { title: "Super Admin", url: "/super-admin", icon: ShieldAlert },
-    { title: "Company Setup", url: "/setup", icon: Building2 },
-    { title: "Industry & Modules", url: "/industry", icon: Sparkles },
-    { title: "Subscription", url: "/subscription", icon: Sparkles },
-    { title: "Audit Logs", url: "/audit-logs", icon: ShieldCheck },
-    { title: "Notifications", url: "/notifications", icon: Bell },
-    { title: "Settings", url: "/setup", icon: Settings },
-  ]},
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
