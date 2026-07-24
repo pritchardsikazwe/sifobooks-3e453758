@@ -150,6 +150,7 @@ export const MODULES: ModuleDef[] = [
     routes: [
       { title: "Admin Home", url: "/admin", iconName: "UserCog" },
       { title: "Modules", url: "/modules", iconName: "Sparkles" },
+      { title: "Roles & Permissions", url: "/roles", iconName: "ShieldCheck" },
       { title: "Approvals", url: "/approvals", iconName: "Inbox" },
       { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert" },
       { title: "Company Setup", url: "/setup", iconName: "Building2" },
