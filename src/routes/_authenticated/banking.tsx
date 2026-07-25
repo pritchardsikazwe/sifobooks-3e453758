@@ -498,9 +498,14 @@ function BankingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SpendMoneyDialog open={spendOpen} onOpenChange={setSpendOpen} onRecorded={load} mode="spend" />
+      <SpendMoneyDialog open={receiveOpen} onOpenChange={setReceiveOpen} onRecorded={load} mode="receive" />
+      <ReconcileDialog open={reconcileOpen} onOpenChange={setReconcileOpen} onLocked={load} />
     </div>
   );
 }
+
 
 function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: string; tint: string }) {
   return (
