@@ -14,7 +14,10 @@ import { AppNav } from "@/components/AppNav";
 import { parseStatement, type ParsedTxn } from "@/lib/statement-parser";
 import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
+import { SpendMoneyDialog } from "@/components/SpendMoneyDialog";
+import { ReconcileDialog } from "@/components/ReconcileDialog";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/banking")({
   head: () => ({ meta: [{ title: "Banking — SifoBooks" }, { name: "robots", content: "noindex" }] }),
