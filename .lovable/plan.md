@@ -1,59 +1,58 @@
 
-## Goal
+## Scope
 
-Make every module (School ERP, NGO, Mining, Payroll extras, etc.) installable/uninstallable per tenant. Sidebar hides anything not installed. Then deepen RBAC, Inventory, Payroll and Leave.
+Four Sage-style surfaces, all in dark glass matching the current dashboard theme.
 
-## Phase 1 — Module registry + sidebar gating (ship first)
+## 1. Spend Money modal (Banking)
 
-**Central module registry** in `src/lib/modules.ts`:
-- Defines every module: `key`, `label`, `category`, `routes[]`, `default_installed` (only Core/Finance/Sales/Purchases true; School ERP, NGO, Mining, Compliance-extras = false).
-- Groups: Core, Finance, Sales, Purchases, Inventory, HR & Payroll, Projects, School ERP, NGO, Mining, Compliance, Admin.
+New component `src/components/SpendMoneyDialog.tsx` opened from a "Spend Money" button on `banking.tsx` and `bank-accounts.tsx`.
 
-**Data**: reuse existing `company_modules` table.
-- Seed nothing new server-side; a hook computes "installed = row exists OR module.default_installed".
-- Add `useInstalledModules()` hook (React Query) returning a `Set<string>`.
+Fields (match screenshot order):
+- Account Paid From (bank account select, shows current balance)
+- Transaction Date (date picker, defaults today)
+- Amount (currency, ZMW)
+- Supplier (optional combobox from `suppliers`)
+- Payment Method (Manual / EFT / Cheque / Cash / Mobile Money)
+- Reference Number (auto-filled `PMT-####`, editable)
+- Journal Memo (textarea)
+- Account Allocation grid: rows of `{ account (COA select), amount, DR/CR }`, add/remove rows, live remaining-to-allocate indicator
+- Actions: Save Template, Record (primary), Cancel
 
-**Sidebar** (`src/components/AppSidebar.tsx`):
-- Rebuild items from the registry, filtered by installed set. School ERP group hidden until installed.
-- Empty groups collapse away.
+On Record: insert one `bank_transactions` row (negative amount) plus a balanced `journal_entries` + `journal_lines` posting from bank credit → allocation debits/credits. Reuses existing `posting.ts` helpers.
 
-**Modules admin page** `src/routes/_authenticated/modules.tsx`:
-- Card grid grouped by category with Install/Uninstall toggle per module.
-- Uses `installIndustry`/`uninstallModule` helpers (already exist) — extend to accept module key without industry.
-- Route-guard wrapper `<RequireModule moduleKey="school_erp">` for route pages, redirects to /modules with toast if not installed.
+## 2. Reconcile Account modal
 
-## Phase 2 — Roles & Permissions
+New component `src/components/ReconcileDialog.tsx` opened from Banking and Reconciliation Sessions.
 
-- Extend `app_role` enum (already has super_admin/admin) with: `accountant`, `hr`, `sales`, `viewer`.
-- New table `role_permissions(role, permission)` seeded with a matrix (module_key + action: view/create/edit/delete/approve).
-- Helper `has_permission(user, module, action)` SQL fn + `usePermission()` hook.
-- Admin page `/roles`: assign users to roles, edit permission matrix (super_admin only).
-- Sidebar/actions gated by permission (hide edit buttons without `edit`).
+Header grid: Account · Last Reconciled Date · Bank Statement Date · New Statement Balance · Calculated Balance (live) · Out of Balance (live, red when non-zero).
 
-## Phase 3 — Inventory enhancements
+Body: table of unreconciled `bank_transactions` for the account with a Reconciled checkbox, Date, Ledger Transaction, Deposits, Payments columns. Toolbar: Load Bank Statement from File (reuses existing `statement-parser.ts`), + Add Deposit, + Add Payment, Rollback to Previous. Footer: Reconcile (disabled until Out of Balance = 0), Cancel.
 
-- Add columns: `barcode`, `sku`, `warehouse_id`, `avg_cost`, `last_cost` to `stock_items` (some exist).
-- Live stock valuation per warehouse (view).
-- Reorder alerts already exist via notifications — surface a dashboard widget.
-- Stock transfer between warehouses (new form).
-- Bulk import CSV.
+On Reconcile: creates a `reconciliation_sessions` row via existing `lock_reconciliation` RPC with the ticked lines.
 
-## Phase 4 — Payroll + Leave
+## 3. Reports hub — colored tile grid
 
-- Payroll: add fields Overtime hrs, Shift, Sunday hrs, PSPF, Gratuity, Long Service, Terminal Benefits (columns to `payslips`); update `computePayslip`.
-- Leave: accrual engine (monthly cron via `run_notification_scans`-style RPC), balance per employee (`leave_balances` table), auto-decrement on approved requests, calendar view.
-- Approval workflow already exists; wire `leave_requests` into `approval_requests`.
+Rewrite `src/routes/_authenticated/reports.index.tsx` to render category-colored tiles matching the screenshot:
+- Purple: Income Statement, Income Statement Analysis, Balance Sheet, Cash Flow, Trial Balance, Consolidated
+- Orange: Invoices, Quotes, Orders, Sales Invoice Payment, Transactions, Items per Customer, Customer Sales
+- Cyan: Inventory, Item Sales, Salesperson, Unpaid Accounts, Accounts Payable, Payments of AP, AR Aging, Customers
+- Green: Account Enquiry, Reconciliation, Chart of Accounts, Mileage, VAT/Sales Tax, Budget & Variance, Customised
+
+Dark-glass tiles with color-tinted gradient overlays, keyboard-navigable, click routes to existing report pages. Skeleton loaders while route lazy-loads.
+
+## 4. Inventory table — grouped layout
+
+Rewrite `src/routes/_authenticated/stock.tsx` list view to group `stock_items` by `warehouse` (Location) → `category`, with columns: Category, Order By Unit, Cost, Qty/Unit, Item Size, Cost per Item, Stock Qty, Reorder Level, Reorder (auto: `qty <= reorder_level ? "REORDER" : "OK"` styled pill), Item Reorder Qty. Sticky location headers, alternating row shading, dark-glass shell.
+
+## Shared
+
+- `src/components/ui/glass-card.tsx` — reusable dark-glass panel token so all four surfaces share the same background/border/blur.
+- All new dialogs: shadcn Dialog, `pointer-events-auto` on interactive parts, responsive (stack on <sm), keyboard shortcuts (Esc close, ⌘/Ctrl+Enter submit), toast success/error, zod validation, loading skeletons.
+- No new tables; reuses `bank_transactions`, `bank_allocations`, `reconciliation_sessions`, `journal_entries`, `stock_items`, `warehouses`.
 
 ## Technical notes
 
-- All migrations follow CREATE TABLE + GRANT + RLS + POLICY order.
-- No route file for a module is deleted; only sidebar visibility + route guard change.
-- School ERP routes (`school-grants`, `teaching-materials`, `workshops`, `tuckshop`, `imprest`) become gated by `school_erp` module.
-- NGO shows only if `ngo` module installed; Mining only if `mining` installed.
-
-## Delivery order
-
-1. Phase 1 (module registry, sidebar, /modules page, School ERP hidden by default) — this turn.
-2. Phase 2–4 in follow-up turns after you confirm Phase 1 looks right.
-
-Reply **go** to ship Phase 1 now.
+- Dialogs live in `src/components/`, opened from existing routes — no new routes.
+- Posting reuses `src/lib/posting.ts` and `src/lib/bank-posting.ts`; if a helper for multi-line DR/CR splits is missing, add `postSpendMoney()` in `src/lib/bank-posting.ts`.
+- Reports tiles map to existing routes under `/reports/*`; any tile whose target route doesn't exist yet renders as "Coming soon" instead of a broken link.
+- Inventory grouping done client-side with `useMemo`; no schema change.
