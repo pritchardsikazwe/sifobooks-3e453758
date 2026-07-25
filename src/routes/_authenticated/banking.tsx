@@ -14,7 +14,10 @@ import { AppNav } from "@/components/AppNav";
 import { parseStatement, type ParsedTxn } from "@/lib/statement-parser";
 import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
+import { SpendMoneyDialog } from "@/components/SpendMoneyDialog";
+import { ReconcileDialog } from "@/components/ReconcileDialog";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/banking")({
   head: () => ({ meta: [{ title: "Banking — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -68,6 +71,11 @@ function BankingPage() {
   const [reverseReason, setReverseReason] = useState("");
 
   const money = (n: number) => formatMoney(n, currency);
+
+  const [spendOpen, setSpendOpen] = useState(false);
+  const [receiveOpen, setReceiveOpen] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+
 
   const load = async () => {
     const { data, error } = await supabase.from("bank_transactions").select("*").order("txn_date", { ascending: false });
@@ -260,14 +268,18 @@ function BankingPage() {
               <p className="mt-1 text-xs text-muted-foreground">Allocate transactions to accounts. Partial allocations stay Partial until fully cleared. Reverse any allocation with a reason — nothing is deleted.</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setSpendOpen(true)}><TrendingDown className="h-4 w-4 mr-2 text-red-600" />Spend Money</Button>
+              <Button variant="outline" onClick={() => setReceiveOpen(true)}><TrendingUp className="h-4 w-4 mr-2 text-emerald-600" />Receive Money</Button>
+              <Button variant="outline" onClick={() => setReconcileOpen(true)}><Scale className="h-4 w-4 mr-2" />Reconcile</Button>
               <Link to="/bank-accounts"><Button variant="outline"><Landmark className="h-4 w-4 mr-2" />Accounts</Button></Link>
               <Link to="/bank-rules"><Button variant="outline"><CheckCircle2 className="h-4 w-4 mr-2" />Rules</Button></Link>
-              <Link to="/reconciliation"><Button variant="outline"><Scale className="h-4 w-4 mr-2" />Reconciliation</Button></Link>
+              <Link to="/reconciliation-sessions"><Button variant="outline"><BookOpen className="h-4 w-4 mr-2" />Sessions</Button></Link>
               <input ref={fileRef} type="file" accept=".csv,.ofx,.qfx,text/csv" hidden onChange={onFile} />
               <Button onClick={() => fileRef.current?.click()} disabled={importing} className="bg-emerald-600 hover:bg-emerald-700">
                 {importing ? <><FileUp className="h-4 w-4 animate-pulse mr-2" /> Importing…</> : <><Upload className="h-4 w-4 mr-2" /> Import statement</>}
               </Button>
             </div>
+
 
           </CardHeader>
 
@@ -486,9 +498,14 @@ function BankingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SpendMoneyDialog open={spendOpen} onOpenChange={setSpendOpen} onRecorded={load} mode="spend" />
+      <SpendMoneyDialog open={receiveOpen} onOpenChange={setReceiveOpen} onRecorded={load} mode="receive" />
+      <ReconcileDialog open={reconcileOpen} onOpenChange={setReconcileOpen} onLocked={load} />
     </div>
   );
 }
+
 
 function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: string; tint: string }) {
   return (

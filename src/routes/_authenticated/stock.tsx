@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import { ArrowLeft, LogOut, Package, Plus, AlertTriangle, ArrowUpRight, ArrowDownRight, Sliders, Trash2, Loader2, Upload, Download, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -133,47 +133,15 @@ function StockPage() {
                 No stock items yet. Click "New item" to add your first product.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-6">Item</TableHead>
-                    <TableHead>HS code</TableHead>
-                    <TableHead>VAT</TableHead>
-                    <TableHead className="text-right">Cost</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">On hand</TableHead>
-                    <TableHead className="w-40"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(i => {
-                    const isLow = i.reorder_level > 0 && Number(i.quantity_on_hand) <= Number(i.reorder_level);
-                    return (
-                      <TableRow key={i.id} className={isLow ? "bg-amber-50/40" : ""}>
-                        <TableCell className="pl-6">
-                          <div className="font-medium">{i.name}</div>
-                          <div className="text-xs text-muted-foreground">{i.sku ? `SKU ${i.sku} · ` : ""}{i.unit}</div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {i.hs_code ? (<><div className="font-mono">{i.hs_code}</div><div className="text-muted-foreground">{findHsCode(i.hs_code)?.label ?? "custom"}</div></>) : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell><Badge variant="outline" className="text-xs">{i.vat_rate}% {i.tax_category}</Badge></TableCell>
-                        <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
-                        <TableCell className="text-right">{money(Number(i.sell_price))}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="font-medium">{Number(i.quantity_on_hand)}</div>
-                          {isLow && <div className="text-xs text-amber-700">≤ reorder {Number(i.reorder_level)}</div>}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="outline" onClick={() => setMoveFor(i)}><Sliders className="h-3 w-3" /> Move</Button>
-                          <Button size="icon" variant="ghost" onClick={() => removeItem(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <GroupedStockTable
+                items={filtered}
+                locationLabel={businessName || "Main Store"}
+                money={money}
+                onMove={setMoveFor}
+                onDelete={removeItem}
+              />
             )}
+
           </CardContent>
         </Card>
       </main>
@@ -182,6 +150,91 @@ function StockPage() {
     </div>
   );
 }
+
+function GroupedStockTable({
+  items, locationLabel, money, onMove, onDelete,
+}: {
+  items: Item[]; locationLabel: string; money: (n: number) => string;
+  onMove: (i: Item) => void; onDelete: (id: string) => void;
+}) {
+  const groups = useMemo(() => {
+    const m = new Map<string, Item[]>();
+    items.forEach(i => {
+      const key = (i.tax_category || "OTHER").toUpperCase();
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(i);
+    });
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [items]);
+
+  return (
+    <div className="overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white">
+        Location: {locationLabel}
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-blue-900/90 hover:bg-blue-900/90">
+            <TableHead className="pl-6 text-white">Category / Item</TableHead>
+            <TableHead className="text-white">Order By Unit</TableHead>
+            <TableHead className="text-right text-white">Cost</TableHead>
+            <TableHead className="text-right text-white">Qty/Unit</TableHead>
+            <TableHead className="text-white">Item Size</TableHead>
+            <TableHead className="text-right text-white">Cost per Item</TableHead>
+            <TableHead className="text-right text-white">Stock Qty</TableHead>
+            <TableHead className="text-right text-white">Reorder Level</TableHead>
+            <TableHead className="text-center text-white">Reorder</TableHead>
+            <TableHead className="text-right text-white">Item Reorder Qty</TableHead>
+            <TableHead className="w-24" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {groups.map(([cat, rows]) => (
+            <Fragment key={cat}>
+              <TableRow className="bg-amber-100/60 hover:bg-amber-100/60 dark:bg-amber-950/30">
+                <TableCell colSpan={11} className="pl-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                  {cat}
+                </TableCell>
+              </TableRow>
+              {rows.map(i => {
+                const qty = Number(i.quantity_on_hand);
+                const rl = Number(i.reorder_level);
+                const isLow = rl > 0 && qty <= rl;
+                const reorderQty = isLow ? Math.max(rl * 2 - qty, rl) : 0;
+                return (
+                  <TableRow key={i.id} className="odd:bg-muted/20">
+                    <TableCell className="pl-6">
+                      <div className="font-medium">{i.name}</div>
+                      {i.sku && <div className="text-xs text-muted-foreground">SKU {i.sku}</div>}
+                    </TableCell>
+                    <TableCell className="text-xs">{i.unit || "unit"}</TableCell>
+                    <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
+                    <TableCell className="text-right">{i.unit ? 1 : "—"}</TableCell>
+                    <TableCell className="text-xs">{i.description ?? "—"}</TableCell>
+                    <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
+                    <TableCell className="text-right font-medium">{qty}</TableCell>
+                    <TableCell className="text-right">{rl || "—"}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={`inline-block rounded px-3 py-1 text-xs font-bold ${isLow ? "bg-amber-500 text-white" : "bg-sky-400 text-white"}`}>
+                        {isLow ? "REORDER" : "OK"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">{reorderQty || 0}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button size="sm" variant="ghost" onClick={() => onMove(i)}><Sliders className="h-3 w-3" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => onDelete(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 
 function NewItemDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (v: boolean) => void; onCreated: () => void }) {
   const [name, setName] = useState("");
