@@ -72,6 +72,11 @@ function BankingPage() {
 
   const money = (n: number) => formatMoney(n, currency);
 
+  const [spendOpen, setSpendOpen] = useState(false);
+  const [receiveOpen, setReceiveOpen] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+
+
   const load = async () => {
     const { data, error } = await supabase.from("bank_transactions").select("*").order("txn_date", { ascending: false });
     if (error) return toast.error(error.message);
