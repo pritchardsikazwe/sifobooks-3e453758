@@ -133,47 +133,15 @@ function StockPage() {
                 No stock items yet. Click "New item" to add your first product.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-6">Item</TableHead>
-                    <TableHead>HS code</TableHead>
-                    <TableHead>VAT</TableHead>
-                    <TableHead className="text-right">Cost</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">On hand</TableHead>
-                    <TableHead className="w-40"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(i => {
-                    const isLow = i.reorder_level > 0 && Number(i.quantity_on_hand) <= Number(i.reorder_level);
-                    return (
-                      <TableRow key={i.id} className={isLow ? "bg-amber-50/40" : ""}>
-                        <TableCell className="pl-6">
-                          <div className="font-medium">{i.name}</div>
-                          <div className="text-xs text-muted-foreground">{i.sku ? `SKU ${i.sku} · ` : ""}{i.unit}</div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {i.hs_code ? (<><div className="font-mono">{i.hs_code}</div><div className="text-muted-foreground">{findHsCode(i.hs_code)?.label ?? "custom"}</div></>) : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell><Badge variant="outline" className="text-xs">{i.vat_rate}% {i.tax_category}</Badge></TableCell>
-                        <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
-                        <TableCell className="text-right">{money(Number(i.sell_price))}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="font-medium">{Number(i.quantity_on_hand)}</div>
-                          {isLow && <div className="text-xs text-amber-700">≤ reorder {Number(i.reorder_level)}</div>}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="outline" onClick={() => setMoveFor(i)}><Sliders className="h-3 w-3" /> Move</Button>
-                          <Button size="icon" variant="ghost" onClick={() => removeItem(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <GroupedStockTable
+                items={filtered}
+                locationLabel={businessName || "Main Store"}
+                money={money}
+                onMove={setMoveFor}
+                onDelete={removeItem}
+              />
             )}
+
           </CardContent>
         </Card>
       </main>
