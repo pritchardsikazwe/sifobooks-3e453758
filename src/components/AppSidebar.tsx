@@ -19,7 +19,6 @@ function iconFor(name?: string): any {
   return (Icons as any)[name] ?? (Icons as any)[name.replace("Icon", "")] ?? Icons.Circle;
 }
 
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -69,37 +68,44 @@ export function AppSidebar() {
   }, [installed, canView]);
 
   return (
-    <Sidebar collapsible="icon" className="border-r bg-[oklch(0.16_0.02_220)] text-white [&_[data-sidebar=sidebar]]:bg-[oklch(0.16_0.02_220)]">
-      <SidebarHeader className="border-b border-white/10 px-4 py-4 bg-[oklch(0.16_0.02_220)]">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="SifoBooks" className="h-8 w-8 rounded-md object-contain bg-white/95 p-0.5" width={32} height={32} />
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-slate-200 bg-white text-slate-700 [&_[data-sidebar=sidebar]]:bg-white"
+    >
+      <SidebarHeader className="border-b border-slate-200 px-3 py-3 bg-white">
+        <div className="flex items-center gap-2.5">
+          <img src={logo} alt="SifoBooks" className="h-9 w-9 rounded-lg object-contain bg-emerald-50 p-1 ring-1 ring-emerald-100" width={36} height={36} />
           {!collapsed && (
             <div className="min-w-0">
-              <div className="text-lg font-bold tracking-tight text-emerald-400 leading-none">SifoBooks</div>
-              <div className="text-[11px] text-white/60 truncate mt-0.5">{subtitle}</div>
+              <div className="text-[15px] font-bold tracking-tight text-emerald-700 leading-none">SifoBooks</div>
+              <div className="text-[10px] text-slate-500 truncate mt-1">{subtitle}</div>
             </div>
           )}
         </div>
         {!collapsed && (
-          <div className="mt-3 rounded-md bg-white/5 px-2.5 py-1.5 text-xs font-medium truncate">
+          <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 truncate">
             {companyName}
           </div>
         )}
       </SidebarHeader>
 
-      <SidebarContent className="bg-[oklch(0.16_0.02_220)] px-1">
+      <SidebarContent className="bg-white px-1 [&_[data-sidebar=content]]:bg-white">
         {sections.map(section => (
-          <SidebarGroup key={section.label}>
-            {!collapsed && <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-white/40 px-3 pt-3">{section.label}</SidebarGroupLabel>}
+          <SidebarGroup key={section.label} className="py-1">
+            {!collapsed && (
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.14em] text-slate-400 px-3 pt-2 pb-1 font-semibold">
+                {section.label}
+              </SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map(item => {
                   const Icon = item.icon;
                   const active = currentPath === item.url;
-                  const baseCls = "text-white/80 hover:bg-white/10 hover:text-white data-[active=true]:bg-emerald-500/15 data-[active=true]:text-emerald-300 data-[active=true]:font-semibold";
+                  const cls = "relative text-slate-600 hover:bg-slate-100 hover:text-slate-900 data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-700 data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-emerald-600 data-[active=true]:before:rounded-r";
                   return (
                     <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild isActive={active} className={baseCls} tooltip={item.title}>
+                      <SidebarMenuButton asChild isActive={active} className={cls} tooltip={item.title}>
                         <Link to={item.url}>
                           <Icon className="h-4 w-4" />
                           <span>{item.title}</span>
@@ -114,19 +120,18 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-
-      <SidebarFooter className="border-t border-white/10 bg-[oklch(0.16_0.02_220)] p-3">
+      <SidebarFooter className="border-t border-slate-200 bg-white p-2.5">
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 shrink-0 rounded-full bg-emerald-500/20 grid place-items-center text-sm font-semibold text-emerald-300">
-            {name.slice(0,1).toUpperCase()}
+          <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-100 grid place-items-center text-xs font-bold text-emerald-700">
+            {name.slice(0, 1).toUpperCase()}
           </div>
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{name}</div>
-                <div className="text-[11px] text-white/50 truncate">{email}</div>
+                <div className="text-xs font-semibold text-slate-800 truncate">{name}</div>
+                <div className="text-[10px] text-slate-500 truncate">{email}</div>
               </div>
-              <Button variant="ghost" size="icon" onClick={signOut} className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8" title="Sign out">
+              <Button variant="ghost" size="icon" onClick={signOut} className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 h-8 w-8" title="Sign out">
                 <LogOut className="h-4 w-4" />
               </Button>
             </>
