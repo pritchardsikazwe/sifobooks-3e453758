@@ -2799,6 +2799,7 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
+          employees_paid: number | null
           id: string
           notes: string | null
           pay_date: string | null
@@ -2806,17 +2807,24 @@ export type Database = {
           period_year: number
           run_number: string
           status: string
+          total_allowances: number | null
+          total_bonus: number | null
+          total_employer_cost: number | null
           total_gross: number | null
           total_napsa: number | null
           total_net: number | null
           total_nhima: number | null
+          total_overtime: number | null
           total_paye: number | null
+          total_sdl: number | null
+          total_wcf: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           currency?: string
+          employees_paid?: number | null
           id?: string
           notes?: string | null
           pay_date?: string | null
@@ -2824,17 +2832,24 @@ export type Database = {
           period_year: number
           run_number: string
           status?: string
+          total_allowances?: number | null
+          total_bonus?: number | null
+          total_employer_cost?: number | null
           total_gross?: number | null
           total_napsa?: number | null
           total_net?: number | null
           total_nhima?: number | null
+          total_overtime?: number | null
           total_paye?: number | null
+          total_sdl?: number | null
+          total_wcf?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           currency?: string
+          employees_paid?: number | null
           id?: string
           notes?: string | null
           pay_date?: string | null
@@ -2842,11 +2857,17 @@ export type Database = {
           period_year?: number
           run_number?: string
           status?: string
+          total_allowances?: number | null
+          total_bonus?: number | null
+          total_employer_cost?: number | null
           total_gross?: number | null
           total_napsa?: number | null
           total_net?: number | null
           total_nhima?: number | null
+          total_overtime?: number | null
           total_paye?: number | null
+          total_sdl?: number | null
+          total_wcf?: number | null
           updated_at?: string
           user_id?: string
         }

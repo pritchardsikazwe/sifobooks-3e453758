@@ -19,6 +19,16 @@ export const DEFAULT_PAYE_BANDS: PayeBand[] = [
 export const NAPSA_RATE = 0.05;
 export const NAPSA_CAP = 1342.40;
 export const NHIMA_RATE = 0.01;
+// Employer statutory contributions (Zambia)
+export const WCF_RATE = 0.015;   // Workers' Compensation Fund — 1.5% of gross (employer)
+export const SDL_RATE = 0.005;   // Skills Development Levy — 0.5% of gross (employer)
+
+export function calcWcf(gross: number): number { return round2(gross * WCF_RATE); }
+export function calcSdl(gross: number): number { return round2(gross * SDL_RATE); }
+/** Total employer cost on top of net pay: employer NAPSA match + WCF + SDL. */
+export function calcEmployerOncost(gross: number): number {
+  return round2(calcNapsa(gross) + calcWcf(gross) + calcSdl(gross));
+}
 
 export function calcPaye(taxable: number, bands: PayeBand[] = DEFAULT_PAYE_BANDS): number {
   if (taxable <= 0) return 0;
