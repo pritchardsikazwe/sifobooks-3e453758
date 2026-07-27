@@ -87,6 +87,7 @@ export const MODULES: ModuleDef[] = [
   { key: "hr_payroll", label: "HR & Payroll", category: "HR & Payroll", defaultInstalled: true,
     description: "Employees, attendance, leave and Zambian payroll.",
     routes: [
+      { title: "Payroll Dashboard", url: "/payroll-dashboard", iconName: "LayoutDashboard" },
       { title: "Employees", url: "/employees", iconName: "UserSquare" },
       { title: "Attendance", url: "/attendance", iconName: "CalendarCheck" },
       { title: "Leave", url: "/leave", iconName: "CalendarDays" },
