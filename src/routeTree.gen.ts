@@ -36,6 +36,7 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
+import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_authenticated/opening-balances'
@@ -243,6 +244,12 @@ const AuthenticatedPeriodCloseRoute =
   AuthenticatedPeriodCloseRouteImport.update({
     id: '/period-close',
     path: '/period-close',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollDashboardRoute =
+  AuthenticatedPayrollDashboardRouteImport.update({
+    id: '/payroll-dashboard',
+    path: '/payroll-dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
@@ -635,6 +642,7 @@ export interface FileRoutesByFullPath {
   '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -724,6 +732,7 @@ export interface FileRoutesByTo {
   '/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
+  '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -815,6 +824,7 @@ export interface FileRoutesById {
   '/_authenticated/opening-balances': typeof AuthenticatedOpeningBalancesRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
+  '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -908,6 +918,7 @@ export interface FileRouteTypes {
     | '/opening-balances'
     | '/opportunities'
     | '/payroll'
+    | '/payroll-dashboard'
     | '/period-close'
     | '/project-tasks'
     | '/projects'
@@ -997,6 +1008,7 @@ export interface FileRouteTypes {
     | '/opening-balances'
     | '/opportunities'
     | '/payroll'
+    | '/payroll-dashboard'
     | '/period-close'
     | '/project-tasks'
     | '/projects'
@@ -1087,6 +1099,7 @@ export interface FileRouteTypes {
     | '/_authenticated/opening-balances'
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
+    | '/_authenticated/payroll-dashboard'
     | '/_authenticated/period-close'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
@@ -1334,6 +1347,13 @@ declare module '@tanstack/react-router' {
       path: '/period-close'
       fullPath: '/period-close'
       preLoaderRoute: typeof AuthenticatedPeriodCloseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-dashboard': {
+      id: '/_authenticated/payroll-dashboard'
+      path: '/payroll-dashboard'
+      fullPath: '/payroll-dashboard'
+      preLoaderRoute: typeof AuthenticatedPayrollDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll': {
@@ -1920,6 +1940,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOpeningBalancesRoute: typeof AuthenticatedOpeningBalancesRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
+  AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -1983,6 +2004,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOpeningBalancesRoute: AuthenticatedOpeningBalancesRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
+  AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
