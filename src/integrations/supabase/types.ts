@@ -4574,6 +4574,7 @@ export type Database = {
       post_school_grant: { Args: { _id: string }; Returns: string }
       post_tuckshop: { Args: { _id: string }; Returns: string }
       rebuild_ledgers: { Args: never; Returns: Json }
+      rebuild_ledgers_for: { Args: { _uid: string }; Returns: Json }
       recalc_bank_txn_allocation: {
         Args: { _txn_id: string }
         Returns: undefined
