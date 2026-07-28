@@ -87,10 +87,13 @@ import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './route
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsPayrollSchedulesRouteImport } from './routes/_authenticated/reports.payroll-schedules'
+import { Route as AuthenticatedReportsManagementPackRouteImport } from './routes/_authenticated/reports.management-pack'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
 import { Route as AuthenticatedReportsIncomeTaxRouteImport } from './routes/_authenticated/reports.income-tax'
+import { Route as AuthenticatedReportsGeneralLedgerRouteImport } from './routes/_authenticated/reports.general-ledger'
 import { Route as AuthenticatedReportsCustomerStatementRouteImport } from './routes/_authenticated/reports.customer-statement'
 import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_authenticated/reports.cash-flow'
+import { Route as AuthenticatedReportsBankReconciliationRouteImport } from './routes/_authenticated/reports.bank-reconciliation'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
 import { Route as AuthenticatedReportsAgedReceivablesRouteImport } from './routes/_authenticated/reports.aged-receivables'
 import { Route as AuthenticatedReportsAgedPayablesRouteImport } from './routes/_authenticated/reports.aged-payables'
@@ -524,6 +527,12 @@ const AuthenticatedReportsPayrollSchedulesRoute =
     path: '/payroll-schedules',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsManagementPackRoute =
+  AuthenticatedReportsManagementPackRouteImport.update({
+    id: '/management-pack',
+    path: '/management-pack',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsInventoryValuationRoute =
   AuthenticatedReportsInventoryValuationRouteImport.update({
     id: '/inventory-valuation',
@@ -536,6 +545,12 @@ const AuthenticatedReportsIncomeTaxRoute =
     path: '/income-tax',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsGeneralLedgerRoute =
+  AuthenticatedReportsGeneralLedgerRouteImport.update({
+    id: '/general-ledger',
+    path: '/general-ledger',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsCustomerStatementRoute =
   AuthenticatedReportsCustomerStatementRouteImport.update({
     id: '/customer-statement',
@@ -546,6 +561,12 @@ const AuthenticatedReportsCashFlowRoute =
   AuthenticatedReportsCashFlowRouteImport.update({
     id: '/cash-flow',
     path: '/cash-flow',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsBankReconciliationRoute =
+  AuthenticatedReportsBankReconciliationRouteImport.update({
+    id: '/bank-reconciliation',
+    path: '/bank-reconciliation',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
 const AuthenticatedReportsBalanceSheetRoute =
@@ -675,10 +696,13 @@ export interface FileRoutesByFullPath {
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
+  '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -763,10 +787,13 @@ export interface FileRoutesByTo {
   '/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
+  '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -857,10 +884,13 @@ export interface FileRoutesById {
   '/_authenticated/reports/aged-payables': typeof AuthenticatedReportsAgedPayablesRoute
   '/_authenticated/reports/aged-receivables': typeof AuthenticatedReportsAgedReceivablesRoute
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
+  '/_authenticated/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/_authenticated/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
   '/_authenticated/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
+  '/_authenticated/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/_authenticated/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
+  '/_authenticated/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/_authenticated/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -951,10 +981,13 @@ export interface FileRouteTypes {
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
+    | '/reports/bank-reconciliation'
     | '/reports/cash-flow'
     | '/reports/customer-statement'
+    | '/reports/general-ledger'
     | '/reports/income-tax'
     | '/reports/inventory-valuation'
+    | '/reports/management-pack'
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -1039,10 +1072,13 @@ export interface FileRouteTypes {
     | '/reports/aged-payables'
     | '/reports/aged-receivables'
     | '/reports/balance-sheet'
+    | '/reports/bank-reconciliation'
     | '/reports/cash-flow'
     | '/reports/customer-statement'
+    | '/reports/general-ledger'
     | '/reports/income-tax'
     | '/reports/inventory-valuation'
+    | '/reports/management-pack'
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -1132,10 +1168,13 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/aged-payables'
     | '/_authenticated/reports/aged-receivables'
     | '/_authenticated/reports/balance-sheet'
+    | '/_authenticated/reports/bank-reconciliation'
     | '/_authenticated/reports/cash-flow'
     | '/_authenticated/reports/customer-statement'
+    | '/_authenticated/reports/general-ledger'
     | '/_authenticated/reports/income-tax'
     | '/_authenticated/reports/inventory-valuation'
+    | '/_authenticated/reports/management-pack'
     | '/_authenticated/reports/payroll-schedules'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
@@ -1706,6 +1745,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsPayrollSchedulesRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/management-pack': {
+      id: '/_authenticated/reports/management-pack'
+      path: '/management-pack'
+      fullPath: '/reports/management-pack'
+      preLoaderRoute: typeof AuthenticatedReportsManagementPackRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/inventory-valuation': {
       id: '/_authenticated/reports/inventory-valuation'
       path: '/inventory-valuation'
@@ -1720,6 +1766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsIncomeTaxRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/general-ledger': {
+      id: '/_authenticated/reports/general-ledger'
+      path: '/general-ledger'
+      fullPath: '/reports/general-ledger'
+      preLoaderRoute: typeof AuthenticatedReportsGeneralLedgerRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/customer-statement': {
       id: '/_authenticated/reports/customer-statement'
       path: '/customer-statement'
@@ -1732,6 +1785,13 @@ declare module '@tanstack/react-router' {
       path: '/cash-flow'
       fullPath: '/reports/cash-flow'
       preLoaderRoute: typeof AuthenticatedReportsCashFlowRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/bank-reconciliation': {
+      id: '/_authenticated/reports/bank-reconciliation'
+      path: '/bank-reconciliation'
+      fullPath: '/reports/bank-reconciliation'
+      preLoaderRoute: typeof AuthenticatedReportsBankReconciliationRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
     '/_authenticated/reports/balance-sheet': {
@@ -1851,10 +1911,13 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsAgedPayablesRoute: typeof AuthenticatedReportsAgedPayablesRoute
   AuthenticatedReportsAgedReceivablesRoute: typeof AuthenticatedReportsAgedReceivablesRoute
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
+  AuthenticatedReportsBankReconciliationRoute: typeof AuthenticatedReportsBankReconciliationRoute
   AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
   AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
+  AuthenticatedReportsGeneralLedgerRoute: typeof AuthenticatedReportsGeneralLedgerRoute
   AuthenticatedReportsIncomeTaxRoute: typeof AuthenticatedReportsIncomeTaxRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
+  AuthenticatedReportsManagementPackRoute: typeof AuthenticatedReportsManagementPackRoute
   AuthenticatedReportsPayrollSchedulesRoute: typeof AuthenticatedReportsPayrollSchedulesRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
@@ -1877,12 +1940,18 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsAgedReceivablesRoute:
     AuthenticatedReportsAgedReceivablesRoute,
   AuthenticatedReportsBalanceSheetRoute: AuthenticatedReportsBalanceSheetRoute,
+  AuthenticatedReportsBankReconciliationRoute:
+    AuthenticatedReportsBankReconciliationRoute,
   AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
   AuthenticatedReportsCustomerStatementRoute:
     AuthenticatedReportsCustomerStatementRoute,
+  AuthenticatedReportsGeneralLedgerRoute:
+    AuthenticatedReportsGeneralLedgerRoute,
   AuthenticatedReportsIncomeTaxRoute: AuthenticatedReportsIncomeTaxRoute,
   AuthenticatedReportsInventoryValuationRoute:
     AuthenticatedReportsInventoryValuationRoute,
+  AuthenticatedReportsManagementPackRoute:
+    AuthenticatedReportsManagementPackRoute,
   AuthenticatedReportsPayrollSchedulesRoute:
     AuthenticatedReportsPayrollSchedulesRoute,
   AuthenticatedReportsPayrollSummaryRoute:
@@ -2043,3 +2112,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
