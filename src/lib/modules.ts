@@ -71,8 +71,8 @@ export const MODULES: ModuleDef[] = [
   { key: "budgets", label: "Budgets", category: "Finance", defaultInstalled: true,
     description: "Budget vs. actuals.",
     routes: [{ title: "Budgets", url: "/budgets", iconName: "PiggyBank" }] },
-  { key: "multi_currency", label: "Multi-Currency", category: "Finance", defaultInstalled: false,
-    description: "FX rates and multi-currency posting.",
+  { key: "multi_currency", label: "Multi-Currency", category: "Finance", core: true, defaultInstalled: true,
+    description: "Core FX rates and multi-currency posting. ZMW is the default base currency.",
     routes: [{ title: "Exchange Rates", url: "/fx-rates", iconName: "Coins" }] },
 
   // ---------- INVENTORY ----------
