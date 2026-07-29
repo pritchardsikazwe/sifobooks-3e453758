@@ -104,19 +104,40 @@ function Landing() {
             <a href="#contact" className="hover:text-[#0e8f4a] transition-colors">Contact</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/auth" className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
-              Sign in
-            </Link>
-            <Link
-              to="/auth"
-              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.8)]"
-            >
-              Get Started
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
+            {signedIn ? (
+              <Link
+                to="/dashboard"
+                className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(14,143,74,0.8)]"
+              >
+                Open Dashboard
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            ) : (
+              <>
+                <Link to="/auth" className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                  Sign in
+                </Link>
+                <Link
+                  to="/auth"
+                  className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(14,143,74,0.8)]"
+                >
+                  Get Started Free
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
           </div>
         </nav>
+        {/* Zambian flag stripe */}
+        <div aria-hidden className="h-1 w-full flex">
+          <span className="flex-1 bg-[#0e8f4a]" />
+          <span className="flex-1 bg-[#d21034]" />
+          <span className="flex-1 bg-[#000000]" />
+          <span className="flex-1 bg-[#f39200]" />
+        </div>
       </header>
+
+
 
       {/* HERO — split screen */}
       <section className="relative overflow-hidden">
