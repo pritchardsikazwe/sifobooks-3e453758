@@ -145,3 +145,8 @@
   background-clip: text;
   color: transparent;
 }
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
