@@ -172,6 +172,7 @@ function PostingWizard() {
   const [description, setDescription] = useState<string>("");
   const [lines, setLines] = useState<Line[]>([newLine(), newLine()]);
   const [posting, setPosting] = useState(false);
+  const [rolePick, setRolePick] = useState<Partial<Record<AccountRole, string>>>({});
 
   useEffect(() => {
     (async () => {
@@ -184,6 +185,23 @@ function PostingWizard() {
       setAccounts(acc ?? []);
     })();
   }, []);
+
+  const currentScenario = SCENARIOS.find(s => s.key === scenario)!;
+
+  // When scenario or accounts change, seed rolePick with sensible defaults (by code, then by type).
+  useEffect(() => {
+    if (!accounts.length) return;
+    const next: Partial<Record<AccountRole, string>> = { ...rolePick };
+    for (const r of currentScenario.roles) {
+      if (next[r.role]) continue;
+      const byCode = accounts.find(a => a.account_code === ROLE_DEFAULT_CODE[r.role]);
+      const byType = accounts.find(a => r.typeHint.includes(a.account_type));
+      if (byCode) next[r.role] = byCode.id;
+      else if (byType) next[r.role] = byType.id;
+    }
+    setRolePick(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario, accounts]);
 
   async function ensureAccounts(codes: string[]): Promise<Account[]> {
     if (!userId) return accounts;
@@ -207,16 +225,25 @@ function PostingWizard() {
     const sc = SCENARIOS.find(s => s.key === scenario)!;
     const template = sc.build(amount, vat);
     if (!template.length) { setLines([newLine(), newLine()]); setStep(2); return; }
-    const acc = await ensureAccounts(template.map(t => t.code));
+    // Ensure any role without a user pick has a default account created
+    const neededCodes = sc.roles
+      .filter(r => !rolePick[r.role])
+      .map(r => ROLE_DEFAULT_CODE[r.role]);
+    const acc = neededCodes.length ? await ensureAccounts(neededCodes) : accounts;
     const built = template.map(t => {
-      const a = acc.find(x => x.account_code === t.code);
-      return { id: crypto.randomUUID(), account_id: a?.id ?? "", description: t.desc,
+      const picked = rolePick[t.role];
+      const fallback = acc.find(x => x.account_code === ROLE_DEFAULT_CODE[t.role]);
+      return { id: crypto.randomUUID(),
+        account_id: picked ?? fallback?.id ?? "",
+        description: t.desc,
         debit: +(t.debit ?? 0).toFixed(2), credit: +(t.credit ?? 0).toFixed(2) };
     });
     setLines(built);
     if (!description) setDescription(sc.label);
     setStep(2);
   }
+
+
 
   const totalDebit = useMemo(() => lines.reduce((s, l) => s + (+l.debit || 0), 0), [lines]);
   const totalCredit = useMemo(() => lines.reduce((s, l) => s + (+l.credit || 0), 0), [lines]);
