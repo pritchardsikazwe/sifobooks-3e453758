@@ -1176,7 +1176,9 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean | null
+          normal_balance: string | null
           parent_id: string | null
+          purpose: string | null
           reporting_class: string | null
           reporting_group: string | null
           updated_at: string
@@ -1191,7 +1193,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          normal_balance?: string | null
           parent_id?: string | null
+          purpose?: string | null
           reporting_class?: string | null
           reporting_group?: string | null
           updated_at?: string
@@ -1206,7 +1210,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          normal_balance?: string | null
           parent_id?: string | null
+          purpose?: string | null
           reporting_class?: string | null
           reporting_group?: string | null
           updated_at?: string
