@@ -37,8 +37,10 @@ const CASHBOOK_TYPES = [
 
 function CashbookPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [glAccounts, setGlAccounts] = useState<any[]>([]);
   const [accountId, setAccountId] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [source, setSource] = useState<"ledger"|"bank">("ledger");
   const [rows, setRows] = useState<Row[]>([]);
   const [opening, setOpening] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -50,16 +52,29 @@ function CashbookPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: a } = await supabase.from("bank_accounts").select("*").order("name");
+      const [{ data: a }, { data: gl }] = await Promise.all([
+        supabase.from("bank_accounts").select("*").order("name"),
+        supabase.from("chart_of_accounts").select("id, account_code, account_name, account_type")
+          .in("account_type", ["asset"]).order("account_code"),
+      ]);
       setAccounts(a ?? []);
+      setGlAccounts((gl ?? []).filter((x: any) =>
+        ["1000","1001","1002","1010","1020","1030","1040","1050","1060","1070","1200"].includes(x.account_code)
+        || /cash|bank|petty|mobile|momo/i.test(x.account_name)
+      ));
     })();
   }, []);
 
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [accountId, typeFilter, range.from, range.to]);
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [accountId, typeFilter, source, range.from, range.to]);
 
-  async function load() {
-    setLoading(true);
-    // Opening = sum of prior transactions (before range.from) for selected accounts
+  function scopedAccounts() {
+    return accounts.filter(a =>
+      (accountId === "all" || a.id === accountId) &&
+      (typeFilter === "all" || (a.cashbook_type ?? "main") === typeFilter)
+    );
+  }
+
+  async function loadFromBank() {
     const scopedAccountIds = scopedAccounts().map(a => a.id);
     let priorSum = 0;
     if (range.from && scopedAccountIds.length) {
@@ -81,14 +96,63 @@ function CashbookPage() {
     const { data, error } = await query;
     if (error) toast.error(error.message);
     setRows((data as any) ?? []);
-    setLoading(false);
   }
 
-  function scopedAccounts() {
-    return accounts.filter(a =>
-      (accountId === "all" || a.id === accountId) &&
-      (typeFilter === "all" || (a.cashbook_type ?? "main") === typeFilter)
-    );
+  async function loadFromLedger() {
+    // Cashbook = GL view of the linked cash/bank accounts. Automatically
+    // includes receipts, expenses, bills, payroll, transfers — anything posted.
+    const scoped = scopedAccounts();
+    // Resolve target GL account ids from the selected bank accounts (fallback to all cash-like GL accounts).
+    let glIds = scoped.map(a => a.gl_account_id).filter(Boolean) as string[];
+    if (!glIds.length) glIds = glAccounts.map(g => g.id);
+    if (!glIds.length) { setRows([]); setOpening(0); return; }
+
+    // Opening balance = SUM(debit - credit) on those accounts before range.from
+    let openingBal = scoped.reduce((s, a) => s + Number(a.opening_balance ?? 0), 0);
+    if (range.from) {
+      const { data: pre } = await supabase.from("journal_lines")
+        .select("debit, credit, journal_entries!inner(entry_date, user_id)")
+        .in("account_id", glIds)
+        .lt("journal_entries.entry_date", range.from);
+      openingBal += (pre ?? []).reduce((s: number, r: any) => s + Number(r.debit || 0) - Number(r.credit || 0), 0);
+    }
+    setOpening(openingBal);
+
+    let q2: any = supabase.from("journal_lines")
+      .select("id, debit, credit, description, account_id, journal_entries!inner(id, entry_date, entry_number, reference, description, user_id)")
+      .in("account_id", glIds)
+      .order("entry_date", { referencedTable: "journal_entries" });
+    if (range.from) q2 = q2.gte("journal_entries.entry_date", range.from);
+    if (range.to)   q2 = q2.lte("journal_entries.entry_date", range.to);
+    const { data, error } = await q2;
+    if (error) { toast.error(error.message); setRows([]); return; }
+
+    const mapped: Row[] = (data ?? []).map((l: any) => {
+      const je = l.journal_entries;
+      const amt = Number(l.debit || 0) - Number(l.credit || 0);
+      return {
+        id: l.id,
+        txn_date: je.entry_date,
+        description: l.description ?? je.description,
+        reference: je.reference ?? je.entry_number,
+        amount: amt,
+        payee: null, charge_code: null,
+        voucher_no: je.entry_number, receipt_no: null,
+        cost_centre: null, project_ref: null, fund_source: null,
+        bank_account_id: l.account_id,
+        user_id: je.user_id,
+        created_at: je.entry_date,
+      };
+    });
+    setRows(mapped);
+  }
+
+  async function load() {
+    setLoading(true);
+    try {
+      if (source === "ledger") await loadFromLedger();
+      else await loadFromBank();
+    } finally { setLoading(false); }
   }
 
   async function updateCashbookType(id: string, type: string) {
@@ -157,10 +221,22 @@ function CashbookPage() {
           <BookText className="h-6 w-6 text-emerald-600" />
           <div>
             <h1 className="text-2xl font-bold">Cashbook</h1>
-            <p className="text-sm text-muted-foreground">Audit-ready cashbook — separate from bank reconciliation. Choose the cashbook type per bank account.</p>
+            <p className="text-sm text-muted-foreground">
+              {source === "ledger"
+                ? "Live GL cashbook — auto-fed by receipts, expenses, bills, payroll, transfers and imports."
+                : "Bank imports only — raw statement view for reconciliation."}
+            </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex rounded-md border p-0.5 text-xs">
+            {(["ledger","bank"] as const).map(s => (
+              <button key={s} onClick={() => setSource(s)}
+                className={`px-3 py-1.5 rounded ${source===s ? "bg-emerald-600 text-white" : "text-muted-foreground"}`}>
+                {s === "ledger" ? "Ledger (all sources)" : "Bank imports"}
+              </button>
+            ))}
+          </div>
           <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Print</Button>
           <ExportMenu rows={exportRows} filename="cashbook" title="Cashbook Report" />
         </div>
