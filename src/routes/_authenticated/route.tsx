@@ -11,6 +11,7 @@ import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { QuickCreate } from "@/components/QuickCreate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
