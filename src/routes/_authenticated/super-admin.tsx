@@ -116,7 +116,7 @@ function SuperAdminPage() {
   const savePlan = async (p: Plan) => {
     const { error } = await supabase.from("subscription_plans").update({
       name: p.name, price_monthly: p.price_monthly, max_users: p.max_users,
-      max_invoices: p.max_invoices, is_active: p.is_active, sort_order: p.sort_order,
+      max_invoices: p.max_invoices ?? undefined, is_active: p.is_active, sort_order: p.sort_order,
     }).eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("Plan saved");
