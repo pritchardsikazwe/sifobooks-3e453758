@@ -1216,42 +1216,69 @@ export type Database = {
         Row: {
           account_id: string | null
           actual_amount: number | null
+          allocation_percentage: number | null
           budgeted_amount: number
+          charge_code: string | null
+          company_id: string | null
           created_at: string
           department_id: string | null
           fiscal_year: number
+          funding_source: string | null
           id: string
           name: string
           notes: string | null
           period: string | null
+          programme_code: string | null
+          programme_name: string | null
+          quarter: string | null
+          sub_programme_code: string | null
+          sub_programme_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           account_id?: string | null
           actual_amount?: number | null
+          allocation_percentage?: number | null
           budgeted_amount?: number
+          charge_code?: string | null
+          company_id?: string | null
           created_at?: string
           department_id?: string | null
           fiscal_year: number
+          funding_source?: string | null
           id?: string
           name: string
           notes?: string | null
           period?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
+          quarter?: string | null
+          sub_programme_code?: string | null
+          sub_programme_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           account_id?: string | null
           actual_amount?: number | null
+          allocation_percentage?: number | null
           budgeted_amount?: number
+          charge_code?: string | null
+          company_id?: string | null
           created_at?: string
           department_id?: string | null
           fiscal_year?: number
+          funding_source?: string | null
           id?: string
           name?: string
           notes?: string | null
           period?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
+          quarter?: string | null
+          sub_programme_code?: string | null
+          sub_programme_name?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3282,6 +3309,66 @@ export type Database = {
         }
         Relationships: []
       }
+      moe_charge_codes: {
+        Row: {
+          charge_code: string
+          code_type: string
+          created_at: string
+          description: string
+          id: string
+          suggested_account_code: string | null
+        }
+        Insert: {
+          charge_code: string
+          code_type: string
+          created_at?: string
+          description: string
+          id?: string
+          suggested_account_code?: string | null
+        }
+        Update: {
+          charge_code?: string
+          code_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          suggested_account_code?: string | null
+        }
+        Relationships: []
+      }
+      moe_programmes: {
+        Row: {
+          created_at: string
+          default_percentage: number | null
+          id: string
+          programme_code: string
+          programme_name: string
+          school_level: string
+          sub_programme_code: string
+          sub_programme_name: string
+        }
+        Insert: {
+          created_at?: string
+          default_percentage?: number | null
+          id?: string
+          programme_code: string
+          programme_name: string
+          school_level: string
+          sub_programme_code: string
+          sub_programme_name: string
+        }
+        Update: {
+          created_at?: string
+          default_percentage?: number | null
+          id?: string
+          programme_code?: string
+          programme_name?: string
+          school_level?: string
+          sub_programme_code?: string
+          sub_programme_name?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -4484,9 +4571,13 @@ export type Database = {
       }
       school_grants: {
         Row: {
+          allocation_percentage: number | null
+          allocation_source: string | null
           approved_amount: number
           attachment_url: string | null
           bank_account_id: string | null
+          charge_code: string | null
+          company_id: string | null
           created_at: string
           currency: string | null
           date_received: string | null
@@ -4497,18 +4588,26 @@ export type Database = {
           id: string
           journal_entry_id: string | null
           notes: string | null
+          programme_code: string | null
+          programme_name: string | null
           purpose: string | null
           quarter: string | null
           received_amount: number
           source: string
           status: string
+          sub_programme_code: string | null
+          sub_programme_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          allocation_percentage?: number | null
+          allocation_source?: string | null
           approved_amount?: number
           attachment_url?: string | null
           bank_account_id?: string | null
+          charge_code?: string | null
+          company_id?: string | null
           created_at?: string
           currency?: string | null
           date_received?: string | null
@@ -4519,18 +4618,26 @@ export type Database = {
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
           purpose?: string | null
           quarter?: string | null
           received_amount?: number
           source?: string
           status?: string
+          sub_programme_code?: string | null
+          sub_programme_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          allocation_percentage?: number | null
+          allocation_source?: string | null
           approved_amount?: number
           attachment_url?: string | null
           bank_account_id?: string | null
+          charge_code?: string | null
+          company_id?: string | null
           created_at?: string
           currency?: string | null
           date_received?: string | null
@@ -4541,11 +4648,15 @@ export type Database = {
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
           purpose?: string | null
           quarter?: string | null
           received_amount?: number
           source?: string
           status?: string
+          sub_programme_code?: string | null
+          sub_programme_name?: string | null
           updated_at?: string
           user_id?: string
         }
