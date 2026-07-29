@@ -10,12 +10,12 @@ function AttendancePage() {
     (async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, first_name, last_name, employee_number")
+        .select("id, first_name, last_name")
         .order("first_name");
       setEmployees(
         (data ?? []).map(e => ({
           value: e.id,
-          label: `${e.first_name ?? ""} ${e.last_name ?? ""}${e.employee_number ? ` · ${e.employee_number}` : ""}`.trim(),
+          label: `${e.first_name ?? ""} ${e.last_name ?? ""}`.trim() || "Employee",
         })),
       );
     })();
