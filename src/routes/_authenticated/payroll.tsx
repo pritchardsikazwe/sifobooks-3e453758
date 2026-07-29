@@ -47,6 +47,7 @@ type Slip = {
 type Company = {
   name: string; address: string | null; city: string | null; country: string | null;
   phone: string | null; email: string | null; logo_url: string | null; base_currency: string;
+  tpin: string | null; payslip_header: string | null; payslip_footer: string | null;
 };
 
 function PayrollPage() {
@@ -63,7 +64,7 @@ function PayrollPage() {
     if (!u.user) { setLoading(false); return; }
     setUserId(u.user.id);
     const [{ data: c }, { data: r }] = await Promise.all([
-      supabase.from("companies").select("name,address,city,country,phone,email,logo_url,base_currency").eq("user_id", u.user.id).maybeSingle(),
+      supabase.from("companies").select("name,address,city,country,phone,email,logo_url,base_currency,tpin,payslip_header,payslip_footer").eq("user_id", u.user.id).maybeSingle(),
       supabase.from("payroll_runs").select("*").eq("user_id", u.user.id).order("period_year", { ascending: false }).order("period_month", { ascending: false }),
     ]);
     if (c) setCompany(c as Company);
@@ -179,8 +180,14 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
       + Number((s as any).transport_allowance ?? 0)
       + Math.min(Number((s as any).housing_allowance ?? 0), basic * 0.3);
     const taxable = Math.max(0, gross - nonTax);
+    // Resolve logo storage path to a short-lived signed URL for the PDF fetcher
+    let logoUrl: string | null = company?.logo_url ?? null;
+    if (logoUrl && !/^https?:\/\//i.test(logoUrl)) {
+      const { data: signed } = await supabase.storage.from("company-logos").createSignedUrl(logoUrl, 300);
+      logoUrl = signed?.signedUrl ?? null;
+    }
     await downloadPayslipPdf({
-      company: company ? { ...company, tpin: (company as any).tpin ?? null } : null,
+      company: company ? { ...company, logo_url: logoUrl } : null,
       employee: {
         name: `${s.employee.first_name} ${s.employee.last_name}`,
         title: null, employee_code: s.employee.employee_code,

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/setup")({
   component: SetupPage,
 });
 
-type Company = { id: string; user_id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string };
+type Company = { id: string; user_id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string; payslip_header: string | null; payslip_footer: string | null };
 
 function SetupPage() {
   const [userId, setUserId] = useState<string>("");
@@ -104,6 +104,7 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
       name: c.name, trading_name: c.trading_name, tpin: c.tpin, vat_number: c.vat_number, vat_registered: c.vat_registered,
       address: c.address, city: c.city, country: c.country, phone: c.phone, email: c.email, website: c.website,
       base_currency: c.base_currency, timezone: c.timezone,
+      payslip_header: c.payslip_header, payslip_footer: c.payslip_footer,
     }).eq("id", c.id).select().single();
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -134,6 +135,22 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
           </Select>
         </Field>
         <Field label="Address" className="sm:col-span-2"><Textarea rows={2} value={c.address ?? ""} onChange={e => setC({ ...c, address: e.target.value })} /></Field>
+
+        <div className="sm:col-span-2 mt-2 rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+          <div>
+            <div className="text-sm font-semibold text-emerald-900">Payslip branding</div>
+            <p className="text-xs text-slate-600">Appears at the top and bottom of every payslip PDF for this company. Logo above is reused.</p>
+          </div>
+          <Field label="Payslip header text">
+            <Input value={c.payslip_header ?? ""} onChange={e => setC({ ...c, payslip_header: e.target.value })}
+              placeholder="e.g. Confidential — Human Resources Department" maxLength={160} />
+          </Field>
+          <Field label="Payslip footer text">
+            <Textarea rows={2} value={c.payslip_footer ?? ""} onChange={e => setC({ ...c, payslip_footer: e.target.value })}
+              placeholder="e.g. Queries: hr@company.co.zm · +260 971 234 567. This payslip is system-generated." maxLength={280} />
+          </Field>
+        </div>
+
         <div className="sm:col-span-2 flex justify-end">
           <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save profile</Button>
         </div>
