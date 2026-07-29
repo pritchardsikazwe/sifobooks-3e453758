@@ -29,7 +29,16 @@ function AdminPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     setUserId(u.user.id);
-    const { data: c } = await supabase.from("companies").select("*").eq("user_id", u.user.id).maybeSingle();
+    const { data: prof } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+    let c: any = null;
+    if (prof?.active_company_id) {
+      const { data } = await supabase.from("companies").select("*").eq("id", prof.active_company_id).maybeSingle();
+      c = data;
+    }
+    if (!c) {
+      const { data } = await supabase.from("companies").select("*").eq("user_id", u.user.id).order("created_at").limit(1).maybeSingle();
+      c = data;
+    }
     setCompany(c ?? null);
     if (c) {
       const { data: m } = await supabase.from("company_members")
