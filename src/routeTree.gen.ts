@@ -81,6 +81,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
+import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
@@ -499,6 +500,11 @@ const AuthenticatedQuotesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedQuotesRoute,
   } as any)
+const AuthenticatedLearnIndexRoute = AuthenticatedLearnIndexRouteImport.update({
+  id: '/learn/',
+  path: '/learn/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvoicesIndexRoute =
   AuthenticatedInvoicesIndexRouteImport.update({
     id: '/',
@@ -779,6 +785,7 @@ export interface FileRoutesByFullPath {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/learn/': typeof AuthenticatedLearnIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -879,6 +886,7 @@ export interface FileRoutesByTo {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
+  '/learn': typeof AuthenticatedLearnIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -985,6 +993,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1091,6 +1100,7 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/customers/'
     | '/invoices/'
+    | '/learn/'
     | '/quotes/'
     | '/reports/'
     | '/lovable/email/auth/preview'
@@ -1191,6 +1201,7 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/customers'
     | '/invoices'
+    | '/learn'
     | '/quotes'
     | '/reports'
     | '/lovable/email/auth/preview'
@@ -1296,6 +1307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/vat-return'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
+    | '/_authenticated/learn/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/lovable/email/auth/preview'
@@ -1820,6 +1832,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesIndexRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
     }
+    '/_authenticated/learn/': {
+      id: '/_authenticated/learn/'
+      path: '/learn'
+      fullPath: '/learn/'
+      preLoaderRoute: typeof AuthenticatedLearnIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invoices/': {
       id: '/_authenticated/invoices/'
       path: '/'
@@ -2218,6 +2237,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
+  AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2289,6 +2309,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
   AuthenticatedLearnAccountingBasicsRoute:
     AuthenticatedLearnAccountingBasicsRoute,
+  AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -2307,13 +2328,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
