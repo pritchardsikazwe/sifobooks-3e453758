@@ -1,15 +1,11 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Search, Bell, HelpCircle, Settings as SettingsIcon, Plus, Command, Sparkles } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Bell, HelpCircle, Settings as SettingsIcon, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
-import {
-  CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
-} from "@/components/ui/command";
-import { MODULES } from "@/lib/modules";
+import { CommandPalette } from "@/components/CommandPalette";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
 import { QuickCreate } from "@/components/QuickCreate";
@@ -36,7 +32,6 @@ function useBreadcrumb() {
 
 function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
-  const navigate = useNavigate();
   const crumb = useBreadcrumb();
 
   useEffect(() => {
@@ -48,12 +43,6 @@ function Shell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const allRoutes = useMemo(() => {
-    const items: { title: string; url: string; group: string }[] = [];
-    for (const m of MODULES) for (const r of m.routes) items.push({ title: r.title, url: r.url, group: m.category });
-    return items;
   }, []);
 
   return (
@@ -95,31 +84,7 @@ function Shell() {
           </main>
         </div>
 
-        <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
-          <CommandInput placeholder="Jump to a page, report, or module…" />
-          <CommandList>
-            <CommandEmpty>No results.</CommandEmpty>
-            <CommandGroup heading="Quick actions">
-              <CommandItem onSelect={() => { setCmdOpen(false); navigate({ to: "/invoices/new" }); }}>
-                <Plus className="h-4 w-4 mr-2" /> New invoice
-              </CommandItem>
-              <CommandItem onSelect={() => { setCmdOpen(false); navigate({ to: "/quotes/new" }); }}>
-                <Plus className="h-4 w-4 mr-2" /> New quote
-              </CommandItem>
-              <CommandItem onSelect={() => { setCmdOpen(false); navigate({ to: "/dashboard" }); }}>
-                <Sparkles className="h-4 w-4 mr-2" /> Dashboard
-              </CommandItem>
-            </CommandGroup>
-            <CommandGroup heading="Navigate">
-              {allRoutes.map(r => (
-                <CommandItem key={r.url} value={`${r.title} ${r.group}`} onSelect={() => { setCmdOpen(false); navigate({ to: r.url as any }); }}>
-                  <span className="text-slate-500 text-xs mr-2">{r.group}</span>
-                  <span className="font-medium">{r.title}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
+        <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
       </div>
     </SidebarProvider>
   );
