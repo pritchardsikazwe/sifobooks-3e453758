@@ -18,9 +18,15 @@ export function useInstalledModules() {
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setLoading(false); return; }
-    const { data: c } = await supabase
-      .from("companies").select("id").eq("user_id", u.user.id).maybeSingle();
-    const cid = c?.id ?? null;
+    // Prefer the active company from the profile (set by the switcher).
+    const { data: p } = await supabase
+      .from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+    let cid: string | null = (p?.active_company_id as string | null) ?? null;
+    if (!cid) {
+      const { data: cs } = await supabase
+        .from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = cs?.[0]?.id ?? null;
+    }
     setCompanyId(cid);
 
     const explicit = new Set<string>();
