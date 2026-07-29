@@ -1547,6 +1547,8 @@ export type Database = {
           is_primary: boolean
           logo_url: string | null
           name: string
+          payslip_footer: string | null
+          payslip_header: string | null
           phone: string | null
           timezone: string
           tpin: string | null
@@ -1570,6 +1572,8 @@ export type Database = {
           is_primary?: boolean
           logo_url?: string | null
           name: string
+          payslip_footer?: string | null
+          payslip_header?: string | null
           phone?: string | null
           timezone?: string
           tpin?: string | null
@@ -1593,6 +1597,8 @@ export type Database = {
           is_primary?: boolean
           logo_url?: string | null
           name?: string
+          payslip_footer?: string | null
+          payslip_header?: string | null
           phone?: string | null
           timezone?: string
           tpin?: string | null
