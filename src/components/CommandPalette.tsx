@@ -36,6 +36,7 @@ const QUICK_ACTIONS: { label: string; url: string; icon: any; hint: string }[] =
   { label: "Pay Supplier", url: "/bill-payments", icon: Wallet, hint: "Purchases" },
   { label: "Record Expense", url: "/expenses", icon: Receipt, hint: "Purchases" },
   { label: "New Journal Entry", url: "/journal-entries", icon: BookText, hint: "Accounting" },
+  { label: "Smart Posting Wizard", url: "/posting-wizard", icon: Sparkles, hint: "Accounting" },
   { label: "New Customer", url: "/customers", icon: Users, hint: "Sales" },
   { label: "New Supplier", url: "/suppliers", icon: Truck, hint: "Purchases" },
   { label: "New Employee", url: "/employees", icon: UserSquare, hint: "Payroll" },
