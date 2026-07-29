@@ -221,10 +221,22 @@ function CashbookPage() {
           <BookText className="h-6 w-6 text-emerald-600" />
           <div>
             <h1 className="text-2xl font-bold">Cashbook</h1>
-            <p className="text-sm text-muted-foreground">Audit-ready cashbook — separate from bank reconciliation. Choose the cashbook type per bank account.</p>
+            <p className="text-sm text-muted-foreground">
+              {source === "ledger"
+                ? "Live GL cashbook — auto-fed by receipts, expenses, bills, payroll, transfers and imports."
+                : "Bank imports only — raw statement view for reconciliation."}
+            </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex rounded-md border p-0.5 text-xs">
+            {(["ledger","bank"] as const).map(s => (
+              <button key={s} onClick={() => setSource(s)}
+                className={`px-3 py-1.5 rounded ${source===s ? "bg-emerald-600 text-white" : "text-muted-foreground"}`}>
+                {s === "ledger" ? "Ledger (all sources)" : "Bank imports"}
+              </button>
+            ))}
+          </div>
           <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Print</Button>
           <ExportMenu rows={exportRows} filename="cashbook" title="Cashbook Report" />
         </div>
