@@ -591,94 +591,198 @@ export type Database = {
           },
         ]
       }
+      bank_transaction_events: {
+        Row: {
+          actor_id: string | null
+          bank_txn_id: string
+          created_at: string
+          event: string
+          id: string
+          journal_entry_id: string | null
+          new_status: string | null
+          previous_status: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          bank_txn_id: string
+          created_at?: string
+          event: string
+          id?: string
+          journal_entry_id?: string | null
+          new_status?: string | null
+          previous_status?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          bank_txn_id?: string
+          created_at?: string
+          event?: string
+          id?: string
+          journal_entry_id?: string | null
+          new_status?: string | null
+          previous_status?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transaction_events_bank_txn_id_fkey"
+            columns: ["bank_txn_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transactions: {
         Row: {
           allocated_amount: number
+          allocated_at: string | null
+          allocated_by: string | null
           amount: number
           balance: number | null
           bank_account_id: string | null
           category: string | null
           charge_code: string | null
+          cleared_at: string | null
+          cleared_by: string | null
+          cleared_reference: string | null
+          content_hash: string | null
           cost_centre: string | null
           created_at: string
           currency: string
           description: string
           exchange_rate: number
+          external_transaction_id: string | null
           fund_source: string | null
           id: string
+          import_batch_id: string | null
+          is_allocated: boolean
+          is_cleared: boolean
+          is_posted: boolean
+          journal_entry_id: string | null
           last_allocated_at: string | null
           matched_id: string | null
           matched_invoice: string | null
           matched_type: string | null
           payee: string | null
+          posted_at: string | null
+          posted_by: string | null
           project_ref: string | null
           receipt_no: string | null
           reconciled: boolean
           reconciled_at: string | null
+          reconciled_by: string | null
+          reconciliation_id: string | null
           reference: string | null
+          reversal_of_transaction_id: string | null
+          source: string
           source_file: string | null
           status: string
           txn_date: string
+          updated_at: string
           user_id: string
           voucher_no: string | null
         }
         Insert: {
           allocated_amount?: number
+          allocated_at?: string | null
+          allocated_by?: string | null
           amount: number
           balance?: number | null
           bank_account_id?: string | null
           category?: string | null
           charge_code?: string | null
+          cleared_at?: string | null
+          cleared_by?: string | null
+          cleared_reference?: string | null
+          content_hash?: string | null
           cost_centre?: string | null
           created_at?: string
           currency?: string
           description: string
           exchange_rate?: number
+          external_transaction_id?: string | null
           fund_source?: string | null
           id?: string
+          import_batch_id?: string | null
+          is_allocated?: boolean
+          is_cleared?: boolean
+          is_posted?: boolean
+          journal_entry_id?: string | null
           last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
           payee?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           project_ref?: string | null
           receipt_no?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_id?: string | null
           reference?: string | null
+          reversal_of_transaction_id?: string | null
+          source?: string
           source_file?: string | null
           status?: string
           txn_date: string
+          updated_at?: string
           user_id: string
           voucher_no?: string | null
         }
         Update: {
           allocated_amount?: number
+          allocated_at?: string | null
+          allocated_by?: string | null
           amount?: number
           balance?: number | null
           bank_account_id?: string | null
           category?: string | null
           charge_code?: string | null
+          cleared_at?: string | null
+          cleared_by?: string | null
+          cleared_reference?: string | null
+          content_hash?: string | null
           cost_centre?: string | null
           created_at?: string
           currency?: string
           description?: string
           exchange_rate?: number
+          external_transaction_id?: string | null
           fund_source?: string | null
           id?: string
+          import_batch_id?: string | null
+          is_allocated?: boolean
+          is_cleared?: boolean
+          is_posted?: boolean
+          journal_entry_id?: string | null
           last_allocated_at?: string | null
           matched_id?: string | null
           matched_invoice?: string | null
           matched_type?: string | null
           payee?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           project_ref?: string | null
           receipt_no?: string | null
           reconciled?: boolean
           reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_id?: string | null
           reference?: string | null
+          reversal_of_transaction_id?: string | null
+          source?: string
           source_file?: string | null
           status?: string
           txn_date?: string
+          updated_at?: string
           user_id?: string
           voucher_no?: string | null
         }
@@ -4649,6 +4753,10 @@ export type Database = {
         Args: { _req: string; _user: string }
         Returns: boolean
       }
+      clear_bank_transaction: {
+        Args: { _reference?: string; _txn_id: string }
+        Returns: Json
+      }
       close_month: { Args: { _month: number; _year: number }; Returns: Json }
       close_year: { Args: { _year: number }; Returns: Json }
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
@@ -4721,6 +4829,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      rebuild_bank_status: { Args: never; Returns: Json }
       rebuild_ledgers: { Args: never; Returns: Json }
       rebuild_ledgers_for: { Args: { _uid: string }; Returns: Json }
       recalc_bank_txn_allocation: {
