@@ -39,11 +39,11 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
 
-  --shadow-glow: 0 20px 60px -20px oklch(0.42 0.09 190 / 0.35);
+  --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.98 0.02 80) 0%, oklch(0.96 0.03 200) 100%);
-  --gradient-brand: linear-gradient(135deg, oklch(0.42 0.09 190) 0%, oklch(0.55 0.15 40) 100%);
+  --gradient-hero: linear-gradient(135deg, oklch(0.985 0.005 160) 0%, oklch(0.96 0.02 158) 100%);
+  --gradient-brand: linear-gradient(135deg, oklch(0.32 0.09 162) 0%, oklch(0.62 0.15 158) 100%);
 }
 
 :root {
