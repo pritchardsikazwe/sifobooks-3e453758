@@ -51,19 +51,19 @@ function Landing() {
   const body = { fontFamily: "Figtree, sans-serif" } as const;
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-slate-200 selection:bg-[#4f46e5]/40 selection:text-white" style={body}>
+    <div className="min-h-screen bg-[#06110c] text-slate-200 selection:bg-[#0e8f4a]/40 selection:text-white" style={body}>
       {/* NAV */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#06110c]/80 backdrop-blur-xl">
         <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img src={logo} alt="SifoBooks" className="h-8 w-8 object-contain transition-transform group-hover:scale-110" width={32} height={32} />
             <span className="text-xl font-bold tracking-tight text-white" style={heading}>SifoBooks</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#modules" className="hover:text-[#4f46e5] transition-colors">Modules</a>
-            <a href="#features" className="hover:text-[#4f46e5] transition-colors">Features</a>
-            <a href="#compliance" className="hover:text-[#4f46e5] transition-colors">Compliance</a>
-            <a href="#contact" className="hover:text-[#4f46e5] transition-colors">Contact</a>
+            <a href="#modules" className="hover:text-[#0e8f4a] transition-colors">Modules</a>
+            <a href="#features" className="hover:text-[#0e8f4a] transition-colors">Features</a>
+            <a href="#compliance" className="hover:text-[#0e8f4a] transition-colors">Compliance</a>
+            <a href="#contact" className="hover:text-[#0e8f4a] transition-colors">Contact</a>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/auth" className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
@@ -71,7 +71,7 @@ function Landing() {
             </Link>
             <Link
               to="/auth"
-              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#4f46e5] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.8)]"
+              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.8)]"
             >
               Get Started
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -82,20 +82,20 @@ function Landing() {
 
       {/* HERO — split screen */}
       <section className="relative overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#4f46e5]/20 blur-[120px]" />
-        <div className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[#7c3aed]/15 blur-[120px]" />
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#0e8f4a]/20 blur-[120px]" />
+        <div className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[#f39200]/15 blur-[120px]" />
         <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-28 grid lg:grid-cols-2 gap-16 items-center">
           <Reveal className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e1e5a] border border-[#4f46e5]/30 text-[#a5a1ff] text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f3a24] border border-[#0e8f4a]/30 text-[#7dd3a5] text-xs font-bold uppercase tracking-wider">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4f46e5] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4f46e5]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0e8f4a] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0e8f4a]" />
               </span>
               Zambia-focused · Aligned with IFRS-for-SMEs · Configurable statutory rules
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-white tracking-tight" style={heading}>
               A Finance Operating System{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#a855f7]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0e8f4a] via-[#f39200] to-[#d21034]">
                 built for Zambia.
               </span>
             </h1>
@@ -106,7 +106,7 @@ function Landing() {
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 to="/auth"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#4f46e5] text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_35px_-5px_#4f46e5]"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#0e8f4a] text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_35px_-5px_#0e8f4a]"
               >
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -115,18 +115,18 @@ function Landing() {
                 href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20a%20demo.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#141432] text-white border border-white/10 rounded-xl font-bold hover:bg-[#1e1e5a] hover:border-[#4f46e5]/40 transition-all duration-300"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#0d1f16] text-white border border-white/10 rounded-xl font-bold hover:bg-[#0f3a24] hover:border-[#0e8f4a]/40 transition-all duration-300"
               >
-                <MessageCircle className="w-5 h-5 text-[#4f46e5] transition-transform duration-300 group-hover:scale-110" />
+                <MessageCircle className="w-5 h-5 text-[#0e8f4a] transition-transform duration-300 group-hover:scale-110" />
                 Chat on WhatsApp
               </a>
             </div>
           </Reveal>
 
           <Reveal delay={120} className="relative">
-            <div className="absolute -inset-6 bg-gradient-to-tr from-[#4f46e5]/30 to-transparent blur-3xl opacity-70" />
-            <div className="relative bg-[#141432] rounded-3xl border border-white/10 p-2 shadow-2xl">
-              <div className="bg-[#0a0a1a] rounded-2xl border border-white/5 p-6">
+            <div className="absolute -inset-6 bg-gradient-to-tr from-[#0e8f4a]/30 to-transparent blur-3xl opacity-70" />
+            <div className="relative bg-[#0d1f16] rounded-3xl border border-white/10 p-2 shadow-2xl">
+              <div className="bg-[#06110c] rounded-2xl border border-white/5 p-6">
                 <div className="flex items-center justify-between mb-8">
                   <div className="space-y-1.5">
                     <div className="h-3 w-28 bg-white/10 rounded-full" />
@@ -134,12 +134,12 @@ function Landing() {
                   </div>
                   <div className="flex gap-2">
                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5" />
-                    <div className="w-8 h-8 rounded-full bg-[#4f46e5]/30 border border-[#4f46e5]/30" />
+                    <div className="w-8 h-8 rounded-full bg-[#0e8f4a]/30 border border-[#0e8f4a]/30" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="h-32 bg-gradient-to-br from-[#1e1e5a]/60 to-[#4f46e5]/10 border border-[#4f46e5]/20 rounded-xl p-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#4f46e5]/40 mb-3 grid place-items-center">
+                  <div className="h-32 bg-gradient-to-br from-[#0f3a24]/60 to-[#0e8f4a]/10 border border-[#0e8f4a]/20 rounded-xl p-4">
+                    <div className="w-10 h-10 rounded-lg bg-[#0e8f4a]/40 mb-3 grid place-items-center">
                       <ReceiptText className="w-5 h-5 text-white" />
                     </div>
                     <div className="h-3 w-full bg-white/10 rounded mb-2" />
@@ -156,7 +156,7 @@ function Landing() {
                     {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
                       <div
                         key={i}
-                        className="flex-1 rounded-t bg-gradient-to-t from-[#4f46e5]/70 to-[#a855f7]/70"
+                        className="flex-1 rounded-t bg-gradient-to-t from-[#0e8f4a]/70 to-[#d21034]/70"
                         style={{ height: `${h}%` }}
                       />
                     ))}
@@ -171,7 +171,7 @@ function Landing() {
       {/* BENTO — one consolidated product surface (kills shortcuts+modules duplication) */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="mb-12 max-w-2xl">
-          <div className="text-xs font-bold uppercase tracking-widest text-[#a5a1ff] mb-3">Everything in one place</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Everything in one place</div>
           <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
             Six departments. One clean ledger.
           </h2>
@@ -182,9 +182,9 @@ function Landing() {
 
         <Reveal className="grid grid-cols-1 md:grid-cols-4 gap-4 md:auto-rows-[220px]">
           {/* Big feature */}
-          <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-[#141432] to-[#0a0a1a] border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:border-[#4f46e5]/50 transition-colors">
+          <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-[#0d1f16] to-[#06110c] border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:border-[#0e8f4a]/50 transition-colors">
             <div>
-              <div className="w-12 h-12 bg-[#4f46e5] rounded-xl grid place-items-center mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]">
+              <div className="w-12 h-12 bg-[#0e8f4a] rounded-xl grid place-items-center mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]">
                 <ReceiptText className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-white mb-3" style={heading}>Smart Invoicing & Receivables</h3>
@@ -194,34 +194,34 @@ function Landing() {
             </div>
             <div className="mt-8 pt-6 border-t border-white/5">
               <ul className="space-y-2.5 text-sm text-slate-300">
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> ZRA TPIN & VAT baked in</li>
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> Multi-currency, ZMW native</li>
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> Customer statements & credit notes</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> ZRA TPIN & VAT baked in</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> Multi-currency, ZMW native</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> Customer statements & credit notes</li>
               </ul>
             </div>
           </div>
 
           {/* Wide */}
-          <div className="md:col-span-2 bg-[#141432] border border-white/10 rounded-3xl p-8 flex items-center gap-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+          <div className="md:col-span-2 bg-[#0d1f16] border border-white/10 rounded-3xl p-8 flex items-center gap-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-white mb-2" style={heading}>Banking & Reconciliation</h3>
               <p className="text-sm text-slate-400">Import statements, auto-match rules, split allocations across accounts, reconcile in minutes.</p>
             </div>
-            <div className="w-20 h-20 shrink-0 bg-[#0a0a1a] rounded-2xl border border-white/10 grid place-items-center">
-              <Landmark className="w-8 h-8 text-[#4f46e5]" />
+            <div className="w-20 h-20 shrink-0 bg-[#06110c] rounded-2xl border border-white/10 grid place-items-center">
+              <Landmark className="w-8 h-8 text-[#0e8f4a]" />
             </div>
           </div>
 
           {/* Small */}
-          <div className="bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
-            <Banknote className="w-6 h-6 text-[#4f46e5] mb-4" />
+          <div className="bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
+            <Banknote className="w-6 h-6 text-[#0e8f4a] mb-4" />
             <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Payroll</h3>
             <p className="text-sm text-slate-400">PAYE, NAPSA, NHIMA, WCF & SDL — computed live.</p>
           </div>
 
           {/* Small */}
-          <div className="bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
-            <Boxes className="w-6 h-6 text-[#4f46e5] mb-4" />
+          <div className="bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
+            <Boxes className="w-6 h-6 text-[#0e8f4a] mb-4" />
             <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Inventory</h3>
             <p className="text-sm text-slate-400">Real-time stock, warehouses, reorder alerts.</p>
           </div>
@@ -229,22 +229,22 @@ function Landing() {
 
         {/* Second bento row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-          <Reveal className="md:col-span-1 bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
-            <FileText className="w-6 h-6 text-[#4f46e5] mb-4" />
+          <Reveal className="md:col-span-1 bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
+            <FileText className="w-6 h-6 text-[#0e8f4a] mb-4" />
             <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Purchases</h3>
             <p className="text-sm text-slate-400">POs, supplier bills, payment scheduling.</p>
           </Reveal>
-          <Reveal delay={60} className="md:col-span-1 bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
-            <BarChart3 className="w-6 h-6 text-[#4f46e5] mb-4" />
+          <Reveal delay={60} className="md:col-span-1 bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
+            <BarChart3 className="w-6 h-6 text-[#0e8f4a] mb-4" />
             <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Live Reports</h3>
             <p className="text-sm text-slate-400">P&L, TB, BS, Cash Flow — always current.</p>
           </Reveal>
-          <Reveal delay={120} className="md:col-span-2 bg-gradient-to-br from-[#1e1e5a] to-[#4f46e5]/30 border border-[#4f46e5]/40 rounded-3xl p-6 flex items-center justify-between group hover:shadow-[0_0_40px_-10px_#4f46e5] transition-all">
+          <Reveal delay={120} className="md:col-span-2 bg-gradient-to-br from-[#0f3a24] to-[#0e8f4a]/30 border border-[#0e8f4a]/40 rounded-3xl p-6 flex items-center justify-between group hover:shadow-[0_0_40px_-10px_#0e8f4a] transition-all">
             <div>
               <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Annual Financial Statements</h3>
               <p className="text-sm text-slate-300">IFRS-for-SME AFS, ready for your auditor.</p>
             </div>
-            <div className="w-12 h-12 shrink-0 rounded-full bg-white/10 grid place-items-center group-hover:bg-[#4f46e5] group-hover:translate-x-1 transition-all">
+            <div className="w-12 h-12 shrink-0 rounded-full bg-white/10 grid place-items-center group-hover:bg-[#0e8f4a] group-hover:translate-x-1 transition-all">
               <ArrowRight className="w-5 h-5 text-white" />
             </div>
           </Reveal>
@@ -260,9 +260,9 @@ function Landing() {
             { icon: Building2, title: "Multi-company", desc: "Run all your entities from one login — switch companies without signing out." },
           ].map((f, i) => (
             <Reveal key={f.title} delay={i * 80}>
-              <div className="h-full bg-[#141432] border border-white/10 rounded-2xl p-6 hover:border-[#4f46e5]/40 hover:-translate-y-1 transition-all duration-300">
-                <div className="w-11 h-11 bg-[#4f46e5]/15 border border-[#4f46e5]/30 rounded-xl grid place-items-center mb-4">
-                  <f.icon className="w-5 h-5 text-[#a5a1ff]" />
+              <div className="h-full bg-[#0d1f16] border border-white/10 rounded-2xl p-6 hover:border-[#0e8f4a]/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-11 h-11 bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 rounded-xl grid place-items-center mb-4">
+                  <f.icon className="w-5 h-5 text-[#7dd3a5]" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>{f.title}</h3>
                 <p className="text-sm text-slate-400">{f.desc}</p>
@@ -273,19 +273,19 @@ function Landing() {
       </section>
 
       {/* COMPLIANCE strip */}
-      <div id="compliance" className="border-y border-white/5 bg-[#0a0a1a]">
+      <div id="compliance" className="border-y border-white/5 bg-[#06110c]">
         <div className="max-w-7xl mx-auto px-6 py-10 flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#4f46e5]/15 border border-[#4f46e5]/30 grid place-items-center">
-              <span className="font-bold text-[#a5a1ff] text-xs">ZRA</span>
+            <div className="w-10 h-10 rounded-full bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 grid place-items-center">
+              <span className="font-bold text-[#7dd3a5] text-xs">ZRA</span>
             </div>
             <span className="text-sm font-semibold tracking-widest text-slate-300 uppercase">Officially ZRA Compliant</span>
           </div>
           <div className="hidden lg:block h-px flex-1 bg-white/5 mx-4" />
           <div className="flex flex-wrap items-center gap-2">
             {["VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "WHT"].map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300 hover:border-[#4f46e5]/40 hover:text-white transition-colors">
-                <CheckCircle2 className="w-3 h-3 text-[#4f46e5]" />
+              <span key={tag} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300 hover:border-[#0e8f4a]/40 hover:text-white transition-colors">
+                <CheckCircle2 className="w-3 h-3 text-[#0e8f4a]" />
                 {tag}
               </span>
             ))}
@@ -296,7 +296,7 @@ function Landing() {
       {/* CONTACT */}
       <section id="contact" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="text-center mb-12">
-          <div className="text-xs font-bold uppercase tracking-widest text-[#a5a1ff] mb-3">Talk to us</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Talk to us</div>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={heading}>We're one message away.</h2>
           <p className="mt-4 text-slate-400">Real humans. Same-day replies. In Lusaka, serving all of Zambia.</p>
         </Reveal>
@@ -310,13 +310,13 @@ function Landing() {
               <a
                 href={c.href}
                 {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="group block h-full bg-[#141432] border border-white/10 rounded-2xl p-6 hover:border-[#4f46e5]/50 hover:-translate-y-1 hover:shadow-[0_10px_40px_-15px_#4f46e5] transition-all duration-300"
+                className="group block h-full bg-[#0d1f16] border border-white/10 rounded-2xl p-6 hover:border-[#0e8f4a]/50 hover:-translate-y-1 hover:shadow-[0_10px_40px_-15px_#0e8f4a] transition-all duration-300"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#4f46e5]/15 border border-[#4f46e5]/30 grid place-items-center mb-4 group-hover:bg-[#4f46e5] group-hover:border-[#4f46e5] transition-colors">
-                  <c.icon className="w-5 h-5 text-[#a5a1ff] group-hover:text-white transition-colors" />
+                <div className="w-11 h-11 rounded-xl bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 grid place-items-center mb-4 group-hover:bg-[#0e8f4a] group-hover:border-[#0e8f4a] transition-colors">
+                  <c.icon className="w-5 h-5 text-[#7dd3a5] group-hover:text-white transition-colors" />
                 </div>
                 <div className="text-lg font-bold text-white" style={heading}>{c.label}</div>
-                <div className="text-sm font-medium text-[#a5a1ff] mt-1 break-all">{c.value}</div>
+                <div className="text-sm font-medium text-[#7dd3a5] mt-1 break-all">{c.value}</div>
                 <div className="text-xs text-slate-500 mt-2">{c.sub}</div>
               </a>
             </Reveal>
@@ -326,7 +326,7 @@ function Landing() {
 
       {/* CTA band */}
       <section className="max-w-7xl mx-auto px-6 pb-24">
-        <Reveal className="relative bg-gradient-to-r from-[#1e1e5a] via-[#4338ca] to-[#4f46e5] rounded-[2.5rem] p-12 md:p-20 overflow-hidden">
+        <Reveal className="relative bg-gradient-to-r from-[#0f3a24] via-[#0a6d3a] to-[#0e8f4a] rounded-[2.5rem] p-12 md:p-20 overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_70%)]" />
           <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
           <div className="relative z-10 max-w-2xl">
@@ -339,7 +339,7 @@ function Landing() {
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/auth"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-[#0a0a1a] rounded-xl font-bold transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)]"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-[#06110c] rounded-xl font-bold transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)]"
               >
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -366,8 +366,8 @@ function Landing() {
             <span>© {new Date().getFullYear()} · Accounting ERP</span>
           </div>
           <div className="flex gap-6 font-medium">
-            <a href={`tel:${PHONE}`} className="hover:text-[#a5a1ff] transition-colors">{PHONE}</a>
-            <a href={`mailto:${EMAIL}`} className="hover:text-[#a5a1ff] transition-colors break-all">{EMAIL}</a>
+            <a href={`tel:${PHONE}`} className="hover:text-[#7dd3a5] transition-colors">{PHONE}</a>
+            <a href={`mailto:${EMAIL}`} className="hover:text-[#7dd3a5] transition-colors break-all">{EMAIL}</a>
           </div>
         </div>
       </footer>
