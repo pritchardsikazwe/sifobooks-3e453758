@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ShieldCheck, LogOut, Plus, Trash2, CheckCircle2, AlertCircle, Clock, Sparkles } from "lucide-react";
+import { ArrowLeft, ShieldCheck, LogOut, Plus, Trash2, CheckCircle2, AlertCircle, Clock, Sparkles, ExternalLink, Calendar, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppNav } from "@/components/AppNav";
 import { STATUTORY_BODIES, bodyByCode } from "@/lib/compliance-bodies";
+import {
+  PAYE_BANDS_MONTHLY, NAPSA, NHIMA, SDL, WCF, VAT, TURNOVER_TAX, WHT,
+  INCOME_TAX, FILING_CALENDAR, PORTALS, ZAMBIA_TAX_YEAR,
+} from "@/lib/zambia-tax";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/compliance")({
