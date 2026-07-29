@@ -105,6 +105,40 @@ function CompliancePage() {
     await load();
   };
 
+  const generateWholeYear = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const y = new Date().getFullYear();
+    const rows: { user_id: string; body: string; obligation_type: string; period: string; due_date: string; status: string }[] = [];
+    for (let m = 0; m < 12; m++) {
+      const period = `${y}-${String(m + 1).padStart(2, "0")}`;
+      for (const b of STATUTORY_BODIES) {
+        if (b.frequency !== "monthly") continue;
+        const dd = new Date(y, m + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
+        for (const o of b.obligations) {
+          rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" });
+        }
+      }
+    }
+    // Quarterly + annual
+    for (const b of STATUTORY_BODIES) {
+      if (b.frequency === "quarterly") {
+        for (const q of [2, 5, 8, 11]) {
+          const period = `${y}-Q${Math.floor(q / 3) + 1}`;
+          const dd = new Date(y, q + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
+          for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" });
+        }
+      } else if (b.frequency === "annual") {
+        const dd = new Date(y, 11, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
+        for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period: String(y), due_date: dd, status: "upcoming" });
+      }
+    }
+    const { error } = await supabase.from("compliance_obligations").insert(rows);
+    if (error) return toast.error(error.message);
+    toast.success(`Generated ${rows.length} obligations for ${y}`);
+    await load();
+  };
+
   const markFiled = async (id: string) => {
     const { error } = await supabase.from("compliance_obligations").update({ status: "filed" }).eq("id", id);
     if (error) return toast.error(error.message);
