@@ -13,6 +13,8 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
+import { installOfflineAutoDrain } from "@/lib/offline-queue";
 
 function NotFoundComponent() {
   return (
@@ -87,6 +89,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "SifoBooks — Accounting ERP" },
       { name: "twitter:description", content: "SifoBooks is a complete accounting ERP for African businesses — invoicing, purchases, inventory, payroll, and tax compliance in one platform." },
+      { name: "theme-color", content: "#0e8f4a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "SifoBooks" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -97,6 +104,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -122,13 +131,17 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => { installOfflineAutoDrain(); }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <InstallAppPrompt />
         <Toaster position="top-right" richColors closeButton />
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
+

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
+import { offlineInsert } from "@/lib/offline-queue";
 
 export type Field = {
   name: string;
@@ -125,9 +126,15 @@ export function SimpleCrud({
     }
     const res = editing
       ? await supabase.from(table as any).update(payload).eq("id", editing.id)
-      : await supabase.from(table as any).insert(payload);
+      : await offlineInsert(table, payload);
     if (res.error) return toast.error(res.error.message);
-    toast.success(editing ? "Updated" : "Created");
+    toast.success(
+      editing
+        ? "Updated"
+        : (res as any).queued
+          ? "Saved offline — will sync when back online"
+          : "Created",
+    );
     setOpen(false);
     load();
   };

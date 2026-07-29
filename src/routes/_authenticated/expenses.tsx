@@ -205,6 +205,21 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
     if (!expenseAccountId || !bankAccountId) return toast.error("Pick both expense and payment (cash/bank) accounts");
     if (amount <= 0) return toast.error("Amount must be > 0");
     setSaving(true);
+    // If offline, queue a pending expense row; server trigger will post JE on drain.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const number = `EXP-${Date.now().toString().slice(-8)}`;
+      const { queueInsert } = await import("@/lib/offline-queue");
+      await queueInsert("expenses", {
+        user_id: userId, expense_number: number, expense_date: date, category, payment_method: payment,
+        bank_account_id: bankAccountId, expense_account_id: expenseAccountId,
+        amount, vat_amount: vat, total, reference: reference || null, notes: notes || null,
+        status: "pending_sync",
+      });
+      toast.success(`Expense ${number} saved offline — will sync when back online`);
+      setOpen(false); setAmount(0); setVatRate(0); setReference(""); setNotes("");
+      setSaving(false); onSaved();
+      return;
+    }
     try {
       const number = `EXP-${Date.now().toString().slice(-8)}`;
       const { data: je, error: je1 } = await supabase.from("journal_entries").insert({
