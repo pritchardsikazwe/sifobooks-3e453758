@@ -351,13 +351,8 @@ function BankingPage() {
               <Button onClick={() => fileRef.current?.click()} disabled={importing} className="bg-emerald-600 hover:bg-emerald-700">
                 {importing ? <><FileUp className="h-4 w-4 animate-pulse mr-2" /> Importing…</> : <><Upload className="h-4 w-4 mr-2" /> Import statement</>}
               </Button>
-            </div>
-
-
               <Button variant="outline" onClick={rebuildStatus} title="Recalculate status flags for all bank transactions">Rebuild status</Button>
             </div>
-
-
           </CardHeader>
 
           <CardContent className="space-y-4">
