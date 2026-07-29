@@ -27,11 +27,12 @@ type Line = {
   price: number;
   discount: number;
   discountType: "%" | "ZMW";
-  taxCode: "A" | "B" | "C" | "E";
+  taxCode: "A" | "B" | "C" | "D" | "E" | "X";
   vatRate: number;
 };
 
-const TAX_RATES: Record<string, number> = { A: 16, B: 0, C: 0, E: 0 };
+type TaxScheme = "vat" | "vat_wht" | "turnover" | "rental_wht" | "tourism" | "exempt";
+const TAX_RATES: Record<string, number> = { A: 16, B: 0, C: 0, D: 0, E: 0, X: 0 };
 
 function NewInvoicePage() {
   const navigate = useNavigate();
@@ -52,6 +53,10 @@ function NewInvoicePage() {
   const [customerId, setCustomerId] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [taxScheme, setTaxScheme] = useState<TaxScheme>("vat");
+  const [whtRate, setWhtRate] = useState(15);
+  const [tourismRate, setTourismRate] = useState(5);
+  const [turnoverRate, setTurnoverRate] = useState(4);
 
   const [customers, setCustomers] = useState<any[]>([]);
   const [stock, setStock] = useState<any[]>([]);
@@ -101,8 +106,14 @@ function NewInvoicePage() {
         tax += net * rate;
       }
     }
-    return { subtotal, tax, total: subtotal + tax };
-  }, [items, taxInclusive]);
+    const total = subtotal + tax;
+    const whtAmount = (taxScheme === "vat_wht" || taxScheme === "rental_wht") ? subtotal * (whtRate / 100) : 0;
+    const tourismLevyAmount = taxScheme === "tourism" ? subtotal * (tourismRate / 100) : 0;
+    const turnoverAmount = taxScheme === "turnover" ? subtotal * (turnoverRate / 100) : 0;
+    const grossWithExtras = total + tourismLevyAmount + turnoverAmount;
+    const payable = grossWithExtras - whtAmount;
+    return { subtotal, tax, total: grossWithExtras, whtAmount, tourismLevyAmount, turnoverAmount, payable };
+  }, [items, taxInclusive, taxScheme, whtRate, tourismRate, turnoverRate]);
 
   const pickStock = (idx: number, stockId: string) => {
     const s = stock.find(x => x.id === stockId);
@@ -179,10 +190,18 @@ function NewInvoicePage() {
         return {
           description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "—",
           qty: i.qty, price: i.price, discount: i.discount, discountType: i.discountType,
-          vatRate: i.vatRate, lineTotal,
+          vatRate: i.vatRate, taxCode: i.taxCode, lineTotal,
         };
       }),
       subtotal: totals.subtotal, tax: totals.tax, total: totals.total, notes,
+      taxScheme,
+      whtRate: (taxScheme === "vat_wht" || taxScheme === "rental_wht") ? whtRate : undefined,
+      whtAmount: totals.whtAmount || undefined,
+      tourismLevyRate: taxScheme === "tourism" ? tourismRate : undefined,
+      tourismLevyAmount: totals.tourismLevyAmount || undefined,
+      turnoverRate: taxScheme === "turnover" ? turnoverRate : undefined,
+      turnoverAmount: totals.turnoverAmount || undefined,
+      payable: totals.payable,
     };
   };
 
@@ -191,7 +210,7 @@ function NewInvoicePage() {
       <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
       <Button variant="outline" onClick={() => previewPdf(buildPdfDoc())}>Preview Invoice</Button>
       <Button variant="outline" onClick={() => downloadPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
-      <Button onClick={() => submit("sent")} disabled={saving} className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post Invoice</Button>
+      <Button onClick={() => submit("sent")} disabled={saving} className="bg-emerald-700 hover:bg-emerald-800 text-white">Post Invoice</Button>
     </div>
   );
 
@@ -227,7 +246,7 @@ function NewInvoicePage() {
         </div>
 
         {/* Invoice Information */}
-        <Section title="INVOICE INFORMATION" action={<button className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+        <Section title="INVOICE INFORMATION" action={<button className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
           <Field label="Invoice Number">
             <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-slate-50" />
           </Field>
@@ -258,7 +277,7 @@ function NewInvoicePage() {
             </Field>
             <Field label="Currency">
               <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-slate-50" />
-              <div className="text-right"><button className="text-xs text-[#0f4c5c] font-medium underline mt-1">Set Exchange Rate</button></div>
+              <div className="text-right"><button className="text-xs text-emerald-700 font-medium underline mt-1">Set Exchange Rate</button></div>
             </Field>
           </div>
         </Section>
@@ -268,7 +287,7 @@ function NewInvoicePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Customer" action={
               <QuickAddCustomer
-                trigger={<button type="button" className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
+                trigger={<button type="button" className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
                 onCreated={c => { setCustomers(p => [...p, c]); setCustomerId(c.id); }}
               />
             }>
@@ -302,9 +321,9 @@ function NewInvoicePage() {
           <div className="flex items-center justify-between px-4 py-3 border-b flex-wrap gap-2">
             <span className="text-xs font-semibold text-muted-foreground tracking-wide">INVOICE ITEMS</span>
             <label className="flex items-center gap-2 text-xs">
-              <span className={taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
+              <span className={taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
               <Switch checked={taxInclusive} onCheckedChange={setTaxInclusive} />
-              <span className={!taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
+              <span className={!taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
             </label>
           </div>
           <div className="overflow-x-auto">
@@ -355,7 +374,9 @@ function NewInvoicePage() {
                           <SelectItem value="A">A (16%)</SelectItem>
                           <SelectItem value="B">B (0%)</SelectItem>
                           <SelectItem value="C">C (Exempt)</SelectItem>
-                          <SelectItem value="E">E (Export)</SelectItem>
+                          <SelectItem value="D">D (Zero-rated Dom.)</SelectItem>
+                          <SelectItem value="E">E (Export 0%)</SelectItem>
+                          <SelectItem value="X">X (Out of scope)</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>
@@ -369,14 +390,14 @@ function NewInvoicePage() {
           </div>
           <div className="px-4 py-3 border-t">
             <button onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}
-              className="text-sm text-[#0f4c5c] font-medium inline-flex items-center gap-1">
+              className="text-sm text-emerald-700 font-medium inline-flex items-center gap-1">
               <Plus className="h-4 w-4" /> Add Item
             </button>
           </div>
         </div>
 
         {/* Bank Details */}
-        <Section title="BANK DETAILS" action={<button className="text-xs text-[#0f4c5c] font-medium">Edit</button>}>
+        <Section title="BANK DETAILS" action={<button className="text-xs text-emerald-700 font-medium">Edit</button>}>
           <div className="text-sm text-muted-foreground space-y-1">
             <div>Account Name: {company?.name ?? "—"}</div>
             <div>Account Number: {company?.bank_account_number ?? "—"}</div>
@@ -395,13 +416,54 @@ function NewInvoicePage() {
           />
         </div>
 
+        {/* Zambian Tax Scheme */}
+        <Section title="ZAMBIAN TAX SCHEME">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Field label="Scheme">
+              <Select value={taxScheme} onValueChange={(v: TaxScheme) => setTaxScheme(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vat">VAT (Standard 16%)</SelectItem>
+                  <SelectItem value="vat_wht">VAT + Withholding Tax</SelectItem>
+                  <SelectItem value="turnover">Turnover Tax (4%)</SelectItem>
+                  <SelectItem value="rental_wht">Rental Income WHT (4%)</SelectItem>
+                  <SelectItem value="tourism">Tourism Levy (5%)</SelectItem>
+                  <SelectItem value="exempt">Exempt / Out of Scope</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            {(taxScheme === "vat_wht" || taxScheme === "rental_wht") && (
+              <Field label={`WHT Rate (${taxScheme === "rental_wht" ? "typically 4%" : "typically 15%"})`}>
+                <Input type="number" step="0.5" value={whtRate} onChange={e => setWhtRate(Number(e.target.value))} />
+              </Field>
+            )}
+            {taxScheme === "tourism" && (
+              <Field label="Tourism Levy Rate %">
+                <Input type="number" step="0.5" value={tourismRate} onChange={e => setTourismRate(Number(e.target.value))} />
+              </Field>
+            )}
+            {taxScheme === "turnover" && (
+              <Field label="Turnover Tax Rate %">
+                <Input type="number" step="0.5" value={turnoverRate} onChange={e => setTurnoverRate(Number(e.target.value))} />
+              </Field>
+            )}
+          </div>
+        </Section>
+
         {/* Summary */}
         <div className="bg-white rounded-lg border p-4">
           <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">SUMMARY</div>
-          <SummaryRow label="Subtotal" value={fmtMoney(totals.subtotal, currency)} />
-          <SummaryRow label="Tax" value={fmtMoney(totals.tax, currency)} />
-          <SummaryRow label="Total Price" value={fmtMoney(totals.total, currency)} strong />
-          <SummaryRow label="Conversion Rate" value={`${currency} 1 = ${currency} 1`} muted />
+          <SummaryRow label="Subtotal (excl. VAT)" value={fmtMoney(totals.subtotal, currency)} />
+          <SummaryRow label={`VAT ${taxInclusive ? "(inclusive)" : "(exclusive)"}`} value={fmtMoney(totals.tax, currency)} />
+          {totals.tourismLevyAmount > 0 && <SummaryRow label={`Tourism Levy ${tourismRate}%`} value={fmtMoney(totals.tourismLevyAmount, currency)} />}
+          {totals.turnoverAmount > 0 && <SummaryRow label={`Turnover Tax ${turnoverRate}%`} value={fmtMoney(totals.turnoverAmount, currency)} />}
+          <SummaryRow label="Total" value={fmtMoney(totals.total, currency)} strong />
+          {totals.whtAmount > 0 && (
+            <>
+              <SummaryRow label={`Less: WHT ${whtRate}%`} value={`-${fmtMoney(totals.whtAmount, currency)}`} />
+              <SummaryRow label="Payable" value={fmtMoney(totals.payable, currency)} strong />
+            </>
+          )}
         </div>
 
         <div className="hidden lg:flex justify-end pt-2">{ActionButtons}</div>
@@ -410,7 +472,7 @@ function NewInvoicePage() {
       {/* Sticky action bar on mobile & tablet — guarantees Post Invoice is always reachable */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t shadow-lg px-3 py-2 flex items-center gap-2">
         <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1">Save Draft</Button>
-        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">
+        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white">
           {saving ? "Posting…" : "Post Invoice"}
         </Button>
       </div>

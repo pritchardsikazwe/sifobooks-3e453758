@@ -51,6 +51,7 @@ import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedInventorySheetsRouteImport } from './routes/_authenticated/inventory-sheets'
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
 import { Route as AuthenticatedFxRatesRouteImport } from './routes/_authenticated/fx-rates'
@@ -338,6 +339,12 @@ const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInventorySheetsRoute =
+  AuthenticatedInventorySheetsRouteImport.update({
+    id: '/inventory-sheets',
+    path: '/inventory-sheets',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedIndustryRoute = AuthenticatedIndustryRouteImport.update({
   id: '/industry',
   path: '/industry',
@@ -698,6 +705,7 @@ export interface FileRoutesByFullPath {
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -799,6 +807,7 @@ export interface FileRoutesByTo {
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -900,6 +909,7 @@ export interface FileRoutesById {
   '/_authenticated/fx-rates': typeof AuthenticatedFxRatesRoute
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
+  '/_authenticated/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -1004,6 +1014,7 @@ export interface FileRouteTypes {
     | '/fx-rates'
     | '/imprest'
     | '/industry'
+    | '/inventory-sheets'
     | '/invoices'
     | '/job-cards'
     | '/journal-entries'
@@ -1105,6 +1116,7 @@ export interface FileRouteTypes {
     | '/fx-rates'
     | '/imprest'
     | '/industry'
+    | '/inventory-sheets'
     | '/job-cards'
     | '/journal-entries'
     | '/leads'
@@ -1205,6 +1217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fx-rates'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
+    | '/_authenticated/inventory-sheets'
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
@@ -1582,6 +1595,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory-sheets': {
+      id: '/_authenticated/inventory-sheets'
+      path: '/inventory-sheets'
+      fullPath: '/inventory-sheets'
+      preLoaderRoute: typeof AuthenticatedInventorySheetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/industry': {
@@ -2138,6 +2158,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFxRatesRoute: typeof AuthenticatedFxRatesRoute
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
+  AuthenticatedInventorySheetsRoute: typeof AuthenticatedInventorySheetsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
@@ -2206,6 +2227,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFxRatesRoute: AuthenticatedFxRatesRoute,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
+  AuthenticatedInventorySheetsRoute: AuthenticatedInventorySheetsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,

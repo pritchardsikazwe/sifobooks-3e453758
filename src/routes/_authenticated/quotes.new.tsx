@@ -220,7 +220,7 @@ function NewQuotePage() {
       <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
       <Button variant="outline" onClick={() => previewPdf(buildPdfDoc())}>Preview Quote</Button>
       <Button variant="outline" onClick={() => downloadPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
-      <Button onClick={() => submit("sent")} disabled={saving} className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post Quote</Button>
+      <Button onClick={() => submit("sent")} disabled={saving} className="bg-emerald-700 hover:bg-emerald-800 text-white">Post Quote</Button>
       <Button onClick={() => submit("convert")} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white">Convert to Invoice</Button>
     </div>
   );
@@ -251,7 +251,7 @@ function NewQuotePage() {
           </Select>
         </div>
 
-        <Section title="QUOTE INFORMATION" action={<button className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+        <Section title="QUOTE INFORMATION" action={<button className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
           <Field label="Quote Number">
             <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-slate-50" />
           </Field>
@@ -282,7 +282,7 @@ function NewQuotePage() {
             </Field>
             <Field label="Currency">
               <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-slate-50" />
-              <div className="text-right"><button className="text-xs text-[#0f4c5c] font-medium underline mt-1">Set Exchange Rate</button></div>
+              <div className="text-right"><button className="text-xs text-emerald-700 font-medium underline mt-1">Set Exchange Rate</button></div>
             </Field>
           </div>
         </Section>
@@ -291,7 +291,7 @@ function NewQuotePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Customer" action={
               <QuickAddCustomer
-                trigger={<button type="button" className="text-xs text-[#0f4c5c] font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
+                trigger={<button type="button" className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
                 onCreated={c => { setCustomers(p => [...p, c]); setCustomerId(c.id); }}
               />
             }>
@@ -314,9 +314,9 @@ function NewQuotePage() {
           <div className="flex items-center justify-between px-4 py-3 border-b flex-wrap gap-2">
             <span className="text-xs font-semibold text-muted-foreground tracking-wide">QUOTE ITEMS</span>
             <label className="flex items-center gap-2 text-xs">
-              <span className={taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
+              <span className={taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
               <Switch checked={taxInclusive} onCheckedChange={setTaxInclusive} />
-              <span className={!taxInclusive ? "text-[#0f4c5c] font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
+              <span className={!taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
             </label>
           </div>
           <div className="overflow-x-auto">
@@ -381,7 +381,7 @@ function NewQuotePage() {
           </div>
           <div className="px-4 py-3 border-t">
             <button onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}
-              className="text-sm text-[#0f4c5c] font-medium inline-flex items-center gap-1">
+              className="text-sm text-emerald-700 font-medium inline-flex items-center gap-1">
               <Plus className="h-4 w-4" /> Add Item
             </button>
           </div>
@@ -411,7 +411,7 @@ function NewQuotePage() {
       {/* Mobile sticky action bar */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg px-3 py-2 flex items-center gap-2">
         <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1 text-xs">Draft</Button>
-        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 text-xs bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post</Button>
+        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 text-xs bg-emerald-700 hover:bg-emerald-800 text-white">Post</Button>
         <Button onClick={() => submit("convert")} disabled={saving} className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Convert</Button>
       </div>
     </div>
