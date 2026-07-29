@@ -89,6 +89,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "SifoBooks — Accounting ERP" },
       { name: "twitter:description", content: "SifoBooks is a complete accounting ERP for African businesses — invoicing, purchases, inventory, payroll, and tax compliance in one platform." },
+      { name: "theme-color", content: "#0e8f4a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "SifoBooks" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
