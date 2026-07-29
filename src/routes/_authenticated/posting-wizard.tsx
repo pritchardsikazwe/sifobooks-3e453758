@@ -326,12 +326,46 @@ function PostingWizard() {
               })}
             </div>
             {scenario !== "blank" && (
-              <div className="grid gap-3 md:grid-cols-4">
-                <div><Label>Total amount</Label><Input type="number" step="0.01" value={amount || ""} onChange={e => setAmount(+e.target.value || 0)} /></div>
-                <div><Label>Of which VAT</Label><Input type="number" step="0.01" value={vat || ""} onChange={e => setVat(+e.target.value || 0)} /></div>
-                <div><Label>Entry date</Label><Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} /></div>
-                <div><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" /></div>
-              </div>
+              <>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <div><Label>Total amount</Label><Input type="number" step="0.01" value={amount || ""} onChange={e => setAmount(+e.target.value || 0)} /></div>
+                  <div><Label>Of which VAT</Label><Input type="number" step="0.01" value={vat || ""} onChange={e => setVat(+e.target.value || 0)} /></div>
+                  <div><Label>Entry date</Label><Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} /></div>
+                  <div><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" /></div>
+                </div>
+                {currentScenario.roles.length > 0 && (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Pick accounts for this entry
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {currentScenario.roles.map(r => {
+                        const filtered = accounts.filter(a => r.typeHint.includes(a.account_type));
+                        const options = filtered.length ? filtered : accounts;
+                        return (
+                          <div key={r.role}>
+                            <Label className="text-xs">{r.label}</Label>
+                            <Select value={rolePick[r.role] ?? ""} onValueChange={v => setRolePick(p => ({ ...p, [r.role]: v }))}>
+                              <SelectTrigger><SelectValue placeholder="Select account…" /></SelectTrigger>
+                              <SelectContent>
+                                {options.map(a => (
+                                  <SelectItem key={a.id} value={a.id}>
+                                    {a.account_code} · {a.account_name}
+                                    <span className="ml-2 text-[10px] text-muted-foreground">{a.account_type}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Defaults are suggested from your Chart of Accounts — change any pick to route this posting to the right account.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             <div className="flex justify-end">
               <Button onClick={applyScenario} disabled={scenario !== "blank" && amount <= 0}>
