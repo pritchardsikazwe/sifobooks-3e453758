@@ -31,11 +31,27 @@ function SetupPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       setUserId(u.user.id);
-      const { data } = await supabase.from("companies").select("*").eq("user_id", u.user.id).maybeSingle();
-      if (data) setCompany(data as Company);
-      else {
+      const { data: prof } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+      let data: any = null;
+      if (prof?.active_company_id) {
+        const { data: c } = await supabase.from("companies").select("*").eq("id", prof.active_company_id).maybeSingle();
+        data = c;
+      }
+      if (!data) {
+        const { data: any1 } = await supabase.from("companies").select("*").eq("user_id", u.user.id).order("created_at").limit(1).maybeSingle();
+        data = any1;
+      }
+      if (data) {
+        setCompany(data as Company);
+        if (prof && prof.active_company_id !== data.id) {
+          await supabase.from("profiles").update({ active_company_id: data.id }).eq("id", u.user.id);
+        }
+      } else {
         const { data: created } = await supabase.from("companies").insert({ user_id: u.user.id, name: "My Company", base_currency: "ZMW", country: "Zambia" }).select().single();
-        if (created) setCompany(created as Company);
+        if (created) {
+          setCompany(created as Company);
+          await supabase.from("profiles").update({ active_company_id: created.id }).eq("id", u.user.id);
+        }
       }
       setLoading(false);
     })();
