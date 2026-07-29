@@ -133,7 +133,7 @@ function ReceiptsPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
     const number = `RCT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
-    const { error } = await supabase.from("receipts").insert({
+    const payload = {
       user_id: u.user.id,
       customer_id: needsCustomer ? customerId : null,
       invoice_id: invoiceId || null,
@@ -144,10 +144,16 @@ function ReceiptsPage() {
       voucher_no: voucherNo || null,
       bank_account_id: bankAccountId || null,
       status: "posted",
-    } as any);
+    };
+    const { offlineInsert } = await import("@/lib/offline-queue");
+    const { error, queued } = await offlineInsert("receipts", payload);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success(`Receipt ${number} captured and posted`);
+    toast.success(
+      queued
+        ? `Receipt ${number} saved offline — will sync when back online`
+        : `Receipt ${number} captured and posted`,
+    );
     setOpen(false);
     resetForm();
     load();
