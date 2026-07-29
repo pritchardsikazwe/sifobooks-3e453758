@@ -47,18 +47,32 @@ export function AppSidebar() {
       setEmail(u.user.email ?? "");
       const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
       setName(n || (u.user.email ?? "").split("@")[0]);
-      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency").eq("user_id", u.user.id).maybeSingle();
-      if (c) {
-        setCompanyName(c.trading_name || c.name);
-        setSubtitle(`${c.base_currency || "ZMW"} · Accounting ERP`);
+      const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+      let cid = (p?.active_company_id as string | null) ?? null;
+      if (!cid) {
+        const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+        cid = cs0?.[0]?.id ?? null;
+      }
+      if (cid) {
+        const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency").eq("id", cid).maybeSingle();
+        if (c) {
+          setCompanyName(c.trading_name || c.name);
+          setSubtitle(`${c.base_currency || "ZMW"} · Accounting ERP`);
+        }
       }
     })();
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error(e);
+    }
+    // Hard reload to clear all in-memory query cache & route context
+    window.location.assign("/auth");
   };
+
 
   const { installed } = useInstalledModules();
   const { canView } = usePermissions();
