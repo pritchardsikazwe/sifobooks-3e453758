@@ -3,7 +3,7 @@
 export type ModuleCategory =
   | "Core" | "Sales" | "Purchases" | "Finance" | "Inventory"
   | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
-  | "School ERP" | "NGO" | "Mining" | "Admin";
+  | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Admin";
 
 export type ModuleRoute = { title: string; url: string; iconName?: string };
 
@@ -146,6 +146,13 @@ export const MODULES: ModuleDef[] = [
       { title: "Tuckshop POS", url: "/tuckshop", iconName: "ShoppingBag" },
     ] },
 
+  // ---------- HELP & LEARNING ----------
+  { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true,
+    description: "Accounting basics, Dr/Cr rules and Zambian compliance guides.",
+    routes: [
+      { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" },
+    ] },
+
   // ---------- ADMIN ----------
   { key: "admin", label: "Administration", category: "Admin", core: true, defaultInstalled: true,
     description: "Company setup, roles, approvals, audit and notifications.",
@@ -165,7 +172,8 @@ export const MODULES: ModuleDef[] = [
 
 export const CATEGORY_ORDER: ModuleCategory[] = [
   "Core", "Sales", "Purchases", "Finance", "Inventory", "HR & Payroll",
-  "CRM", "Projects & Service", "Reports", "School ERP", "NGO", "Mining", "Admin",
+  "CRM", "Projects & Service", "Reports", "School ERP", "NGO", "Mining",
+  "Help & Learning", "Admin",
 ];
 
 export function getModule(key: string): ModuleDef | undefined {
