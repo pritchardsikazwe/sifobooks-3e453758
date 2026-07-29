@@ -9,6 +9,7 @@ export type PayslipPdfInput = {
     name?: string | null; address?: string | null; city?: string | null;
     country?: string | null; phone?: string | null; email?: string | null;
     logo_url?: string | null; tpin?: string | null;
+    payslip_header?: string | null; payslip_footer?: string | null;
   } | null;
   employee: {
     name: string; title?: string | null; employee_code?: string | null;
