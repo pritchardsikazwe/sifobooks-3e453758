@@ -80,6 +80,13 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 function Landing() {
   const heading = { fontFamily: "Outfit, sans-serif" } as const;
   const body = { fontFamily: "Figtree, sans-serif" } as const;
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-[#06110c] text-slate-200 selection:bg-[#0e8f4a]/40 selection:text-white" style={body}>
