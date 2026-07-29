@@ -292,11 +292,20 @@ function BankingPage() {
 
   const statusBadge = (t: Txn) => {
     const st = t.status ?? "unallocated";
-    if (st === "allocated") return <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100"><CheckCircle2 className="h-3 w-3" />Allocated</Badge>;
-    if (st === "partial") return <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100">Partial</Badge>;
-    const list = allocs[t.id] ?? [];
-    if (list.length && list.every(a => a.is_reversed)) return <Badge variant="outline" className="text-slate-500">Reversed</Badge>;
-    return <Badge variant="outline">Unallocated</Badge>;
+    const map: Record<string, string> = {
+      allocated: "bg-emerald-100 text-emerald-700",
+      posted: "bg-emerald-100 text-emerald-700",
+      reconciled: "bg-sky-100 text-sky-700",
+      cleared: "bg-indigo-100 text-indigo-700",
+      partial: "bg-amber-100 text-amber-700",
+      reversed: "bg-slate-100 text-slate-500",
+      voided: "bg-slate-100 text-slate-500",
+      failed: "bg-red-100 text-red-700",
+      draft: "bg-slate-100 text-slate-600",
+      unallocated: "",
+    };
+    const cls = map[st] ?? "";
+    return <Badge variant={cls ? "secondary" : "outline"} className={cls}>{st.charAt(0).toUpperCase() + st.slice(1)}</Badge>;
   };
 
   return (
@@ -345,6 +354,10 @@ function BankingPage() {
             </div>
 
 
+              <Button variant="outline" onClick={rebuildStatus} title="Recalculate status flags for all bank transactions">Rebuild status</Button>
+            </div>
+
+
           </CardHeader>
 
           <CardContent className="space-y-4">
@@ -352,9 +365,11 @@ function BankingPage() {
             <div className="flex flex-wrap items-center gap-1 border-b">
               {([
                 ["all", "All", counts.all],
-                ["unallocated", "Unallocated", counts.unallocated],
+                ["unallocated", "To Allocate", counts.unallocated],
                 ["partial", "Partial", counts.partial],
-                ["allocated", "Allocated", counts.allocated],
+                ["allocated", "Posted", counts.allocated],
+                ["reconciled", "Reconciled", counts.reconciled],
+                ["cleared", "Cleared", counts.cleared],
                 ["reversed", "Reversed", counts.reversed],
               ] as [StatusTab, string, number][]).map(([k, label, n]) => (
                 <button key={k} onClick={() => setTab(k)}
