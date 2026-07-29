@@ -12,6 +12,8 @@ import {
 import { MODULES } from "@/lib/modules";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
+import { QuickCreate } from "@/components/QuickCreate";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
