@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/command";
 import { MODULES } from "@/lib/modules";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
+import { CompanySwitcher } from "@/components/CompanySwitcher";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
