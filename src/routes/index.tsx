@@ -10,9 +10,9 @@ import logo from "@/assets/sifobooks-logo.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SifoBooks — Smart Accounting for African Enterprise" },
-      { name: "description", content: "SifoBooks automates invoicing, inventory, payroll and ZRA tax compliance in one modern accounting ERP for growing African businesses." },
-      { property: "og:title", content: "SifoBooks — Smart Accounting for African Enterprise" },
+      { title: "SifoBooks — Zambia-focused Accounting, Reporting & Compliance" },
+      { name: "description", content: "SifoBooks is Zambia-focused accounting software aligned with applicable financial reporting frameworks and configurable statutory compliance rules — accounting, reporting, compliance, audit and training in one system." },
+      { property: "og:title", content: "SifoBooks — Zambia-focused Accounting, Reporting & Compliance" },
       { property: "og:description", content: "Automate invoicing, inventory, payroll and tax compliance in one modern accounting ERP." },
     ],
   }),
@@ -91,17 +91,17 @@ function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4f46e5] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4f46e5]" />
               </span>
-              ZRA Compliant ERP · Built in Zambia
+              Zambia-focused · Aligned with IFRS-for-SMEs · Configurable statutory rules
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-white tracking-tight" style={heading}>
-              Smart Accounting for{" "}
+              A Finance Operating System{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#a855f7]">
-                African Enterprise.
+                built for Zambia.
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
-              Automate invoicing, inventory, payroll and tax filing in one modern ERP —
-              built for growing businesses that need real-time insight and seamless ZRA compliance.
+              Accounting engine, reporting engine, compliance centre, audit trail and in-app training — one system for owners, bookkeepers, accountants, finance managers and auditors.
+              Aligned with applicable financial reporting frameworks and configurable Zambian statutory rules (PAYE, NAPSA, NHIMA, WCF, SDL, VAT, TOT, WHT).
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
