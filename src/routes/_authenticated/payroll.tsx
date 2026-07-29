@@ -170,21 +170,33 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     else { toast.success("Run deleted"); onClose(); onChanged(); }
   };
 
-  const downloadSlip = (s: Slip & { employee: Employee }) => {
-    downloadPayslipPdf({
-      company,
+  const downloadSlip = async (s: Slip & { employee: Employee }) => {
+    const basic = Number(s.basic_salary ?? 0);
+    const allowances = Number(s.allowances ?? 0);
+    const gross = Number(s.gross_pay ?? 0);
+    // Taxable ≈ gross minus non-taxable allowances (utility + housing exempt portion + transport)
+    const nonTax = Number((s as any).utility_allowance ?? 0)
+      + Number((s as any).transport_allowance ?? 0)
+      + Math.min(Number((s as any).housing_allowance ?? 0), basic * 0.3);
+    const taxable = Math.max(0, gross - nonTax);
+    await downloadPayslipPdf({
+      company: company ? { ...company, tpin: (company as any).tpin ?? null } : null,
       employee: {
         name: `${s.employee.first_name} ${s.employee.last_name}`,
         title: null, employee_code: s.employee.employee_code,
         napsa_number: s.employee.napsa_number, national_id: s.employee.national_id,
+        tpin: (s.employee as any).tpin ?? null,
         bank_name: s.employee.bank_name, bank_account: s.employee.bank_account,
+        hire_date: (s.employee as any).hire_date ?? null,
+        department: null,
       },
       period: { monthName: monthName(run.period_month), year: run.period_year, payDate: run.pay_date },
       earnings: s.earnings ?? [], deductions: s.deductions ?? [],
-      gross: Number(s.gross_pay ?? 0), taxable: Number(s.ytd_taxable ?? 0) ? Number(s.gross_pay ?? 0) - Number(s.allowances ?? 0) : Number(s.gross_pay ?? 0),
-      net: Number(s.net_pay ?? 0),
+      gross, taxable, net: Number(s.net_pay ?? 0),
       ytd: { taxable: Number(s.ytd_taxable ?? 0), paye: Number(s.ytd_paye ?? 0), napsa: Number(s.ytd_napsa ?? 0) },
-      loan_balance: Number(s.loan_balance ?? 0), notes: s.notes,
+      loan_balance: Number(s.loan_balance ?? 0),
+      leave_balance: Number((s.employee as any).leave_days_entitlement ?? 0) - Number((s as any).leave_days_taken ?? 0),
+      notes: s.notes,
       currency: company?.base_currency ?? "ZMW",
     }, `payslip-${run.run_number}-${s.employee.first_name}-${s.employee.last_name}.pdf`);
   };
