@@ -31,7 +31,12 @@ type Txn = {
   reconciled?: boolean; matched_type?: string | null; matched_id?: string | null;
   currency?: string;
   allocated_amount?: number;
-  status?: "unallocated" | "partial" | "allocated" | "reversed";
+  status?: "unallocated" | "partial" | "allocated" | "posted" | "reconciled" | "cleared" | "reversed" | "draft" | "voided" | "failed";
+  is_allocated?: boolean; is_posted?: boolean; is_cleared?: boolean;
+  allocated_at?: string | null; posted_at?: string | null;
+  reconciled_at?: string | null; cleared_at?: string | null;
+  cleared_reference?: string | null;
+  content_hash?: string | null;
 };
 type Account = { id: string; account_code: string; account_name: string; account_type: string };
 type Allocation = {
@@ -41,7 +46,13 @@ type Allocation = {
   reversed_at: string | null; reverse_reason: string | null;
 };
 
-type StatusTab = "all" | "unallocated" | "partial" | "allocated" | "reversed";
+type StatusTab = "all" | "unallocated" | "partial" | "allocated" | "reconciled" | "cleared" | "reversed";
+
+async function sha1Hex(s: string): Promise<string> {
+  const buf = new TextEncoder().encode(s);
+  const digest = await crypto.subtle.digest("SHA-1", buf);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 function BankingPage() {
   const navigate = useNavigate();
