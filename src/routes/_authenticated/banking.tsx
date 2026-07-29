@@ -396,25 +396,38 @@ function BankingPage() {
               <div className="text-xs text-muted-foreground ml-auto">{filtered.length} shown</div>
             </div>
 
+            {selected.size > 0 && (
+              <div className="flex items-center gap-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+                <span className="font-medium">{selected.size} selected</span>
+                <Button size="sm" variant="outline" onClick={bulkClear}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear selected</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Deselect</Button>
+              </div>
+            )}
+
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="w-8">
+                      <input type="checkbox"
+                        checked={filtered.length > 0 && selected.size === filtered.length}
+                        onChange={toggleSelectAll} />
+                    </TableHead>
+                    <TableHead className="w-6"></TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="text-right">Allocated</TableHead>
-                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Remaining</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
                   ) : filtered.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No transactions match.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">No transactions match.</TableCell></TableRow>
                   ) : filtered.map(t => {
                     const abs = Math.abs(Number(t.amount));
                     const allocated = Number(t.allocated_amount ?? 0);
@@ -424,6 +437,9 @@ function BankingPage() {
                     return (
                       <>
                         <TableRow key={t.id}>
+                          <TableCell className="pr-0">
+                            <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
+                          </TableCell>
                           <TableCell className="pr-0">
                             {list.length > 0 && (
                               <button onClick={() => toggleExpand(t.id)} className="text-muted-foreground hover:text-foreground">
@@ -446,13 +462,25 @@ function BankingPage() {
                                 <BookOpen className="h-3.5 w-3.5 mr-1" />Allocate
                               </Button>
                             )}
+                            {t.is_allocated && !t.is_cleared && (
+                              <Button size="sm" variant="outline" className="mr-1 border-indigo-300 text-indigo-700 hover:bg-indigo-50" onClick={() => { setClearTxn(t); setClearRef(""); }}>
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear
+                              </Button>
+                            )}
                             <Button variant="ghost" size="icon" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                           </TableCell>
                         </TableRow>
-                        {isOpen && list.length > 0 && (
+                        {isOpen && (
                           <TableRow key={t.id + "-exp"} className="bg-muted/40">
-                            <TableCell colSpan={8} className="py-2">
-                              <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div>
+                            <TableCell colSpan={9} className="py-2">
+                              <div className="pl-6 pb-2 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                                {t.allocated_at && <span>✓ Allocated · {t.allocated_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.posted_at && <span>✓ Posted · {t.posted_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.reconciled_at && <span>✓ Reconciled · {t.reconciled_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.cleared_at && <span>✓ Cleared · {t.cleared_at.slice(0,16).replace("T"," ")}{t.cleared_reference ? ` (${t.cleared_reference})` : ""}</span>}
+                              </div>
+                              {list.length > 0 && <>
+                              <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div></>}
                               <table className="w-full text-xs">
                                 <thead className="text-muted-foreground">
                                   <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
