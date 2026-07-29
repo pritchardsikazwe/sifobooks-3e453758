@@ -129,6 +129,203 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
+  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "recent-activity"];
+  const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
+  const [editMode, setEditMode] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!e.over || e.active.id === e.over.id) return;
+    move(String(e.active.id), String(e.over.id));
+  };
+
+  const spans: Record<string, string> = {
+    "quick-bar": "col-span-12",
+    "kpis": "col-span-12",
+    "sales-chart": "col-span-12 lg:col-span-5",
+    "income-vs-expenses": "col-span-12 lg:col-span-4",
+    "cash-flow": "col-span-12 lg:col-span-3",
+    "revenue-categories": "col-span-12 lg:col-span-4",
+    "quick-actions": "col-span-12 lg:col-span-4",
+    "snapshot": "col-span-12 lg:col-span-4",
+    "recent-activity": "col-span-12",
+  };
+
+  const WIDGET_LABELS: Record<string, string> = {
+    "quick-bar": "Quick action bar",
+    "kpis": "KPI strip",
+    "sales-chart": "Sales by month",
+    "income-vs-expenses": "Income vs Expenses",
+    "cash-flow": "Cash flow",
+    "revenue-categories": "Revenue categories",
+    "quick-actions": "Quick actions",
+    "snapshot": "Module snapshot",
+    "recent-activity": "Recent activity",
+  };
+
+  const widgetContent: Record<string, React.ReactNode> = {
+    "quick-bar": (
+      <div className="rounded-lg border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-sm font-semibold">What do you want to do?</div>
+            <div className="text-[11px] text-muted-foreground">One-click accounting actions</div>
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Press ⌘K</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          <ActionBtn to="/invoices/new" icon={FileText} label="Record Sale" />
+          <ActionBtn to="/bills" icon={FileText} label="Record Purchase" />
+          <ActionBtn to="/expenses" icon={Receipt} label="Record Expense" />
+          <ActionBtn to="/receipts" icon={CreditCard} label="Receive Money" />
+          <ActionBtn to="/bill-payments" icon={Wallet} label="Pay Money" />
+          <ActionBtn to="/reconciliation" icon={Landmark} label="Reconcile" />
+          <ActionBtn to="/payroll" icon={Banknote} label="Run Payroll" />
+          <ActionBtn to="/reports" icon={FileText} label="Reports" />
+        </div>
+      </div>
+    ),
+    "kpis": (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} series={monthlySeries.map(m => m.income)} positive to="/reports/pnl" />
+        <Kpi label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
+        <Kpi label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
+        <Kpi label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} to="/banking" />
+        <Kpi label="Receivables" value={money(receivables)} delta={null} icon={ArrowUpRight} series={[]} to="/reports/aged-receivables" />
+        <Kpi label="Payables" value={money(payables)} delta={null} icon={ArrowDownRight} series={[]} to="/reports/aged-payables" />
+        <Kpi label="Outstanding Invoices" value={String(invoiceCount)} delta={null} icon={FileText} series={[]} to="/invoices" />
+        <Kpi label="Inventory value" value={money(stockValue)} delta={null} icon={Package} series={[]} to="/stock" />
+      </div>
+    ),
+    "sales-chart": (
+      <Panel title="Sales by Month" subtitle="Last 12 months">
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={monthlySeries}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+            <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+            <Bar dataKey="income" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Panel>
+    ),
+    "income-vs-expenses": (
+      <Panel title="Income vs Expenses" subtitle="12-month trend">
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={monthlySeries}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+            <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Line type="monotone" dataKey="income" stroke="var(--color-primary)" strokeWidth={2.5} dot={false} />
+            <Line type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={2.5} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Panel>
+    ),
+    "cash-flow": (
+      <Panel title="Cash Flow" subtitle="Cumulative">
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={cashFlowSeries}>
+            <defs>
+              <linearGradient id="gCash" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis hide />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+            <Area type="monotone" dataKey="balance" stroke="var(--color-primary)" strokeWidth={2.5} fill="url(#gCash)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </Panel>
+    ),
+    "revenue-categories": (
+      <Panel title="Revenue Categories" subtitle="Top 5">
+        {categoryData.length === 0 ? (
+          <EmptyState label="No categorised income yet" />
+        ) : (
+          <ResponsiveContainer width="100%" height={230}>
+            <PieChart>
+              <Pie data={categoryData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                {categoryData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
+              </Pie>
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </Panel>
+    ),
+    "quick-actions": (
+      <Panel title="Quick Actions" subtitle="Post transactions">
+        <div className="grid grid-cols-2 gap-2">
+          <QuickTile to="/invoices/new" icon={FileText} label="Invoice" />
+          <QuickTile to="/quotes/new" icon={ClipboardList} label="Quote" />
+          <QuickTile to="/receipts" icon={CreditCard} label="Receipt" />
+          <QuickTile to="/expenses" icon={Receipt} label="Expense" />
+          <QuickTile to="/bills" icon={FileText} label="Bill" />
+          <QuickTile to="/purchase-orders" icon={ShoppingCart} label="PO" />
+          <QuickTile to="/banking" icon={Landmark} label="Deposit" />
+          <QuickTile to="/journal-entries" icon={BookText} label="Journal" />
+        </div>
+      </Panel>
+    ),
+    "snapshot": (
+      <Panel title="Snapshot" subtitle="Key modules">
+        <div className="space-y-1">
+          <Row icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" />
+          <Row icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
+          <Row icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" />
+          <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />
+          <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />
+          <Row icon={Truck} label="Suppliers" value={String(supplierCount)} to="/suppliers" />
+          <Row icon={Wallet} label="Invoices" value={String(invoiceCount)} to="/invoices" />
+        </div>
+      </Panel>
+    ),
+    "recent-activity": (
+      <Panel title="Recent Activity" subtitle="Latest bank transactions" action={<Link to="/banking" className="text-xs text-primary hover:underline font-semibold">View all →</Link>}>
+        {loading ? <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
+        : recent.length === 0 ? <EmptyState label="No transactions yet. Import a bank statement to get started." cta="Import statement" to="/banking" />
+        : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-[11px] uppercase tracking-widest text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="text-left py-2 pr-3 font-semibold">Date</th>
+                  <th className="text-left py-2 pr-3 font-semibold">Description</th>
+                  <th className="text-left py-2 pr-3 font-semibold">Reference</th>
+                  <th className="text-left py-2 pr-3 font-semibold">Category</th>
+                  <th className="text-right py-2 font-semibold">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map(t => (
+                  <tr key={t.id} className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors">
+                    <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}</td>
+                    <td className="py-2.5 pr-3 font-medium truncate max-w-xs">{t.description}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground text-xs">{t.reference || "—"}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground text-xs">{t.category || "—"}</td>
+                    <td className={cn("py-2.5 text-right font-semibold whitespace-nowrap num", t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+                      {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+    ),
+  };
+
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] mx-auto">
@@ -145,155 +342,77 @@ function DashboardPage() {
               {companyName || "SifoBooks"} · {dateLabel}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" className="border-border"><Link to="/reports">Reports</Link></Button>
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground"><Link to="/invoices/new">New invoice</Link></Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={editMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEditMode(v => !v)}
+              className="h-9"
+            >
+              {editMode ? <><Check className="h-4 w-4 mr-1.5" /> Done</> : <><LayoutGrid className="h-4 w-4 mr-1.5" /> Customize</>}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <Plus className="h-4 w-4 mr-1.5" /> Widgets
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Hidden widgets</DropdownMenuLabel>
+                {layout.hidden.length === 0 && (
+                  <DropdownMenuItem disabled className="text-xs italic">All widgets visible</DropdownMenuItem>
+                )}
+                {layout.hidden.map(id => (
+                  <DropdownMenuItem key={id} onClick={() => show(id)}>
+                    <Eye className="h-4 w-4 mr-2" /> {WIDGET_LABELS[id] ?? id}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={reset}>
+                  <RotateCcw className="h-4 w-4 mr-2" /> Reset layout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button asChild variant="outline" size="sm" className="h-9 border-border"><Link to="/reports">Reports</Link></Button>
+            <Button asChild size="sm" className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground"><Link to="/invoices/new">New invoice</Link></Button>
           </div>
         </motion.div>
 
-        {/* KPI grid — compact professional cards with sparklines */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Kpi label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} series={monthlySeries.map(m => m.income)} positive to="/reports/pnl" />
-          <Kpi label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-          <Kpi label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
-          <Kpi label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} to="/banking" />
-          <Kpi label="Receivables" value={money(receivables)} delta={null} icon={ArrowUpRight} series={[]} to="/reports/aged-receivables" />
-          <Kpi label="Payables" value={money(payables)} delta={null} icon={ArrowDownRight} series={[]} to="/reports/aged-payables" />
-          <Kpi label="Outstanding Invoices" value={String(invoiceCount)} delta={null} icon={FileText} series={[]} to="/invoices" />
-          <Kpi label="Inventory value" value={money(stockValue)} delta={null} icon={Package} series={[]} to="/stock" />
-        </div>
-
-        {/* Charts row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Panel className="lg:col-span-5" title="Sales by Month" subtitle="Last 12 months">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={monthlySeries}>
-                <defs>
-                  <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary-rgb, 0 0 0))" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="hsl(var(--primary-rgb, 0 0 0))" stopOpacity={0.55} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-                <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
-                <Bar dataKey="income" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Panel>
-
-          <Panel className="lg:col-span-4" title="Income vs Expenses" subtitle="12-month trend">
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={monthlySeries}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-                <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="income" stroke="var(--color-primary)" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Panel>
-
-          <Panel className="lg:col-span-3" title="Cash Flow" subtitle="Cumulative">
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={cashFlowSeries}>
-                <defs>
-                  <linearGradient id="gCash" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="label" stroke="currentColor" className="text-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis hide />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
-                <Area type="monotone" dataKey="balance" stroke="var(--color-primary)" strokeWidth={2.5} fill="url(#gCash)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Panel>
-        </div>
-
-        {/* Charts row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Panel className="lg:col-span-4" title="Revenue Categories" subtitle="Top 5">
-            {categoryData.length === 0 ? (
-              <EmptyState label="No categorised income yet" />
-            ) : (
-              <ResponsiveContainer width="100%" height={230}>
-                <PieChart>
-                  <Pie data={categoryData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
-                    {categoryData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => money(Number(v))} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </Panel>
-
-          <Panel className="lg:col-span-4" title="Quick Actions" subtitle="Post transactions">
-            <div className="grid grid-cols-2 gap-2">
-              <QuickTile to="/invoices/new" icon={FileText} label="Invoice" />
-              <QuickTile to="/quotes/new" icon={ClipboardList} label="Quote" />
-              <QuickTile to="/receipts" icon={CreditCard} label="Receipt" />
-              <QuickTile to="/expenses" icon={Receipt} label="Expense" />
-              <QuickTile to="/bills" icon={FileText} label="Bill" />
-              <QuickTile to="/purchase-orders" icon={ShoppingCart} label="PO" />
-              <QuickTile to="/banking" icon={Landmark} label="Deposit" />
-              <QuickTile to="/journal-entries" icon={BookText} label="Journal" />
-            </div>
-          </Panel>
-
-          <Panel className="lg:col-span-4" title="Snapshot" subtitle="Key modules">
-            <div className="space-y-1">
-              <Row icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" />
-              <Row icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
-              <Row icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" />
-              <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />
-              <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />
-              <Row icon={Truck} label="Suppliers" value={String(supplierCount)} to="/suppliers" />
-              <Row icon={Wallet} label="Invoices" value={String(invoiceCount)} to="/invoices" />
-            </div>
-          </Panel>
-        </div>
-
-        {/* Recent activity */}
-        <Panel title="Recent Activity" subtitle="Latest bank transactions" action={<Link to="/banking" className="text-xs text-primary hover:underline font-semibold">View all →</Link>}>
-          {loading ? <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
-          : recent.length === 0 ? <EmptyState label="No transactions yet. Import a bank statement to get started." cta="Import statement" to="/banking" />
-          : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-[11px] uppercase tracking-widest text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="text-left py-2 pr-3 font-semibold">Date</th>
-                    <th className="text-left py-2 pr-3 font-semibold">Description</th>
-                    <th className="text-left py-2 pr-3 font-semibold">Reference</th>
-                    <th className="text-left py-2 pr-3 font-semibold">Category</th>
-                    <th className="text-right py-2 font-semibold">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.map(t => (
-                    <tr key={t.id} className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors">
-                      <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}</td>
-                      <td className="py-2.5 pr-3 font-medium truncate max-w-xs">{t.description}</td>
-                      <td className="py-2.5 pr-3 text-muted-foreground text-xs">{t.reference || "—"}</td>
-                      <td className="py-2.5 pr-3 text-muted-foreground text-xs">{t.category || "—"}</td>
-                      <td className={cn("py-2.5 text-right font-semibold whitespace-nowrap num", t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
-                        {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Panel>
+        {ready && (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={layout.order} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-12 gap-4">
+                {layout.order.map(id => (
+                  <SortableWidget
+                    key={id}
+                    id={id}
+                    span={spans[id] ?? "col-span-12 lg:col-span-4"}
+                    editMode={editMode}
+                    onHide={() => hide(id)}
+                  >
+                    {widgetContent[id] ?? null}
+                  </SortableWidget>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </div>
     </div>
+  );
+}
+
+function ActionBtn({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="group flex flex-col items-center justify-center gap-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:bg-primary/5 px-2 py-3 transition-all"
+    >
+      <div className="h-8 w-8 rounded-md bg-primary/10 grid place-items-center text-primary group-hover:scale-110 transition-transform">
+        <Icon className="h-4 w-4" />
+      </div>
+      <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{label}</span>
+    </Link>
   );
 }
 
