@@ -31,7 +31,7 @@ function AttendancePage() {
       columns={[
         { key: "attendance_date", header: "Date" },
         { key: "employee_id", header: "Employee",
-          render: (v: string) => employees.find(e => e.value === v)?.label ?? "—" },
+          render: (row: any) => employees.find(e => e.value === row.employee_id)?.label ?? "—" },
         { key: "clock_in", header: "Clock In" },
         { key: "clock_out", header: "Clock Out" },
         { key: "hours_worked", header: "Hours" },
