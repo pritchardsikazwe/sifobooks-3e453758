@@ -60,6 +60,7 @@ export const MODULES: ModuleDef[] = [
       { title: "Recon Sessions", url: "/reconciliation-sessions", iconName: "Scale" },
       { title: "Chart of Accounts", url: "/chart-of-accounts", iconName: "BookOpen" },
       { title: "Journal Entries", url: "/journal-entries", iconName: "BookText" },
+      { title: "Smart Posting Wizard", url: "/posting-wizard", iconName: "Sparkles" },
       { title: "Cashbook", url: "/cashbook", iconName: "BookText" },
       { title: "Opening Balances", url: "/opening-balances", iconName: "Sparkles" },
       { title: "Period Close", url: "/period-close", iconName: "CalendarClock" },
