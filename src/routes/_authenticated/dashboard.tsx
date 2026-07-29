@@ -432,13 +432,13 @@ function Kpi({ label, value, delta, icon: Icon, series, positive = true, to }: {
   const up = delta != null && delta >= 0;
   const good = positive ? up : !up;
   const content = (
-    <div className="group relative rounded-lg border border-border bg-card p-3.5 hover:border-primary/30 hover:shadow-sm transition-all">
+    <div className="group relative rounded-lg border border-border bg-card p-3 sm:p-3.5 hover:border-primary/30 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">{label}</div>
-          <div className="mt-1 text-lg sm:text-xl font-bold text-foreground num truncate">{value}</div>
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">{label}</div>
+          <div className="mt-1 text-sm sm:text-xl font-bold text-foreground num leading-tight break-words tabular-nums">{value}</div>
         </div>
-        <div className="h-8 w-8 rounded-md bg-primary/10 grid place-items-center text-primary shrink-0">
+        <div className="hidden sm:grid h-8 w-8 rounded-md bg-primary/10 place-items-center text-primary shrink-0">
           <Icon className="h-4 w-4" />
         </div>
       </div>
