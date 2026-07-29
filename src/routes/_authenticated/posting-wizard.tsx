@@ -26,54 +26,117 @@ export const Route = createFileRoute("/_authenticated/posting-wizard")({
 type Account = { id: string; account_code: string; account_name: string; account_type: string };
 type Line = { id: string; account_id: string; description: string; debit: number; credit: number };
 
+export type AccountRole =
+  | "bank" | "cash" | "receivable" | "payable" | "sales" | "cogs" | "expense"
+  | "vat_output" | "vat_input" | "fixed_asset" | "loan" | "equity" | "bank_to";
+
+type ScenarioLineTpl = {
+  role: AccountRole;
+  desc: string;
+  debit?: number;
+  credit?: number;
+};
+
 type Scenario = {
   key: string;
   label: string;
   icon: any;
   hint: string;
-  build: (amt: number, vat: number) => Array<{ code: string; desc: string; debit?: number; credit?: number }>;
+  /** Which account roles the user should pick before building. */
+  roles: { role: AccountRole; label: string; typeHint: string[] }[];
+  build: (amt: number, vat: number) => ScenarioLineTpl[];
+};
+
+const ROLE_DEFAULT_CODE: Record<AccountRole, string> = {
+  bank: "1000", cash: "1000", receivable: "1100", payable: "2100",
+  sales: "4000", cogs: "5000", expense: "6000",
+  vat_output: "2200", vat_input: "2210", fixed_asset: "1500",
+  loan: "2300", equity: "3000", bank_to: "1001",
 };
 
 const SCENARIOS: Scenario[] = [
   { key: "blank", label: "Blank Entry", icon: FileText, hint: "Start from scratch — manual lines.",
+    roles: [],
     build: () => [] },
   { key: "sale", label: "Cash Sale", icon: ShoppingCart, hint: "Debit Bank · Credit Sales & VAT Output.",
+    roles: [
+      { role: "bank", label: "Deposit into (Bank/Cash)", typeHint: ["asset"] },
+      { role: "sales", label: "Sales / Revenue account", typeHint: ["revenue"] },
+      { role: "vat_output", label: "VAT Output (if VAT > 0)", typeHint: ["liability"] },
+    ],
     build: (a, v) => [
-      { code: "1000", desc: "Cash received", debit: a },
-      { code: "4000", desc: "Sales revenue", credit: a - v },
-      ...(v > 0 ? [{ code: "2200", desc: "VAT output", credit: v }] : []),
+      { role: "bank", desc: "Cash received", debit: a },
+      { role: "sales", desc: "Sales revenue", credit: a - v },
+      ...(v > 0 ? [{ role: "vat_output" as const, desc: "VAT output", credit: v }] : []),
+    ] },
+  { key: "credit_sale", label: "Credit Sale (Invoice)", icon: Receipt, hint: "Debit Receivable · Credit Sales & VAT.",
+    roles: [
+      { role: "receivable", label: "Accounts Receivable", typeHint: ["asset"] },
+      { role: "sales", label: "Sales / Revenue account", typeHint: ["revenue"] },
+      { role: "vat_output", label: "VAT Output (if VAT > 0)", typeHint: ["liability"] },
+    ],
+    build: (a, v) => [
+      { role: "receivable", desc: "Customer invoice", debit: a },
+      { role: "sales", desc: "Sales revenue", credit: a - v },
+      ...(v > 0 ? [{ role: "vat_output" as const, desc: "VAT output", credit: v }] : []),
     ] },
   { key: "purchase", label: "Purchase on Credit", icon: Receipt, hint: "Debit Expense/Stock · Credit Payables.",
+    roles: [
+      { role: "cogs", label: "Purchase / Cost account", typeHint: ["expense", "cogs", "asset"] },
+      { role: "vat_input", label: "VAT Input (if VAT > 0)", typeHint: ["asset"] },
+      { role: "payable", label: "Accounts Payable", typeHint: ["liability"] },
+    ],
     build: (a, v) => [
-      { code: "5000", desc: "Purchase / cost", debit: a - v },
-      ...(v > 0 ? [{ code: "2210", desc: "VAT input", debit: v }] : []),
-      { code: "2100", desc: "Trade payable", credit: a },
+      { role: "cogs", desc: "Purchase / cost", debit: a - v },
+      ...(v > 0 ? [{ role: "vat_input" as const, desc: "VAT input", debit: v }] : []),
+      { role: "payable", desc: "Trade payable", credit: a },
     ] },
   { key: "expense", label: "Operating Expense", icon: Receipt, hint: "Debit Expense · Credit Bank.",
+    roles: [
+      { role: "expense", label: "Expense account", typeHint: ["expense"] },
+      { role: "vat_input", label: "VAT Input (if VAT > 0)", typeHint: ["asset"] },
+      { role: "bank", label: "Paid from (Bank/Cash)", typeHint: ["asset"] },
+    ],
     build: (a, v) => [
-      { code: "6000", desc: "Operating expense", debit: a - v },
-      ...(v > 0 ? [{ code: "2210", desc: "VAT input", debit: v }] : []),
-      { code: "1000", desc: "Paid from bank", credit: a },
+      { role: "expense", desc: "Operating expense", debit: a - v },
+      ...(v > 0 ? [{ role: "vat_input" as const, desc: "VAT input", debit: v }] : []),
+      { role: "bank", desc: "Paid from bank", credit: a },
     ] },
   { key: "transfer", label: "Bank Transfer", icon: ArrowLeftRight, hint: "Debit destination · Credit source.",
+    roles: [
+      { role: "bank_to", label: "Destination account", typeHint: ["asset"] },
+      { role: "bank", label: "Source account", typeHint: ["asset"] },
+    ],
     build: (a) => [
-      { code: "1001", desc: "To secondary bank", debit: a },
-      { code: "1000", desc: "From main bank", credit: a },
+      { role: "bank_to", desc: "Transfer in", debit: a },
+      { role: "bank", desc: "Transfer out", credit: a },
     ] },
   { key: "loan", label: "Loan Received", icon: Landmark, hint: "Debit Bank · Credit Loan Liability.",
+    roles: [
+      { role: "bank", label: "Deposit into (Bank)", typeHint: ["asset"] },
+      { role: "loan", label: "Loan liability account", typeHint: ["liability"] },
+    ],
     build: (a) => [
-      { code: "1000", desc: "Loan proceeds", debit: a },
-      { code: "2300", desc: "Loan payable", credit: a },
+      { role: "bank", desc: "Loan proceeds", debit: a },
+      { role: "loan", desc: "Loan payable", credit: a },
     ] },
   { key: "asset", label: "Buy Fixed Asset", icon: Building2, hint: "Debit Asset · Credit Bank/Payable.",
+    roles: [
+      { role: "fixed_asset", label: "Fixed asset account", typeHint: ["asset"] },
+      { role: "bank", label: "Paid from (Bank/Cash)", typeHint: ["asset"] },
+    ],
     build: (a) => [
-      { code: "1500", desc: "Fixed asset", debit: a },
-      { code: "1000", desc: "Paid from bank", credit: a },
+      { role: "fixed_asset", desc: "Fixed asset", debit: a },
+      { role: "bank", desc: "Paid from bank", credit: a },
     ] },
   { key: "owner", label: "Owner Contribution", icon: Coins, hint: "Debit Bank · Credit Equity.",
+    roles: [
+      { role: "bank", label: "Deposit into (Bank/Cash)", typeHint: ["asset"] },
+      { role: "equity", label: "Owner's equity account", typeHint: ["equity"] },
+    ],
     build: (a) => [
-      { code: "1000", desc: "Cash contribution", debit: a },
-      { code: "3000", desc: "Owner's equity", credit: a },
+      { role: "bank", desc: "Cash contribution", debit: a },
+      { role: "equity", desc: "Owner's equity", credit: a },
     ] },
 ];
 
@@ -109,6 +172,7 @@ function PostingWizard() {
   const [description, setDescription] = useState<string>("");
   const [lines, setLines] = useState<Line[]>([newLine(), newLine()]);
   const [posting, setPosting] = useState(false);
+  const [rolePick, setRolePick] = useState<Partial<Record<AccountRole, string>>>({});
 
   useEffect(() => {
     (async () => {
@@ -121,6 +185,23 @@ function PostingWizard() {
       setAccounts(acc ?? []);
     })();
   }, []);
+
+  const currentScenario = SCENARIOS.find(s => s.key === scenario)!;
+
+  // When scenario or accounts change, seed rolePick with sensible defaults (by code, then by type).
+  useEffect(() => {
+    if (!accounts.length) return;
+    const next: Partial<Record<AccountRole, string>> = { ...rolePick };
+    for (const r of currentScenario.roles) {
+      if (next[r.role]) continue;
+      const byCode = accounts.find(a => a.account_code === ROLE_DEFAULT_CODE[r.role]);
+      const byType = accounts.find(a => r.typeHint.includes(a.account_type));
+      if (byCode) next[r.role] = byCode.id;
+      else if (byType) next[r.role] = byType.id;
+    }
+    setRolePick(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario, accounts]);
 
   async function ensureAccounts(codes: string[]): Promise<Account[]> {
     if (!userId) return accounts;
@@ -144,16 +225,25 @@ function PostingWizard() {
     const sc = SCENARIOS.find(s => s.key === scenario)!;
     const template = sc.build(amount, vat);
     if (!template.length) { setLines([newLine(), newLine()]); setStep(2); return; }
-    const acc = await ensureAccounts(template.map(t => t.code));
+    // Ensure any role without a user pick has a default account created
+    const neededCodes = sc.roles
+      .filter(r => !rolePick[r.role])
+      .map(r => ROLE_DEFAULT_CODE[r.role]);
+    const acc = neededCodes.length ? await ensureAccounts(neededCodes) : accounts;
     const built = template.map(t => {
-      const a = acc.find(x => x.account_code === t.code);
-      return { id: crypto.randomUUID(), account_id: a?.id ?? "", description: t.desc,
+      const picked = rolePick[t.role];
+      const fallback = acc.find(x => x.account_code === ROLE_DEFAULT_CODE[t.role]);
+      return { id: crypto.randomUUID(),
+        account_id: picked ?? fallback?.id ?? "",
+        description: t.desc,
         debit: +(t.debit ?? 0).toFixed(2), credit: +(t.credit ?? 0).toFixed(2) };
     });
     setLines(built);
     if (!description) setDescription(sc.label);
     setStep(2);
   }
+
+
 
   const totalDebit = useMemo(() => lines.reduce((s, l) => s + (+l.debit || 0), 0), [lines]);
   const totalCredit = useMemo(() => lines.reduce((s, l) => s + (+l.credit || 0), 0), [lines]);
@@ -236,12 +326,46 @@ function PostingWizard() {
               })}
             </div>
             {scenario !== "blank" && (
-              <div className="grid gap-3 md:grid-cols-4">
-                <div><Label>Total amount</Label><Input type="number" step="0.01" value={amount || ""} onChange={e => setAmount(+e.target.value || 0)} /></div>
-                <div><Label>Of which VAT</Label><Input type="number" step="0.01" value={vat || ""} onChange={e => setVat(+e.target.value || 0)} /></div>
-                <div><Label>Entry date</Label><Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} /></div>
-                <div><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" /></div>
-              </div>
+              <>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <div><Label>Total amount</Label><Input type="number" step="0.01" value={amount || ""} onChange={e => setAmount(+e.target.value || 0)} /></div>
+                  <div><Label>Of which VAT</Label><Input type="number" step="0.01" value={vat || ""} onChange={e => setVat(+e.target.value || 0)} /></div>
+                  <div><Label>Entry date</Label><Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} /></div>
+                  <div><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" /></div>
+                </div>
+                {currentScenario.roles.length > 0 && (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Pick accounts for this entry
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {currentScenario.roles.map(r => {
+                        const filtered = accounts.filter(a => r.typeHint.includes(a.account_type));
+                        const options = filtered.length ? filtered : accounts;
+                        return (
+                          <div key={r.role}>
+                            <Label className="text-xs">{r.label}</Label>
+                            <Select value={rolePick[r.role] ?? ""} onValueChange={v => setRolePick(p => ({ ...p, [r.role]: v }))}>
+                              <SelectTrigger><SelectValue placeholder="Select account…" /></SelectTrigger>
+                              <SelectContent>
+                                {options.map(a => (
+                                  <SelectItem key={a.id} value={a.id}>
+                                    {a.account_code} · {a.account_name}
+                                    <span className="ml-2 text-[10px] text-muted-foreground">{a.account_type}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Defaults are suggested from your Chart of Accounts — change any pick to route this posting to the right account.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             <div className="flex justify-end">
               <Button onClick={applyScenario} disabled={scenario !== "blank" && amount <= 0}>
