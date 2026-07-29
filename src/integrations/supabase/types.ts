@@ -5469,6 +5469,7 @@ export type Database = {
         Returns: undefined
       }
       post_allowance: { Args: { _id: string }; Returns: string }
+      post_asset_disposal: { Args: { _disposal_id: string }; Returns: string }
       post_bill: { Args: { _bill_id: string }; Returns: string }
       post_bill_payment: { Args: { _payment_id: string }; Returns: string }
       post_depreciation: {
