@@ -3027,6 +3027,9 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_url: string | null
           batch_id: string | null
           created_at: string
           currency: string
@@ -3045,6 +3048,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_url?: string | null
           batch_id?: string | null
           created_at?: string
           currency?: string
@@ -3063,6 +3069,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_url?: string | null
           batch_id?: string | null
           created_at?: string
           currency?: string
