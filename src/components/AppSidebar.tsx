@@ -15,6 +15,7 @@ import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 
 const LogOut = Icons.LogOut;
+const GraduationCap = Icons.GraduationCap;
 const STORAGE_KEY = "sifobooks.sidebar.groups";
 
 function iconFor(name?: string): any {
@@ -199,7 +200,19 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border bg-card p-2.5">
+      <SidebarFooter className="border-t border-border bg-card p-2.5 space-y-2">
+        <Link
+          to="/learn"
+          className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors ${
+            currentPath.startsWith("/learn")
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+          title="Learn Centre"
+        >
+          <GraduationCap className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Learn Centre</span>}
+        </Link>
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 shrink-0 rounded-full bg-primary/10 grid place-items-center text-xs font-bold text-primary">
             {name.slice(0, 1).toUpperCase()}
