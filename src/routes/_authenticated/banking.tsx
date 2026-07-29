@@ -80,6 +80,9 @@ function BankingPage() {
 
   const [reverseAlloc, setReverseAlloc] = useState<Allocation | null>(null);
   const [reverseReason, setReverseReason] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [clearTxn, setClearTxn] = useState<Txn | null>(null);
+  const [clearRef, setClearRef] = useState("");
 
   const money = (n: number) => formatMoney(n, currency);
 
@@ -164,7 +167,8 @@ function BankingPage() {
     const s = search.trim().toLowerCase();
     return txns.filter(t => {
       const st = t.status ?? "unallocated";
-      if (tab !== "all" && st !== tab) return false;
+      if (tab === "unallocated" && !(st === "unallocated" || st === "partial")) return false;
+      if (tab !== "all" && tab !== "unallocated" && st !== tab) return false;
       if (dirFilter === "in" && !(Number(t.amount) > 0)) return false;
       if (dirFilter === "out" && !(Number(t.amount) < 0)) return false;
       if (dateFrom && t.txn_date < dateFrom) return false;
@@ -177,20 +181,50 @@ function BankingPage() {
   }, [txns, search, tab, dirFilter, dateFrom, dateTo]);
 
   const counts = useMemo(() => {
-    const c = { all: txns.length, unallocated: 0, partial: 0, allocated: 0, reversed: 0 };
+    const c = { all: txns.length, unallocated: 0, partial: 0, allocated: 0, reconciled: 0, cleared: 0, reversed: 0 };
     txns.forEach(t => {
       const st = t.status ?? "unallocated";
-      if (st in c) (c as any)[st]++;
-    });
-    // Reversed = txns with only reversed allocations and no live ones
-    Object.entries(allocs).forEach(([tid, list]) => {
-      if (list.length && list.every(a => a.is_reversed)) {
-        const t = txns.find(x => x.id === tid);
-        if (t && (t.status ?? "unallocated") === "unallocated") c.reversed++;
-      }
+      if (st === "unallocated" || st === "partial") c.unallocated++;
+      if (st === "partial") c.partial++;
+      if (st === "allocated" || st === "posted") c.allocated++;
+      if (st === "reconciled") c.reconciled++;
+      if (st === "cleared") c.cleared++;
+      if (st === "reversed") c.reversed++;
     });
     return c;
-  }, [txns, allocs]);
+  }, [txns]);
+
+  const toggleSelect = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelectAll = () =>
+    setSelected(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)));
+
+  const runClear = async (txn: Txn, ref: string) => {
+    const { error } = await supabase.rpc("clear_bank_transaction", { _txn_id: txn.id, _reference: ref || null });
+    if (error) { toast.error(error.message); return false; }
+    return true;
+  };
+
+  const bulkClear = async () => {
+    if (!selected.size) return;
+    let ok = 0, skip = 0, fail = 0;
+    for (const id of selected) {
+      const t = txns.find(x => x.id === id); if (!t) continue;
+      if (t.is_cleared) { skip++; continue; }
+      const good = await runClear(t, "");
+      good ? ok++ : fail++;
+    }
+    toast.success(`${selected.size} selected · ${ok} cleared · ${skip} already · ${fail} failed`);
+    setSelected(new Set());
+    await load();
+  };
+
+  const rebuildStatus = async () => {
+    const { error } = await supabase.rpc("rebuild_bank_status");
+    if (error) return toast.error(error.message);
+    toast.success("Status index rebuilt");
+    await load();
+  };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
