@@ -1,58 +1,63 @@
+# Plan — Banking Sub-Screens + Modern Reports Centre 2026
 
-## Scope
+This is a large scope. I'll deliver it in **4 phases** so each ships as a working, testable piece rather than one giant untested drop. Phase 1 starts as soon as you approve.
 
-Four Sage-style surfaces, all in dark glass matching the current dashboard theme.
+## Phase 1 — Banking Sub-Screens (DataTable + Drawer)
 
-## 1. Spend Money modal (Banking)
+Migrate the remaining bank-related list screens to the new `DataTable` + `DetailDrawer` pattern (matches Customers/Invoices/Expenses from Phase 2).
 
-New component `src/components/SpendMoneyDialog.tsx` opened from a "Spend Money" button on `banking.tsx` and `bank-accounts.tsx`.
+- `bank-accounts.tsx` — table with balance/last-reconciled columns, drawer showing account KPIs + recent transactions.
+- `bank-rules.tsx` — table with priority/hits/last-used, drawer to edit rule.
+- `reconciliation-sessions.tsx` — table with status/difference/statement balance, drawer showing lines + Lock/Reopen actions.
+- `cashbook.tsx` — keep bespoke Sage layout, add DataTable-styled toolbar + export.
+- Leave the main `banking.tsx` (Sage Spend/Reconcile flow) as-is — it's intentionally bespoke.
 
-Fields (match screenshot order):
-- Account Paid From (bank account select, shows current balance)
-- Transaction Date (date picker, defaults today)
-- Amount (currency, ZMW)
-- Supplier (optional combobox from `suppliers`)
-- Payment Method (Manual / EFT / Cheque / Cash / Mobile Money)
-- Reference Number (auto-filled `PMT-####`, editable)
-- Journal Memo (textarea)
-- Account Allocation grid: rows of `{ account (COA select), amount, DR/CR }`, add/remove rows, live remaining-to-allocate indicator
-- Actions: Save Template, Record (primary), Cancel
+## Phase 2 — Reports Centre Foundation
 
-On Record: insert one `bank_transactions` row (negative amount) plus a balanced `journal_entries` + `journal_lines` posting from bank credit → allocation debits/credits. Reuses existing `posting.ts` helpers.
+Shared infrastructure everything else builds on. No individual reports rewritten yet.
 
-## 2. Reconcile Account modal
+- `src/components/reports/ReportsShell.tsx` — modern viewer: sticky header (logo, company, title, period, generated), KPI strip, chart slot, table slot, footer.
+- `src/components/reports/ReportFilterBar.tsx` — global filter bar with period presets (This Month, Prev Month, QTD, YTD, PY, Custom), and optional Branch/Dept/Project/Account/Customer/Supplier/Employee/Product filters (only render what the report opts into).
+- `src/components/reports/CompareToggle.tsx` — Current vs Previous / MoM / YoY / Budget vs Actual, emits a second period range.
+- `src/components/reports/ReportTable.tsx` — sticky headers, subtotals/grand totals, negatives in brackets, tabular numerals, zebra rows, print page-breaks.
+- `src/lib/reports/format.ts` — accounting number/percent formatters, variance calc, period-preset resolver.
+- `src/lib/reports/pdf.ts` — jsPDF/autoTable branded exporter (portrait/landscape, header/footer, page numbers) — replaces ad-hoc `reports-pdf.ts` calls per report.
+- `src/lib/reports/favorites.ts` — localStorage-backed star + recently-viewed.
+- `src/routes/_authenticated/reports.index.tsx` — rebuild as a **Reports Centre** hub: categorized cards (Financial, Sales, Purchases, Banking, Inventory, Payroll, Tax, Receivables, Payables, Projects, Management, Monthly, Custom), each card = name + description + last-generated + star + Generate/Export quick actions. Tabs: All / Favorites / Recent.
 
-New component `src/components/ReconcileDialog.tsx` opened from Banking and Reconciliation Sessions.
+## Phase 3 — Report Migration (batched)
 
-Header grid: Account · Last Reconciled Date · Bank Statement Date · New Statement Balance · Calculated Balance (live) · Out of Balance (live, red when non-zero).
+Rebuild the existing reports on the new shell + add the missing high-value ones. Each report: filter bar + KPI strip + chart (toggle) + table + compare + PDF/Excel/CSV/Print/Share.
 
-Body: table of unreconciled `bank_transactions` for the account with a Reconciled checkbox, Date, Ledger Transaction, Deposits, Payments columns. Toolbar: Load Bank Statement from File (reuses existing `statement-parser.ts`), + Add Deposit, + Add Payment, Rollback to Previous. Footer: Reconcile (disabled until Out of Balance = 0), Cancel.
+Batch A (Financial): P&L (with monthly columns + comparison), Balance Sheet, Trial Balance, General Ledger, Cash Flow, **Chart of Accounts**, **Retained Earnings / Changes in Equity**.
+Batch B (Sales/Purchases): Sales Summary, Sales by Customer/Product/Salesperson, Outstanding Invoices, Purchase Summary, Purchases by Supplier/Product, Outstanding Bills.
+Batch C (Banking/Cash): Bank Book, Cash Book, Bank Reconciliation, Bank Transactions, Receipts, Payments, Unallocated.
+Batch D (Inventory/Payroll/Tax): Stock Valuation/Movement/Card/Ageing/Low Stock, Payroll Register/PAYE/NAPSA/NHIMA/WCF/SDL, VAT Return/Sales/Purchases/Control, Withholding, Turnover Tax.
+Batch E (Receivables/Payables/Projects/Management): Ageing (both), Statements, Top Customers, Debtor/Creditor Days, Project P&L, Management Pack (already exists — reskin).
 
-On Reconcile: creates a `reconciliation_sessions` row via existing `lock_reconciliation` RPC with the ticked lines.
+All calculations continue to pull from live journals/invoices/bills/etc. — no hardcoded demo numbers.
 
-## 3. Reports hub — colored tile grid
+## Phase 4 — Monthly Engine + Advanced
 
-Rewrite `src/routes/_authenticated/reports.index.tsx` to render category-colored tiles matching the screenshot:
-- Purple: Income Statement, Income Statement Analysis, Balance Sheet, Cash Flow, Trial Balance, Consolidated
-- Orange: Invoices, Quotes, Orders, Sales Invoice Payment, Transactions, Items per Customer, Customer Sales
-- Cyan: Inventory, Item Sales, Salesperson, Unpaid Accounts, Accounts Payable, Payments of AP, AR Aging, Customers
-- Green: Account Enquiry, Reconciliation, Chart of Accounts, Mileage, VAT/Sales Tax, Budget & Variance, Customised
+- `src/routes/_authenticated/reports.monthly.tsx` — Monthly Reports module: pick Year/Month/Branch/Dept/Project, render all monthly-capable reports side-by-side with MoM, YoY, YTD, variance columns.
+- **Custom Report Builder** — pick accounts/columns/rows/filters/grouping, save as template (new `report_templates` table).
+- **Scheduled Reports** — new `report_schedules` table + pg_cron hook to `/api/public/hooks/reports-run` that generates + emails/notifies (daily/weekly/monthly/quarterly/annually).
+- **Report Activity Log** — reuse `audit_logs` with `action='report_generated'`, filters/format captured.
+- **Drill-down** — click a total → slide-over listing underlying transactions → click txn → existing DetailDrawer.
 
-Dark-glass tiles with color-tinted gradient overlays, keyboard-navigable, click routes to existing report pages. Skeleton loaders while route lazy-loads.
+## Out of scope for this plan
 
-## 4. Inventory table — grouped layout
+- WhatsApp share is a mailto/wa.me deep link only (no WhatsApp Business API).
+- Drag-and-drop dashboard widgets (already deferred from Phase 3 of the earlier UI plan).
 
-Rewrite `src/routes/_authenticated/stock.tsx` list view to group `stock_items` by `warehouse` (Location) → `category`, with columns: Category, Order By Unit, Cost, Qty/Unit, Item Size, Cost per Item, Stock Qty, Reorder Level, Reorder (auto: `qty <= reorder_level ? "REORDER" : "OK"` styled pill), Item Reorder Qty. Sticky location headers, alternating row shading, dark-glass shell.
+## What I need from you
 
-## Shared
-
-- `src/components/ui/glass-card.tsx` — reusable dark-glass panel token so all four surfaces share the same background/border/blur.
-- All new dialogs: shadcn Dialog, `pointer-events-auto` on interactive parts, responsive (stack on <sm), keyboard shortcuts (Esc close, ⌘/Ctrl+Enter submit), toast success/error, zod validation, loading skeletons.
-- No new tables; reuses `bank_transactions`, `bank_allocations`, `reconciliation_sessions`, `journal_entries`, `stock_items`, `warehouses`.
+Approve and I'll ship **Phase 1 + Phase 2 in this turn** (banking sub-screens + Reports Centre foundation + hub redesign). Then say "go phase 3" to start the report migration batches.
 
 ## Technical notes
 
-- Dialogs live in `src/components/`, opened from existing routes — no new routes.
-- Posting reuses `src/lib/posting.ts` and `src/lib/bank-posting.ts`; if a helper for multi-line DR/CR splits is missing, add `postSpendMoney()` in `src/lib/bank-posting.ts`.
-- Reports tiles map to existing routes under `/reports/*`; any tile whose target route doesn't exist yet renders as "Coming soon" instead of a broken link.
-- Inventory grouping done client-side with `useMemo`; no schema change.
+- New DB objects (Phase 4): `report_templates`, `report_schedules`, plus GRANTs + RLS scoped to `auth.uid()`.
+- PDF: keep `jspdf` + `jspdf-autotable` (already installed via existing exports).
+- Charts: reuse `recharts` (already in dashboard).
+- No changes to posting engine, RLS on existing tables, or module registry.
+- Permissions: reports check `user_can_view_module('reports')` and payroll/financial reports additionally check role via existing `has_role` RPC.
