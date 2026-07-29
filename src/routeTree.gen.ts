@@ -81,6 +81,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
+import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
@@ -106,6 +107,11 @@ import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
+import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenticated/learn.vat-zra'
+import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
+import { Route as AuthenticatedLearnQuickStartRouteImport } from './routes/_authenticated/learn.quick-start'
+import { Route as AuthenticatedLearnPayrollRouteImport } from './routes/_authenticated/learn.payroll'
+import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './routes/_authenticated/learn.bank-reconciliation'
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -499,6 +505,11 @@ const AuthenticatedQuotesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedQuotesRoute,
   } as any)
+const AuthenticatedLearnIndexRoute = AuthenticatedLearnIndexRouteImport.update({
+  id: '/learn/',
+  path: '/learn/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvoicesIndexRoute =
   AuthenticatedInvoicesIndexRouteImport.update({
     id: '/',
@@ -646,6 +657,36 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
+const AuthenticatedLearnVatZraRoute =
+  AuthenticatedLearnVatZraRouteImport.update({
+    id: '/learn/vat-zra',
+    path: '/learn/vat-zra',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLearnReportsRoute =
+  AuthenticatedLearnReportsRouteImport.update({
+    id: '/learn/reports',
+    path: '/learn/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLearnQuickStartRoute =
+  AuthenticatedLearnQuickStartRouteImport.update({
+    id: '/learn/quick-start',
+    path: '/learn/quick-start',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLearnPayrollRoute =
+  AuthenticatedLearnPayrollRouteImport.update({
+    id: '/learn/payroll',
+    path: '/learn/payroll',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLearnBankReconciliationRoute =
+  AuthenticatedLearnBankReconciliationRouteImport.update({
+    id: '/learn/bank-reconciliation',
+    path: '/learn/bank-reconciliation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLearnAccountingBasicsRoute =
   AuthenticatedLearnAccountingBasicsRouteImport.update({
     id: '/learn/accounting-basics',
@@ -754,6 +795,11 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
+  '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/learn/payroll': typeof AuthenticatedLearnPayrollRoute
+  '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
+  '/learn/reports': typeof AuthenticatedLearnReportsRoute
+  '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -779,6 +825,7 @@ export interface FileRoutesByFullPath {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/learn/': typeof AuthenticatedLearnIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -854,6 +901,11 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
+  '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/learn/payroll': typeof AuthenticatedLearnPayrollRoute
+  '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
+  '/learn/reports': typeof AuthenticatedLearnReportsRoute
+  '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -879,6 +931,7 @@ export interface FileRoutesByTo {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
+  '/learn': typeof AuthenticatedLearnIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -960,6 +1013,11 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
+  '/_authenticated/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/_authenticated/learn/payroll': typeof AuthenticatedLearnPayrollRoute
+  '/_authenticated/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
+  '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
+  '/_authenticated/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -985,6 +1043,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1066,6 +1125,11 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/learn/accounting-basics'
+    | '/learn/bank-reconciliation'
+    | '/learn/payroll'
+    | '/learn/quick-start'
+    | '/learn/reports'
+    | '/learn/vat-zra'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1091,6 +1155,7 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/customers/'
     | '/invoices/'
+    | '/learn/'
     | '/quotes/'
     | '/reports/'
     | '/lovable/email/auth/preview'
@@ -1166,6 +1231,11 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/invoices/new'
     | '/learn/accounting-basics'
+    | '/learn/bank-reconciliation'
+    | '/learn/payroll'
+    | '/learn/quick-start'
+    | '/learn/reports'
+    | '/learn/vat-zra'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1191,6 +1261,7 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/customers'
     | '/invoices'
+    | '/learn'
     | '/quotes'
     | '/reports'
     | '/lovable/email/auth/preview'
@@ -1271,6 +1342,11 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/learn/accounting-basics'
+    | '/_authenticated/learn/bank-reconciliation'
+    | '/_authenticated/learn/payroll'
+    | '/_authenticated/learn/quick-start'
+    | '/_authenticated/learn/reports'
+    | '/_authenticated/learn/vat-zra'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
@@ -1296,6 +1372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/vat-return'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
+    | '/_authenticated/learn/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/lovable/email/auth/preview'
@@ -1820,6 +1897,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesIndexRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
     }
+    '/_authenticated/learn/': {
+      id: '/_authenticated/learn/'
+      path: '/learn'
+      fullPath: '/learn/'
+      preLoaderRoute: typeof AuthenticatedLearnIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invoices/': {
       id: '/_authenticated/invoices/'
       path: '/'
@@ -1994,6 +2078,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/quotes/new'
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
+    }
+    '/_authenticated/learn/vat-zra': {
+      id: '/_authenticated/learn/vat-zra'
+      path: '/learn/vat-zra'
+      fullPath: '/learn/vat-zra'
+      preLoaderRoute: typeof AuthenticatedLearnVatZraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn/reports': {
+      id: '/_authenticated/learn/reports'
+      path: '/learn/reports'
+      fullPath: '/learn/reports'
+      preLoaderRoute: typeof AuthenticatedLearnReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn/quick-start': {
+      id: '/_authenticated/learn/quick-start'
+      path: '/learn/quick-start'
+      fullPath: '/learn/quick-start'
+      preLoaderRoute: typeof AuthenticatedLearnQuickStartRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn/payroll': {
+      id: '/_authenticated/learn/payroll'
+      path: '/learn/payroll'
+      fullPath: '/learn/payroll'
+      preLoaderRoute: typeof AuthenticatedLearnPayrollRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn/bank-reconciliation': {
+      id: '/_authenticated/learn/bank-reconciliation'
+      path: '/learn/bank-reconciliation'
+      fullPath: '/learn/bank-reconciliation'
+      preLoaderRoute: typeof AuthenticatedLearnBankReconciliationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/learn/accounting-basics': {
       id: '/_authenticated/learn/accounting-basics'
@@ -2218,6 +2337,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
+  AuthenticatedLearnBankReconciliationRoute: typeof AuthenticatedLearnBankReconciliationRoute
+  AuthenticatedLearnPayrollRoute: typeof AuthenticatedLearnPayrollRoute
+  AuthenticatedLearnQuickStartRoute: typeof AuthenticatedLearnQuickStartRoute
+  AuthenticatedLearnReportsRoute: typeof AuthenticatedLearnReportsRoute
+  AuthenticatedLearnVatZraRoute: typeof AuthenticatedLearnVatZraRoute
+  AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2289,6 +2414,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
   AuthenticatedLearnAccountingBasicsRoute:
     AuthenticatedLearnAccountingBasicsRoute,
+  AuthenticatedLearnBankReconciliationRoute:
+    AuthenticatedLearnBankReconciliationRoute,
+  AuthenticatedLearnPayrollRoute: AuthenticatedLearnPayrollRoute,
+  AuthenticatedLearnQuickStartRoute: AuthenticatedLearnQuickStartRoute,
+  AuthenticatedLearnReportsRoute: AuthenticatedLearnReportsRoute,
+  AuthenticatedLearnVatZraRoute: AuthenticatedLearnVatZraRoute,
+  AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
