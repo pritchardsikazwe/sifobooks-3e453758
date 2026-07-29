@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, UserPlus, FileText, Ban, Loader2 } from "lucide-react";
+import { Plus, UserPlus, FileText, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,8 @@ import { ShareDoc } from "@/components/ShareDoc";
 import { toast } from "sonner";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
+import { DataTable, type DTColumn } from "@/components/data-table";
+import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({ meta: [{ title: "Invoice Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -23,14 +26,13 @@ export const Route = createFileRoute("/_authenticated/invoices/")({
 type Tab = "all" | "normal" | "recurring" | "credit";
 
 function InvoicesPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
   const [tab, setTab] = useState<Tab>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"new" | "old">("new");
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
-
+  const [drawer, setDrawer] = useState<any | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -50,160 +52,134 @@ function InvoicesPage() {
     overdue: rows.filter(isOverdue).length,
   }), [rows]);
 
-  const filtered = useMemo(() => {
-    const s = q.toLowerCase().trim();
-    let list = rows.filter(i => {
-      if (!inRange(i.issue_date, range)) return false;
-      if (statusFilter !== "all") {
-        if (statusFilter === "overdue" ? !isOverdue(i) : i.status !== statusFilter) return false;
-      }
-      if (!s) return true;
-      return (i.number ?? "").toLowerCase().includes(s) || (i.customers?.name ?? "").toLowerCase().includes(s);
-    });
-    list = [...list].sort((a, b) => sort === "new" ? (b.issue_date > a.issue_date ? 1 : -1) : (a.issue_date > b.issue_date ? 1 : -1));
-    return list;
-  }, [rows, q, statusFilter, sort, range]);
+  const filtered = useMemo(() => rows.filter(i => {
+    if (!inRange(i.issue_date, range)) return false;
+    if (statusFilter !== "all") {
+      if (statusFilter === "overdue" ? !isOverdue(i) : i.status !== statusFilter) return false;
+    }
+    return true;
+  }), [rows, statusFilter, range]);
+
+  const columns: DTColumn<any>[] = useMemo(() => [
+    { key: "number", header: "#", accessor: r => r.number, cell: r => <span className="font-mono text-xs">{r.number}</span> },
+    { key: "customer", header: "Customer", accessor: r => r.customers?.name ?? "", cell: r => r.customers?.name ?? "—" },
+    { key: "issue_date", header: "Issued", accessor: r => r.issue_date, cell: r => <span className="text-xs tabular-nums">{r.issue_date}</span> },
+    { key: "due_date", header: "Due", accessor: r => r.due_date, cell: r => <span className="text-xs tabular-nums">{r.due_date ?? "—"}</span> },
+    { key: "total", header: "Total", align: "right", accessor: r => Number(r.total), cell: r => <span className="tabular-nums">{fmtMoney(r.total, r.currency)}</span> },
+    { key: "balance_due", header: "Balance", align: "right", accessor: r => Number(r.balance_due), cell: r => <span className="tabular-nums font-medium">{fmtMoney(r.balance_due, r.currency)}</span> },
+    { key: "status", header: "Status", accessor: r => r.status, cell: r => <Status s={r.status === "voided" ? "voided" : isOverdue(r) ? "overdue" : r.status} /> },
+  ], []);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top action bar */}
-      <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[220px] max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search for Invoices, purchase order, receipts etc" value={q} onChange={e => setQ(e.target.value)} className="pl-9 bg-slate-50 border-slate-200" />
+    <div className="p-6 space-y-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><FileText className="h-6 w-6 text-primary" /> Invoice Manager</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">An intuitive way to see all your invoices for quick access.</p>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <QuickAddCustomer trigger={
-            <Button variant="outline" className="gap-2"><UserPlus className="h-4 w-4" /> New Customer</Button>
-          } onCreated={() => { /* no-op */ }} />
-          <Button asChild className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white gap-2">
-            <Link to="/invoices/new"><Plus className="h-4 w-4" /> New Invoice</Link>
-          </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <DateRangeFilter value={range} onChange={setRange} compact />
+          <ExportMenu filename="invoices" title="Invoices" rows={filtered.map(i => ({ Number: i.number, Customer: i.customers?.name ?? "", Issued: i.issue_date, Due: i.due_date ?? "", Total: i.total, Balance: i.balance_due, Status: i.status, Currency: i.currency ?? "ZMW" }))} />
+          <QuickAddCustomer trigger={<Button variant="outline" size="sm" className="h-9"><UserPlus className="h-4 w-4 mr-1.5" /> Customer</Button>} onCreated={() => {}} />
+          <Button asChild size="sm" className="h-9"><Link to="/invoices/new"><Plus className="h-4 w-4 mr-1.5" /> New invoice</Link></Button>
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-semibold">Invoice Manager</h1>
-            <p className="text-sm text-muted-foreground">An intuitive way to see all your general invoices for quick access</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <DateRangeFilter value={range} onChange={setRange} compact />
-            <ExportMenu filename="invoices" title="Invoices" rows={filtered.map(i => ({ Number: i.number, Customer: i.customers?.name ?? "", Issued: i.issue_date, Due: i.due_date ?? "", Total: i.total, Balance: i.balance_due, Status: i.status, Currency: i.currency ?? "ZMW" }))} />
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KPI label="Total invoices" value={stats.total} />
+        <KPI label="Paid" value={stats.paid} />
+        <KPI label="Posted" value={stats.posted} />
+        <KPI label="Overdue" value={stats.overdue} accent={stats.overdue > 0 ? "text-red-600" : undefined} />
+      </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KPI label="Total Invoices" value={stats.total} />
-          <KPI label="Paid" value={stats.paid} />
-          <KPI label="Posted" value={stats.posted} />
-          <KPI label="Overdue" value={stats.overdue} accent={stats.overdue > 0 ? "text-red-600" : undefined} />
-        </div>
+      <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
+        {(["all", "normal", "recurring", "credit"] as Tab[]).map(t => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`py-2.5 px-3 text-sm capitalize border-b-2 -mb-px transition ${tab === t ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {t === "credit" ? "Credit notes" : t}
+          </button>
+        ))}
+      </div>
 
-        {/* Tabs & filters */}
-        <div className="bg-white rounded-lg border">
-          <div className="flex items-center justify-between border-b px-4 flex-wrap gap-2">
-            <div className="flex gap-1">
-              {(["all", "normal", "recurring", "credit"] as Tab[]).map(t => (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`py-3 px-3 text-sm capitalize border-b-2 -mb-px transition ${tab === t ? "border-[#0f4c5c] text-[#0f4c5c] font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-                  {t === "credit" ? "Credit Notes" : t}
-                </button>
-              ))}
+      {loading ? (
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : (
+        <DataTable
+          data={filtered}
+          columns={columns}
+          searchPlaceholder="Search invoices, customers…"
+          onRowClick={setDrawer}
+          toolbarLeft={
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+          empty={<div className="py-6"><FileText className="h-10 w-10 mx-auto mb-3 opacity-40" /><div>No invoices in this range.</div></div>}
+        />
+      )}
+
+      <DetailDrawer
+        open={!!drawer}
+        onOpenChange={(v) => !v && setDrawer(null)}
+        title={drawer ? `Invoice ${drawer.number}` : ""}
+        subtitle={drawer?.customers?.name}
+        meta={drawer && <Status s={drawer.status === "voided" ? "voided" : isOverdue(drawer) ? "overdue" : drawer.status} />}
+        toolbar={drawer && <ShareDoc kind="invoice" id={drawer.id} docNumber={drawer.number} />}
+        footer={drawer && (
+          <>
+            {drawer.status !== "voided" && <VoidInvoice invoice={drawer} onDone={() => { setDrawer(null); load(); }} />}
+            <Button size="sm" onClick={() => navigate({ to: "/invoices/new" })}>Duplicate</Button>
+          </>
+        )}
+      >
+        {drawer && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-3 gap-3">
+              <StatTile label="Total" value={fmtMoney(drawer.total, drawer.currency)} />
+              <StatTile label="Paid" value={fmtMoney(drawer.amount_paid, drawer.currency)} />
+              <StatTile label="Balance" value={fmtMoney(drawer.balance_due, drawer.currency)} accent={Number(drawer.balance_due) > 0 ? "text-red-600" : undefined} />
             </div>
-            <div className="flex items-center gap-2 py-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sort} onValueChange={(v: any) => setSort(v)}>
-                <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">Newest to Oldest</SelectItem>
-                  <SelectItem value="old">Oldest to Newest</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="p-4">
-            <div className="text-sm font-medium mb-3">Invoices</div>
-            {loading ? (
-              <div className="py-16 text-center text-muted-foreground text-sm">Loading…</div>
-            ) : filtered.length === 0 ? (
-              <div className="py-14 flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                  <FileText className="h-9 w-9 text-slate-400" />
-                </div>
-                <div className="font-semibold">No invoices yet</div>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xs">Create your first invoice to start getting paid by your clients.</p>
-                <Button asChild className="mt-5 bg-[#0f4c5c] hover:bg-[#0c3f4c] gap-2">
-                  <Link to="/invoices/new"><Plus className="h-4 w-4" /> Create Invoice</Link>
-                </Button>
+            <DrawerSection title="Details">
+              <div className="grid grid-cols-2 gap-3">
+                <DrawerField label="Issue date">{drawer.issue_date}</DrawerField>
+                <DrawerField label="Due date">{drawer.due_date ?? "—"}</DrawerField>
+                <DrawerField label="Currency">{drawer.currency ?? "ZMW"}</DrawerField>
+                <DrawerField label="Status">{drawer.status}</DrawerField>
+                {drawer.reference && <DrawerField label="Reference" className="col-span-2">{drawer.reference}</DrawerField>}
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-muted-foreground border-b">
-                    <tr>
-                      <th className="text-left font-medium py-2 px-2">#</th>
-                      <th className="text-left font-medium py-2 px-2">Customer</th>
-                      <th className="text-left font-medium py-2 px-2">Issued</th>
-                      <th className="text-left font-medium py-2 px-2">Due</th>
-                      <th className="text-right font-medium py-2 px-2">Total</th>
-                      <th className="text-right font-medium py-2 px-2">Balance</th>
-                      <th className="text-left font-medium py-2 px-2">Status</th>
-                      <th className="text-right font-medium py-2 px-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map(i => {
-                      const overdue = isOverdue(i);
-                      return (
-                        <tr key={i.id} className={`border-b last:border-0 hover:bg-slate-50 ${i.status === "voided" ? "opacity-50" : ""}`}>
-                          <td className="py-2 px-2 font-mono text-xs">{i.number}</td>
-                          <td className="py-2 px-2">{i.customers?.name ?? "—"}</td>
-                          <td className="py-2 px-2 text-xs">{i.issue_date}</td>
-                          <td className="py-2 px-2 text-xs">{i.due_date ?? "—"}</td>
-                          <td className="py-2 px-2 text-right">{fmtMoney(i.total, i.currency)}</td>
-                          <td className="py-2 px-2 text-right font-medium">{fmtMoney(i.balance_due, i.currency)}</td>
-                          <td className="py-2 px-2"><Status s={i.status === "voided" ? "voided" : overdue ? "overdue" : i.status} /></td>
-                          <td className="py-2 px-2 text-right">
-                            <div className="inline-flex items-center gap-1">
-                              <ShareDoc kind="invoice" id={i.id} docNumber={i.number} />
-                              {i.status !== "voided" && <VoidInvoice invoice={i} onDone={load} />}
-                            </div>
-                          </td>
-
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            </DrawerSection>
+            {drawer.notes && (
+              <DrawerSection title="Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{drawer.notes}</p></DrawerSection>
             )}
           </div>
-        </div>
-      </div>
+        )}
+      </DetailDrawer>
     </div>
   );
 }
 
 function KPI({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
   return (
-    <div className="bg-white rounded-lg border p-4">
+    <div className="rounded-lg border border-border bg-card p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-2xl font-semibold mt-1 ${accent ?? ""}`}>{value}</div>
+      <div className={`text-2xl font-semibold mt-1 tabular-nums ${accent ?? "text-foreground"}`}>{value}</div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`text-base font-semibold tabular-nums ${accent ?? "text-foreground"}`}>{value}</div>
     </div>
   );
 }
@@ -213,6 +189,7 @@ function Status({ s }: { s: string }) {
     paid: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700",
     overdue: "bg-red-100 text-red-700", sent: "bg-blue-100 text-blue-700",
     draft: "bg-slate-100 text-slate-700", cancelled: "bg-slate-100 text-slate-500",
+    voided: "bg-slate-200 text-slate-500",
   };
   return <span className={`px-2 py-0.5 rounded text-xs capitalize ${map[s] ?? "bg-slate-100"}`}>{s}</span>;
 }
@@ -226,9 +203,7 @@ function VoidInvoice({ invoice, onDone }: { invoice: any; onDone: () => void }) 
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setBusy(false); return; }
-    const res = await voidInvoiceLedger({
-      userId: u.user.id, invoiceId: invoice.id, number: invoice.number, reason,
-    });
+    const res = await voidInvoiceLedger({ userId: u.user.id, invoiceId: invoice.id, number: invoice.number, reason });
     setBusy(false);
     if (!res.ok) return toast.error(res.error ?? "Void failed");
     toast.success(`Invoice ${invoice.number} voided — stock restored, ledger reversed`);
@@ -238,7 +213,7 @@ function VoidInvoice({ invoice, onDone }: { invoice: any; onDone: () => void }) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 gap-1"><Ban className="h-3.5 w-3.5" /> Void</Button>
+        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50"><Ban className="h-3.5 w-3.5 mr-1" /> Void</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Void invoice {invoice.number}?</DialogTitle></DialogHeader>
