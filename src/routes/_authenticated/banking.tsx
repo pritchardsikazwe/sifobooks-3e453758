@@ -200,7 +200,7 @@ function BankingPage() {
     setSelected(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)));
 
   const runClear = async (txn: Txn, ref: string) => {
-    const { error } = await supabase.rpc("clear_bank_transaction", { _txn_id: txn.id, _reference: ref || null });
+    const { error } = await supabase.rpc("clear_bank_transaction" as any, { _txn_id: txn.id, _reference: ref || undefined });
     if (error) { toast.error(error.message); return false; }
     return true;
   };
@@ -220,7 +220,7 @@ function BankingPage() {
   };
 
   const rebuildStatus = async () => {
-    const { error } = await supabase.rpc("rebuild_bank_status");
+    const { error } = await supabase.rpc("rebuild_bank_status" as any);
     if (error) return toast.error(error.message);
     toast.success("Status index rebuilt");
     await load();
@@ -238,16 +238,30 @@ function BankingPage() {
       if (!parsed.length) return toast.error("No transactions found in file");
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      const rows = parsed.map((p: ParsedTxn) => ({
-        user_id: u.user!.id, txn_date: p.txn_date,
-        description: p.description.slice(0, 500), amount: p.amount, balance: p.balance,
-        reference: p.reference?.slice(0, 100) ?? null,
-        category: p.amount >= 0 ? "Income" : "Expense",
-        source_file: file.name.slice(0, 200),
+      const batchId = crypto.randomUUID();
+      const rows = await Promise.all(parsed.map(async (p: ParsedTxn) => {
+        const hash = await sha1Hex(`${p.txn_date}|${p.amount}|${(p.description ?? "").trim().toLowerCase()}|${p.reference ?? ""}`);
+        return {
+          user_id: u.user!.id, txn_date: p.txn_date,
+          description: p.description.slice(0, 500), amount: p.amount, balance: p.balance,
+          reference: p.reference?.slice(0, 100) ?? null,
+          category: p.amount >= 0 ? "Income" : "Expense",
+          source_file: file.name.slice(0, 200),
+          source: "import",
+          import_batch_id: batchId,
+          content_hash: hash,
+        };
       }));
-      const { error } = await supabase.from("bank_transactions").insert(rows);
+      // Dedupe against existing content_hash for this user
+      const { data: existing } = await supabase.from("bank_transactions")
+        .select("content_hash").eq("user_id", u.user.id).not("content_hash", "is", null);
+      const have = new Set((existing ?? []).map((r: any) => r.content_hash));
+      const fresh = rows.filter(r => !have.has(r.content_hash));
+      const dupes = rows.length - fresh.length;
+      if (!fresh.length) { toast.info(`No new transactions · ${dupes} duplicates skipped`); return; }
+      const { error } = await supabase.from("bank_transactions").insert(fresh as any);
       if (error) throw error;
-      toast.success(`Imported ${rows.length} transactions`);
+      toast.success(`Imported ${fresh.length} new · ${dupes} duplicates skipped`);
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
@@ -255,6 +269,11 @@ function BankingPage() {
   };
 
   const remove = async (id: string) => {
+    const t = txns.find(x => x.id === id);
+    if (t && (t.is_allocated || t.is_cleared || t.reconciled)) {
+      toast.error("Cannot delete: transaction is allocated, cleared or reconciled. Reverse it first.");
+      return;
+    }
     const { error } = await supabase.from("bank_transactions").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setTxns(prev => prev.filter(t => t.id !== id));
