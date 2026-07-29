@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
         { key: "status", header: "Status", render: r => <Badge className={STATUS_COLOR[r.status] ?? ""} variant="secondary">{r.status}</Badge> },
         { key: "total_debit", header: "Debit", render: r => fmtMoney(r.total_debit ?? 0) },
         { key: "total_credit", header: "Credit", render: r => fmtMoney(r.total_credit ?? 0) },
+        { key: "attachment_url", header: "Source Doc", render: r => <AttachmentCell table="journal_entries" row={r} /> },
       ]}
       rowActions={[
         {
