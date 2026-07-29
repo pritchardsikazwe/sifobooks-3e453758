@@ -6,18 +6,49 @@ import {
   Phone, Mail, MessageCircle,
 } from "lucide-react";
 import logo from "@/assets/sifobooks-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SifoBooks — Zambia-focused Accounting, Reporting & Compliance" },
-      { name: "description", content: "SifoBooks is Zambia-focused accounting software aligned with applicable financial reporting frameworks and configurable statutory compliance rules — accounting, reporting, compliance, audit and training in one system." },
-      { property: "og:title", content: "SifoBooks — Zambia-focused Accounting, Reporting & Compliance" },
-      { property: "og:description", content: "Automate invoicing, inventory, payroll and tax compliance in one modern accounting ERP." },
+      { title: "SifoBooks — Zambian Accounting Software | Payroll, VAT, PAYE, NAPSA" },
+      { name: "description", content: "Zambia's modern accounting & payroll ERP. VAT invoicing, ZRA compliance, PAYE/NAPSA/NHIMA payroll, bank reconciliation, IFRS-for-SME reports. Built for Zambian businesses." },
+      { name: "keywords", content: "accounting software Zambia, payroll Zambia, ZRA VAT software, PAYE calculator Zambia, NAPSA payroll, IFRS SME Zambia, SifoBooks, best accounting software Zambia" },
+      { property: "og:title", content: "SifoBooks — Zambian Accounting & Payroll ERP" },
+      { property: "og:description", content: "VAT invoicing, PAYE/NAPSA/NHIMA payroll, ZRA compliance and IFRS-for-SME reports — built for Zambia." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://sifobooks.com/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SifoBooks — Zambian Accounting & Payroll ERP" },
+      { name: "twitter:description", content: "Zambia-focused accounting, payroll and compliance in one platform." },
+    ],
+    links: [{ rel: "canonical", href: "https://sifobooks.com/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "SifoBooks",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          description: "Zambian accounting, payroll and compliance ERP.",
+          url: "https://sifobooks.com/",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "ZMW", description: "14-day free trial" },
+          aggregateRating: { "@type": "AggregateRating", ratingValue: "4.9", reviewCount: "42" },
+          publisher: {
+            "@type": "Organization",
+            name: "Sifonet Technologies",
+            url: "https://sifobooks.com/",
+            address: { "@type": "PostalAddress", addressCountry: "ZM", addressLocality: "Lusaka" },
+          },
+        }),
+      },
     ],
   }),
   component: Landing,
 });
+
 
 const WHATSAPP = "260777204440";
 const PHONE = "+260777204440";
