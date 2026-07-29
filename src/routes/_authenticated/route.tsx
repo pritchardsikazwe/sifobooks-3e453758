@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/command";
 import { MODULES } from "@/lib/modules";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
+import { CompanySwitcher } from "@/components/CompanySwitcher";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -65,6 +66,7 @@ function Shell() {
               <span className="text-slate-300">/</span>
               <span className="text-slate-500">{crumb}</span>
             </div>
+            <div className="ml-1"><CompanySwitcher /></div>
             <button
               onClick={() => setCmdOpen(true)}
               className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 transition text-left text-sm text-slate-500"
