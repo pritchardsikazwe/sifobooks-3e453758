@@ -479,36 +479,38 @@ function BankingPage() {
                                 {t.reconciled_at && <span>✓ Reconciled · {t.reconciled_at.slice(0,16).replace("T"," ")}</span>}
                                 {t.cleared_at && <span>✓ Cleared · {t.cleared_at.slice(0,16).replace("T"," ")}{t.cleared_reference ? ` (${t.cleared_reference})` : ""}</span>}
                               </div>
-                              {list.length > 0 && <>
-                              <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div></>}
-                              <table className="w-full text-xs">
-                                <thead className="text-muted-foreground">
-                                  <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
-                                </thead>
-                                <tbody>
-                                  {list.map(a => (
-                                    <tr key={a.id} className="border-t border-border/50">
-                                      <td className="pl-6 py-1.5">{a.allocated_at.slice(0, 10)}</td>
-                                      <td>{a.memo ?? "—"}</td>
-                                      <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
-                                      <td className="text-right font-medium">{money(Number(a.amount))}</td>
-                                      <td className="pl-4">
-                                        {a.is_reversed
-                                          ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
-                                          : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
-                                      </td>
-                                      <td className="text-right">
-                                        {!a.is_reversed && (
-                                          <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
-                                            <RotateCcw className="h-3 w-3 mr-1" />Reverse
-                                          </Button>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                 </tbody>
-                              </table>
-                              </>}
+                              {list.length > 0 && (
+                                <>
+                                  <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div>
+                                  <table className="w-full text-xs">
+                                    <thead className="text-muted-foreground">
+                                      <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                      {list.map(a => (
+                                        <tr key={a.id} className="border-t border-border/50">
+                                          <td className="pl-6 py-1.5">{a.allocated_at.slice(0, 10)}</td>
+                                          <td>{a.memo ?? "—"}</td>
+                                          <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
+                                          <td className="text-right font-medium">{money(Number(a.amount))}</td>
+                                          <td className="pl-4">
+                                            {a.is_reversed
+                                              ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
+                                              : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
+                                          </td>
+                                          <td className="text-right">
+                                            {!a.is_reversed && (
+                                              <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
+                                                <RotateCcw className="h-3 w-3 mr-1" />Reverse
+                                              </Button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </>
+                              )}
                             </TableCell>
                           </TableRow>
                         )}
