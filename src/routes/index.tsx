@@ -1,12 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle2, ShieldCheck, Zap, BarChart3, Wallet,
-  Users, FileText, ReceiptText, CreditCard, Truck, ShoppingCart, FileBox,
-  Landmark, BookOpen, BookText, PiggyBank, Boxes, Warehouse, ClipboardEdit,
-  UserSquare, CalendarCheck, CalendarDays, Banknote, Building2, Bell,
+  FileText, ReceiptText, Boxes, Landmark, Banknote, Building2,
   Phone, Mail, MessageCircle,
 } from "lucide-react";
 import logo from "@/assets/sifobooks-logo.png";
@@ -14,66 +10,19 @@ import logo from "@/assets/sifobooks-logo.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SifoBooks — Accounting ERP for African Businesses" },
-      { name: "description", content: "SifoBooks is a complete accounting ERP — sales, purchases, inventory, finance, HR, payroll and tax compliance in one bold platform." },
-      { property: "og:title", content: "SifoBooks — Accounting ERP" },
-      { property: "og:description", content: "Run your entire business from one place. Sales, purchases, inventory, payroll, and ZRA compliance." },
+      { title: "SifoBooks — Smart Accounting for African Enterprise" },
+      { name: "description", content: "SifoBooks automates invoicing, inventory, payroll and ZRA tax compliance in one modern accounting ERP for growing African businesses." },
+      { property: "og:title", content: "SifoBooks — Smart Accounting for African Enterprise" },
+      { property: "og:description", content: "Automate invoicing, inventory, payroll and tax compliance in one modern accounting ERP." },
     ],
   }),
   component: Landing,
 });
 
-const MODULES = [
-  { section: "Sales", color: "from-emerald-500 to-teal-500", items: [
-    { icon: Users, title: "Customers", desc: "CRM with balances & comms history" },
-    { icon: FileText, title: "Quotes", desc: "Draft, send, approve, convert" },
-    { icon: ReceiptText, title: "Invoices", desc: "ZRA-ready with VAT & TPIN" },
-    { icon: CreditCard, title: "Receipts", desc: "Cash, mobile money, bank" },
-  ]},
-  { section: "Purchases", color: "from-blue-500 to-indigo-500", items: [
-    { icon: Truck, title: "Suppliers", desc: "Vendor master with balances" },
-    { icon: ShoppingCart, title: "Purchase Orders", desc: "Approve, track, receive" },
-    { icon: FileBox, title: "Bills", desc: "Match POs to supplier invoices" },
-    { icon: Wallet, title: "Supplier Payments", desc: "Bank, cash, cheque, MoMo" },
-  ]},
-  { section: "Finance", color: "from-violet-500 to-purple-500", items: [
-    { icon: Landmark, title: "Banking", desc: "Statements & reconciliation" },
-    { icon: BookOpen, title: "Chart of Accounts", desc: "Assets, liabilities, equity" },
-    { icon: BookText, title: "Journal Entries", desc: "Double-entry bookkeeping" },
-    { icon: PiggyBank, title: "Budgets", desc: "Plan vs. actual by dept" },
-  ]},
-  { section: "Inventory", color: "from-orange-500 to-red-500", items: [
-    { icon: Boxes, title: "Items", desc: "SKUs, HS codes, valuation" },
-    { icon: Warehouse, title: "Warehouses", desc: "Multi-location stock" },
-    { icon: ClipboardEdit, title: "Adjustments", desc: "Count, damage, transfer" },
-    { icon: BarChart3, title: "Reports", desc: "Live stock valuation" },
-  ]},
-  { section: "HR & Payroll", color: "from-pink-500 to-rose-500", items: [
-    { icon: UserSquare, title: "Employees", desc: "Full HR master file" },
-    { icon: CalendarCheck, title: "Attendance", desc: "Clock in/out tracking" },
-    { icon: CalendarDays, title: "Leave", desc: "Requests & approvals" },
-    { icon: Banknote, title: "Payroll", desc: "PAYE, NAPSA, NHIMA" },
-  ]},
-  { section: "Admin & Compliance", color: "from-amber-500 to-yellow-500", items: [
-    { icon: Building2, title: "Company Setup", desc: "Branches, departments, tax" },
-    { icon: ShieldCheck, title: "Compliance", desc: "ZRA, NAPSA obligations" },
-    { icon: Bell, title: "Notifications", desc: "Real-time alerts" },
-    { icon: ShieldCheck, title: "Audit Trail", desc: "Every action logged" },
-  ]},
-];
-
-const STATS = [
-  { value: "24", label: "Modules" },
-  { value: "6", label: "Departments" },
-  { value: "100%", label: "ZRA Ready" },
-  { value: "ZMW", label: "Native Currency" },
-];
-
 const WHATSAPP = "260777204440";
 const PHONE = "+260777204440";
 const EMAIL = "sifonettechnologies@gmail.com";
 
-/** Reveal children on scroll using IntersectionObserver + animate-fade-in */
 function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
@@ -89,8 +38,8 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   return (
     <div
       ref={ref}
-      style={{ transitionDelay: `${delay}ms`, animationDelay: `${delay}ms` }}
-      className={`${shown ? "animate-fade-in opacity-100" : "opacity-0 translate-y-4"} transition-all duration-700 ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`${shown ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} transition-all duration-700 ${className}`}
     >
       {children}
     </div>
@@ -98,289 +47,327 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 }
 
 function Landing() {
+  const heading = { fontFamily: "Outfit, sans-serif" } as const;
+  const body = { fontFamily: "Figtree, sans-serif" } as const;
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#0a0a1a] text-slate-200 selection:bg-[#4f46e5]/40 selection:text-white" style={body}>
       {/* NAV */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover-scale">
-            <img src={logo} alt="SifoBooks" className="h-9 w-9 object-contain" width={36} height={36} />
-            <span className="text-xl font-black tracking-tight">SifoBooks</span>
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
+        <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <img src={logo} alt="SifoBooks" className="h-8 w-8 object-contain transition-transform group-hover:scale-110" width={32} height={32} />
+            <span className="text-xl font-bold tracking-tight text-white" style={heading}>SifoBooks</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-bold">
-            <a href="#modules" className="hover:text-emerald-600 story-link">Modules</a>
-            <a href="#features" className="hover:text-emerald-600 story-link">Features</a>
-            <a href="#compliance" className="hover:text-emerald-600 story-link">Compliance</a>
-            <a href="#contact" className="hover:text-emerald-600 story-link">Contact</a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/auth"><Button variant="ghost" className="font-bold">Sign in</Button></Link>
-            <Link to="/auth"><Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20">Get Started</Button></Link>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+            <a href="#modules" className="hover:text-[#4f46e5] transition-colors">Modules</a>
+            <a href="#features" className="hover:text-[#4f46e5] transition-colors">Features</a>
+            <a href="#compliance" className="hover:text-[#4f46e5] transition-colors">Compliance</a>
+            <a href="#contact" className="hover:text-[#4f46e5] transition-colors">Contact</a>
           </div>
-        </div>
+          <div className="flex items-center gap-3">
+            <Link to="/auth" className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Sign in
+            </Link>
+            <Link
+              to="/auth"
+              className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#4f46e5] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.8)]"
+            >
+              Get Started
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </nav>
       </header>
 
-      {/* HERO */}
+      {/* HERO — split screen */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/20 via-background to-background" />
-        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-black text-emerald-600 mb-8 animate-fade-in">
-            <Zap className="h-3.5 w-3.5" /> BUILT FOR AFRICAN BUSINESSES · ZMW · TPIN · ZRA
-          </div>
-          <div className="animate-fade-in" style={{ animationDelay: "80ms" }}>
-            <img src={logo} alt="SifoBooks" className="mx-auto h-24 w-24 md:h-28 md:w-28 object-contain mb-6 drop-shadow-2xl" width={112} height={112} />
-          </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] mb-6 animate-fade-in" style={{ animationDelay: "120ms" }}>
-            Run your <span className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 bg-clip-text text-transparent">entire business</span><br />
-            from one place.
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 font-bold animate-fade-in" style={{ animationDelay: "200ms" }}>
-            Sales. Purchases. Inventory. Finance. HR. Payroll. Compliance.
-            <span className="block font-black text-foreground mt-2">One bold accounting ERP.</span>
-          </p>
-          <div className="flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: "280ms" }}>
-            <Link to="/auth"><Button size="lg" className="h-14 px-8 text-base font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-600/30 hover-scale">
-              Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
-            </Button></Link>
-            <a href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20to%20know%20more.`} target="_blank" rel="noopener noreferrer">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-black border-2 hover-scale">
-                <MessageCircle className="mr-2 h-5 w-5 text-emerald-600" /> Chat on WhatsApp
-              </Button>
-            </a>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mt-20">
-            {STATS.map((s, i) => (
-              <Reveal key={s.label} delay={i * 100}>
-                <div className="text-center">
-                  <div className="text-4xl md:text-5xl font-black bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text text-transparent">{s.value}</div>
-                  <div className="text-xs font-black uppercase tracking-widest text-muted-foreground mt-2">{s.label}</div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SHORTCUTS — pic tiles wired to live pages */}
-      <section id="shortcuts" className="py-20 border-t border-border bg-muted/20">
-        <div className="max-w-7xl mx-auto px-6">
-          <Reveal>
-            <div className="text-center mb-12">
-              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Jump right in</div>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-3">Your daily shortcuts.</h2>
-              <p className="text-base text-muted-foreground font-bold">One click to the live page. Sign-in required first time.</p>
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#4f46e5]/20 blur-[120px]" />
+        <div className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[#7c3aed]/15 blur-[120px]" />
+        <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-28 grid lg:grid-cols-2 gap-16 items-center">
+          <Reveal className="space-y-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e1e5a] border border-[#4f46e5]/30 text-[#a5a1ff] text-xs font-bold uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4f46e5] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4f46e5]" />
+              </span>
+              ZRA Compliant ERP · Built in Zambia
             </div>
-          </Reveal>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[
-              { to: "/dashboard", icon: BarChart3, label: "Dashboard", tint: "from-emerald-500 to-teal-500", desc: "Live KPIs" },
-              { to: "/quotes/new", icon: FileText, label: "Create a Quote", tint: "from-blue-500 to-indigo-500", desc: "Send a quotation" },
-              { to: "/invoices/new", icon: ReceiptText, label: "Create an Invoice", tint: "from-emerald-500 to-cyan-500", desc: "Bill your customer" },
-              { to: "/receipts", icon: CreditCard, label: "Customer Receipts", tint: "from-teal-500 to-emerald-600", desc: "Receive money" },
-              { to: "/credit-notes", icon: FileText, label: "Credit Note", tint: "from-pink-500 to-rose-500", desc: "Refund a customer" },
-              { to: "/bills", icon: FileBox, label: "Supplier Bill", tint: "from-orange-500 to-red-500", desc: "Enter supplier invoices" },
-              { to: "/bill-payments", icon: Wallet, label: "Supplier Payments", tint: "from-amber-500 to-orange-500", desc: "Pay your supplier" },
-              { to: "/banking", icon: Landmark, label: "Import Bank", tint: "from-violet-500 to-purple-500", desc: "Import statements" },
-              { to: "/reconciliation", icon: Wallet, label: "Reconcile & Post", tint: "from-purple-500 to-fuchsia-500", desc: "Match & post to ledger" },
-              { to: "/journal-entries", icon: BookText, label: "Journal Entries", tint: "from-indigo-500 to-blue-500", desc: "Double-entry" },
-              { to: "/customers", icon: Users, label: "Customers", tint: "from-emerald-500 to-teal-500", desc: "CRM & balances" },
-              { to: "/suppliers", icon: Truck, label: "Suppliers", tint: "from-blue-500 to-indigo-500", desc: "Vendor master" },
-              { to: "/stock", icon: Boxes, label: "Items & Stock", tint: "from-orange-500 to-red-500", desc: "SKUs & valuation" },
-              { to: "/reports", icon: BarChart3, label: "Reports", tint: "from-emerald-600 to-teal-600", desc: "P&L, TB, BS, Tax" },
-              { to: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts", tint: "from-slate-500 to-slate-700", desc: "Ledger setup" },
-            ].map((s, i) => (
-              <Reveal key={s.to + s.label} delay={i * 40}>
-                <Link to={s.to as any}>
-                  <Card className="p-4 h-full border-2 hover:border-emerald-500/60 hover:shadow-xl hover:-translate-y-1 transition-all group text-center">
-                    <div className={`mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br ${s.tint} grid place-items-center mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg`}>
-                      <s.icon className="h-7 w-7 text-white" />
-                    </div>
-                    <div className="font-black text-sm">{s.label}</div>
-                    <div className="text-xs text-muted-foreground font-semibold mt-1">{s.desc}</div>
-                  </Card>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* MODULES */}
-      <section id="modules" className="py-24 border-t border-border">
-        <div className="max-w-7xl mx-auto px-6">
-          <Reveal>
-            <div className="text-center mb-16">
-              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Complete Coverage</div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Every module you need.</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-bold">
-                Six departments. Twenty-four modules. Zero add-ons required.
-              </p>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-white tracking-tight" style={heading}>
+              Smart Accounting for{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#a855f7]">
+                African Enterprise.
+              </span>
+            </h1>
+            <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
+              Automate invoicing, inventory, payroll and tax filing in one modern ERP —
+              built for growing businesses that need real-time insight and seamless ZRA compliance.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                to="/auth"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#4f46e5] text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_35px_-5px_#4f46e5]"
+              >
+                Start Free Trial
+                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+              <a
+                href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20a%20demo.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#141432] text-white border border-white/10 rounded-xl font-bold hover:bg-[#1e1e5a] hover:border-[#4f46e5]/40 transition-all duration-300"
+              >
+                <MessageCircle className="w-5 h-5 text-[#4f46e5] transition-transform duration-300 group-hover:scale-110" />
+                Chat on WhatsApp
+              </a>
             </div>
           </Reveal>
 
-          <div className="space-y-16">
-            {MODULES.map((group) => (
-              <Reveal key={group.section}>
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${group.color}`} />
-                    <h3 className="text-2xl md:text-3xl font-black tracking-tight">{group.section}</h3>
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{group.items.length} modules</span>
+          <Reveal delay={120} className="relative">
+            <div className="absolute -inset-6 bg-gradient-to-tr from-[#4f46e5]/30 to-transparent blur-3xl opacity-70" />
+            <div className="relative bg-[#141432] rounded-3xl border border-white/10 p-2 shadow-2xl">
+              <div className="bg-[#0a0a1a] rounded-2xl border border-white/5 p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-28 bg-white/10 rounded-full" />
+                    <div className="h-2.5 w-20 bg-white/5 rounded-full" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {group.items.map((item, i) => (
-                      <Reveal key={item.title} delay={i * 80}>
-                        <Card className="p-6 hover:shadow-2xl hover:-translate-y-2 transition-all border-2 hover:border-emerald-500/50 group cursor-default h-full">
-                          <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${group.color} grid place-items-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform`}>
-                            <item.icon className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="font-black text-lg mb-1">{item.title}</div>
-                          <div className="text-sm text-muted-foreground font-semibold">{item.desc}</div>
-                        </Card>
-                      </Reveal>
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5" />
+                    <div className="w-8 h-8 rounded-full bg-[#4f46e5]/30 border border-[#4f46e5]/30" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-32 bg-gradient-to-br from-[#1e1e5a]/60 to-[#4f46e5]/10 border border-[#4f46e5]/20 rounded-xl p-4">
+                    <div className="w-10 h-10 rounded-lg bg-[#4f46e5]/40 mb-3 grid place-items-center">
+                      <ReceiptText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="h-3 w-full bg-white/10 rounded mb-2" />
+                    <div className="h-3 w-2/3 bg-white/5 rounded" />
+                  </div>
+                  <div className="h-32 bg-white/[0.02] border border-white/5 rounded-xl p-4">
+                    <div className="w-10 h-10 rounded-lg bg-white/5 mb-3 grid place-items-center">
+                      <BarChart3 className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div className="h-3 w-full bg-white/10 rounded mb-2" />
+                    <div className="h-3 w-2/3 bg-white/5 rounded" />
+                  </div>
+                  <div className="col-span-2 h-24 bg-white/[0.02] border border-white/5 rounded-xl p-4 flex items-end gap-2">
+                    {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-t bg-gradient-to-t from-[#4f46e5]/70 to-[#a855f7]/70"
+                        style={{ height: `${h}%` }}
+                      />
                     ))}
                   </div>
                 </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="py-24 border-t border-border bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6">
-          <Reveal>
-            <div className="text-center mb-16">
-              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Why SifoBooks</div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter">Built to move fast.</h2>
+              </div>
             </div>
           </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { icon: BarChart3, title: "Real-Time Dashboard", desc: "Cash flow, receivables, payables, KPIs — updated live as transactions post." },
-              { icon: ShieldCheck, title: "Bank-Grade Security", desc: "Row-level security, audit trails, and role-based access on every record." },
-              { icon: Zap, title: "Automatic Everything", desc: "Invoice balances, stock movements, and payroll calculations run themselves." },
-            ].map((f, i) => (
-              <Reveal key={f.title} delay={i * 120}>
-                <Card className="p-8 border-2 hover:border-emerald-500/50 hover:shadow-xl transition-all h-full">
-                  <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 grid place-items-center mb-6">
-                    <f.icon className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <div className="text-2xl font-black mb-2">{f.title}</div>
-                  <div className="text-muted-foreground font-semibold">{f.desc}</div>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* COMPLIANCE */}
-      <section id="compliance" className="py-24 border-t border-border">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <Reveal>
-            <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Fully Compliant</div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Zambian tax authorities. Handled.</h2>
-            <p className="text-lg text-muted-foreground font-bold mb-10 max-w-2xl mx-auto">
-              Native support for ZRA VAT, TPIN, PAYE brackets, NAPSA contributions, and NHIMA deductions.
-            </p>
+      {/* BENTO — one consolidated product surface (kills shortcuts+modules duplication) */}
+      <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
+        <Reveal className="mb-12 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#a5a1ff] mb-3">Everything in one place</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            Six departments. One clean ledger.
+          </h2>
+          <p className="mt-4 text-slate-400">
+            Twenty-four modules that talk to each other — no add-ons, no imports, no duplicate data entry.
+          </p>
+        </Reveal>
+
+        <Reveal className="grid grid-cols-1 md:grid-cols-4 gap-4 md:auto-rows-[220px]">
+          {/* Big feature */}
+          <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-[#141432] to-[#0a0a1a] border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:border-[#4f46e5]/50 transition-colors">
+            <div>
+              <div className="w-12 h-12 bg-[#4f46e5] rounded-xl grid place-items-center mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]">
+                <ReceiptText className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3" style={heading}>Smart Invoicing & Receivables</h3>
+              <p className="text-slate-400 leading-relaxed">
+                VAT-compliant invoices in seconds, automated reminders, multi-currency, and one-click receipt matching — so cash lands faster.
+              </p>
+            </div>
+            <div className="mt-8 pt-6 border-t border-white/5">
+              <ul className="space-y-2.5 text-sm text-slate-300">
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> ZRA TPIN & VAT baked in</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> Multi-currency, ZMW native</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#4f46e5]" /> Customer statements & credit notes</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Wide */}
+          <div className="md:col-span-2 bg-[#141432] border border-white/10 rounded-3xl p-8 flex items-center gap-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white mb-2" style={heading}>Banking & Reconciliation</h3>
+              <p className="text-sm text-slate-400">Import statements, auto-match rules, split allocations across accounts, reconcile in minutes.</p>
+            </div>
+            <div className="w-20 h-20 shrink-0 bg-[#0a0a1a] rounded-2xl border border-white/10 grid place-items-center">
+              <Landmark className="w-8 h-8 text-[#4f46e5]" />
+            </div>
+          </div>
+
+          {/* Small */}
+          <div className="bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+            <Banknote className="w-6 h-6 text-[#4f46e5] mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Payroll</h3>
+            <p className="text-sm text-slate-400">PAYE, NAPSA, NHIMA, WCF & SDL — computed live.</p>
+          </div>
+
+          {/* Small */}
+          <div className="bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+            <Boxes className="w-6 h-6 text-[#4f46e5] mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Inventory</h3>
+            <p className="text-sm text-slate-400">Real-time stock, warehouses, reorder alerts.</p>
+          </div>
+        </Reveal>
+
+        {/* Second bento row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          <Reveal className="md:col-span-1 bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+            <FileText className="w-6 h-6 text-[#4f46e5] mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Purchases</h3>
+            <p className="text-sm text-slate-400">POs, supplier bills, payment scheduling.</p>
           </Reveal>
-          <div className="flex flex-wrap justify-center gap-3">
-            {["ZRA VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "Withholding Tax"].map((tag, i) => (
-              <Reveal key={tag} delay={i * 60}>
-                <div className="rounded-full border-2 border-emerald-500/30 bg-emerald-500/5 px-5 py-2 text-sm font-black text-emerald-700 dark:text-emerald-400 hover-scale">
-                  <CheckCircle2 className="inline h-4 w-4 mr-1.5 -mt-0.5" />{tag}
+          <Reveal delay={60} className="md:col-span-1 bg-[#141432] border border-white/10 rounded-3xl p-6 group hover:bg-[#1e1e5a]/40 hover:border-[#4f46e5]/40 transition-all">
+            <BarChart3 className="w-6 h-6 text-[#4f46e5] mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Live Reports</h3>
+            <p className="text-sm text-slate-400">P&L, TB, BS, Cash Flow — always current.</p>
+          </Reveal>
+          <Reveal delay={120} className="md:col-span-2 bg-gradient-to-br from-[#1e1e5a] to-[#4f46e5]/30 border border-[#4f46e5]/40 rounded-3xl p-6 flex items-center justify-between group hover:shadow-[0_0_40px_-10px_#4f46e5] transition-all">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Annual Financial Statements</h3>
+              <p className="text-sm text-slate-300">IFRS-for-SME AFS, ready for your auditor.</p>
+            </div>
+            <div className="w-12 h-12 shrink-0 rounded-full bg-white/10 grid place-items-center group-hover:bg-[#4f46e5] group-hover:translate-x-1 transition-all">
+              <ArrowRight className="w-5 h-5 text-white" />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* FEATURES strip */}
+      <section id="features" className="max-w-7xl mx-auto px-6 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { icon: Zap, title: "Automatic posting", desc: "Every invoice, bill and receipt flows straight into the GL — no manual journals." },
+            { icon: ShieldCheck, title: "Bank-grade security", desc: "Row-level security, full audit trail, and role-based access on every record." },
+            { icon: Building2, title: "Multi-company", desc: "Run all your entities from one login — switch companies without signing out." },
+          ].map((f, i) => (
+            <Reveal key={f.title} delay={i * 80}>
+              <div className="h-full bg-[#141432] border border-white/10 rounded-2xl p-6 hover:border-[#4f46e5]/40 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-11 h-11 bg-[#4f46e5]/15 border border-[#4f46e5]/30 rounded-xl grid place-items-center mb-4">
+                  <f.icon className="w-5 h-5 text-[#a5a1ff]" />
                 </div>
-              </Reveal>
+                <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>{f.title}</h3>
+                <p className="text-sm text-slate-400">{f.desc}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* COMPLIANCE strip */}
+      <div id="compliance" className="border-y border-white/5 bg-[#0a0a1a]">
+        <div className="max-w-7xl mx-auto px-6 py-10 flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#4f46e5]/15 border border-[#4f46e5]/30 grid place-items-center">
+              <span className="font-bold text-[#a5a1ff] text-xs">ZRA</span>
+            </div>
+            <span className="text-sm font-semibold tracking-widest text-slate-300 uppercase">Officially ZRA Compliant</span>
+          </div>
+          <div className="hidden lg:block h-px flex-1 bg-white/5 mx-4" />
+          <div className="flex flex-wrap items-center gap-2">
+            {["VAT", "TPIN", "PAYE", "NAPSA", "NHIMA", "Turnover Tax", "WHT"].map((tag) => (
+              <span key={tag} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300 hover:border-[#4f46e5]/40 hover:text-white transition-colors">
+                <CheckCircle2 className="w-3 h-3 text-[#4f46e5]" />
+                {tag}
+              </span>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
       {/* CONTACT */}
-      <section id="contact" className="py-24 border-t border-border bg-muted/30">
-        <div className="max-w-5xl mx-auto px-6">
-          <Reveal>
-            <div className="text-center mb-12">
-              <div className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-3">Talk to us</div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">We're one message away.</h2>
-              <p className="text-lg text-muted-foreground font-bold">Real humans. Same-day replies. In Lusaka, serving all of Zambia.</p>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Reveal delay={0}>
-              <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer">
-                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
-                  <div className="h-12 w-12 rounded-xl bg-emerald-500 grid place-items-center mb-4">
-                    <MessageCircle className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="font-black text-lg">WhatsApp</div>
-                  <div className="font-bold text-emerald-600 mt-1 break-all">{PHONE}</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-2">Fastest replies · Mon–Sat</div>
-                </Card>
+      <section id="contact" className="max-w-7xl mx-auto px-6 py-24">
+        <Reveal className="text-center mb-12">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#a5a1ff] mb-3">Talk to us</div>
+          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={heading}>We're one message away.</h2>
+          <p className="mt-4 text-slate-400">Real humans. Same-day replies. In Lusaka, serving all of Zambia.</p>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {[
+            { href: `https://wa.me/${WHATSAPP}`, icon: MessageCircle, label: "WhatsApp", value: PHONE, sub: "Fastest replies · Mon–Sat", external: true },
+            { href: `tel:${PHONE}`, icon: Phone, label: "Phone", value: PHONE, sub: "Call our support desk", external: false },
+            { href: `mailto:${EMAIL}`, icon: Mail, label: "Email", value: EMAIL, sub: "Sales & billing", external: false },
+          ].map((c, i) => (
+            <Reveal key={c.label} delay={i * 80}>
+              <a
+                href={c.href}
+                {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="group block h-full bg-[#141432] border border-white/10 rounded-2xl p-6 hover:border-[#4f46e5]/50 hover:-translate-y-1 hover:shadow-[0_10px_40px_-15px_#4f46e5] transition-all duration-300"
+              >
+                <div className="w-11 h-11 rounded-xl bg-[#4f46e5]/15 border border-[#4f46e5]/30 grid place-items-center mb-4 group-hover:bg-[#4f46e5] group-hover:border-[#4f46e5] transition-colors">
+                  <c.icon className="w-5 h-5 text-[#a5a1ff] group-hover:text-white transition-colors" />
+                </div>
+                <div className="text-lg font-bold text-white" style={heading}>{c.label}</div>
+                <div className="text-sm font-medium text-[#a5a1ff] mt-1 break-all">{c.value}</div>
+                <div className="text-xs text-slate-500 mt-2">{c.sub}</div>
               </a>
             </Reveal>
-            <Reveal delay={100}>
-              <a href={`tel:${PHONE}`}>
-                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
-                  <div className="h-12 w-12 rounded-xl bg-blue-500 grid place-items-center mb-4">
-                    <Phone className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="font-black text-lg">Phone</div>
-                  <div className="font-bold text-blue-600 mt-1 break-all">{PHONE}</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-2">Call our support desk</div>
-                </Card>
-              </a>
-            </Reveal>
-            <Reveal delay={200}>
-              <a href={`mailto:${EMAIL}`}>
-                <Card className="p-6 border-2 hover:border-emerald-500 hover:shadow-xl transition-all h-full">
-                  <div className="h-12 w-12 rounded-xl bg-violet-500 grid place-items-center mb-4">
-                    <Mail className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="font-black text-lg">Email</div>
-                  <div className="font-bold text-violet-600 mt-1 break-all">{EMAIL}</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-2">Sales & billing enquiries</div>
-                </Card>
-              </a>
-            </Reveal>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section id="pricing" className="py-24 border-t border-border">
-        <div className="max-w-4xl mx-auto px-6">
-          <Reveal>
-            <Card className="p-12 md:p-16 text-center bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 shadow-2xl">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">Ready to take control?</h2>
-              <p className="text-xl font-bold opacity-90 mb-8">Get every module. One flat plan. Start today.</p>
-              <Link to="/auth">
-                <Button size="lg" className="h-14 px-10 text-base font-black bg-white text-emerald-700 hover:bg-white/90 hover-scale">
-                  Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+      {/* CTA band */}
+      <section className="max-w-7xl mx-auto px-6 pb-24">
+        <Reveal className="relative bg-gradient-to-r from-[#1e1e5a] via-[#4338ca] to-[#4f46e5] rounded-[2.5rem] p-12 md:p-20 overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_70%)]" />
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
+          <div className="relative z-10 max-w-2xl">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-5 tracking-tight" style={heading}>
+              Ready to streamline your accounting?
+            </h2>
+            <p className="text-lg text-white/80 mb-10 leading-relaxed">
+              Join the fastest-growing businesses in Zambia. No credit card required — start your 14-day free trial today.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to="/auth"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-[#0a0a1a] rounded-xl font-bold transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)]"
+              >
+                Start Free Trial
+                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
-            </Card>
-          </Reveal>
-        </div>
+              <a
+                href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20talk%20to%20sales.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-transparent border border-white/30 text-white rounded-xl font-bold hover:bg-white/10 hover:border-white transition-all"
+              >
+                Talk to Sales
+              </a>
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-border py-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+      <footer className="border-t border-white/5 py-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
           <div className="flex items-center gap-2">
             <img src={logo} alt="SifoBooks" className="h-6 w-6 object-contain" width={24} height={24} />
-            <span className="font-black text-foreground">SifoBooks</span>
-            <span className="font-semibold">© {new Date().getFullYear()} · Accounting ERP</span>
+            <span className="font-bold text-white" style={heading}>SifoBooks</span>
+            <span>© {new Date().getFullYear()} · Accounting ERP</span>
           </div>
-          <div className="flex gap-6 font-bold">
-            <a href={`tel:${PHONE}`} className="hover:text-foreground">{PHONE}</a>
-            <a href={`mailto:${EMAIL}`} className="hover:text-foreground break-all">{EMAIL}</a>
+          <div className="flex gap-6 font-medium">
+            <a href={`tel:${PHONE}`} className="hover:text-[#a5a1ff] transition-colors">{PHONE}</a>
+            <a href={`mailto:${EMAIL}`} className="hover:text-[#a5a1ff] transition-colors break-all">{EMAIL}</a>
           </div>
         </div>
       </footer>
@@ -391,7 +378,7 @@ function Landing() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WhatsApp support"
-        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-[#25D366] shadow-2xl grid place-items-center hover:scale-110 transition-transform animate-fade-in"
+        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-[#25D366] shadow-2xl grid place-items-center hover:scale-110 transition-transform"
         style={{ boxShadow: "0 10px 30px -5px rgba(37, 211, 102, 0.6)" }}
       >
         <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
