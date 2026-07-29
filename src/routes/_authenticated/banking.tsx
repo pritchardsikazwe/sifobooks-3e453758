@@ -506,8 +506,9 @@ function BankingPage() {
                                       </td>
                                     </tr>
                                   ))}
-                                </tbody>
+                                 </tbody>
                               </table>
+                              </>}
                             </TableCell>
                           </TableRow>
                         )}
