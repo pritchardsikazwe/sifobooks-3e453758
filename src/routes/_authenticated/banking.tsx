@@ -607,6 +607,36 @@ function BankingPage() {
       <SpendMoneyDialog open={spendOpen} onOpenChange={setSpendOpen} onRecorded={load} mode="spend" />
       <SpendMoneyDialog open={receiveOpen} onOpenChange={setReceiveOpen} onRecorded={load} mode="receive" />
       <ReconcileDialog open={reconcileOpen} onOpenChange={setReconcileOpen} onLocked={load} />
+
+      <Dialog open={!!clearTxn} onOpenChange={o => !o && setClearTxn(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Clear transaction</DialogTitle></DialogHeader>
+          {clearTxn && (
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-md bg-muted">
+                <div className="font-medium">{clearTxn.description}</div>
+                <div className="text-xs text-muted-foreground">{clearTxn.txn_date} · <span className="font-mono">{money(Number(clearTxn.amount))}</span></div>
+              </div>
+              <div>
+                <Label>Clearing reference (optional)</Label>
+                <Input value={clearRef} onChange={e => setClearRef(e.target.value)} placeholder="e.g. Bank statement 15-May" />
+              </div>
+              <p className="text-xs text-muted-foreground">Marks the transaction as fully cleared. It moves to the Cleared tab and cannot be deleted.</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setClearTxn(null)}>Cancel</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={busy === clearTxn?.id} onClick={async () => {
+              if (!clearTxn) return;
+              const ok = await runClear(clearTxn, clearRef);
+              if (ok) setClearTxn(null);
+            }}>
+              {busy === clearTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Clear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
