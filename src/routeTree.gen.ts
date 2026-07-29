@@ -102,6 +102,7 @@ import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
+import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -619,6 +620,12 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
+const AuthenticatedLearnAccountingBasicsRoute =
+  AuthenticatedLearnAccountingBasicsRouteImport.update({
+    id: '/learn/accounting-basics',
+    path: '/learn/accounting-basics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInvoicesNewRoute =
   AuthenticatedInvoicesNewRouteImport.update({
     id: '/new',
@@ -716,6 +723,7 @@ export interface FileRoutesByFullPath {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -811,6 +819,7 @@ export interface FileRoutesByTo {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -912,6 +921,7 @@ export interface FileRoutesById {
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1013,6 +1023,7 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/invoices/new'
+    | '/learn/accounting-basics'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1108,6 +1119,7 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/invoices/new'
+    | '/learn/accounting-basics'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1208,6 +1220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/workshops'
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
+    | '/_authenticated/learn/accounting-basics'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
@@ -1903,6 +1916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
     }
+    '/_authenticated/learn/accounting-basics': {
+      id: '/_authenticated/learn/accounting-basics'
+      path: '/learn/accounting-basics'
+      fullPath: '/learn/accounting-basics'
+      preLoaderRoute: typeof AuthenticatedLearnAccountingBasicsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invoices/new': {
       id: '/_authenticated/invoices/new'
       path: '/new'
@@ -2115,6 +2135,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2181,6 +2202,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedLearnAccountingBasicsRoute:
+    AuthenticatedLearnAccountingBasicsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -2198,3 +2221,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
