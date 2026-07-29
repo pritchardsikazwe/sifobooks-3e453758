@@ -3055,6 +3055,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_company_id: string | null
           business_name: string | null
           country: string | null
           created_at: string
@@ -3072,6 +3073,7 @@ export type Database = {
           vat_registered: boolean
         }
         Insert: {
+          active_company_id?: string | null
           business_name?: string | null
           country?: string | null
           created_at?: string
@@ -3089,6 +3091,7 @@ export type Database = {
           vat_registered?: boolean
         }
         Update: {
+          active_company_id?: string | null
           business_name?: string | null
           country?: string | null
           created_at?: string
@@ -3105,7 +3108,15 @@ export type Database = {
           updated_at?: string
           vat_registered?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_company_id_fkey"
+            columns: ["active_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_tasks: {
         Row: {
