@@ -86,8 +86,18 @@ export async function buildPayslipPdf(i: PayslipPdfInput): Promise<jsPDF> {
   pdf.text(`${i.period.monthName} ${i.period.year}`, W - 32, 50, { align: "right" });
   if (i.period.payDate) pdf.text(`Pay Date: ${i.period.payDate}`, W - 32, 64, { align: "right" });
 
+  // ----- Optional payslip header text -----
+  let y = 100;
+  if (i.company?.payslip_header) {
+    pdf.setFillColor(BRAND.soft); pdf.rect(0, y, W, 18, "F");
+    pdf.setTextColor(BRAND.dark); pdf.setFont("helvetica", "bold"); pdf.setFontSize(8.5);
+    pdf.text(i.company.payslip_header, W / 2, y + 12, { align: "center", maxWidth: W - 40 });
+    y += 26;
+  } else {
+    y = 108;
+  }
+
   // ----- Employee card -----
-  let y = 108;
   pdf.setFillColor(BRAND.soft); pdf.roundedRect(32, y, W - 64, 78, 6, 6, "F");
   pdf.setTextColor(BRAND.slate); pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
   pdf.text(i.employee.name, 44, y + 20);
