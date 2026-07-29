@@ -35,6 +35,7 @@ import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
+import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
@@ -244,6 +245,12 @@ const AuthenticatedProjectTasksRoute =
   AuthenticatedProjectTasksRouteImport.update({
     id: '/project-tasks',
     path: '/project-tasks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPostingWizardRoute =
+  AuthenticatedPostingWizardRouteImport.update({
+    id: '/posting-wizard',
+    path: '/posting-wizard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPeriodCloseRoute =
@@ -684,6 +691,7 @@ export interface FileRoutesByFullPath {
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -780,6 +788,7 @@ export interface FileRoutesByTo {
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -878,6 +887,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -978,6 +988,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/payroll-dashboard'
     | '/period-close'
+    | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
@@ -1074,6 +1085,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/payroll-dashboard'
     | '/period-close'
+    | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
@@ -1171,6 +1183,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll'
     | '/_authenticated/payroll-dashboard'
     | '/_authenticated/period-close'
+    | '/_authenticated/posting-wizard'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
     | '/_authenticated/purchase-orders'
@@ -1419,6 +1432,13 @@ declare module '@tanstack/react-router' {
       path: '/project-tasks'
       fullPath: '/project-tasks'
       preLoaderRoute: typeof AuthenticatedProjectTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/posting-wizard': {
+      id: '/_authenticated/posting-wizard'
+      path: '/posting-wizard'
+      fullPath: '/posting-wizard'
+      preLoaderRoute: typeof AuthenticatedPostingWizardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/period-close': {
@@ -2072,6 +2092,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
+  AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
@@ -2136,6 +2157,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
+  AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
@@ -2176,3 +2198,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
