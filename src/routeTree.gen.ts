@@ -39,7 +39,9 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
+import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_authenticated/payroll-transactions'
 import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
+import { Route as AuthenticatedPayrollSetupRouteImport } from './routes/_authenticated/payroll-setup'
 import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
@@ -280,10 +282,22 @@ const AuthenticatedPeriodCloseRoute =
     path: '/period-close',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPayrollTransactionsRoute =
+  AuthenticatedPayrollTransactionsRouteImport.update({
+    id: '/payroll-transactions',
+    path: '/payroll-transactions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPayrollToolsRoute =
   AuthenticatedPayrollToolsRouteImport.update({
     id: '/payroll-tools',
     path: '/payroll-tools',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollSetupRoute =
+  AuthenticatedPayrollSetupRouteImport.update({
+    id: '/payroll-setup',
+    path: '/payroll-setup',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollDashboardRoute =
@@ -766,7 +780,9 @@ export interface FileRoutesByFullPath {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
+  '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -874,7 +890,9 @@ export interface FileRoutesByTo {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
+  '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -984,7 +1002,9 @@ export interface FileRoutesById {
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/_authenticated/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
+  '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -1096,7 +1116,9 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-setup'
     | '/payroll-tools'
+    | '/payroll-transactions'
     | '/period-close'
     | '/posting-wizard'
     | '/project-tasks'
@@ -1204,7 +1226,9 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-setup'
     | '/payroll-tools'
+    | '/payroll-transactions'
     | '/period-close'
     | '/posting-wizard'
     | '/project-tasks'
@@ -1313,7 +1337,9 @@ export interface FileRouteTypes {
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/payroll-dashboard'
+    | '/_authenticated/payroll-setup'
     | '/_authenticated/payroll-tools'
+    | '/_authenticated/payroll-transactions'
     | '/_authenticated/period-close'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/project-tasks'
@@ -1603,11 +1629,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeriodCloseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/payroll-transactions': {
+      id: '/_authenticated/payroll-transactions'
+      path: '/payroll-transactions'
+      fullPath: '/payroll-transactions'
+      preLoaderRoute: typeof AuthenticatedPayrollTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/payroll-tools': {
       id: '/_authenticated/payroll-tools'
       path: '/payroll-tools'
       fullPath: '/payroll-tools'
       preLoaderRoute: typeof AuthenticatedPayrollToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-setup': {
+      id: '/_authenticated/payroll-setup'
+      path: '/payroll-setup'
+      fullPath: '/payroll-setup'
+      preLoaderRoute: typeof AuthenticatedPayrollSetupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll-dashboard': {
@@ -2310,7 +2350,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
+  AuthenticatedPayrollSetupRoute: typeof AuthenticatedPayrollSetupRoute
   AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
+  AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
@@ -2385,7 +2427,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
+  AuthenticatedPayrollSetupRoute: AuthenticatedPayrollSetupRoute,
   AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
+  AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,

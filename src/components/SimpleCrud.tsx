@@ -106,7 +106,11 @@ export function SimpleCrud({
   const openNew = () => { setEditing(null); setForm(initial); setOpen(true); };
   const openEdit = (r: any) => {
     setEditing(r);
-    setForm(Object.fromEntries(fields.map(f => [f.name, r[f.name] ?? (f.type === "number" ? 0 : "")])));
+    setForm(Object.fromEntries(fields.map(f => {
+      const v = r[f.name];
+      if (typeof v === "boolean") return [f.name, String(v)];
+      return [f.name, v ?? (f.type === "number" ? 0 : "")];
+    })));
     setOpen(true);
   };
 
@@ -121,7 +125,11 @@ export function SimpleCrud({
       const v = payload[f.name];
       if (f.type === "number") payload[f.name] = v === "" || v == null ? null : Number(v);
       else if (f.type === "date") { if (v === "" || v == null) payload[f.name] = null; }
-      else if (f.type === "select") { if (v === "" || v == null) payload[f.name] = null; }
+      else if (f.type === "select") {
+        if (v === "" || v == null) payload[f.name] = null;
+        else if (v === "true") payload[f.name] = true;
+        else if (v === "false") payload[f.name] = false;
+      }
       else if (v === "") payload[f.name] = null;
     }
     const res = editing
