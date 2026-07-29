@@ -179,68 +179,211 @@ function CompliancePage() {
           <Stat label="Est. liability" value={money(counts.amount)} tint="bg-primary/10 text-primary" icon={<ShieldCheck className="h-4 w-4" />} />
         </div>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="text-base">Statutory bodies covered</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {STATUTORY_BODIES.map(b => (
-                <Badge key={b.code} variant="outline" className={b.color} title={b.full}>{b.name} — {b.full}</Badge>
+        <Tabs defaultValue="obligations" className="mt-8">
+          <TabsList>
+            <TabsTrigger value="obligations">Obligations</TabsTrigger>
+            <TabsTrigger value="rates">Zambia Rates ({ZAMBIA_TAX_YEAR})</TabsTrigger>
+            <TabsTrigger value="calendar">Filing Calendar</TabsTrigger>
+            <TabsTrigger value="portals">Filing Portals</TabsTrigger>
+            <TabsTrigger value="bodies">Statutory Bodies</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="obligations">
+            <Card>
+              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" /> Obligations</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={generateThisMonth}><Sparkles className="h-4 w-4" /> This month</Button>
+                  <Button variant="outline" onClick={generateWholeYear}><Calendar className="h-4 w-4" /> Whole year</Button>
+                  <NewObligationDialog open={open} setOpen={setOpen} onCreated={load} />
+                </div>
+              </CardHeader>
+              <CardContent className="px-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-6">Body</TableHead>
+                      <TableHead>Obligation</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead>Due</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="w-40 text-right"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
+                    ) : withDerivedStatus.length === 0 ? (
+                      <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No obligations yet. Use "This month" or "Whole year" to seed filings.</TableCell></TableRow>
+                    ) : withDerivedStatus.map(i => {
+                      const b = bodyByCode(i.body);
+                      return (
+                        <TableRow key={i.id}>
+                          <TableCell className="pl-6"><Badge variant="outline" className={b?.color ?? ""}>{b?.name ?? i.body}</Badge></TableCell>
+                          <TableCell className="font-medium">{i.obligation_type}</TableCell>
+                          <TableCell className="text-muted-foreground">{i.period}</TableCell>
+                          <TableCell className="text-muted-foreground">{i.due_date}</TableCell>
+                          <TableCell><Badge variant="outline" className={statusStyles[i.status]}><span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span></Badge></TableCell>
+                          <TableCell className="text-right font-medium">{i.amount != null ? money(Number(i.amount)) : "—"}</TableCell>
+                          <TableCell className="text-right">
+                            {i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}
+                            <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rates" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Scale className="h-4 w-4 text-emerald-600" /> PAYE monthly bands</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader><TableRow><TableHead>Band</TableHead><TableHead className="text-right">Rate</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {PAYE_BANDS_MONTHLY.map(b => (
+                      <TableRow key={b.label}><TableCell>{b.label}</TableCell><TableCell className="text-right font-semibold">{(b.rate * 100).toFixed(0)}%</TableCell></TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <RateCard title="NAPSA (pension)" rows={[
+                ["Employee", `${(NAPSA.employeeRate * 100).toFixed(1)}%`],
+                ["Employer", `${(NAPSA.employerRate * 100).toFixed(1)}%`],
+                ["Monthly ceiling", `K ${NAPSA.monthlyCeiling.toLocaleString()}`],
+                ["Due", "10th of following month"],
+              ]} />
+              <RateCard title="NHIMA (health)" rows={[
+                ["Employee", `${(NHIMA.employeeRate * 100).toFixed(1)}%`],
+                ["Employer", `${(NHIMA.employerRate * 100).toFixed(1)}%`],
+                ["Base", "Basic pay"],
+                ["Due", "10th of following month"],
+              ]} />
+              <RateCard title="Skills Development Levy" rows={[
+                ["Rate", `${(SDL.rate * 100).toFixed(2)}%`],
+                ["Base", SDL.base],
+                ["Body", "TEVETA / ZRA"],
+                ["Due", "20th of following month"],
+              ]} />
+              <RateCard title="Workers' Compensation" rows={[
+                ["Default rate", `${(WCF.rateDefault * 100).toFixed(1)}%`],
+                ["Base", WCF.base],
+                ["Note", WCF.note],
+                ["Body", "WCFCB"],
+              ]} />
+              <RateCard title="VAT" rows={[
+                ["Standard", `${(VAT.standard * 100).toFixed(0)}%`],
+                ["Zero-rated", "0%"],
+                ["Exempt", "N/A"],
+                ["Return", "VAT 3 · monthly · 18th"],
+              ]} />
+              <RateCard title="Turnover Tax" rows={[
+                ["Rate", `${(TURNOVER_TAX.rate * 100).toFixed(0)}%`],
+                ["Annual threshold", `K ${TURNOVER_TAX.thresholdAnnual.toLocaleString()}`],
+                ["Eligibility", TURNOVER_TAX.note],
+                ["Due", "14th of following month"],
+              ]} />
+              <RateCard title="Withholding Tax" rows={[
+                ["Rent", `${(WHT.rent * 100).toFixed(0)}%`],
+                ["Dividends", `${(WHT.dividends * 100).toFixed(0)}%`],
+                ["Interest / Mgmt / Royalties", `${(WHT.interest * 100).toFixed(0)}%`],
+                ["Commissions / Public entertainers", `${(WHT.commissions * 100).toFixed(0)}%`],
+              ]} />
+              <RateCard title="Company Income Tax" rows={[
+                ["Standard", `${(INCOME_TAX.companyStandard * 100).toFixed(0)}%`],
+                ["Mining", `${(INCOME_TAX.mining * 100).toFixed(0)}%`],
+                ["Mobile operators", `${(INCOME_TAX.mobileOperators * 100).toFixed(0)}%`],
+                ["Farming / Non-trad. exports", `${(INCOME_TAX.farming * 100).toFixed(0)}% / ${(INCOME_TAX.exportOfNonTraditional * 100).toFixed(0)}%`],
+              ]} />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Rates are indicative and configurable. Always verify against current ZRA, NAPSA, NHIMA, TEVETA and WCFCB guidance.
+            </p>
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Calendar className="h-4 w-4" /> Statutory filing calendar</CardTitle></CardHeader>
+              <CardContent className="px-0">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="pl-6">Body</TableHead><TableHead>Obligation</TableHead><TableHead>Frequency</TableHead><TableHead className="text-right">Due day</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {FILING_CALENDAR.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="pl-6"><Badge variant="outline">{r.body}</Badge></TableCell>
+                        <TableCell className="font-medium">{r.obligation}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.frequency}</TableCell>
+                        <TableCell className="text-right">{r.dueDay}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="portals">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PORTALS.map(p => (
+                <Card key={p.name}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold">{p.name}</div>
+                        <div className="text-xs text-muted-foreground">{p.purpose}</div>
+                      </div>
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-emerald-700 hover:text-emerald-800" aria-label={`Open ${p.name}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </div>
+                    <div className="mt-2 truncate text-[11px] text-muted-foreground">{p.url}</div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        <Card className="mt-8">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" /> Obligations</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={generateThisMonth}><Sparkles className="h-4 w-4" /> Auto-generate this month</Button>
-              <NewObligationDialog open={open} setOpen={setOpen} onCreated={load} />
-            </div>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-6">Body</TableHead>
-                  <TableHead>Obligation</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="w-40 text-right"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
-                ) : withDerivedStatus.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No obligations yet. Use "Auto-generate this month" to seed monthly filings.</TableCell></TableRow>
-                ) : withDerivedStatus.map(i => {
-                  const b = bodyByCode(i.body);
-                  return (
-                    <TableRow key={i.id}>
-                      <TableCell className="pl-6"><Badge variant="outline" className={b?.color ?? ""}>{b?.name ?? i.body}</Badge></TableCell>
-                      <TableCell className="font-medium">{i.obligation_type}</TableCell>
-                      <TableCell className="text-muted-foreground">{i.period}</TableCell>
-                      <TableCell className="text-muted-foreground">{i.due_date}</TableCell>
-                      <TableCell><Badge variant="outline" className={statusStyles[i.status]}><span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span></Badge></TableCell>
-                      <TableCell className="text-right font-medium">{i.amount != null ? money(Number(i.amount)) : "—"}</TableCell>
-                      <TableCell className="text-right">
-                        {i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}
-                        <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          <TabsContent value="bodies">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Statutory bodies covered</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {STATUTORY_BODIES.map(b => (
+                    <Badge key={b.code} variant="outline" className={b.color} title={b.full}>{b.name} — {b.full}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
+  );
+}
+
+function RateCard({ title, rows }: { title: string; rows: [string, string][] }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+      <CardContent className="pt-0">
+        <dl className="text-xs">
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between border-b py-1.5 last:border-0">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="font-medium text-right">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
   );
 }
 
