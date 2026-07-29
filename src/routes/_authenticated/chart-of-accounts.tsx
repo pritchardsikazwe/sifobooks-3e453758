@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Info } from "lucide-react";
 import { BookOpen, Plus, Search, FileText, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +32,8 @@ type Row = {
   total_credit: number;
   balance: number;
   entry_count: number;
+  purpose?: string | null;
+  normal_balance?: "Dr" | "Cr" | null;
 };
 
 const TYPES = [
@@ -61,9 +65,17 @@ function ChartOfAccountsPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any).from("account_balances").select("*").order("account_code");
+    const [{ data, error }, { data: coa }] = await Promise.all([
+      (supabase as any).from("account_balances").select("*").order("account_code"),
+      (supabase as any).from("chart_of_accounts").select("id, purpose, normal_balance"),
+    ]);
     if (error) { toast.error(error.message); setRows([]); }
-    else setRows((data ?? []) as Row[]);
+    else {
+      const meta = new Map<string, { purpose?: string; normal_balance?: "Dr" | "Cr" }>(
+        (coa ?? []).map((c: any) => [c.id, { purpose: c.purpose, normal_balance: c.normal_balance }]),
+      );
+      setRows(((data ?? []) as Row[]).map(r => ({ ...r, ...(meta.get(r.account_id) ?? {}) })));
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -178,8 +190,38 @@ function ChartOfAccountsPage() {
               {filtered.map(r => (
                 <tr key={r.account_id} className="hover:bg-slate-50">
                   <td className="py-1.5 text-slate-500">{r.account_code}</td>
-                  <td className="font-medium text-slate-900">{r.account_name}</td>
-                  <td><Badge className={TYPE_COLOR[r.account_type] ?? ""} variant="secondary">{r.account_type}</Badge></td>
+                  <td className="font-medium text-slate-900">
+                    <div className="flex items-center gap-1.5">
+                      <span>{r.account_name}</span>
+                      {(r.purpose || r.normal_balance) && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="text-slate-400 hover:text-emerald-600" aria-label={`About ${r.account_name}`}>
+                              <Info className="h-3.5 w-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent side="right" className="w-80 text-xs">
+                            <div className="font-semibold text-slate-900 mb-1">{r.account_code} · {r.account_name}</div>
+                            {r.normal_balance && (
+                              <div className="mb-2">
+                                <Badge variant="secondary" className={r.normal_balance === "Dr" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}>
+                                  Normal balance: {r.normal_balance === "Dr" ? "Debit (Dr)" : "Credit (Cr)"}
+                                </Badge>
+                              </div>
+                            )}
+                            {r.purpose && <p className="text-slate-600 leading-relaxed">{r.purpose}</p>}
+                            <div className="mt-3 pt-2 border-t">
+                              <Link to="/learn/accounting-basics" className="text-emerald-700 hover:underline">Learn Dr/Cr rules →</Link>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <Badge className={TYPE_COLOR[r.account_type] ?? ""} variant="secondary">{r.account_type}</Badge>
+                    {r.normal_balance && <span className="ml-1 text-[10px] text-slate-400">{r.normal_balance}</span>}
+                  </td>
                   <td className="text-right">{r.total_debit > 0 ? fmtMoney(r.total_debit) : ""}</td>
                   <td className="text-right">{r.total_credit > 0 ? fmtMoney(r.total_credit) : ""}</td>
                   <td className="text-right font-semibold">{fmtMoney(r.balance)}</td>
