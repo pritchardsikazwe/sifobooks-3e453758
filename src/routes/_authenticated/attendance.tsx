@@ -40,8 +40,8 @@ function AttendancePage() {
       fields={[
         { name: "employee_id", label: "Employee", type: "select", required: true, options: employees },
         { name: "attendance_date", label: "Date", type: "date", required: true, defaultValue: new Date().toISOString().slice(0, 10) },
-        { name: "clock_in", label: "Clock In", type: "text", placeholder: "e.g. 08:00" },
-        { name: "clock_out", label: "Clock Out", type: "text", placeholder: "e.g. 17:00" },
+        { name: "clock_in", label: "Clock In (HH:MM)", type: "text" },
+        { name: "clock_out", label: "Clock Out (HH:MM)", type: "text" },
         { name: "hours_worked", label: "Hours Worked", type: "number" },
         { name: "status", label: "Status", type: "select", defaultValue: "present",
           options: [{ value: "present", label: "Present" }, { value: "absent", label: "Absent" }, { value: "late", label: "Late" }, { value: "leave", label: "On Leave" }, { value: "holiday", label: "Holiday" }] },
