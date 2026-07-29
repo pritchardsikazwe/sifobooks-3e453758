@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWorkshopsRouteImport } from './routes/_authenticated/workshops'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTuckshopRouteImport } from './routes/_authenticated/tuckshop'
+import { Route as AuthenticatedTimesheetRouteImport } from './routes/_authenticated/timesheet'
 import { Route as AuthenticatedTimeEntriesRouteImport } from './routes/_authenticated/time-entries'
 import { Route as AuthenticatedTeachingMaterialsRouteImport } from './routes/_authenticated/teaching-materials'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -37,6 +38,7 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
+import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
 import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
@@ -141,6 +143,11 @@ const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
 const AuthenticatedTuckshopRoute = AuthenticatedTuckshopRouteImport.update({
   id: '/tuckshop',
   path: '/tuckshop',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTimesheetRoute = AuthenticatedTimesheetRouteImport.update({
+  id: '/timesheet',
+  path: '/timesheet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTimeEntriesRoute =
@@ -258,6 +265,12 @@ const AuthenticatedPeriodCloseRoute =
   AuthenticatedPeriodCloseRouteImport.update({
     id: '/period-close',
     path: '/period-close',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollToolsRoute =
+  AuthenticatedPayrollToolsRouteImport.update({
+    id: '/payroll-tools',
+    path: '/payroll-tools',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollDashboardRoute =
@@ -697,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -718,6 +732,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
+  '/timesheet': typeof AuthenticatedTimesheetRoute
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
@@ -795,6 +810,7 @@ export interface FileRoutesByTo {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -814,6 +830,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
+  '/timesheet': typeof AuthenticatedTimesheetRoute
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
@@ -895,6 +912,7 @@ export interface FileRoutesById {
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
@@ -916,6 +934,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
   '/_authenticated/time-entries': typeof AuthenticatedTimeEntriesRoute
+  '/_authenticated/timesheet': typeof AuthenticatedTimesheetRoute
   '/_authenticated/tuckshop': typeof AuthenticatedTuckshopRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
@@ -997,6 +1016,7 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-tools'
     | '/period-close'
     | '/posting-wizard'
     | '/project-tasks'
@@ -1018,6 +1038,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/teaching-materials'
     | '/time-entries'
+    | '/timesheet'
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
@@ -1095,6 +1116,7 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-tools'
     | '/period-close'
     | '/posting-wizard'
     | '/project-tasks'
@@ -1114,6 +1136,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/teaching-materials'
     | '/time-entries'
+    | '/timesheet'
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
@@ -1194,6 +1217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/payroll-dashboard'
+    | '/_authenticated/payroll-tools'
     | '/_authenticated/period-close'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/project-tasks'
@@ -1215,6 +1239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/teaching-materials'
     | '/_authenticated/time-entries'
+    | '/_authenticated/timesheet'
     | '/_authenticated/tuckshop'
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
@@ -1312,6 +1337,13 @@ declare module '@tanstack/react-router' {
       path: '/tuckshop'
       fullPath: '/tuckshop'
       preLoaderRoute: typeof AuthenticatedTuckshopRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/timesheet': {
+      id: '/_authenticated/timesheet'
+      path: '/timesheet'
+      fullPath: '/timesheet'
+      preLoaderRoute: typeof AuthenticatedTimesheetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/time-entries': {
@@ -1459,6 +1491,13 @@ declare module '@tanstack/react-router' {
       path: '/period-close'
       fullPath: '/period-close'
       preLoaderRoute: typeof AuthenticatedPeriodCloseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-tools': {
+      id: '/_authenticated/payroll-tools'
+      path: '/payroll-tools'
+      fullPath: '/payroll-tools'
+      preLoaderRoute: typeof AuthenticatedPayrollToolsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll-dashboard': {
@@ -2111,6 +2150,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
+  AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
@@ -2132,6 +2172,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTeachingMaterialsRoute: typeof AuthenticatedTeachingMaterialsRoute
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
+  AuthenticatedTimesheetRoute: typeof AuthenticatedTimesheetRoute
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
@@ -2177,6 +2218,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
+  AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
@@ -2199,6 +2241,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTeachingMaterialsRoute: AuthenticatedTeachingMaterialsRoute,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
+  AuthenticatedTimesheetRoute: AuthenticatedTimesheetRoute,
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
@@ -2221,13 +2264,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

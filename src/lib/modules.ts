@@ -92,7 +92,9 @@ export const MODULES: ModuleDef[] = [
       { title: "Employees", url: "/employees", iconName: "UserSquare" },
       { title: "Attendance", url: "/attendance", iconName: "CalendarCheck" },
       { title: "Leave", url: "/leave", iconName: "CalendarDays" },
+      { title: "Timesheet", url: "/timesheet", iconName: "Clock" },
       { title: "Payroll", url: "/payroll", iconName: "Banknote" },
+      { title: "Payroll Tools", url: "/payroll-tools", iconName: "Calculator" },
       { title: "Payroll Schedules", url: "/reports/payroll-schedules", iconName: "Banknote" },
     ] },
 
