@@ -4,13 +4,19 @@ import { motion } from "framer-motion";
 import {
   TrendingUp, TrendingDown, Wallet, Landmark, Receipt, Users, FileText, Package, CreditCard,
   ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Banknote, BookText, Truck, Boxes, ClipboardList,
+  LayoutGrid, Check, Eye, RotateCcw, Plus,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
   PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { SortableWidget } from "@/components/dashboard/SortableWidget";
+import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
