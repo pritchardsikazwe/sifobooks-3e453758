@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { DataTable, type DTColumn } from "@/components/data-table";
+import { ExportMenu } from "@/lib/exports";
 
 export const Route = createFileRoute("/_authenticated/reconciliation-sessions")({
   head: () => ({
@@ -107,65 +109,70 @@ function ReconciliationSessions() {
     return <SessionDetail id={activeId} onBack={() => { setActiveId(null); load(); }} />;
   }
 
+  const columns: DTColumn<Session>[] = useMemo(() => [
+    { key: "statement_date", header: "Statement Date" },
+    { key: "bank", header: "Bank Account",
+      accessor: (s) => accounts.find(a => a.id === s.bank_account_id)?.name ?? "—",
+      cell: (s) => accounts.find(a => a.id === s.bank_account_id)?.name ?? <span className="text-muted-foreground">—</span> },
+    { key: "opening_balance", header: "Opening", align: "right",
+      accessor: (s) => Number(s.opening_balance),
+      cell: (s) => fmt(s.opening_balance) },
+    { key: "statement_balance", header: "Statement", align: "right",
+      accessor: (s) => Number(s.statement_balance),
+      cell: (s) => fmt(s.statement_balance) },
+    { key: "book_balance", header: "Book", align: "right",
+      accessor: (s) => Number(s.book_balance),
+      cell: (s) => fmt(s.book_balance) },
+    { key: "difference", header: "Difference", align: "right",
+      accessor: (s) => Number(s.difference),
+      cell: (s) => (
+        <span className={Math.abs(s.difference) < 0.01 ? "text-emerald-600 font-medium" : "text-amber-600 font-medium"}>
+          {fmt(s.difference)}
+        </span>
+      ) },
+    { key: "status", header: "Status",
+      accessor: (s) => s.status,
+      cell: (s) => s.status === "locked"
+        ? <Badge className="bg-emerald-600"><Lock className="h-3 w-3 mr-1" /> Locked</Badge>
+        : s.status === "completed" ? <Badge variant="secondary">Completed</Badge>
+        : <Badge variant="outline">Draft</Badge> },
+  ], [accounts]);
+
+  const exportRows = sessions.map(s => ({
+    StatementDate: s.statement_date,
+    BankAccount: accounts.find(a => a.id === s.bank_account_id)?.name ?? "",
+    Opening: s.opening_balance,
+    Statement: s.statement_balance,
+    Book: s.book_balance,
+    Difference: s.difference,
+    Status: s.status,
+  }));
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Scale className="h-6 w-6" /> Reconciliation Sessions</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Scale className="h-6 w-6 text-emerald-700" /> Reconciliation Sessions</h1>
           <p className="text-sm text-muted-foreground">Formal statement-vs-book reconciliation with audit locking.</p>
         </div>
         <div className="flex gap-2">
+          <ExportMenu rows={exportRows} filename="reconciliation-sessions" title="Reconciliation Sessions" />
           <Button variant="outline" asChild><Link to="/reconciliation">Quick Match</Link></Button>
-          <Button onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> New Session</Button>
+          <Button onClick={() => setOpenNew(true)} className="bg-emerald-700 hover:bg-emerald-800"><Plus className="h-4 w-4 mr-1" /> New Session</Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Sessions</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Statement Date</TableHead>
-                  <TableHead>Bank Account</TableHead>
-                  <TableHead className="text-right">Opening</TableHead>
-                  <TableHead className="text-right">Statement</TableHead>
-                  <TableHead className="text-right">Book</TableHead>
-                  <TableHead className="text-right">Difference</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No sessions yet. Create one to start a formal reconciliation.</TableCell></TableRow>
-                )}
-                {sessions.map(s => {
-                  const acc = accounts.find(a => a.id === s.bank_account_id);
-                  const balanced = Math.abs(s.difference) < 0.01;
-                  return (
-                    <TableRow key={s.id} className="cursor-pointer" onClick={() => setActiveId(s.id)}>
-                      <TableCell>{s.statement_date}</TableCell>
-                      <TableCell>{acc?.name || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="text-right">{fmt(s.opening_balance)}</TableCell>
-                      <TableCell className="text-right">{fmt(s.statement_balance)}</TableCell>
-                      <TableCell className="text-right">{fmt(s.book_balance)}</TableCell>
-                      <TableCell className={`text-right ${balanced ? "text-emerald-600" : "text-amber-600"}`}>{fmt(s.difference)}</TableCell>
-                      <TableCell>
-                        {s.status === "locked" ? <Badge variant="default" className="bg-emerald-600"><Lock className="h-3 w-3 mr-1" /> Locked</Badge>
-                          : s.status === "completed" ? <Badge variant="secondary">Completed</Badge>
-                          : <Badge variant="outline">Draft</Badge>}
-                      </TableCell>
-                      <TableCell><Button size="sm" variant="ghost">Open</Button></TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      ) : (
+        <DataTable
+          data={sessions}
+          columns={columns}
+          onRowClick={(s) => setActiveId(s.id)}
+          empty="No sessions yet. Create one to start a formal reconciliation."
+        />
+      )}
+
 
       <Dialog open={openNew} onOpenChange={setOpenNew}>
         <DialogContent>

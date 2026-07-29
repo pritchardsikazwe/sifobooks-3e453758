@@ -1,19 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Landmark, Loader2 } from "lucide-react";
+import { Plus, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
+import { DataTable, type DTColumn } from "@/components/data-table";
+import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 
 export const Route = createFileRoute("/_authenticated/bank-accounts")({
   head: () => ({ meta: [{ title: "Bank Accounts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -22,12 +22,20 @@ export const Route = createFileRoute("/_authenticated/bank-accounts")({
 
 const CURRENCIES = ["ZMW", "USD", "EUR", "GBP", "ZAR"];
 
+type Row = {
+  id: string; name: string; bank_name: string | null; account_number: string | null;
+  currency: string; opening_balance: number; opening_date: string | null; notes: string | null;
+  is_active: boolean;
+};
+
 function Page() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [balances, setBalances] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [edit, setEdit] = useState<any | null>(null);
+  const [edit, setEdit] = useState<Row | null>(null);
+  const [drawer, setDrawer] = useState<Row | null>(null);
+  const [recent, setRecent] = useState<any[]>([]);
   const [f, setF] = useState<any>({
     name: "", bank_name: "", account_number: "", currency: "ZMW",
     opening_balance: 0, opening_date: new Date().toISOString().slice(0, 10), notes: "",
@@ -39,7 +47,7 @@ function Page() {
       supabase.from("bank_accounts" as any).select("*").order("created_at", { ascending: false }),
       supabase.from("bank_running_balance" as any).select("*"),
     ]);
-    setRows((accs ?? []) as any);
+    setRows(((accs ?? []) as unknown) as Row[]);
     const map: Record<string, any> = {};
     (rb ?? []).forEach((r: any) => { map[r.bank_account_id] = r; });
     setBalances(map);
@@ -47,13 +55,23 @@ function Page() {
   };
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!drawer) { setRecent([]); return; }
+    (async () => {
+      const { data } = await supabase.from("bank_transactions" as any)
+        .select("id, txn_date, description, amount, reference, reconciled")
+        .eq("bank_account_id", drawer.id).order("txn_date", { ascending: false }).limit(15);
+      setRecent(data ?? []);
+    })();
+  }, [drawer]);
+
   const openNew = () => {
     setEdit(null);
     setF({ name: "", bank_name: "", account_number: "", currency: "ZMW",
       opening_balance: 0, opening_date: new Date().toISOString().slice(0, 10), notes: "" });
     setOpen(true);
   };
-  const openEdit = (r: any) => {
+  const openEdit = (r: Row) => {
     setEdit(r);
     setF({
       name: r.name, bank_name: r.bank_name ?? "", account_number: r.account_number ?? "",
@@ -75,7 +93,7 @@ function Page() {
     setOpen(false); load();
   };
 
-  const toggle = async (r: any) => {
+  const toggle = async (r: Row) => {
     const { error } = await supabase.from("bank_accounts" as any).update({ is_active: !r.is_active }).eq("id", r.id);
     if (error) return toast.error(error.message);
     load();
@@ -89,18 +107,36 @@ function Page() {
     Status: r.is_active ? "Active" : "Inactive",
   }));
 
+  const columns: DTColumn<Row>[] = useMemo(() => [
+    { key: "name", header: "Name", cell: (r) => <span className="font-medium text-foreground">{r.name}</span> },
+    { key: "bank_name", header: "Bank", cell: (r) => r.bank_name ?? "—" },
+    { key: "account_number", header: "Account #", cell: (r) => <span className="font-mono text-xs">{r.account_number ?? "—"}</span> },
+    { key: "currency", header: "Currency" },
+    { key: "opening_balance", header: "Opening", align: "right",
+      accessor: (r) => Number(r.opening_balance ?? 0), cell: (r) => fmtMoney(Number(r.opening_balance ?? 0)) },
+    { key: "current", header: "Current Balance", align: "right",
+      accessor: (r) => Number(balances[r.id]?.current_balance ?? r.opening_balance ?? 0),
+      cell: (r) => <span className="font-medium">{fmtMoney(Number(balances[r.id]?.current_balance ?? r.opening_balance ?? 0))}</span> },
+    { key: "unreconciled", header: "Unreconciled", align: "right",
+      accessor: (r) => Number(balances[r.id]?.unreconciled_count ?? 0),
+      cell: (r) => balances[r.id]?.unreconciled_count ?? 0 },
+    { key: "is_active", header: "Status",
+      accessor: (r) => r.is_active ? "Active" : "Inactive",
+      cell: (r) => <Badge variant={r.is_active ? "default" : "outline"}>{r.is_active ? "Active" : "Inactive"}</Badge> },
+  ], [balances]);
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Landmark className="h-6 w-6 text-emerald-600" /> Bank Accounts</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Landmark className="h-6 w-6 text-emerald-700" /> Bank Accounts</h1>
           <p className="text-sm text-muted-foreground">Manage multiple bank accounts, currencies, and opening balances.</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu rows={exportRows} filename="bank-accounts" title="Bank Accounts" />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNew} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" /> New Account</Button>
+              <Button onClick={openNew} className="bg-emerald-700 hover:bg-emerald-800"><Plus className="h-4 w-4 mr-1" /> New Account</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader><DialogTitle>{edit ? "Edit" : "New"} Bank Account</DialogTitle></DialogHeader>
@@ -118,51 +154,81 @@ function Page() {
                 <div><Label>Opening date</Label><Input type="date" value={f.opening_date} onChange={e => setF({ ...f, opening_date: e.target.value })} /></div>
                 <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} /></div>
               </div>
-              <Button onClick={save} className="bg-emerald-600 hover:bg-emerald-700">{edit ? "Save" : "Create"}</Button>
+              <Button onClick={save} className="bg-emerald-700 hover:bg-emerald-800">{edit ? "Save" : "Create"}</Button>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        {loading ? (
-          <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
-        ) : (
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Name</TableHead><TableHead>Bank</TableHead><TableHead>Account #</TableHead>
-              <TableHead>Currency</TableHead>
-              <TableHead className="text-right">Opening</TableHead>
-              <TableHead className="text-right">Current balance</TableHead>
-              <TableHead className="text-right">Unreconciled</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => {
-                const b = balances[r.id];
-                return (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{r.bank_name ?? "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">{r.account_number ?? "—"}</TableCell>
-                    <TableCell>{r.currency}</TableCell>
-                    <TableCell className="text-right">{fmtMoney(Number(r.opening_balance ?? 0))}</TableCell>
-                    <TableCell className="text-right font-medium">{fmtMoney(Number(b?.current_balance ?? r.opening_balance ?? 0))}</TableCell>
-                    <TableCell className="text-right">{b?.unreconciled_count ?? 0}</TableCell>
-                    <TableCell><Badge variant={r.is_active ? "default" : "outline"}>{r.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(r)}>Edit</Button>
-                      <Button size="sm" variant="ghost" onClick={() => toggle(r)}>{r.is_active ? "Deactivate" : "Activate"}</Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {!rows.length && <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No bank accounts yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
+      {loading ? (
+        <div className="text-sm text-muted-foreground py-8">Loading…</div>
+      ) : (
+        <DataTable
+          data={rows}
+          columns={columns}
+          onRowClick={setDrawer}
+          empty="No bank accounts yet."
+        />
+      )}
+
+      <DetailDrawer
+        open={!!drawer}
+        onOpenChange={(v) => !v && setDrawer(null)}
+        title={drawer?.name ?? ""}
+        subtitle={drawer ? `${drawer.bank_name ?? "—"} • ${drawer.account_number ?? "—"} • ${drawer.currency}` : ""}
+        meta={drawer && <Badge variant={drawer.is_active ? "default" : "outline"}>{drawer.is_active ? "Active" : "Inactive"}</Badge>}
+        footer={drawer && (
+          <>
+            <Button variant="ghost" onClick={() => toggle(drawer)}>{drawer.is_active ? "Deactivate" : "Activate"}</Button>
+            <Button onClick={() => { openEdit(drawer); setDrawer(null); }}>Edit</Button>
+          </>
         )}
-      </Card>
+      >
+        {drawer && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-3 gap-3">
+              <Kpi label="Opening" value={fmtMoney(Number(drawer.opening_balance ?? 0))} />
+              <Kpi label="Current" value={fmtMoney(Number(balances[drawer.id]?.current_balance ?? drawer.opening_balance ?? 0))} accent />
+              <Kpi label="Unreconciled" value={String(balances[drawer.id]?.unreconciled_count ?? 0)} />
+            </div>
+            <DrawerSection title="Details">
+              <div className="grid grid-cols-2 gap-4">
+                <DrawerField label="Currency">{drawer.currency}</DrawerField>
+                <DrawerField label="Opening date">{drawer.opening_date ?? "—"}</DrawerField>
+                {drawer.notes && <DrawerField label="Notes" className="col-span-2">{drawer.notes}</DrawerField>}
+              </div>
+            </DrawerSection>
+            <DrawerSection title="Recent transactions">
+              {recent.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No transactions yet.</div>
+              ) : (
+                <div className="space-y-1">
+                  {recent.map(t => (
+                    <div key={t.id} className="flex items-center justify-between text-xs py-1.5 border-b border-border/60 last:border-0">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{t.description ?? "—"}</div>
+                        <div className="text-muted-foreground">{t.txn_date} {t.reference && `• ${t.reference}`}</div>
+                      </div>
+                      <div className={`tabular-nums ${Number(t.amount) < 0 ? "text-rose-600" : "text-emerald-700"}`}>
+                        {fmtMoney(Number(t.amount))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DrawerSection>
+          </div>
+        )}
+      </DetailDrawer>
+    </div>
+  );
+}
+
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">{label}</div>
+      <div className={`mt-1 text-sm font-semibold tabular-nums ${accent ? "text-emerald-700" : "text-foreground"}`}>{value}</div>
     </div>
   );
 }
