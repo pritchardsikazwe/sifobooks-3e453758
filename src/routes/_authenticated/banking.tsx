@@ -31,7 +31,12 @@ type Txn = {
   reconciled?: boolean; matched_type?: string | null; matched_id?: string | null;
   currency?: string;
   allocated_amount?: number;
-  status?: "unallocated" | "partial" | "allocated" | "reversed";
+  status?: "unallocated" | "partial" | "allocated" | "posted" | "reconciled" | "cleared" | "reversed" | "draft" | "voided" | "failed";
+  is_allocated?: boolean; is_posted?: boolean; is_cleared?: boolean;
+  allocated_at?: string | null; posted_at?: string | null;
+  reconciled_at?: string | null; cleared_at?: string | null;
+  cleared_reference?: string | null;
+  content_hash?: string | null;
 };
 type Account = { id: string; account_code: string; account_name: string; account_type: string };
 type Allocation = {
@@ -41,7 +46,13 @@ type Allocation = {
   reversed_at: string | null; reverse_reason: string | null;
 };
 
-type StatusTab = "all" | "unallocated" | "partial" | "allocated" | "reversed";
+type StatusTab = "all" | "unallocated" | "partial" | "allocated" | "reconciled" | "cleared" | "reversed";
+
+async function sha1Hex(s: string): Promise<string> {
+  const buf = new TextEncoder().encode(s);
+  const digest = await crypto.subtle.digest("SHA-1", buf);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 function BankingPage() {
   const navigate = useNavigate();
@@ -69,6 +80,9 @@ function BankingPage() {
 
   const [reverseAlloc, setReverseAlloc] = useState<Allocation | null>(null);
   const [reverseReason, setReverseReason] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [clearTxn, setClearTxn] = useState<Txn | null>(null);
+  const [clearRef, setClearRef] = useState("");
 
   const money = (n: number) => formatMoney(n, currency);
 
@@ -153,7 +167,8 @@ function BankingPage() {
     const s = search.trim().toLowerCase();
     return txns.filter(t => {
       const st = t.status ?? "unallocated";
-      if (tab !== "all" && st !== tab) return false;
+      if (tab === "unallocated" && !(st === "unallocated" || st === "partial")) return false;
+      if (tab !== "all" && tab !== "unallocated" && st !== tab) return false;
       if (dirFilter === "in" && !(Number(t.amount) > 0)) return false;
       if (dirFilter === "out" && !(Number(t.amount) < 0)) return false;
       if (dateFrom && t.txn_date < dateFrom) return false;
@@ -166,20 +181,50 @@ function BankingPage() {
   }, [txns, search, tab, dirFilter, dateFrom, dateTo]);
 
   const counts = useMemo(() => {
-    const c = { all: txns.length, unallocated: 0, partial: 0, allocated: 0, reversed: 0 };
+    const c = { all: txns.length, unallocated: 0, partial: 0, allocated: 0, reconciled: 0, cleared: 0, reversed: 0 };
     txns.forEach(t => {
       const st = t.status ?? "unallocated";
-      if (st in c) (c as any)[st]++;
-    });
-    // Reversed = txns with only reversed allocations and no live ones
-    Object.entries(allocs).forEach(([tid, list]) => {
-      if (list.length && list.every(a => a.is_reversed)) {
-        const t = txns.find(x => x.id === tid);
-        if (t && (t.status ?? "unallocated") === "unallocated") c.reversed++;
-      }
+      if (st === "unallocated" || st === "partial") c.unallocated++;
+      if (st === "partial") c.partial++;
+      if (st === "allocated" || st === "posted") c.allocated++;
+      if (st === "reconciled") c.reconciled++;
+      if (st === "cleared") c.cleared++;
+      if (st === "reversed") c.reversed++;
     });
     return c;
-  }, [txns, allocs]);
+  }, [txns]);
+
+  const toggleSelect = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelectAll = () =>
+    setSelected(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)));
+
+  const runClear = async (txn: Txn, ref: string) => {
+    const { error } = await supabase.rpc("clear_bank_transaction" as any, { _txn_id: txn.id, _reference: ref || undefined });
+    if (error) { toast.error(error.message); return false; }
+    return true;
+  };
+
+  const bulkClear = async () => {
+    if (!selected.size) return;
+    let ok = 0, skip = 0, fail = 0;
+    for (const id of selected) {
+      const t = txns.find(x => x.id === id); if (!t) continue;
+      if (t.is_cleared) { skip++; continue; }
+      const good = await runClear(t, "");
+      good ? ok++ : fail++;
+    }
+    toast.success(`${selected.size} selected · ${ok} cleared · ${skip} already · ${fail} failed`);
+    setSelected(new Set());
+    await load();
+  };
+
+  const rebuildStatus = async () => {
+    const { error } = await supabase.rpc("rebuild_bank_status" as any);
+    if (error) return toast.error(error.message);
+    toast.success("Status index rebuilt");
+    await load();
+  };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -193,16 +238,30 @@ function BankingPage() {
       if (!parsed.length) return toast.error("No transactions found in file");
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      const rows = parsed.map((p: ParsedTxn) => ({
-        user_id: u.user!.id, txn_date: p.txn_date,
-        description: p.description.slice(0, 500), amount: p.amount, balance: p.balance,
-        reference: p.reference?.slice(0, 100) ?? null,
-        category: p.amount >= 0 ? "Income" : "Expense",
-        source_file: file.name.slice(0, 200),
+      const batchId = crypto.randomUUID();
+      const rows = await Promise.all(parsed.map(async (p: ParsedTxn) => {
+        const hash = await sha1Hex(`${p.txn_date}|${p.amount}|${(p.description ?? "").trim().toLowerCase()}|${p.reference ?? ""}`);
+        return {
+          user_id: u.user!.id, txn_date: p.txn_date,
+          description: p.description.slice(0, 500), amount: p.amount, balance: p.balance,
+          reference: p.reference?.slice(0, 100) ?? null,
+          category: p.amount >= 0 ? "Income" : "Expense",
+          source_file: file.name.slice(0, 200),
+          source: "import",
+          import_batch_id: batchId,
+          content_hash: hash,
+        };
       }));
-      const { error } = await supabase.from("bank_transactions").insert(rows);
+      // Dedupe against existing content_hash for this user
+      const { data: existing } = await supabase.from("bank_transactions")
+        .select("content_hash").eq("user_id", u.user.id).not("content_hash", "is", null);
+      const have = new Set((existing ?? []).map((r: any) => r.content_hash));
+      const fresh = rows.filter(r => !have.has(r.content_hash));
+      const dupes = rows.length - fresh.length;
+      if (!fresh.length) { toast.info(`No new transactions · ${dupes} duplicates skipped`); return; }
+      const { error } = await supabase.from("bank_transactions").insert(fresh as any);
       if (error) throw error;
-      toast.success(`Imported ${rows.length} transactions`);
+      toast.success(`Imported ${fresh.length} new · ${dupes} duplicates skipped`);
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
@@ -210,6 +269,11 @@ function BankingPage() {
   };
 
   const remove = async (id: string) => {
+    const t = txns.find(x => x.id === id);
+    if (t && (t.is_allocated || t.is_cleared || t.reconciled)) {
+      toast.error("Cannot delete: transaction is allocated, cleared or reconciled. Reverse it first.");
+      return;
+    }
     const { error } = await supabase.from("bank_transactions").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setTxns(prev => prev.filter(t => t.id !== id));
@@ -228,11 +292,20 @@ function BankingPage() {
 
   const statusBadge = (t: Txn) => {
     const st = t.status ?? "unallocated";
-    if (st === "allocated") return <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100"><CheckCircle2 className="h-3 w-3" />Allocated</Badge>;
-    if (st === "partial") return <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100">Partial</Badge>;
-    const list = allocs[t.id] ?? [];
-    if (list.length && list.every(a => a.is_reversed)) return <Badge variant="outline" className="text-slate-500">Reversed</Badge>;
-    return <Badge variant="outline">Unallocated</Badge>;
+    const map: Record<string, string> = {
+      allocated: "bg-emerald-100 text-emerald-700",
+      posted: "bg-emerald-100 text-emerald-700",
+      reconciled: "bg-sky-100 text-sky-700",
+      cleared: "bg-indigo-100 text-indigo-700",
+      partial: "bg-amber-100 text-amber-700",
+      reversed: "bg-slate-100 text-slate-500",
+      voided: "bg-slate-100 text-slate-500",
+      failed: "bg-red-100 text-red-700",
+      draft: "bg-slate-100 text-slate-600",
+      unallocated: "",
+    };
+    const cls = map[st] ?? "";
+    return <Badge variant={cls ? "secondary" : "outline"} className={cls}>{st.charAt(0).toUpperCase() + st.slice(1)}</Badge>;
   };
 
   return (
@@ -278,9 +351,8 @@ function BankingPage() {
               <Button onClick={() => fileRef.current?.click()} disabled={importing} className="bg-emerald-600 hover:bg-emerald-700">
                 {importing ? <><FileUp className="h-4 w-4 animate-pulse mr-2" /> Importing…</> : <><Upload className="h-4 w-4 mr-2" /> Import statement</>}
               </Button>
+              <Button variant="outline" onClick={rebuildStatus} title="Recalculate status flags for all bank transactions">Rebuild status</Button>
             </div>
-
-
           </CardHeader>
 
           <CardContent className="space-y-4">
@@ -288,9 +360,11 @@ function BankingPage() {
             <div className="flex flex-wrap items-center gap-1 border-b">
               {([
                 ["all", "All", counts.all],
-                ["unallocated", "Unallocated", counts.unallocated],
+                ["unallocated", "To Allocate", counts.unallocated],
                 ["partial", "Partial", counts.partial],
-                ["allocated", "Allocated", counts.allocated],
+                ["allocated", "Posted", counts.allocated],
+                ["reconciled", "Reconciled", counts.reconciled],
+                ["cleared", "Cleared", counts.cleared],
                 ["reversed", "Reversed", counts.reversed],
               ] as [StatusTab, string, number][]).map(([k, label, n]) => (
                 <button key={k} onClick={() => setTab(k)}
@@ -322,25 +396,38 @@ function BankingPage() {
               <div className="text-xs text-muted-foreground ml-auto">{filtered.length} shown</div>
             </div>
 
+            {selected.size > 0 && (
+              <div className="flex items-center gap-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+                <span className="font-medium">{selected.size} selected</span>
+                <Button size="sm" variant="outline" onClick={bulkClear}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear selected</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Deselect</Button>
+              </div>
+            )}
+
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="w-8">
+                      <input type="checkbox"
+                        checked={filtered.length > 0 && selected.size === filtered.length}
+                        onChange={toggleSelectAll} />
+                    </TableHead>
+                    <TableHead className="w-6"></TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="text-right">Allocated</TableHead>
-                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Remaining</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
                   ) : filtered.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No transactions match.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">No transactions match.</TableCell></TableRow>
                   ) : filtered.map(t => {
                     const abs = Math.abs(Number(t.amount));
                     const allocated = Number(t.allocated_amount ?? 0);
@@ -350,6 +437,9 @@ function BankingPage() {
                     return (
                       <>
                         <TableRow key={t.id}>
+                          <TableCell className="pr-0">
+                            <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
+                          </TableCell>
                           <TableCell className="pr-0">
                             {list.length > 0 && (
                               <button onClick={() => toggleExpand(t.id)} className="text-muted-foreground hover:text-foreground">
@@ -372,40 +462,55 @@ function BankingPage() {
                                 <BookOpen className="h-3.5 w-3.5 mr-1" />Allocate
                               </Button>
                             )}
+                            {t.is_allocated && !t.is_cleared && (
+                              <Button size="sm" variant="outline" className="mr-1 border-indigo-300 text-indigo-700 hover:bg-indigo-50" onClick={() => { setClearTxn(t); setClearRef(""); }}>
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear
+                              </Button>
+                            )}
                             <Button variant="ghost" size="icon" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                           </TableCell>
                         </TableRow>
-                        {isOpen && list.length > 0 && (
+                        {isOpen && (
                           <TableRow key={t.id + "-exp"} className="bg-muted/40">
-                            <TableCell colSpan={8} className="py-2">
-                              <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div>
-                              <table className="w-full text-xs">
-                                <thead className="text-muted-foreground">
-                                  <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
-                                </thead>
-                                <tbody>
-                                  {list.map(a => (
-                                    <tr key={a.id} className="border-t border-border/50">
-                                      <td className="pl-6 py-1.5">{a.allocated_at.slice(0, 10)}</td>
-                                      <td>{a.memo ?? "—"}</td>
-                                      <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
-                                      <td className="text-right font-medium">{money(Number(a.amount))}</td>
-                                      <td className="pl-4">
-                                        {a.is_reversed
-                                          ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
-                                          : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
-                                      </td>
-                                      <td className="text-right">
-                                        {!a.is_reversed && (
-                                          <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
-                                            <RotateCcw className="h-3 w-3 mr-1" />Reverse
-                                          </Button>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            <TableCell colSpan={9} className="py-2">
+                              <div className="pl-6 pb-2 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                                {t.allocated_at && <span>✓ Allocated · {t.allocated_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.posted_at && <span>✓ Posted · {t.posted_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.reconciled_at && <span>✓ Reconciled · {t.reconciled_at.slice(0,16).replace("T"," ")}</span>}
+                                {t.cleared_at && <span>✓ Cleared · {t.cleared_at.slice(0,16).replace("T"," ")}{t.cleared_reference ? ` (${t.cleared_reference})` : ""}</span>}
+                              </div>
+                              {list.length > 0 && (
+                                <>
+                                  <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div>
+                                  <table className="w-full text-xs">
+                                    <thead className="text-muted-foreground">
+                                      <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                      {list.map(a => (
+                                        <tr key={a.id} className="border-t border-border/50">
+                                          <td className="pl-6 py-1.5">{a.allocated_at.slice(0, 10)}</td>
+                                          <td>{a.memo ?? "—"}</td>
+                                          <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
+                                          <td className="text-right font-medium">{money(Number(a.amount))}</td>
+                                          <td className="pl-4">
+                                            {a.is_reversed
+                                              ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
+                                              : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
+                                          </td>
+                                          <td className="text-right">
+                                            {!a.is_reversed && (
+                                              <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
+                                                <RotateCcw className="h-3 w-3 mr-1" />Reverse
+                                              </Button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </>
+                              )}
                             </TableCell>
                           </TableRow>
                         )}
@@ -502,6 +607,36 @@ function BankingPage() {
       <SpendMoneyDialog open={spendOpen} onOpenChange={setSpendOpen} onRecorded={load} mode="spend" />
       <SpendMoneyDialog open={receiveOpen} onOpenChange={setReceiveOpen} onRecorded={load} mode="receive" />
       <ReconcileDialog open={reconcileOpen} onOpenChange={setReconcileOpen} onLocked={load} />
+
+      <Dialog open={!!clearTxn} onOpenChange={o => !o && setClearTxn(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Clear transaction</DialogTitle></DialogHeader>
+          {clearTxn && (
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-md bg-muted">
+                <div className="font-medium">{clearTxn.description}</div>
+                <div className="text-xs text-muted-foreground">{clearTxn.txn_date} · <span className="font-mono">{money(Number(clearTxn.amount))}</span></div>
+              </div>
+              <div>
+                <Label>Clearing reference (optional)</Label>
+                <Input value={clearRef} onChange={e => setClearRef(e.target.value)} placeholder="e.g. Bank statement 15-May" />
+              </div>
+              <p className="text-xs text-muted-foreground">Marks the transaction as fully cleared. It moves to the Cleared tab and cannot be deleted.</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setClearTxn(null)}>Cancel</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={busy === clearTxn?.id} onClick={async () => {
+              if (!clearTxn) return;
+              const ok = await runClear(clearTxn, clearRef);
+              if (ok) setClearTxn(null);
+            }}>
+              {busy === clearTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Clear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
