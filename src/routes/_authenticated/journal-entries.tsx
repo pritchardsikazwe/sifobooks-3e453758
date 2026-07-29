@@ -5,6 +5,7 @@ import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { reverseJournalEntry } from "@/lib/reversal";
 import { toast } from "sonner";
+import { AttachmentCell } from "@/components/AttachmentCell";
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700",
