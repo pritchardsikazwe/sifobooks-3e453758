@@ -101,8 +101,8 @@ function FixedAssetsPage() {
       user_id: u.user.id, code: cf.code, name: cf.name,
       useful_life_years: Number(cf.useful_life_years) || 5,
       depreciation_method: cf.depreciation_method,
-      depreciation_rate: cf.depreciation_rate ? Number(cf.depreciation_rate) : null,
-      capitalisation_threshold: cf.capitalisation_threshold ? Number(cf.capitalisation_threshold) : null,
+      depreciation_rate: cf.depreciation_rate ? Number(cf.depreciation_rate) : undefined,
+      capitalisation_threshold: cf.capitalisation_threshold ? Number(cf.capitalisation_threshold) : undefined,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
