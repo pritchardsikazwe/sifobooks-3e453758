@@ -63,6 +63,7 @@ import { Route as AuthenticatedFixedAssetsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
+import { Route as AuthenticatedDonorsRouteImport } from './routes/_authenticated/donors'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedCsatRouteImport } from './routes/_authenticated/csat'
@@ -412,6 +413,11 @@ const AuthenticatedExpenseRulesRoute =
 const AuthenticatedEmployeesRoute = AuthenticatedEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDonorsRoute = AuthenticatedDonorsRouteImport.update({
+  id: '/donors',
+  path: '/donors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -766,6 +772,7 @@ export interface FileRoutesByFullPath {
   '/csat': typeof AuthenticatedCsatRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -878,6 +885,7 @@ export interface FileRoutesByTo {
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/csat': typeof AuthenticatedCsatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -990,6 +998,7 @@ export interface FileRoutesById {
   '/_authenticated/csat': typeof AuthenticatedCsatRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/donors': typeof AuthenticatedDonorsRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
@@ -1105,6 +1114,7 @@ export interface FileRouteTypes {
     | '/csat'
     | '/customers'
     | '/dashboard'
+    | '/donors'
     | '/employees'
     | '/expense-rules'
     | '/expenses'
@@ -1217,6 +1227,7 @@ export interface FileRouteTypes {
     | '/credit-notes'
     | '/csat'
     | '/dashboard'
+    | '/donors'
     | '/employees'
     | '/expense-rules'
     | '/expenses'
@@ -1328,6 +1339,7 @@ export interface FileRouteTypes {
     | '/_authenticated/csat'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/donors'
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
     | '/_authenticated/expenses'
@@ -1807,6 +1819,13 @@ declare module '@tanstack/react-router' {
       path: '/employees'
       fullPath: '/employees'
       preLoaderRoute: typeof AuthenticatedEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/donors': {
+      id: '/_authenticated/donors'
+      path: '/donors'
+      fullPath: '/donors'
+      preLoaderRoute: typeof AuthenticatedDonorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -2349,6 +2368,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCsatRoute: typeof AuthenticatedCsatRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDonorsRoute: typeof AuthenticatedDonorsRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
@@ -2427,6 +2447,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCsatRoute: AuthenticatedCsatRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDonorsRoute: AuthenticatedDonorsRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
