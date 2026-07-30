@@ -140,16 +140,30 @@ export const MODULES: ModuleDef[] = [
     description: "ZRA, NAPSA, NHIMA and other statutory obligations.",
     routes: [{ title: "Compliance", url: "/compliance", iconName: "ShieldCheck" }] },
 
+  // ---------- LOANS ----------
+  { key: "loans", label: "Loans", category: "Finance", defaultInstalled: false,
+    description: "Staff loans, bank loans payable and loans receivable with amortisation schedules and GL posting.",
+    routes: [{ title: "Loans", url: "/loans", iconName: "Banknote" }] },
+
+  // ---------- DONORS / NGO ----------
+  { key: "donors", label: "Donors & Fundraising", category: "NGO", defaultInstalled: false,
+    description: "Donor register, pledges, donation receipts, restricted funds and grant reporting milestones.",
+    routes: [{ title: "Donors & Pledges", url: "/donors", iconName: "HeartHandshake" }] },
+
   // ---------- SCHOOL ERP (opt-in) ----------
   { key: "school_erp", label: "School ERP", category: "School ERP", defaultInstalled: false,
-    description: "Grants, teaching materials, workshops, imprest and tuckshop for schools & NGOs.",
+    description: "Students, fees, grants, teaching materials, workshops, imprest, petty cash and tuckshop.",
     routes: [
+      { title: "Students & Classes", url: "/students", iconName: "GraduationCap" },
+      { title: "School Fees", url: "/school-fees", iconName: "Coins" },
       { title: "Grants & Donor Funds", url: "/school-grants", iconName: "Landmark" },
       { title: "Teaching Materials", url: "/teaching-materials", iconName: "BookIcon" },
       { title: "Workshops & Allowances", url: "/workshops", iconName: "GraduationCap" },
       { title: "Imprest Register", url: "/imprest", iconName: "Wallet" },
+      { title: "Petty Cash", url: "/petty-cash", iconName: "Wallet" },
       { title: "Tuckshop POS", url: "/tuckshop", iconName: "ShoppingBag" },
     ] },
+
 
   // ---------- HELP & LEARNING ----------
   { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true,

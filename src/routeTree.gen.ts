@@ -40,6 +40,7 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
+import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_authenticated/payroll-transactions'
 import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
@@ -290,6 +291,11 @@ const AuthenticatedPostingWizardRoute =
     path: '/posting-wizard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPettyCashRoute = AuthenticatedPettyCashRouteImport.update({
+  id: '/petty-cash',
+  path: '/petty-cash',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPeriodCloseRoute =
   AuthenticatedPeriodCloseRouteImport.update({
     id: '/period-close',
@@ -810,6 +816,7 @@ export interface FileRoutesByFullPath {
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -924,6 +931,7 @@ export interface FileRoutesByTo {
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -1040,6 +1048,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -1158,6 +1167,7 @@ export interface FileRouteTypes {
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
+    | '/petty-cash'
     | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
@@ -1272,6 +1282,7 @@ export interface FileRouteTypes {
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
+    | '/petty-cash'
     | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
@@ -1387,6 +1398,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll-tools'
     | '/_authenticated/payroll-transactions'
     | '/_authenticated/period-close'
+    | '/_authenticated/petty-cash'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
@@ -1682,6 +1694,13 @@ declare module '@tanstack/react-router' {
       path: '/posting-wizard'
       fullPath: '/posting-wizard'
       preLoaderRoute: typeof AuthenticatedPostingWizardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/petty-cash': {
+      id: '/_authenticated/petty-cash'
+      path: '/petty-cash'
+      fullPath: '/petty-cash'
+      preLoaderRoute: typeof AuthenticatedPettyCashRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/period-close': {
@@ -2432,6 +2451,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
   AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
+  AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -2513,6 +2533,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
   AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
+  AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
