@@ -23,11 +23,13 @@ import { Route as AuthenticatedTeachingMaterialsRouteImport } from './routes/_au
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
 import { Route as AuthenticatedSchoolGrantsRouteImport } from './routes/_authenticated/school-grants'
+import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school-fees'
 import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedReconciliationSessionsRouteImport } from './routes/_authenticated/reconciliation-sessions'
@@ -38,6 +40,7 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
+import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_authenticated/payroll-transactions'
 import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
@@ -49,6 +52,7 @@ import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_auth
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
+import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
@@ -62,6 +66,7 @@ import { Route as AuthenticatedFixedAssetsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
+import { Route as AuthenticatedDonorsRouteImport } from './routes/_authenticated/donors'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedCsatRouteImport } from './routes/_authenticated/csat'
@@ -193,6 +198,11 @@ const AuthenticatedSubscriptionRoute =
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStockAdjustmentsRoute =
   AuthenticatedStockAdjustmentsRouteImport.update({
     id: '/stock-adjustments',
@@ -221,6 +231,11 @@ const AuthenticatedSchoolGrantsRoute =
     path: '/school-grants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSchoolFeesRoute = AuthenticatedSchoolFeesRouteImport.update({
+  id: '/school-fees',
+  path: '/school-fees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
@@ -276,6 +291,11 @@ const AuthenticatedPostingWizardRoute =
     path: '/posting-wizard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPettyCashRoute = AuthenticatedPettyCashRouteImport.update({
+  id: '/petty-cash',
+  path: '/petty-cash',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPeriodCloseRoute =
   AuthenticatedPeriodCloseRouteImport.update({
     id: '/period-close',
@@ -337,6 +357,11 @@ const AuthenticatedNotificationsRoute =
 const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
@@ -406,6 +431,11 @@ const AuthenticatedExpenseRulesRoute =
 const AuthenticatedEmployeesRoute = AuthenticatedEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDonorsRoute = AuthenticatedDonorsRouteImport.update({
+  id: '/donors',
+  path: '/donors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -760,6 +790,7 @@ export interface FileRoutesByFullPath {
   '/csat': typeof AuthenticatedCsatRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -773,6 +804,7 @@ export interface FileRoutesByFullPath {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/loans': typeof AuthenticatedLoansRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -784,6 +816,7 @@ export interface FileRoutesByFullPath {
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -794,11 +827,13 @@ export interface FileRoutesByFullPath {
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/roles': typeof AuthenticatedRolesRoute
+  '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/students': typeof AuthenticatedStudentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
@@ -871,6 +906,7 @@ export interface FileRoutesByTo {
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/csat': typeof AuthenticatedCsatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -883,6 +919,7 @@ export interface FileRoutesByTo {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/loans': typeof AuthenticatedLoansRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -894,6 +931,7 @@ export interface FileRoutesByTo {
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -902,11 +940,13 @@ export interface FileRoutesByTo {
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/roles': typeof AuthenticatedRolesRoute
+  '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/students': typeof AuthenticatedStudentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
@@ -982,6 +1022,7 @@ export interface FileRoutesById {
   '/_authenticated/csat': typeof AuthenticatedCsatRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/donors': typeof AuthenticatedDonorsRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
@@ -995,6 +1036,7 @@ export interface FileRoutesById {
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
+  '/_authenticated/loans': typeof AuthenticatedLoansRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1006,6 +1048,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
+  '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -1016,11 +1059,13 @@ export interface FileRoutesById {
   '/_authenticated/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
+  '/_authenticated/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/_authenticated/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
@@ -1096,6 +1141,7 @@ export interface FileRouteTypes {
     | '/csat'
     | '/customers'
     | '/dashboard'
+    | '/donors'
     | '/employees'
     | '/expense-rules'
     | '/expenses'
@@ -1109,6 +1155,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/loans'
     | '/modules'
     | '/notifications'
     | '/onboarding'
@@ -1120,6 +1167,7 @@ export interface FileRouteTypes {
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
+    | '/petty-cash'
     | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
@@ -1130,11 +1178,13 @@ export interface FileRouteTypes {
     | '/reconciliation-sessions'
     | '/reports'
     | '/roles'
+    | '/school-fees'
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
     | '/stock'
     | '/stock-adjustments'
+    | '/students'
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
@@ -1207,6 +1257,7 @@ export interface FileRouteTypes {
     | '/credit-notes'
     | '/csat'
     | '/dashboard'
+    | '/donors'
     | '/employees'
     | '/expense-rules'
     | '/expenses'
@@ -1219,6 +1270,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/loans'
     | '/modules'
     | '/notifications'
     | '/onboarding'
@@ -1230,6 +1282,7 @@ export interface FileRouteTypes {
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
+    | '/petty-cash'
     | '/posting-wizard'
     | '/project-tasks'
     | '/projects'
@@ -1238,11 +1291,13 @@ export interface FileRouteTypes {
     | '/reconciliation'
     | '/reconciliation-sessions'
     | '/roles'
+    | '/school-fees'
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
     | '/stock'
     | '/stock-adjustments'
+    | '/students'
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
@@ -1317,6 +1372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/csat'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/donors'
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
     | '/_authenticated/expenses'
@@ -1330,6 +1386,7 @@ export interface FileRouteTypes {
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
+    | '/_authenticated/loans'
     | '/_authenticated/modules'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
@@ -1341,6 +1398,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll-tools'
     | '/_authenticated/payroll-transactions'
     | '/_authenticated/period-close'
+    | '/_authenticated/petty-cash'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
@@ -1351,11 +1409,13 @@ export interface FileRouteTypes {
     | '/_authenticated/reconciliation-sessions'
     | '/_authenticated/reports'
     | '/_authenticated/roles'
+    | '/_authenticated/school-fees'
     | '/_authenticated/school-grants'
     | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
     | '/_authenticated/stock'
     | '/_authenticated/stock-adjustments'
+    | '/_authenticated/students'
     | '/_authenticated/subscription'
     | '/_authenticated/super-admin'
     | '/_authenticated/suppliers'
@@ -1517,6 +1577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/students': {
+      id: '/_authenticated/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/stock-adjustments': {
       id: '/_authenticated/stock-adjustments'
       path: '/stock-adjustments'
@@ -1550,6 +1617,13 @@ declare module '@tanstack/react-router' {
       path: '/school-grants'
       fullPath: '/school-grants'
       preLoaderRoute: typeof AuthenticatedSchoolGrantsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/school-fees': {
+      id: '/_authenticated/school-fees'
+      path: '/school-fees'
+      fullPath: '/school-fees'
+      preLoaderRoute: typeof AuthenticatedSchoolFeesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/roles': {
@@ -1620,6 +1694,13 @@ declare module '@tanstack/react-router' {
       path: '/posting-wizard'
       fullPath: '/posting-wizard'
       preLoaderRoute: typeof AuthenticatedPostingWizardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/petty-cash': {
+      id: '/_authenticated/petty-cash'
+      path: '/petty-cash'
+      fullPath: '/petty-cash'
+      preLoaderRoute: typeof AuthenticatedPettyCashRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/period-close': {
@@ -1697,6 +1778,13 @@ declare module '@tanstack/react-router' {
       path: '/modules'
       fullPath: '/modules'
       preLoaderRoute: typeof AuthenticatedModulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans': {
+      id: '/_authenticated/loans'
+      path: '/loans'
+      fullPath: '/loans'
+      preLoaderRoute: typeof AuthenticatedLoansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leave': {
@@ -1788,6 +1876,13 @@ declare module '@tanstack/react-router' {
       path: '/employees'
       fullPath: '/employees'
       preLoaderRoute: typeof AuthenticatedEmployeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/donors': {
+      id: '/_authenticated/donors'
+      path: '/donors'
+      fullPath: '/donors'
+      preLoaderRoute: typeof AuthenticatedDonorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -2330,6 +2425,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCsatRoute: typeof AuthenticatedCsatRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDonorsRoute: typeof AuthenticatedDonorsRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
@@ -2343,6 +2439,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
+  AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -2354,6 +2451,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
   AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
+  AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -2364,11 +2462,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReconciliationSessionsRoute: typeof AuthenticatedReconciliationSessionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
+  AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
   AuthenticatedSchoolGrantsRoute: typeof AuthenticatedSchoolGrantsRoute
   AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
+  AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
@@ -2407,6 +2507,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCsatRoute: AuthenticatedCsatRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDonorsRoute: AuthenticatedDonorsRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
@@ -2420,6 +2521,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
+  AuthenticatedLoansRoute: AuthenticatedLoansRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -2431,6 +2533,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
   AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
+  AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
@@ -2442,11 +2545,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReconciliationSessionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
+  AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
   AuthenticatedSchoolGrantsRoute: AuthenticatedSchoolGrantsRoute,
   AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
+  AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
@@ -2483,13 +2588,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

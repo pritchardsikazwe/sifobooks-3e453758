@@ -2299,6 +2299,197 @@ export type Database = {
           },
         ]
       }
+      donation_receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          donor_id: string | null
+          fund_name: string | null
+          id: string
+          journal_entry_id: string | null
+          method: string | null
+          notes: string | null
+          pledge_id: string | null
+          receipt_date: string
+          receipt_no: string | null
+          reference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          fund_name?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          method?: string | null
+          notes?: string | null
+          pledge_id?: string | null
+          receipt_date?: string
+          receipt_no?: string | null
+          reference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          fund_name?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          method?: string | null
+          notes?: string | null
+          pledge_id?: string | null
+          receipt_date?: string
+          receipt_no?: string | null
+          reference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_receipts_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_receipts_pledge_id_fkey"
+            columns: ["pledge_id"]
+            isOneToOne: false
+            referencedRelation: "donor_pledges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donor_pledges: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          donor_id: string | null
+          expected_date: string | null
+          fund_name: string | null
+          id: string
+          is_restricted: boolean
+          notes: string | null
+          pledge_date: string
+          pledge_ref: string | null
+          purpose: string | null
+          received_amount: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          expected_date?: string | null
+          fund_name?: string | null
+          id?: string
+          is_restricted?: boolean
+          notes?: string | null
+          pledge_date?: string
+          pledge_ref?: string | null
+          purpose?: string | null
+          received_amount?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_id?: string | null
+          expected_date?: string | null
+          fund_name?: string | null
+          id?: string
+          is_restricted?: boolean
+          notes?: string | null
+          pledge_date?: string
+          pledge_ref?: string | null
+          purpose?: string | null
+          received_amount?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donor_pledges_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donors: {
+        Row: {
+          address: string | null
+          company_id: string | null
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          donor_code: string | null
+          donor_type: string
+          email: string | null
+          focus_area: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          company_id?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          donor_code?: string | null
+          donor_type?: string
+          email?: string | null
+          focus_area?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          company_id?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          donor_code?: string | null
+          donor_type?: string
+          email?: string | null
+          focus_area?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2816,12 +3007,14 @@ export type Database = {
           amount: number
           bank_account_id: string | null
           category: string | null
+          charge_code: string | null
           created_at: string
           currency: string
           exchange_rate: number
           expense_account_id: string | null
           expense_date: string
           expense_number: string | null
+          funding_source: string | null
           id: string
           journal_entry_id: string | null
           notes: string | null
@@ -2839,12 +3032,14 @@ export type Database = {
           amount?: number
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
           expense_number?: string | null
+          funding_source?: string | null
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
@@ -2862,12 +3057,14 @@ export type Database = {
           amount?: number
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
           expense_number?: string | null
+          funding_source?: string | null
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
@@ -2915,6 +3112,128 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          journal_entry_id: string | null
+          method: string | null
+          notes: string | null
+          payment_date: string
+          receipt_no: string | null
+          reference: string | null
+          student_fee_id: string | null
+          student_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          journal_entry_id?: string | null
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          receipt_no?: string | null
+          reference?: string | null
+          student_fee_id?: string | null
+          student_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          journal_entry_id?: string | null
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          receipt_no?: string | null
+          reference?: string | null
+          student_fee_id?: string | null
+          student_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_student_fee_id_fkey"
+            columns: ["student_fee_id"]
+            isOneToOne: false
+            referencedRelation: "student_fees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_structures: {
+        Row: {
+          academic_year: number
+          amount: number
+          class_id: string | null
+          company_id: string | null
+          created_at: string
+          fee_name: string
+          fee_type: string | null
+          id: string
+          income_account_code: string | null
+          is_mandatory: boolean
+          notes: string | null
+          term: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_year?: number
+          amount?: number
+          class_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          fee_name: string
+          fee_type?: string | null
+          id?: string
+          income_account_code?: string | null
+          is_mandatory?: boolean
+          notes?: string | null
+          term?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_year?: number
+          amount?: number
+          class_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          fee_name?: string
+          fee_type?: string | null
+          id?: string
+          income_account_code?: string | null
+          is_mandatory?: boolean
+          notes?: string | null
+          term?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_structures_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "school_classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_periods: {
         Row: {
@@ -3100,6 +3419,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      grant_milestones: {
+        Row: {
+          amount: number | null
+          completed_date: string | null
+          created_at: string
+          donor_id: string | null
+          due_date: string | null
+          grant_id: string | null
+          id: string
+          milestone_type: string
+          notes: string | null
+          owner: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          completed_date?: string | null
+          created_at?: string
+          donor_id?: string | null
+          due_date?: string | null
+          grant_id?: string | null
+          id?: string
+          milestone_type?: string
+          notes?: string | null
+          owner?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          completed_date?: string | null
+          created_at?: string
+          donor_id?: string | null
+          due_date?: string | null
+          grant_id?: string | null
+          id?: string
+          milestone_type?: string
+          notes?: string | null
+          owner?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grant_milestones_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grant_milestones_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "school_grants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       imprest_register: {
         Row: {
@@ -3707,6 +4092,217 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loan_repayments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          interest_portion: number
+          journal_entry_id: string | null
+          loan_id: string
+          method: string | null
+          notes: string | null
+          payment_date: string
+          payroll_run_id: string | null
+          principal_portion: number
+          reference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          interest_portion?: number
+          journal_entry_id?: string | null
+          loan_id: string
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          payroll_run_id?: string | null
+          principal_portion?: number
+          reference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          interest_portion?: number
+          journal_entry_id?: string | null
+          loan_id?: string
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          payroll_run_id?: string | null
+          principal_portion?: number
+          reference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_repayments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_schedule: {
+        Row: {
+          amount_paid: number
+          closing_balance: number
+          created_at: string
+          due_date: string
+          id: string
+          interest_due: number
+          loan_id: string
+          opening_balance: number
+          period_no: number
+          principal_due: number
+          status: string
+          total_due: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          closing_balance?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          interest_due?: number
+          loan_id: string
+          opening_balance?: number
+          period_no: number
+          principal_due?: number
+          status?: string
+          total_due?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          closing_balance?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          interest_due?: number
+          loan_id?: string
+          opening_balance?: number
+          period_no?: number
+          principal_due?: number
+          status?: string
+          total_due?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_schedule_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          amount_repaid: number
+          company_id: string | null
+          control_account_code: string | null
+          counterparty: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          deduct_from_payroll: boolean
+          employee_id: string | null
+          first_due_date: string | null
+          id: string
+          instalment_amount: number | null
+          interest_account_code: string | null
+          interest_method: string
+          interest_rate: number
+          loan_number: string
+          loan_type: string
+          notes: string | null
+          outstanding_balance: number
+          principal: number
+          start_date: string
+          status: string
+          supplier_id: string | null
+          term_months: number
+          total_interest: number | null
+          total_repayable: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_repaid?: number
+          company_id?: string | null
+          control_account_code?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          deduct_from_payroll?: boolean
+          employee_id?: string | null
+          first_due_date?: string | null
+          id?: string
+          instalment_amount?: number | null
+          interest_account_code?: string | null
+          interest_method?: string
+          interest_rate?: number
+          loan_number: string
+          loan_type?: string
+          notes?: string | null
+          outstanding_balance?: number
+          principal?: number
+          start_date?: string
+          status?: string
+          supplier_id?: string | null
+          term_months?: number
+          total_interest?: number | null
+          total_repayable?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_repaid?: number
+          company_id?: string | null
+          control_account_code?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          deduct_from_payroll?: boolean
+          employee_id?: string | null
+          first_due_date?: string | null
+          id?: string
+          instalment_amount?: number | null
+          interest_account_code?: string | null
+          interest_method?: string
+          interest_rate?: number
+          loan_number?: string
+          loan_type?: string
+          notes?: string | null
+          outstanding_balance?: number
+          principal?: number
+          start_date?: string
+          status?: string
+          supplier_id?: string | null
+          term_months?: number
+          total_interest?: number | null
+          total_repayable?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       module_dependencies: {
         Row: {
@@ -4415,6 +5011,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      petty_cash: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          balance_after: number | null
+          charge_code: string | null
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          journal_entry_id: string | null
+          payee: string | null
+          txn_date: string
+          txn_type: string
+          updated_at: string
+          user_id: string
+          voucher_no: string | null
+        }
+        Insert: {
+          amount?: number
+          approved_by?: string | null
+          balance_after?: number | null
+          charge_code?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          payee?: string | null
+          txn_date?: string
+          txn_type?: string
+          updated_at?: string
+          user_id: string
+          voucher_no?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          balance_after?: number | null
+          charge_code?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          payee?: string | null
+          txn_date?: string
+          txn_type?: string
+          updated_at?: string
+          user_id?: string
+          voucher_no?: string | null
+        }
+        Relationships: []
       }
       positions: {
         Row: {
@@ -5328,6 +5978,51 @@ export type Database = {
         }
         Relationships: []
       }
+      school_classes: {
+        Row: {
+          academic_year: number
+          capacity: number | null
+          class_teacher: string | null
+          company_id: string | null
+          created_at: string
+          grade_level: string | null
+          id: string
+          name: string
+          status: string
+          stream: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_year?: number
+          capacity?: number | null
+          class_teacher?: string | null
+          company_id?: string | null
+          created_at?: string
+          grade_level?: string | null
+          id?: string
+          name: string
+          status?: string
+          stream?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_year?: number
+          capacity?: number | null
+          class_teacher?: string | null
+          company_id?: string | null
+          created_at?: string
+          grade_level?: string | null
+          id?: string
+          name?: string
+          status?: string
+          stream?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       school_grants: {
         Row: {
           allocation_percentage: number | null
@@ -5340,6 +6035,7 @@ export type Database = {
           created_at: string
           currency: string | null
           date_received: string | null
+          donor_id: string | null
           fiscal_year: number | null
           funding_institution: string | null
           grant_name: string
@@ -5370,6 +6066,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           date_received?: string | null
+          donor_id?: string | null
           fiscal_year?: number | null
           funding_institution?: string | null
           grant_name: string
@@ -5400,6 +6097,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           date_received?: string | null
+          donor_id?: string | null
           fiscal_year?: number | null
           funding_institution?: string | null
           grant_name?: string
@@ -5626,6 +6324,152 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_fees: {
+        Row: {
+          academic_year: number
+          amount_due: number
+          amount_paid: number
+          balance: number
+          created_at: string
+          description: string | null
+          due_date: string | null
+          fee_structure_id: string | null
+          id: string
+          status: string
+          student_id: string | null
+          term: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_year?: number
+          amount_due?: number
+          amount_paid?: number
+          balance?: number
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fee_structure_id?: string | null
+          id?: string
+          status?: string
+          student_id?: string | null
+          term?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_year?: number
+          amount_due?: number
+          amount_paid?: number
+          balance?: number
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fee_structure_id?: string | null
+          id?: string
+          status?: string
+          student_id?: string | null
+          term?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_fees_fee_structure_id_fkey"
+            columns: ["fee_structure_id"]
+            isOneToOne: false
+            referencedRelation: "fee_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          address: string | null
+          boarding: string | null
+          class_id: string | null
+          company_id: string | null
+          created_at: string
+          date_of_birth: string | null
+          enrolment_date: string | null
+          first_name: string
+          gender: string | null
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_relationship: string | null
+          id: string
+          last_name: string
+          notes: string | null
+          sponsorship: string | null
+          status: string
+          student_no: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          boarding?: string | null
+          class_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          enrolment_date?: string | null
+          first_name: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          last_name: string
+          notes?: string | null
+          sponsorship?: string | null
+          status?: string
+          student_no: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          boarding?: string | null
+          class_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          enrolment_date?: string | null
+          first_name?: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          sponsorship?: string | null
+          status?: string
+          student_no?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "school_classes"
             referencedColumns: ["id"]
           },
         ]
