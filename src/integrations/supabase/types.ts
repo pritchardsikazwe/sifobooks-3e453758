@@ -3007,12 +3007,14 @@ export type Database = {
           amount: number
           bank_account_id: string | null
           category: string | null
+          charge_code: string | null
           created_at: string
           currency: string
           exchange_rate: number
           expense_account_id: string | null
           expense_date: string
           expense_number: string | null
+          funding_source: string | null
           id: string
           journal_entry_id: string | null
           notes: string | null
@@ -3030,12 +3032,14 @@ export type Database = {
           amount?: number
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
           expense_number?: string | null
+          funding_source?: string | null
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
@@ -3053,12 +3057,14 @@ export type Database = {
           amount?: number
           bank_account_id?: string | null
           category?: string | null
+          charge_code?: string | null
           created_at?: string
           currency?: string
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
           expense_number?: string | null
+          funding_source?: string | null
           id?: string
           journal_entry_id?: string | null
           notes?: string | null
