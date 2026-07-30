@@ -181,7 +181,7 @@ function LoansPage() {
             ]}
             rowActions={[
               { label: "Generate schedule", icon: CalendarRange, run: (r, reload) => generateSchedule(r, reload) },
-              { label: "View schedule", icon: ListOrdered, run: (r) => openSchedule(r) },
+              { label: "View schedule", icon: ListOrdered, run: async (r) => { await openSchedule(r); } },
               { label: "Repay", icon: Coins, variant: "outline", show: (r) => r.status === "active" || r.status === "draft", run: (r) => setRepayFor(r) },
               { label: "Write off", variant: "ghost", className: "text-destructive", show: (r) => r.status === "active", run: (r, reload) => writeOff(r, reload) },
             ]}

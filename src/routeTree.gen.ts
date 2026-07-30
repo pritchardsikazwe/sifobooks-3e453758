@@ -49,6 +49,7 @@ import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_auth
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
+import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
@@ -337,6 +338,11 @@ const AuthenticatedNotificationsRoute =
 const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
@@ -773,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/loans': typeof AuthenticatedLoansRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -883,6 +890,7 @@ export interface FileRoutesByTo {
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/loans': typeof AuthenticatedLoansRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -995,6 +1003,7 @@ export interface FileRoutesById {
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
+  '/_authenticated/loans': typeof AuthenticatedLoansRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1109,6 +1118,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/loans'
     | '/modules'
     | '/notifications'
     | '/onboarding'
@@ -1219,6 +1229,7 @@ export interface FileRouteTypes {
     | '/journal-entries'
     | '/leads'
     | '/leave'
+    | '/loans'
     | '/modules'
     | '/notifications'
     | '/onboarding'
@@ -1330,6 +1341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/journal-entries'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
+    | '/_authenticated/loans'
     | '/_authenticated/modules'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
@@ -1697,6 +1709,13 @@ declare module '@tanstack/react-router' {
       path: '/modules'
       fullPath: '/modules'
       preLoaderRoute: typeof AuthenticatedModulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loans': {
+      id: '/_authenticated/loans'
+      path: '/loans'
+      fullPath: '/loans'
+      preLoaderRoute: typeof AuthenticatedLoansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leave': {
@@ -2343,6 +2362,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
+  AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -2420,6 +2440,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
+  AuthenticatedLoansRoute: AuthenticatedLoansRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
