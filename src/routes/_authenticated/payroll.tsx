@@ -139,6 +139,10 @@ function PayrollPage() {
         <TabsContent value="calc" className="mt-4">
           <PayeCalculator />
         </TabsContent>
+
+        <TabsContent value="benefits" className="mt-4">
+          <BenefitsCalculator />
+        </TabsContent>
       </Tabs>
     </div>
   );
