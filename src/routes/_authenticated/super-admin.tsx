@@ -263,8 +263,16 @@ function SuperAdminPage() {
                     const plan = plans.find((p) => p.id === sub?.plan_id);
                     return (
                       <tr key={c.id} className="hover:bg-slate-50">
-                        <td className="py-2 font-medium text-slate-900">{c.trading_name || c.name}</td>
-                        <td className="text-slate-600">{owner?.email || "—"}</td>
+                        <td className="py-2">
+                          <div className="font-medium text-slate-900">{c.trading_name || c.name}</div>
+                          {c.trading_name && c.trading_name !== c.name && (
+                            <div className="text-xs text-slate-500">{c.name}</div>
+                          )}
+                        </td>
+                        <td className="text-slate-600">
+                          <div>{owner?.email || "—"}</div>
+                          {owner?.full_name && <div className="text-xs text-slate-500">{owner.full_name}</div>}
+                        </td>
                         <td className="text-slate-500">{c.industry || "—"}</td>
                         <td>{c.base_currency || "—"}</td>
                         <td className="text-slate-500">{c.tpin || "—"}</td>
