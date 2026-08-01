@@ -149,6 +149,7 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
   const [slips, setSlips] = useState<(Slip & { employee: Employee })[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<(Slip & { employee: Employee }) | null>(null);
+  const [bankFormat, setBankFormat] = useState<"zanaco" | "stanbic" | "fnb" | "absa" | "generic">("generic");
 
   const load = async () => {
     setLoading(true);
