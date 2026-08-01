@@ -118,6 +118,7 @@ import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenti
 import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
 import { Route as AuthenticatedLearnQuickStartRouteImport } from './routes/_authenticated/learn.quick-start'
 import { Route as AuthenticatedLearnPayrollRouteImport } from './routes/_authenticated/learn.payroll'
+import { Route as AuthenticatedLearnNewCompanyRouteImport } from './routes/_authenticated/learn.new-company'
 import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './routes/_authenticated/learn.bank-reconciliation'
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
@@ -725,6 +726,12 @@ const AuthenticatedLearnPayrollRoute =
     path: '/learn/payroll',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLearnNewCompanyRoute =
+  AuthenticatedLearnNewCompanyRouteImport.update({
+    id: '/learn/new-company',
+    path: '/learn/new-company',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLearnBankReconciliationRoute =
   AuthenticatedLearnBankReconciliationRouteImport.update({
     id: '/learn/bank-reconciliation',
@@ -847,6 +854,7 @@ export interface FileRoutesByFullPath {
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
   '/learn/payroll': typeof AuthenticatedLearnPayrollRoute
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
@@ -960,6 +968,7 @@ export interface FileRoutesByTo {
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
   '/learn/payroll': typeof AuthenticatedLearnPayrollRoute
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
@@ -1079,6 +1088,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/_authenticated/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
+  '/_authenticated/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
   '/_authenticated/learn/payroll': typeof AuthenticatedLearnPayrollRoute
   '/_authenticated/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
@@ -1198,6 +1208,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/learn/accounting-basics'
     | '/learn/bank-reconciliation'
+    | '/learn/new-company'
     | '/learn/payroll'
     | '/learn/quick-start'
     | '/learn/reports'
@@ -1311,6 +1322,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/learn/accounting-basics'
     | '/learn/bank-reconciliation'
+    | '/learn/new-company'
     | '/learn/payroll'
     | '/learn/quick-start'
     | '/learn/reports'
@@ -1429,6 +1441,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/new'
     | '/_authenticated/learn/accounting-basics'
     | '/_authenticated/learn/bank-reconciliation'
+    | '/_authenticated/learn/new-company'
     | '/_authenticated/learn/payroll'
     | '/_authenticated/learn/quick-start'
     | '/_authenticated/learn/reports'
@@ -2242,6 +2255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnPayrollRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/learn/new-company': {
+      id: '/_authenticated/learn/new-company'
+      path: '/learn/new-company'
+      fullPath: '/learn/new-company'
+      preLoaderRoute: typeof AuthenticatedLearnNewCompanyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/learn/bank-reconciliation': {
       id: '/_authenticated/learn/bank-reconciliation'
       path: '/learn/bank-reconciliation'
@@ -2480,6 +2500,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
   AuthenticatedLearnBankReconciliationRoute: typeof AuthenticatedLearnBankReconciliationRoute
+  AuthenticatedLearnNewCompanyRoute: typeof AuthenticatedLearnNewCompanyRoute
   AuthenticatedLearnPayrollRoute: typeof AuthenticatedLearnPayrollRoute
   AuthenticatedLearnQuickStartRoute: typeof AuthenticatedLearnQuickStartRoute
   AuthenticatedLearnReportsRoute: typeof AuthenticatedLearnReportsRoute
@@ -2565,6 +2586,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedLearnAccountingBasicsRoute,
   AuthenticatedLearnBankReconciliationRoute:
     AuthenticatedLearnBankReconciliationRoute,
+  AuthenticatedLearnNewCompanyRoute: AuthenticatedLearnNewCompanyRoute,
   AuthenticatedLearnPayrollRoute: AuthenticatedLearnPayrollRoute,
   AuthenticatedLearnQuickStartRoute: AuthenticatedLearnQuickStartRoute,
   AuthenticatedLearnReportsRoute: AuthenticatedLearnReportsRoute,
@@ -2588,13 +2610,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
