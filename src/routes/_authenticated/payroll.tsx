@@ -14,7 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, monthName } from "@/lib/format";
-import { computePayslip, calcPaye, DEFAULT_PAYE_BANDS, type EarningLine, type DeductionLine } from "@/lib/payroll";
+import {
+  computePayslip, calcPaye, DEFAULT_PAYE_BANDS, calcGratuity, calcLeavePay, calcNoticePay,
+  calcRepatriation, hourlyRate, STD_HOURS_PER_MONTH, OVERTIME_WEEKDAY, OVERTIME_WEEKEND,
+  OVERTIME_HOLIDAY, type EarningLine, type DeductionLine,
+} from "@/lib/payroll";
 import { downloadPayslipPdf } from "@/lib/payslip-pdf";
 import {
   downloadCsv, exportZraPaye, exportNapsaICare, exportNhima,
@@ -683,4 +687,117 @@ function PayeCalculator() {
 }
 function Row({ k, v, bold }: { k: string; v: number; bold?: boolean }) {
   return <div className={`flex justify-between ${bold ? "text-emerald-700 font-bold text-lg" : "text-slate-700"}`}><span>{k}</span><span>{fmtMoney(v)}</span></div>;
+}
+
+/* ================= Gratuity, overtime & backpay calculator ================= */
+
+function BenefitsCalculator() {
+  const [basic, setBasic] = useState(10000);
+  const [months, setMonths] = useState(24);
+  const [pct, setPct] = useState(25);
+  const [leaveDays, setLeaveDays] = useState(0);
+  const [noticeMonths, setNoticeMonths] = useState(1);
+  const [yearsService, setYearsService] = useState(2);
+
+  const [otWeekday, setOtWeekday] = useState(0);
+  const [otWeekend, setOtWeekend] = useState(0);
+  const [otHoliday, setOtHoliday] = useState(0);
+
+  const [backOld, setBackOld] = useState(10000);
+  const [backNew, setBackNew] = useState(12000);
+  const [backMonths, setBackMonths] = useState(3);
+
+  const rate = hourlyRate(basic);
+  const otPay = round2(
+    otWeekday * rate * OVERTIME_WEEKDAY +
+    otWeekend * rate * OVERTIME_WEEKEND +
+    otHoliday * rate * OVERTIME_HOLIDAY
+  );
+  const gratuity = calcGratuity(basic, months, pct / 100);
+  const leavePay = calcLeavePay(basic, leaveDays);
+  const noticePay = calcNoticePay(basic, noticeMonths);
+  const repatriation = calcRepatriation(basic / 22, yearsService);
+  const terminalTotal = round2(gratuity + leavePay + noticePay + repatriation);
+  const backpay = round2(Math.max(0, backNew - backOld) * backMonths);
+  const backpayPaye = calcPaye(backpay);
+
+  const Row = ({ label, value, strong }: { label: string; value: number; strong?: boolean }) => (
+    <div className={`flex items-center justify-between py-1.5 text-sm ${strong ? "font-semibold border-t mt-1 pt-2" : ""}`}>
+      <span className="text-slate-600">{label}</span><span className="tabular-nums">{fmtMoney(value)}</span>
+    </div>
+  );
+  const Num = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (n: number) => void; step?: number }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input type="number" step={step} value={value} onChange={e => onChange(Number(e.target.value) || 0)} />
+    </div>
+  );
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Terminal benefits</CardTitle>
+          <CardDescription>Gratuity, leave pay, notice and repatriation.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Num label="Monthly basic (ZMW)" value={basic} onChange={setBasic} step={100} />
+          <div className="grid grid-cols-2 gap-3">
+            <Num label="Months served" value={months} onChange={setMonths} />
+            <Num label="Gratuity %" value={pct} onChange={setPct} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Num label="Leave days" value={leaveDays} onChange={setLeaveDays} />
+            <Num label="Notice mths" value={noticeMonths} onChange={setNoticeMonths} />
+            <Num label="Yrs service" value={yearsService} onChange={setYearsService} />
+          </div>
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Gratuity" value={gratuity} />
+            <Row label="Leave pay" value={leavePay} />
+            <Row label="Notice pay" value={noticePay} />
+            <Row label="Repatriation" value={repatriation} />
+            <Row label="Total terminal benefits" value={terminalTotal} strong />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Overtime</CardTitle>
+          <CardDescription>1.5× weekday, 2× weekend & public holiday.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="text-xs text-slate-500">Hourly rate: <span className="font-semibold tabular-nums">{fmtMoney(rate)}</span> ({STD_HOURS_PER_MONTH} hrs/month)</div>
+          <Num label="Weekday hours (1.5×)" value={otWeekday} onChange={setOtWeekday} step={0.5} />
+          <Num label="Weekend hours (2×)" value={otWeekend} onChange={setOtWeekend} step={0.5} />
+          <Num label="Public holiday hours (2×)" value={otHoliday} onChange={setOtHoliday} step={0.5} />
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Weekday" value={round2(otWeekday * rate * OVERTIME_WEEKDAY)} />
+            <Row label="Weekend" value={round2(otWeekend * rate * OVERTIME_WEEKEND)} />
+            <Row label="Holiday" value={round2(otHoliday * rate * OVERTIME_HOLIDAY)} />
+            <Row label="Total overtime (taxable)" value={otPay} strong />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Backpay</CardTitle>
+          <CardDescription>Arrears from a salary revision.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Num label="Old monthly salary" value={backOld} onChange={setBackOld} step={100} />
+          <Num label="New monthly salary" value={backNew} onChange={setBackNew} step={100} />
+          <Num label="Months in arrears" value={backMonths} onChange={setBackMonths} />
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Monthly difference" value={round2(Math.max(0, backNew - backOld))} />
+            <Row label="Gross backpay" value={backpay} />
+            <Row label="PAYE on backpay" value={backpayPaye} />
+            <Row label="Net backpay" value={round2(backpay - backpayPaye)} strong />
+          </div>
+          <p className="text-xs text-slate-500">Add these amounts as earning lines on the employee's payslip so PAYE, NAPSA and NHIMA recompute on the full gross.</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
