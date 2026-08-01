@@ -254,7 +254,7 @@ function SuperAdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-slate-500 uppercase">
-                  <tr><th className="py-2">Name</th><th>Owner</th><th>Industry</th><th>Currency</th><th>TPIN</th><th>Plan</th><th>Created</th><th className="text-right">Actions</th></tr>
+                  <tr><th className="py-2">Company</th><th>Owner email</th><th>Industry</th><th>Currency</th><th>TPIN</th><th>Plan</th><th>Created</th><th className="text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {filteredCompanies.map((c) => {
