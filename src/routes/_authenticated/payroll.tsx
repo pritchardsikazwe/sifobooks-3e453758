@@ -91,6 +91,7 @@ function PayrollPage() {
           <TabsTrigger value="runs">Runs</TabsTrigger>
           <TabsTrigger value="generate"><Wand2 className="h-3.5 w-3.5 mr-1" /> Generate</TabsTrigger>
           <TabsTrigger value="calc"><Calculator className="h-3.5 w-3.5 mr-1" /> PAYE Calculator</TabsTrigger>
+          <TabsTrigger value="benefits"><Calculator className="h-3.5 w-3.5 mr-1" /> Gratuity, Overtime & Backpay</TabsTrigger>
         </TabsList>
 
         <TabsContent value="runs" className="mt-4 space-y-4">
