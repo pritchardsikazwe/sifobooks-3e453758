@@ -16,6 +16,10 @@ import { toast } from "sonner";
 import { fmtMoney, monthName } from "@/lib/format";
 import { computePayslip, calcPaye, DEFAULT_PAYE_BANDS, type EarningLine, type DeductionLine } from "@/lib/payroll";
 import { downloadPayslipPdf } from "@/lib/payslip-pdf";
+import {
+  downloadCsv, exportZraPaye, exportNapsaICare, exportNhima,
+  exportBankSchedule, exportMobileMoney, type PayrollExportRow,
+} from "@/lib/payroll-exports";
 
 export const Route = createFileRoute("/_authenticated/payroll")({
   head: () => ({ meta: [{ title: "Payroll — SifoBooks" }, { name: "robots", content: "noindex" }] }),
