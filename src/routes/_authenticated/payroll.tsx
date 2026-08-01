@@ -14,8 +14,16 @@ import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, monthName } from "@/lib/format";
-import { computePayslip, calcPaye, DEFAULT_PAYE_BANDS, type EarningLine, type DeductionLine } from "@/lib/payroll";
+import {
+  computePayslip, calcPaye, DEFAULT_PAYE_BANDS, calcGratuity, calcLeavePay, calcNoticePay,
+  calcRepatriation, hourlyRate, STD_HOURS_PER_MONTH, OVERTIME_WEEKDAY, OVERTIME_WEEKEND,
+  OVERTIME_HOLIDAY, type EarningLine, type DeductionLine,
+} from "@/lib/payroll";
 import { downloadPayslipPdf } from "@/lib/payslip-pdf";
+import {
+  downloadCsv, exportZraPaye, exportNapsaICare, exportNhima,
+  exportBankSchedule, exportMobileMoney, type PayrollExportRow,
+} from "@/lib/payroll-exports";
 
 export const Route = createFileRoute("/_authenticated/payroll")({
   head: () => ({ meta: [{ title: "Payroll — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -87,6 +95,7 @@ function PayrollPage() {
           <TabsTrigger value="runs">Runs</TabsTrigger>
           <TabsTrigger value="generate"><Wand2 className="h-3.5 w-3.5 mr-1" /> Generate</TabsTrigger>
           <TabsTrigger value="calc"><Calculator className="h-3.5 w-3.5 mr-1" /> PAYE Calculator</TabsTrigger>
+          <TabsTrigger value="benefits"><Calculator className="h-3.5 w-3.5 mr-1" /> Gratuity, Overtime & Backpay</TabsTrigger>
         </TabsList>
 
         <TabsContent value="runs" className="mt-4 space-y-4">
@@ -134,6 +143,10 @@ function PayrollPage() {
         <TabsContent value="calc" className="mt-4">
           <PayeCalculator />
         </TabsContent>
+
+        <TabsContent value="benefits" className="mt-4">
+          <BenefitsCalculator />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -145,6 +158,7 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
   const [slips, setSlips] = useState<(Slip & { employee: Employee })[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<(Slip & { employee: Employee }) | null>(null);
+  const [bankFormat, setBankFormat] = useState<"zanaco" | "stanbic" | "fnb" | "absa" | "generic">("generic");
 
   const load = async () => {
     setLoading(true);
@@ -208,6 +222,51 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     }, `payslip-${run.run_number}-${s.employee.first_name}-${s.employee.last_name}.pdf`);
   };
 
+  const exportRows = (): PayrollExportRow[] => slips.map(s => {
+    const basic = Number(s.basic_salary ?? 0);
+    const gross = Number(s.gross_pay ?? 0);
+    const nonTax = Number((s as any).utility_allowance ?? 0)
+      + Number((s as any).transport_allowance ?? 0)
+      + Math.min(Number((s as any).housing_allowance ?? 0), basic * 0.3);
+    return {
+      employee_code: s.employee.employee_code,
+      first_name: s.employee.first_name,
+      last_name: s.employee.last_name,
+      national_id: s.employee.national_id,
+      tpin: (s.employee as any).tpin ?? null,
+      napsa_number: s.employee.napsa_number,
+      nhima_number: (s.employee as any).nhima_number ?? null,
+      bank_name: s.employee.bank_name,
+      bank_branch: (s.employee as any).bank_branch ?? null,
+      bank_account: s.employee.bank_account,
+      mobile_money_provider: (s.employee as any).mobile_money_provider ?? null,
+      mobile_money_number: (s.employee as any).mobile_money_number ?? null,
+      basic,
+      gross,
+      taxable: Math.max(0, gross - nonTax),
+      paye: Number(s.paye ?? 0),
+      napsa: Number(s.napsa ?? 0),
+      nhima: Number(s.nhima ?? 0),
+      net: Number(s.net_pay ?? 0),
+    };
+  });
+
+  const period = `${String(run.period_month).padStart(2, "0")}/${run.period_year}`;
+  const stem = `${run.run_number}-${run.period_year}-${String(run.period_month).padStart(2, "0")}`;
+  const doExport = (kind: "paye" | "napsa" | "nhima" | "bank" | "momo") => {
+    const rows = exportRows();
+    if (!rows.length) return toast.error("No payslips to export");
+    if (kind === "paye") downloadCsv(`ZRA-PAYE-${stem}.csv`, exportZraPaye(rows, period));
+    if (kind === "napsa") downloadCsv(`NAPSA-iCare-${stem}.csv`, exportNapsaICare(rows, period));
+    if (kind === "nhima") downloadCsv(`NHIMA-${stem}.csv`, exportNhima(rows, period));
+    if (kind === "bank") downloadCsv(`Bank-Schedule-${stem}.csv`, exportBankSchedule(rows, {
+      format: bankFormat, valueDate: run.pay_date ?? new Date().toISOString().slice(0, 10),
+      narration: `SALARY ${period}`,
+    }));
+    if (kind === "momo") downloadCsv(`MobileMoney-${stem}.csv`, exportMobileMoney(rows, { provider: "mtn", reference: `SALARY ${period}` }));
+    toast.success("Export downloaded");
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -223,6 +282,25 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
             <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
             <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border bg-slate-50 p-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 px-1">Statutory returns</span>
+          <Button size="sm" variant="outline" onClick={() => doExport("paye")}><Download className="h-3.5 w-3.5 mr-1" /> ZRA PAYE</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("napsa")}><Download className="h-3.5 w-3.5 mr-1" /> NAPSA iCare</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("nhima")}><Download className="h-3.5 w-3.5 mr-1" /> NHIMA</Button>
+          <span className="mx-1 h-5 w-px bg-slate-200" />
+          <Select value={bankFormat} onValueChange={(v) => setBankFormat(v as any)}>
+            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="generic">Generic bank</SelectItem>
+              <SelectItem value="zanaco">Zanaco</SelectItem>
+              <SelectItem value="stanbic">Stanbic</SelectItem>
+              <SelectItem value="fnb">FNB</SelectItem>
+              <SelectItem value="absa">Absa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={() => doExport("bank")}><Download className="h-3.5 w-3.5 mr-1" /> Bank schedule</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("momo")}><Download className="h-3.5 w-3.5 mr-1" /> Mobile money</Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -609,4 +687,119 @@ function PayeCalculator() {
 }
 function Row({ k, v, bold }: { k: string; v: number; bold?: boolean }) {
   return <div className={`flex justify-between ${bold ? "text-emerald-700 font-bold text-lg" : "text-slate-700"}`}><span>{k}</span><span>{fmtMoney(v)}</span></div>;
+}
+
+/* ================= Gratuity, overtime & backpay calculator ================= */
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function BenefitsCalculator() {
+  const [basic, setBasic] = useState(10000);
+  const [months, setMonths] = useState(24);
+  const [pct, setPct] = useState(25);
+  const [leaveDays, setLeaveDays] = useState(0);
+  const [noticeMonths, setNoticeMonths] = useState(1);
+  const [yearsService, setYearsService] = useState(2);
+
+  const [otWeekday, setOtWeekday] = useState(0);
+  const [otWeekend, setOtWeekend] = useState(0);
+  const [otHoliday, setOtHoliday] = useState(0);
+
+  const [backOld, setBackOld] = useState(10000);
+  const [backNew, setBackNew] = useState(12000);
+  const [backMonths, setBackMonths] = useState(3);
+
+  const rate = hourlyRate(basic);
+  const otPay = round2(
+    otWeekday * rate * OVERTIME_WEEKDAY +
+    otWeekend * rate * OVERTIME_WEEKEND +
+    otHoliday * rate * OVERTIME_HOLIDAY
+  );
+  const gratuity = calcGratuity(basic, months, pct / 100);
+  const leavePay = calcLeavePay(basic, leaveDays);
+  const noticePay = calcNoticePay(basic, noticeMonths);
+  const repatriation = calcRepatriation(basic / 22, yearsService);
+  const terminalTotal = round2(gratuity + leavePay + noticePay + repatriation);
+  const backpay = round2(Math.max(0, backNew - backOld) * backMonths);
+  const backpayPaye = calcPaye(backpay);
+
+  const Row = ({ label, value, strong }: { label: string; value: number; strong?: boolean }) => (
+    <div className={`flex items-center justify-between py-1.5 text-sm ${strong ? "font-semibold border-t mt-1 pt-2" : ""}`}>
+      <span className="text-slate-600">{label}</span><span className="tabular-nums">{fmtMoney(value)}</span>
+    </div>
+  );
+  const Num = ({ label, value, onChange, step = 1 }: { label: string; value: number; onChange: (n: number) => void; step?: number }) => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input type="number" step={step} value={value} onChange={e => onChange(Number(e.target.value) || 0)} />
+    </div>
+  );
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Terminal benefits</CardTitle>
+          <CardDescription>Gratuity, leave pay, notice and repatriation.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Num label="Monthly basic (ZMW)" value={basic} onChange={setBasic} step={100} />
+          <div className="grid grid-cols-2 gap-3">
+            <Num label="Months served" value={months} onChange={setMonths} />
+            <Num label="Gratuity %" value={pct} onChange={setPct} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Num label="Leave days" value={leaveDays} onChange={setLeaveDays} />
+            <Num label="Notice mths" value={noticeMonths} onChange={setNoticeMonths} />
+            <Num label="Yrs service" value={yearsService} onChange={setYearsService} />
+          </div>
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Gratuity" value={gratuity} />
+            <Row label="Leave pay" value={leavePay} />
+            <Row label="Notice pay" value={noticePay} />
+            <Row label="Repatriation" value={repatriation} />
+            <Row label="Total terminal benefits" value={terminalTotal} strong />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Overtime</CardTitle>
+          <CardDescription>1.5× weekday, 2× weekend & public holiday.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="text-xs text-slate-500">Hourly rate: <span className="font-semibold tabular-nums">{fmtMoney(rate)}</span> ({STD_HOURS_PER_MONTH} hrs/month)</div>
+          <Num label="Weekday hours (1.5×)" value={otWeekday} onChange={setOtWeekday} step={0.5} />
+          <Num label="Weekend hours (2×)" value={otWeekend} onChange={setOtWeekend} step={0.5} />
+          <Num label="Public holiday hours (2×)" value={otHoliday} onChange={setOtHoliday} step={0.5} />
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Weekday" value={round2(otWeekday * rate * OVERTIME_WEEKDAY)} />
+            <Row label="Weekend" value={round2(otWeekend * rate * OVERTIME_WEEKEND)} />
+            <Row label="Holiday" value={round2(otHoliday * rate * OVERTIME_HOLIDAY)} />
+            <Row label="Total overtime (taxable)" value={otPay} strong />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Backpay</CardTitle>
+          <CardDescription>Arrears from a salary revision.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Num label="Old monthly salary" value={backOld} onChange={setBackOld} step={100} />
+          <Num label="New monthly salary" value={backNew} onChange={setBackNew} step={100} />
+          <Num label="Months in arrears" value={backMonths} onChange={setBackMonths} />
+          <div className="rounded-lg border bg-slate-50 p-3">
+            <Row label="Monthly difference" value={round2(Math.max(0, backNew - backOld))} />
+            <Row label="Gross backpay" value={backpay} />
+            <Row label="PAYE on backpay" value={backpayPaye} />
+            <Row label="Net backpay" value={round2(backpay - backpayPaye)} strong />
+          </div>
+          <p className="text-xs text-slate-500">Add these amounts as earning lines on the employee's payslip so PAYE, NAPSA and NHIMA recompute on the full gross.</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
