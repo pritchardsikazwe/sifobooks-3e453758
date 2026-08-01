@@ -164,8 +164,13 @@ function SuperAdminPage() {
     users.filter((u) => !q || `${u.email ?? ""} ${u.full_name ?? ""}`.toLowerCase().includes(q.toLowerCase())),
     [users, q]);
   const filteredCompanies = useMemo(() =>
-    companies.filter((c) => !q || `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""}`.toLowerCase().includes(q.toLowerCase())),
-    [companies, q]);
+    companies.filter((c) => {
+      if (!q) return true;
+      const owner = users.find((u) => u.id === c.user_id);
+      return `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""} ${owner?.email ?? ""} ${owner?.full_name ?? ""}`
+        .toLowerCase().includes(q.toLowerCase());
+    }),
+    [companies, users, q]);
   const grouped = flags.reduce<Record<string, FeatureFlag[]>>((acc, f) => { (acc[f.category] ||= []).push(f); return acc; }, {});
   const maintenance = flags.find((f) => f.key === "maintenance")?.enabled;
   const signupsOff = flags.find((f) => f.key === "signups")?.enabled === false;
