@@ -691,6 +691,8 @@ function Row({ k, v, bold }: { k: string; v: number; bold?: boolean }) {
 
 /* ================= Gratuity, overtime & backpay calculator ================= */
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 function BenefitsCalculator() {
   const [basic, setBasic] = useState(10000);
   const [months, setMonths] = useState(24);
