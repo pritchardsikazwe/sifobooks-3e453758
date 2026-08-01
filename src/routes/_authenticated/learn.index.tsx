@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   GraduationCap, BookOpen, Banknote, Landmark, ReceiptText, BarChart3,
-  ShieldCheck, Sparkles, ArrowRight, PlayCircle, HelpCircle, Rocket,
+  ShieldCheck, Sparkles, ArrowRight, PlayCircle, HelpCircle, Rocket, ClipboardList,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
