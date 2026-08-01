@@ -208,6 +208,51 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     }, `payslip-${run.run_number}-${s.employee.first_name}-${s.employee.last_name}.pdf`);
   };
 
+  const exportRows = (): PayrollExportRow[] => slips.map(s => {
+    const basic = Number(s.basic_salary ?? 0);
+    const gross = Number(s.gross_pay ?? 0);
+    const nonTax = Number((s as any).utility_allowance ?? 0)
+      + Number((s as any).transport_allowance ?? 0)
+      + Math.min(Number((s as any).housing_allowance ?? 0), basic * 0.3);
+    return {
+      employee_code: s.employee.employee_code,
+      first_name: s.employee.first_name,
+      last_name: s.employee.last_name,
+      national_id: s.employee.national_id,
+      tpin: (s.employee as any).tpin ?? null,
+      napsa_number: s.employee.napsa_number,
+      nhima_number: (s.employee as any).nhima_number ?? null,
+      bank_name: s.employee.bank_name,
+      bank_branch: (s.employee as any).bank_branch ?? null,
+      bank_account: s.employee.bank_account,
+      mobile_money_provider: (s.employee as any).mobile_money_provider ?? null,
+      mobile_money_number: (s.employee as any).mobile_money_number ?? null,
+      basic,
+      gross,
+      taxable: Math.max(0, gross - nonTax),
+      paye: Number(s.paye ?? 0),
+      napsa: Number(s.napsa ?? 0),
+      nhima: Number(s.nhima ?? 0),
+      net: Number(s.net_pay ?? 0),
+    };
+  });
+
+  const period = `${String(run.period_month).padStart(2, "0")}/${run.period_year}`;
+  const stem = `${run.run_number}-${run.period_year}-${String(run.period_month).padStart(2, "0")}`;
+  const doExport = (kind: "paye" | "napsa" | "nhima" | "bank" | "momo") => {
+    const rows = exportRows();
+    if (!rows.length) return toast.error("No payslips to export");
+    if (kind === "paye") downloadCsv(`ZRA-PAYE-${stem}.csv`, exportZraPaye(rows, period));
+    if (kind === "napsa") downloadCsv(`NAPSA-iCare-${stem}.csv`, exportNapsaICare(rows, period));
+    if (kind === "nhima") downloadCsv(`NHIMA-${stem}.csv`, exportNhima(rows, period));
+    if (kind === "bank") downloadCsv(`Bank-Schedule-${stem}.csv`, exportBankSchedule(rows, {
+      format: bankFormat, valueDate: run.pay_date ?? new Date().toISOString().slice(0, 10),
+      narration: `SALARY ${period}`,
+    }));
+    if (kind === "momo") downloadCsv(`MobileMoney-${stem}.csv`, exportMobileMoney(rows, { provider: "mtn", reference: `SALARY ${period}` }));
+    toast.success("Export downloaded");
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -223,6 +268,25 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
             <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
             <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border bg-slate-50 p-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 px-1">Statutory returns</span>
+          <Button size="sm" variant="outline" onClick={() => doExport("paye")}><Download className="h-3.5 w-3.5 mr-1" /> ZRA PAYE</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("napsa")}><Download className="h-3.5 w-3.5 mr-1" /> NAPSA iCare</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("nhima")}><Download className="h-3.5 w-3.5 mr-1" /> NHIMA</Button>
+          <span className="mx-1 h-5 w-px bg-slate-200" />
+          <Select value={bankFormat} onValueChange={(v) => setBankFormat(v as any)}>
+            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="generic">Generic bank</SelectItem>
+              <SelectItem value="zanaco">Zanaco</SelectItem>
+              <SelectItem value="stanbic">Stanbic</SelectItem>
+              <SelectItem value="fnb">FNB</SelectItem>
+              <SelectItem value="absa">Absa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={() => doExport("bank")}><Download className="h-3.5 w-3.5 mr-1" /> Bank schedule</Button>
+          <Button size="sm" variant="outline" onClick={() => doExport("momo")}><Download className="h-3.5 w-3.5 mr-1" /> Mobile money</Button>
         </div>
       </CardHeader>
       <CardContent>
