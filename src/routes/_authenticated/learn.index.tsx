@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   GraduationCap, BookOpen, Banknote, Landmark, ReceiptText, BarChart3,
-  ShieldCheck, Sparkles, ArrowRight, PlayCircle, HelpCircle, Rocket,
+  ShieldCheck, Sparkles, ArrowRight, PlayCircle, HelpCircle, Rocket, ClipboardList,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ type Topic = {
 };
 
 const TOPICS: Topic[] = [
+  { to: "/learn/new-company", title: "New to a Company? Start Here", blurb: "First-90-days checklist: what to collect, which source documents to file, and the order to capture them.", minutes: 14, level: "Beginner", icon: ClipboardList, tint: "from-indigo-500/25 to-indigo-500/5" },
   { to: "/learn/quick-start", title: "Quick Start (10 minutes)", blurb: "Set up your company, chart of accounts, tax profile and issue your first invoice.", minutes: 10, level: "Beginner", icon: Rocket, tint: "from-emerald-500/25 to-emerald-500/5" },
   { to: "/learn/accounting-basics", title: "Accounting Basics", blurb: "Debits, credits, double-entry and the Zambian statutory framework — plain English.", minutes: 12, level: "Beginner", icon: BookOpen, tint: "from-sky-500/25 to-sky-500/5" },
   { to: "/learn/payroll", title: "Zambian Payroll", blurb: "PAYE 2026 bands, NAPSA, NHIMA, WCF, SDL — with worked examples and payslips.", minutes: 15, level: "Intermediate", icon: Banknote, tint: "from-amber-500/25 to-amber-500/5" },

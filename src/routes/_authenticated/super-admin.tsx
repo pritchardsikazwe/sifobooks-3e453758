@@ -164,8 +164,13 @@ function SuperAdminPage() {
     users.filter((u) => !q || `${u.email ?? ""} ${u.full_name ?? ""}`.toLowerCase().includes(q.toLowerCase())),
     [users, q]);
   const filteredCompanies = useMemo(() =>
-    companies.filter((c) => !q || `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""}`.toLowerCase().includes(q.toLowerCase())),
-    [companies, q]);
+    companies.filter((c) => {
+      if (!q) return true;
+      const owner = users.find((u) => u.id === c.user_id);
+      return `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""} ${owner?.email ?? ""} ${owner?.full_name ?? ""}`
+        .toLowerCase().includes(q.toLowerCase());
+    }),
+    [companies, users, q]);
   const grouped = flags.reduce<Record<string, FeatureFlag[]>>((acc, f) => { (acc[f.category] ||= []).push(f); return acc; }, {});
   const maintenance = flags.find((f) => f.key === "maintenance")?.enabled;
   const signupsOff = flags.find((f) => f.key === "signups")?.enabled === false;
@@ -254,7 +259,7 @@ function SuperAdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-slate-500 uppercase">
-                  <tr><th className="py-2">Name</th><th>Owner</th><th>Industry</th><th>Currency</th><th>TPIN</th><th>Plan</th><th>Created</th><th className="text-right">Actions</th></tr>
+                  <tr><th className="py-2">Company</th><th>Owner email</th><th>Industry</th><th>Currency</th><th>TPIN</th><th>Plan</th><th>Created</th><th className="text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {filteredCompanies.map((c) => {
@@ -263,8 +268,16 @@ function SuperAdminPage() {
                     const plan = plans.find((p) => p.id === sub?.plan_id);
                     return (
                       <tr key={c.id} className="hover:bg-slate-50">
-                        <td className="py-2 font-medium text-slate-900">{c.trading_name || c.name}</td>
-                        <td className="text-slate-600">{owner?.email || "—"}</td>
+                        <td className="py-2">
+                          <div className="font-medium text-slate-900">{c.trading_name || c.name}</div>
+                          {c.trading_name && c.trading_name !== c.name && (
+                            <div className="text-xs text-slate-500">{c.name}</div>
+                          )}
+                        </td>
+                        <td className="text-slate-600">
+                          <div>{owner?.email || "—"}</div>
+                          {owner?.full_name && <div className="text-xs text-slate-500">{owner.full_name}</div>}
+                        </td>
                         <td className="text-slate-500">{c.industry || "—"}</td>
                         <td>{c.base_currency || "—"}</td>
                         <td className="text-slate-500">{c.tpin || "—"}</td>

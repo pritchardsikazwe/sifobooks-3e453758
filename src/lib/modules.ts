@@ -169,6 +169,8 @@ export const MODULES: ModuleDef[] = [
   { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true,
     description: "Accounting basics, Dr/Cr rules and Zambian compliance guides.",
     routes: [
+      { title: "Learn Centre", url: "/learn", iconName: "GraduationCap" },
+      { title: "New Company Setup", url: "/learn/new-company", iconName: "ClipboardList" },
       { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" },
     ] },
 
