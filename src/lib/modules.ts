@@ -182,7 +182,7 @@ export const MODULES: ModuleDef[] = [
       { title: "Modules", url: "/modules", iconName: "Sparkles" },
       { title: "Roles & Permissions", url: "/roles", iconName: "ShieldCheck" },
       { title: "Approvals", url: "/approvals", iconName: "Inbox" },
-      { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert" },
+      { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
       { title: "Company Setup", url: "/setup", iconName: "Building2" },
       { title: "Industry Presets", url: "/industry", iconName: "Sparkles" },
       { title: "Subscription", url: "/subscription", iconName: "Sparkles" },
