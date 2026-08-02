@@ -16,6 +16,8 @@ import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -190,7 +192,7 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
   const [saving, setSaving] = useState(false);
 
   const expenseAccounts = accounts.filter(a => a.account_type === "expense");
-  const cashBankAccounts = accounts.filter(a => a.account_type === "asset" && /(cash|bank|mobile|airtel|mtn|zamtel|visa|master)/i.test(a.account_name));
+  const cashBankAccounts = accounts.filter(a => a.account_type === "asset" && /(cash|bank|mobile|airtel|mtn|zamtel|visa|master|petty)/i.test(a.account_name));
 
   useEffect(() => {
     if (!expenseAccountId && expenseAccounts[0]) setExpenseAccountId(expenseAccounts[0].id);
@@ -200,10 +202,26 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
   const vat = +(amount * (vatRate / 100)).toFixed(2);
   const total = +(amount + vat).toFixed(2);
 
+  const vatInputAccount = accounts.find(a => /vat.*input|input.*vat/i.test(a.account_name));
+  const label = (id: string) => {
+    const a = accounts.find(x => x.id === id);
+    return a ? `${a.account_code} — ${a.account_name}` : "—";
+  };
+  const previewLines: PreviewLine[] = useMemo(() => {
+    if (!expenseAccountId || !bankAccountId || total <= 0) return [];
+    const lines: PreviewLine[] = [];
+    const useVatAccount = vat > 0 && !!vatInputAccount;
+    lines.push({ account: label(expenseAccountId), description: category, debit: useVatAccount ? amount : total, credit: 0 });
+    if (useVatAccount) lines.push({ account: label(vatInputAccount!.id), description: "VAT input", debit: vat, credit: 0 });
+    lines.push({ account: label(bankAccountId), description: `Paid via ${payment}`, debit: 0, credit: total });
+    return lines;
+  }, [expenseAccountId, bankAccountId, amount, vat, total, category, payment, accounts]);
+
   const save = async () => {
     if (!userId) return toast.error("Not signed in");
     if (!expenseAccountId || !bankAccountId) return toast.error("Pick both expense and payment (cash/bank) accounts");
     if (amount <= 0) return toast.error("Amount must be > 0");
+    if (!isBalanced(previewLines)) return toast.error("This transaction is not balanced — debits must equal credits");
     setSaving(true);
     // If offline, queue a pending expense row; server trigger will post JE on drain.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -264,12 +282,15 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
               <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Expense Account</Label>
-            <Select value={expenseAccountId} onValueChange={setExpenseAccountId}>
-              <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>{expenseAccounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <AccountSelector
+            label="Expense Account"
+            help="Select the expense category that describes what the money was spent on. This account is debited."
+            accounts={expenseAccounts}
+            value={expenseAccountId}
+            onChange={v => setExpenseAccountId(v ?? "")}
+            required
+            recentKey="expense-account"
+          />
           <div><Label>Payment Method</Label>
             <Select value={payment} onValueChange={setPayment}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -284,21 +305,26 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
               </SelectContent>
             </Select>
           </div>
-          <div className="sm:col-span-2"><Label>Paid From (Cash / Bank Account)</Label>
-            <Select value={bankAccountId} onValueChange={setBankAccountId}>
-              <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-              <SelectContent>{cashBankAccounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <AccountSelector
+            label="Paid From (Cash / Bank Account)"
+            help="Select the bank or cash account the money was paid from. This account is credited."
+            accounts={cashBankAccounts}
+            value={bankAccountId}
+            onChange={v => setBankAccountId(v ?? "")}
+            required
+            recentKey="paid-from-account"
+            className="sm:col-span-2"
+          />
           <div><Label>Amount (Net)</Label><Input type="number" step="0.01" value={amount} onChange={e => setAmount(Number(e.target.value))} /></div>
           <div><Label>VAT Rate %</Label><Input type="number" step="0.01" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} /></div>
           <div><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Receipt #, txn ref…" /></div>
           <div><Label>Total (auto)</Label><Input value={total.toFixed(2)} readOnly /></div>
           <div className="sm:col-span-2"><Label>Notes</Label><Textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} /></div>
+          <div className="sm:col-span-2"><PostingPreview lines={previewLines} /></div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save & Post</Button>
+          <Button onClick={save} disabled={saving || !isBalanced(previewLines)}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save & Post</Button>
         </div>
       </DialogContent>
     </Dialog>
