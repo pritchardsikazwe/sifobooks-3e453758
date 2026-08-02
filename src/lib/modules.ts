@@ -5,7 +5,7 @@ export type ModuleCategory =
   | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
   | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Admin";
 
-export type ModuleRoute = { title: string; url: string; iconName?: string };
+export type ModuleRoute = { title: string; url: string; iconName?: string; superAdminOnly?: boolean };
 
 export type ModuleDef = {
   key: string;
