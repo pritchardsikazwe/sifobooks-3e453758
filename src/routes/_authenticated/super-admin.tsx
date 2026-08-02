@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/super-admin")({
   component: SuperAdminPage,
 });
 
-type Company = { id: string; name: string; trading_name: string | null; base_currency: string | null; tpin: string | null; user_id: string; created_at: string; industry?: string | null };
+type Company = { id: string; email?: string | null; name: string; trading_name: string | null; base_currency: string | null; tpin: string | null; user_id: string; created_at: string; industry?: string | null };
 type Profile = { id: string; email: string | null; full_name: string | null; created_at: string; active_company_id?: string | null };
 type Plan = { id: string; code: string; name: string; price_monthly: number; currency: string; max_users: number | null; max_invoices: number | null; is_active: boolean; sort_order: number };
 type AuditRow = { id: string; user_id: string | null; action: string; entity: string | null; entity_id: string | null; created_at: string; metadata: any };
@@ -56,7 +56,7 @@ function SuperAdminPage() {
     if (!ok) return;
     const [f, c, p, pl, sb, al, ur] = await Promise.all([
       supabase.from("feature_flags").select("*").order("category").order("label"),
-      supabase.from("companies").select("id,name,trading_name,base_currency,tpin,user_id,created_at,industry").order("created_at", { ascending: false }),
+      supabase.from("companies").select("id,name,trading_name,base_currency,tpin,user_id,created_at,industry,email").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id,email,full_name,created_at,active_company_id").order("created_at", { ascending: false }).limit(500),
       supabase.from("subscription_plans").select("*").order("sort_order"),
       supabase.from("company_subscriptions").select("id,company_id,plan_id,status,current_period_end"),
@@ -167,7 +167,7 @@ function SuperAdminPage() {
     companies.filter((c) => {
       if (!q) return true;
       const owner = users.find((u) => u.id === c.user_id);
-      return `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""} ${owner?.email ?? ""} ${owner?.full_name ?? ""}`
+      return `${c.name} ${c.trading_name ?? ""} ${c.tpin ?? ""} ${c.email ?? ""} ${owner?.email ?? ""} ${owner?.full_name ?? ""}`
         .toLowerCase().includes(q.toLowerCase());
     }),
     [companies, users, q]);
@@ -187,27 +187,27 @@ function SuperAdminPage() {
               <p className="text-sm">Only the platform super administrator can view this page.</p>
             </div>
           </div>
-          <Link to="/dashboard" className="text-sm text-[#0f4c5c] underline mt-4 inline-block">Return to dashboard</Link>
+          <Link to="/dashboard" className="text-sm text-primary underline mt-4 inline-block">Return to dashboard</Link>
         </Card>
       </div>
     );
   }
 
   const stats = [
-    { label: "Tenants", value: companies.length, icon: Building2, color: "text-indigo-600 bg-indigo-50" },
-    { label: "Users", value: users.length, icon: Users, color: "text-emerald-600 bg-emerald-50" },
-    { label: "Active Subscriptions", value: subs.filter((s) => s.status === "active").length, icon: DollarSign, color: "text-amber-600 bg-amber-50" },
-    { label: "Features Enabled", value: `${flags.filter((f) => f.enabled).length}/${flags.length}`, icon: Package, color: "text-sky-600 bg-sky-50" },
+    { label: "Tenants", value: companies.length, icon: Building2, color: "text-primary bg-primary/10" },
+    { label: "Users", value: users.length, icon: Users, color: "text-primary bg-primary/10" },
+    { label: "Active Subscriptions", value: subs.filter((s) => s.status === "active").length, icon: DollarSign, color: "text-accent-foreground bg-accent" },
+    { label: "Features Enabled", value: `${flags.filter((f) => f.enabled).length}/${flags.length}`, icon: Package, color: "text-primary bg-primary/10" },
   ];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <ShieldAlert className="h-7 w-7 text-rose-600" />
+          <ShieldAlert className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Super Admin Console</h1>
-            <p className="text-sm text-slate-500">Platform-wide controls, tenants, users, billing and system settings.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-primary">Super Admin Console</h1>
+            <p className="text-sm text-muted-foreground">Platform-wide controls, tenants, users, billing and system settings.</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
@@ -229,8 +229,8 @@ function SuperAdminPage() {
           <Card key={s.label} className="p-4 flex items-center gap-3">
             <div className={`p-2 rounded-lg ${s.color}`}><s.icon className="h-5 w-5" /></div>
             <div>
-              <div className="text-xs text-slate-500">{s.label}</div>
-              <div className="text-xl font-semibold text-slate-900">{s.value}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
+              <div className="text-xl font-bold text-foreground tabular-nums">{s.value}</div>
             </div>
           </Card>
         ))}
@@ -250,7 +250,7 @@ function SuperAdminPage() {
         <TabsContent value="tenants">
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-              <h2 className="text-lg font-semibold text-slate-900">Tenants ({filteredCompanies.length})</h2>
+              <h2 className="text-lg font-semibold text-primary">Tenants ({filteredCompanies.length})</h2>
               <div className="relative w-72">
                 <Search className="h-4 w-4 absolute left-2 top-2.5 text-slate-400" />
                 <Input placeholder="Search tenant / TPIN" value={q} onChange={(e) => setQ(e.target.value)} className="pl-8 h-9" />
@@ -275,7 +275,7 @@ function SuperAdminPage() {
                           )}
                         </td>
                         <td className="text-slate-600">
-                          <div>{owner?.email || "—"}</div>
+                          <div>{owner?.email || c.email || "—"}</div>
                           {owner?.full_name && <div className="text-xs text-slate-500">{owner.full_name}</div>}
                         </td>
                         <td className="text-slate-500">{c.industry || "—"}</td>
@@ -304,7 +304,7 @@ function SuperAdminPage() {
         <TabsContent value="users">
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-              <h2 className="text-lg font-semibold text-slate-900">Users ({filteredUsers.length})</h2>
+              <h2 className="text-lg font-semibold text-primary">Users ({filteredUsers.length})</h2>
               <div className="relative w-72">
                 <Search className="h-4 w-4 absolute left-2 top-2.5 text-slate-400" />
                 <Input placeholder="Search email or name" value={q} onChange={(e) => setQ(e.target.value)} className="pl-8 h-9" />
@@ -385,7 +385,7 @@ function SuperAdminPage() {
         <TabsContent value="plans">
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900">Subscription Plans</h2>
+              <h2 className="text-lg font-semibold text-primary">Subscription Plans</h2>
               <Button size="sm" onClick={addPlan}><Plus className="h-4 w-4 mr-1" /> New plan</Button>
             </div>
             <div className="space-y-3">
