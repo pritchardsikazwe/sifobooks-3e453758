@@ -190,7 +190,7 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
   const [saving, setSaving] = useState(false);
 
   const expenseAccounts = accounts.filter(a => a.account_type === "expense");
-  const cashBankAccounts = accounts.filter(a => a.account_type === "asset" && /(cash|bank|mobile|airtel|mtn|zamtel|visa|master)/i.test(a.account_name));
+  const cashBankAccounts = accounts.filter(a => a.account_type === "asset" && /(cash|bank|mobile|airtel|mtn|zamtel|visa|master|petty)/i.test(a.account_name));
 
   useEffect(() => {
     if (!expenseAccountId && expenseAccounts[0]) setExpenseAccountId(expenseAccounts[0].id);
@@ -199,6 +199,21 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
 
   const vat = +(amount * (vatRate / 100)).toFixed(2);
   const total = +(amount + vat).toFixed(2);
+
+  const vatInputAccount = accounts.find(a => /vat.*input|input.*vat/i.test(a.account_name));
+  const label = (id: string) => {
+    const a = accounts.find(x => x.id === id);
+    return a ? `${a.account_code} — ${a.account_name}` : "—";
+  };
+  const previewLines: PreviewLine[] = useMemo(() => {
+    if (!expenseAccountId || !bankAccountId || total <= 0) return [];
+    const lines: PreviewLine[] = [];
+    const useVatAccount = vat > 0 && !!vatInputAccount;
+    lines.push({ account: label(expenseAccountId), description: category, debit: useVatAccount ? amount : total, credit: 0 });
+    if (useVatAccount) lines.push({ account: label(vatInputAccount!.id), description: "VAT input", debit: vat, credit: 0 });
+    lines.push({ account: label(bankAccountId), description: `Paid via ${payment}`, debit: 0, credit: total });
+    return lines;
+  }, [expenseAccountId, bankAccountId, amount, vat, total, category, payment, accounts]);
 
   const save = async () => {
     if (!userId) return toast.error("Not signed in");
