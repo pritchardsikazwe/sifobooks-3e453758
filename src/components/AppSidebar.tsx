@@ -54,6 +54,11 @@ export function AppSidebar() {
         const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
         cid = cs0?.[0]?.id ?? null;
       }
+      if (!cid) {
+        // Member of a company they don't own
+        const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
+        cid = (cm?.[0]?.company_id as string | undefined) ?? null;
+      }
       if (cid) {
         const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency").eq("id", cid).maybeSingle();
         if (c) {
@@ -76,7 +81,7 @@ export function AppSidebar() {
 
 
   const { installed } = useInstalledModules();
-  const { canView } = usePermissions();
+  const { canView, isSuperAdmin } = usePermissions();
 
   const sections = useMemo(() => {
     const groups: { label: ModuleCategory; items: { title: string; url: string; icon: any }[] }[] = [];
@@ -86,12 +91,15 @@ export function AppSidebar() {
         if (m.category !== cat) continue;
         if (!installed.has(m.key)) continue;
         if (!canView(m.key)) continue;
-        for (const r of m.routes) items.push({ title: r.title, url: r.url, icon: iconFor(r.iconName) });
+        for (const r of m.routes) {
+          if (r.superAdminOnly && !isSuperAdmin) continue;
+          items.push({ title: r.title, url: r.url, icon: iconFor(r.iconName) });
+        }
       }
       if (items.length > 0) groups.push({ label: cat, items });
     }
     return groups;
-  }, [installed, canView]);
+  }, [installed, canView, isSuperAdmin]);
 
   const isOpen = (label: string) => {
     // Default: open if it contains the active route, otherwise open unless user closed it
