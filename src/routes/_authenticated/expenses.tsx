@@ -221,6 +221,7 @@ function NewExpenseDialog({ open, setOpen, userId, accounts, onSaved }: { open: 
     if (!userId) return toast.error("Not signed in");
     if (!expenseAccountId || !bankAccountId) return toast.error("Pick both expense and payment (cash/bank) accounts");
     if (amount <= 0) return toast.error("Amount must be > 0");
+    if (!isBalanced(previewLines)) return toast.error("This transaction is not balanced — debits must equal credits");
     setSaving(true);
     // If offline, queue a pending expense row; server trigger will post JE on drain.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
