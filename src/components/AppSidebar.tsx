@@ -54,6 +54,11 @@ export function AppSidebar() {
         const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
         cid = cs0?.[0]?.id ?? null;
       }
+      if (!cid) {
+        // Member of a company they don't own
+        const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
+        cid = (cm?.[0]?.company_id as string | undefined) ?? null;
+      }
       if (cid) {
         const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency").eq("id", cid).maybeSingle();
         if (c) {
