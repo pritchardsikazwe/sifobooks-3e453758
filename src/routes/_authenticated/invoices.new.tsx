@@ -13,6 +13,10 @@ import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
 import { previewPdf, downloadPdf, type PdfDoc } from "@/lib/pdf";
 import { Download } from "lucide-react";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced } from "@/components/PostingPreview";
+import { salesInvoiceLines } from "@/lib/posting-lines";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
