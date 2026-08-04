@@ -322,15 +322,6 @@ function ReceiptsPage() {
                   <div className="space-y-1"><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Txn #, cheque #…" /></div>
                 </div>
                 <div className="space-y-1"><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Posting…" : "Post receipt"}</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 border-t pt-3">
                   <AccountSelector
@@ -351,6 +342,17 @@ function ReceiptsPage() {
                 {!previewBalanced && (
                   <p className="text-xs text-destructive">Enter an amount and pick both accounts before posting.</p>
                 )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save} disabled={saving || !previewBalanced} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Posting…" : "Post receipt"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+
 
       {overdue.length > 0 && (
         <div className="rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 flex items-center justify-between">
