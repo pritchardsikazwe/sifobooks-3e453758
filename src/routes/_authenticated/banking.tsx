@@ -562,7 +562,18 @@ function BankingPage() {
                     <Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Journal description" />
                   </div>
                 </div>
+
+                <PostingPreview lines={allocPreviewLines} title="Journal that will clear this line" />
+                {!allocBalanced && (
+                  <p className="text-xs text-destructive">Pick a counter account and an amount greater than zero before posting.</p>
+                )}
+                {allocBalanced && remaining - Number(allocAmount || 0) > 0.005 && (
+                  <p className="text-xs text-muted-foreground">
+                    This is a partial allocation — {money(remaining - Number(allocAmount || 0))} will stay unallocated and the line remains in the Partial tab.
+                  </p>
+                )}
               </div>
+
             );
           })()}
           <DialogFooter>
