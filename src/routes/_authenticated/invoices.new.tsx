@@ -497,6 +497,34 @@ function NewInvoicePage() {
           )}
         </div>
 
+        {/* Accounting effect */}
+        <Section title="ACCOUNTING EFFECT">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <AccountSelector
+              label="Receivable account" required recentKey="inv-ar"
+              help="Where the customer debt is recorded until they pay."
+              accounts={accounts} types={["asset"]} value={arAccountId} onChange={setArAccountId}
+            />
+            <AccountSelector
+              label="Revenue account" required recentKey="inv-revenue"
+              help="Income account credited with the net sale value."
+              accounts={accounts} types={["revenue", "income"]} value={revenueAccountId} onChange={setRevenueAccountId}
+            />
+            <AccountSelector
+              label="VAT output account" recentKey="inv-vat"
+              help="Liability owed to ZRA for VAT charged on this invoice."
+              accounts={accounts} types={["liability"]} value={vatAccountId} onChange={setVatAccountId}
+            />
+          </div>
+          <PostingPreview lines={previewLines} title="Journal that will be posted" />
+          {!previewBalanced && (
+            <p className="text-xs text-destructive">
+              Posting is blocked until debits equal credits. Pick the accounts above and make sure the invoice has a value.
+            </p>
+          )}
+        </Section>
+
+
         <div className="hidden lg:flex justify-end pt-2">{ActionButtons}</div>
       </div>
 
