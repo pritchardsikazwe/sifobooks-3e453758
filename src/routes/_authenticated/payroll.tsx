@@ -10,6 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced } from "@/components/PostingPreview";
+import { payrollJournalLines } from "@/lib/posting-lines";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -160,6 +164,48 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
   const [editing, setEditing] = useState<(Slip & { employee: Employee }) | null>(null);
   const [bankFormat, setBankFormat] = useState<"zanaco" | "stanbic" | "fnb" | "absa" | "generic">("generic");
 
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [jl, setJl] = useState<Record<string, string | null>>({});
+  useEffect(() => {
+    if (accounts.length === 0) return;
+    setJl(prev => ({
+      wages: prev.wages ?? defaultFor("6200", "5100", "5000")?.id ?? null,
+      employer: prev.employer ?? defaultFor("6210", "6200")?.id ?? null,
+      paye: prev.paye ?? defaultFor("2300", "2200")?.id ?? null,
+      napsa: prev.napsa ?? defaultFor("2310")?.id ?? null,
+      nhima: prev.nhima ?? defaultFor("2320")?.id ?? null,
+      other: prev.other ?? defaultFor("2390")?.id ?? null,
+      net: prev.net ?? defaultFor("1000")?.id ?? null,
+    }));
+  }, [accounts]);
+  const acc = (k: string) => accounts.find(a => a.id === jl[k]) ?? null;
+
+  const journalLines = useMemo(() => {
+    const n = (v: any) => Number(v) || 0;
+    const t = slips.reduce((a, s: any) => ({
+      grossPay: a.grossPay + n(s.gross_pay),
+      paye: a.paye + n(s.paye),
+      napsaEmployee: a.napsaEmployee + n(s.napsa),
+      napsaEmployer: a.napsaEmployer + n(s.napsa_employer ?? s.napsa),
+      nhimaEmployee: a.nhimaEmployee + n(s.nhima),
+      nhimaEmployer: a.nhimaEmployer + n(s.nhima_employer ?? s.nhima),
+      otherDeductions: a.otherDeductions + n(s.other_deductions) + n(s.loan_deduction),
+      netPay: a.netPay + n(s.net_pay),
+    }), { grossPay: 0, paye: 0, napsaEmployee: 0, napsaEmployer: 0, nhimaEmployee: 0, nhimaEmployer: 0, otherDeductions: 0, netPay: 0 });
+    return payrollJournalLines({
+      ...t,
+      wagesExpense: acc("wages"),
+      employerContribExpense: acc("employer"),
+      payePayable: acc("paye"),
+      napsaPayable: acc("napsa"),
+      nhimaPayable: acc("nhima"),
+      otherPayable: acc("other"),
+      netPayable: acc("net"),
+      periodLabel: `${monthName(run.period_month)} ${run.period_year}`,
+    });
+  }, [slips, jl, accounts, run.period_month, run.period_year]);
+  const journalBalanced = isBalanced(journalLines);
+
   const load = async () => {
     setLoading(true);
     const { data } = await supabase
@@ -276,7 +322,11 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
             <CardDescription>Payslips generated for this period.</CardDescription>
           </div>
           <div className="flex gap-2">
-            {run.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus("approved")}>Approve</Button>}
+            {run.status === "draft" && (
+              <Button size="sm" variant="outline" disabled={!journalBalanced}
+                title={journalBalanced ? undefined : "The payroll journal must balance before approval"}
+                onClick={() => setStatus("approved")}>Approve</Button>
+            )}
             {run.status === "approved" && <Button size="sm" onClick={() => setStatus("paid")}>Mark Paid</Button>}
             {run.status !== "draft" && <Button size="sm" variant="outline" onClick={() => setStatus("draft")}>Reopen</Button>}
             <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
@@ -338,6 +388,25 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
               </Table>
             </div>
           )}
+      </CardContent>
+
+      <CardContent className="pt-0">
+        <div className="rounded-lg border bg-slate-50/60 p-3 space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payroll journal accounts</div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <AccountSelector label="Salaries & wages expense" required accounts={accounts} types={["expense"]} recentKey="pr-wages" value={jl.wages ?? null} onChange={v => setJl(s2 => ({ ...s2, wages: v }))} help="Gross pay charged to the profit & loss." />
+            <AccountSelector label="Employer contributions expense" required accounts={accounts} types={["expense"]} recentKey="pr-employer" value={jl.employer ?? null} onChange={v => setJl(s2 => ({ ...s2, employer: v }))} help="Employer NAPSA and NHIMA cost." />
+            <AccountSelector label="PAYE payable" required accounts={accounts} types={["liability"]} recentKey="pr-paye" value={jl.paye ?? null} onChange={v => setJl(s2 => ({ ...s2, paye: v }))} help="Owed to ZRA until remitted." />
+            <AccountSelector label="NAPSA payable" required accounts={accounts} types={["liability"]} recentKey="pr-napsa" value={jl.napsa ?? null} onChange={v => setJl(s2 => ({ ...s2, napsa: v }))} help="Employee plus employer NAPSA." />
+            <AccountSelector label="NHIMA payable" required accounts={accounts} types={["liability"]} recentKey="pr-nhima" value={jl.nhima ?? null} onChange={v => setJl(s2 => ({ ...s2, nhima: v }))} help="Employee plus employer NHIMA." />
+            <AccountSelector label="Other payroll deductions" accounts={accounts} types={["liability"]} recentKey="pr-other" value={jl.other ?? null} onChange={v => setJl(s2 => ({ ...s2, other: v }))} help="Loans, unions and similar deductions." />
+            <AccountSelector label="Net pay — cash / bank" required accounts={accounts} types={["asset"]} cashBankOnly recentKey="pr-net" value={jl.net ?? null} onChange={v => setJl(s2 => ({ ...s2, net: v }))} help="Account the salaries are paid from." />
+          </div>
+          <PostingPreview lines={journalLines} title="Payroll journal for this run" />
+          {!journalBalanced && (
+            <p className="text-xs text-rose-600">Approval is blocked until every account is chosen and the journal balances.</p>
+          )}
+        </div>
       </CardContent>
 
       {editing && <EditSlipDialog slip={editing} run={run} userId={userId} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); onChanged(); }} />}
