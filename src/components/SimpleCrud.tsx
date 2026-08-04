@@ -94,7 +94,7 @@ export function SimpleCrud({
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
 
-  const { accounts, byCode } = useCoaAccounts();
+  const { accounts, defaultFor } = useCoaAccounts();
   const [acctSel, setAcctSel] = useState<Record<string, string | null>>({});
 
   // Seed the pickers with sensible defaults once the chart of accounts is loaded.
@@ -103,11 +103,11 @@ export function SimpleCrud({
     setAcctSel(prev => {
       const next = { ...prev };
       for (const af of accountFields) {
-        if (!next[af.key] && af.defaultCode) next[af.key] = byCode(af.defaultCode)?.id ?? null;
+        if (!next[af.key] && af.defaultCode) next[af.key] = defaultFor(af.defaultCode)?.id ?? null;
       }
       return next;
     });
-  }, [accountFields, accounts, byCode]);
+    }, [accountFields, accounts]);
 
   const accountFor = (key: string) => accounts.find(a => a.id === acctSel[key]) ?? null;
   const preview = useMemo(
