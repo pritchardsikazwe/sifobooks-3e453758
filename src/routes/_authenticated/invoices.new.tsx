@@ -84,13 +84,6 @@ function NewInvoicePage() {
     setVatAccountId(p => p ?? defaultFor("2200")?.id ?? null);
   }, [accounts]);
 
-  const previewLines = useMemo(() => salesInvoiceLines({
-    subtotal: totalsRef.subtotal, vat: totalsRef.tax, total: totalsRef.total,
-    receivable: accounts.find(a => a.id === arAccountId),
-    revenue: accounts.find(a => a.id === revenueAccountId),
-    vatOutput: accounts.find(a => a.id === vatAccountId),
-    customerName: customers.find(c => c.id === customerId)?.name,
-  }), [totalsRef, accounts, arAccountId, revenueAccountId, vatAccountId, customers, customerId]);
 
 
   useEffect(() => {
