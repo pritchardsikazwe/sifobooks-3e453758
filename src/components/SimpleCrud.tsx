@@ -71,11 +71,18 @@ type Props = {
   extraFilters?: { name: string; label: string; options: { value: string; label: string }[] }[];
   dateField?: string;
   exportable?: boolean;
+  /** Ledger account pickers rendered in the dialog. */
+  accountFields?: AccountField[];
+  /** Build the double-entry preview from the form and the picked accounts. */
+  previewLines?: (form: Record<string, any>, account: (key: string) => CoaAccount | null) => PreviewLine[];
+  /** Block saving while the preview does not balance. */
+  requireBalanced?: boolean;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
+  accountFields, previewLines, requireBalanced,
 }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +93,29 @@ export function SimpleCrud({
   const [statusVal, setStatusVal] = useState<string>("__all");
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+
+  const { accounts, byCode } = useCoaAccounts();
+  const [acctSel, setAcctSel] = useState<Record<string, string | null>>({});
+
+  // Seed the pickers with sensible defaults once the chart of accounts is loaded.
+  useEffect(() => {
+    if (!accountFields?.length || accounts.length === 0) return;
+    setAcctSel(prev => {
+      const next = { ...prev };
+      for (const af of accountFields) {
+        if (!next[af.key] && af.defaultCode) next[af.key] = byCode(af.defaultCode)?.id ?? null;
+      }
+      return next;
+    });
+  }, [accountFields, accounts, byCode]);
+
+  const accountFor = (key: string) => accounts.find(a => a.id === acctSel[key]) ?? null;
+  const preview = useMemo(
+    () => (previewLines ? previewLines(form, k => accounts.find(a => a.id === acctSel[k]) ?? null) : []),
+    [previewLines, form, acctSel, accounts],
+  );
+  const previewOk = !requireBalanced || isBalanced(preview);
+
 
   const statusOptions = useMemo(() => {
     if (!statusField) return null;
