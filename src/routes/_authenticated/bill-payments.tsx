@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Wallet } from "lucide-react";
 import { SimpleCrud } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
+import { supplierPaymentLines } from "@/lib/posting-lines";
 
 export const Route = createFileRoute("/_authenticated/bill-payments")({
   head: () => ({ meta: [{ title: "Supplier Payments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -29,6 +30,16 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
         { name: "reference", label: "Reference" },
         { name: "notes", label: "Notes", type: "textarea" },
       ]}
+      accountFields={[
+        { key: "payable", label: "Debit — supplier payable", defaultCode: "2100", help: "Account holding what you owe the supplier." },
+        { key: "bank", label: "Credit — cash / bank", defaultCode: "1000", cashBankOnly: true, types: ["asset"], help: "Account the money leaves from." },
+      ]}
+      previewLines={(form, account) => supplierPaymentLines({
+        amount: Number(form.amount) || 0,
+        payable: account("payable"),
+        bank: account("bank"),
+      })}
+      requireBalanced
     />
   ),
 });

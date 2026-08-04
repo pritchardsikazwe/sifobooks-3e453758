@@ -3,6 +3,7 @@ import { FileBox, CheckCircle2 } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { supplierBillLines } from "@/lib/posting-lines";
 
 const COLOR: Record<string, string> = {
   unpaid: "bg-amber-100 text-amber-700",
@@ -54,6 +55,20 @@ export const Route = createFileRoute("/_authenticated/bills")({
         { name: "currency", label: "Currency", defaultValue: "ZMW" },
         { name: "notes", label: "Notes", type: "textarea" },
       ]}
+      accountFields={[
+        { key: "expense", label: "Debit — expense / purchase", types: ["expense"], defaultCode: "5000", help: "Where the cost of this bill is recorded." },
+        { key: "vatInput", label: "Debit — VAT input", defaultCode: "2201", help: "Recoverable VAT on this bill." },
+        { key: "payable", label: "Credit — supplier payable", defaultCode: "2100", help: "What you now owe the supplier." },
+      ]}
+      previewLines={(form, account) => supplierBillLines({
+        subtotal: Number(form.subtotal) || 0,
+        vat: Number(form.tax_amount) || 0,
+        total: Number(form.total) || 0,
+        expense: account("expense"),
+        vatInput: account("vatInput"),
+        payable: account("payable"),
+      })}
+      requireBalanced
     />
   ),
 });
