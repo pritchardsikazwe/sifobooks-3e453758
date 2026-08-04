@@ -153,6 +153,7 @@ function ReceiptsPage() {
     if (needsCustomer && !customerId) return toast.error("Select a customer");
     if (!needsCustomer && !payerName.trim()) return toast.error("Enter payer name");
     if (amount <= 0) return toast.error("Amount must be positive");
+    if (!previewBalanced) return toast.error("Posting blocked — debits and credits must balance. Check the accounting effect panel.");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
