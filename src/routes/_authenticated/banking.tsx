@@ -539,17 +539,16 @@ function BankingPage() {
                   <div className="text-xs text-muted-foreground">{allocTxn.txn_date} · {allocTxn.reference} · <span className="font-mono">{money(Number(allocTxn.amount))}</span></div>
                   <div className="mt-1 text-xs">Already allocated: <span className="font-medium">{money(already)}</span> · Remaining: <span className="font-medium text-emerald-700">{money(remaining)}</span></div>
                 </div>
-                <div>
-                  <Label>Counter account</Label>
-                  <Select value={allocAccountId} onValueChange={setAllocAccountId}>
-                    <SelectTrigger><SelectValue placeholder="Pick account" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {accounts.filter(a => a.account_code !== "1000").map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name} <span className="text-xs text-muted-foreground">({a.account_type})</span></SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <AccountSelector
+                  label="Counter account" required recentKey="bank-alloc"
+                  help={Number(allocTxn.amount) >= 0
+                    ? "Income, receivable or liability account credited by this deposit."
+                    : "Expense, payable or asset account debited by this payment."}
+                  accounts={accounts.filter(a => a.account_code !== "1000")}
+                  value={allocAccountId || null}
+                  onChange={v => setAllocAccountId(v ?? "")}
+                />
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Amount to allocate</Label>
