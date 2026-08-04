@@ -66,6 +66,26 @@ function ReceiptsPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Shared selectors + balanced posting preview
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [debitAccountId, setDebitAccountId] = useState<string | null>(null);
+  const [creditAccountId, setCreditAccountId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!accounts.length) return;
+    setDebitAccountId(p => p ?? defaultFor("1000")?.id ?? null);
+    setCreditAccountId(p => p ?? defaultFor(receiptType === "customer" ? "1100" : "4000")?.id ?? null);
+  }, [accounts, receiptType]);
+
+  const previewLines = useMemo(() => receiptLines({
+    amount,
+    bank: accounts.find(a => a.id === debitAccountId),
+    credit: accounts.find(a => a.id === creditAccountId),
+    isCustomerReceipt: receiptType === "customer",
+    payer: receiptType === "customer" ? customers.find(c => c.id === customerId)?.name : payerName,
+    invoiceNumber: openInvoices.find(i => i.id === invoiceId)?.number,
+  }), [amount, accounts, debitAccountId, creditAccountId, receiptType, customers, customerId, payerName, openInvoices, invoiceId]);
+  const previewBalanced = isBalanced(previewLines);
+
   const load = async () => {
     setLoading(true);
     const [{ data: rs }, { data: cs }, { data: bs }, { data: invs }] = await Promise.all([
