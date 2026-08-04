@@ -71,6 +71,28 @@ function NewInvoicePage() {
     { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 },
   ]);
 
+  // ---- Accounting effect (shared selectors + balanced posting preview) ----
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [arAccountId, setArAccountId] = useState<string | null>(null);
+  const [revenueAccountId, setRevenueAccountId] = useState<string | null>(null);
+  const [vatAccountId, setVatAccountId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!accounts.length) return;
+    setArAccountId(p => p ?? defaultFor("1100")?.id ?? null);
+    setRevenueAccountId(p => p ?? defaultFor("4000")?.id ?? null);
+    setVatAccountId(p => p ?? defaultFor("2200")?.id ?? null);
+  }, [accounts]);
+
+  const previewLines = useMemo(() => salesInvoiceLines({
+    subtotal: totalsRef.subtotal, vat: totalsRef.tax, total: totalsRef.total,
+    receivable: accounts.find(a => a.id === arAccountId),
+    revenue: accounts.find(a => a.id === revenueAccountId),
+    vatOutput: accounts.find(a => a.id === vatAccountId),
+    customerName: customers.find(c => c.id === customerId)?.name,
+  }), [totalsRef, accounts, arAccountId, revenueAccountId, vatAccountId, customers, customerId]);
+
+
   useEffect(() => {
     (async () => {
       const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
