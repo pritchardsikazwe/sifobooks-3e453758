@@ -16,6 +16,9 @@ import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
 import { SpendMoneyDialog } from "@/components/SpendMoneyDialog";
 import { ReconcileDialog } from "@/components/ReconcileDialog";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced } from "@/components/PostingPreview";
+import { bankAllocationLines } from "@/lib/posting-lines";
 import { toast } from "sonner";
 
 
@@ -78,6 +81,16 @@ function BankingPage() {
   const [allocAmount, setAllocAmount] = useState<string>("");
   const [busy, setBusy] = useState<string | null>(null);
 
+  const allocPreviewLines = useMemo(() => allocTxn ? bankAllocationLines({
+    amount: Number(allocAmount) || 0,
+    signedAmount: Number(allocTxn.amount),
+    bank: accounts.find(a => a.account_code === "1000") ?? { account_code: "1000", account_name: "Cash & Bank" },
+    account: accounts.find(a => a.id === allocAccountId),
+    memo: allocMemo || undefined,
+  }) : [], [allocTxn, allocAmount, allocAccountId, allocMemo, accounts]);
+  const allocBalanced = isBalanced(allocPreviewLines) && !!allocAccountId;
+
+
   const [reverseAlloc, setReverseAlloc] = useState<Allocation | null>(null);
   const [reverseReason, setReverseReason] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -134,6 +147,7 @@ function BankingPage() {
 
   const runAllocate = async () => {
     if (!allocTxn || !allocAccountId) return toast.error("Pick an account");
+    if (!allocBalanced) return toast.error("Posting blocked — the allocation journal does not balance.");
     const amt = Number(allocAmount);
     if (!amt || amt <= 0) return toast.error("Enter a positive amount");
     setBusy(allocTxn.id);
@@ -539,17 +553,16 @@ function BankingPage() {
                   <div className="text-xs text-muted-foreground">{allocTxn.txn_date} · {allocTxn.reference} · <span className="font-mono">{money(Number(allocTxn.amount))}</span></div>
                   <div className="mt-1 text-xs">Already allocated: <span className="font-medium">{money(already)}</span> · Remaining: <span className="font-medium text-emerald-700">{money(remaining)}</span></div>
                 </div>
-                <div>
-                  <Label>Counter account</Label>
-                  <Select value={allocAccountId} onValueChange={setAllocAccountId}>
-                    <SelectTrigger><SelectValue placeholder="Pick account" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {accounts.filter(a => a.account_code !== "1000").map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name} <span className="text-xs text-muted-foreground">({a.account_type})</span></SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <AccountSelector
+                  label="Counter account" required recentKey="bank-alloc"
+                  help={Number(allocTxn.amount) >= 0
+                    ? "Income, receivable or liability account credited by this deposit."
+                    : "Expense, payable or asset account debited by this payment."}
+                  accounts={accounts.filter(a => a.account_code !== "1000")}
+                  value={allocAccountId || null}
+                  onChange={v => setAllocAccountId(v ?? "")}
+                />
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Amount to allocate</Label>
@@ -563,12 +576,23 @@ function BankingPage() {
                     <Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Journal description" />
                   </div>
                 </div>
+
+                <PostingPreview lines={allocPreviewLines} title="Journal that will clear this line" />
+                {!allocBalanced && (
+                  <p className="text-xs text-destructive">Pick a counter account and an amount greater than zero before posting.</p>
+                )}
+                {allocBalanced && remaining - Number(allocAmount || 0) > 0.005 && (
+                  <p className="text-xs text-muted-foreground">
+                    This is a partial allocation — {money(remaining - Number(allocAmount || 0))} will stay unallocated and the line remains in the Partial tab.
+                  </p>
+                )}
               </div>
+
             );
           })()}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
-            <Button onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+            <Button onClick={runAllocate} disabled={!allocBalanced || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
               {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Post allocation
             </Button>

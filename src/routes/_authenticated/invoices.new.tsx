@@ -13,6 +13,10 @@ import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
 import { previewPdf, downloadPdf, type PdfDoc } from "@/lib/pdf";
 import { Download } from "lucide-react";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced } from "@/components/PostingPreview";
+import { salesInvoiceLines } from "@/lib/posting-lines";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -67,6 +71,21 @@ function NewInvoicePage() {
     { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 },
   ]);
 
+  // ---- Accounting effect (shared selectors + balanced posting preview) ----
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [arAccountId, setArAccountId] = useState<string | null>(null);
+  const [revenueAccountId, setRevenueAccountId] = useState<string | null>(null);
+  const [vatAccountId, setVatAccountId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!accounts.length) return;
+    setArAccountId(p => p ?? defaultFor("1100")?.id ?? null);
+    setRevenueAccountId(p => p ?? defaultFor("4000")?.id ?? null);
+    setVatAccountId(p => p ?? defaultFor("2200")?.id ?? null);
+  }, [accounts]);
+
+
+
   useEffect(() => {
     (async () => {
       const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
@@ -115,6 +134,15 @@ function NewInvoicePage() {
     return { subtotal, tax, total: grossWithExtras, whtAmount, tourismLevyAmount, turnoverAmount, payable };
   }, [items, taxInclusive, taxScheme, whtRate, tourismRate, turnoverRate]);
 
+  const previewLines = useMemo(() => salesInvoiceLines({
+    subtotal: totals.subtotal, vat: totals.tax, total: totals.subtotal + totals.tax,
+    receivable: accounts.find(a => a.id === arAccountId),
+    revenue: accounts.find(a => a.id === revenueAccountId),
+    vatOutput: accounts.find(a => a.id === vatAccountId),
+    customerName: customers.find(c => c.id === customerId)?.name,
+  }), [totals, accounts, arAccountId, revenueAccountId, vatAccountId, customers, customerId]);
+  const previewBalanced = isBalanced(previewLines);
+
   const pickStock = (idx: number, stockId: string) => {
     const s = stock.find(x => x.id === stockId);
     if (!s) return;
@@ -131,6 +159,9 @@ function NewInvoicePage() {
     if (!customerId) return toast.error("Select a customer");
     const valid = items.filter(i => (i.description.trim() || i.stockItemId) && i.qty > 0 && i.price > 0);
     if (valid.length === 0) return toast.error("Add at least one line item with price");
+    if (targetStatus === "sent" && !previewBalanced) {
+      return toast.error("Posting blocked — debits and credits do not balance. Check the accounting effect panel.");
+    }
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
@@ -465,6 +496,34 @@ function NewInvoicePage() {
             </>
           )}
         </div>
+
+        {/* Accounting effect */}
+        <Section title="ACCOUNTING EFFECT">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <AccountSelector
+              label="Receivable account" required recentKey="inv-ar"
+              help="Where the customer debt is recorded until they pay."
+              accounts={accounts} types={["asset"]} value={arAccountId} onChange={setArAccountId}
+            />
+            <AccountSelector
+              label="Revenue account" required recentKey="inv-revenue"
+              help="Income account credited with the net sale value."
+              accounts={accounts} types={["revenue", "income"]} value={revenueAccountId} onChange={setRevenueAccountId}
+            />
+            <AccountSelector
+              label="VAT output account" recentKey="inv-vat"
+              help="Liability owed to ZRA for VAT charged on this invoice."
+              accounts={accounts} types={["liability"]} value={vatAccountId} onChange={setVatAccountId}
+            />
+          </div>
+          <PostingPreview lines={previewLines} title="Journal that will be posted" />
+          {!previewBalanced && (
+            <p className="text-xs text-destructive">
+              Posting is blocked until debits equal credits. Pick the accounts above and make sure the invoice has a value.
+            </p>
+          )}
+        </Section>
+
 
         <div className="hidden lg:flex justify-end pt-2">{ActionButtons}</div>
       </div>

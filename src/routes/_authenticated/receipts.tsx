@@ -17,6 +17,10 @@ import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { reverseJournalEntry } from "@/lib/reversal";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced } from "@/components/PostingPreview";
+import { receiptLines } from "@/lib/posting-lines";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -61,6 +65,26 @@ function ReceiptsPage() {
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Shared selectors + balanced posting preview
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [debitAccountId, setDebitAccountId] = useState<string | null>(null);
+  const [creditAccountId, setCreditAccountId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!accounts.length) return;
+    setDebitAccountId(p => p ?? defaultFor("1000")?.id ?? null);
+    setCreditAccountId(p => p ?? defaultFor(receiptType === "customer" ? "1100" : "4000")?.id ?? null);
+  }, [accounts, receiptType]);
+
+  const previewLines = useMemo(() => receiptLines({
+    amount,
+    bank: accounts.find(a => a.id === debitAccountId),
+    credit: accounts.find(a => a.id === creditAccountId),
+    isCustomerReceipt: receiptType === "customer",
+    payer: receiptType === "customer" ? customers.find(c => c.id === customerId)?.name : payerName,
+    invoiceNumber: openInvoices.find(i => i.id === invoiceId)?.number,
+  }), [amount, accounts, debitAccountId, creditAccountId, receiptType, customers, customerId, payerName, openInvoices, invoiceId]);
+  const previewBalanced = isBalanced(previewLines);
 
   const load = async () => {
     setLoading(true);
@@ -129,6 +153,7 @@ function ReceiptsPage() {
     if (needsCustomer && !customerId) return toast.error("Select a customer");
     if (!needsCustomer && !payerName.trim()) return toast.error("Enter payer name");
     if (amount <= 0) return toast.error("Amount must be positive");
+    if (!previewBalanced) return toast.error("Posting blocked — debits and credits must balance. Check the accounting effect panel.");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
@@ -297,15 +322,37 @@ function ReceiptsPage() {
                   <div className="space-y-1"><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Txn #, cheque #…" /></div>
                 </div>
                 <div className="space-y-1"><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div>
+
+                <div className="grid gap-3 sm:grid-cols-2 border-t pt-3">
+                  <AccountSelector
+                    label="Debit — cash / bank" required recentKey="rct-bank"
+                    help="Account that receives the money."
+                    accounts={accounts} types={["asset"]} cashBankOnly value={debitAccountId} onChange={setDebitAccountId}
+                  />
+                  <AccountSelector
+                    label={receiptType === "customer" ? "Credit — receivable" : "Credit — income / source"}
+                    required recentKey="rct-credit"
+                    help={receiptType === "customer"
+                      ? "Customer ledger account cleared by this payment."
+                      : "Income, loan or capital account credited."}
+                    accounts={accounts} value={creditAccountId} onChange={setCreditAccountId}
+                  />
+                </div>
+                <PostingPreview lines={previewLines} title="Journal that will be posted" />
+                {!previewBalanced && (
+                  <p className="text-xs text-destructive">Enter an amount and pick both accounts before posting.</p>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Posting…" : "Post receipt"}</Button>
+                <Button onClick={save} disabled={saving || !previewBalanced} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Posting…" : "Post receipt"}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+
 
       {overdue.length > 0 && (
         <div className="rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 flex items-center justify-between">

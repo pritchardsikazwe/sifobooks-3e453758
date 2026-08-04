@@ -12,6 +12,23 @@ import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/compone
 import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { offlineInsert } from "@/lib/offline-queue";
+import { AccountSelector, type CoaAccount } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+
+/** Ledger account picker shown inside the create/edit dialog. */
+export type AccountField = {
+  key: string;
+  label: string;
+  help?: string;
+  types?: string[];
+  cashBankOnly?: boolean;
+  /** Chart-of-accounts code pre-selected when available. */
+  defaultCode?: string;
+  /** Persist the chosen account id into this database column. */
+  persistTo?: string;
+};
+
 
 export type Field = {
   name: string;
@@ -54,11 +71,18 @@ type Props = {
   extraFilters?: { name: string; label: string; options: { value: string; label: string }[] }[];
   dateField?: string;
   exportable?: boolean;
+  /** Ledger account pickers rendered in the dialog. */
+  accountFields?: AccountField[];
+  /** Build the double-entry preview from the form and the picked accounts. */
+  previewLines?: (form: Record<string, any>, account: (key: string) => CoaAccount | null) => PreviewLine[];
+  /** Block saving while the preview does not balance. */
+  requireBalanced?: boolean;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
+  accountFields, previewLines, requireBalanced,
 }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +93,28 @@ export function SimpleCrud({
   const [statusVal, setStatusVal] = useState<string>("__all");
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [acctSel, setAcctSel] = useState<Record<string, string | null>>({});
+
+  // Seed the pickers with sensible defaults once the chart of accounts is loaded.
+  useEffect(() => {
+    if (!accountFields?.length || accounts.length === 0) return;
+    setAcctSel(prev => {
+      const next = { ...prev };
+      for (const af of accountFields) {
+        if (!next[af.key] && af.defaultCode) next[af.key] = defaultFor(af.defaultCode)?.id ?? null;
+      }
+      return next;
+    });
+    }, [accountFields, accounts]);
+
+  const preview = useMemo(
+    () => (previewLines ? previewLines(form, k => accounts.find(a => a.id === acctSel[k]) ?? null) : []),
+    [previewLines, form, acctSel, accounts],
+  );
+  const previewOk = !requireBalanced || isBalanced(preview);
+
 
   const statusOptions = useMemo(() => {
     if (!statusField) return null;
@@ -120,7 +166,14 @@ export function SimpleCrud({
     for (const f of fields) {
       if (f.required && !form[f.name] && form[f.name] !== 0) return toast.error(`${f.label} is required`);
     }
+    if (!previewOk) return toast.error("Posting blocked — debits and credits do not balance.");
+    for (const af of accountFields ?? []) {
+      if (!acctSel[af.key]) return toast.error(`${af.label} is required`);
+    }
     const payload: any = { ...form, user_id: u.user.id };
+    for (const af of accountFields ?? []) {
+      if (af.persistTo) payload[af.persistTo] = acctSel[af.key] ?? null;
+    }
     for (const f of fields) {
       const v = payload[f.name];
       if (f.type === "number") payload[f.name] = v === "" || v == null ? null : Number(v);
@@ -270,10 +323,33 @@ export function SimpleCrud({
                 )}
               </div>
             ))}
+            {accountFields?.map(af => (
+              <div key={af.key} className="col-span-2 sm:col-span-1">
+                <AccountSelector
+                  label={af.label}
+                  help={af.help}
+                  required
+                  recentKey={`${table}-${af.key}`}
+                  accounts={accounts}
+                  types={af.types}
+                  cashBankOnly={af.cashBankOnly}
+                  value={acctSel[af.key] ?? null}
+                  onChange={v => setAcctSel(s => ({ ...s, [af.key]: v }))}
+                />
+              </div>
+            ))}
+            {previewLines && (
+              <div className="col-span-2 space-y-1">
+                <PostingPreview lines={preview} title="Journal that will be posted" />
+                {!previewOk && (
+                  <p className="text-xs text-destructive">Pick the ledger accounts and an amount so debits equal credits before saving.</p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>{editing ? "Save" : "Create"}</Button>
+            <Button onClick={save} disabled={!previewOk}>{editing ? "Save" : "Create"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
