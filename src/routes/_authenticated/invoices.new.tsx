@@ -159,6 +159,9 @@ function NewInvoicePage() {
     if (!customerId) return toast.error("Select a customer");
     const valid = items.filter(i => (i.description.trim() || i.stockItemId) && i.qty > 0 && i.price > 0);
     if (valid.length === 0) return toast.error("Add at least one line item with price");
+    if (targetStatus === "sent" && !previewBalanced) {
+      return toast.error("Posting blocked — debits and credits do not balance. Check the accounting effect panel.");
+    }
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
