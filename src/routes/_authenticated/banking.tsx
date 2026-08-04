@@ -81,6 +81,16 @@ function BankingPage() {
   const [allocAmount, setAllocAmount] = useState<string>("");
   const [busy, setBusy] = useState<string | null>(null);
 
+  const allocPreviewLines = useMemo(() => allocTxn ? bankAllocationLines({
+    amount: Number(allocAmount) || 0,
+    signedAmount: Number(allocTxn.amount),
+    bank: accounts.find(a => a.account_code === "1000") ?? { account_code: "1000", account_name: "Cash & Bank" },
+    account: accounts.find(a => a.id === allocAccountId),
+    memo: allocMemo || undefined,
+  }) : [], [allocTxn, allocAmount, allocAccountId, allocMemo, accounts]);
+  const allocBalanced = isBalanced(allocPreviewLines) && !!allocAccountId;
+
+
   const [reverseAlloc, setReverseAlloc] = useState<Allocation | null>(null);
   const [reverseReason, setReverseReason] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
