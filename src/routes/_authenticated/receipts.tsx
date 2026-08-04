@@ -332,6 +332,26 @@ function ReceiptsPage() {
         </div>
       </div>
 
+                <div className="grid gap-3 sm:grid-cols-2 border-t pt-3">
+                  <AccountSelector
+                    label="Debit — cash / bank" required recentKey="rct-bank"
+                    help="Account that receives the money."
+                    accounts={accounts} types={["asset"]} cashBankOnly value={debitAccountId} onChange={setDebitAccountId}
+                  />
+                  <AccountSelector
+                    label={receiptType === "customer" ? "Credit — receivable" : "Credit — income / source"}
+                    required recentKey="rct-credit"
+                    help={receiptType === "customer"
+                      ? "Customer ledger account cleared by this payment."
+                      : "Income, loan or capital account credited."}
+                    accounts={accounts} value={creditAccountId} onChange={setCreditAccountId}
+                  />
+                </div>
+                <PostingPreview lines={previewLines} title="Journal that will be posted" />
+                {!previewBalanced && (
+                  <p className="text-xs text-destructive">Enter an amount and pick both accounts before posting.</p>
+                )}
+
       {overdue.length > 0 && (
         <div className="rounded-md border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
