@@ -147,6 +147,7 @@ function BankingPage() {
 
   const runAllocate = async () => {
     if (!allocTxn || !allocAccountId) return toast.error("Pick an account");
+    if (!allocBalanced) return toast.error("Posting blocked — the allocation journal does not balance.");
     const amt = Number(allocAmount);
     if (!amt || amt <= 0) return toast.error("Enter a positive amount");
     setBusy(allocTxn.id);
@@ -591,7 +592,7 @@ function BankingPage() {
           })()}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
-            <Button onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+            <Button onClick={runAllocate} disabled={!allocBalanced || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
               {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Post allocation
             </Button>
