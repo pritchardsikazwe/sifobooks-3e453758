@@ -134,6 +134,15 @@ function NewInvoicePage() {
     return { subtotal, tax, total: grossWithExtras, whtAmount, tourismLevyAmount, turnoverAmount, payable };
   }, [items, taxInclusive, taxScheme, whtRate, tourismRate, turnoverRate]);
 
+  const previewLines = useMemo(() => salesInvoiceLines({
+    subtotal: totals.subtotal, vat: totals.tax, total: totals.subtotal + totals.tax,
+    receivable: accounts.find(a => a.id === arAccountId),
+    revenue: accounts.find(a => a.id === revenueAccountId),
+    vatOutput: accounts.find(a => a.id === vatAccountId),
+    customerName: customers.find(c => c.id === customerId)?.name,
+  }), [totals, accounts, arAccountId, revenueAccountId, vatAccountId, customers, customerId]);
+  const previewBalanced = isBalanced(previewLines);
+
   const pickStock = (idx: number, stockId: string) => {
     const s = stock.find(x => x.id === stockId);
     if (!s) return;
