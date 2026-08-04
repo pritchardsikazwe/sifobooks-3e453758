@@ -12,6 +12,23 @@ import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/compone
 import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { offlineInsert } from "@/lib/offline-queue";
+import { AccountSelector, type CoaAccount } from "@/components/selectors/AccountSelector";
+import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+
+/** Ledger account picker shown inside the create/edit dialog. */
+export type AccountField = {
+  key: string;
+  label: string;
+  help?: string;
+  types?: string[];
+  cashBankOnly?: boolean;
+  /** Chart-of-accounts code pre-selected when available. */
+  defaultCode?: string;
+  /** Persist the chosen account id into this database column. */
+  persistTo?: string;
+};
+
 
 export type Field = {
   name: string;
