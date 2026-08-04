@@ -109,7 +109,6 @@ export function SimpleCrud({
     });
     }, [accountFields, accounts]);
 
-  const accountFor = (key: string) => accounts.find(a => a.id === acctSel[key]) ?? null;
   const preview = useMemo(
     () => (previewLines ? previewLines(form, k => accounts.find(a => a.id === acctSel[k]) ?? null) : []),
     [previewLines, form, acctSel, accounts],
@@ -167,7 +166,14 @@ export function SimpleCrud({
     for (const f of fields) {
       if (f.required && !form[f.name] && form[f.name] !== 0) return toast.error(`${f.label} is required`);
     }
+    if (!previewOk) return toast.error("Posting blocked — debits and credits do not balance.");
+    for (const af of accountFields ?? []) {
+      if (!acctSel[af.key]) return toast.error(`${af.label} is required`);
+    }
     const payload: any = { ...form, user_id: u.user.id };
+    for (const af of accountFields ?? []) {
+      if (af.persistTo) payload[af.persistTo] = acctSel[af.key] ?? null;
+    }
     for (const f of fields) {
       const v = payload[f.name];
       if (f.type === "number") payload[f.name] = v === "" || v == null ? null : Number(v);
@@ -317,10 +323,33 @@ export function SimpleCrud({
                 )}
               </div>
             ))}
+            {accountFields?.map(af => (
+              <div key={af.key} className="col-span-2 sm:col-span-1">
+                <AccountSelector
+                  label={af.label}
+                  help={af.help}
+                  required
+                  recentKey={`${table}-${af.key}`}
+                  accounts={accounts}
+                  types={af.types}
+                  cashBankOnly={af.cashBankOnly}
+                  value={acctSel[af.key] ?? null}
+                  onChange={v => setAcctSel(s => ({ ...s, [af.key]: v }))}
+                />
+              </div>
+            ))}
+            {previewLines && (
+              <div className="col-span-2 space-y-1">
+                <PostingPreview lines={preview} title="Journal that will be posted" />
+                {!previewOk && (
+                  <p className="text-xs text-destructive">Pick the ledger accounts and an amount so debits equal credits before saving.</p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>{editing ? "Save" : "Create"}</Button>
+            <Button onClick={save} disabled={!previewOk}>{editing ? "Save" : "Create"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
