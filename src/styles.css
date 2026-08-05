@@ -39,6 +39,22 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
 
+  /* Module identity palette — used for colour-coded tabs, KPIs and badges */
+  --color-mod-accounting: var(--mod-accounting);
+  --color-mod-sales: var(--mod-sales);
+  --color-mod-purchases: var(--mod-purchases);
+  --color-mod-inventory: var(--mod-inventory);
+  --color-mod-banking: var(--mod-banking);
+  --color-mod-payroll: var(--mod-payroll);
+  --color-mod-tax: var(--mod-tax);
+  --color-mod-reports: var(--mod-reports);
+  --color-state-pending: var(--state-pending);
+  --color-state-overdue: var(--state-overdue);
+  --color-state-paid: var(--state-paid);
+  --color-state-draft: var(--state-draft);
+  --color-state-partial: var(--state-partial);
+
+
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
 
