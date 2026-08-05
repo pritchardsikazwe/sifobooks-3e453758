@@ -21,6 +21,8 @@ export type ModuleTheme = {
   soft: string;
   /** Border used on active tabs / hovered cards */
   border: string;
+  /** Static hover-border class (Tailwind cannot see interpolated variants) */
+  hoverBorder: string;
   /** Full-strength background for the thin identity rail */
   bar: string;
   /** Icon chip: tinted bg + coloured glyph */
@@ -32,42 +34,42 @@ export type ModuleTheme = {
 export const MODULE_THEMES: Record<ModuleKey, ModuleTheme> = {
   accounting: {
     key: "accounting", label: "Accounting", to: "/chart-of-accounts",
-    text: "text-mod-accounting", soft: "bg-mod-accounting/10", border: "border-mod-accounting/40",
+    text: "text-mod-accounting", soft: "bg-mod-accounting/10", border: "border-mod-accounting/40", hoverBorder: "hover:border-mod-accounting/50",
     bar: "bg-mod-accounting", chip: "bg-mod-accounting/10 text-mod-accounting",
   },
   sales: {
     key: "sales", label: "Sales", to: "/invoices",
-    text: "text-mod-sales", soft: "bg-mod-sales/10", border: "border-mod-sales/40",
+    text: "text-mod-sales", soft: "bg-mod-sales/10", border: "border-mod-sales/40", hoverBorder: "hover:border-mod-sales/50",
     bar: "bg-mod-sales", chip: "bg-mod-sales/10 text-mod-sales",
   },
   purchases: {
     key: "purchases", label: "Purchases", to: "/bills",
-    text: "text-mod-purchases", soft: "bg-mod-purchases/10", border: "border-mod-purchases/40",
+    text: "text-mod-purchases", soft: "bg-mod-purchases/10", border: "border-mod-purchases/40", hoverBorder: "hover:border-mod-purchases/50",
     bar: "bg-mod-purchases", chip: "bg-mod-purchases/10 text-mod-purchases",
   },
   inventory: {
     key: "inventory", label: "Inventory", to: "/stock",
-    text: "text-mod-inventory", soft: "bg-mod-inventory/10", border: "border-mod-inventory/40",
+    text: "text-mod-inventory", soft: "bg-mod-inventory/10", border: "border-mod-inventory/40", hoverBorder: "hover:border-mod-inventory/50",
     bar: "bg-mod-inventory", chip: "bg-mod-inventory/10 text-mod-inventory",
   },
   banking: {
     key: "banking", label: "Banking", to: "/banking",
-    text: "text-mod-banking", soft: "bg-mod-banking/10", border: "border-mod-banking/40",
+    text: "text-mod-banking", soft: "bg-mod-banking/10", border: "border-mod-banking/40", hoverBorder: "hover:border-mod-banking/50",
     bar: "bg-mod-banking", chip: "bg-mod-banking/10 text-mod-banking",
   },
   payroll: {
     key: "payroll", label: "Payroll", to: "/payroll-dashboard",
-    text: "text-mod-payroll", soft: "bg-mod-payroll/10", border: "border-mod-payroll/40",
+    text: "text-mod-payroll", soft: "bg-mod-payroll/10", border: "border-mod-payroll/40", hoverBorder: "hover:border-mod-payroll/50",
     bar: "bg-mod-payroll", chip: "bg-mod-payroll/10 text-mod-payroll",
   },
   tax: {
     key: "tax", label: "Tax", to: "/compliance",
-    text: "text-mod-tax", soft: "bg-mod-tax/10", border: "border-mod-tax/40",
+    text: "text-mod-tax", soft: "bg-mod-tax/10", border: "border-mod-tax/40", hoverBorder: "hover:border-mod-tax/50",
     bar: "bg-mod-tax", chip: "bg-mod-tax/10 text-mod-tax",
   },
   reports: {
     key: "reports", label: "Reports", to: "/reports",
-    text: "text-mod-reports", soft: "bg-mod-reports/10", border: "border-mod-reports/40",
+    text: "text-mod-reports", soft: "bg-mod-reports/10", border: "border-mod-reports/40", hoverBorder: "hover:border-mod-reports/50",
     bar: "bg-mod-reports", chip: "bg-mod-reports/10 text-mod-reports",
   },
 };
