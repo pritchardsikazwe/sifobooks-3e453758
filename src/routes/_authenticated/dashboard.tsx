@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
+import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
