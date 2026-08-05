@@ -169,38 +169,39 @@ function DashboardPage() {
 
   const widgetContent: Record<string, React.ReactNode> = {
     "quick-bar": (
-      <div className="rounded-lg border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <div className="text-sm font-semibold">What do you want to do?</div>
             <div className="text-[11px] text-muted-foreground">One-click accounting actions</div>
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Press ⌘K</span>
+          <span className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          <ActionBtn to="/invoices/new" icon={FileText} label="Record Sale" />
-          <ActionBtn to="/bills" icon={FileText} label="Record Purchase" />
-          <ActionBtn to="/expenses" icon={Receipt} label="Record Expense" />
-          <ActionBtn to="/receipts" icon={CreditCard} label="Receive Money" />
-          <ActionBtn to="/bill-payments" icon={Wallet} label="Pay Money" />
-          <ActionBtn to="/reconciliation" icon={Landmark} label="Reconcile" />
-          <ActionBtn to="/payroll" icon={Banknote} label="Run Payroll" />
-          <ActionBtn to="/reports" icon={FileText} label="Reports" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" hint="Raise a customer invoice" />
+          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" hint="Enter a supplier bill" />
+          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" hint="Capture a business expense" />
+          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" hint="Log money received" />
+          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" hint="Pay a supplier" />
+          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" hint="Match bank to ledger" />
+          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" hint="Process a pay run" />
+          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" hint="Open the reports centre" />
         </div>
       </div>
     ),
     "kpis": (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} series={monthlySeries.map(m => m.income)} positive to="/reports/pnl" />
-        <Kpi label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-        <Kpi label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
-        <Kpi label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} to="/banking" />
-        <Kpi label="Receivables" value={money(receivables)} delta={null} icon={ArrowUpRight} series={[]} to="/reports/aged-receivables" />
-        <Kpi label="Payables" value={money(payables)} delta={null} icon={ArrowDownRight} series={[]} to="/reports/aged-payables" />
-        <Kpi label="Outstanding Invoices" value={String(invoiceCount)} delta={null} icon={FileText} series={[]} to="/invoices" />
-        <Kpi label="Inventory value" value={money(stockValue)} delta={null} icon={Package} series={[]} to="/stock" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
+        <SifoKpiCard label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
+        <SifoKpiCard label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
+        <SifoKpiCard label="Cash at Bank" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
+        <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
+        <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
+        <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
+        <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />
       </div>
     ),
+
     "sales-chart": (
       <Panel title="Sales by Month" subtitle="Last 12 months">
         <ResponsiveContainer width="100%" height={260}>
