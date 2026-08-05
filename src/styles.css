@@ -144,7 +144,24 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.72 0.13 160);
+
+  /* Module identity — dark (lifted for contrast on dark surfaces) */
+  --mod-accounting: oklch(0.72 0.14 250);
+  --mod-sales: oklch(0.75 0.11 195);
+  --mod-purchases: oklch(0.76 0.14 62);
+  --mod-inventory: oklch(0.76 0.11 215);
+  --mod-banking: oklch(0.7 0.13 255);
+  --mod-payroll: oklch(0.7 0.15 285);
+  --mod-tax: oklch(0.7 0.17 25);
+  --mod-reports: oklch(0.72 0.16 305);
+
+  --state-pending: oklch(0.8 0.14 78);
+  --state-overdue: oklch(0.72 0.17 25);
+  --state-paid: oklch(0.75 0.13 158);
+  --state-draft: oklch(0.72 0.13 300);
+  --state-partial: oklch(0.78 0.14 58);
 }
+
 
 @layer base {
   * {
