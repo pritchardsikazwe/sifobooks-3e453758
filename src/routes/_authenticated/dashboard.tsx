@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, TrendingDown, Wallet, Landmark, Receipt, Users, FileText, Package, CreditCard,
+  TrendingUp, Wallet, Landmark, Receipt, FileText, Package, CreditCard,
   ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Banknote, BookText, Truck, Boxes, ClipboardList,
   LayoutGrid, Check, Eye, RotateCcw, Plus,
 } from "lucide-react";
