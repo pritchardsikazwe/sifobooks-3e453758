@@ -330,20 +330,21 @@ function DashboardPage() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] mx-auto">
-        {/* Header */}
+      <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+        {/* Compact header */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-end justify-between gap-3"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between"
         >
-          <div>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">
-              {greeting}, <span className="text-primary">{firstName || "there"}</span>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">
+              {greeting}, <span className="text-primary">{firstName || "there"}</span> 👋
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="truncate text-xs text-muted-foreground">
               {companyName || "SifoBooks"} · {dateLabel}
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant={editMode ? "default" : "outline"}
