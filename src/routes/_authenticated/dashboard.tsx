@@ -410,21 +410,10 @@ function DashboardPage() {
   );
 }
 
-function ActionBtn({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col items-center justify-center gap-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:bg-primary/5 px-2 py-3 transition-all"
-    >
-      <div className="h-8 w-8 rounded-md bg-primary/10 grid place-items-center text-primary group-hover:scale-110 transition-transform">
-        <Icon className="h-4 w-4" />
-      </div>
-      <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{label}</span>
-    </Link>
-  );
-}
-
-const DONUT_COLORS = ["#10b981", "#0ea5e9", "#8b5cf6", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = [
+  "var(--color-mod-sales)", "var(--color-mod-accounting)", "var(--color-mod-reports)",
+  "var(--color-state-pending)", "var(--color-mod-tax)",
+];
 const tooltipStyle = {
   background: "var(--color-card)",
   border: "1px solid var(--color-border)",
@@ -434,57 +423,6 @@ const tooltipStyle = {
   boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
 };
 
-function Kpi({ label, value, delta, icon: Icon, series, positive = true, to }: {
-  label: string; value: string; delta: number | null; icon: any; series: number[]; positive?: boolean; to?: string;
-}) {
-  const up = delta != null && delta >= 0;
-  const good = positive ? up : !up;
-  const content = (
-    <div className="group relative rounded-lg border border-border bg-card p-3 sm:p-3.5 hover:border-primary/30 hover:shadow-sm transition-all">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">{label}</div>
-          <div className="mt-1 text-sm sm:text-xl font-bold text-foreground num leading-tight break-words tabular-nums">{value}</div>
-        </div>
-        <div className="hidden sm:grid h-8 w-8 rounded-md bg-primary/10 place-items-center text-primary shrink-0">
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        {delta != null ? (
-          <span className={cn(
-            "inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded",
-            good ? "text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-500/10"
-                 : "text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-500/10",
-          )}>
-            {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {Math.abs(delta).toFixed(1)}%
-          </span>
-        ) : <span />}
-        {series.length > 1 && <Sparkline data={series} positive={good} />}
-      </div>
-    </div>
-  );
-  return to ? <Link to={to}>{content}</Link> : content;
-}
-
-function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
-  const w = 60, h = 20;
-  const min = Math.min(...data), max = Math.max(...data);
-  const range = max - min || 1;
-  const step = w / Math.max(1, data.length - 1);
-  const points = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
-  return (
-    <svg width={w} height={h} className="shrink-0">
-      <polyline
-        fill="none"
-        stroke={positive ? "var(--color-primary)" : "#f43f5e"}
-        strokeWidth={1.5}
-        points={points}
-      />
-    </svg>
-  );
-}
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
