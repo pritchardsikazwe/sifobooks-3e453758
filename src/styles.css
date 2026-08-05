@@ -100,7 +100,24 @@
   --border: oklch(0.92 0.008 210);
   --input: oklch(0.92 0.008 210);
   --ring: oklch(0.42 0.11 160);
+
+  /* Module identity — light */
+  --mod-accounting: oklch(0.52 0.15 250);   /* blue */
+  --mod-sales: oklch(0.55 0.11 195);        /* teal */
+  --mod-purchases: oklch(0.62 0.16 55);     /* orange */
+  --mod-inventory: oklch(0.58 0.12 215);    /* cyan */
+  --mod-banking: oklch(0.48 0.14 255);      /* deep blue */
+  --mod-payroll: oklch(0.48 0.17 285);      /* indigo */
+  --mod-tax: oklch(0.55 0.2 25);            /* red */
+  --mod-reports: oklch(0.52 0.19 305);      /* purple */
+
+  --state-pending: oklch(0.68 0.16 75);
+  --state-overdue: oklch(0.58 0.21 25);
+  --state-paid: oklch(0.52 0.14 155);
+  --state-draft: oklch(0.55 0.15 300);
+  --state-partial: oklch(0.65 0.16 55);
 }
+
 
 .dark {
   /* Deep Emerald Pro — dark workspace */
