@@ -12,7 +12,7 @@ export function SifoModuleTabs({
   module, tabs, className,
 }: { module: ModuleKey; tabs?: SifoTab[]; className?: string }) {
   const theme = moduleTheme(module);
-  const items = tabs ?? MODULE_TABS[module];
+  const items: SifoTab[] = tabs ?? MODULE_TABS[module];
   const pathname = useRouterState({ select: s => s.location.pathname });
 
   return (
