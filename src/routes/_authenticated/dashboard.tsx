@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, TrendingDown, Wallet, Landmark, Receipt, Users, FileText, Package, CreditCard,
+  TrendingUp, Wallet, Landmark, Receipt, FileText, Package, CreditCard,
   ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Banknote, BookText, Truck, Boxes, ClipboardList,
   LayoutGrid, Check, Eye, RotateCcw, Plus,
 } from "lucide-react";
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
+import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -168,38 +169,39 @@ function DashboardPage() {
 
   const widgetContent: Record<string, React.ReactNode> = {
     "quick-bar": (
-      <div className="rounded-lg border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <div className="text-sm font-semibold">What do you want to do?</div>
             <div className="text-[11px] text-muted-foreground">One-click accounting actions</div>
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Press ⌘K</span>
+          <span className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          <ActionBtn to="/invoices/new" icon={FileText} label="Record Sale" />
-          <ActionBtn to="/bills" icon={FileText} label="Record Purchase" />
-          <ActionBtn to="/expenses" icon={Receipt} label="Record Expense" />
-          <ActionBtn to="/receipts" icon={CreditCard} label="Receive Money" />
-          <ActionBtn to="/bill-payments" icon={Wallet} label="Pay Money" />
-          <ActionBtn to="/reconciliation" icon={Landmark} label="Reconcile" />
-          <ActionBtn to="/payroll" icon={Banknote} label="Run Payroll" />
-          <ActionBtn to="/reports" icon={FileText} label="Reports" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" hint="Raise a customer invoice" />
+          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" hint="Enter a supplier bill" />
+          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" hint="Capture a business expense" />
+          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" hint="Log money received" />
+          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" hint="Pay a supplier" />
+          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" hint="Match bank to ledger" />
+          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" hint="Process a pay run" />
+          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" hint="Open the reports centre" />
         </div>
       </div>
     ),
     "kpis": (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} series={monthlySeries.map(m => m.income)} positive to="/reports/pnl" />
-        <Kpi label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-        <Kpi label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
-        <Kpi label="Cash at Bank" value={money(stats.cashAtBank)} delta={null} icon={Landmark} series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} to="/banking" />
-        <Kpi label="Receivables" value={money(receivables)} delta={null} icon={ArrowUpRight} series={[]} to="/reports/aged-receivables" />
-        <Kpi label="Payables" value={money(payables)} delta={null} icon={ArrowDownRight} series={[]} to="/reports/aged-payables" />
-        <Kpi label="Outstanding Invoices" value={String(invoiceCount)} delta={null} icon={FileText} series={[]} to="/invoices" />
-        <Kpi label="Inventory value" value={money(stockValue)} delta={null} icon={Package} series={[]} to="/stock" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
+        <SifoKpiCard label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
+        <SifoKpiCard label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
+        <SifoKpiCard label="Cash at Bank" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
+        <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
+        <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
+        <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
+        <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />
       </div>
     ),
+
     "sales-chart": (
       <Panel title="Sales by Month" subtitle="Last 12 months">
         <ResponsiveContainer width="100%" height={260}>
@@ -328,20 +330,21 @@ function DashboardPage() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1600px] mx-auto">
-        {/* Header */}
+      <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+        {/* Compact header */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-end justify-between gap-3"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between"
         >
-          <div>
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">
-              {greeting}, <span className="text-primary">{firstName || "there"}</span>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">
+              {greeting}, <span className="text-primary">{firstName || "there"}</span> 👋
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="truncate text-xs text-muted-foreground">
               {companyName || "SifoBooks"} · {dateLabel}
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant={editMode ? "default" : "outline"}
@@ -374,9 +377,14 @@ function DashboardPage() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Button asChild variant="outline" size="sm" className="h-9 border-border"><Link to="/reports">Reports</Link></Button>
-            <Button asChild size="sm" className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground"><Link to="/invoices/new">New invoice</Link></Button>
+            <Button asChild size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"><Link to="/posting-wizard"><Plus className="mr-1.5 h-4 w-4" /> New Transaction</Link></Button>
           </div>
         </motion.div>
+
+        {/* Colour-coded module strip */}
+        <SifoModuleStrip />
+
+
 
         {ready && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -402,21 +410,10 @@ function DashboardPage() {
   );
 }
 
-function ActionBtn({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col items-center justify-center gap-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:bg-primary/5 px-2 py-3 transition-all"
-    >
-      <div className="h-8 w-8 rounded-md bg-primary/10 grid place-items-center text-primary group-hover:scale-110 transition-transform">
-        <Icon className="h-4 w-4" />
-      </div>
-      <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{label}</span>
-    </Link>
-  );
-}
-
-const DONUT_COLORS = ["#10b981", "#0ea5e9", "#8b5cf6", "#f59e0b", "#f43f5e"];
+const DONUT_COLORS = [
+  "var(--color-mod-sales)", "var(--color-mod-accounting)", "var(--color-mod-reports)",
+  "var(--color-state-pending)", "var(--color-mod-tax)",
+];
 const tooltipStyle = {
   background: "var(--color-card)",
   border: "1px solid var(--color-border)",
@@ -426,57 +423,6 @@ const tooltipStyle = {
   boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
 };
 
-function Kpi({ label, value, delta, icon: Icon, series, positive = true, to }: {
-  label: string; value: string; delta: number | null; icon: any; series: number[]; positive?: boolean; to?: string;
-}) {
-  const up = delta != null && delta >= 0;
-  const good = positive ? up : !up;
-  const content = (
-    <div className="group relative rounded-lg border border-border bg-card p-3 sm:p-3.5 hover:border-primary/30 hover:shadow-sm transition-all">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">{label}</div>
-          <div className="mt-1 text-sm sm:text-xl font-bold text-foreground num leading-tight break-words tabular-nums">{value}</div>
-        </div>
-        <div className="hidden sm:grid h-8 w-8 rounded-md bg-primary/10 place-items-center text-primary shrink-0">
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        {delta != null ? (
-          <span className={cn(
-            "inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded",
-            good ? "text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-500/10"
-                 : "text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-500/10",
-          )}>
-            {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {Math.abs(delta).toFixed(1)}%
-          </span>
-        ) : <span />}
-        {series.length > 1 && <Sparkline data={series} positive={good} />}
-      </div>
-    </div>
-  );
-  return to ? <Link to={to}>{content}</Link> : content;
-}
-
-function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
-  const w = 60, h = 20;
-  const min = Math.min(...data), max = Math.max(...data);
-  const range = max - min || 1;
-  const step = w / Math.max(1, data.length - 1);
-  const points = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
-  return (
-    <svg width={w} height={h} className="shrink-0">
-      <polyline
-        fill="none"
-        stroke={positive ? "var(--color-primary)" : "#f43f5e"}
-        strokeWidth={1.5}
-        points={points}
-      />
-    </svg>
-  );
-}
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (

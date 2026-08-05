@@ -39,6 +39,22 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
 
+  /* Module identity palette — used for colour-coded tabs, KPIs and badges */
+  --color-mod-accounting: var(--mod-accounting);
+  --color-mod-sales: var(--mod-sales);
+  --color-mod-purchases: var(--mod-purchases);
+  --color-mod-inventory: var(--mod-inventory);
+  --color-mod-banking: var(--mod-banking);
+  --color-mod-payroll: var(--mod-payroll);
+  --color-mod-tax: var(--mod-tax);
+  --color-mod-reports: var(--mod-reports);
+  --color-state-pending: var(--state-pending);
+  --color-state-overdue: var(--state-overdue);
+  --color-state-paid: var(--state-paid);
+  --color-state-draft: var(--state-draft);
+  --color-state-partial: var(--state-partial);
+
+
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
 
@@ -84,7 +100,24 @@
   --border: oklch(0.92 0.008 210);
   --input: oklch(0.92 0.008 210);
   --ring: oklch(0.42 0.11 160);
+
+  /* Module identity — light */
+  --mod-accounting: oklch(0.52 0.15 250);   /* blue */
+  --mod-sales: oklch(0.55 0.11 195);        /* teal */
+  --mod-purchases: oklch(0.62 0.16 55);     /* orange */
+  --mod-inventory: oklch(0.58 0.12 215);    /* cyan */
+  --mod-banking: oklch(0.48 0.14 255);      /* deep blue */
+  --mod-payroll: oklch(0.48 0.17 285);      /* indigo */
+  --mod-tax: oklch(0.55 0.2 25);            /* red */
+  --mod-reports: oklch(0.52 0.19 305);      /* purple */
+
+  --state-pending: oklch(0.68 0.16 75);
+  --state-overdue: oklch(0.58 0.21 25);
+  --state-paid: oklch(0.52 0.14 155);
+  --state-draft: oklch(0.55 0.15 300);
+  --state-partial: oklch(0.65 0.16 55);
 }
+
 
 .dark {
   /* Deep Emerald Pro — dark workspace */
@@ -111,7 +144,24 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.72 0.13 160);
+
+  /* Module identity — dark (lifted for contrast on dark surfaces) */
+  --mod-accounting: oklch(0.72 0.14 250);
+  --mod-sales: oklch(0.75 0.11 195);
+  --mod-purchases: oklch(0.76 0.14 62);
+  --mod-inventory: oklch(0.76 0.11 215);
+  --mod-banking: oklch(0.7 0.13 255);
+  --mod-payroll: oklch(0.7 0.15 285);
+  --mod-tax: oklch(0.7 0.17 25);
+  --mod-reports: oklch(0.72 0.16 305);
+
+  --state-pending: oklch(0.8 0.14 78);
+  --state-overdue: oklch(0.72 0.17 25);
+  --state-paid: oklch(0.75 0.13 158);
+  --state-draft: oklch(0.72 0.13 300);
+  --state-partial: oklch(0.78 0.14 58);
 }
+
 
 @layer base {
   * {
