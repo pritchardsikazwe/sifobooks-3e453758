@@ -377,9 +377,14 @@ function DashboardPage() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Button asChild variant="outline" size="sm" className="h-9 border-border"><Link to="/reports">Reports</Link></Button>
-            <Button asChild size="sm" className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground"><Link to="/invoices/new">New invoice</Link></Button>
+            <Button asChild size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"><Link to="/posting-wizard"><Plus className="mr-1.5 h-4 w-4" /> New Transaction</Link></Button>
           </div>
         </motion.div>
+
+        {/* Colour-coded module strip */}
+        <SifoModuleStrip />
+
+
 
         {ready && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
