@@ -5,23 +5,31 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "ripple inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:shadow-md",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        /* Semantic ERP actions — one colour per intent, system-wide */
+        save: "bg-action-save text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        update: "bg-action-update text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        approve: "bg-action-approve text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        report: "bg-action-report text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        warn: "bg-action-warn text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        delete: "bg-action-delete text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        cancel: "bg-muted text-muted-foreground border border-border hover:bg-secondary",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-lg px-3 text-xs",
+        lg: "h-11 rounded-lg px-8",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
@@ -30,6 +38,7 @@ const buttonVariants = cva(
     },
   },
 );
+
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
