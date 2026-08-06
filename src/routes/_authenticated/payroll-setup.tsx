@@ -99,6 +99,8 @@ function PayrollSetupPage() {
 
         <TabsContent value="incomes" className="mt-2">
           <SimpleCrud
+      module="payroll"
+      description="Incomes, deductions and org units"
             title="Incomes Setup" icon={Coins} table="payroll_income_types"
             orderBy={{ column: "sort_order", ascending: true }}
             searchKeys={["code", "name", "type"]} statusField="status"

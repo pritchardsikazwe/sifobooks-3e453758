@@ -6,6 +6,8 @@ export const Route = createFileRoute("/_authenticated/warehouses")({
   head: () => ({ meta: [{ title: "Warehouses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="inventory"
+      description="Storage locations for stock"
       title="Warehouses"
       icon={Warehouse}
       table="warehouses"

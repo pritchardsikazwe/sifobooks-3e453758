@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/petty-cash")({
 function PettyCashPage() {
   return (
     <SimpleCrud
+      module="banking"
+      description="Petty cash float and disbursements"
       title="Petty Cash" icon={Wallet} table="petty_cash" orderBy={{ column: "txn_date", ascending: false }}
       searchKeys={["voucher_no", "payee", "description", "charge_code"]} dateField="txn_date"
       extraFilters={[{ name: "txn_type", label: "Type", options: [

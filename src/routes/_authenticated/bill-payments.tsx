@@ -8,6 +8,8 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
   head: () => ({ meta: [{ title: "Supplier Payments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="purchases"
+      description="Payments made against supplier bills"
       title="Supplier Payments"
       icon={Wallet}
       table="bill_payments"

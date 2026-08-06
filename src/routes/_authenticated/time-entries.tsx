@@ -6,6 +6,8 @@ export const Route = createFileRoute("/_authenticated/time-entries")({
   head: () => ({ meta: [{ title: "Time Entries — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="payroll"
+      description="Timesheets feeding payroll and jobs"
       title="Time Entries"
       icon={Clock}
       table="time_entries"
