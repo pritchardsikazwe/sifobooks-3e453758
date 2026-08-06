@@ -15,6 +15,9 @@ import { offlineInsert } from "@/lib/offline-queue";
 import { AccountSelector, type CoaAccount } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
+import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
 
 /** Ledger account picker shown inside the create/edit dialog. */
 export type AccountField = {
@@ -77,12 +80,16 @@ type Props = {
   previewLines?: (form: Record<string, any>, account: (key: string) => CoaAccount | null) => PreviewLine[];
   /** Block saving while the preview does not balance. */
   requireBalanced?: boolean;
+  /** Module identity — renders the colour-coded module header + tab strip. */
+  module?: ModuleKey;
+  /** Sub-title shown under the module title. */
+  description?: string;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
-  accountFields, previewLines, requireBalanced,
+  accountFields, previewLines, requireBalanced, module, description,
 }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,7 +225,11 @@ export function SimpleCrud({
         const v = r[c.key];
         return typeof v === "object" && v !== null ? "" : v;
       },
-      cell: c.render ? (r) => c.render!(r) : undefined,
+      cell: c.render
+        ? (r) => c.render!(r)
+        : (statusField && c.key === statusField)
+          ? (r) => <SifoStatusBadge status={r[c.key]} />
+          : undefined,
     }));
     cols.push({
       key: "__actions",
@@ -242,7 +253,7 @@ export function SimpleCrud({
       ),
     });
     return cols;
-  }, [columns, rowActions]);
+  }, [columns, rowActions, statusField]);
 
   const toolbar = (
     <>
