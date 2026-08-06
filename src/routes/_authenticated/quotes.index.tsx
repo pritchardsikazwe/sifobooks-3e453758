@@ -10,6 +10,7 @@ import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { postInvoiceLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/quotes/")({
   head: () => ({ meta: [{ title: "Quote Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -121,13 +122,13 @@ function QuotesPage() {
       </div>
 
       <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-semibold">Quote Manager</h1>
-            <p className="text-sm text-muted-foreground">Draft, send, accept and convert quotes to invoices.</p>
-          </div>
-          <Button variant="outline" className="gap-2"><Calendar className="h-4 w-4" /> Pick Date</Button>
-        </div>
+        <SifoModuleHeader
+          module="sales"
+          icon={Calendar}
+          title="Quote Manager"
+          description="Draft, send, accept and convert quotes to invoices."
+          breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "Quotes" }]}
+        />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KPI label="Total Quotes" value={stats.total} />

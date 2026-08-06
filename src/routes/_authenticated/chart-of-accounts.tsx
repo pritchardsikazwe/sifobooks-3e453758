@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/chart-of-accounts")({
   head: () => ({ meta: [{ title: "Chart of Accounts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -111,14 +112,13 @@ function ChartOfAccountsPage() {
 
   return (
     <div className="p-6 space-y-4 max-w-7xl">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-6 w-6 text-emerald-600" />
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Chart of Accounts</h1>
-            <p className="text-sm text-slate-500">Live balances from posted journal entries. Click an account to see its transactions.</p>
-          </div>
-        </div>
+      <SifoModuleHeader
+        module="accounting"
+        icon={BookOpen}
+        title="Chart of Accounts"
+        description="Live balances from posted journal entries. Click an account to see its transactions."
+        breadcrumbs={[{ label: "Accounting", to: "/chart-of-accounts" }, { label: "Chart of Accounts" }]}
+        actions={
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" />New Account</Button>

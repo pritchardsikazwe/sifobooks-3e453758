@@ -18,6 +18,7 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -93,17 +94,18 @@ function ExpensesPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Receipt className="h-6 w-6 text-primary" /> Expenses</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Record cash/bank expenses. Each posted expense creates a journal entry and can be reversed if wrong.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <SifoModuleHeader
+        module="purchases"
+        icon={Receipt}
+        title="Expenses"
+        description="Each posted expense creates a journal entry and can be reversed if wrong."
+        breadcrumbs={[{ label: "Purchases", to: "/bills" }, { label: "Expenses" }]}
+        actions={<>
           <DateRangeFilter value={range} onChange={setRange} compact />
           <ExportMenu rows={filtered.map(r => ({ Date: r.expense_date, Number: r.expense_number ?? "", Category: r.category ?? "", Payment: r.payment_method, Reference: r.reference ?? "", Net: r.amount, VAT: r.vat_amount, Total: r.total, Status: r.status }))} filename="expenses" title="Expenses" />
           <NewExpenseDialog open={open} setOpen={setOpen} userId={userId} accounts={accounts} onSaved={load} />
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPI label="Entries" value={String(totals.count)} />

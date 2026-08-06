@@ -21,6 +21,7 @@ import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { receiptLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -240,12 +241,13 @@ function ReceiptsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> Receipts</h1>
-          <p className="text-sm text-muted-foreground">Every posted receipt flows: Cashbook → Customer ledger → General ledger → Reports.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <SifoModuleHeader
+        module="sales"
+        icon={CreditCard}
+        title="Receipts"
+        description="Cashbook → Customer ledger → General ledger → Reports."
+        breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "Receipts" }]}
+        actions={<>
           <DateRangeFilter value={range} onChange={setRange} compact />
           <ExportMenu filename="receipts" title="Receipts" rows={filtered.map(r => ({
             Number: r.number, Date: r.receipt_date, Type: r.receipt_type ?? "customer",

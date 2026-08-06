@@ -13,6 +13,7 @@ import { fmtMoney } from "@/lib/format";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 import { ExportMenu } from "@/lib/exports";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/customers/")({
   head: () => ({ meta: [{ title: "Customers — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -145,20 +146,21 @@ function CustomersPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Users className="h-6 w-6 text-primary" /> Customers</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage clients, credit terms, balances and communication history.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <SifoModuleHeader
+        module="sales"
+        icon={Users}
+        title="Customers"
+        description="Manage clients, credit terms, balances and communication history."
+        breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "Customers" }]}
+        actions={<>
           <ExportMenu rows={filtered.map(c => ({
             Name: c.name, Contact: c.contact_person ?? "", Email: c.email ?? "", Phone: c.phone ?? "",
             TPIN: c.tpin ?? "", Terms: c.payment_terms_days, Balance: balances[c.id]?.balance ?? 0,
             Overdue: balances[c.id]?.overdue ?? 0, Status: c.active ? "Active" : "Inactive",
           }))} filename="customers" title="Customers" />
           <Button onClick={openNew} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New customer</Button>
-        </div>
-      </div>
+        </>}
+      />
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
