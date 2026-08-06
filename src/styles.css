@@ -147,21 +147,22 @@
   --ring: oklch(0.72 0.13 160);
 
   /* Module identity — dark (lifted for contrast on dark surfaces) */
-  --mod-accounting: oklch(0.72 0.14 250);
-  --mod-sales: oklch(0.75 0.11 195);
-  --mod-purchases: oklch(0.76 0.14 62);
-  --mod-inventory: oklch(0.76 0.11 215);
-  --mod-banking: oklch(0.7 0.13 255);
-  --mod-payroll: oklch(0.7 0.15 285);
-  --mod-tax: oklch(0.7 0.17 25);
-  --mod-reports: oklch(0.72 0.16 305);
+  --mod-accounting: #60A5FA;
+  --mod-sales: #4ADE80;
+  --mod-purchases: #FB923C;
+  --mod-inventory: #FACC15;
+  --mod-banking: #93B4FF;
+  --mod-payroll: #A5B4FC;
+  --mod-tax: #F87171;
+  --mod-reports: #C4B5FD;
 
-  --state-pending: oklch(0.8 0.14 78);
-  --state-overdue: oklch(0.72 0.17 25);
-  --state-paid: oklch(0.75 0.13 158);
-  --state-draft: oklch(0.72 0.13 300);
-  --state-partial: oklch(0.78 0.14 58);
+  --state-pending: #FACC15;
+  --state-overdue: #F87171;
+  --state-paid: #4ADE80;
+  --state-draft: #9CA3AF;
+  --state-partial: #FB923C;
 }
+
 
 
 @layer base {
