@@ -72,7 +72,7 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 
   /* Deep Emerald Pro — light workspace */
   --background: oklch(0.985 0.003 160);
