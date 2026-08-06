@@ -54,6 +54,15 @@
   --color-state-draft: var(--state-draft);
   --color-state-partial: var(--state-partial);
 
+  /* Semantic action colours — fixed in both themes so buttons stay readable */
+  --color-action-save: #16A34A;
+  --color-action-update: #2563EB;
+  --color-action-approve: #F97316;
+  --color-action-report: #7C3AED;
+  --color-action-warn: #CA8A04;
+  --color-action-delete: #DC2626;
+
+
 
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
@@ -63,7 +72,7 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 
   /* Deep Emerald Pro — light workspace */
   --background: oklch(0.985 0.003 160);
@@ -101,22 +110,23 @@
   --input: oklch(0.92 0.008 210);
   --ring: oklch(0.42 0.11 160);
 
-  /* Module identity — light */
-  --mod-accounting: oklch(0.52 0.15 250);   /* blue */
-  --mod-sales: oklch(0.55 0.11 195);        /* teal */
-  --mod-purchases: oklch(0.62 0.16 55);     /* orange */
-  --mod-inventory: oklch(0.58 0.12 215);    /* cyan */
-  --mod-banking: oklch(0.48 0.14 255);      /* deep blue */
-  --mod-payroll: oklch(0.48 0.17 285);      /* indigo */
-  --mod-tax: oklch(0.55 0.2 25);            /* red */
-  --mod-reports: oklch(0.52 0.19 305);      /* purple */
+  /* Module identity — official SifoBooks palette (light) */
+  --mod-accounting: #2563EB;   /* blue    */
+  --mod-sales: #16A34A;        /* green   */
+  --mod-purchases: #F97316;    /* orange  */
+  --mod-inventory: #CA8A04;    /* yellow  */
+  --mod-banking: #1D4ED8;      /* deep blue */
+  --mod-payroll: #4F46E5;      /* indigo  */
+  --mod-tax: #DC2626;          /* red     */
+  --mod-reports: #7C3AED;      /* purple  */
 
-  --state-pending: oklch(0.68 0.16 75);
-  --state-overdue: oklch(0.58 0.21 25);
-  --state-paid: oklch(0.52 0.14 155);
-  --state-draft: oklch(0.55 0.15 300);
-  --state-partial: oklch(0.65 0.16 55);
+  --state-pending: #CA8A04;
+  --state-overdue: #DC2626;
+  --state-paid: #16A34A;
+  --state-draft: #6B7280;
+  --state-partial: #F97316;
 }
+
 
 
 .dark {
@@ -146,21 +156,22 @@
   --ring: oklch(0.72 0.13 160);
 
   /* Module identity — dark (lifted for contrast on dark surfaces) */
-  --mod-accounting: oklch(0.72 0.14 250);
-  --mod-sales: oklch(0.75 0.11 195);
-  --mod-purchases: oklch(0.76 0.14 62);
-  --mod-inventory: oklch(0.76 0.11 215);
-  --mod-banking: oklch(0.7 0.13 255);
-  --mod-payroll: oklch(0.7 0.15 285);
-  --mod-tax: oklch(0.7 0.17 25);
-  --mod-reports: oklch(0.72 0.16 305);
+  --mod-accounting: #60A5FA;
+  --mod-sales: #4ADE80;
+  --mod-purchases: #FB923C;
+  --mod-inventory: #FACC15;
+  --mod-banking: #93B4FF;
+  --mod-payroll: #A5B4FC;
+  --mod-tax: #F87171;
+  --mod-reports: #C4B5FD;
 
-  --state-pending: oklch(0.8 0.14 78);
-  --state-overdue: oklch(0.72 0.17 25);
-  --state-paid: oklch(0.75 0.13 158);
-  --state-draft: oklch(0.72 0.13 300);
-  --state-partial: oklch(0.78 0.14 58);
+  --state-pending: #FACC15;
+  --state-overdue: #F87171;
+  --state-paid: #4ADE80;
+  --state-draft: #9CA3AF;
+  --state-partial: #FB923C;
 }
+
 
 
 @layer base {
@@ -179,6 +190,33 @@
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+  }
+
+  /* Consistent, accessible focus ring on every interactive element */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Shared motion language: 200ms ease for interactive surfaces */
+  a, button, [role="button"], [role="tab"], [role="menuitem"], [role="row"] {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -200,3 +238,49 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
+
+/* --- Shared surface + interaction utilities used across every module --- */
+
+@utility surface-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+@utility glass-panel {
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+  background-color: color-mix(in oklab, var(--color-card) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+@utility hover-lift {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* Material-style ripple for primary controls */
+@utility ripple {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, currentColor 12%, transparent 12.5%);
+    opacity: 0;
+    transform: scale(0.2);
+    pointer-events: none;
+    transition: transform 400ms ease-out, opacity 500ms ease-out;
+  }
+  &:active::after {
+    opacity: 0.22;
+    transform: scale(2.4);
+    transition: 0s;
+  }
+}
+
