@@ -54,6 +54,15 @@
   --color-state-draft: var(--state-draft);
   --color-state-partial: var(--state-partial);
 
+  /* Semantic action colours — fixed in both themes so buttons stay readable */
+  --color-action-save: #16A34A;
+  --color-action-update: #2563EB;
+  --color-action-approve: #F97316;
+  --color-action-report: #7C3AED;
+  --color-action-warn: #CA8A04;
+  --color-action-delete: #DC2626;
+
+
 
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
