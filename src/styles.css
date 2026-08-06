@@ -191,6 +191,33 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  /* Consistent, accessible focus ring on every interactive element */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Shared motion language: 200ms ease for interactive surfaces */
+  a, button, [role="button"], [role="tab"], [role="menuitem"], [role="row"] {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @utility container-page {
@@ -211,3 +238,49 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
+
+/* --- Shared surface + interaction utilities used across every module --- */
+
+@utility surface-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+@utility glass-panel {
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+  background-color: color-mix(in oklab, var(--color-card) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+@utility hover-lift {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* Material-style ripple for primary controls */
+@utility ripple {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, currentColor 12%, transparent 12.5%);
+    opacity: 0;
+    transform: scale(0.2);
+    pointer-events: none;
+    transition: transform 400ms ease-out, opacity 500ms ease-out;
+  }
+  &:active::after {
+    opacity: 0.22;
+    transform: scale(2.4);
+    transition: 0s;
+  }
+}
+
