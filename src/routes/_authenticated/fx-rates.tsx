@@ -9,6 +9,8 @@ export const Route = createFileRoute("/_authenticated/fx-rates")({
   head: () => ({ meta: [{ title: "FX Rates — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="accounting"
+      description="Exchange rates used for revaluation"
       title="Exchange Rates"
       icon={Coins}
       table="fx_rates"

@@ -17,6 +17,7 @@ import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({ meta: [{ title: "Invoice Manager — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -72,18 +73,19 @@ function InvoicesPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><FileText className="h-6 w-6 text-primary" /> Invoice Manager</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">An intuitive way to see all your invoices for quick access.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <SifoModuleHeader
+        module="sales"
+        icon={FileText}
+        title="Invoice Manager"
+        description="An intuitive way to see all your invoices for quick access."
+        breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "Invoices" }]}
+        actions={<>
           <DateRangeFilter value={range} onChange={setRange} compact />
           <ExportMenu filename="invoices" title="Invoices" rows={filtered.map(i => ({ Number: i.number, Customer: i.customers?.name ?? "", Issued: i.issue_date, Due: i.due_date ?? "", Total: i.total, Balance: i.balance_due, Status: i.status, Currency: i.currency ?? "ZMW" }))} />
           <QuickAddCustomer trigger={<Button variant="outline" size="sm" className="h-9"><UserPlus className="h-4 w-4 mr-1.5" /> Customer</Button>} onCreated={() => {}} />
           <Button asChild size="sm" className="h-9"><Link to="/invoices/new"><Plus className="h-4 w-4 mr-1.5" /> New invoice</Link></Button>
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPI label="Total invoices" value={stats.total} />

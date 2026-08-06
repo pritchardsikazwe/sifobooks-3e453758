@@ -97,6 +97,8 @@ export const Route = createFileRoute("/_authenticated/leave")({
     <div className="space-y-6">
       <LeaveBalances />
       <SimpleCrud
+      module="payroll"
+      description="Leave requests, balances and register"
         title="Leave Requests"
         icon={CalendarDays}
         table="leave_requests"

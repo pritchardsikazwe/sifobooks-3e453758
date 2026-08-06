@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
   head: () => ({ meta: [{ title: "Journal Entries — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="accounting"
+      description="Manual double-entry journals"
       title="Journal Entries"
       icon={BookText}
       table="journal_entries"

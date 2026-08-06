@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/employees")({
   head: () => ({ meta: [{ title: "Employee Master — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
+      module="payroll"
+      description="Employee master and statutory details"
       title="Employee Master"
       icon={UserSquare}
       table="employees"

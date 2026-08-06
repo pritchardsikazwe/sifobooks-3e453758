@@ -23,6 +23,8 @@ function AttendancePage() {
 
   return (
     <SimpleCrud
+      module="payroll"
+      description="Daily attendance capture"
       title="Attendance"
       icon={CalendarCheck}
       table="attendance"

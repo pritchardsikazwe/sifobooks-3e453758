@@ -14,6 +14,7 @@ import { postCreditNoteLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/credit-notes")({
   head: () => ({ meta: [{ title: "Credit Notes — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -80,16 +81,17 @@ function CreditNotesPage() {
       </div>
 
       <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2"><Undo2 className="h-5 w-5 text-[#0f4c5c]" /> Credit Notes</h1>
-            <p className="text-sm text-muted-foreground">Reverse or reduce previously issued invoices for returns, discounts or corrections.</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
+        <SifoModuleHeader
+          module="sales"
+          icon={Undo2}
+          title="Credit Notes"
+          description="Reverse or reduce previously issued invoices for returns, discounts or corrections."
+          breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "Credit Notes" }]}
+          actions={<>
             <DateRangeFilter value={range} onChange={setRange} compact />
             <ExportMenu filename="credit-notes" title="Credit Notes" rows={filtered.map(r => ({ Number: r.number, Customer: r.customers?.name ?? "", Invoice: r.invoices?.number ?? "", Issued: r.issue_date, Total: r.total, Status: r.status, Currency: r.currency ?? "ZMW" }))} />
-          </div>
-        </div>
+          </>}
+        />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KPI label="Total" value={stats.total} />

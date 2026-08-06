@@ -66,6 +66,8 @@ function PayrollTransactionsPage() {
 
         <TabsContent value="incomes" className="mt-2">
           <SimpleCrud
+      module="payroll"
+      description="Loans, advances and statutory transactions"
             title="Manage Incomes" icon={Coins} table="employee_incomes"
             orderBy={{ column: "created_at", ascending: false }} searchKeys={["comments", "currency"]}
             statusField="status" dateField="effective_from"
