@@ -244,19 +244,35 @@ export function SimpleCrud({
     return cols;
   }, [columns, rowActions]);
 
+  const toolbar = (
+    <>
+      {headerExtra}
+      {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
+      <Button onClick={openNew} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New</Button>
+    </>
+  );
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Icon className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+    <div className="p-4 sm:p-6 space-y-4">
+      {module ? (
+        <SifoModuleHeader
+          module={module}
+          title={title}
+          description={description}
+          icon={Icon}
+          breadcrumbs={[{ label: MODULE_THEMES[module].label, to: MODULE_THEMES[module].to }, { label: title }]}
+          actions={toolbar}
+        />
+      ) : (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Icon className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">{toolbar}</div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {headerExtra}
-          {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
-          <Button onClick={openNew} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New</Button>
-        </div>
-      </div>
+      )}
+
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
