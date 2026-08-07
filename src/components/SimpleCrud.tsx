@@ -259,6 +259,66 @@ export function SimpleCrud({
     });
     return cols;
   }, [columns, rowActions, statusField]);
+  const DEFAULT_GROUP = "Details";
+  const groupNames = useMemo(() => {
+    const seen: string[] = [];
+    for (const f of fields) {
+      const g = f.group ?? DEFAULT_GROUP;
+      if (!seen.includes(g)) seen.push(g);
+    }
+    return seen;
+  }, [fields]);
+
+  const renderField = (f: Field) => (
+    <div key={f.name} className={f.colSpan === 2 || f.type === "textarea" ? "col-span-2" : ""}>
+      <Label>{f.label}{f.required && <span className="text-destructive"> *</span>}</Label>
+      {f.type === "textarea" ? (
+        <Textarea value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} />
+      ) : f.type === "select" ? (
+        <Select value={String(form[f.name] ?? "")} onValueChange={v => setForm({ ...form, [f.name]: v })}>
+          <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+          <SelectContent>
+            {f.options?.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+          value={form[f.name] ?? ""}
+          onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+        />
+      )}
+    </div>
+  );
+
+  const extras = (
+    <>
+      {accountFields?.map(af => (
+        <div key={af.key} className="col-span-2 sm:col-span-1">
+          <AccountSelector
+            label={af.label}
+            help={af.help}
+            required
+            recentKey={`${table}-${af.key}`}
+            accounts={accounts}
+            types={af.types}
+            cashBankOnly={af.cashBankOnly}
+            value={acctSel[af.key] ?? null}
+            onChange={v => setAcctSel(s => ({ ...s, [af.key]: v }))}
+          />
+        </div>
+      ))}
+      {previewLines && (
+        <div className="col-span-2 space-y-1">
+          <PostingPreview lines={preview} title="Journal that will be posted" />
+          {!previewOk && (
+            <p className="text-xs text-destructive">Pick the ledger accounts and an amount so debits equal credits before saving.</p>
+          )}
+        </div>
+      )}
+    </>
+  );
+
 
   const toolbar = (
     <>
