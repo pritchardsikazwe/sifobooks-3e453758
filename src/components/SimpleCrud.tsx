@@ -17,6 +17,8 @@ import { PostingPreview, isBalanced, type PreviewLine } from "@/components/Posti
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
+import { SifoModuleAI } from "@/components/sifo/SifoModuleAI";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
 
 /** Ledger account picker shown inside the create/edit dialog. */
