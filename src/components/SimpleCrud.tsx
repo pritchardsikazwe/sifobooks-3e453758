@@ -258,10 +258,12 @@ export function SimpleCrud({
   const toolbar = (
     <>
       {headerExtra}
+      {module && <SifoModuleAI module={module} />}
       {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
       <Button onClick={openNew} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New</Button>
     </>
   );
+
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
