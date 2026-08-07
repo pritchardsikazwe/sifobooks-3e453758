@@ -43,7 +43,10 @@ export type Field = {
   required?: boolean;
   defaultValue?: any;
   colSpan?: 1 | 2;
+  /** Group fields into tabs inside the create/edit dialog. */
+  group?: string;
 };
+
 
 export type Column = {
   key: string;
