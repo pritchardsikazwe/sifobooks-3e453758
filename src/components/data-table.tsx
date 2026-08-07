@@ -54,7 +54,23 @@ type Props<T> = {
   pageSize?: number;
   /** Extra className for wrapper card. */
   className?: string;
+  /** Persist column widths / visibility / density per user under this id. */
+  tableId?: string;
+  /** Allow dragging column edges to resize. Default true. */
+  resizable?: boolean;
 };
+
+type Prefs = {
+  hidden?: Record<string, boolean>;
+  widths?: Record<string, number>;
+  density?: "compact" | "comfortable";
+};
+
+function loadPrefs(id?: string): Prefs {
+  if (!id || typeof window === "undefined") return {};
+  try { return JSON.parse(window.localStorage.getItem(`sifo.table.${id}`) ?? "{}") as Prefs; }
+  catch { return {}; }
+}
 
 export function DataTable<T extends Record<string, any>>({
   data,
@@ -69,19 +85,58 @@ export function DataTable<T extends Record<string, any>>({
   empty,
   pageSize: initialPageSize = 25,
   className,
+  tableId,
+  resizable = true,
 }: Props<T>) {
+  const saved = useMemo(() => loadPrefs(tableId), [tableId]);
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [hidden, setHidden] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(columns.filter(c => c.defaultHidden).map(c => [c.key, true])),
+    saved.hidden ?? Object.fromEntries(columns.filter(c => c.defaultHidden).map(c => [c.key, true])),
   );
-  const [density, setDensity] = useState<"compact" | "comfortable">("comfortable");
+  const [widths, setWidths] = useState<Record<string, number>>(
+    () => saved.widths ?? Object.fromEntries(columns.filter(c => c.width).map(c => [c.key, c.width!])),
+  );
+  const [density, setDensity] = useState<"compact" | "comfortable">(saved.density ?? "comfortable");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
 
+  // Remember the user's table layout between visits.
+  useEffect(() => {
+    if (!tableId || typeof window === "undefined") return;
+    window.localStorage.setItem(`sifo.table.${tableId}`, JSON.stringify({ hidden, widths, density }));
+  }, [tableId, hidden, widths, density]);
+
+  const drag = useRef<{ key: string; startX: number; startW: number } | null>(null);
+  const startResize = useCallback((key: string, e: React.PointerEvent<HTMLSpanElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = (e.currentTarget.parentElement as HTMLElement | null);
+    drag.current = { key, startX: e.clientX, startW: widths[key] ?? th?.offsetWidth ?? 140 };
+    const move = (ev: PointerEvent) => {
+      if (!drag.current) return;
+      const next = Math.max(64, drag.current.startW + (ev.clientX - drag.current.startX));
+      setWidths(w => ({ ...w, [drag.current!.key]: next }));
+    };
+    const up = () => {
+      drag.current = null;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, [widths]);
+
+  const resetLayout = () => {
+    setWidths({});
+    setHidden(Object.fromEntries(columns.filter(c => c.defaultHidden).map(c => [c.key, true])));
+    setDensity("comfortable");
+  };
+
   const visibleColumns = useMemo(() => columns.filter(c => !hidden[c.key]), [columns, hidden]);
+
 
   const filtered = useMemo(() => {
     if (!q.trim()) return data;
