@@ -284,8 +284,9 @@ export function DataTable<T extends Record<string, any>>({
                 return (
                   <th
                     key={col.key}
+                    style={widths[col.key] ? { width: widths[col.key], minWidth: widths[col.key] } : undefined}
                     className={cn(
-                      "px-3 py-2 text-[11px] uppercase tracking-widest font-semibold text-muted-foreground select-none",
+                      "relative px-3 py-2 text-[11px] uppercase tracking-widest font-semibold text-muted-foreground select-none",
                       align,
                       col.headerClassName,
                     )}
@@ -304,7 +305,18 @@ export function DataTable<T extends Record<string, any>>({
                     ) : (
                       col.header
                     )}
+                    {resizable && (
+                      <span
+                        role="separator"
+                        aria-orientation="vertical"
+                        onPointerDown={e => startResize(col.key, e)}
+                        onDoubleClick={() => setWidths(w => { const n = { ...w }; delete n[col.key]; return n; })}
+                        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none hover:bg-primary/40"
+                        title="Drag to resize · double-click to reset"
+                      />
+                    )}
                   </th>
+
                 );
               })}
             </tr>
