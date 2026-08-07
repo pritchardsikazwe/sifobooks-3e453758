@@ -27,6 +27,9 @@ export type DTColumn<T> = {
   defaultHidden?: boolean;
   /** Cannot be hidden. */
   sticky?: boolean;
+  /** Initial column width in px (user can drag to resize). */
+  width?: number;
+
 };
 
 type Props<T> = {
