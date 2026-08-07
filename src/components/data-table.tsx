@@ -248,7 +248,10 @@ export function DataTable<T extends Record<string, any>>({
                   {c.header}
                 </DropdownMenuCheckboxItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={resetLayout}>Reset layout</DropdownMenuItem>
             </DropdownMenuContent>
+
           </DropdownMenu>
         </div>
       </div>
