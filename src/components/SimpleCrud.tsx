@@ -335,52 +335,27 @@ export function SimpleCrud({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? `Edit ${title}` : `New ${title}`}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            {fields.map(f => (
-              <div key={f.name} className={f.colSpan === 2 || f.type === "textarea" ? "col-span-2" : ""}>
-                <Label>{f.label}{f.required && <span className="text-destructive"> *</span>}</Label>
-                {f.type === "textarea" ? (
-                  <Textarea value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} />
-                ) : f.type === "select" ? (
-                  <Select value={String(form[f.name] ?? "")} onValueChange={v => setForm({ ...form, [f.name]: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>
-                      {f.options?.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
-                    value={form[f.name] ?? ""}
-                    onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-                  />
-                )}
-              </div>
-            ))}
-            {accountFields?.map(af => (
-              <div key={af.key} className="col-span-2 sm:col-span-1">
-                <AccountSelector
-                  label={af.label}
-                  help={af.help}
-                  required
-                  recentKey={`${table}-${af.key}`}
-                  accounts={accounts}
-                  types={af.types}
-                  cashBankOnly={af.cashBankOnly}
-                  value={acctSel[af.key] ?? null}
-                  onChange={v => setAcctSel(s => ({ ...s, [af.key]: v }))}
-                />
-              </div>
-            ))}
-            {previewLines && (
-              <div className="col-span-2 space-y-1">
-                <PostingPreview lines={preview} title="Journal that will be posted" />
-                {!previewOk && (
-                  <p className="text-xs text-destructive">Pick the ledger accounts and an amount so debits equal credits before saving.</p>
-                )}
-              </div>
-            )}
-          </div>
+          {groupNames.length > 1 ? (
+            <Tabs defaultValue={groupNames[0]} className="py-1">
+              <TabsList className="flex w-full flex-wrap justify-start">
+                {groupNames.map(g => <TabsTrigger key={g} value={g} className="text-xs">{g}</TabsTrigger>)}
+              </TabsList>
+              {groupNames.map(g => (
+                <TabsContent key={g} value={g} className="mt-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    {fields.filter(f => (f.group ?? DEFAULT_GROUP) === g).map(renderField)}
+                    {g === groupNames[groupNames.length - 1] && extras}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 py-2">
+              {fields.map(renderField)}
+              {extras}
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={save} disabled={!previewOk}>{editing ? "Save" : "Create"}</Button>
