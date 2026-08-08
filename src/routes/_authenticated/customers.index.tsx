@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -144,8 +144,67 @@ function CustomersPage() {
 
   const b = drawer ? balances[drawer.id] : null;
 
+  if (formOpen) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="sales"
+          icon={Users}
+          title={editing ? "Edit customer" : "New customer"}
+          subtitle="Client details, credit terms and contact information."
+          onCancel={() => setFormOpen(false)}
+          onSave={save}
+          saveLabel={editing ? "Save changes" : "Create customer"}
+        >
+          <SifoFormSection title="Identity">
+            <SifoField label="Name" required wide htmlFor="cust-name">
+              <Input id="cust-name" className="h-11" value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </SifoField>
+            <SifoField label="Contact person" htmlFor="cust-contact">
+              <Input id="cust-contact" className="h-11" value={form.contact_person ?? ""} onChange={e => setForm({ ...form, contact_person: e.target.value })} />
+            </SifoField>
+            <SifoField label="TPIN" htmlFor="cust-tpin">
+              <Input id="cust-tpin" className="h-11" value={form.tpin ?? ""} onChange={e => setForm({ ...form, tpin: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+
+          <SifoFormSection title="Contact">
+            <SifoField label="Email" htmlFor="cust-email">
+              <Input id="cust-email" type="email" className="h-11" value={form.email ?? ""} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </SifoField>
+            <SifoField label="Phone" htmlFor="cust-phone">
+              <Input id="cust-phone" className="h-11" value={form.phone ?? ""} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            </SifoField>
+            <SifoField label="Address" wide htmlFor="cust-address">
+              <Input id="cust-address" className="h-11" value={form.address ?? ""} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </SifoField>
+            <SifoField label="City" htmlFor="cust-city">
+              <Input id="cust-city" className="h-11" value={form.city ?? ""} onChange={e => setForm({ ...form, city: e.target.value })} />
+            </SifoField>
+            <SifoField label="Country" htmlFor="cust-country">
+              <Input id="cust-country" className="h-11" value={form.country ?? ""} onChange={e => setForm({ ...form, country: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+
+          <SifoFormSection title="Credit terms">
+            <SifoField label="Credit limit (ZMW)" htmlFor="cust-limit">
+              <Input id="cust-limit" type="number" className="h-11" value={form.credit_limit ?? ""} onChange={e => setForm({ ...form, credit_limit: e.target.value ? Number(e.target.value) : null })} />
+            </SifoField>
+            <SifoField label="Payment terms (days)" htmlFor="cust-terms">
+              <Input id="cust-terms" type="number" className="h-11" value={form.payment_terms_days ?? 30} onChange={e => setForm({ ...form, payment_terms_days: Number(e.target.value) })} />
+            </SifoField>
+            <SifoField label="Notes" wide htmlFor="cust-notes">
+              <Input id="cust-notes" className="h-11" value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-4">
+
       <SifoModuleHeader
         module="sales"
         icon={Users}
@@ -266,30 +325,10 @@ function CustomersPage() {
         )}
       </DetailDrawer>
 
-      {/* Add/edit dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogTrigger asChild><span className="hidden" /></DialogTrigger>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editing ? "Edit customer" : "New customer"}</DialogTitle></DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1 sm:col-span-2"><Label>Name *</Label><Input value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Contact person</Label><Input value={form.contact_person ?? ""} onChange={e => setForm({ ...form, contact_person: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Email</Label><Input type="email" value={form.email ?? ""} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Phone</Label><Input value={form.phone ?? ""} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-            <div className="space-y-1"><Label>TPIN</Label><Input value={form.tpin ?? ""} onChange={e => setForm({ ...form, tpin: e.target.value })} /></div>
-            <div className="space-y-1 sm:col-span-2"><Label>Address</Label><Input value={form.address ?? ""} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div className="space-y-1"><Label>City</Label><Input value={form.city ?? ""} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Country</Label><Input value={form.country ?? ""} onChange={e => setForm({ ...form, country: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Credit limit (ZMW)</Label><Input type="number" value={form.credit_limit ?? ""} onChange={e => setForm({ ...form, credit_limit: e.target.value ? Number(e.target.value) : null })} /></div>
-            <div className="space-y-1"><Label>Payment terms (days)</Label><Input type="number" value={form.payment_terms_days ?? 30} onChange={e => setForm({ ...form, payment_terms_days: Number(e.target.value) })} /></div>
-            <div className="space-y-1 sm:col-span-2"><Label>Notes</Label><Input value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button><Button onClick={save}>{editing ? "Save" : "Add"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+
 
 function StatTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (

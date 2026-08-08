@@ -59,7 +59,16 @@ type Props<T> = {
   tableId?: string;
   /** Allow dragging column edges to resize. Default true. */
   resizable?: boolean;
+  /** Show a skeleton/spinner state instead of rows. */
+  loading?: boolean;
+  /** Show an error state instead of rows. */
+  error?: string | null;
+  /** Retry handler rendered inside the error state. */
+  onRetry?: () => void;
+  /** Footer totals keyed by column key, computed from the filtered rows. */
+  totals?: (rows: T[]) => Record<string, ReactNode>;
 };
+
 
 type Prefs = {
   hidden?: Record<string, boolean>;
@@ -88,7 +97,12 @@ export function DataTable<T extends Record<string, any>>({
   className,
   tableId,
   resizable = true,
+  loading = false,
+  error = null,
+  onRetry,
+  totals,
 }: Props<T>) {
+
   const saved = useMemo(() => loadPrefs(tableId), [tableId]);
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -326,13 +340,34 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {error ? (
+              <tr>
+                <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="py-14 text-center">
+                  <p className="text-sm font-medium text-destructive">{error}</p>
+                  {onRetry && (
+                    <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>Try again</Button>
+                  )}
+                </td>
+              </tr>
+            ) : loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-b border-border/60 last:border-0">
+                  {selectable && <td className="pl-3 pr-1"><div className="h-4 w-4 animate-pulse rounded bg-muted" /></td>}
+                  {visibleColumns.map(col => (
+                    <td key={col.key} className={cn("px-3", rowPad)}>
+                      <div className="h-3.5 w-full max-w-[160px] animate-pulse rounded bg-muted" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : paged.length === 0 ? (
               <tr>
                 <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="py-16 text-center text-muted-foreground">
                   {empty ?? "No records found."}
                 </td>
               </tr>
             ) : paged.map(row => {
+
               const k = rowKey(row);
               const isSel = selected.has(k);
               return (
@@ -363,7 +398,26 @@ export function DataTable<T extends Record<string, any>>({
               );
             })}
           </tbody>
+          {totals && !loading && !error && sorted.length > 0 && (() => {
+            const t = totals(sorted);
+            return (
+              <tfoot className="sticky bottom-0 border-t border-border bg-muted/60 font-semibold">
+                <tr>
+                  {selectable && <td className="pl-3 pr-1" />}
+                  {visibleColumns.map((col, i) => {
+                    const align = col.align === "right" ? "text-right num" : col.align === "center" ? "text-center" : "text-left";
+                    return (
+                      <td key={col.key} className={cn("px-3 py-2 text-foreground", align)}>
+                        {t[col.key] ?? (i === 0 ? "Total" : "")}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            );
+          })()}
         </table>
+
       </div>
 
       {/* Pagination */}
