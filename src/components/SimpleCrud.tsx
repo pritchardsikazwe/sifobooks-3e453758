@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Loader2, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,6 @@ import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
 import { SifoModuleAI } from "@/components/sifo/SifoModuleAI";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
 
 /** Ledger account picker shown inside the create/edit dialog. */

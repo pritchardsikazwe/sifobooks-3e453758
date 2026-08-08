@@ -5,3 +5,4 @@ export { SifoKpiCard, SifoSparkline } from "./SifoKpiCard";
 export { SifoQuickAction } from "./SifoQuickAction";
 export { SifoStatusBadge } from "./SifoStatusBadge";
 export { SifoPanel } from "./SifoPanel";
+export { SifoFormPage, SifoFormSection, SifoField } from "./SifoFormPage";
