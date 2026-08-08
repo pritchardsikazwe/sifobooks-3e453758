@@ -340,13 +340,34 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {error ? (
+              <tr>
+                <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="py-14 text-center">
+                  <p className="text-sm font-medium text-destructive">{error}</p>
+                  {onRetry && (
+                    <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>Try again</Button>
+                  )}
+                </td>
+              </tr>
+            ) : loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-b border-border/60 last:border-0">
+                  {selectable && <td className="pl-3 pr-1"><div className="h-4 w-4 animate-pulse rounded bg-muted" /></td>}
+                  {visibleColumns.map(col => (
+                    <td key={col.key} className={cn("px-3", rowPad)}>
+                      <div className="h-3.5 w-full max-w-[160px] animate-pulse rounded bg-muted" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : paged.length === 0 ? (
               <tr>
                 <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="py-16 text-center text-muted-foreground">
                   {empty ?? "No records found."}
                 </td>
               </tr>
             ) : paged.map(row => {
+
               const k = rowKey(row);
               const isSel = selected.has(k);
               return (
