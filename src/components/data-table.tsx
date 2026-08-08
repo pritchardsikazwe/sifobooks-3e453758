@@ -398,7 +398,26 @@ export function DataTable<T extends Record<string, any>>({
               );
             })}
           </tbody>
+          {totals && !loading && !error && sorted.length > 0 && (() => {
+            const t = totals(sorted);
+            return (
+              <tfoot className="sticky bottom-0 border-t border-border bg-muted/60 font-semibold">
+                <tr>
+                  {selectable && <td className="pl-3 pr-1" />}
+                  {visibleColumns.map((col, i) => {
+                    const align = col.align === "right" ? "text-right num" : col.align === "center" ? "text-center" : "text-left";
+                    return (
+                      <td key={col.key} className={cn("px-3 py-2 text-foreground", align)}>
+                        {t[col.key] ?? (i === 0 ? "Total" : "")}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            );
+          })()}
         </table>
+
       </div>
 
       {/* Pagination */}
