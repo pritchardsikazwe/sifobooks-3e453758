@@ -59,7 +59,16 @@ type Props<T> = {
   tableId?: string;
   /** Allow dragging column edges to resize. Default true. */
   resizable?: boolean;
+  /** Show a skeleton/spinner state instead of rows. */
+  loading?: boolean;
+  /** Show an error state instead of rows. */
+  error?: string | null;
+  /** Retry handler rendered inside the error state. */
+  onRetry?: () => void;
+  /** Footer totals keyed by column key, computed from the filtered rows. */
+  totals?: (rows: T[]) => Record<string, ReactNode>;
 };
+
 
 type Prefs = {
   hidden?: Record<string, boolean>;
