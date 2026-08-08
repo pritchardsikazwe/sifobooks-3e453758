@@ -97,7 +97,12 @@ export function DataTable<T extends Record<string, any>>({
   className,
   tableId,
   resizable = true,
+  loading = false,
+  error = null,
+  onRetry,
+  totals,
 }: Props<T>) {
+
   const saved = useMemo(() => loadPrefs(tableId), [tableId]);
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
