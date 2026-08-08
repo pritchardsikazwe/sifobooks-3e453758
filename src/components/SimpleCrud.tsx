@@ -170,9 +170,10 @@ export function SimpleCrud({
     return o;
   }), [filtered, columns]);
 
-  const openNew = () => { setEditing(null); setForm(initial); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm(initial); setErrors({}); setOpen(true); };
   const openEdit = (r: any) => {
     setEditing(r);
+    setErrors({});
     setForm(Object.fromEntries(fields.map(f => {
       const v = r[f.name];
       if (typeof v === "boolean") return [f.name, String(v)];
@@ -184,9 +185,15 @@ export function SimpleCrud({
   const save = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return toast.error("Not signed in");
+    const nextErrors: Record<string, string> = {};
     for (const f of fields) {
-      if (f.required && !form[f.name] && form[f.name] !== 0) return toast.error(`${f.label} is required`);
+      if (f.required && !form[f.name] && form[f.name] !== 0) nextErrors[f.name] = `${f.label} is required`;
     }
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return toast.error("Please fix the highlighted fields");
+    }
+    setErrors({});
     if (!previewOk) return toast.error("Posting blocked — debits and credits do not balance.");
     for (const af of accountFields ?? []) {
       if (!acctSel[af.key]) return toast.error(`${af.label} is required`);
@@ -206,9 +213,11 @@ export function SimpleCrud({
       }
       else if (v === "") payload[f.name] = null;
     }
+    setSaving(true);
     const res = editing
       ? await supabase.from(table as any).update(payload).eq("id", editing.id)
       : await offlineInsert(table, payload);
+    setSaving(false);
     if (res.error) return toast.error(res.error.message);
     toast.success(
       editing
@@ -220,6 +229,7 @@ export function SimpleCrud({
     setOpen(false);
     load();
   };
+
 
   const remove = async (r: any) => {
     if (!confirm("Delete this record?")) return;
