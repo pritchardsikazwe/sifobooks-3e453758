@@ -144,8 +144,67 @@ function CustomersPage() {
 
   const b = drawer ? balances[drawer.id] : null;
 
+  if (formOpen) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="sales"
+          icon={Users}
+          title={editing ? "Edit customer" : "New customer"}
+          subtitle="Client details, credit terms and contact information."
+          onCancel={() => setFormOpen(false)}
+          onSave={save}
+          saveLabel={editing ? "Save changes" : "Create customer"}
+        >
+          <SifoFormSection title="Identity">
+            <SifoField label="Name" required wide htmlFor="cust-name">
+              <Input id="cust-name" className="h-11" value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </SifoField>
+            <SifoField label="Contact person" htmlFor="cust-contact">
+              <Input id="cust-contact" className="h-11" value={form.contact_person ?? ""} onChange={e => setForm({ ...form, contact_person: e.target.value })} />
+            </SifoField>
+            <SifoField label="TPIN" htmlFor="cust-tpin">
+              <Input id="cust-tpin" className="h-11" value={form.tpin ?? ""} onChange={e => setForm({ ...form, tpin: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+
+          <SifoFormSection title="Contact">
+            <SifoField label="Email" htmlFor="cust-email">
+              <Input id="cust-email" type="email" className="h-11" value={form.email ?? ""} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </SifoField>
+            <SifoField label="Phone" htmlFor="cust-phone">
+              <Input id="cust-phone" className="h-11" value={form.phone ?? ""} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            </SifoField>
+            <SifoField label="Address" wide htmlFor="cust-address">
+              <Input id="cust-address" className="h-11" value={form.address ?? ""} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </SifoField>
+            <SifoField label="City" htmlFor="cust-city">
+              <Input id="cust-city" className="h-11" value={form.city ?? ""} onChange={e => setForm({ ...form, city: e.target.value })} />
+            </SifoField>
+            <SifoField label="Country" htmlFor="cust-country">
+              <Input id="cust-country" className="h-11" value={form.country ?? ""} onChange={e => setForm({ ...form, country: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+
+          <SifoFormSection title="Credit terms">
+            <SifoField label="Credit limit (ZMW)" htmlFor="cust-limit">
+              <Input id="cust-limit" type="number" className="h-11" value={form.credit_limit ?? ""} onChange={e => setForm({ ...form, credit_limit: e.target.value ? Number(e.target.value) : null })} />
+            </SifoField>
+            <SifoField label="Payment terms (days)" htmlFor="cust-terms">
+              <Input id="cust-terms" type="number" className="h-11" value={form.payment_terms_days ?? 30} onChange={e => setForm({ ...form, payment_terms_days: Number(e.target.value) })} />
+            </SifoField>
+            <SifoField label="Notes" wide htmlFor="cust-notes">
+              <Input id="cust-notes" className="h-11" value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-4">
+
       <SifoModuleHeader
         module="sales"
         icon={Users}
