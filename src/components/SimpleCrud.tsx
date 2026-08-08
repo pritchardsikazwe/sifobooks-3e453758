@@ -104,6 +104,13 @@ export function SimpleCrud({
   const [editing, setEditing] = useState<any | null>(null);
   const initial = useMemo(() => Object.fromEntries(fields.map(f => [f.name, f.defaultValue ?? (f.type === "number" ? 0 : "")])), [fields]);
   const [form, setForm] = useState<Record<string, any>>(initial);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const setField = (name: string, value: any) => {
+    setForm(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => (prev[name] ? { ...prev, [name]: "" } : prev));
+  };
+
   const [statusVal, setStatusVal] = useState<string>("__all");
   const [filterVals, setFilterVals] = useState<Record<string, string>>({});
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
