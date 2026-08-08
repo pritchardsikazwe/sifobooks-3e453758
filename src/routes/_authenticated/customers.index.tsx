@@ -266,30 +266,10 @@ function CustomersPage() {
         )}
       </DetailDrawer>
 
-      {/* Add/edit dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogTrigger asChild><span className="hidden" /></DialogTrigger>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editing ? "Edit customer" : "New customer"}</DialogTitle></DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1 sm:col-span-2"><Label>Name *</Label><Input value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Contact person</Label><Input value={form.contact_person ?? ""} onChange={e => setForm({ ...form, contact_person: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Email</Label><Input type="email" value={form.email ?? ""} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Phone</Label><Input value={form.phone ?? ""} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-            <div className="space-y-1"><Label>TPIN</Label><Input value={form.tpin ?? ""} onChange={e => setForm({ ...form, tpin: e.target.value })} /></div>
-            <div className="space-y-1 sm:col-span-2"><Label>Address</Label><Input value={form.address ?? ""} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div className="space-y-1"><Label>City</Label><Input value={form.city ?? ""} onChange={e => setForm({ ...form, city: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Country</Label><Input value={form.country ?? ""} onChange={e => setForm({ ...form, country: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Credit limit (ZMW)</Label><Input type="number" value={form.credit_limit ?? ""} onChange={e => setForm({ ...form, credit_limit: e.target.value ? Number(e.target.value) : null })} /></div>
-            <div className="space-y-1"><Label>Payment terms (days)</Label><Input type="number" value={form.payment_terms_days ?? 30} onChange={e => setForm({ ...form, payment_terms_days: Number(e.target.value) })} /></div>
-            <div className="space-y-1 sm:col-span-2"><Label>Notes</Label><Input value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button><Button onClick={save}>{editing ? "Save" : "Add"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+
 
 function StatTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
