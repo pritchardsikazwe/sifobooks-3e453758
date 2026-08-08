@@ -269,32 +269,55 @@ export function SimpleCrud({
     return seen;
   }, [fields]);
 
-  const renderField = (f: Field) => (
-    <div key={f.name} className={f.colSpan === 2 || f.type === "textarea" ? "col-span-2" : ""}>
-      <Label>{f.label}{f.required && <span className="text-destructive"> *</span>}</Label>
-      {f.type === "textarea" ? (
-        <Textarea value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} />
-      ) : f.type === "select" ? (
-        <Select value={String(form[f.name] ?? "")} onValueChange={v => setForm({ ...form, [f.name]: v })}>
-          <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-          <SelectContent>
-            {f.options?.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ) : (
-        <Input
-          type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
-          value={form[f.name] ?? ""}
-          onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-        />
-      )}
-    </div>
-  );
+  const renderField = (f: Field) => {
+    const id = `${table}-${f.name}`;
+    const err = errors[f.name];
+    const invalid = Boolean(err);
+    return (
+      <SifoField
+        key={f.name}
+        htmlFor={id}
+        label={f.label}
+        required={f.required}
+        error={err}
+        wide={f.colSpan === 2 || f.type === "textarea"}
+      >
+        {f.type === "textarea" ? (
+          <Textarea
+            id={id}
+            aria-invalid={invalid}
+            className={invalid ? "border-destructive" : undefined}
+            rows={3}
+            value={form[f.name] ?? ""}
+            onChange={e => setField(f.name, e.target.value)}
+          />
+        ) : f.type === "select" ? (
+          <Select value={String(form[f.name] ?? "")} onValueChange={v => setField(f.name, v)}>
+            <SelectTrigger id={id} aria-invalid={invalid} className={cn("h-11", invalid && "border-destructive")}>
+              <SelectValue placeholder="Select…" />
+            </SelectTrigger>
+            <SelectContent>
+              {f.options?.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id={id}
+            aria-invalid={invalid}
+            className={cn("h-11", invalid && "border-destructive")}
+            type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+            value={form[f.name] ?? ""}
+            onChange={e => setField(f.name, e.target.value)}
+          />
+        )}
+      </SifoField>
+    );
+  };
 
   const extras = (
     <>
       {accountFields?.map(af => (
-        <div key={af.key} className="col-span-2 sm:col-span-1">
+        <div key={af.key}>
           <AccountSelector
             label={af.label}
             help={af.help}
@@ -309,7 +332,7 @@ export function SimpleCrud({
         </div>
       ))}
       {previewLines && (
-        <div className="col-span-2 space-y-1">
+        <div className="space-y-1 sm:col-span-2">
           <PostingPreview lines={preview} title="Journal that will be posted" />
           {!previewOk && (
             <p className="text-xs text-destructive">Pick the ledger accounts and an amount so debits equal credits before saving.</p>
@@ -329,6 +352,31 @@ export function SimpleCrud({
     </>
   );
 
+  // Full-page record editor replaces the list while open.
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module={module}
+          icon={Icon}
+          title={editing ? `Edit ${title}` : `New ${title}`}
+          subtitle={description}
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saving={saving}
+          saveDisabled={!previewOk}
+          saveLabel={editing ? "Save changes" : `Create ${title.toLowerCase()}`}
+        >
+          {groupNames.map((g, gi) => (
+            <SifoFormSection key={g} title={g}>
+              {fields.filter(f => (f.group ?? DEFAULT_GROUP) === g).map(renderField)}
+              {gi === groupNames.length - 1 && extras}
+            </SifoFormSection>
+          ))}
+        </SifoFormPage>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -351,81 +399,47 @@ export function SimpleCrud({
         </div>
       )}
 
-
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : (
-        <DataTable
-          tableId={`crud-${table}`}
-          data={filtered}
-          columns={dtColumns}
-          searchPlaceholder={`Search ${title.toLowerCase()}…`}
-          onRowClick={openEdit}
-          empty={
-            <div className="py-6">
-              <Icon className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <div>{rows.length === 0 ? `No ${title.toLowerCase()} yet. Click "New" to add one.` : "No records match your filters."}</div>
-            </div>
-          }
-          toolbarLeft={
-            <div className="flex flex-wrap items-center gap-2">
-              {statusOptions && (
-                <Select value={statusVal} onValueChange={setStatusVal}>
-                  <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">All statuses</SelectItem>
-                    {statusOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              {extraFilters.map(f => (
-                <Select key={f.name} value={filterVals[f.name] ?? "__all"} onValueChange={v => setFilterVals(s => ({ ...s, [f.name]: v }))}>
-                  <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={f.label} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">All {f.label.toLowerCase()}</SelectItem>
-                    {f.options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              ))}
-              {dateField && <DateRangeFilter value={range} onChange={setRange} compact />}
-            </div>
-          }
-        />
-      )}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? `Edit ${title}` : `New ${title}`}</DialogTitle></DialogHeader>
-          {groupNames.length > 1 ? (
-            <Tabs defaultValue={groupNames[0]} className="py-1">
-              <TabsList className="flex w-full flex-wrap justify-start">
-                {groupNames.map(g => <TabsTrigger key={g} value={g} className="text-xs">{g}</TabsTrigger>)}
-              </TabsList>
-              {groupNames.map(g => (
-                <TabsContent key={g} value={g} className="mt-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    {fields.filter(f => (f.group ?? DEFAULT_GROUP) === g).map(renderField)}
-                    {g === groupNames[groupNames.length - 1] && extras}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 py-2">
-              {fields.map(renderField)}
-              {extras}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save} disabled={!previewOk}>{editing ? "Save" : "Create"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DataTable
+        tableId={`crud-${table}`}
+        data={filtered}
+        columns={dtColumns}
+        loading={loading}
+        searchPlaceholder={`Search ${title.toLowerCase()}…`}
+        onRowClick={openEdit}
+        empty={
+          <div className="py-6">
+            <Icon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <div>{rows.length === 0 ? `No ${title.toLowerCase()} yet. Click "New" to add one.` : "No records match your filters."}</div>
+          </div>
+        }
+        toolbarLeft={
+          <div className="flex flex-wrap items-center gap-2">
+            {statusOptions && (
+              <Select value={statusVal} onValueChange={setStatusVal}>
+                <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">All statuses</SelectItem>
+                  {statusOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {extraFilters.map(f => (
+              <Select key={f.name} value={filterVals[f.name] ?? "__all"} onValueChange={v => setFilterVals(s => ({ ...s, [f.name]: v }))}>
+                <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">All {f.label.toLowerCase()}</SelectItem>
+                  {f.options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ))}
+            {dateField && <DateRangeFilter value={range} onChange={setRange} compact />}
+          </div>
+        }
+      />
     </div>
   );
 }
+
 
 /** Helper: mark a record as posted (or set any status). */
 export async function updateStatus(table: string, id: string, status: string) {
