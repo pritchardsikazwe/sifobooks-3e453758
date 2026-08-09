@@ -154,7 +154,7 @@ function SifoPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                 placeholder="Ask Sifo AI…"
                 className="flex-1 h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400"
               />
-              <Button type="submit" disabled={busy || !input.trim()} className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button variant="save" type="submit" disabled={busy || !input.trim()} className="h-10">
                 <Send className="h-4 w-4" />
               </Button>
             </form>

@@ -571,7 +571,7 @@ function Reconciliation() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
-            <Button onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+            <Button variant="save" onClick={runAllocate} disabled={!allocAccountId || busy === allocTxn?.id} >
               {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Post to Ledger
             </Button>

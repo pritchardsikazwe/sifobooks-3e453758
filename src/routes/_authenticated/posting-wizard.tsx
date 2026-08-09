@@ -494,7 +494,7 @@ function PostingWizard() {
 
             <div className="flex justify-between pt-2">
               <Button variant="ghost" onClick={() => setStep(2)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
-              <Button onClick={post} disabled={posting} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button variant="save" onClick={post} disabled={posting} >
                 <CheckCircle2 className="mr-2 h-4 w-4" />{posting ? "Posting…" : "Post journal"}
               </Button>
             </div>

@@ -221,7 +221,7 @@ export function ReconcileDialog({
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-300">Cancel</Button>
-            <Button onClick={lock} disabled={!balanced || locking} className="bg-blue-600 hover:bg-blue-500">
+            <Button variant="update" onClick={lock} disabled={!balanced || locking} >
               {locking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
               Reconcile & Lock
             </Button>

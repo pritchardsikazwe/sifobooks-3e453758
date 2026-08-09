@@ -196,7 +196,7 @@ function IndustryPage() {
               </div>
             )}
 
-            <Button onClick={install} disabled={saving || !companyId} className="w-full bg-emerald-600 hover:bg-emerald-700">
+            <Button variant="save" onClick={install} disabled={saving || !companyId} className="w-full">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {companyIndustry === industry.id ? "Update modules" : `Install ${industry.label}`}
             </Button>

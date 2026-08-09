@@ -90,7 +90,7 @@ export function ReportFilterBar({
         <Button variant="ghost" size="sm" onClick={reset}>
           <RotateCcw className="h-4 w-4 mr-1" /> Reset
         </Button>
-        <Button size="sm" onClick={apply} className="bg-emerald-700 hover:bg-emerald-800">
+        <Button variant="save" size="sm" onClick={apply} >
           <Calendar className="h-4 w-4 mr-1" /> Apply
         </Button>
       </div>

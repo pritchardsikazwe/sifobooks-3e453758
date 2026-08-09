@@ -295,7 +295,7 @@ function Grid({
                 {last ? <>Last generated <span className="text-foreground font-medium">{last}</span></> : "Not yet generated"}
               </div>
               <Link to={r.to as any}>
-                <Button size="sm" className="h-7 text-xs bg-emerald-700 hover:bg-emerald-800">
+                <Button variant="save" size="sm" className="h-7 text-xs">
                   <Sparkles className="h-3 w-3 mr-1" /> Generate
                 </Button>
               </Link>

@@ -592,7 +592,7 @@ function BankingPage() {
           })()}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
-            <Button onClick={runAllocate} disabled={!allocBalanced || busy === allocTxn?.id} className="bg-emerald-700 hover:bg-emerald-800">
+            <Button variant="save" onClick={runAllocate} disabled={!allocBalanced || busy === allocTxn?.id} >
               {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Post allocation
             </Button>
@@ -620,7 +620,7 @@ function BankingPage() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReverseAlloc(null)}>Cancel</Button>
-            <Button onClick={runReverse} disabled={busy === reverseAlloc?.id || !reverseReason.trim()} className="bg-red-600 hover:bg-red-700">
+            <Button variant="delete" onClick={runReverse} disabled={busy === reverseAlloc?.id || !reverseReason.trim()} >
               {busy === reverseAlloc?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Reverse
             </Button>
@@ -650,7 +650,7 @@ function BankingPage() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setClearTxn(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={busy === clearTxn?.id} onClick={async () => {
+            <Button variant="update"  disabled={busy === clearTxn?.id} onClick={async () => {
               if (!clearTxn) return;
               const ok = await runClear(clearTxn, clearRef);
               if (ok) setClearTxn(null);

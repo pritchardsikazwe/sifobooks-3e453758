@@ -216,7 +216,7 @@ export function SpendMoneyDialog({
 
         <div className="mt-2 flex items-center justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-300">Cancel</Button>
-          <Button onClick={record} disabled={saving} className="bg-blue-600 hover:bg-blue-500">
+          <Button variant="update" onClick={record} disabled={saving} >
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Record
           </Button>

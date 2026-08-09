@@ -137,7 +137,7 @@ function InventorySheetsPage() {
                 {items.map(i => <SelectItem key={i.id} value={i.id}>{i.name}{i.sku ? ` (${i.sku})` : ""}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={runBinCard} disabled={busy || !selectedItem} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1">
+            <Button variant="save" onClick={runBinCard} disabled={busy || !selectedItem} className="gap-1">
               <Download className="h-4 w-4" /> PDF
             </Button>
           </div>
@@ -150,7 +150,7 @@ function InventorySheetsPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">{filtered.length} items in scope</span>
-            <Button onClick={runStockTake} disabled={busy} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1">
+            <Button variant="save" onClick={runStockTake} disabled={busy} className="gap-1">
               <Download className="h-4 w-4" /> Print Sheet
             </Button>
           </div>
@@ -163,7 +163,7 @@ function InventorySheetsPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Snapshot as of today</span>
-            <Button onClick={runValuation} disabled={busy} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1">
+            <Button variant="save" onClick={runValuation} disabled={busy} className="gap-1">
               <Download className="h-4 w-4" /> Valuation PDF
             </Button>
           </div>
@@ -176,7 +176,7 @@ function InventorySheetsPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">{from} → {to}</span>
-            <Button onClick={runMovement} disabled={busy} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1">
+            <Button variant="save" onClick={runMovement} disabled={busy} className="gap-1">
               <Download className="h-4 w-4" /> Movement PDF
             </Button>
           </div>

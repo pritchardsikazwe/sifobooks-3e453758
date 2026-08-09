@@ -86,7 +86,7 @@ function RolesPage() {
           <ShieldCheck className="h-6 w-6 text-emerald-600" />
           <h1 className="text-2xl font-bold">Roles & Permissions</h1>
         </div>
-        <Button onClick={save} disabled={saving || dirty.size === 0} className="bg-emerald-600 hover:bg-emerald-700">
+        <Button variant="save" onClick={save} disabled={saving || dirty.size === 0} >
           <Save className="h-4 w-4 mr-1" /> Save {dirty.size > 0 ? `(${dirty.size})` : ""}
         </Button>
       </div>
