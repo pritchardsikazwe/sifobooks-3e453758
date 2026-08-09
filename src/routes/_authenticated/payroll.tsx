@@ -655,7 +655,7 @@ function GenerateRun({ userId, onDone }: { userId: string; onDone: () => void })
           <Totals label="NHIMA" value={totals.nhima} />
           <Totals label="Net" value={totals.net} accent />
           <div className="ml-auto">
-            <Button onClick={save} disabled={saving || preview.length === 0} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button variant="save" onClick={save} disabled={saving || preview.length === 0} >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Save Run & Payslips
             </Button>
           </div>
@@ -706,7 +706,7 @@ function EditSlipDialog({ slip, run, userId, onClose, onSaved }: { slip: Slip & 
           <div className="text-xs text-slate-500">To recompute earnings/deductions from scratch, delete this run and regenerate. Individual figures on the payslip come from the run.</div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save</Button>
+            <Button variant="save" onClick={save} disabled={saving} >{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save</Button>
           </div>
         </div>
         <div className="text-[10px] text-slate-400">Run {run.run_number}</div>

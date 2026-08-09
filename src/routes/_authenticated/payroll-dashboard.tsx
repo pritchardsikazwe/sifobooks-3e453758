@@ -166,7 +166,7 @@ function PayrollDashboard() {
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/employees">Employees</Link></Button>
             <Button asChild variant="outline"><Link to="/attendance">Attendance</Link></Button>
-            <Button asChild className="bg-emerald-600 hover:bg-emerald-700"><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
+            <Button variant="save" asChild ><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
           </div>
         </div>
       </motion.div>

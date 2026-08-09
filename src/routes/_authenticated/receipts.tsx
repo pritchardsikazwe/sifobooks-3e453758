@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +21,7 @@ import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { receiptLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -239,6 +239,120 @@ function ReceiptsPage() {
     return <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600">Posted</Badge>;
   };
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="sales"
+          icon={CreditCard}
+          title="Receive payment"
+          subtitle="Cashbook → Customer ledger → General ledger → Reports."
+          onCancel={() => { setOpen(false); resetForm(); }}
+          onSave={save}
+          saving={saving}
+          saveDisabled={!previewBalanced}
+          saveLabel={saving ? "Posting…" : "Post receipt"}
+        >
+          <SifoFormSection title="Payment details">
+            <SifoField label="Receipt type" required>
+              <Select value={receiptType} onValueChange={setReceiptType}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+
+            {receiptType === "customer" ? (
+              <>
+                <SifoField label="Customer" required wide>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
+                  </div>
+                  {customers.length === 0 ? (
+                    <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground text-center">
+                      No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above.
+                    </div>
+                  ) : (
+                    <Select value={customerId} onValueChange={v => { setCustomerId(v); setInvoiceId(""); }}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Choose customer" /></SelectTrigger>
+                      <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                </SifoField>
+                <SifoField label="Apply to invoice (optional)" wide>
+                  <Select value={invoiceId || "none"} onValueChange={v => setInvoiceId(v === "none" ? "" : v)}>
+                    <SelectTrigger className="h-11"><SelectValue placeholder="Unallocated" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unallocated / on account</SelectItem>
+                      {invoicesForCustomer.map(i => <SelectItem key={i.id} value={i.id}>{i.number} — bal {fmtMoney(i.balance_due, i.currency)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </SifoField>
+              </>
+            ) : (
+              <SifoField label="Payer / source" required wide>
+                <Input className="h-11" value={payerName} onChange={e => setPayerName(e.target.value)} placeholder="Name of payer, lender, or source" />
+              </SifoField>
+            )}
+
+            <SifoField label="Date" required>
+              <Input type="date" className="h-11" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} />
+            </SifoField>
+            <SifoField label="Amount" required>
+              <Input type="number" step="0.01" className="h-11" value={amount} onChange={e => setAmount(Number(e.target.value))} />
+            </SifoField>
+            <SifoField label="Method">
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>{METHODS.map(m => <SelectItem key={m} value={m} className="capitalize">{m.replace("_", " ")}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Bank / cashbook">
+              <Select value={bankAccountId || "none"} onValueChange={v => setBankAccountId(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Default cash" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Default cash (1000)</SelectItem>
+                  {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.account_number ? ` — ${b.account_number}` : ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Voucher #">
+              <Input className="h-11" value={voucherNo} onChange={e => setVoucherNo(e.target.value)} placeholder="Optional" />
+            </SifoField>
+            <SifoField label="Reference">
+              <Input className="h-11" value={reference} onChange={e => setReference(e.target.value)} placeholder="Txn #, cheque #…" />
+            </SifoField>
+            <SifoField label="Notes" wide>
+              <Input className="h-11" value={notes} onChange={e => setNotes(e.target.value)} />
+            </SifoField>
+          </SifoFormSection>
+
+          <SifoFormSection title="Ledger accounts">
+            <AccountSelector
+              label="Debit — cash / bank" required recentKey="rct-bank"
+              help="Account that receives the money."
+              accounts={accounts} types={["asset"]} cashBankOnly value={debitAccountId} onChange={setDebitAccountId}
+            />
+            <AccountSelector
+              label={receiptType === "customer" ? "Credit — receivable" : "Credit — income / source"}
+              required recentKey="rct-credit"
+              help={receiptType === "customer"
+                ? "Customer ledger account cleared by this payment."
+                : "Income, loan or capital account credited."}
+              accounts={accounts} value={creditAccountId} onChange={setCreditAccountId}
+            />
+          </SifoFormSection>
+
+          <SifoFormSection title="Posting" columns={1}>
+            <PostingPreview lines={previewLines} title="Journal that will be posted" />
+            {!previewBalanced && (
+              <p className="text-xs text-destructive">Enter an amount and pick both accounts before posting.</p>
+            )}
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <SifoModuleHeader
@@ -256,101 +370,7 @@ function ReceiptsPage() {
             Voucher: r.voucher_no ?? "", Reference: r.reference ?? "",
             Amount: r.amount, Status: r.status ?? "posted",
           }))} />
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-            <DialogTrigger asChild><Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" /> Receive payment</Button></DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Receive payment</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div className="space-y-1"><Label>Receipt type *</Label>
-                  <Select value={receiptType} onValueChange={setReceiptType}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-
-                {receiptType === "customer" ? (
-                  <>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Label>Customer *</Label>
-                        <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
-                      </div>
-                      {customers.length === 0 ? (
-                        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground text-center">
-                          No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above.
-                        </div>
-                      ) : (
-                        <Select value={customerId} onValueChange={v => { setCustomerId(v); setInvoiceId(""); }}>
-                          <SelectTrigger><SelectValue placeholder="Choose customer" /></SelectTrigger>
-                          <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                    <div className="space-y-1"><Label>Apply to invoice (optional)</Label>
-                      <Select value={invoiceId || "none"} onValueChange={v => setInvoiceId(v === "none" ? "" : v)}>
-                        <SelectTrigger><SelectValue placeholder="Unallocated" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Unallocated / on account</SelectItem>
-                          {invoicesForCustomer.map(i => <SelectItem key={i.id} value={i.id}>{i.number} — bal {fmtMoney(i.balance_due, i.currency)}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-1"><Label>Payer / source *</Label>
-                    <Input value={payerName} onChange={e => setPayerName(e.target.value)} placeholder="Name of payer, lender, or source" />
-                  </div>
-                )}
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1"><Label>Date *</Label><Input type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} /></div>
-                  <div className="space-y-1"><Label>Amount *</Label><Input type="number" step="0.01" value={amount} onChange={e => setAmount(Number(e.target.value))} /></div>
-                  <div className="space-y-1"><Label>Method</Label>
-                    <Select value={method} onValueChange={setMethod}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{METHODS.map(m => <SelectItem key={m} value={m} className="capitalize">{m.replace("_", " ")}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1"><Label>Bank / cashbook</Label>
-                    <Select value={bankAccountId || "none"} onValueChange={v => setBankAccountId(v === "none" ? "" : v)}>
-                      <SelectTrigger><SelectValue placeholder="Default cash" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Default cash (1000)</SelectItem>
-                        {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.account_number ? ` — ${b.account_number}` : ""}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1"><Label>Voucher #</Label><Input value={voucherNo} onChange={e => setVoucherNo(e.target.value)} placeholder="Optional" /></div>
-                  <div className="space-y-1"><Label>Reference</Label><Input value={reference} onChange={e => setReference(e.target.value)} placeholder="Txn #, cheque #…" /></div>
-                </div>
-                <div className="space-y-1"><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div>
-
-                <div className="grid gap-3 sm:grid-cols-2 border-t pt-3">
-                  <AccountSelector
-                    label="Debit — cash / bank" required recentKey="rct-bank"
-                    help="Account that receives the money."
-                    accounts={accounts} types={["asset"]} cashBankOnly value={debitAccountId} onChange={setDebitAccountId}
-                  />
-                  <AccountSelector
-                    label={receiptType === "customer" ? "Credit — receivable" : "Credit — income / source"}
-                    required recentKey="rct-credit"
-                    help={receiptType === "customer"
-                      ? "Customer ledger account cleared by this payment."
-                      : "Income, loan or capital account credited."}
-                    accounts={accounts} value={creditAccountId} onChange={setCreditAccountId}
-                  />
-                </div>
-                <PostingPreview lines={previewLines} title="Journal that will be posted" />
-                {!previewBalanced && (
-                  <p className="text-xs text-destructive">Enter an amount and pick both accounts before posting.</p>
-                )}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={save} disabled={saving || !previewBalanced} className="bg-emerald-600 hover:bg-emerald-700">{saving ? "Posting…" : "Post receipt"}</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setOpen(true)} size="sm" variant="save" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> Receive payment</Button>
         </>}
       />
 

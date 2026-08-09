@@ -229,7 +229,7 @@ function VoidInvoice({ invoice, onDone }: { invoice: any; onDone: () => void }) 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={run} disabled={busy} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={run} disabled={busy} variant="delete">
             {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Void invoice
           </Button>
         </DialogFooter>

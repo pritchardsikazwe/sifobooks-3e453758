@@ -91,7 +91,7 @@ function Timesheet() {
           <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, -7))}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="outline" size="sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>This week</Button>
           <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight className="h-4 w-4" /></Button>
-          <Button size="sm" onClick={save} className="bg-emerald-600 hover:bg-emerald-700"><Save className="h-4 w-4 mr-1" /> Save</Button>
+          <Button variant="save" size="sm" onClick={save} ><Save className="h-4 w-4 mr-1" /> Save</Button>
         </div>
       </div>
 

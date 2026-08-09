@@ -118,7 +118,7 @@ export function InstallAppPrompt({ delayMs = 6000 }: { delayMs?: number }) {
           ) : null}
           <div className="mt-3 flex gap-2">
             {!isIOS && evt ? (
-              <Button size="sm" onClick={install} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button variant="save" size="sm" onClick={install} >
                 <Download className="h-3.5 w-3.5 mr-1.5" /> Install app
               </Button>
             ) : null}

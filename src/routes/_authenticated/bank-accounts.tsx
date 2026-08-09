@@ -3,9 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Landmark } from "lucide-react";
@@ -125,6 +124,49 @@ function Page() {
       cell: (r) => <Badge variant={r.is_active ? "default" : "outline"}>{r.is_active ? "Active" : "Inactive"}</Badge> },
   ], [balances]);
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="banking"
+          icon={Landmark}
+          title={edit ? "Edit Bank Account" : "New Bank Account"}
+          subtitle="Manage multiple bank accounts, currencies, and opening balances."
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saveLabel={edit ? "Save changes" : "Create account"}
+        >
+          <SifoFormSection title="Account details">
+            <SifoField label="Account name" required wide htmlFor="ba-name">
+              <Input id="ba-name" className="h-11" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="e.g. Zanaco Main Operating" />
+            </SifoField>
+            <SifoField label="Bank" htmlFor="ba-bank">
+              <Input id="ba-bank" className="h-11" value={f.bank_name} onChange={e => setF({ ...f, bank_name: e.target.value })} placeholder="Zanaco" />
+            </SifoField>
+            <SifoField label="Account number" htmlFor="ba-acct">
+              <Input id="ba-acct" className="h-11" value={f.account_number} onChange={e => setF({ ...f, account_number: e.target.value })} />
+            </SifoField>
+            <SifoField label="Currency" htmlFor="ba-currency">
+              <Select value={f.currency} onValueChange={v => setF({ ...f, currency: v })}>
+                <SelectTrigger id="ba-currency" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>{CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Opening balance" htmlFor="ba-opening">
+              <Input id="ba-opening" className="h-11" type="number" step="0.01" value={f.opening_balance} onChange={e => setF({ ...f, opening_balance: e.target.value })} />
+            </SifoField>
+            <SifoField label="Opening date" htmlFor="ba-date">
+              <Input id="ba-date" className="h-11" type="date" value={f.opening_date} onChange={e => setF({ ...f, opening_date: e.target.value })} />
+            </SifoField>
+            <SifoField label="Notes" wide htmlFor="ba-notes">
+              <Textarea id="ba-notes" rows={3} value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -134,29 +176,7 @@ function Page() {
         </div>
         <div className="flex gap-2">
           <ExportMenu rows={exportRows} filename="bank-accounts" title="Bank Accounts" />
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openNew} className="bg-emerald-700 hover:bg-emerald-800"><Plus className="h-4 w-4 mr-1" /> New Account</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader><DialogTitle>{edit ? "Edit" : "New"} Bank Account</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><Label>Account name *</Label><Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="e.g. Zanaco Main Operating" /></div>
-                <div><Label>Bank</Label><Input value={f.bank_name} onChange={e => setF({ ...f, bank_name: e.target.value })} placeholder="Zanaco" /></div>
-                <div><Label>Account number</Label><Input value={f.account_number} onChange={e => setF({ ...f, account_number: e.target.value })} /></div>
-                <div><Label>Currency</Label>
-                  <Select value={f.currency} onValueChange={v => setF({ ...f, currency: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Opening balance</Label><Input type="number" step="0.01" value={f.opening_balance} onChange={e => setF({ ...f, opening_balance: e.target.value })} /></div>
-                <div><Label>Opening date</Label><Input type="date" value={f.opening_date} onChange={e => setF({ ...f, opening_date: e.target.value })} /></div>
-                <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} /></div>
-              </div>
-              <Button onClick={save} className="bg-emerald-700 hover:bg-emerald-800">{edit ? "Save" : "Create"}</Button>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openNew} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New Account</Button>
         </div>
       </div>
 

@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/fixed-assets")({
@@ -36,17 +36,15 @@ type Disposal = { id: string; asset_id: string; disposal_date: string; disposal_
 
 const fmt = (n: number) => (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type Mode = "asset" | "category" | "transfer" | "disposal" | "depreciation" | null;
+
 function FixedAssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [cats, setCats] = useState<Category[]>([]);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [disposals, setDisposals] = useState<Disposal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [depOpen, setDepOpen] = useState(false);
-  const [catOpen, setCatOpen] = useState(false);
-  const [trOpen, setTrOpen] = useState(false);
-  const [dispOpen, setDispOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>(null);
   const [depYear, setDepYear] = useState(new Date().getFullYear());
   const [depMonth, setDepMonth] = useState(new Date().getMonth() + 1);
   const [saving, setSaving] = useState(false);
@@ -87,7 +85,7 @@ function FixedAssetsPage() {
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Asset added"); setOpen(false);
+    toast.success("Asset added"); setMode(null);
     setF({ ...f, asset_number: "", description: "", supplier: "", cost: "0", notes: "" });
     load();
   };
@@ -106,7 +104,7 @@ function FixedAssetsPage() {
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Category added"); setCatOpen(false);
+    toast.success("Category added"); setMode(null);
     setCf({ code: "", name: "", useful_life_years: "5", depreciation_method: "straight_line", depreciation_rate: "", capitalisation_threshold: "" });
     load();
   };
@@ -127,7 +125,7 @@ function FixedAssetsPage() {
     }
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Transfer recorded"); setTrOpen(false);
+    toast.success("Transfer recorded"); setMode(null);
     setTf({ asset_id: "", transfer_date: new Date().toISOString().slice(0, 10), to_location: "", to_custodian: "", to_department: "", reason: "" });
     load();
   };
@@ -146,7 +144,7 @@ function FixedAssetsPage() {
     const { error: perr } = await supabase.rpc("post_asset_disposal", { _disposal_id: disp.id });
     setSaving(false);
     if (perr) { toast.error(perr.message); return; }
-    toast.success("Disposal posted to GL"); setDispOpen(false);
+    toast.success("Disposal posted to GL"); setMode(null);
     setDf({ asset_id: "", disposal_date: new Date().toISOString().slice(0, 10), disposal_method: "sale", proceeds: "0", buyer: "", reason: "" });
     load();
   };
@@ -158,7 +156,7 @@ function FixedAssetsPage() {
     if (error) { toast.error(error.message); return; }
     const res = data as { assets_posted: number; total_depreciation: number };
     toast.success(`Posted ${res.assets_posted} asset(s), total ${fmt(res.total_depreciation)}`);
-    setDepOpen(false); load();
+    setMode(null); load();
   };
 
   const totals = {
@@ -175,6 +173,162 @@ function FixedAssetsPage() {
 
   const assetName = (id: string) => assets.find(x => x.id === id)?.description || id.slice(0, 8);
 
+  if (mode === "asset") {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={Package} title="New Fixed Asset" subtitle="Register a new capitalised asset."
+          onCancel={() => setMode(null)} onSave={save} saving={saving} saveLabel="Save asset">
+          <SifoFormSection title="Details">
+            <SifoField label="Asset #" required><Input value={f.asset_number} onChange={e => setF({ ...f, asset_number: e.target.value })} placeholder="FA-001" /></SifoField>
+            <SifoField label="Category">
+              <Select value={f.category} onValueChange={v => setF({ ...f, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {cats.length > 0 ? cats.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>) : (<>
+                    <SelectItem value="Vehicle">Vehicle</SelectItem>
+                    <SelectItem value="Equipment">Equipment</SelectItem>
+                    <SelectItem value="Furniture">Furniture & Fittings</SelectItem>
+                    <SelectItem value="Computer">Computer & IT</SelectItem>
+                    <SelectItem value="Building">Building</SelectItem>
+                    <SelectItem value="Land">Land</SelectItem>
+                  </>)}
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Description" required wide><Input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} /></SifoField>
+            <SifoField label="Purchase Date"><Input type="date" value={f.purchase_date} onChange={e => setF({ ...f, purchase_date: e.target.value })} /></SifoField>
+            <SifoField label="Supplier"><Input value={f.supplier} onChange={e => setF({ ...f, supplier: e.target.value })} /></SifoField>
+            <SifoField label="Cost"><Input type="number" step="0.01" value={f.cost} onChange={e => setF({ ...f, cost: e.target.value })} /></SifoField>
+            <SifoField label="Salvage Value"><Input type="number" step="0.01" value={f.salvage_value} onChange={e => setF({ ...f, salvage_value: e.target.value })} /></SifoField>
+            <SifoField label="Useful Life (years)"><Input type="number" step="0.5" value={f.useful_life_years} onChange={e => setF({ ...f, useful_life_years: e.target.value })} /></SifoField>
+            <SifoField label="Location"><Input value={f.location} onChange={e => setF({ ...f, location: e.target.value })} /></SifoField>
+            <SifoField label="Condition">
+              <Select value={f.condition} onValueChange={v => setF({ ...f, condition: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="fair">Fair</SelectItem>
+                  <SelectItem value="poor">Poor</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Notes" wide><Textarea rows={2} value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
+  if (mode === "category") {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={Layers} title="New Asset Category" subtitle="Standardise useful life and depreciation policy."
+          onCancel={() => setMode(null)} onSave={saveCat} saving={saving} saveLabel="Save category">
+          <SifoFormSection title="Details">
+            <SifoField label="Code" required><Input value={cf.code} onChange={e => setCf({ ...cf, code: e.target.value })} placeholder="VEH" /></SifoField>
+            <SifoField label="Name" required><Input value={cf.name} onChange={e => setCf({ ...cf, name: e.target.value })} placeholder="Motor Vehicles" /></SifoField>
+            <SifoField label="Useful Life (yrs)"><Input type="number" value={cf.useful_life_years} onChange={e => setCf({ ...cf, useful_life_years: e.target.value })} /></SifoField>
+            <SifoField label="Method">
+              <Select value={cf.depreciation_method} onValueChange={v => setCf({ ...cf, depreciation_method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="straight_line">Straight-line</SelectItem>
+                  <SelectItem value="reducing_balance">Reducing balance</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Rate % (for reducing bal.)"><Input type="number" value={cf.depreciation_rate} onChange={e => setCf({ ...cf, depreciation_rate: e.target.value })} /></SifoField>
+            <SifoField label="Capitalisation Threshold"><Input type="number" value={cf.capitalisation_threshold} onChange={e => setCf({ ...cf, capitalisation_threshold: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
+  if (mode === "transfer") {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={ArrowRightLeft} title="Transfer Asset" subtitle="Move an asset to another location or custodian."
+          onCancel={() => setMode(null)} onSave={saveTransfer} saving={saving} saveLabel="Record transfer">
+          <SifoFormSection title="Details">
+            <SifoField label="Asset" required wide>
+              <Select value={tf.asset_id} onValueChange={v => setTf({ ...tf, asset_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Pick an asset" /></SelectTrigger>
+                <SelectContent>
+                  {assets.filter(a => a.status === "active").map(a => <SelectItem key={a.id} value={a.id}>{a.asset_number} — {a.description}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Date"><Input type="date" value={tf.transfer_date} onChange={e => setTf({ ...tf, transfer_date: e.target.value })} /></SifoField>
+            <SifoField label="To Department"><Input value={tf.to_department} onChange={e => setTf({ ...tf, to_department: e.target.value })} /></SifoField>
+            <SifoField label="To Location"><Input value={tf.to_location} onChange={e => setTf({ ...tf, to_location: e.target.value })} /></SifoField>
+            <SifoField label="To Custodian"><Input value={tf.to_custodian} onChange={e => setTf({ ...tf, to_custodian: e.target.value })} /></SifoField>
+            <SifoField label="Reason" wide><Textarea rows={2} value={tf.reason} onChange={e => setTf({ ...tf, reason: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
+  if (mode === "disposal") {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={Trash2} title="Dispose Asset" subtitle="Removes cost + accumulated depreciation, records proceeds and posts gain / loss to the GL."
+          onCancel={() => setMode(null)} onSave={saveDisposal} saving={saving} saveLabel="Post disposal">
+          <SifoFormSection title="Details">
+            <SifoField label="Asset" required wide>
+              <Select value={df.asset_id} onValueChange={v => setDf({ ...df, asset_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Pick an asset" /></SelectTrigger>
+                <SelectContent>
+                  {assets.filter(a => a.status === "active").map(a => <SelectItem key={a.id} value={a.id}>{a.asset_number} — {a.description} (BV {fmt(a.book_value)})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Date"><Input type="date" value={df.disposal_date} onChange={e => setDf({ ...df, disposal_date: e.target.value })} /></SifoField>
+            <SifoField label="Method">
+              <Select value={df.disposal_method} onValueChange={v => setDf({ ...df, disposal_method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sale">Sale</SelectItem>
+                  <SelectItem value="scrap">Scrap</SelectItem>
+                  <SelectItem value="donation">Donation</SelectItem>
+                  <SelectItem value="write_off">Write-off</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Proceeds"><Input type="number" step="0.01" value={df.proceeds} onChange={e => setDf({ ...df, proceeds: e.target.value })} /></SifoField>
+            <SifoField label="Buyer"><Input value={df.buyer} onChange={e => setDf({ ...df, buyer: e.target.value })} /></SifoField>
+            <SifoField label="Reason" wide><Textarea rows={2} value={df.reason} onChange={e => setDf({ ...df, reason: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
+  if (mode === "depreciation") {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={RefreshCw} title="Post Monthly Depreciation" subtitle="Posts straight-line depreciation for all active assets and creates journal entries dated the last day of the selected month."
+          onCancel={() => setMode(null)} onSave={runDep} saving={saving} saveLabel="Post">
+          <SifoFormSection title="Period">
+            <SifoField label="Year"><Input type="number" value={depYear} onChange={e => setDepYear(Number(e.target.value))} /></SifoField>
+            <SifoField label="Month">
+              <Select value={String(depMonth)} onValueChange={v => setDepMonth(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                    <SelectItem key={m} value={String(m)}>{new Date(2000, m - 1, 1).toLocaleString(undefined, { month: "long" })}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -183,15 +337,15 @@ function FixedAssetsPage() {
           <p className="text-sm text-muted-foreground">Categories, transfers, disposals and monthly depreciation posting.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setDepOpen(true)}><Calendar className="h-4 w-4 mr-1" /> Post Depreciation</Button>
-          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Asset</Button>
+          <Button variant="outline" size="sm" className="h-9" onClick={() => setMode("depreciation")}><Calendar className="h-4 w-4 mr-1" /> Post Depreciation</Button>
+          <Button size="sm" className="h-9" onClick={() => setMode("asset")}><Plus className="h-4 w-4 mr-1" /> New Asset</Button>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Total Cost</div><div className="text-xl font-bold">{fmt(totals.cost)}</div></CardContent></Card>
-        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Accumulated Depreciation</div><div className="text-xl font-bold text-rose-600">{fmt(totals.acc)}</div></CardContent></Card>
-        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Net Book Value</div><div className="text-xl font-bold text-emerald-600">{fmt(totals.bv)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Accumulated Depreciation</div><div className="text-xl font-bold text-destructive">{fmt(totals.acc)}</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Net Book Value</div><div className="text-xl font-bold text-emerald-700">{fmt(totals.bv)}</div></CardContent></Card>
       </div>
 
       <Tabs defaultValue="register">
@@ -225,13 +379,13 @@ function FixedAssetsPage() {
                         <TableCell>{a.purchase_date}</TableCell><TableCell>{a.location}</TableCell>
                         <TableCell className="text-right">{fmt(a.cost)}</TableCell>
                         <TableCell className="text-right">{a.useful_life_years}y</TableCell>
-                        <TableCell className="text-right text-rose-600">{fmt(a.accumulated_depreciation)}</TableCell>
+                        <TableCell className="text-right text-destructive">{fmt(a.accumulated_depreciation)}</TableCell>
                         <TableCell className="text-right font-semibold">{fmt(a.book_value)}</TableCell>
                         <TableCell><Badge variant={a.status === "active" ? "default" : "secondary"}>{a.status}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
-                            <Button size="sm" variant="ghost" onClick={() => { setTf({ ...tf, asset_id: a.id }); setTrOpen(true); }} disabled={a.status !== "active"}><ArrowRightLeft className="h-3.5 w-3.5" /></Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setDf({ ...df, asset_id: a.id }); setDispOpen(true); }} disabled={a.status !== "active"}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setTf({ ...tf, asset_id: a.id }); setMode("transfer"); }} disabled={a.status !== "active"}><ArrowRightLeft className="h-3.5 w-3.5" /></Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setDf({ ...df, asset_id: a.id }); setMode("disposal"); }} disabled={a.status !== "active"}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -247,7 +401,7 @@ function FixedAssetsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Categories ({cats.length})</CardTitle>
-              <Button size="sm" onClick={() => setCatOpen(true)}><Plus className="h-4 w-4 mr-1" />New Category</Button>
+              <Button size="sm" className="h-9" onClick={() => setMode("category")}><Plus className="h-4 w-4 mr-1" />New Category</Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -279,7 +433,7 @@ function FixedAssetsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Transfers ({transfers.length})</CardTitle>
-              <Button size="sm" onClick={() => setTrOpen(true)}><Plus className="h-4 w-4 mr-1" />New Transfer</Button>
+              <Button size="sm" className="h-9" onClick={() => setMode("transfer")}><Plus className="h-4 w-4 mr-1" />New Transfer</Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -309,7 +463,7 @@ function FixedAssetsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Disposals ({disposals.length})</CardTitle>
-              <Button size="sm" onClick={() => setDispOpen(true)}><Plus className="h-4 w-4 mr-1" />New Disposal</Button>
+              <Button size="sm" className="h-9" onClick={() => setMode("disposal")}><Plus className="h-4 w-4 mr-1" />New Disposal</Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -327,7 +481,7 @@ function FixedAssetsPage() {
                       <TableCell>{d.disposal_method}</TableCell>
                       <TableCell>{d.buyer || "—"}</TableCell>
                       <TableCell className="text-right">{fmt(d.proceeds)}</TableCell>
-                      <TableCell className={"text-right font-semibold " + ((d.gain_loss ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600")}>{fmt(d.gain_loss ?? 0)}</TableCell>
+                      <TableCell className={"text-right font-semibold " + ((d.gain_loss ?? 0) >= 0 ? "text-emerald-700" : "text-destructive")}>{fmt(d.gain_loss ?? 0)}</TableCell>
                       <TableCell>{d.journal_entry_id ? <Badge>Posted</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
                     </TableRow>
                   ))}
@@ -357,8 +511,8 @@ function FixedAssetsPage() {
                       <TableCell className="text-right">{a.useful_life_years}y</TableCell>
                       <TableCell className="text-right">{fmt(a.annual_dep)}</TableCell>
                       <TableCell className="text-right">{fmt(a.monthly_dep)}</TableCell>
-                      <TableCell className="text-right text-rose-600">{fmt(a.accumulated_depreciation)}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-600">{fmt(a.book_value)}</TableCell>
+                      <TableCell className="text-right text-destructive">{fmt(a.accumulated_depreciation)}</TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-700">{fmt(a.book_value)}</TableCell>
                     </TableRow>
                   ))}
                   {schedule.length > 0 && (
@@ -368,8 +522,8 @@ function FixedAssetsPage() {
                       <TableCell></TableCell><TableCell></TableCell>
                       <TableCell className="text-right">{fmt(schedule.reduce((s, a) => s + a.annual_dep, 0))}</TableCell>
                       <TableCell className="text-right">{fmt(schedule.reduce((s, a) => s + a.monthly_dep, 0))}</TableCell>
-                      <TableCell className="text-right text-rose-600">{fmt(schedule.reduce((s, a) => s + Number(a.accumulated_depreciation), 0))}</TableCell>
-                      <TableCell className="text-right text-emerald-600">{fmt(schedule.reduce((s, a) => s + Number(a.book_value), 0))}</TableCell>
+                      <TableCell className="text-right text-destructive">{fmt(schedule.reduce((s, a) => s + Number(a.accumulated_depreciation), 0))}</TableCell>
+                      <TableCell className="text-right text-emerald-700">{fmt(schedule.reduce((s, a) => s + Number(a.book_value), 0))}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -378,169 +532,6 @@ function FixedAssetsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* New Asset */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>New Fixed Asset</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Asset # *</Label><Input value={f.asset_number} onChange={e => setF({ ...f, asset_number: e.target.value })} placeholder="FA-001" /></div>
-            <div><Label>Category</Label>
-              <Select value={f.category} onValueChange={v => setF({ ...f, category: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {cats.length > 0 ? cats.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>) : (<>
-                    <SelectItem value="Vehicle">Vehicle</SelectItem>
-                    <SelectItem value="Equipment">Equipment</SelectItem>
-                    <SelectItem value="Furniture">Furniture & Fittings</SelectItem>
-                    <SelectItem value="Computer">Computer & IT</SelectItem>
-                    <SelectItem value="Building">Building</SelectItem>
-                    <SelectItem value="Land">Land</SelectItem>
-                  </>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2"><Label>Description *</Label><Input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} /></div>
-            <div><Label>Purchase Date</Label><Input type="date" value={f.purchase_date} onChange={e => setF({ ...f, purchase_date: e.target.value })} /></div>
-            <div><Label>Supplier</Label><Input value={f.supplier} onChange={e => setF({ ...f, supplier: e.target.value })} /></div>
-            <div><Label>Cost</Label><Input type="number" step="0.01" value={f.cost} onChange={e => setF({ ...f, cost: e.target.value })} /></div>
-            <div><Label>Salvage Value</Label><Input type="number" step="0.01" value={f.salvage_value} onChange={e => setF({ ...f, salvage_value: e.target.value })} /></div>
-            <div><Label>Useful Life (years)</Label><Input type="number" step="0.5" value={f.useful_life_years} onChange={e => setF({ ...f, useful_life_years: e.target.value })} /></div>
-            <div><Label>Location</Label><Input value={f.location} onChange={e => setF({ ...f, location: e.target.value })} /></div>
-            <div><Label>Condition</Label>
-              <Select value={f.condition} onValueChange={v => setF({ ...f, condition: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="fair">Fair</SelectItem>
-                  <SelectItem value="poor">Poor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} rows={2} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Category */}
-      <Dialog open={catOpen} onOpenChange={setCatOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>New Asset Category</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Code *</Label><Input value={cf.code} onChange={e => setCf({ ...cf, code: e.target.value })} placeholder="VEH" /></div>
-            <div><Label>Name *</Label><Input value={cf.name} onChange={e => setCf({ ...cf, name: e.target.value })} placeholder="Motor Vehicles" /></div>
-            <div><Label>Useful Life (yrs)</Label><Input type="number" value={cf.useful_life_years} onChange={e => setCf({ ...cf, useful_life_years: e.target.value })} /></div>
-            <div><Label>Method</Label>
-              <Select value={cf.depreciation_method} onValueChange={v => setCf({ ...cf, depreciation_method: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="straight_line">Straight-line</SelectItem>
-                  <SelectItem value="reducing_balance">Reducing balance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Rate % (for reducing bal.)</Label><Input type="number" value={cf.depreciation_rate} onChange={e => setCf({ ...cf, depreciation_rate: e.target.value })} /></div>
-            <div><Label>Capitalisation Threshold</Label><Input type="number" value={cf.capitalisation_threshold} onChange={e => setCf({ ...cf, capitalisation_threshold: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCatOpen(false)}>Cancel</Button>
-            <Button onClick={saveCat} disabled={saving}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Transfer */}
-      <Dialog open={trOpen} onOpenChange={setTrOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Transfer Asset</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Label>Asset *</Label>
-              <Select value={tf.asset_id} onValueChange={v => setTf({ ...tf, asset_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Pick an asset" /></SelectTrigger>
-                <SelectContent>
-                  {assets.filter(a => a.status === "active").map(a => <SelectItem key={a.id} value={a.id}>{a.asset_number} — {a.description}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Date</Label><Input type="date" value={tf.transfer_date} onChange={e => setTf({ ...tf, transfer_date: e.target.value })} /></div>
-            <div><Label>To Department</Label><Input value={tf.to_department} onChange={e => setTf({ ...tf, to_department: e.target.value })} /></div>
-            <div><Label>To Location</Label><Input value={tf.to_location} onChange={e => setTf({ ...tf, to_location: e.target.value })} /></div>
-            <div><Label>To Custodian</Label><Input value={tf.to_custodian} onChange={e => setTf({ ...tf, to_custodian: e.target.value })} /></div>
-            <div className="col-span-2"><Label>Reason</Label><Textarea rows={2} value={tf.reason} onChange={e => setTf({ ...tf, reason: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTrOpen(false)}>Cancel</Button>
-            <Button onClick={saveTransfer} disabled={saving}>Record Transfer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Disposal */}
-      <Dialog open={dispOpen} onOpenChange={setDispOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Dispose Asset</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Removes cost + accumulated depreciation, records any proceeds and posts gain / loss to the GL.</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Label>Asset *</Label>
-              <Select value={df.asset_id} onValueChange={v => setDf({ ...df, asset_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Pick an asset" /></SelectTrigger>
-                <SelectContent>
-                  {assets.filter(a => a.status === "active").map(a => <SelectItem key={a.id} value={a.id}>{a.asset_number} — {a.description} (BV {fmt(a.book_value)})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Date</Label><Input type="date" value={df.disposal_date} onChange={e => setDf({ ...df, disposal_date: e.target.value })} /></div>
-            <div><Label>Method</Label>
-              <Select value={df.disposal_method} onValueChange={v => setDf({ ...df, disposal_method: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">Sale</SelectItem>
-                  <SelectItem value="scrap">Scrap</SelectItem>
-                  <SelectItem value="donation">Donation</SelectItem>
-                  <SelectItem value="write_off">Write-off</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Proceeds</Label><Input type="number" step="0.01" value={df.proceeds} onChange={e => setDf({ ...df, proceeds: e.target.value })} /></div>
-            <div><Label>Buyer</Label><Input value={df.buyer} onChange={e => setDf({ ...df, buyer: e.target.value })} /></div>
-            <div className="col-span-2"><Label>Reason</Label><Textarea rows={2} value={df.reason} onChange={e => setDf({ ...df, reason: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDispOpen(false)}>Cancel</Button>
-            <Button onClick={saveDisposal} disabled={saving}>Post Disposal</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Post Depreciation */}
-      <Dialog open={depOpen} onOpenChange={setDepOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Post Monthly Depreciation</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Posts straight-line depreciation for all active assets and creates journal entries dated the last day of the selected month.</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Year</Label><Input type="number" value={depYear} onChange={e => setDepYear(Number(e.target.value))} /></div>
-            <div><Label>Month</Label>
-              <Select value={String(depMonth)} onValueChange={v => setDepMonth(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                    <SelectItem key={m} value={String(m)}>{new Date(2000, m - 1, 1).toLocaleString(undefined, { month: "long" })}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDepOpen(false)}>Cancel</Button>
-            <Button onClick={runDep} disabled={saving}><RefreshCw className="h-4 w-4 mr-1" /> Post</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

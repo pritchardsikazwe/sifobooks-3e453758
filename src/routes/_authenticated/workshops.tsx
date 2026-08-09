@@ -4,15 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Plus, GraduationCap, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 import { RequireModule } from "@/components/RequireModule";
 
@@ -27,6 +25,7 @@ function Page() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [aOpen, setAOpen] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [f, setF] = useState<any>({
     workshop_name: "", start_date: new Date().toISOString().slice(0, 10), end_date: "",
     venue: "", participants_count: 0, budget: 0, notes: "",
@@ -55,7 +54,9 @@ function Page() {
     if (!u.user) return;
     const payload = { user_id: u.user.id, ...f, budget: Number(f.budget), participants_count: Number(f.participants_count) };
     if (!payload.end_date) delete (payload as any).end_date;
+    setSaving(true);
     const { error } = await supabase.from("workshops").insert(payload);
+    setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Workshop created"); setOpen(false); load();
   };
@@ -70,6 +71,7 @@ function Page() {
     if (error) return toast.error(error.message);
     toast.success("Allowance recorded — posted to GL");
     setA({ ...a, recipient_name: "", amount: 0 });
+    setAOpen(null);
     load();
   };
 
@@ -79,30 +81,96 @@ function Page() {
     Spent: r.actual_spent, Status: r.status,
   }));
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="inventory"
+          icon={GraduationCap}
+          title="Workshop"
+          subtitle="Training register with per-recipient allowance payments"
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saving={saving}
+          saveLabel="Save workshop"
+        >
+          <SifoFormSection title="Workshop details">
+            <SifoField label="Name" wide><Input value={f.workshop_name} onChange={e => setF({ ...f, workshop_name: e.target.value })} /></SifoField>
+            <SifoField label="Start"><Input type="date" value={f.start_date} onChange={e => setF({ ...f, start_date: e.target.value })} /></SifoField>
+            <SifoField label="End"><Input type="date" value={f.end_date} onChange={e => setF({ ...f, end_date: e.target.value })} /></SifoField>
+            <SifoField label="Venue" wide><Input value={f.venue} onChange={e => setF({ ...f, venue: e.target.value })} /></SifoField>
+            <SifoField label="Participants"><Input type="number" value={f.participants_count} onChange={e => setF({ ...f, participants_count: e.target.value })} /></SifoField>
+            <SifoField label="Budget (K)"><Input type="number" value={f.budget} onChange={e => setF({ ...f, budget: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
+  if (aOpen) {
+    const workshop = rows.find(r => r.id === aOpen);
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="inventory"
+          icon={Users}
+          title="Pay Allowance"
+          subtitle={workshop ? `For ${workshop.workshop_name}` : undefined}
+          onCancel={() => setAOpen(null)}
+          onSave={addAllowance}
+          saveLabel="Pay & post"
+        >
+          <SifoFormSection title="Allowance details">
+            <SifoField label="Recipient" wide><Input value={a.recipient_name} onChange={e => setA({ ...a, recipient_name: e.target.value })} /></SifoField>
+            <SifoField label="Role">
+              <Select value={a.role} onValueChange={v => setA({ ...a, role: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="facilitator">Facilitator</SelectItem>
+                  <SelectItem value="participant">Participant</SelectItem>
+                  <SelectItem value="coordinator">Coordinator</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Allowance type">
+              <Select value={a.allowance_type} onValueChange={v => setA({ ...a, allowance_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transport">Transport</SelectItem>
+                  <SelectItem value="accommodation">Accommodation</SelectItem>
+                  <SelectItem value="lunch">Lunch</SelectItem>
+                  <SelectItem value="facilitation">Facilitation fee</SelectItem>
+                  <SelectItem value="sitting">Sitting</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Amount (K)"><Input type="number" value={a.amount} onChange={e => setA({ ...a, amount: e.target.value })} /></SifoField>
+            <SifoField label="Payment method">
+              <Select value={a.payment_method} onValueChange={v => setA({ ...a, payment_method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank">Bank</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="mobile">Mobile money</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><GraduationCap className="h-6 w-6 text-emerald-600" /> Workshops & Allowances</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><GraduationCap className="h-6 w-6 text-primary" /> Workshops & Allowances</h1>
           <p className="text-sm text-muted-foreground">Training register with per-recipient allowance payments auto-posted to GL.</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu rows={exportRows} filename="workshops" title="Workshops" />
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" /> New Workshop</Button></DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader><DialogTitle>Workshop</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><Label>Name</Label><Input value={f.workshop_name} onChange={e => setF({ ...f, workshop_name: e.target.value })} /></div>
-                <div><Label>Start</Label><Input type="date" value={f.start_date} onChange={e => setF({ ...f, start_date: e.target.value })} /></div>
-                <div><Label>End</Label><Input type="date" value={f.end_date} onChange={e => setF({ ...f, end_date: e.target.value })} /></div>
-                <div className="col-span-2"><Label>Venue</Label><Input value={f.venue} onChange={e => setF({ ...f, venue: e.target.value })} /></div>
-                <div><Label>Participants</Label><Input type="number" value={f.participants_count} onChange={e => setF({ ...f, participants_count: e.target.value })} /></div>
-                <div><Label>Budget (K)</Label><Input type="number" value={f.budget} onChange={e => setF({ ...f, budget: e.target.value })} /></div>
-              </div>
-              <Button onClick={save} className="bg-emerald-600 hover:bg-emerald-700">Save Workshop</Button>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" className="h-9" variant="save" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Workshop</Button>
         </div>
       </div>
 
@@ -137,49 +205,6 @@ function Page() {
           </Table>
         }
       </Card>
-
-      <Dialog open={!!aOpen} onOpenChange={() => setAOpen(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Pay Allowance</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Label>Recipient</Label><Input value={a.recipient_name} onChange={e => setA({ ...a, recipient_name: e.target.value })} /></div>
-            <div><Label>Role</Label>
-              <Select value={a.role} onValueChange={v => setA({ ...a, role: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="facilitator">Facilitator</SelectItem>
-                  <SelectItem value="participant">Participant</SelectItem>
-                  <SelectItem value="coordinator">Coordinator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Allowance type</Label>
-              <Select value={a.allowance_type} onValueChange={v => setA({ ...a, allowance_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="transport">Transport</SelectItem>
-                  <SelectItem value="accommodation">Accommodation</SelectItem>
-                  <SelectItem value="lunch">Lunch</SelectItem>
-                  <SelectItem value="facilitation">Facilitation fee</SelectItem>
-                  <SelectItem value="sitting">Sitting</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Amount (K)</Label><Input type="number" value={a.amount} onChange={e => setA({ ...a, amount: e.target.value })} /></div>
-            <div><Label>Payment method</Label>
-              <Select value={a.payment_method} onValueChange={v => setA({ ...a, payment_method: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank">Bank</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="mobile">Mobile money</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Button onClick={addAllowance} className="bg-emerald-600 hover:bg-emerald-700">Pay & Post</Button>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

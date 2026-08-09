@@ -152,7 +152,7 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
         </div>
 
         <div className="sm:col-span-2 flex justify-end">
-          <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save profile</Button>
+          <Button variant="save" onClick={save} disabled={saving} >{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save profile</Button>
         </div>
       </CardContent>
     </Card>
@@ -179,7 +179,7 @@ function FinancialYearTab({ company, onSaved }: { company: Company; onSaved: (c:
         <div className="rounded-md bg-slate-50 border p-3 text-sm text-slate-600">
           Current FY: <b>{monthName(m)} {new Date().getFullYear()}</b> → <b>{monthName(((m - 2 + 12) % 12) + 1)} {new Date().getFullYear() + 1}</b>
         </div>
-        <Button onClick={save} className="bg-emerald-600 hover:bg-emerald-700">Save</Button>
+        <Button variant="save" onClick={save} >Save</Button>
       </CardContent>
     </Card>
   );
@@ -249,7 +249,7 @@ function ListTab<T extends Row>({ title, description, table, userId, companyId, 
             ))}
           </div>
           <div className="mt-3 flex justify-end">
-            <Button onClick={add} size="sm" className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4" /> Add</Button>
+            <Button variant="save" onClick={add} size="sm" ><Plus className="h-4 w-4" /> Add</Button>
           </div>
         </div>
 

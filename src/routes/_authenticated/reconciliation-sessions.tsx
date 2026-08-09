@@ -309,7 +309,7 @@ function SessionDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
         <div className="flex gap-2">
           {!locked && <Button variant="outline" onClick={saveLines} disabled={saving}><RefreshCw className="h-4 w-4 mr-1" /> Save</Button>}
-          {!locked && <Button onClick={lock} disabled={!summary.balanced || saving} className="bg-emerald-600 hover:bg-emerald-700"><Lock className="h-4 w-4 mr-1" /> Lock</Button>}
+          {!locked && <Button variant="save" onClick={lock} disabled={!summary.balanced || saving} ><Lock className="h-4 w-4 mr-1" /> Lock</Button>}
           {!locked && <Button variant="destructive" onClick={del}>Delete</Button>}
           {locked && <Badge className="bg-emerald-600"><Lock className="h-3 w-3 mr-1" /> Locked {session.locked_at?.slice(0,10)}</Badge>}
         </div>

@@ -3,9 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Sparkles, Play, Loader2 } from "lucide-react";
@@ -119,6 +118,68 @@ function Page() {
       cell: (r) => r.auto_apply ? <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Yes</Badge> : <Badge variant="outline">No</Badge> },
   ], [accounts]);
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="banking"
+          icon={Sparkles}
+          title={edit ? "Edit Rule" : "New Rule"}
+          subtitle="Teach the system how to auto-match imported bank transactions."
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saveLabel={edit ? "Save changes" : "Create rule"}
+        >
+          <SifoFormSection title="Rule details">
+            <SifoField label="Rule name" required wide htmlFor="br-name">
+              <Input id="br-name" className="h-11" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="e.g. ZESCO → Electricity" />
+            </SifoField>
+            <SifoField label="Match type" htmlFor="br-match">
+              <Select value={f.match_type} onValueChange={v => setF({ ...f, match_type: v })}>
+                <SelectTrigger id="br-match" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="contains">Contains</SelectItem>
+                  <SelectItem value="equals">Equals</SelectItem>
+                  <SelectItem value="regex">Regex</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Direction" htmlFor="br-direction">
+              <Select value={f.direction} onValueChange={v => setF({ ...f, direction: v })}>
+                <SelectTrigger id="br-direction" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="inflow">Inflow (money in)</SelectItem>
+                  <SelectItem value="outflow">Outflow (money out)</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Pattern" required wide htmlFor="br-pattern">
+              <Input id="br-pattern" className="h-11" value={f.pattern} onChange={e => setF({ ...f, pattern: e.target.value })} placeholder="ZESCO" />
+            </SifoField>
+            <SifoField label="Target account" required wide htmlFor="br-account">
+              <Select value={f.suggested_account_id} onValueChange={v => setF({ ...f, suggested_account_id: v })}>
+                <SelectTrigger id="br-account" className="h-11"><SelectValue placeholder="Pick a GL account" /></SelectTrigger>
+                <SelectContent>{accounts.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name} ({a.account_type})</SelectItem>
+                ))}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Priority" htmlFor="br-priority">
+              <Input id="br-priority" className="h-11" type="number" value={f.priority} onChange={e => setF({ ...f, priority: e.target.value })} />
+            </SifoField>
+            <SifoField label="Auto-apply on import" htmlFor="br-auto">
+              <div className="flex h-11 items-center gap-3">
+                <Switch id="br-auto" checked={f.auto_apply} onCheckedChange={v => setF({ ...f, auto_apply: v })} />
+                <span className="text-sm text-muted-foreground">Automatically apply matching transactions</span>
+              </div>
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -128,55 +189,10 @@ function Page() {
         </div>
         <div className="flex gap-2">
           <ExportMenu rows={exportRows} filename="bank-rules" title="Bank Rules" />
-          <Button onClick={runAll} disabled={running} variant="outline">
-            {running ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Running…</> : <><Play className="h-4 w-4 mr-1" /> Run Rules Now</>}
+          <Button onClick={runAll} disabled={running} variant="outline" size="sm" className="h-9">
+            {running ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Running…</> : <><Play className="h-4 w-4 mr-1.5" /> Run Rules Now</>}
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openNew} className="bg-emerald-700 hover:bg-emerald-800"><Plus className="h-4 w-4 mr-1" /> New Rule</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader><DialogTitle>{edit ? "Edit" : "New"} Rule</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><Label>Rule name *</Label><Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="e.g. ZESCO → Electricity" /></div>
-                <div><Label>Match type</Label>
-                  <Select value={f.match_type} onValueChange={v => setF({ ...f, match_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="contains">Contains</SelectItem>
-                      <SelectItem value="equals">Equals</SelectItem>
-                      <SelectItem value="regex">Regex</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Direction</Label>
-                  <Select value={f.direction} onValueChange={v => setF({ ...f, direction: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any</SelectItem>
-                      <SelectItem value="inflow">Inflow (money in)</SelectItem>
-                      <SelectItem value="outflow">Outflow (money out)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2"><Label>Pattern *</Label><Input value={f.pattern} onChange={e => setF({ ...f, pattern: e.target.value })} placeholder="ZESCO" /></div>
-                <div className="col-span-2"><Label>Target account *</Label>
-                  <Select value={f.suggested_account_id} onValueChange={v => setF({ ...f, suggested_account_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Pick a GL account" /></SelectTrigger>
-                    <SelectContent>{accounts.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name} ({a.account_type})</SelectItem>
-                    ))}</SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Priority</Label><Input type="number" value={f.priority} onChange={e => setF({ ...f, priority: e.target.value })} /></div>
-                <div className="flex items-center gap-3 pt-6">
-                  <Switch checked={f.auto_apply} onCheckedChange={v => setF({ ...f, auto_apply: v })} />
-                  <Label>Auto-apply on import</Label>
-                </div>
-              </div>
-              <Button onClick={save} className="bg-emerald-700 hover:bg-emerald-800">{edit ? "Save" : "Create"}</Button>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openNew} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New Rule</Button>
         </div>
       </div>
 

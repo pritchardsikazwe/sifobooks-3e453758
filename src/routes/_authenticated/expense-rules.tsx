@@ -5,11 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/expense-rules")({
@@ -103,6 +102,61 @@ function ExpenseRules() {
     return a ? `${a.account_code} — ${a.account_name}` : "—";
   };
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="purchases"
+          icon={Tags}
+          title="New expense rule"
+          subtitle="Rules that map future bills to the right expense accounts automatically."
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saving={saving}
+          saveLabel="Save rule"
+        >
+          <SifoFormSection title="Rule details">
+            <SifoField label="Rule name" required wide htmlFor="er-name">
+              <Input id="er-name" className="h-11" placeholder="e.g. Fuel expenses" value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </SifoField>
+            <SifoField label="Match type" htmlFor="er-match">
+              <Select value={form.match_type} onValueChange={v => setForm({ ...form, match_type: v as any, match_value: "" })}>
+                <SelectTrigger id="er-match" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="keyword">Description keyword</SelectItem>
+                  <SelectItem value="supplier">Supplier</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Priority" htmlFor="er-priority">
+              <Input id="er-priority" className="h-11" type="number" value={form.priority ?? 100} onChange={e => setForm({ ...form, priority: Number(e.target.value) || 100 })} />
+            </SifoField>
+            <SifoField label={form.match_type === "supplier" ? "Supplier" : "Keyword"} required wide htmlFor="er-value">
+              {form.match_type === "supplier" ? (
+                <Select value={form.match_value ?? ""} onValueChange={v => setForm({ ...form, match_value: v })}>
+                  <SelectTrigger id="er-value" className="h-11"><SelectValue placeholder="Select supplier" /></SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input id="er-value" className="h-11" placeholder="e.g. fuel" value={form.match_value ?? ""} onChange={e => setForm({ ...form, match_value: e.target.value })} />
+              )}
+            </SifoField>
+            <SifoField label="Post to account" required wide htmlFor="er-account">
+              <Select value={form.account_id ?? ""} onValueChange={v => setForm({ ...form, account_id: v })}>
+                <SelectTrigger id="er-account" className="h-11"><SelectValue placeholder="Select expense account" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -113,7 +167,7 @@ function ExpenseRules() {
             <p className="text-sm text-muted-foreground">Rules that map future bills to the right expense accounts automatically.</p>
           </div>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />New rule</Button>
+        <Button onClick={() => setOpen(true)} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New rule</Button>
       </div>
 
       <Card>
@@ -144,7 +198,7 @@ function ExpenseRules() {
                       {r.match_type === "supplier" ? (suppliers.find(s => s.id === r.match_value)?.name ?? r.match_value) : `"${r.match_value}"`}
                     </TableCell>
                     <TableCell className="text-xs">{accountLabel(r.account_id)}</TableCell>
-                    <TableCell>{r.is_active ? <Badge className="bg-emerald-600 hover:bg-emerald-700">Active</Badge> : <Badge variant="outline">Inactive</Badge>}</TableCell>
+                    <TableCell>{r.is_active ? <Badge variant="secondary" className="bg-primary/10 text-primary">Active</Badge> : <Badge variant="outline">Inactive</Badge>}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button size="sm" variant="ghost" onClick={() => toggle(r)}>
                         {r.is_active ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
@@ -168,61 +222,6 @@ function ExpenseRules() {
         </CardContent>
       </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>New expense rule</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Rule name</Label>
-              <Input placeholder="e.g. Fuel expenses" value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Match type</Label>
-                <Select value={form.match_type} onValueChange={v => setForm({ ...form, match_type: v as any, match_value: "" })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="keyword">Description keyword</SelectItem>
-                    <SelectItem value="supplier">Supplier</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Priority</Label>
-                <Input type="number" value={form.priority ?? 100} onChange={e => setForm({ ...form, priority: Number(e.target.value) || 100 })} />
-              </div>
-            </div>
-            <div>
-              <Label>{form.match_type === "supplier" ? "Supplier" : "Keyword"}</Label>
-              {form.match_type === "supplier" ? (
-                <Select value={form.match_value ?? ""} onValueChange={v => setForm({ ...form, match_value: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input placeholder="e.g. fuel" value={form.match_value ?? ""} onChange={e => setForm({ ...form, match_value: e.target.value })} />
-              )}
-            </div>
-            <div>
-              <Label>Post to account</Label>
-              <Select value={form.account_id ?? ""} onValueChange={v => setForm({ ...form, account_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select expense account" /></SelectTrigger>
-                <SelectContent>
-                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save rule
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

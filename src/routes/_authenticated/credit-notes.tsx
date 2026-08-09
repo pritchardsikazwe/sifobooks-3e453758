@@ -3,9 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, UserPlus, FileText, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
@@ -15,6 +13,7 @@ import { ShareDoc } from "@/components/ShareDoc";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 export const Route = createFileRoute("/_authenticated/credit-notes")({
   head: () => ({ meta: [{ title: "Credit Notes — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -29,7 +28,29 @@ function CreditNotesPage() {
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"all" | "draft" | "posted">("all");
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const [open, setOpen] = useState(false);
 
+  // New credit note form state
+  const today = new Date().toISOString().slice(0, 10);
+  const [invoiceId, setInvoiceId] = useState<string>("");
+  const [customerId, setCustomerId] = useState<string>("");
+  const [issueDate, setIssueDate] = useState(today);
+  const [reason, setReason] = useState("");
+  const [subtotal, setSubtotal] = useState(0);
+  const [vatRate, setVatRate] = useState(16);
+  const [saving, setSaving] = useState(false);
+
+  const vat = subtotal * (vatRate / 100);
+  const total = subtotal + vat;
+
+  const chosenInv = invoices.find(i => i.id === invoiceId);
+  useEffect(() => {
+    if (chosenInv) {
+      setCustomerId(chosenInv.customer_id);
+      setSubtotal(Number(chosenInv.total) / (1 + vatRate / 100));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceId]);
 
   const load = async () => {
     setLoading(true);
@@ -67,6 +88,101 @@ function CreditNotesPage() {
     load();
   };
 
+  const resetForm = () => {
+    setInvoiceId(""); setCustomerId(""); setIssueDate(today); setReason(""); setSubtotal(0); setVatRate(16);
+  };
+
+  const openNew = () => { resetForm(); setOpen(true); };
+
+  const submit = async (post: boolean) => {
+    if (!customerId && !invoiceId) return toast.error("Pick a customer or invoice");
+    if (subtotal <= 0) return toast.error("Amount must be greater than zero");
+    setSaving(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { setSaving(false); return; }
+    const { count } = await supabase.from("credit_notes").select("*", { count: "exact", head: true });
+    const number = `CN${(count ?? 0) + 1}`;
+
+    const { data: cn, error } = await supabase.from("credit_notes").insert({
+      user_id: u.user.id, customer_id: customerId || null, invoice_id: invoiceId || null,
+      number, issue_date: issueDate, reason,
+      subtotal, vat_amount: vat, total,
+      status: post ? "posted" : "draft",
+    }).select().single();
+    if (error || !cn) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
+
+    await supabase.from("credit_note_items").insert({
+      user_id: u.user.id, credit_note_id: cn.id, description: reason || "Credit note",
+      quantity: 1, unit_price: subtotal, vat_rate: vatRate, line_total: total,
+    });
+
+    if (post) {
+      const custName = customers.find(c => c.id === customerId)?.name;
+      await postCreditNoteLedger({
+        userId: u.user.id, creditNoteId: cn.id, number, issueDate,
+        subtotal, vat, total, customerName: custName,
+      });
+    }
+
+    setSaving(false);
+    setOpen(false);
+    toast.success(post ? `Credit note ${number} posted — journal entry created` : `Draft ${number} saved`);
+    resetForm();
+    load();
+  };
+
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="sales"
+          icon={Undo2}
+          title="New Credit Note"
+          subtitle="Reverse or reduce a previously issued invoice for returns, discounts or corrections."
+          onCancel={() => setOpen(false)}
+          onSave={() => submit(true)}
+          saving={saving}
+          saveLabel="Post Credit Note"
+          secondary={<Button variant="outline" onClick={() => submit(false)} disabled={saving}>Save as Draft</Button>}
+        >
+          <SifoFormSection title="Details">
+            <SifoField label="Against Invoice (optional)">
+              <Select value={invoiceId} onValueChange={setInvoiceId}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="— Pick invoice —" /></SelectTrigger>
+                <SelectContent>{invoices.map(i => <SelectItem key={i.id} value={i.id}>{i.number} · {fmtMoney(i.total, i.currency)}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Customer">
+              <Select value={customerId} onValueChange={setCustomerId} disabled={!!invoiceId}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="— Select customer —" /></SelectTrigger>
+                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Issue Date" required>
+              <Input type="date" className="h-11" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
+            </SifoField>
+            <SifoField label="VAT %">
+              <Input type="number" className="h-11" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} />
+            </SifoField>
+            <SifoField label="Net amount (excl VAT)" required>
+              <Input type="number" step="0.01" className="h-11" value={subtotal || ""} onChange={e => setSubtotal(Number(e.target.value))} />
+            </SifoField>
+            <SifoField label="Reason" wide>
+              <textarea value={reason} onChange={e => setReason(e.target.value)} className="w-full min-h-16 rounded-md border bg-background p-2 text-sm" placeholder="Return / correction / discount…" />
+            </SifoField>
+          </SifoFormSection>
+          <SifoFormSection title="Posting" columns={1}>
+            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat)}</span></div>
+              <div className="flex justify-between font-semibold border-t border-border pt-1"><span>Total credit</span><span>{fmtMoney(total)}</span></div>
+            </div>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 flex-wrap">
@@ -75,8 +191,8 @@ function CreditNotesPage() {
           <Input placeholder="Search credit notes" value={q} onChange={e => setQ(e.target.value)} className="pl-9 bg-slate-50 border-slate-200" />
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <QuickAddCustomer trigger={<Button variant="outline" className="gap-2"><UserPlus className="h-4 w-4" /> New Customer</Button>} onCreated={() => load()} />
-          <NewCreditNoteDialog invoices={invoices} customers={customers} onCreated={load} />
+          <QuickAddCustomer trigger={<Button variant="outline" size="sm" className="h-9 gap-2"><UserPlus className="h-4 w-4" /> New Customer</Button>} onCreated={() => load()} />
+          <Button onClick={openNew} size="sm" variant="save" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New Credit Note</Button>
         </div>
       </div>
 
@@ -168,110 +284,5 @@ function KPI({ label, value }: { label: string; value: number | string }) {
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold mt-1">{value}</div>
     </div>
-  );
-}
-
-function NewCreditNoteDialog({ invoices, customers, onCreated }: { invoices: any[]; customers: any[]; onCreated: () => void }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const [open, setOpen] = useState(false);
-  const [invoiceId, setInvoiceId] = useState<string>("");
-  const [customerId, setCustomerId] = useState<string>("");
-  const [issueDate, setIssueDate] = useState(today);
-  const [reason, setReason] = useState("");
-  const [subtotal, setSubtotal] = useState(0);
-  const [vatRate, setVatRate] = useState(16);
-  const [saving, setSaving] = useState(false);
-
-  const vat = subtotal * (vatRate / 100);
-  const total = subtotal + vat;
-
-  const chosenInv = invoices.find(i => i.id === invoiceId);
-  useEffect(() => {
-    if (chosenInv) {
-      setCustomerId(chosenInv.customer_id);
-      setSubtotal(Number(chosenInv.total) / (1 + vatRate / 100));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoiceId]);
-
-  const submit = async (post: boolean) => {
-    if (!customerId && !invoiceId) return toast.error("Pick a customer or invoice");
-    if (subtotal <= 0) return toast.error("Amount must be greater than zero");
-    setSaving(true);
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) { setSaving(false); return; }
-    const { count } = await supabase.from("credit_notes").select("*", { count: "exact", head: true });
-    const number = `CN${(count ?? 0) + 1}`;
-
-    const { data: cn, error } = await supabase.from("credit_notes").insert({
-      user_id: u.user.id, customer_id: customerId || null, invoice_id: invoiceId || null,
-      number, issue_date: issueDate, reason,
-      subtotal, vat_amount: vat, total,
-      status: post ? "posted" : "draft",
-    }).select().single();
-    if (error || !cn) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
-
-    await supabase.from("credit_note_items").insert({
-      user_id: u.user.id, credit_note_id: cn.id, description: reason || "Credit note",
-      quantity: 1, unit_price: subtotal, vat_rate: vatRate, line_total: total,
-    });
-
-    if (post) {
-      const custName = customers.find(c => c.id === customerId)?.name;
-      await postCreditNoteLedger({
-        userId: u.user.id, creditNoteId: cn.id, number, issueDate,
-        subtotal, vat, total, customerName: custName,
-      });
-    }
-
-    setSaving(false);
-    setOpen(false);
-    toast.success(post ? `Credit note ${number} posted — journal entry created` : `Draft ${number} saved`);
-    onCreated();
-    setInvoiceId(""); setCustomerId(""); setSubtotal(0); setReason("");
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white gap-2"><Plus className="h-4 w-4" /> New Credit Note</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>New Credit Note</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1"><Label>Against Invoice (optional)</Label>
-            <Select value={invoiceId} onValueChange={setInvoiceId}>
-              <SelectTrigger><SelectValue placeholder="— Pick invoice —" /></SelectTrigger>
-              <SelectContent>{invoices.map(i => <SelectItem key={i.id} value={i.id}>{i.number} · {fmtMoney(i.total, i.currency)}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1"><Label>Customer</Label>
-            <Select value={customerId} onValueChange={setCustomerId} disabled={!!invoiceId}>
-              <SelectTrigger><SelectValue placeholder="— Select customer —" /></SelectTrigger>
-              <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Issue Date</Label><Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} /></div>
-            <div className="space-y-1"><Label>VAT %</Label><Input type="number" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} /></div>
-          </div>
-          <div className="space-y-1"><Label>Net amount (excl VAT)</Label>
-            <Input type="number" step="0.01" value={subtotal || ""} onChange={e => setSubtotal(Number(e.target.value))} />
-          </div>
-          <div className="space-y-1"><Label>Reason</Label>
-            <textarea value={reason} onChange={e => setReason(e.target.value)} className="w-full min-h-16 rounded-md border bg-background p-2 text-sm" placeholder="Return / correction / discount…" />
-          </div>
-          <div className="border-t pt-3 space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat)}</span></div>
-            <div className="flex justify-between font-semibold border-t pt-1"><span>Total credit</span><span>{fmtMoney(total)}</span></div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => submit(false)} disabled={saving}>Save as Draft</Button>
-          <Button onClick={() => submit(true)} disabled={saving} className="bg-[#0f4c5c] hover:bg-[#0c3f4c] text-white">Post Credit Note</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

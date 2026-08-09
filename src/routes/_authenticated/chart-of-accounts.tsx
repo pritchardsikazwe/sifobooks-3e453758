@@ -7,11 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -110,6 +107,41 @@ function ChartOfAccountsPage() {
     load();
   };
 
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="accounting"
+          icon={BookOpen}
+          title="New Account"
+          subtitle="Add a ledger account to the chart of accounts."
+          onCancel={() => setOpen(false)}
+          onSave={save}
+          saving={saving}
+          saveLabel="Create account"
+        >
+          <SifoFormSection title="Details">
+            <SifoField label="Code" required htmlFor="coa-code">
+              <Input id="coa-code" className="h-11" value={form.account_code} onChange={e => setForm({ ...form, account_code: e.target.value })} placeholder="e.g. 5100" />
+            </SifoField>
+            <SifoField label="Type" required htmlFor="coa-type">
+              <Select value={form.account_type} onValueChange={v => setForm({ ...form, account_type: v })}>
+                <SelectTrigger id="coa-type" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Name" required wide htmlFor="coa-name">
+              <Input id="coa-name" className="h-11" value={form.account_name} onChange={e => setForm({ ...form, account_name: e.target.value })} />
+            </SifoField>
+            <SifoField label="Description" wide htmlFor="coa-desc">
+              <Input id="coa-desc" className="h-11" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-4 max-w-7xl">
       <SifoModuleHeader
@@ -119,31 +151,7 @@ function ChartOfAccountsPage() {
         description="Live balances from posted journal entries. Click an account to see its transactions."
         breadcrumbs={[{ label: "Accounting", to: "/chart-of-accounts" }, { label: "Chart of Accounts" }]}
         actions={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" />New Account</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New account</DialogTitle></DialogHeader>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div><Label>Code</Label><Input value={form.account_code} onChange={e => setForm({ ...form, account_code: e.target.value })} placeholder="e.g. 5100" /></div>
-              <div><Label>Type</Label>
-                <Select value={form.account_type} onValueChange={v => setForm({ ...form, account_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="sm:col-span-2"><Label>Name</Label><Input value={form.account_name} onChange={e => setForm({ ...form, account_name: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Description</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Save
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <Button variant="save" size="sm" className="h-9" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1.5" />New Account</Button>
         }
       />
 
