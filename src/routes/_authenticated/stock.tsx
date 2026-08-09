@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AppNav } from "@/components/AppNav";
 import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
@@ -77,6 +78,22 @@ function StockPage() {
 
   const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); };
 
+  // Full-page record editors replace the dashboard while open.
+  if (openNew) {
+    return (
+      <div className="p-4 sm:p-6">
+        <NewItemForm onCancel={() => setOpenNew(false)} onCreated={() => { setOpenNew(false); load(); }} />
+      </div>
+    );
+  }
+  if (moveFor) {
+    return (
+      <div className="p-4 sm:p-6">
+        <MovementForm item={moveFor} onCancel={() => setMoveFor(null)} onSaved={() => { setMoveFor(null); load(); }} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
@@ -95,7 +112,7 @@ function StockPage() {
           <div className="flex items-center gap-2">
             <AppNav />
             <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
-            <NewItemDialog open={openNew} setOpen={setOpenNew} onCreated={load} />
+            <Button size="sm" className="h-9" variant="save" onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> New item</Button>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
@@ -145,8 +162,6 @@ function StockPage() {
           </CardContent>
         </Card>
       </main>
-
-      {moveFor && <MovementDialog item={moveFor} onClose={() => setMoveFor(null)} onSaved={load} />}
     </div>
   );
 }
@@ -235,8 +250,7 @@ function GroupedStockTable({
   );
 }
 
-
-function NewItemDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (v: boolean) => void; onCreated: () => void }) {
+function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [hsMode, setHsMode] = useState<"list" | "custom">("list");
@@ -251,8 +265,6 @@ function NewItemDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (
   const [reorder, setReorder] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const reset = () => { setName(""); setSku(""); setHsMode("list"); setHsCode(""); setCustomHs(""); setVatRate(16); setTaxCategory("standard"); setUnit("each"); setCost(0); setPrice(0); setQty(0); setReorder(0); };
-
   const pickHs = (code: string) => {
     setHsCode(code);
     const h = findHsCode(code);
@@ -260,7 +272,7 @@ function NewItemDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (
   };
 
   const submit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) return toast.error("Name is required");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
@@ -273,71 +285,73 @@ function NewItemDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Item added");
-    reset(); setOpen(false); onCreated();
+    onCreated();
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild><Button><Plus className="h-4 w-4" /> New item</Button></DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Add stock item</DialogTitle></DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2"><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Portland cement 50kg" /></div>
-          <div className="space-y-2"><Label>SKU (optional)</Label><Input value={sku} onChange={e => setSku(e.target.value)} placeholder="CEM-50" /></div>
-          <div className="space-y-2"><Label>Unit</Label><Input value={unit} onChange={e => setUnit(e.target.value)} placeholder="each, kg, box…" /></div>
+    <SifoFormPage
+      module="inventory"
+      icon={Package}
+      title="Add stock item"
+      subtitle="Tracked SKU with ZRA HS code and tax details"
+      onCancel={onCancel}
+      onSave={submit}
+      saving={saving}
+      saveLabel="Add item"
+    >
+      <SifoFormSection title="Item details">
+        <SifoField label="Name" required wide><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Portland cement 50kg" /></SifoField>
+        <SifoField label="SKU (optional)"><Input value={sku} onChange={e => setSku(e.target.value)} placeholder="CEM-50" /></SifoField>
+        <SifoField label="Unit"><Input value={unit} onChange={e => setUnit(e.target.value)} placeholder="each, kg, box…" /></SifoField>
+      </SifoFormSection>
 
-          <div className="space-y-2 sm:col-span-2 rounded-lg border bg-emerald-50/40 p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">ZRA HS code & tax</Label>
-              <div className="text-xs">
-                <button type="button" onClick={() => setHsMode("list")} className={`rounded px-2 py-0.5 ${hsMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Pick from list</button>
-                <button type="button" onClick={() => setHsMode("custom")} className={`ml-1 rounded px-2 py-0.5 ${hsMode === "custom" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Custom</button>
-              </div>
-            </div>
-            {hsMode === "list" ? (
-              <Select value={hsCode} onValueChange={pickHs}>
-                <SelectTrigger><SelectValue placeholder="Select an HS code…" /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {ZRA_HS_CODES.map(h => (
-                    <SelectItem key={h.code} value={h.code}>
-                      <span className="font-mono text-xs">{h.code}</span> — {h.label} <span className="text-muted-foreground">({h.vatRate}%)</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={customHs} onChange={e => setCustomHs(e.target.value)} placeholder="e.g. 8471.30 or SVC-XXX" />
-            )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="space-y-1"><Label className="text-xs">VAT rate (%)</Label><Input type="number" min={0} max={100} step="0.5" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} /></div>
-              <div className="space-y-1"><Label className="text-xs">Tax category</Label>
-                <Select value={taxCategory} onValueChange={v => setTaxCategory(v as "standard" | "zero" | "exempt")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard">Standard-rated</SelectItem>
-                    <SelectItem value="zero">Zero-rated</SelectItem>
-                    <SelectItem value="exempt">Exempt</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+      <SifoFormSection title="ZRA HS code & tax">
+        <SifoField label="Lookup mode" wide>
+          <div className="text-xs">
+            <button type="button" onClick={() => setHsMode("list")} className={`rounded px-2 py-0.5 ${hsMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Pick from list</button>
+            <button type="button" onClick={() => setHsMode("custom")} className={`ml-1 rounded px-2 py-0.5 ${hsMode === "custom" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Custom</button>
           </div>
+        </SifoField>
+        {hsMode === "list" ? (
+          <SifoField label="HS code" wide>
+            <Select value={hsCode} onValueChange={pickHs}>
+              <SelectTrigger><SelectValue placeholder="Select an HS code…" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {ZRA_HS_CODES.map(h => (
+                  <SelectItem key={h.code} value={h.code}>
+                    <span className="font-mono text-xs">{h.code}</span> — {h.label} <span className="text-muted-foreground">({h.vatRate}%)</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SifoField>
+        ) : (
+          <SifoField label="Custom HS code" wide><Input value={customHs} onChange={e => setCustomHs(e.target.value)} placeholder="e.g. 8471.30 or SVC-XXX" /></SifoField>
+        )}
+        <SifoField label="VAT rate (%)"><Input type="number" min={0} max={100} step="0.5" value={vatRate} onChange={e => setVatRate(Number(e.target.value))} /></SifoField>
+        <SifoField label="Tax category">
+          <Select value={taxCategory} onValueChange={v => setTaxCategory(v as "standard" | "zero" | "exempt")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard">Standard-rated</SelectItem>
+              <SelectItem value="zero">Zero-rated</SelectItem>
+              <SelectItem value="exempt">Exempt</SelectItem>
+            </SelectContent>
+          </Select>
+        </SifoField>
+      </SifoFormSection>
 
-          <div className="space-y-2"><Label>Cost price</Label><Input type="number" min={0} step="0.01" value={cost} onChange={e => setCost(Number(e.target.value))} /></div>
-          <div className="space-y-2"><Label>Sell price</Label><Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(Number(e.target.value))} /></div>
-          <div className="space-y-2"><Label>Opening quantity</Label><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></div>
-          <div className="space-y-2"><Label>Reorder level</Label><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={saving || !name.trim()}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Add item</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <SifoFormSection title="Pricing & stock">
+        <SifoField label="Cost price"><Input type="number" min={0} step="0.01" value={cost} onChange={e => setCost(Number(e.target.value))} /></SifoField>
+        <SifoField label="Sell price"><Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(Number(e.target.value))} /></SifoField>
+        <SifoField label="Opening quantity"><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>
+        <SifoField label="Reorder level"><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></SifoField>
+      </SifoFormSection>
+    </SifoFormPage>
   );
 }
 
-function MovementDialog({ item, onClose, onSaved }: { item: Item; onClose: () => void; onSaved: () => void }) {
+function MovementForm({ item, onCancel, onSaved }: { item: Item; onCancel: () => void; onSaved: () => void }) {
   const [type, setType] = useState<"in" | "out" | "adjust">("in");
   const [qty, setQty] = useState<number>(0);
   const [note, setNote] = useState("");
@@ -354,35 +368,35 @@ function MovementDialog({ item, onClose, onSaved }: { item: Item; onClose: () =>
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(type === "adjust" ? "Stock adjusted" : type === "in" ? "Stock added" : "Stock removed");
-    onSaved(); onClose();
+    onSaved();
   };
 
   return (
-    <Dialog open onOpenChange={v => { if (!v) onClose(); }}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Stock movement — {item.name}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">Current on hand: <span className="font-semibold text-foreground">{Number(item.quantity_on_hand)} {item.unit}</span></div>
-          <div className="space-y-2">
-            <Label>Movement type</Label>
-            <Select value={type} onValueChange={v => setType(v as "in" | "out" | "adjust")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="in"><ArrowUpRight className="h-3 w-3" /> Receive (in)</SelectItem>
-                <SelectItem value="out"><ArrowDownRight className="h-3 w-3" /> Issue (out)</SelectItem>
-                <SelectItem value="adjust"><Sliders className="h-3 w-3" /> Adjust to exact quantity</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2"><Label>{type === "adjust" ? "New quantity" : "Quantity"}</Label><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></div>
-          <div className="space-y-2"><Label>Note (optional)</Label><Input value={note} onChange={e => setNote(e.target.value)} placeholder="Reason, reference, supplier…" /></div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save movement</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <SifoFormPage
+      module="inventory"
+      icon={Sliders}
+      title={`Stock movement — ${item.name}`}
+      subtitle={`Current on hand: ${Number(item.quantity_on_hand)} ${item.unit}`}
+      onCancel={onCancel}
+      onSave={submit}
+      saving={saving}
+      saveLabel="Save movement"
+    >
+      <SifoFormSection title="Movement">
+        <SifoField label="Movement type" wide>
+          <Select value={type} onValueChange={v => setType(v as "in" | "out" | "adjust")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="in"><ArrowUpRight className="h-3 w-3" /> Receive (in)</SelectItem>
+              <SelectItem value="out"><ArrowDownRight className="h-3 w-3" /> Issue (out)</SelectItem>
+              <SelectItem value="adjust"><Sliders className="h-3 w-3" /> Adjust to exact quantity</SelectItem>
+            </SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label={type === "adjust" ? "New quantity" : "Quantity"}><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>
+        <SifoField label="Note (optional)" wide><Input value={note} onChange={e => setNote(e.target.value)} placeholder="Reason, reference, supplier…" /></SifoField>
+      </SifoFormSection>
+    </SifoFormPage>
   );
 }
 
@@ -494,7 +508,7 @@ function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen
 
   return (
     <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild><Button variant="outline"><Upload className="h-4 w-4" /> Import CSV</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" size="sm" className="h-9"><Upload className="h-4 w-4" /> Import CSV</Button></DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" /> Bulk import stock items</DialogTitle>
@@ -570,7 +584,7 @@ function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={doImport} disabled={importing || validRows.length === 0}>
+          <Button variant="save" onClick={doImport} disabled={importing || validRows.length === 0}>
             {importing && <Loader2 className="h-4 w-4 animate-spin" />}
             Import {validRows.length > 0 ? `${validRows.length} item${validRows.length > 1 ? "s" : ""}` : ""}
           </Button>
