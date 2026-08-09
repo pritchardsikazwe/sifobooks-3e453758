@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SimpleCrud } from "@/components/SimpleCrud";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
@@ -127,6 +127,32 @@ function LoansPage() {
   };
 
   const loanLabel = (id: string) => loans.find(l => l.id === id)?.loan_number ?? "—";
+
+  if (repayFor) {
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage module="accounting" icon={Coins} title={`Record repayment — ${repayFor.loan_number}`}
+          onCancel={() => setRepayFor(null)} onSave={saveRepayment} saveLabel="Save & post">
+          <SifoFormSection title="Details">
+            <SifoField label="Date"><Input type="date" value={repay.payment_date} onChange={e => setRepay({ ...repay, payment_date: e.target.value })} /></SifoField>
+            <SifoField label="Amount (K)"><Input type="number" value={repay.amount} onChange={e => setRepay({ ...repay, amount: e.target.value })} /></SifoField>
+            <SifoField label="Interest portion"><Input type="number" value={repay.interest_portion} onChange={e => setRepay({ ...repay, interest_portion: e.target.value })} /></SifoField>
+            <SifoField label="Principal portion"><Input type="number" value={repay.principal_portion} onChange={e => setRepay({ ...repay, principal_portion: e.target.value })} placeholder="auto" /></SifoField>
+            <SifoField label="Method">
+              <Select value={repay.method} onValueChange={v => setRepay({ ...repay, method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank">Bank</SelectItem><SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="payroll">Payroll deduction</SelectItem><SelectItem value="mobile">Mobile money</SelectItem>
+                </SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Reference"><Input value={repay.reference} onChange={e => setRepay({ ...repay, reference: e.target.value })} /></SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -274,31 +300,6 @@ function LoansPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!repayFor} onOpenChange={() => setRepayFor(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Record repayment — {repayFor?.loan_number}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Date</Label><Input type="date" value={repay.payment_date} onChange={e => setRepay({ ...repay, payment_date: e.target.value })} /></div>
-            <div><Label>Amount (K)</Label><Input type="number" value={repay.amount} onChange={e => setRepay({ ...repay, amount: e.target.value })} /></div>
-            <div><Label>Interest portion</Label><Input type="number" value={repay.interest_portion} onChange={e => setRepay({ ...repay, interest_portion: e.target.value })} /></div>
-            <div><Label>Principal portion</Label><Input type="number" value={repay.principal_portion} onChange={e => setRepay({ ...repay, principal_portion: e.target.value })} placeholder="auto" /></div>
-            <div><Label>Method</Label>
-              <Select value={repay.method} onValueChange={v => setRepay({ ...repay, method: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank">Bank</SelectItem><SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="payroll">Payroll deduction</SelectItem><SelectItem value="mobile">Mobile money</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Reference</Label><Input value={repay.reference} onChange={e => setRepay({ ...repay, reference: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRepayFor(null)}>Cancel</Button>
-            <Button onClick={saveRepayment}>Save & post</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
