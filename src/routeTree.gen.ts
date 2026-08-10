@@ -100,6 +100,7 @@ import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './route
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsPayrollSchedulesRouteImport } from './routes/_authenticated/reports.payroll-schedules'
+import { Route as AuthenticatedReportsMonthlyManagementRouteImport } from './routes/_authenticated/reports.monthly-management'
 import { Route as AuthenticatedReportsManagementPackRouteImport } from './routes/_authenticated/reports.management-pack'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
 import { Route as AuthenticatedReportsIncomeTaxRouteImport } from './routes/_authenticated/reports.income-tax'
@@ -620,6 +621,12 @@ const AuthenticatedReportsPayrollSchedulesRoute =
     path: '/payroll-schedules',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsMonthlyManagementRoute =
+  AuthenticatedReportsMonthlyManagementRouteImport.update({
+    id: '/monthly-management',
+    path: '/monthly-management',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsManagementPackRoute =
   AuthenticatedReportsManagementPackRouteImport.update({
     id: '/management-pack',
@@ -873,6 +880,7 @@ export interface FileRoutesByFullPath {
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
+  '/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -987,6 +995,7 @@ export interface FileRoutesByTo {
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
+  '/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -1107,6 +1116,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
+  '/_authenticated/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
   '/_authenticated/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
@@ -1227,6 +1237,7 @@ export interface FileRouteTypes {
     | '/reports/income-tax'
     | '/reports/inventory-valuation'
     | '/reports/management-pack'
+    | '/reports/monthly-management'
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -1341,6 +1352,7 @@ export interface FileRouteTypes {
     | '/reports/income-tax'
     | '/reports/inventory-valuation'
     | '/reports/management-pack'
+    | '/reports/monthly-management'
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
@@ -1460,6 +1472,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/income-tax'
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/management-pack'
+    | '/_authenticated/reports/monthly-management'
     | '/_authenticated/reports/payroll-schedules'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
@@ -2129,6 +2142,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsPayrollSchedulesRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/monthly-management': {
+      id: '/_authenticated/reports/monthly-management'
+      path: '/monthly-management'
+      fullPath: '/reports/monthly-management'
+      preLoaderRoute: typeof AuthenticatedReportsMonthlyManagementRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/management-pack': {
       id: '/_authenticated/reports/management-pack'
       path: '/management-pack'
@@ -2372,6 +2392,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsIncomeTaxRoute: typeof AuthenticatedReportsIncomeTaxRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsManagementPackRoute: typeof AuthenticatedReportsManagementPackRoute
+  AuthenticatedReportsMonthlyManagementRoute: typeof AuthenticatedReportsMonthlyManagementRoute
   AuthenticatedReportsPayrollSchedulesRoute: typeof AuthenticatedReportsPayrollSchedulesRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
@@ -2406,6 +2427,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsInventoryValuationRoute,
   AuthenticatedReportsManagementPackRoute:
     AuthenticatedReportsManagementPackRoute,
+  AuthenticatedReportsMonthlyManagementRoute:
+    AuthenticatedReportsMonthlyManagementRoute,
   AuthenticatedReportsPayrollSchedulesRoute:
     AuthenticatedReportsPayrollSchedulesRoute,
   AuthenticatedReportsPayrollSummaryRoute:

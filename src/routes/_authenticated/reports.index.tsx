@@ -93,7 +93,9 @@ const REPORTS: Report[] = [
   { id: "tax-summary", name: "Tax Summary", description: "Consolidated tax position.", to: "/reports/tax-summary", icon: Calculator, category: "tax" },
 
   // Management
+  { id: "monthly-management", name: "Accountant Monthly Management Report", description: "Full monthly handover to management: income, expenses, invoices, payments, returns, ZRA compliance, outstanding items and accountant activity.", to: "/reports/monthly-management", icon: ClipboardList, category: "management" },
   { id: "management-pack", name: "Monthly Management Pack", description: "KPIs, P&L, BS movement and AI insights.", to: "/reports/management-pack", icon: FileBarChart, category: "management" },
+
   { id: "budgets", name: "Budgets & Variance", description: "Budget vs actuals per line.", to: "/budgets", icon: BarChart3, category: "management" },
 ];
 

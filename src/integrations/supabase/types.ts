@@ -4304,6 +4304,57 @@ export type Database = {
         }
         Relationships: []
       }
+      management_reports: {
+        Row: {
+          approved_at: string | null
+          comments: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          period: string
+          prepared_at: string
+          prepared_by: string | null
+          reference: string
+          reviewed_by: string | null
+          snapshot: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          comments?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          period: string
+          prepared_at?: string
+          prepared_by?: string | null
+          reference: string
+          reviewed_by?: string | null
+          snapshot?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          comments?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          period?: string
+          prepared_at?: string
+          prepared_by?: string | null
+          reference?: string
+          reviewed_by?: string | null
+          snapshot?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       module_dependencies: {
         Row: {
           depends_on: string
