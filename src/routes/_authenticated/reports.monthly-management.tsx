@@ -263,12 +263,9 @@ function MonthlyManagementReport() {
               <Section title="5. Invoices issued" meta={`Invoiced ${money(data.income.gross)} · Collected ${money(data.income.collected)} · Outstanding ${money(data.income.outstanding)} · Overdue ${money(data.income.overdueAmount)}`}>
                 <Table
                   head={["Invoice", "Date", "Customer", "Amount", "VAT", "Total", "Paid", "Balance", "Status"]}
-                  rows={data.income.rows.map((i, idx) => [i.invoice, i.date, i.customer, money(i.amount), money(i.tax), money(i.total), "", "", i.status]).map((r, idx) => {
-                    const inv = data.income.rows[idx];
-                    r[6] = money(inv.total - 0);
-                    return r;
-                  })}
+                  rows={data.income.rows.map(i => [i.invoice, i.date, i.customer, money(i.amount), money(i.tax), money(i.total), money(i.paid), money(i.balance), i.status])}
                 />
+
               </Section>
               <Section title="6. Purchase invoices" meta={`${data.purchases.count} processed · Total ${money(data.purchases.total)} · Paid ${money(data.purchases.paid)} · Outstanding ${money(data.purchases.outstanding)}`}>
                 <Table
