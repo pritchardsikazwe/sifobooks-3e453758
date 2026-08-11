@@ -131,15 +131,17 @@
   --input: oklch(0.92 0.008 210);
   --ring: oklch(0.42 0.11 160);
 
-  /* Module identity — official SifoBooks palette (light) */
-  --mod-accounting: #2563EB;   /* blue    */
-  --mod-sales: #16A34A;        /* green   */
-  --mod-purchases: #F97316;    /* orange  */
-  --mod-inventory: #CA8A04;    /* yellow  */
-  --mod-banking: #1D4ED8;      /* deep blue */
-  --mod-payroll: #4F46E5;      /* indigo  */
-  --mod-tax: #DC2626;          /* red     */
-  --mod-reports: #7C3AED;      /* purple  */
+  /* Module identity — official SifoBooks 2026 palette (light) */
+  --mod-accounting: #15803D;   /* green   */
+  --mod-sales: #0D9488;        /* teal    */
+  --mod-purchases: #EA580C;    /* orange  */
+  --mod-inventory: #CA8A04;    /* amber   */
+  --mod-banking: #2563EB;      /* blue    */
+  --mod-payroll: #7C3AED;      /* purple  */
+  --mod-tax: #DC2626;          /* red — compliance */
+  --mod-reports: #4F46E5;      /* indigo  */
+  --mod-admin: #475569;        /* slate   */
+  --mod-learning: #0891B2;     /* cyan    */
 
   --state-pending: #CA8A04;
   --state-overdue: #DC2626;
