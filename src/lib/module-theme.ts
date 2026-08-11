@@ -10,7 +10,8 @@
 
 export type ModuleKey =
   | "accounting" | "sales" | "purchases" | "inventory"
-  | "banking" | "payroll" | "tax" | "reports";
+  | "banking" | "payroll" | "tax" | "reports"
+  | "admin" | "learning";
 
 export type ModuleTheme = {
   key: ModuleKey;
@@ -63,9 +64,19 @@ export const MODULE_THEMES: Record<ModuleKey, ModuleTheme> = {
     bar: "bg-mod-payroll", chip: "bg-mod-payroll/10 text-mod-payroll",
   },
   tax: {
-    key: "tax", label: "Tax", to: "/compliance",
+    key: "tax", label: "Compliance", to: "/compliance",
     text: "text-mod-tax", soft: "bg-mod-tax/10", border: "border-mod-tax/40", hoverBorder: "hover:border-mod-tax/50",
     bar: "bg-mod-tax", chip: "bg-mod-tax/10 text-mod-tax",
+  },
+  admin: {
+    key: "admin", label: "Admin", to: "/admin",
+    text: "text-mod-admin", soft: "bg-mod-admin/10", border: "border-mod-admin/40", hoverBorder: "hover:border-mod-admin/50",
+    bar: "bg-mod-admin", chip: "bg-mod-admin/10 text-mod-admin",
+  },
+  learning: {
+    key: "learning", label: "Learn", to: "/learn",
+    text: "text-mod-learning", soft: "bg-mod-learning/10", border: "border-mod-learning/40", hoverBorder: "hover:border-mod-learning/50",
+    bar: "bg-mod-learning", chip: "bg-mod-learning/10 text-mod-learning",
   },
   reports: {
     key: "reports", label: "Reports", to: "/reports",
@@ -128,6 +139,22 @@ export const MODULE_TABS: Record<ModuleKey, Array<{ label: string; to: string }>
     { label: "Income Tax", to: "/reports/income-tax" },
     { label: "Turnover Tax", to: "/reports/turnover-tax" },
     { label: "Tax Summary", to: "/reports/tax-summary" },
+  ],
+  admin: [
+    { label: "Admin Home", to: "/admin" },
+    { label: "Modules", to: "/modules" },
+    { label: "Roles & Permissions", to: "/roles" },
+    { label: "Approvals", to: "/approvals" },
+    { label: "Company Setup", to: "/setup" },
+    { label: "Industry Presets", to: "/industry" },
+  ],
+  learning: [
+    { label: "Learn Centre", to: "/learn" },
+    { label: "Quick Start", to: "/learn/quick-start" },
+    { label: "New Company", to: "/learn/new-company" },
+    { label: "Accounting Basics", to: "/learn/accounting-basics" },
+    { label: "Payroll", to: "/learn/payroll" },
+    { label: "VAT & ZRA", to: "/learn/vat-zra" },
   ],
   reports: [
     { label: "All Reports", to: "/reports" },

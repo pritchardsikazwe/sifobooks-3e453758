@@ -59,12 +59,18 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return;
+    // Anything already on screen at mount reveals immediately — no observer race.
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) { setShown(true); return; }
+    if (typeof IntersectionObserver === "undefined") { setShown(true); return; }
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }),
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
+    // Safety net: never leave content permanently invisible.
+    const t = window.setTimeout(() => setShown(true), 2000);
+    return () => { io.disconnect(); window.clearTimeout(t); };
   }, []);
   return (
     <div
@@ -227,88 +233,58 @@ function Landing() {
         </div>
       </section>
 
-      {/* BENTO — one consolidated product surface (kills shortcuts+modules duplication) */}
+      {/* MODULES — 2026 colour-coded grid, mirrors the in-app module identity system */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="mb-12 max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Everything in one place</div>
           <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
-            Six departments. One clean ledger.
+            Eight departments. One clean ledger.
           </h2>
           <p className="mt-4 text-slate-400">
-            Twenty-four modules that talk to each other — no add-ons, no imports, no duplicate data entry.
+            Every module carries its own colour inside SifoBooks, so you always know exactly which part of the business you are working in.
           </p>
         </Reveal>
 
-        <Reveal className="grid grid-cols-1 md:grid-cols-4 gap-4 md:auto-rows-[220px]">
-          {/* Big feature */}
-          <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-[#0d1f16] to-[#06110c] border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:border-[#0e8f4a]/50 transition-colors">
-            <div>
-              <div className="w-12 h-12 bg-[#0e8f4a] rounded-xl grid place-items-center mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]">
-                <ReceiptText className="w-6 h-6 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "Chart of accounts, journals, cashbook, general ledger and period close.", span: "lg:col-span-2" },
+            { name: "Sales", hex: "#0D9488", icon: ReceiptText, desc: "Quotes, VAT invoices, receipts, credit notes and customer statements." },
+            { name: "Purchases", hex: "#EA580C", icon: FileText, desc: "Purchase orders, supplier bills, payments and expense capture." },
+            { name: "Inventory", hex: "#CA8A04", icon: Boxes, desc: "Stock items, warehouses, adjustments, counts and valuation." },
+            { name: "Banking", hex: "#2563EB", icon: Landmark, desc: "Statement import, smart matching, allocations and reconciliation." },
+            { name: "Payroll & HR", hex: "#7C3AED", icon: Banknote, desc: "PAYE, NAPSA, NHIMA, WCF & SDL with branded payslips.", span: "lg:col-span-2" },
+            { name: "Reports", hex: "#4F46E5", icon: BarChart3, desc: "P&L, balance sheet, cash flow, IFRS-for-SME annual statements." },
+            { name: "Compliance", hex: "#DC2626", icon: ShieldCheck, desc: "ZRA calendar, VAT, turnover tax, WHT and statutory returns." },
+          ].map((m, i) => (
+            <Reveal key={m.name} delay={i * 50} className={m.span ?? ""}>
+              <div
+                className="group relative h-full overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f16] p-6 transition-all duration-300 hover:-translate-y-1"
+                style={{ ["--hue" as any]: m.hex }}
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-[3px] opacity-70 transition-opacity group-hover:opacity-100"
+                  style={{ background: m.hex }}
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
+                  style={{ background: m.hex }}
+                />
+                <div
+                  className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border transition-transform duration-300 group-hover:scale-110"
+                  style={{ background: `${m.hex}22`, borderColor: `${m.hex}55`, color: m.hex }}
+                >
+                  <m.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-white" style={heading}>{m.name}</h3>
+                <p className="text-sm leading-relaxed text-slate-400">{m.desc}</p>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3" style={heading}>Smart Invoicing & Receivables</h3>
-              <p className="text-slate-400 leading-relaxed">
-                VAT-compliant invoices in seconds, automated reminders, multi-currency, and one-click receipt matching — so cash lands faster.
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/5">
-              <ul className="space-y-2.5 text-sm text-slate-300">
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> ZRA TPIN & VAT baked in</li>
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> Multi-currency, ZMW native</li>
-                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#0e8f4a]" /> Customer statements & credit notes</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Wide */}
-          <div className="md:col-span-2 bg-[#0d1f16] border border-white/10 rounded-3xl p-8 flex items-center gap-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-white mb-2" style={heading}>Banking & Reconciliation</h3>
-              <p className="text-sm text-slate-400">Import statements, auto-match rules, split allocations across accounts, reconcile in minutes.</p>
-            </div>
-            <div className="w-20 h-20 shrink-0 bg-[#06110c] rounded-2xl border border-white/10 grid place-items-center">
-              <Landmark className="w-8 h-8 text-[#0e8f4a]" />
-            </div>
-          </div>
-
-          {/* Small */}
-          <div className="bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
-            <Banknote className="w-6 h-6 text-[#0e8f4a] mb-4" />
-            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Payroll</h3>
-            <p className="text-sm text-slate-400">PAYE, NAPSA, NHIMA, WCF & SDL — computed live.</p>
-          </div>
-
-          {/* Small */}
-          <div className="bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
-            <Boxes className="w-6 h-6 text-[#0e8f4a] mb-4" />
-            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Inventory</h3>
-            <p className="text-sm text-slate-400">Real-time stock, warehouses, reorder alerts.</p>
-          </div>
-        </Reveal>
-
-        {/* Second bento row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-          <Reveal className="md:col-span-1 bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
-            <FileText className="w-6 h-6 text-[#0e8f4a] mb-4" />
-            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Purchases</h3>
-            <p className="text-sm text-slate-400">POs, supplier bills, payment scheduling.</p>
-          </Reveal>
-          <Reveal delay={60} className="md:col-span-1 bg-[#0d1f16] border border-white/10 rounded-3xl p-6 group hover:bg-[#0f3a24]/40 hover:border-[#0e8f4a]/40 transition-all">
-            <BarChart3 className="w-6 h-6 text-[#0e8f4a] mb-4" />
-            <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Live Reports</h3>
-            <p className="text-sm text-slate-400">P&L, TB, BS, Cash Flow — always current.</p>
-          </Reveal>
-          <Reveal delay={120} className="md:col-span-2 bg-gradient-to-br from-[#0f3a24] to-[#0e8f4a]/30 border border-[#0e8f4a]/40 rounded-3xl p-6 flex items-center justify-between group hover:shadow-[0_0_40px_-10px_#0e8f4a] transition-all">
-            <div>
-              <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>Annual Financial Statements</h3>
-              <p className="text-sm text-slate-300">IFRS-for-SME AFS, ready for your auditor.</p>
-            </div>
-            <div className="w-12 h-12 shrink-0 rounded-full bg-white/10 grid place-items-center group-hover:bg-[#0e8f4a] group-hover:translate-x-1 transition-all">
-              <ArrowRight className="w-5 h-5 text-white" />
-            </div>
-          </Reveal>
+            </Reveal>
+          ))}
         </div>
       </section>
+
 
       {/* FEATURES strip */}
       <section id="features" className="max-w-7xl mx-auto px-6 pb-24">

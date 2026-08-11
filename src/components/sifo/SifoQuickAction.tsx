@@ -12,7 +12,7 @@ export function SifoQuickAction({
       to={to}
       title={hint ?? label}
       className={cn(
-        "group flex min-h-[44px] flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2 py-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0",
+        "elevate-card group flex min-h-[76px] flex-col items-center justify-center gap-1.5 px-2 py-3 text-center",
         theme.hoverBorder,
         className,
       )}

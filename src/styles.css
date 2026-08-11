@@ -48,6 +48,8 @@
   --color-mod-payroll: var(--mod-payroll);
   --color-mod-tax: var(--mod-tax);
   --color-mod-reports: var(--mod-reports);
+  --color-mod-admin: var(--mod-admin);
+  --color-mod-learning: var(--mod-learning);
   --color-state-pending: var(--state-pending);
   --color-state-overdue: var(--state-overdue);
   --color-state-paid: var(--state-paid);
@@ -62,14 +64,33 @@
   --color-action-warn: #CA8A04;
   --color-action-delete: #DC2626;
 
-
+  /* Global spacing scale */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
 
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
   --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
+  --shadow-elevated: 0 24px 60px -24px oklch(0.2 0.05 200 / 0.28);
 
   --gradient-hero: linear-gradient(135deg, oklch(0.985 0.005 160) 0%, oklch(0.96 0.02 158) 100%);
   --gradient-brand: linear-gradient(135deg, oklch(0.32 0.09 162) 0%, oklch(0.62 0.15 158) 100%);
+
+  /* Motion */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --animate-page-in: page-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 :root {
   --radius: 0.875rem;
@@ -110,15 +131,17 @@
   --input: oklch(0.92 0.008 210);
   --ring: oklch(0.42 0.11 160);
 
-  /* Module identity — official SifoBooks palette (light) */
-  --mod-accounting: #2563EB;   /* blue    */
-  --mod-sales: #16A34A;        /* green   */
-  --mod-purchases: #F97316;    /* orange  */
-  --mod-inventory: #CA8A04;    /* yellow  */
-  --mod-banking: #1D4ED8;      /* deep blue */
-  --mod-payroll: #4F46E5;      /* indigo  */
-  --mod-tax: #DC2626;          /* red     */
-  --mod-reports: #7C3AED;      /* purple  */
+  /* Module identity — official SifoBooks 2026 palette (light) */
+  --mod-accounting: #15803D;   /* green   */
+  --mod-sales: #0D9488;        /* teal    */
+  --mod-purchases: #EA580C;    /* orange  */
+  --mod-inventory: #CA8A04;    /* amber   */
+  --mod-banking: #2563EB;      /* blue    */
+  --mod-payroll: #7C3AED;      /* purple  */
+  --mod-tax: #DC2626;          /* red — compliance */
+  --mod-reports: #4F46E5;      /* indigo  */
+  --mod-admin: #475569;        /* slate   */
+  --mod-learning: #0891B2;     /* cyan    */
 
   --state-pending: #CA8A04;
   --state-overdue: #DC2626;
@@ -156,14 +179,16 @@
   --ring: oklch(0.72 0.13 160);
 
   /* Module identity — dark (lifted for contrast on dark surfaces) */
-  --mod-accounting: #60A5FA;
-  --mod-sales: #4ADE80;
+  --mod-accounting: #4ADE80;
+  --mod-sales: #2DD4BF;
   --mod-purchases: #FB923C;
   --mod-inventory: #FACC15;
-  --mod-banking: #93B4FF;
-  --mod-payroll: #A5B4FC;
+  --mod-banking: #60A5FA;
+  --mod-payroll: #C4B5FD;
   --mod-tax: #F87171;
-  --mod-reports: #C4B5FD;
+  --mod-reports: #A5B4FC;
+  --mod-admin: #94A3B8;
+  --mod-learning: #22D3EE;
 
   --state-pending: #FACC15;
   --state-overdue: #F87171;
@@ -284,3 +309,32 @@
   }
 }
 
+
+/* Page transition wrapper — fade + slight rise on every route change */
+@utility page-enter {
+  animation: page-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Elevated interactive card used by quick actions, stat cards and report tiles */
+@utility elevate-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-elevated);
+  }
+  &:active {
+    transform: translateY(-1px);
+  }
+}
+
+/* Hide scrollbars on horizontally scrolling tab strips */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Sidebar module hues are composed at runtime — keep them in the build */
+@source inline("data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:before:bg-primary bg-primary text-primary data-[active=true]:bg-mod-sales/10 data-[active=true]:text-mod-sales data-[active=true]:before:bg-mod-sales bg-mod-sales text-mod-sales data-[active=true]:bg-mod-purchases/10 data-[active=true]:text-mod-purchases data-[active=true]:before:bg-mod-purchases bg-mod-purchases text-mod-purchases data-[active=true]:bg-mod-accounting/10 data-[active=true]:text-mod-accounting data-[active=true]:before:bg-mod-accounting bg-mod-accounting text-mod-accounting data-[active=true]:bg-mod-inventory/10 data-[active=true]:text-mod-inventory data-[active=true]:before:bg-mod-inventory bg-mod-inventory text-mod-inventory data-[active=true]:bg-mod-payroll/10 data-[active=true]:text-mod-payroll data-[active=true]:before:bg-mod-payroll bg-mod-payroll text-mod-payroll data-[active=true]:bg-mod-banking/10 data-[active=true]:text-mod-banking data-[active=true]:before:bg-mod-banking bg-mod-banking text-mod-banking data-[active=true]:bg-mod-reports/10 data-[active=true]:text-mod-reports data-[active=true]:before:bg-mod-reports bg-mod-reports text-mod-reports data-[active=true]:bg-mod-learning/10 data-[active=true]:text-mod-learning data-[active=true]:before:bg-mod-learning bg-mod-learning text-mod-learning data-[active=true]:bg-mod-admin/10 data-[active=true]:text-mod-admin data-[active=true]:before:bg-mod-admin bg-mod-admin text-mod-admin");

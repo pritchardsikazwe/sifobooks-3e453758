@@ -17,6 +17,8 @@ const MODULE_PROMPTS: Record<ModuleKey, string[]> = {
   payroll: ["What is this month's PAYE liability?", "Summarise NAPSA and NHIMA totals", "Which employees have pending leave?"],
   tax: ["What VAT do I owe this period?", "When is my next ZRA filing due?", "Explain turnover tax for my business"],
   reports: ["Summarise my profit and loss", "How is my cash flow trending?", "What should I show my accountant?"],
+  admin: ["Which modules are installed?", "Who has access to payroll?", "What approvals are pending?"],
+  learning: ["How do I set up a new company?", "Explain double entry simply", "How do I run my first payroll?"],
 };
 
 /**

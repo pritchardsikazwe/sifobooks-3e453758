@@ -12,6 +12,7 @@ import { QuickCreate } from "@/components/QuickCreate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -36,6 +37,7 @@ function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const crumb = useBreadcrumb();
+  const pageKey = useRouterState({ select: r => r.location.pathname });
   const router = useRouter();
 
   useEffect(() => {
@@ -120,9 +122,12 @@ function Shell() {
 
 
           <OfflineBanner />
-          <main className="flex-1 min-w-0">
-            <Outlet />
+          <main className="flex-1 min-w-0 pb-16 md:pb-0">
+            <div key={pageKey} className="page-enter">
+              <Outlet />
+            </div>
           </main>
+          <SifoMobileNav />
         </div>
 
         <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
