@@ -238,7 +238,7 @@ function Landing() {
         <Reveal className="mb-12 max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Everything in one place</div>
           <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
-            Nine departments. One clean ledger.
+            Eight departments. One clean ledger.
           </h2>
           <p className="mt-4 text-slate-400">
             Every module carries its own colour inside SifoBooks, so you always know exactly which part of the business you are working in.
