@@ -59,12 +59,18 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return;
+    // Anything already on screen at mount reveals immediately — no observer race.
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) { setShown(true); return; }
+    if (typeof IntersectionObserver === "undefined") { setShown(true); return; }
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }),
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
+    // Safety net: never leave content permanently invisible.
+    const t = window.setTimeout(() => setShown(true), 2000);
+    return () => { io.disconnect(); window.clearTimeout(t); };
   }, []);
   return (
     <div
