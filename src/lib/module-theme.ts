@@ -10,7 +10,8 @@
 
 export type ModuleKey =
   | "accounting" | "sales" | "purchases" | "inventory"
-  | "banking" | "payroll" | "tax" | "reports";
+  | "banking" | "payroll" | "tax" | "reports"
+  | "admin" | "learning";
 
 export type ModuleTheme = {
   key: ModuleKey;
