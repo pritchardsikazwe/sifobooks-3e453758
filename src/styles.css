@@ -179,14 +179,16 @@
   --ring: oklch(0.72 0.13 160);
 
   /* Module identity — dark (lifted for contrast on dark surfaces) */
-  --mod-accounting: #60A5FA;
-  --mod-sales: #4ADE80;
+  --mod-accounting: #4ADE80;
+  --mod-sales: #2DD4BF;
   --mod-purchases: #FB923C;
   --mod-inventory: #FACC15;
-  --mod-banking: #93B4FF;
-  --mod-payroll: #A5B4FC;
+  --mod-banking: #60A5FA;
+  --mod-payroll: #C4B5FD;
   --mod-tax: #F87171;
-  --mod-reports: #C4B5FD;
+  --mod-reports: #A5B4FC;
+  --mod-admin: #94A3B8;
+  --mod-learning: #22D3EE;
 
   --state-pending: #FACC15;
   --state-overdue: #F87171;
