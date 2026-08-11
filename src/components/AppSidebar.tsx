@@ -18,6 +18,25 @@ const LogOut = Icons.LogOut;
 const GraduationCap = Icons.GraduationCap;
 const STORAGE_KEY = "sifobooks.sidebar.groups";
 
+/** Every sidebar section inherits a module identity colour. */
+const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> = {
+  "Core":               { dot: "bg-primary",           text: "text-primary",           soft: "bg-primary/10" },
+  "Sales":              { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
+  "Purchases":          { dot: "bg-mod-purchases",     text: "text-mod-purchases",     soft: "bg-mod-purchases/10" },
+  "Finance":            { dot: "bg-mod-accounting",    text: "text-mod-accounting",    soft: "bg-mod-accounting/10" },
+  "Inventory":          { dot: "bg-mod-inventory",     text: "text-mod-inventory",     soft: "bg-mod-inventory/10" },
+  "HR & Payroll":       { dot: "bg-mod-payroll",       text: "text-mod-payroll",       soft: "bg-mod-payroll/10" },
+  "CRM":                { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
+  "Projects & Service": { dot: "bg-mod-banking",       text: "text-mod-banking",       soft: "bg-mod-banking/10" },
+  "Reports":            { dot: "bg-mod-reports",       text: "text-mod-reports",       soft: "bg-mod-reports/10" },
+  "School ERP":         { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
+  "NGO":                { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
+  "Mining":             { dot: "bg-mod-inventory",     text: "text-mod-inventory",     soft: "bg-mod-inventory/10" },
+  "Help & Learning":    { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
+  "Admin":              { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
+};
+const hueFor = (c: string) => CATEGORY_HUE[c] ?? CATEGORY_HUE["Core"];
+
 function iconFor(name?: string): any {
   if (!name) return Icons.Circle;
   return (Icons as any)[name] ?? (Icons as any)[name.replace("Icon", "")] ?? Icons.Circle;
@@ -147,12 +166,13 @@ export function AppSidebar() {
                     {section.items.map(item => {
                       const Icon = item.icon;
                       const active = currentPath === item.url;
+                      const hue = hueFor(section.label);
                       return (
                         <SidebarMenuItem key={item.url}>
                           <SidebarMenuButton
                             asChild
                             isActive={active}
-                            className="text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-semibold"
+                            className={`text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text}`}
                             tooltip={item.title}
                           >
                             <Link to={item.url}>
@@ -173,7 +193,10 @@ export function AppSidebar() {
               <SidebarGroup className="py-1">
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="group/label flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-3 pt-2 pb-1 font-semibold cursor-pointer hover:text-foreground transition-colors select-none">
-                    <span>{section.label}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className={`h-1.5 w-1.5 rounded-full ${hueFor(section.label).dot}`} />
+                      {section.label}
+                    </span>
                     <ChevronDown className={`h-3 w-3 transition-transform ${open ? "" : "-rotate-90"}`} />
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
@@ -183,12 +206,13 @@ export function AppSidebar() {
                       {section.items.map(item => {
                         const Icon = item.icon;
                         const active = currentPath === item.url;
+                        const hue = hueFor(section.label);
                         return (
                           <SidebarMenuItem key={item.url}>
                             <SidebarMenuButton
                               asChild
                               isActive={active}
-                              className="relative text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-primary data-[active=true]:before:rounded-r"
+                              className={`relative text-muted-foreground transition-all hover:translate-x-0.5 hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text} data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r data-[active=true]:before:${hue.dot}`}
                               tooltip={item.title}
                             >
                               <Link to={item.url}>
