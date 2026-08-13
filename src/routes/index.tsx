@@ -98,18 +98,31 @@ function Landing() {
     <div className="min-h-screen bg-[#06110c] text-slate-200 selection:bg-[#0e8f4a]/40 selection:text-white" style={body}>
       {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#06110c]/80 backdrop-blur-xl">
-        <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
+        <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
             <img src={logo} alt="SifoBooks" className="h-8 w-8 object-contain transition-transform group-hover:scale-110" width={32} height={32} />
             <span className="text-xl font-bold tracking-tight text-white" style={heading}>SifoBooks</span>
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#modules" className="hover:text-[#0e8f4a] transition-colors">Modules</a>
-            <a href="#features" className="hover:text-[#0e8f4a] transition-colors">Features</a>
-            <a href="#compliance" className="hover:text-[#0e8f4a] transition-colors">Compliance</a>
-            <a href="#contact" className="hover:text-[#0e8f4a] transition-colors">Contact</a>
+
+          {/* Pill tab navigation */}
+          <div className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            {NAV_TABS.map((n) => {
+              const active = section === n.id;
+              return (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+                    active ? "bg-[#0e8f4a] text-white shadow-[0_0_20px_-6px_#0e8f4a]" : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {n.label}
+                </a>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2">
             {signedIn ? (
               <Link
                 to="/dashboard"
@@ -127,13 +140,41 @@ function Landing() {
                   to="/auth"
                   className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(14,143,74,0.8)]"
                 >
-                  Get Started Free
+                  Get Started
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              className="md:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-200"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </nav>
+
+        {/* Mobile drawer */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-white/5 px-6 pb-4 pt-2">
+            <div className="grid gap-1">
+              {NAV_TABS.map((n) => (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  {n.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Zambian flag stripe */}
         <div aria-hidden className="h-1 w-full flex">
           <span className="flex-1 bg-[#0e8f4a]" />
@@ -142,6 +183,7 @@ function Landing() {
           <span className="flex-1 bg-[#f39200]" />
         </div>
       </header>
+
 
 
 
