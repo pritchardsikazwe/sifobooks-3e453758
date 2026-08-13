@@ -329,6 +329,68 @@ function FixedAssetsPage() {
     );
   }
 
+  const assetColumns: DTColumn<Asset>[] = [
+    { key: "asset_number", header: "Asset #", sticky: true, cell: (a) => <span className="font-mono text-xs">{a.asset_number}</span> },
+    { key: "description", header: "Description" },
+    { key: "category", header: "Category" },
+    { key: "purchase_date", header: "Purchased" },
+    { key: "location", header: "Location" },
+    { key: "cost", header: "Cost", align: "right", cell: (a) => fmt(a.cost) },
+    { key: "useful_life_years", header: "Life", align: "right", cell: (a) => `${a.useful_life_years}y` },
+    { key: "accumulated_depreciation", header: "Acc. Dep.", align: "right", cell: (a) => <span className="text-destructive">{fmt(a.accumulated_depreciation)}</span> },
+    { key: "book_value", header: "Book Value", align: "right", cell: (a) => <span className="font-semibold">{fmt(a.book_value)}</span> },
+    { key: "status", header: "Status", cell: (a) => <Badge variant={a.status === "active" ? "default" : "secondary"}>{a.status}</Badge> },
+    {
+      key: "actions", header: "", align: "right", sortable: false,
+      cell: (a) => (
+        <div className="flex gap-1 justify-end">
+          <Button size="sm" variant="ghost" onClick={() => { setTf({ ...tf, asset_id: a.id }); setMode("transfer"); }} disabled={a.status !== "active"}><ArrowRightLeft className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" onClick={() => { setDf({ ...df, asset_id: a.id }); setMode("disposal"); }} disabled={a.status !== "active"}><Trash2 className="h-3.5 w-3.5" /></Button>
+        </div>
+      ),
+    },
+  ];
+
+  const categoryColumns: DTColumn<Category>[] = [
+    { key: "code", header: "Code", sticky: true, cell: (c) => <span className="font-mono">{c.code}</span> },
+    { key: "name", header: "Name" },
+    { key: "useful_life_years", header: "Life (yrs)", align: "right" },
+    { key: "depreciation_method", header: "Method" },
+    { key: "depreciation_rate", header: "Rate %", align: "right", cell: (c) => c.depreciation_rate ?? "—" },
+    { key: "capitalisation_threshold", header: "Cap. Threshold", align: "right", cell: (c) => c.capitalisation_threshold ? fmt(c.capitalisation_threshold) : "—" },
+    { key: "is_active", header: "Active", cell: (c) => c.is_active ? <Badge>Active</Badge> : <Badge variant="secondary">Off</Badge> },
+  ];
+
+  const transferColumns: DTColumn<Transfer>[] = [
+    { key: "transfer_date", header: "Date", sticky: true },
+    { key: "asset_id", header: "Asset", cell: (t) => assetName(t.asset_id) },
+    { key: "from_location", header: "From", cell: (t) => t.from_location || "—" },
+    { key: "to_location", header: "To", cell: (t) => t.to_location || "—" },
+    { key: "to_custodian", header: "Custodian", cell: (t) => t.to_custodian || "—" },
+    { key: "reason", header: "Reason", cell: (t) => <span className="text-xs text-muted-foreground">{t.reason || "—"}</span> },
+  ];
+
+  const disposalColumns: DTColumn<Disposal>[] = [
+    { key: "disposal_date", header: "Date", sticky: true },
+    { key: "asset_id", header: "Asset", cell: (d) => assetName(d.asset_id) },
+    { key: "disposal_method", header: "Method" },
+    { key: "buyer", header: "Buyer", cell: (d) => d.buyer || "—" },
+    { key: "proceeds", header: "Proceeds", align: "right", cell: (d) => fmt(d.proceeds) },
+    { key: "gain_loss", header: "Gain / (Loss)", align: "right", cell: (d) => <span className={"font-semibold " + ((d.gain_loss ?? 0) >= 0 ? "text-emerald-700" : "text-destructive")}>{fmt(d.gain_loss ?? 0)}</span> },
+    { key: "journal_entry_id", header: "Posted", cell: (d) => d.journal_entry_id ? <Badge>Posted</Badge> : <Badge variant="secondary">Pending</Badge> },
+  ];
+
+  const scheduleColumns: DTColumn<typeof schedule[number]>[] = [
+    { key: "description", header: "Asset", sticky: true },
+    { key: "cost", header: "Cost", align: "right", cell: (a) => fmt(a.cost) },
+    { key: "salvage_value", header: "Salvage", align: "right", cell: (a) => fmt(a.salvage_value) },
+    { key: "useful_life_years", header: "Life", align: "right", cell: (a) => `${a.useful_life_years}y` },
+    { key: "annual_dep", header: "Annual Dep.", align: "right", cell: (a) => fmt(a.annual_dep) },
+    { key: "monthly_dep", header: "Monthly Dep.", align: "right", cell: (a) => fmt(a.monthly_dep) },
+    { key: "accumulated_depreciation", header: "Acc. Dep.", align: "right", cell: (a) => <span className="text-destructive">{fmt(a.accumulated_depreciation)}</span> },
+    { key: "book_value", header: "Book Value", align: "right", cell: (a) => <span className="font-semibold text-emerald-700">{fmt(a.book_value)}</span> },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
