@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -358,177 +358,83 @@ function FixedAssetsPage() {
         </TabsList>
 
         <TabsContent value="register">
-          <Card>
-            <CardHeader><CardTitle>Assets ({assets.length})</CardTitle></CardHeader>
-            <CardContent>
-              {loading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-                <Table>
-                  <TableHeader><TableRow>
-                    <TableHead>Asset #</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead>
-                    <TableHead>Purchased</TableHead><TableHead>Location</TableHead>
-                    <TableHead className="text-right">Cost</TableHead><TableHead className="text-right">Life</TableHead>
-                    <TableHead className="text-right">Acc. Dep.</TableHead><TableHead className="text-right">Book Value</TableHead>
-                    <TableHead>Status</TableHead><TableHead></TableHead>
-                  </TableRow></TableHeader>
-                  <TableBody>
-                    {assets.length === 0 && <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">No assets yet.</TableCell></TableRow>}
-                    {assets.map(a => (
-                      <TableRow key={a.id}>
-                        <TableCell className="font-mono text-xs">{a.asset_number}</TableCell>
-                        <TableCell>{a.description}</TableCell><TableCell>{a.category}</TableCell>
-                        <TableCell>{a.purchase_date}</TableCell><TableCell>{a.location}</TableCell>
-                        <TableCell className="text-right">{fmt(a.cost)}</TableCell>
-                        <TableCell className="text-right">{a.useful_life_years}y</TableCell>
-                        <TableCell className="text-right text-destructive">{fmt(a.accumulated_depreciation)}</TableCell>
-                        <TableCell className="text-right font-semibold">{fmt(a.book_value)}</TableCell>
-                        <TableCell><Badge variant={a.status === "active" ? "default" : "secondary"}>{a.status}</Badge></TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <Button size="sm" variant="ghost" onClick={() => { setTf({ ...tf, asset_id: a.id }); setMode("transfer"); }} disabled={a.status !== "active"}><ArrowRightLeft className="h-3.5 w-3.5" /></Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setDf({ ...df, asset_id: a.id }); setMode("disposal"); }} disabled={a.status !== "active"}><Trash2 className="h-3.5 w-3.5" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
+          <Card className="p-0 overflow-hidden">
+            <DataTable
+              tableId="fixed-assets-register"
+              columns={assetColumns}
+              data={assets}
+              loading={loading}
+              empty="No assets yet."
+              searchPlaceholder="Search assets…"
+              totals={(list) => ({
+                cost: fmt(list.reduce((s, a) => s + Number(a.cost || 0), 0)),
+                accumulated_depreciation: fmt(list.reduce((s, a) => s + Number(a.accumulated_depreciation || 0), 0)),
+                book_value: fmt(list.reduce((s, a) => s + Number(a.book_value || 0), 0)),
+              })}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="categories">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Categories ({cats.length})</CardTitle>
-              <Button size="sm" className="h-9" onClick={() => setMode("category")}><Plus className="h-4 w-4 mr-1" />New Category</Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Code</TableHead><TableHead>Name</TableHead>
-                  <TableHead className="text-right">Life (yrs)</TableHead>
-                  <TableHead>Method</TableHead><TableHead className="text-right">Rate %</TableHead>
-                  <TableHead className="text-right">Cap. Threshold</TableHead><TableHead>Active</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {cats.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">No categories. Add one to standardise useful life and depreciation policy.</TableCell></TableRow>}
-                  {cats.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-mono">{c.code}</TableCell><TableCell>{c.name}</TableCell>
-                      <TableCell className="text-right">{c.useful_life_years}</TableCell>
-                      <TableCell>{c.depreciation_method}</TableCell>
-                      <TableCell className="text-right">{c.depreciation_rate ?? "—"}</TableCell>
-                      <TableCell className="text-right">{c.capitalisation_threshold ? fmt(c.capitalisation_threshold) : "—"}</TableCell>
-                      <TableCell>{c.is_active ? <Badge>Active</Badge> : <Badge variant="secondary">Off</Badge>}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <Card className="p-0 overflow-hidden">
+            <DataTable
+              tableId="fixed-assets-categories"
+              columns={categoryColumns}
+              data={cats}
+              empty="No categories. Add one to standardise useful life and depreciation policy."
+              searchPlaceholder="Search categories…"
+              toolbarRight={<Button size="sm" className="h-9" onClick={() => setMode("category")}><Plus className="h-4 w-4 mr-1" />New Category</Button>}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="transfers">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Transfers ({transfers.length})</CardTitle>
-              <Button size="sm" className="h-9" onClick={() => setMode("transfer")}><Plus className="h-4 w-4 mr-1" />New Transfer</Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Date</TableHead><TableHead>Asset</TableHead>
-                  <TableHead>From</TableHead><TableHead>To</TableHead><TableHead>Custodian</TableHead><TableHead>Reason</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {transfers.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No transfers yet.</TableCell></TableRow>}
-                  {transfers.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.transfer_date}</TableCell>
-                      <TableCell>{assetName(t.asset_id)}</TableCell>
-                      <TableCell>{t.from_location || "—"}</TableCell>
-                      <TableCell>{t.to_location || "—"}</TableCell>
-                      <TableCell>{t.to_custodian || "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{t.reason || "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <Card className="p-0 overflow-hidden">
+            <DataTable
+              tableId="fixed-assets-transfers"
+              columns={transferColumns}
+              data={transfers}
+              empty="No transfers yet."
+              searchPlaceholder="Search transfers…"
+              toolbarRight={<Button size="sm" className="h-9" onClick={() => setMode("transfer")}><Plus className="h-4 w-4 mr-1" />New Transfer</Button>}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="disposals">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Disposals ({disposals.length})</CardTitle>
-              <Button size="sm" className="h-9" onClick={() => setMode("disposal")}><Plus className="h-4 w-4 mr-1" />New Disposal</Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Date</TableHead><TableHead>Asset</TableHead><TableHead>Method</TableHead>
-                  <TableHead>Buyer</TableHead><TableHead className="text-right">Proceeds</TableHead>
-                  <TableHead className="text-right">Gain / (Loss)</TableHead><TableHead>Posted</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {disposals.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">No disposals yet.</TableCell></TableRow>}
-                  {disposals.map(d => (
-                    <TableRow key={d.id}>
-                      <TableCell>{d.disposal_date}</TableCell>
-                      <TableCell>{assetName(d.asset_id)}</TableCell>
-                      <TableCell>{d.disposal_method}</TableCell>
-                      <TableCell>{d.buyer || "—"}</TableCell>
-                      <TableCell className="text-right">{fmt(d.proceeds)}</TableCell>
-                      <TableCell className={"text-right font-semibold " + ((d.gain_loss ?? 0) >= 0 ? "text-emerald-700" : "text-destructive")}>{fmt(d.gain_loss ?? 0)}</TableCell>
-                      <TableCell>{d.journal_entry_id ? <Badge>Posted</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <Card className="p-0 overflow-hidden">
+            <DataTable
+              tableId="fixed-assets-disposals"
+              columns={disposalColumns}
+              data={disposals}
+              empty="No disposals yet."
+              searchPlaceholder="Search disposals…"
+              totals={(list) => ({
+                proceeds: fmt(list.reduce((s, d) => s + Number(d.proceeds || 0), 0)),
+                gain_loss: fmt(list.reduce((s, d) => s + Number(d.gain_loss || 0), 0)),
+              })}
+              toolbarRight={<Button size="sm" className="h-9" onClick={() => setMode("disposal")}><Plus className="h-4 w-4 mr-1" />New Disposal</Button>}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="schedule">
-          <Card>
-            <CardHeader><CardTitle>Depreciation Schedule ({schedule.length} active)</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Asset</TableHead><TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">Salvage</TableHead><TableHead className="text-right">Life</TableHead>
-                  <TableHead className="text-right">Annual Dep.</TableHead><TableHead className="text-right">Monthly Dep.</TableHead>
-                  <TableHead className="text-right">Acc. Dep.</TableHead><TableHead className="text-right">Book Value</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {schedule.map(a => (
-                    <TableRow key={a.id}>
-                      <TableCell>{a.description}</TableCell>
-                      <TableCell className="text-right">{fmt(a.cost)}</TableCell>
-                      <TableCell className="text-right">{fmt(a.salvage_value)}</TableCell>
-                      <TableCell className="text-right">{a.useful_life_years}y</TableCell>
-                      <TableCell className="text-right">{fmt(a.annual_dep)}</TableCell>
-                      <TableCell className="text-right">{fmt(a.monthly_dep)}</TableCell>
-                      <TableCell className="text-right text-destructive">{fmt(a.accumulated_depreciation)}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-700">{fmt(a.book_value)}</TableCell>
-                    </TableRow>
-                  ))}
-                  {schedule.length > 0 && (
-                    <TableRow className="font-semibold bg-muted/40">
-                      <TableCell>Totals</TableCell>
-                      <TableCell className="text-right">{fmt(schedule.reduce((s, a) => s + a.cost, 0))}</TableCell>
-                      <TableCell></TableCell><TableCell></TableCell>
-                      <TableCell className="text-right">{fmt(schedule.reduce((s, a) => s + a.annual_dep, 0))}</TableCell>
-                      <TableCell className="text-right">{fmt(schedule.reduce((s, a) => s + a.monthly_dep, 0))}</TableCell>
-                      <TableCell className="text-right text-destructive">{fmt(schedule.reduce((s, a) => s + Number(a.accumulated_depreciation), 0))}</TableCell>
-                      <TableCell className="text-right text-emerald-700">{fmt(schedule.reduce((s, a) => s + Number(a.book_value), 0))}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <Card className="p-0 overflow-hidden">
+            <DataTable
+              tableId="fixed-assets-schedule"
+              columns={scheduleColumns}
+              data={schedule}
+              empty="No active assets."
+              searchPlaceholder="Search schedule…"
+              toolbarLeft={<span className="text-sm font-medium text-foreground">{schedule.length} active</span>}
+              totals={(list) => ({
+                cost: fmt(list.reduce((s, a) => s + a.cost, 0)),
+                annual_dep: fmt(list.reduce((s, a) => s + a.annual_dep, 0)),
+                monthly_dep: fmt(list.reduce((s, a) => s + a.monthly_dep, 0)),
+                accumulated_depreciation: fmt(list.reduce((s, a) => s + Number(a.accumulated_depreciation), 0)),
+                book_value: fmt(list.reduce((s, a) => s + Number(a.book_value), 0)),
+              })}
+            />
           </Card>
         </TabsContent>
       </Tabs>

@@ -399,15 +399,24 @@ function Landing() {
 
 
 
-      {/* FEATURES strip */}
+      {/* FEATURES */}
       <section id="features" className="max-w-7xl mx-auto px-6 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Reveal className="mb-10 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Built in, not bolted on</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            The things accountants actually ask for.
+          </h2>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { icon: Zap, title: "Automatic posting", desc: "Every invoice, bill and receipt flows straight into the GL — no manual journals." },
             { icon: ShieldCheck, title: "Bank-grade security", desc: "Row-level security, full audit trail, and role-based access on every record." },
             { icon: Building2, title: "Multi-company", desc: "Run all your entities from one login — switch companies without signing out." },
+            { icon: Landmark, title: "Smart bank matching", desc: "Import a statement and let SifoBooks suggest the account, with partial allocations." },
+            { icon: BarChart3, title: "Export anything", desc: "Every list and report exports to PDF, Excel or CSV with your branding on it." },
+            { icon: Banknote, title: "Kwacha first", desc: "ZMW by default with multi-currency support and live FX rates where you need them." },
           ].map((f, i) => (
-            <Reveal key={f.title} delay={i * 80}>
+            <Reveal key={f.title} delay={i * 60}>
               <div className="h-full bg-[#0d1f16] border border-white/10 rounded-2xl p-6 hover:border-[#0e8f4a]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="w-11 h-11 bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 rounded-xl grid place-items-center mb-4">
                   <f.icon className="w-5 h-5 text-[#7dd3a5]" />
@@ -419,6 +428,7 @@ function Landing() {
           ))}
         </div>
       </section>
+
 
       {/* COMPLIANCE strip */}
       <div id="compliance" className="border-y border-white/5 bg-[#06110c]">

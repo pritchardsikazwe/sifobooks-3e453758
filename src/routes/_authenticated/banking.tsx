@@ -14,12 +14,13 @@ import { AppNav } from "@/components/AppNav";
 import { parseStatement, type ParsedTxn } from "@/lib/statement-parser";
 import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
-import { SpendMoneyDialog } from "@/components/SpendMoneyDialog";
+import { SpendMoneyForm } from "@/components/SpendMoneyDialog";
 import { ReconcileDialog } from "@/components/ReconcileDialog";
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { bankAllocationLines } from "@/lib/posting-lines";
 import { toast } from "sonner";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 
 export const Route = createFileRoute("/_authenticated/banking")({
