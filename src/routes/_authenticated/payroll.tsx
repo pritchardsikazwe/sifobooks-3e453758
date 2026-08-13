@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DataTable, type DTColumn } from "@/components/data-table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
