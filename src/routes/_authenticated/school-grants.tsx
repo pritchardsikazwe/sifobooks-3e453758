@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Loader2 } from "lucide-react";
+import { Plus, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
