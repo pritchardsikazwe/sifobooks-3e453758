@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type DTColumn } from "@/components/data-table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -427,7 +428,7 @@ function NewObligationForm({ onCancel, onCreated }: { onCancel: () => void; onCr
 
   return (
     <SifoFormPage
-      module="compliance"
+      module="tax"
       icon={ShieldCheck}
       title="New statutory obligation"
       subtitle="Track a filing across a statutory body"
