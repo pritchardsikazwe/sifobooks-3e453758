@@ -301,57 +301,79 @@ function Landing() {
         </div>
       </section>
 
-      {/* MODULES — 2026 colour-coded grid, mirrors the in-app module identity system */}
+      {/* MODULES — interactive tabbed explorer, mirrors the in-app module identity system */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
-        <Reveal className="mb-12 max-w-2xl">
+        <Reveal className="mb-10 max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Everything in one place</div>
           <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
             Eight departments. One clean ledger.
           </h2>
           <p className="mt-4 text-slate-400">
-            Every module carries its own colour inside SifoBooks, so you always know exactly which part of the business you are working in.
+            Every module carries its own colour inside SifoBooks. Tap a tab to see exactly what ships with it.
           </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "Chart of accounts, journals, cashbook, general ledger and period close.", span: "lg:col-span-2" },
-            { name: "Sales", hex: "#0D9488", icon: ReceiptText, desc: "Quotes, VAT invoices, receipts, credit notes and customer statements." },
-            { name: "Purchases", hex: "#EA580C", icon: FileText, desc: "Purchase orders, supplier bills, payments and expense capture." },
-            { name: "Inventory", hex: "#CA8A04", icon: Boxes, desc: "Stock items, warehouses, adjustments, counts and valuation." },
-            { name: "Banking", hex: "#2563EB", icon: Landmark, desc: "Statement import, smart matching, allocations and reconciliation." },
-            { name: "Payroll & HR", hex: "#7C3AED", icon: Banknote, desc: "PAYE, NAPSA, NHIMA, WCF & SDL with branded payslips.", span: "lg:col-span-2" },
-            { name: "Reports", hex: "#4F46E5", icon: BarChart3, desc: "P&L, balance sheet, cash flow, IFRS-for-SME annual statements." },
-            { name: "Compliance", hex: "#DC2626", icon: ShieldCheck, desc: "ZRA calendar, VAT, turnover tax, WHT and statutory returns." },
-          ].map((m, i) => (
-            <Reveal key={m.name} delay={i * 50} className={m.span ?? ""}>
-              <div
-                className="group relative h-full overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f16] p-6 transition-all duration-300 hover:-translate-y-1"
-                style={{ ["--hue" as any]: m.hex }}
-              >
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 top-0 h-[3px] opacity-70 transition-opacity group-hover:opacity-100"
-                  style={{ background: m.hex }}
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
-                  style={{ background: m.hex }}
-                />
-                <div
-                  className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: `${m.hex}22`, borderColor: `${m.hex}55`, color: m.hex }}
+        {/* Module tabs */}
+        <div className="-mx-6 overflow-x-auto px-6 pb-2">
+          <div role="tablist" aria-label="SifoBooks modules" className="flex min-w-max gap-2">
+            {MODULES.map((m) => {
+              const on = m.name === moduleTab;
+              return (
+                <button
+                  key={m.name}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setModuleTab(m.name)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                    on ? "text-white -translate-y-0.5" : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.07]"
+                  }`}
+                  style={on ? { background: `${m.hex}26`, borderColor: `${m.hex}80`, boxShadow: `0 10px 30px -14px ${m.hex}` } : undefined}
                 >
-                  <m.icon className="h-6 w-6" />
-                </div>
-                <h3 className="mb-2 text-xl font-bold text-white" style={heading}>{m.name}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{m.desc}</p>
-              </div>
-            </Reveal>
-          ))}
+                  <m.icon className="h-4 w-4" style={{ color: m.hex }} />
+                  {m.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Active module panel */}
+        {MODULES.filter(m => m.name === moduleTab).map((m) => (
+          <div
+            key={m.name}
+            role="tabpanel"
+            className="mt-6 grid gap-6 rounded-3xl border border-white/10 bg-[#0d1f16] p-6 md:p-10 lg:grid-cols-[1.1fr_1fr]"
+            style={{ boxShadow: `inset 0 1px 0 ${m.hex}33` }}
+          >
+            <div>
+              <div
+                className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border"
+                style={{ background: `${m.hex}22`, borderColor: `${m.hex}55`, color: m.hex }}
+              >
+                <m.icon className="h-7 w-7" />
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-white" style={heading}>{m.name}</h3>
+              <p className="mt-3 max-w-lg leading-relaxed text-slate-400">{m.desc}</p>
+              <Link
+                to="/auth"
+                className="mt-7 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-transform hover:scale-[1.03]"
+                style={{ background: m.hex }}
+              >
+                Explore {m.name} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ul className="grid gap-2 self-center sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {m.points.map((p) => (
+                <li key={p} className="flex items-start gap-2.5 rounded-xl border border-white/5 bg-white/[0.02] px-3.5 py-3 text-sm text-slate-300">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: m.hex }} />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </section>
+
 
 
       {/* FEATURES strip */}

@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
@@ -18,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, monthName } from "@/lib/format";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import {
   computePayslip, calcPaye, DEFAULT_PAYE_BANDS, calcGratuity, calcLeavePay, calcNoticePay,
   calcRepatriation, hourlyRate, STD_HOURS_PER_MONTH, OVERTIME_WEEKDAY, OVERTIME_WEEKEND,
@@ -313,6 +313,18 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     toast.success("Export downloaded");
   };
 
+  if (editing) {
+    return (
+      <EditSlipForm
+        slip={editing}
+        run={run}
+        userId={userId}
+        onClose={() => setEditing(null)}
+        onSaved={() => { setEditing(null); load(); onChanged(); }}
+      />
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -409,7 +421,6 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
         </div>
       </CardContent>
 
-      {editing && <EditSlipDialog slip={editing} run={run} userId={userId} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); onChanged(); }} />}
     </Card>
   );
 }
@@ -676,7 +687,7 @@ function Totals({ label, value, accent }: { label: string; value: number; accent
 
 /* ================= Edit slip dialog ================= */
 
-function EditSlipDialog({ slip, run, userId, onClose, onSaved }: { slip: Slip & { employee: Employee }; run: Run; userId: string; onClose: () => void; onSaved: () => void }) {
+function EditSlipForm({ slip, run, userId, onClose, onSaved }: { slip: Slip & { employee: Employee }; run: Run; userId: string; onClose: () => void; onSaved: () => void }) {
   const [basic, setBasic] = useState(Number(slip.basic_salary ?? 0));
   const [notes, setNotes] = useState(slip.notes ?? "");
   const [loanBalance, setLoanBalance] = useState(Number(slip.loan_balance ?? 0));
@@ -694,24 +705,26 @@ function EditSlipDialog({ slip, run, userId, onClose, onSaved }: { slip: Slip & 
   };
 
   return (
-    <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Edit payslip — {slip.employee.first_name} {slip.employee.last_name}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Basic Salary</Label><Input type="number" value={basic} onChange={e => setBasic(Number(e.target.value))} /></div>
-            <div><Label>Loan Balance</Label><Input type="number" value={loanBalance} onChange={e => setLoanBalance(Number(e.target.value))} /></div>
-          </div>
-          <div><Label>Notes</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
-          <div className="text-xs text-slate-500">To recompute earnings/deductions from scratch, delete this run and regenerate. Individual figures on the payslip come from the run.</div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button variant="save" onClick={save} disabled={saving} >{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save</Button>
-          </div>
-        </div>
-        <div className="text-[10px] text-slate-400">Run {run.run_number}</div>
-      </DialogContent>
-    </Dialog>
+    <div className="p-4 sm:p-6">
+      <SifoFormPage
+        module="payroll"
+        icon={Banknote}
+        title={`Edit payslip — ${slip.employee.first_name} ${slip.employee.last_name}`}
+        subtitle={`Run ${run.run_number}`}
+        onCancel={onClose}
+        onSave={save}
+        saving={saving}
+        saveLabel="Save"
+      >
+        <SifoFormSection title="Payslip">
+          <SifoField label="Basic salary"><Input type="number" value={basic} onChange={e => setBasic(Number(e.target.value))} /></SifoField>
+          <SifoField label="Loan balance"><Input type="number" value={loanBalance} onChange={e => setLoanBalance(Number(e.target.value))} /></SifoField>
+          <SifoField label="Notes" wide help="To recompute earnings/deductions from scratch, delete this run and regenerate. Individual figures on the payslip come from the run.">
+            <Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
+          </SifoField>
+        </SifoFormSection>
+      </SifoFormPage>
+    </div>
   );
 }
 

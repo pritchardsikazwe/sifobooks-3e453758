@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ShieldCheck } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,37 +21,30 @@ function AuditLogsPage() {
       setLoading(false);
     })();
   }, []);
+  const columns: DTColumn<any>[] = [
+    { key: "created_at", header: "When", cell: (r) => <span className="text-xs whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</span> },
+    { key: "actor_email", header: "Actor", cell: (r) => r.actor_email ?? "-" },
+    { key: "action", header: "Action", cell: (r) => <Badge variant="outline">{r.action}</Badge> },
+    { key: "entity_type", header: "Entity", cell: (r) => r.entity_type ?? "-" },
+    { key: "details", header: "Details", accessor: (r) => r.details ? JSON.stringify(r.details) : "-", cell: (r) => <span className="text-xs text-muted-foreground max-w-md truncate block">{r.details ? JSON.stringify(r.details) : "-"}</span> },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
         <ShieldCheck className="h-6 w-6 text-emerald-600" />
         <h1 className="text-2xl font-bold">Audit Trail</h1>
       </div>
-      <Card>
-        <CardHeader><CardTitle>Recent Activity ({rows.length})</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
-          : rows.length === 0 ? <div className="text-center py-12 text-muted-foreground">No audit records yet.</div>
-          : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>When</TableHead><TableHead>Actor</TableHead><TableHead>Action</TableHead>
-                <TableHead>Entity</TableHead><TableHead>Details</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {rows.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-xs whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</TableCell>
-                    <TableCell>{r.actor_email ?? "-"}</TableCell>
-                    <TableCell><Badge variant="outline">{r.action}</Badge></TableCell>
-                    <TableCell>{r.entity_type ?? "-"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-md truncate">{r.details ? JSON.stringify(r.details) : "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
+      <Card className="p-0 overflow-hidden">
+        <DataTable
+          tableId="audit-logs"
+          columns={columns}
+          data={rows}
+          loading={loading}
+          empty="No audit records yet."
+          searchPlaceholder="Search audit logs…"
+          toolbarLeft={<span className="text-sm font-medium text-foreground">Recent Activity ({rows.length})</span>}
+        />
       </Card>
     </div>
   );
