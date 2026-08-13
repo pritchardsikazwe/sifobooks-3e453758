@@ -118,6 +118,8 @@ function Landing() {
   const [signedIn, setSignedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [section, setSection] = useState<string>("modules");
+  const [moduleTab, setModuleTab] = useState<string>(MODULES[0].name);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
