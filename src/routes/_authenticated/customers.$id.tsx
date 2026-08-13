@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
@@ -16,6 +16,21 @@ export const Route = createFileRoute("/_authenticated/customers/$id")({
   head: () => ({ meta: [{ title: "Customer — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: CustomerDetail,
 });
+
+const invoiceColumns: DTColumn<any>[] = [
+  { key: "number", header: "#", cell: i => <span className="font-mono text-xs">{i.number}</span> },
+  { key: "issue_date", header: "Date", cell: i => <span className="text-xs">{i.issue_date}</span> },
+  { key: "total", header: "Total", align: "right", cell: i => fmtMoney(i.total) },
+  { key: "balance_due", header: "Balance", align: "right", cell: i => fmtMoney(i.balance_due) },
+  { key: "status", header: "Status", cell: i => <StatusBadge s={i.status} /> },
+];
+
+const receiptColumns: DTColumn<any>[] = [
+  { key: "number", header: "#", cell: r => <span className="font-mono text-xs">{r.number}</span> },
+  { key: "receipt_date", header: "Date", cell: r => <span className="text-xs">{r.receipt_date}</span> },
+  { key: "method", header: "Method", cell: r => <span className="text-xs capitalize">{r.method.replace("_", " ")}</span> },
+  { key: "amount", header: "Amount", align: "right", cell: r => fmtMoney(r.amount) },
+];
 
 function CustomerDetail() {
   const { id } = useParams({ from: "/_authenticated/customers/$id" });
@@ -86,19 +101,29 @@ function CustomerDetail() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Invoices</CardTitle><Button asChild size="sm" variant="outline"><Link to="/invoices/new" search={{ customer: id } as any}>New</Link></Button></CardHeader>
-          <CardContent>{invoices.length === 0 ? <div className="text-sm text-muted-foreground py-6 text-center">No invoices yet.</div> :
-            <Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Balance</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-              <TableBody>{invoices.map(i => (<TableRow key={i.id}><TableCell className="font-mono text-xs">{i.number}</TableCell><TableCell className="text-xs">{i.issue_date}</TableCell><TableCell className="text-right">{fmtMoney(i.total)}</TableCell><TableCell className="text-right">{fmtMoney(i.balance_due)}</TableCell><TableCell><StatusBadge s={i.status} /></TableCell></TableRow>))}</TableBody>
-            </Table>}
+          <CardContent className="p-0">
+            <DataTable
+              tableId="customer-invoices"
+              columns={invoiceColumns}
+              data={invoices}
+              searchPlaceholder={null}
+              empty="No invoices yet."
+              totals={rows => ({ total: fmtMoney(rows.reduce((s, r) => s + Number(r.total || 0), 0)), balance_due: fmtMoney(rows.reduce((s, r) => s + Number(r.balance_due || 0), 0)) })}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><ReceiptIcon className="h-4 w-4" /> Receipts</CardTitle></CardHeader>
-          <CardContent>{receipts.length === 0 ? <div className="text-sm text-muted-foreground py-6 text-center">No payments received yet.</div> :
-            <Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-              <TableBody>{receipts.map(r => (<TableRow key={r.id}><TableCell className="font-mono text-xs">{r.number}</TableCell><TableCell className="text-xs">{r.receipt_date}</TableCell><TableCell className="text-xs capitalize">{r.method.replace("_", " ")}</TableCell><TableCell className="text-right">{fmtMoney(r.amount)}</TableCell></TableRow>))}</TableBody>
-            </Table>}
+          <CardContent className="p-0">
+            <DataTable
+              tableId="customer-receipts"
+              columns={receiptColumns}
+              data={receipts}
+              searchPlaceholder={null}
+              empty="No payments received yet."
+              totals={rows => ({ amount: fmtMoney(rows.reduce((s, r) => s + Number(r.amount || 0), 0)) })}
+            />
           </CardContent>
         </Card>
       </div>

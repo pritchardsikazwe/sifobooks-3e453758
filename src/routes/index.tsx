@@ -91,6 +91,27 @@ const NAV_TABS = [
   { id: "contact", label: "Contact" },
 ];
 
+const MODULES = [
+  { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "A real double-entry engine: every document posts itself to the correct accounts, with reversals and a locked period close.",
+    points: ["Chart of accounts", "Manual & recurring journals", "Cashbook (receipts & payments)", "General ledger drill-down", "Reversals for wrong postings", "Period close & lock"] },
+  { name: "Sales", hex: "#0D9488", icon: ReceiptText, desc: "Quote to cash with Zambian VAT and TPIN on every document, plus customer statements that tie back to the ledger.",
+    points: ["Quotes & VAT invoices", "Receipts & allocations", "Credit notes", "Customer statements", "Aged receivables", "Share by WhatsApp / email"] },
+  { name: "Purchases", hex: "#EA580C", icon: FileText, desc: "Control spend from order to payment, with supplier balances and expense capture that never leaves the GL out of sync.",
+    points: ["Purchase orders", "Supplier bills", "Bill payments", "Expense capture & rules", "Supplier statements", "Aged payables"] },
+  { name: "Inventory", hex: "#CA8A04", icon: Boxes, desc: "Track what you hold, where you hold it and what it is worth — with counts and adjustments that post automatically.",
+    points: ["Stock items & pricing", "Multi-warehouse", "Stock adjustments", "Count sheets", "Inventory valuation", "Cost of sales posting"] },
+  { name: "Banking", hex: "#2563EB", icon: Landmark, desc: "Import statements, let smart matching do the heavy lifting, then reconcile formally with a full audit trail.",
+    points: ["Statement import (CSV/PDF)", "Smart matching & rules", "Partial allocations", "Allocation reversal with reason", "Reconciliation sessions", "Bank schedules"] },
+  { name: "Payroll & HR", hex: "#7C3AED", icon: Banknote, desc: "Statutory Zambian payroll with branded payslips and ready-to-file schedules for every authority.",
+    points: ["PAYE 2026 bands", "NAPSA, NHIMA, WCF & SDL", "Branded YTD payslips", "Timesheets & leave", "Payroll & tax schedules", "Bank payment schedule"] },
+  { name: "Reports", hex: "#4F46E5", icon: BarChart3, desc: "Management and statutory reporting from live data — filter any period, then export to PDF or Excel.",
+    points: ["P&L, balance sheet, trial balance", "Cash flow statement", "IFRS-for-SME annual statements", "Monthly management report", "Ledgers & account transactions", "PDF / Excel / CSV export"] },
+  { name: "Compliance", hex: "#DC2626", icon: ShieldCheck, desc: "Stay ahead of ZRA and the statutory calendar, with computations produced from your own books.",
+    points: ["ZRA filing calendar", "VAT return", "Turnover tax", "Withholding tax", "Income tax computation", "Full audit log"] },
+];
+
+
+
 function Landing() {
   const heading = { fontFamily: "Outfit, sans-serif" } as const;
   const body = { fontFamily: "Figtree, sans-serif" } as const;

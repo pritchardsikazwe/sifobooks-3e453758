@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Tags, Plus, Trash2, Loader2, Check, X } from "lucide-react";
+import { Tags, Plus, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { toast } from "sonner";
+import { ExportMenu } from "@/lib/exports";
 
 export const Route = createFileRoute("/_authenticated/expense-rules")({
   head: () => ({
@@ -89,10 +90,14 @@ function ExpenseRules() {
     load();
   };
 
+  const removeSilent = async (r: Rule) => {
+    const { error } = await supabase.from("expense_category_rules").delete().eq("id", r.id);
+    if (error) toast.error(error.message);
+  };
+
   const remove = async (r: Rule) => {
     if (!confirm(`Delete rule "${r.name}"?`)) return;
-    const { error } = await supabase.from("expense_category_rules").delete().eq("id", r.id);
-    if (error) return toast.error(error.message);
+    await removeSilent(r);
     toast.success("Rule deleted");
     load();
   };
@@ -157,6 +162,29 @@ function ExpenseRules() {
     );
   }
 
+  const ruleColumns: DTColumn<Rule>[] = [
+    { key: "priority", header: "Priority", cell: (r) => <span className="font-mono">{r.priority}</span> },
+    { key: "name", header: "Name", sticky: true, cell: (r) => <span className="font-medium">{r.name}</span> },
+    { key: "match_type", header: "Match", cell: (r) => <Badge variant="outline">{r.match_type}</Badge> },
+    {
+      key: "match_value", header: "Value",
+      cell: (r) => <span className="max-w-[220px] truncate block">{r.match_type === "supplier" ? (suppliers.find(s => s.id === r.match_value)?.name ?? r.match_value) : `"${r.match_value}"`}</span>,
+    },
+    { key: "account_id", header: "Account", cell: (r) => <span className="text-xs">{accountLabel(r.account_id)}</span> },
+    { key: "is_active", header: "Status", cell: (r) => r.is_active ? <Badge variant="secondary" className="bg-primary/10 text-primary">Active</Badge> : <Badge variant="outline">Inactive</Badge> },
+    {
+      key: "actions", header: "Actions", align: "right", sortable: false,
+      cell: (r) => (
+        <div className="flex justify-end gap-1">
+          <Button size="sm" variant="ghost" onClick={() => toggle(r)}>
+            {r.is_active ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => remove(r)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -170,47 +198,31 @@ function ExpenseRules() {
         <Button onClick={() => setOpen(true)} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New rule</Button>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Rules</CardTitle></CardHeader>
-        <CardContent>
-          {loading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin inline" /></div> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Match</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No rules yet. Create one to auto-post future bills.</TableCell></TableRow>
-                ) : rules.map(r => (
-                  <TableRow key={r.id} className={!r.is_active ? "opacity-50" : ""}>
-                    <TableCell className="font-mono">{r.priority}</TableCell>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell><Badge variant="outline">{r.match_type}</Badge></TableCell>
-                    <TableCell className="max-w-[220px] truncate">
-                      {r.match_type === "supplier" ? (suppliers.find(s => s.id === r.match_value)?.name ?? r.match_value) : `"${r.match_value}"`}
-                    </TableCell>
-                    <TableCell className="text-xs">{accountLabel(r.account_id)}</TableCell>
-                    <TableCell>{r.is_active ? <Badge variant="secondary" className="bg-primary/10 text-primary">Active</Badge> : <Badge variant="outline">Inactive</Badge>}</TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button size="sm" variant="ghost" onClick={() => toggle(r)}>
-                        {r.is_active ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(r)}><Trash2 className="h-3 w-3 text-red-600" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <Card className="p-0 overflow-hidden">
+        <DataTable
+          tableId="expense-rules"
+          columns={ruleColumns}
+          data={rules}
+          loading={loading}
+          empty="No rules yet. Create one to auto-post future bills."
+          searchPlaceholder="Search rules…"
+          selectable
+          bulkActions={(selected, clear) => (
+            <Button
+              size="sm" variant="destructive"
+              onClick={async () => {
+                if (!confirm(`Delete ${selected.length} rule(s)?`)) return;
+                for (const r of selected) await removeSilent(r);
+                toast.success("Rules deleted");
+                clear();
+                load();
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete selected
+            </Button>
           )}
-        </CardContent>
+          toolbarRight={<ExportMenu rows={rules.map(r => ({ Priority: r.priority, Name: r.name, Match: r.match_type, Value: r.match_value, Account: accountLabel(r.account_id), Status: r.is_active ? "Active" : "Inactive" }))} filename="expense-rules" title="Custom Expense Categories" />}
+        />
       </Card>
 
       <Card>

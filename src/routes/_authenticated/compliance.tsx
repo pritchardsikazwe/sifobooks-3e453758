@@ -4,9 +4,8 @@ import { ArrowLeft, ShieldCheck, LogOut, Plus, Trash2, CheckCircle2, AlertCircle
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +17,7 @@ import {
   INCOME_TAX, FILING_CALENDAR, PORTALS, ZAMBIA_TAX_YEAR,
 } from "@/lib/zambia-tax";
 import { toast } from "sonner";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 export const Route = createFileRoute("/_authenticated/compliance")({
   head: () => ({
@@ -153,6 +153,33 @@ function CompliancePage() {
 
   const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); };
 
+  const obligationColumns: DTColumn<Obligation>[] = [
+    { key: "body", header: "Body", cell: i => { const b = bodyByCode(i.body); return <Badge variant="outline" className={b?.color ?? ""}>{b?.name ?? i.body}</Badge>; } },
+    { key: "obligation_type", header: "Obligation", cell: i => <span className="font-medium">{i.obligation_type}</span> },
+    { key: "period", header: "Period", cell: i => <span className="text-muted-foreground">{i.period}</span> },
+    { key: "due_date", header: "Due", cell: i => <span className="text-muted-foreground">{i.due_date}</span> },
+    { key: "status", header: "Status", cell: i => (
+        <Badge variant="outline" className={statusStyles[i.status]}>
+          <span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span>
+        </Badge>
+      ) },
+    { key: "amount", header: "Amount", align: "right", cell: i => i.amount != null ? <span className="font-medium">{money(Number(i.amount))}</span> : "—" },
+    { key: "actions", header: "", sortable: false, cell: i => (
+        <div className="text-right">
+          {i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}
+          <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+        </div>
+      ) },
+  ];
+
+  if (open) {
+    return (
+      <div className="p-4 sm:p-6">
+        <NewObligationForm onCancel={() => setOpen(false)} onCreated={() => { setOpen(false); load(); }} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
@@ -195,46 +222,18 @@ function CompliancePage() {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" onClick={generateThisMonth}><Sparkles className="h-4 w-4" /> This month</Button>
                   <Button variant="outline" onClick={generateWholeYear}><Calendar className="h-4 w-4" /> Whole year</Button>
-                  <NewObligationDialog open={open} setOpen={setOpen} onCreated={load} />
+                  <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Add obligation</Button>
                 </div>
               </CardHeader>
               <CardContent className="px-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="pl-6">Body</TableHead>
-                      <TableHead>Obligation</TableHead>
-                      <TableHead>Period</TableHead>
-                      <TableHead>Due</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="w-40 text-right"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
-                    ) : withDerivedStatus.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No obligations yet. Use "This month" or "Whole year" to seed filings.</TableCell></TableRow>
-                    ) : withDerivedStatus.map(i => {
-                      const b = bodyByCode(i.body);
-                      return (
-                        <TableRow key={i.id}>
-                          <TableCell className="pl-6"><Badge variant="outline" className={b?.color ?? ""}>{b?.name ?? i.body}</Badge></TableCell>
-                          <TableCell className="font-medium">{i.obligation_type}</TableCell>
-                          <TableCell className="text-muted-foreground">{i.period}</TableCell>
-                          <TableCell className="text-muted-foreground">{i.due_date}</TableCell>
-                          <TableCell><Badge variant="outline" className={statusStyles[i.status]}><span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span></Badge></TableCell>
-                          <TableCell className="text-right font-medium">{i.amount != null ? money(Number(i.amount)) : "—"}</TableCell>
-                          <TableCell className="text-right">
-                            {i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}
-                            <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  tableId="compliance-obligations"
+                  columns={obligationColumns}
+                  data={withDerivedStatus}
+                  loading={loading}
+                  empty={'No obligations yet. Use "This month" or "Whole year" to seed filings.'}
+                  totals={rows => ({ amount: money(rows.reduce((s, r) => s + Number(r.amount ?? 0), 0)) })}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -401,7 +400,7 @@ function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: stri
   );
 }
 
-function NewObligationDialog({ open, setOpen, onCreated }: { open: boolean; setOpen: (v: boolean) => void; onCreated: () => void }) {
+function NewObligationForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
   const [body, setBody] = useState(STATUTORY_BODIES[0].code);
   const [obligation, setObligation] = useState(STATUTORY_BODIES[0].obligations[0]);
@@ -409,53 +408,52 @@ function NewObligationDialog({ open, setOpen, onCreated }: { open: boolean; setO
   const [due, setDue] = useState(today);
   const [amount, setAmount] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
   const bodyObj = bodyByCode(body);
 
   const submit = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
+    setSaving(true);
     const { error } = await supabase.from("compliance_obligations").insert({
       user_id: u.user.id, body, obligation_type: obligation, period, due_date: due, status: "upcoming",
       amount: amount ? Number(amount) : null, notes: notes || null,
     });
+    setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Obligation added");
-    setOpen(false); setAmount(""); setNotes("");
     onCreated();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button><Plus className="h-4 w-4" /> Add obligation</Button></DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>New statutory obligation</DialogTitle></DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Statutory body</Label>
-              <Select value={body} onValueChange={v => { setBody(v); const b = bodyByCode(v); if (b) setObligation(b.obligations[0]); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUTORY_BODIES.map(b => <SelectItem key={b.code} value={b.code}>{b.name} — {b.full}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Obligation</Label>
-              <Select value={obligation} onValueChange={setObligation}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{bodyObj?.obligations.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2"><Label>Period</Label><Input value={period} onChange={e => setPeriod(e.target.value)} placeholder="2026-07 or 2026-Q3" /></div>
-            <div className="space-y-2"><Label>Due date</Label><Input type="date" value={due} onChange={e => setDue(e.target.value)} /></div>
-            <div className="space-y-2 sm:col-span-2"><Label>Amount (optional)</Label><Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" /></div>
-            <div className="space-y-2 sm:col-span-2"><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Reference, filing portal, etc." /></div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit}>Add</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <SifoFormPage
+      module="compliance"
+      icon={ShieldCheck}
+      title="New statutory obligation"
+      subtitle="Track a filing across a statutory body"
+      onCancel={onCancel}
+      onSave={submit}
+      saving={saving}
+      saveLabel="Add"
+    >
+      <SifoFormSection title="Obligation details">
+        <SifoField label="Statutory body" wide>
+          <Select value={body} onValueChange={v => { setBody(v); const b = bodyByCode(v); if (b) setObligation(b.obligations[0]); }}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{STATUTORY_BODIES.map(b => <SelectItem key={b.code} value={b.code}>{b.name} — {b.full}</SelectItem>)}</SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Obligation" wide>
+          <Select value={obligation} onValueChange={setObligation}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{bodyObj?.obligations.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Period"><Input value={period} onChange={e => setPeriod(e.target.value)} placeholder="2026-07 or 2026-Q3" /></SifoField>
+        <SifoField label="Due date"><Input type="date" value={due} onChange={e => setDue(e.target.value)} /></SifoField>
+        <SifoField label="Amount (optional)"><Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" /></SifoField>
+        <SifoField label="Notes" wide><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Reference, filing portal, etc." /></SifoField>
+      </SifoFormSection>
+    </SifoFormPage>
   );
 }

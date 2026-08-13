@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { ExportMenu } from "@/lib/exports";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 export const Route = createFileRoute("/_authenticated/reconciliation-sessions")({
   head: () => ({
@@ -109,6 +109,24 @@ function ReconciliationSessions() {
     return <SessionDetail id={activeId} onBack={() => { setActiveId(null); load(); }} />;
   }
 
+  if (openNew) {
+    return (
+      <div className="p-4 sm:p-6">
+        <NewSessionForm
+          accounts={accounts}
+          nBank={nBank} setNBank={setNBank}
+          nStart={nStart} setNStart={setNStart}
+          nEnd={nEnd} setNEnd={setNEnd}
+          nOpening={nOpening} setNOpening={setNOpening}
+          nStatement={nStatement} setNStatement={setNStatement}
+          nNotes={nNotes} setNNotes={setNNotes}
+          onCancel={() => setOpenNew(false)}
+          onSave={createSession}
+        />
+      </div>
+    );
+  }
+
   const columns: DTColumn<Session>[] = useMemo(() => [
     { key: "statement_date", header: "Statement Date" },
     { key: "bank", header: "Bank Account",
@@ -174,36 +192,51 @@ function ReconciliationSessions() {
       )}
 
 
-      <Dialog open={openNew} onOpenChange={setOpenNew}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>New Reconciliation Session</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Bank Account</Label>
-              <Select value={nBank} onValueChange={setNBank}>
-                <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-                <SelectContent>
-                  {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name} {a.account_number ? `(${a.account_number})` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Period Start</Label><Input type="date" value={nStart} onChange={e => setNStart(e.target.value)} /></div>
-              <div><Label>Statement Date *</Label><Input type="date" value={nEnd} onChange={e => setNEnd(e.target.value)} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Opening Balance</Label><Input type="number" step="0.01" value={nOpening} onChange={e => setNOpening(e.target.value)} /></div>
-              <div><Label>Closing Statement Balance *</Label><Input type="number" step="0.01" value={nStatement} onChange={e => setNStatement(e.target.value)} /></div>
-            </div>
-            <div><Label>Notes</Label><Textarea value={nNotes} onChange={e => setNNotes(e.target.value)} rows={2} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenNew(false)}>Cancel</Button>
-            <Button onClick={createSession}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
+  );
+}
+
+function NewSessionForm({
+  accounts, nBank, setNBank, nStart, setNStart, nEnd, setNEnd,
+  nOpening, setNOpening, nStatement, setNStatement, nNotes, setNNotes,
+  onCancel, onSave,
+}: {
+  accounts: BankAccount[];
+  nBank: string; setNBank: (v: string) => void;
+  nStart: string; setNStart: (v: string) => void;
+  nEnd: string; setNEnd: (v: string) => void;
+  nOpening: string; setNOpening: (v: string) => void;
+  nStatement: string; setNStatement: (v: string) => void;
+  nNotes: string; setNNotes: (v: string) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <SifoFormPage
+      module="banking"
+      icon={Scale}
+      title="New Reconciliation Session"
+      subtitle="Formal statement-vs-book reconciliation"
+      onCancel={onCancel}
+      onSave={onSave}
+      saveLabel="Create"
+    >
+      <SifoFormSection title="Session details">
+        <SifoField label="Bank account" wide>
+          <Select value={nBank} onValueChange={setNBank}>
+            <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+            <SelectContent>
+              {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name} {a.account_number ? `(${a.account_number})` : ""}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Period start"><Input type="date" value={nStart} onChange={e => setNStart(e.target.value)} /></SifoField>
+        <SifoField label="Statement date" required><Input type="date" value={nEnd} onChange={e => setNEnd(e.target.value)} /></SifoField>
+        <SifoField label="Opening balance"><Input type="number" step="0.01" value={nOpening} onChange={e => setNOpening(e.target.value)} /></SifoField>
+        <SifoField label="Closing statement balance" required><Input type="number" step="0.01" value={nStatement} onChange={e => setNStatement(e.target.value)} /></SifoField>
+        <SifoField label="Notes" wide><Textarea value={nNotes} onChange={e => setNNotes(e.target.value)} rows={2} /></SifoField>
+      </SifoFormSection>
+    </SifoFormPage>
   );
 }
 
