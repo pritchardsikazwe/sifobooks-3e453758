@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Building2, MapPin, Users, Wallet, CalendarRange, Percent, BriefcaseBusiness, ShieldCheck, GitBranch, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { monthName } from "@/lib/format";
@@ -225,6 +225,15 @@ function ListTab<T extends Row>({ title, description, table, userId, companyId, 
     if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
   };
 
+  const dtColumns: DTColumn<any>[] = [
+    ...columns.map(c => ({
+      key: c.key as string,
+      header: c.label,
+      cell: (r: any) => c.render ? c.render(r[c.key], r) : String(r[c.key] ?? "—"),
+    })),
+    { key: "actions", header: "", sortable: false, cell: (r: any) => <Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button> },
+  ];
+
   return (
     <Card>
       <CardHeader><CardTitle>{title}</CardTitle><CardDescription>{description}</CardDescription></CardHeader>
@@ -253,21 +262,14 @@ function ListTab<T extends Row>({ title, description, table, userId, companyId, 
           </div>
         </div>
 
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader><TableRow>{columns.map(c => <TableHead key={c.key}>{c.label}</TableHead>)}<TableHead className="w-12" /></TableRow></TableHeader>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={columns.length + 1} className="text-center py-6 text-slate-400">Loading…</TableCell></TableRow>
-                : rows.length === 0 ? <TableRow><TableCell colSpan={columns.length + 1} className="text-center py-6 text-slate-400">None yet — add your first above.</TableCell></TableRow>
-                : rows.map(r => (
-                  <TableRow key={r.id}>
-                    {columns.map(c => <TableCell key={c.key}>{c.render ? c.render(r[c.key], r) : String(r[c.key] ?? "—")}</TableCell>)}
-                    <TableCell><Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button></TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          tableId={`setup-${table}`}
+          columns={dtColumns}
+          data={rows}
+          loading={loading}
+          searchPlaceholder={null}
+          empty="None yet — add your first above."
+        />
       </CardContent>
     </Card>
   );

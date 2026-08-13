@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Wallet, Loader2 } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
@@ -114,6 +114,22 @@ function Page() {
     );
   }
 
+  const imprestColumns: DTColumn<any>[] = [
+    { key: "imprest_no", header: "#", sticky: true, cell: (r) => <span className="font-mono text-xs">{r.imprest_no}</span> },
+    { key: "officer_name", header: "Officer", cell: (r) => <span className="font-medium">{r.officer_name}</span> },
+    { key: "purpose", header: "Purpose", cell: (r) => <span className="text-xs max-w-xs truncate block">{r.purpose ?? "—"}</span> },
+    { key: "amount_issued", header: "Issued", align: "right", cell: (r) => fmtMoney(Number(r.amount_issued)) },
+    { key: "amount_spent", header: "Spent", align: "right", cell: (r) => fmtMoney(Number(r.amount_spent)) },
+    { key: "amount_returned", header: "Returned", align: "right", cell: (r) => fmtMoney(Number(r.amount_returned)) },
+    { key: "status", header: "Status", cell: (r) => <Badge variant={r.status === "retired" ? "outline" : "default"}>{r.status}</Badge> },
+    {
+      key: "actions", header: "", sortable: false,
+      cell: (r) => r.status !== "retired" && (
+        <Button size="sm" variant="outline" onClick={() => { setRetireId(r.id); setRetire({ amount_spent: r.amount_issued, retirement_date: new Date().toISOString().slice(0, 10) }); setMode("retire"); }}>Retire</Button>
+      ),
+    },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -128,30 +144,19 @@ function Page() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {loading ? <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> :
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>#</TableHead><TableHead>Officer</TableHead><TableHead>Purpose</TableHead>
-              <TableHead className="text-right">Issued</TableHead><TableHead className="text-right">Spent</TableHead>
-              <TableHead className="text-right">Returned</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs">{r.imprest_no}</TableCell>
-                  <TableCell className="font-medium">{r.officer_name}</TableCell>
-                  <TableCell className="text-xs max-w-xs truncate">{r.purpose ?? "—"}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Number(r.amount_issued))}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Number(r.amount_spent))}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Number(r.amount_returned))}</TableCell>
-                  <TableCell><Badge variant={r.status === "retired" ? "outline" : "default"}>{r.status}</Badge></TableCell>
-                  <TableCell>{r.status !== "retired" && <Button size="sm" variant="outline" onClick={() => { setRetireId(r.id); setRetire({ amount_spent: r.amount_issued, retirement_date: new Date().toISOString().slice(0, 10) }); setMode("retire"); }}>Retire</Button>}</TableCell>
-                </TableRow>
-              ))}
-              {!rows.length && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No imprest issued yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        }
+        <DataTable
+          tableId="imprest-register"
+          columns={imprestColumns}
+          data={rows}
+          loading={loading}
+          empty="No imprest issued yet."
+          searchPlaceholder="Search imprest…"
+          totals={(list) => ({
+            amount_issued: fmtMoney(list.reduce((s, r) => s + Number(r.amount_issued || 0), 0)),
+            amount_spent: fmtMoney(list.reduce((s, r) => s + Number(r.amount_spent || 0), 0)),
+            amount_returned: fmtMoney(list.reduce((s, r) => s + Number(r.amount_returned || 0), 0)),
+          })}
+        />
       </Card>
     </div>
   );

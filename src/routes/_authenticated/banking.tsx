@@ -14,12 +14,13 @@ import { AppNav } from "@/components/AppNav";
 import { parseStatement, type ParsedTxn } from "@/lib/statement-parser";
 import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
-import { SpendMoneyDialog } from "@/components/SpendMoneyDialog";
+import { SpendMoneyForm } from "@/components/SpendMoneyDialog";
 import { ReconcileDialog } from "@/components/ReconcileDialog";
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { bankAllocationLines } from "@/lib/posting-lines";
 import { toast } from "sonner";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
 
 export const Route = createFileRoute("/_authenticated/banking")({
@@ -295,6 +296,75 @@ function BankingPage() {
 
   const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); };
 
+  if (spendOpen || receiveOpen) {
+    const isSpend = spendOpen;
+    return (
+      <div className="p-4 sm:p-6">
+        <SpendMoneyForm
+          mode={isSpend ? "spend" : "receive"}
+          onCancel={() => { setSpendOpen(false); setReceiveOpen(false); }}
+          onRecorded={() => { setSpendOpen(false); setReceiveOpen(false); load(); }}
+        />
+      </div>
+    );
+  }
+
+  if (allocTxn) {
+    const abs = Math.abs(Number(allocTxn.amount));
+    const already = Number(allocTxn.allocated_amount ?? 0);
+    const remaining = Math.max(0, abs - already);
+    return (
+      <div className="p-4 sm:p-6">
+        <SifoFormPage
+          module="banking"
+          icon={Landmark}
+          title="Allocate to ledger"
+          subtitle={`${allocTxn.txn_date} · ${allocTxn.reference ?? ""} · ${money(Number(allocTxn.amount))}`}
+          onCancel={() => setAllocTxn(null)}
+          onSave={runAllocate}
+          saving={busy === allocTxn.id}
+          saveDisabled={!allocBalanced}
+          saveLabel="Post allocation"
+        >
+          <SifoFormSection title="Transaction">
+            <SifoField label="Description" wide>
+              <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm">
+                {allocTxn.description}
+                <div className="mt-1 text-xs text-muted-foreground">Already allocated: <span className="font-medium">{money(already)}</span> · Remaining: <span className="font-medium text-emerald-700">{money(remaining)}</span></div>
+              </div>
+            </SifoField>
+            <SifoField label="Counter account" wide required
+              help={Number(allocTxn.amount) >= 0
+                ? "Income, receivable or liability account credited by this deposit."
+                : "Expense, payable or asset account debited by this payment."}
+            >
+              <AccountSelector
+                label="" recentKey="bank-alloc"
+                accounts={accounts.filter(a => a.account_code !== "1000")}
+                value={allocAccountId || null}
+                onChange={v => setAllocAccountId(v ?? "")}
+              />
+            </SifoField>
+            <SifoField label="Amount to allocate">
+              <Input type="number" step="0.01" min="0.01" max={remaining} value={allocAmount} onChange={e => setAllocAmount(e.target.value)} />
+              <button type="button" className="mt-1 text-xs text-emerald-700 hover:underline" onClick={() => setAllocAmount(remaining.toFixed(2))}>Full remaining</button>
+            </SifoField>
+            <SifoField label="Memo"><Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Journal description" /></SifoField>
+            <SifoField label="Journal preview" wide>
+              <PostingPreview lines={allocPreviewLines} title="Journal that will clear this line" />
+              {!allocBalanced && <p className="mt-1 text-xs text-destructive">Pick a counter account and an amount greater than zero before posting.</p>}
+              {allocBalanced && remaining - Number(allocAmount || 0) > 0.005 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This is a partial allocation — {money(remaining - Number(allocAmount || 0))} will stay unallocated and the line remains in the Partial tab.
+                </p>
+              )}
+            </SifoField>
+          </SifoFormSection>
+        </SifoFormPage>
+      </div>
+    );
+  }
+
   const inflow = txns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const outflow = txns.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
   const net = inflow + outflow;
@@ -538,68 +608,6 @@ function BankingPage() {
         </Card>
       </main>
 
-      {/* Allocate dialog */}
-      <Dialog open={!!allocTxn} onOpenChange={o => !o && setAllocTxn(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Allocate to ledger</DialogTitle></DialogHeader>
-          {allocTxn && (() => {
-            const abs = Math.abs(Number(allocTxn.amount));
-            const already = Number(allocTxn.allocated_amount ?? 0);
-            const remaining = Math.max(0, abs - already);
-            return (
-              <div className="space-y-3 text-sm">
-                <div className="p-3 rounded-md bg-muted">
-                  <div className="font-medium">{allocTxn.description}</div>
-                  <div className="text-xs text-muted-foreground">{allocTxn.txn_date} · {allocTxn.reference} · <span className="font-mono">{money(Number(allocTxn.amount))}</span></div>
-                  <div className="mt-1 text-xs">Already allocated: <span className="font-medium">{money(already)}</span> · Remaining: <span className="font-medium text-emerald-700">{money(remaining)}</span></div>
-                </div>
-                <AccountSelector
-                  label="Counter account" required recentKey="bank-alloc"
-                  help={Number(allocTxn.amount) >= 0
-                    ? "Income, receivable or liability account credited by this deposit."
-                    : "Expense, payable or asset account debited by this payment."}
-                  accounts={accounts.filter(a => a.account_code !== "1000")}
-                  value={allocAccountId || null}
-                  onChange={v => setAllocAccountId(v ?? "")}
-                />
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Amount to allocate</Label>
-                    <Input type="number" step="0.01" min="0.01" max={remaining} value={allocAmount} onChange={e => setAllocAmount(e.target.value)} />
-                    <div className="mt-1 flex gap-1">
-                      <button type="button" className="text-xs text-emerald-700 hover:underline" onClick={() => setAllocAmount(remaining.toFixed(2))}>Full remaining</button>
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Memo</Label>
-                    <Input value={allocMemo} onChange={e => setAllocMemo(e.target.value)} placeholder="Journal description" />
-                  </div>
-                </div>
-
-                <PostingPreview lines={allocPreviewLines} title="Journal that will clear this line" />
-                {!allocBalanced && (
-                  <p className="text-xs text-destructive">Pick a counter account and an amount greater than zero before posting.</p>
-                )}
-                {allocBalanced && remaining - Number(allocAmount || 0) > 0.005 && (
-                  <p className="text-xs text-muted-foreground">
-                    This is a partial allocation — {money(remaining - Number(allocAmount || 0))} will stay unallocated and the line remains in the Partial tab.
-                  </p>
-                )}
-              </div>
-
-            );
-          })()}
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAllocTxn(null)}>Cancel</Button>
-            <Button variant="save" onClick={runAllocate} disabled={!allocBalanced || busy === allocTxn?.id} >
-              {busy === allocTxn?.id && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Post allocation
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Reverse dialog */}
       <Dialog open={!!reverseAlloc} onOpenChange={o => !o && setReverseAlloc(null)}>
         <DialogContent className="max-w-md">
@@ -628,8 +636,6 @@ function BankingPage() {
         </DialogContent>
       </Dialog>
 
-      <SpendMoneyDialog open={spendOpen} onOpenChange={setSpendOpen} onRecorded={load} mode="spend" />
-      <SpendMoneyDialog open={receiveOpen} onOpenChange={setReceiveOpen} onRecorded={load} mode="receive" />
       <ReconcileDialog open={reconcileOpen} onOpenChange={setReconcileOpen} onLocked={load} />
 
       <Dialog open={!!clearTxn} onOpenChange={o => !o && setClearTxn(null)}>

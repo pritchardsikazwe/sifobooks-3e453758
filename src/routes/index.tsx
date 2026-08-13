@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle2, ShieldCheck, Zap, BarChart3, Wallet,
   FileText, ReceiptText, Boxes, Landmark, Banknote, Building2,
-  Phone, Mail, MessageCircle, GraduationCap, Quote, PlayCircle, Star, HelpCircle,
+  Phone, Mail, MessageCircle, GraduationCap, Quote, PlayCircle, Star, HelpCircle, Menu, X,
 } from "lucide-react";
 import logo from "@/assets/sifobooks-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,33 +83,95 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
+const NAV_TABS = [
+  { id: "modules", label: "Modules" },
+  { id: "features", label: "Features" },
+  { id: "compliance", label: "Compliance" },
+  { id: "learn", label: "Academy" },
+  { id: "contact", label: "Contact" },
+];
+
+const MODULES = [
+  { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "A real double-entry engine: every document posts itself to the correct accounts, with reversals and a locked period close.",
+    points: ["Chart of accounts", "Manual & recurring journals", "Cashbook (receipts & payments)", "General ledger drill-down", "Reversals for wrong postings", "Period close & lock"] },
+  { name: "Sales", hex: "#0D9488", icon: ReceiptText, desc: "Quote to cash with Zambian VAT and TPIN on every document, plus customer statements that tie back to the ledger.",
+    points: ["Quotes & VAT invoices", "Receipts & allocations", "Credit notes", "Customer statements", "Aged receivables", "Share by WhatsApp / email"] },
+  { name: "Purchases", hex: "#EA580C", icon: FileText, desc: "Control spend from order to payment, with supplier balances and expense capture that never leaves the GL out of sync.",
+    points: ["Purchase orders", "Supplier bills", "Bill payments", "Expense capture & rules", "Supplier statements", "Aged payables"] },
+  { name: "Inventory", hex: "#CA8A04", icon: Boxes, desc: "Track what you hold, where you hold it and what it is worth — with counts and adjustments that post automatically.",
+    points: ["Stock items & pricing", "Multi-warehouse", "Stock adjustments", "Count sheets", "Inventory valuation", "Cost of sales posting"] },
+  { name: "Banking", hex: "#2563EB", icon: Landmark, desc: "Import statements, let smart matching do the heavy lifting, then reconcile formally with a full audit trail.",
+    points: ["Statement import (CSV/PDF)", "Smart matching & rules", "Partial allocations", "Allocation reversal with reason", "Reconciliation sessions", "Bank schedules"] },
+  { name: "Payroll & HR", hex: "#7C3AED", icon: Banknote, desc: "Statutory Zambian payroll with branded payslips and ready-to-file schedules for every authority.",
+    points: ["PAYE 2026 bands", "NAPSA, NHIMA, WCF & SDL", "Branded YTD payslips", "Timesheets & leave", "Payroll & tax schedules", "Bank payment schedule"] },
+  { name: "Reports", hex: "#4F46E5", icon: BarChart3, desc: "Management and statutory reporting from live data — filter any period, then export to PDF or Excel.",
+    points: ["P&L, balance sheet, trial balance", "Cash flow statement", "IFRS-for-SME annual statements", "Monthly management report", "Ledgers & account transactions", "PDF / Excel / CSV export"] },
+  { name: "Compliance", hex: "#DC2626", icon: ShieldCheck, desc: "Stay ahead of ZRA and the statutory calendar, with computations produced from your own books.",
+    points: ["ZRA filing calendar", "VAT return", "Turnover tax", "Withholding tax", "Income tax computation", "Full audit log"] },
+];
+
+
+
 function Landing() {
   const heading = { fontFamily: "Outfit, sans-serif" } as const;
   const body = { fontFamily: "Figtree, sans-serif" } as const;
   const [signedIn, setSignedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [section, setSection] = useState<string>("modules");
+  const [moduleTab, setModuleTab] = useState<string>(MODULES[0].name);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Scroll-spy: highlight the nav tab for the section in view.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const els = NAV_TABS.map(n => document.getElementById(n.id)).filter(Boolean) as HTMLElement[];
+    const io = new IntersectionObserver(
+      entries => {
+        const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setSection(visible.target.id);
+      },
+      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.25, 0.5] },
+    );
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+
 
   return (
     <div className="min-h-screen bg-[#06110c] text-slate-200 selection:bg-[#0e8f4a]/40 selection:text-white" style={body}>
       {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#06110c]/80 backdrop-blur-xl">
-        <nav className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
+        <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
             <img src={logo} alt="SifoBooks" className="h-8 w-8 object-contain transition-transform group-hover:scale-110" width={32} height={32} />
             <span className="text-xl font-bold tracking-tight text-white" style={heading}>SifoBooks</span>
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#modules" className="hover:text-[#0e8f4a] transition-colors">Modules</a>
-            <a href="#features" className="hover:text-[#0e8f4a] transition-colors">Features</a>
-            <a href="#compliance" className="hover:text-[#0e8f4a] transition-colors">Compliance</a>
-            <a href="#contact" className="hover:text-[#0e8f4a] transition-colors">Contact</a>
+
+          {/* Pill tab navigation */}
+          <div className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            {NAV_TABS.map((n) => {
+              const active = section === n.id;
+              return (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+                    active ? "bg-[#0e8f4a] text-white shadow-[0_0_20px_-6px_#0e8f4a]" : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {n.label}
+                </a>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2">
             {signedIn ? (
               <Link
                 to="/dashboard"
@@ -127,13 +189,41 @@ function Landing() {
                   to="/auth"
                   className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-[#0e8f4a] text-white rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_-5px_rgba(14,143,74,0.8)]"
                 >
-                  Get Started Free
+                  Get Started
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              className="md:hidden grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-200"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </nav>
+
+        {/* Mobile drawer */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-white/5 px-6 pb-4 pt-2">
+            <div className="grid gap-1">
+              {NAV_TABS.map((n) => (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                >
+                  {n.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Zambian flag stripe */}
         <div aria-hidden className="h-1 w-full flex">
           <span className="flex-1 bg-[#0e8f4a]" />
@@ -142,6 +232,7 @@ function Landing() {
           <span className="flex-1 bg-[#f39200]" />
         </div>
       </header>
+
 
 
 
@@ -233,68 +324,99 @@ function Landing() {
         </div>
       </section>
 
-      {/* MODULES — 2026 colour-coded grid, mirrors the in-app module identity system */}
+      {/* MODULES — interactive tabbed explorer, mirrors the in-app module identity system */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
-        <Reveal className="mb-12 max-w-2xl">
+        <Reveal className="mb-10 max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Everything in one place</div>
           <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
             Eight departments. One clean ledger.
           </h2>
           <p className="mt-4 text-slate-400">
-            Every module carries its own colour inside SifoBooks, so you always know exactly which part of the business you are working in.
+            Every module carries its own colour inside SifoBooks. Tap a tab to see exactly what ships with it.
           </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "Chart of accounts, journals, cashbook, general ledger and period close.", span: "lg:col-span-2" },
-            { name: "Sales", hex: "#0D9488", icon: ReceiptText, desc: "Quotes, VAT invoices, receipts, credit notes and customer statements." },
-            { name: "Purchases", hex: "#EA580C", icon: FileText, desc: "Purchase orders, supplier bills, payments and expense capture." },
-            { name: "Inventory", hex: "#CA8A04", icon: Boxes, desc: "Stock items, warehouses, adjustments, counts and valuation." },
-            { name: "Banking", hex: "#2563EB", icon: Landmark, desc: "Statement import, smart matching, allocations and reconciliation." },
-            { name: "Payroll & HR", hex: "#7C3AED", icon: Banknote, desc: "PAYE, NAPSA, NHIMA, WCF & SDL with branded payslips.", span: "lg:col-span-2" },
-            { name: "Reports", hex: "#4F46E5", icon: BarChart3, desc: "P&L, balance sheet, cash flow, IFRS-for-SME annual statements." },
-            { name: "Compliance", hex: "#DC2626", icon: ShieldCheck, desc: "ZRA calendar, VAT, turnover tax, WHT and statutory returns." },
-          ].map((m, i) => (
-            <Reveal key={m.name} delay={i * 50} className={m.span ?? ""}>
-              <div
-                className="group relative h-full overflow-hidden rounded-3xl border border-white/10 bg-[#0d1f16] p-6 transition-all duration-300 hover:-translate-y-1"
-                style={{ ["--hue" as any]: m.hex }}
-              >
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 top-0 h-[3px] opacity-70 transition-opacity group-hover:opacity-100"
-                  style={{ background: m.hex }}
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
-                  style={{ background: m.hex }}
-                />
-                <div
-                  className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: `${m.hex}22`, borderColor: `${m.hex}55`, color: m.hex }}
+        {/* Module tabs */}
+        <div className="-mx-6 overflow-x-auto px-6 pb-2">
+          <div role="tablist" aria-label="SifoBooks modules" className="flex min-w-max gap-2">
+            {MODULES.map((m) => {
+              const on = m.name === moduleTab;
+              return (
+                <button
+                  key={m.name}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setModuleTab(m.name)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                    on ? "text-white -translate-y-0.5" : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.07]"
+                  }`}
+                  style={on ? { background: `${m.hex}26`, borderColor: `${m.hex}80`, boxShadow: `0 10px 30px -14px ${m.hex}` } : undefined}
                 >
-                  <m.icon className="h-6 w-6" />
-                </div>
-                <h3 className="mb-2 text-xl font-bold text-white" style={heading}>{m.name}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{m.desc}</p>
-              </div>
-            </Reveal>
-          ))}
+                  <m.icon className="h-4 w-4" style={{ color: m.hex }} />
+                  {m.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Active module panel */}
+        {MODULES.filter(m => m.name === moduleTab).map((m) => (
+          <div
+            key={m.name}
+            role="tabpanel"
+            className="mt-6 grid gap-6 rounded-3xl border border-white/10 bg-[#0d1f16] p-6 md:p-10 lg:grid-cols-[1.1fr_1fr]"
+            style={{ boxShadow: `inset 0 1px 0 ${m.hex}33` }}
+          >
+            <div>
+              <div
+                className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border"
+                style={{ background: `${m.hex}22`, borderColor: `${m.hex}55`, color: m.hex }}
+              >
+                <m.icon className="h-7 w-7" />
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-white" style={heading}>{m.name}</h3>
+              <p className="mt-3 max-w-lg leading-relaxed text-slate-400">{m.desc}</p>
+              <Link
+                to="/auth"
+                className="mt-7 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-transform hover:scale-[1.03]"
+                style={{ background: m.hex }}
+              >
+                Explore {m.name} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ul className="grid gap-2 self-center sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {m.points.map((p) => (
+                <li key={p} className="flex items-start gap-2.5 rounded-xl border border-white/5 bg-white/[0.02] px-3.5 py-3 text-sm text-slate-300">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: m.hex }} />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </section>
 
 
-      {/* FEATURES strip */}
+
+      {/* FEATURES */}
       <section id="features" className="max-w-7xl mx-auto px-6 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Reveal className="mb-10 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Built in, not bolted on</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            The things accountants actually ask for.
+          </h2>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { icon: Zap, title: "Automatic posting", desc: "Every invoice, bill and receipt flows straight into the GL — no manual journals." },
             { icon: ShieldCheck, title: "Bank-grade security", desc: "Row-level security, full audit trail, and role-based access on every record." },
             { icon: Building2, title: "Multi-company", desc: "Run all your entities from one login — switch companies without signing out." },
+            { icon: Landmark, title: "Smart bank matching", desc: "Import a statement and let SifoBooks suggest the account, with partial allocations." },
+            { icon: BarChart3, title: "Export anything", desc: "Every list and report exports to PDF, Excel or CSV with your branding on it." },
+            { icon: Banknote, title: "Kwacha first", desc: "ZMW by default with multi-currency support and live FX rates where you need them." },
           ].map((f, i) => (
-            <Reveal key={f.title} delay={i * 80}>
+            <Reveal key={f.title} delay={i * 60}>
               <div className="h-full bg-[#0d1f16] border border-white/10 rounded-2xl p-6 hover:border-[#0e8f4a]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="w-11 h-11 bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 rounded-xl grid place-items-center mb-4">
                   <f.icon className="w-5 h-5 text-[#7dd3a5]" />
@@ -306,6 +428,7 @@ function Landing() {
           ))}
         </div>
       </section>
+
 
       {/* COMPLIANCE strip */}
       <div id="compliance" className="border-y border-white/5 bg-[#06110c]">

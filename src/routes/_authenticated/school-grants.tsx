@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Loader2 } from "lucide-react";
+import { Plus, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
@@ -106,6 +106,17 @@ function Page() {
     );
   }
 
+  const grantColumns: DTColumn<Grant>[] = [
+    { key: "grant_ref", header: "Ref", sticky: true, cell: (r) => <span className="font-mono text-xs">{r.grant_ref ?? "—"}</span> },
+    { key: "grant_name", header: "Name", cell: (r) => <span className="font-medium">{r.grant_name}</span> },
+    { key: "source", header: "Source", cell: (r) => <Badge variant="outline">{r.source}</Badge> },
+    { key: "quarter", header: "Quarter", cell: (r) => `${r.quarter} ${r.fiscal_year}` },
+    { key: "approved_amount", header: "Approved", align: "right", cell: (r) => fmtMoney(Number(r.approved_amount)) },
+    { key: "received_amount", header: "Received", align: "right", cell: (r) => <span className="font-semibold text-emerald-700">{fmtMoney(Number(r.received_amount))}</span> },
+    { key: "date_received", header: "Date", cell: (r) => r.date_received ?? "—" },
+    { key: "status", header: "Status", cell: (r) => <Badge>{r.status}</Badge> },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -120,30 +131,18 @@ function Page() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {loading ? <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> :
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Ref</TableHead><TableHead>Name</TableHead><TableHead>Source</TableHead>
-              <TableHead>Quarter</TableHead><TableHead className="text-right">Approved</TableHead>
-              <TableHead className="text-right">Received</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs">{r.grant_ref ?? "—"}</TableCell>
-                  <TableCell className="font-medium">{r.grant_name}</TableCell>
-                  <TableCell><Badge variant="outline">{r.source}</Badge></TableCell>
-                  <TableCell>{r.quarter} {r.fiscal_year}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Number(r.approved_amount))}</TableCell>
-                  <TableCell className="text-right font-semibold text-emerald-700">{fmtMoney(Number(r.received_amount))}</TableCell>
-                  <TableCell>{r.date_received ?? "—"}</TableCell>
-                  <TableCell><Badge>{r.status}</Badge></TableCell>
-                </TableRow>
-              ))}
-              {!rows.length && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No grants recorded yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        }
+        <DataTable
+          tableId="school-grants"
+          columns={grantColumns}
+          data={rows}
+          loading={loading}
+          empty="No grants recorded yet."
+          searchPlaceholder="Search grants…"
+          totals={(list) => ({
+            approved_amount: fmtMoney(list.reduce((s, r) => s + Number(r.approved_amount || 0), 0)),
+            received_amount: fmtMoney(list.reduce((s, r) => s + Number(r.received_amount || 0), 0)),
+          })}
+        />
       </Card>
     </div>
   );

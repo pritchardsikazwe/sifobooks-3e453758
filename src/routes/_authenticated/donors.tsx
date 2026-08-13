@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { SimpleCrud } from "@/components/SimpleCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -88,6 +88,15 @@ function DonorsPage() {
     let bal = 0;
     return rows.map(r => { bal += r.pledged - r.received; return { ...r, balance: bal }; });
   }, [stmtDonor, pledges, receipts]);
+
+  const statementColumns: DTColumn<any>[] = [
+    { key: "date", header: "Date" },
+    { key: "ref", header: "Ref", cell: (r) => <span className="font-mono text-xs">{r.ref}</span> },
+    { key: "detail", header: "Detail" },
+    { key: "pledged", header: "Pledged", align: "right", cell: (r) => r.pledged ? fmtMoney(r.pledged) : "—" },
+    { key: "received", header: "Received", align: "right", cell: (r) => r.received ? fmtMoney(r.received) : "—" },
+    { key: "balance", header: "Balance", align: "right", cell: (r) => <span className="font-medium">{fmtMoney(r.balance)}</span> },
+  ];
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -259,25 +268,17 @@ function DonorsPage() {
                 />
               </div>
             </div>
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Date</TableHead><TableHead>Ref</TableHead><TableHead>Detail</TableHead>
-                <TableHead className="text-right">Pledged</TableHead><TableHead className="text-right">Received</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {statement.map((s, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{s.date}</TableCell><TableCell className="font-mono text-xs">{s.ref}</TableCell>
-                    <TableCell>{s.detail}</TableCell>
-                    <TableCell className="text-right tabular-nums">{s.pledged ? fmtMoney(s.pledged) : "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums">{s.received ? fmtMoney(s.received) : "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">{fmtMoney(s.balance)}</TableCell>
-                  </TableRow>
-                ))}
-                {!statement.length && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Select a donor to view their statement.</TableCell></TableRow>}
-              </TableBody>
-            </Table>
+            <DataTable
+              tableId="donor-statement"
+              columns={statementColumns}
+              data={statement.map((s, i) => ({ ...s, id: i }))}
+              empty="Select a donor to view their statement."
+              searchPlaceholder={null}
+              totals={(list) => ({
+                pledged: fmtMoney(list.reduce((s, r) => s + r.pledged, 0)),
+                received: fmtMoney(list.reduce((s, r) => s + r.received, 0)),
+              })}
+            />
           </Card>
         </TabsContent>
       </Tabs>

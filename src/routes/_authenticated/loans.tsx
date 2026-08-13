@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { SimpleCrud } from "@/components/SimpleCrud";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,6 +154,17 @@ function LoansPage() {
     );
   }
 
+  const scheduleColumns: DTColumn<any>[] = [
+    { key: "period_no", header: "#" },
+    { key: "due_date", header: "Due date" },
+    { key: "opening_balance", header: "Opening", align: "right", cell: (s) => fmtMoney(Number(s.opening_balance)) },
+    { key: "principal_due", header: "Principal", align: "right", cell: (s) => fmtMoney(Number(s.principal_due)) },
+    { key: "interest_due", header: "Interest", align: "right", cell: (s) => fmtMoney(Number(s.interest_due)) },
+    { key: "total_due", header: "Instalment", align: "right", cell: (s) => <span className="font-medium">{fmtMoney(Number(s.total_due))}</span> },
+    { key: "closing_balance", header: "Closing", align: "right", cell: (s) => fmtMoney(Number(s.closing_balance)) },
+    { key: "status", header: "Status", cell: (s) => <Badge variant="outline">{s.status}</Badge> },
+  ];
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       <div className="flex items-center gap-3">
@@ -247,29 +258,18 @@ function LoansPage() {
                 />
               </div>
             </div>
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>#</TableHead><TableHead>Due date</TableHead>
-                <TableHead className="text-right">Opening</TableHead><TableHead className="text-right">Principal</TableHead>
-                <TableHead className="text-right">Interest</TableHead><TableHead className="text-right">Instalment</TableHead>
-                <TableHead className="text-right">Closing</TableHead><TableHead>Status</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {schedule.map(s => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.period_no}</TableCell>
-                    <TableCell>{s.due_date}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(Number(s.opening_balance))}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(Number(s.principal_due))}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(Number(s.interest_due))}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">{fmtMoney(Number(s.total_due))}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(Number(s.closing_balance))}</TableCell>
-                    <TableCell><Badge variant="outline">{s.status}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {!schedule.length && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No schedule yet — generate one from the register.</TableCell></TableRow>}
-              </TableBody>
-            </Table>
+            <DataTable
+              tableId="loan-amortisation-schedule"
+              columns={scheduleColumns}
+              data={schedule}
+              empty="No schedule yet — generate one from the register."
+              searchPlaceholder={null}
+              totals={(list) => ({
+                principal_due: fmtMoney(list.reduce((s, r) => s + Number(r.principal_due || 0), 0)),
+                interest_due: fmtMoney(list.reduce((s, r) => s + Number(r.interest_due || 0), 0)),
+                total_due: fmtMoney(list.reduce((s, r) => s + Number(r.total_due || 0), 0)),
+              })}
+            />
           </Card>
         </TabsContent>
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
@@ -196,6 +197,18 @@ function CashbookPage() {
 
   const acctName = (id: string) => accounts.find(a => a.id === id)?.name ?? "—";
 
+  const cashbookTypeColumns: DTColumn<any>[] = [
+    { key: "name", header: "Account", cell: a => <span className="font-medium">{a.name}</span> },
+    { key: "account_number", header: "Number", cell: a => <span className="text-xs">{a.account_number ?? "—"}</span> },
+    { key: "currency", header: "Currency", cell: a => <span className="text-xs">{a.currency ?? "ZMW"}</span> },
+    { key: "cashbook_type", header: "Cashbook type", sortable: false, cell: a => (
+        <Select value={a.cashbook_type ?? "main"} onValueChange={v => updateCashbookType(a.id, v)}>
+          <SelectTrigger className="h-8 w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectContent>{CASHBOOK_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+        </Select>
+      ) },
+  ];
+
   const exportRows = enriched.map(r => ({
     Date: r.txn_date,
     "Voucher #": r.voucher_no ?? "",
@@ -281,31 +294,14 @@ function CashbookPage() {
       {/* Cashbook-type management per account */}
       <Card className="print:hidden">
         <CardHeader className="pb-2"><CardTitle className="text-sm">Bank account cashbook types</CardTitle></CardHeader>
-        <CardContent className="p-0 overflow-auto">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Account</TableHead><TableHead>Number</TableHead><TableHead>Currency</TableHead>
-              <TableHead>Cashbook type</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {accounts.map(a => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.name}</TableCell>
-                  <TableCell className="text-xs">{a.account_number ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{a.currency ?? "ZMW"}</TableCell>
-                  <TableCell>
-                    <Select value={a.cashbook_type ?? "main"} onValueChange={v => updateCashbookType(a.id, v)}>
-                      <SelectTrigger className="h-8 w-[200px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>{CASHBOOK_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {accounts.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No bank accounts — add one under Finance → Bank accounts.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-0">
+          <DataTable
+            tableId="cashbook-account-types"
+            columns={cashbookTypeColumns}
+            data={accounts}
+            searchPlaceholder={null}
+            empty="No bank accounts — add one under Finance → Bank accounts."
+          />
         </CardContent>
       </Card>
 

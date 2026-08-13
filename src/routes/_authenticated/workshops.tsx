@@ -5,8 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, GraduationCap, Loader2, Users } from "lucide-react";
+import { DataTable, type DTColumn } from "@/components/data-table";
+import { Plus, GraduationCap, Users } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
@@ -161,6 +161,30 @@ function Page() {
     );
   }
 
+  const workshopColumns: DTColumn<any>[] = [
+    {
+      key: "workshop_name", header: "Workshop", sticky: true,
+      cell: (r) => (<><span className="font-medium">{r.workshop_name}</span><div className="text-xs text-muted-foreground">{r.participants_count} participants</div></>),
+    },
+    { key: "dates", header: "Dates", accessor: (r) => r.start_date, cell: (r) => <span className="text-xs">{r.start_date} → {r.end_date ?? "—"}</span> },
+    { key: "venue", header: "Venue", cell: (r) => r.venue ?? "—" },
+    { key: "budget", header: "Budget", align: "right", cell: (r) => fmtMoney(Number(r.budget)) },
+    {
+      key: "spent", header: "Spent", align: "right",
+      accessor: (r) => (allowances[r.id] || []).filter((x: any) => x.paid).reduce((s: number, x: any) => s + Number(x.amount), 0),
+      cell: (r) => <span className="font-semibold">{fmtMoney((allowances[r.id] || []).filter((x: any) => x.paid).reduce((s: number, x: any) => s + Number(x.amount), 0))}</span>,
+    },
+    {
+      key: "allowances", header: "Allowances", sortable: false,
+      cell: (r) => (
+        <>
+          <div className="text-xs text-muted-foreground mb-1"><Users className="h-3 w-3 inline" /> {(allowances[r.id] || []).length} recipients</div>
+          <Button size="sm" variant="outline" className="h-7" onClick={() => setAOpen(r.id)}>+ Add Allowance</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -175,35 +199,18 @@ function Page() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {loading ? <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> :
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Workshop</TableHead><TableHead>Dates</TableHead><TableHead>Venue</TableHead>
-              <TableHead className="text-right">Budget</TableHead><TableHead className="text-right">Spent</TableHead>
-              <TableHead>Allowances</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => {
-                const al = allowances[r.id] || [];
-                const paidTotal = al.filter(x => x.paid).reduce((s, x) => s + Number(x.amount), 0);
-                return (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.workshop_name}<div className="text-xs text-muted-foreground">{r.participants_count} participants</div></TableCell>
-                    <TableCell className="text-xs">{r.start_date} → {r.end_date ?? "—"}</TableCell>
-                    <TableCell>{r.venue ?? "—"}</TableCell>
-                    <TableCell className="text-right">{fmtMoney(Number(r.budget))}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmtMoney(paidTotal)}</TableCell>
-                    <TableCell>
-                      <div className="text-xs text-muted-foreground mb-1"><Users className="h-3 w-3 inline" /> {al.length} recipients</div>
-                      <Button size="sm" variant="outline" className="h-7" onClick={() => setAOpen(r.id)}>+ Add Allowance</Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {!rows.length && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No workshops yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        }
+        <DataTable
+          tableId="workshops"
+          columns={workshopColumns}
+          data={rows}
+          loading={loading}
+          empty="No workshops yet."
+          searchPlaceholder="Search workshops…"
+          totals={(list) => ({
+            budget: fmtMoney(list.reduce((s, r) => s + Number(r.budget || 0), 0)),
+            spent: fmtMoney(list.reduce((s, r) => s + (allowances[r.id] || []).filter((x: any) => x.paid).reduce((a: number, x: any) => a + Number(x.amount), 0), 0)),
+          })}
+        />
       </Card>
     </div>
   );

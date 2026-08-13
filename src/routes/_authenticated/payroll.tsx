@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
@@ -18,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, monthName } from "@/lib/format";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import {
   computePayslip, calcPaye, DEFAULT_PAYE_BANDS, calcGratuity, calcLeavePay, calcNoticePay,
   calcRepatriation, hourlyRate, STD_HOURS_PER_MONTH, OVERTIME_WEEKDAY, OVERTIME_WEEKEND,
@@ -85,6 +87,18 @@ function PayrollPage() {
   };
   useEffect(() => { load(); }, []);
 
+    const runColumns: DTColumn<any>[] = [
+    { key: "run_number", header: "Run #", cell: r => <span className="font-mono text-xs">{r.run_number}</span> },
+    { key: "period", header: "Period", accessor: r => `${monthName(r.period_month)} ${r.period_year}`, cell: r => <>{monthName(r.period_month)} {r.period_year}</> },
+    { key: "pay_date", header: "Pay date", cell: r => r.pay_date ?? "—" },
+    { key: "status", header: "Status", cell: r => <Badge variant={r.status === "paid" ? "default" : r.status === "approved" ? "secondary" : "outline"}>{r.status}</Badge> },
+    { key: "total_gross", header: "Gross", align: "right", cell: r => fmtMoney(r.total_gross ?? 0) },
+    { key: "total_paye", header: "PAYE", align: "right", cell: r => fmtMoney(r.total_paye ?? 0) },
+    { key: "total_napsa", header: "NAPSA", align: "right", cell: r => fmtMoney(r.total_napsa ?? 0) },
+    { key: "total_net", header: "Net", align: "right", cell: r => <span className="font-semibold">{fmtMoney(r.total_net ?? 0)}</span> },
+    { key: "actions", header: "", sortable: false, cell: r => <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedRun(r); }}>Open</Button> },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -106,34 +120,15 @@ function PayrollPage() {
           <Card>
             <CardHeader className="pb-2"><CardTitle>Payroll runs</CardTitle><CardDescription>All monthly payroll runs.</CardDescription></CardHeader>
             <CardContent>
-              {loading ? <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
-                : runs.length === 0 ? <div className="py-8 text-center text-slate-400">No runs yet. Use the Generate tab to create your first monthly run.</div>
-                : (
-                  <div className="rounded-md border overflow-hidden">
-                    <Table>
-                      <TableHeader><TableRow>
-                        <TableHead>Run #</TableHead><TableHead>Period</TableHead><TableHead>Pay date</TableHead><TableHead>Status</TableHead>
-                        <TableHead className="text-right">Gross</TableHead><TableHead className="text-right">PAYE</TableHead>
-                        <TableHead className="text-right">NAPSA</TableHead><TableHead className="text-right">Net</TableHead><TableHead />
-                      </TableRow></TableHeader>
-                      <TableBody>
-                        {runs.map(r => (
-                          <TableRow key={r.id} className="cursor-pointer" onClick={() => setSelectedRun(r)}>
-                            <TableCell className="font-mono text-xs">{r.run_number}</TableCell>
-                            <TableCell>{monthName(r.period_month)} {r.period_year}</TableCell>
-                            <TableCell>{r.pay_date ?? "—"}</TableCell>
-                            <TableCell><Badge variant={r.status === "paid" ? "default" : r.status === "approved" ? "secondary" : "outline"}>{r.status}</Badge></TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_gross ?? 0)}</TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_paye ?? 0)}</TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_napsa ?? 0)}</TableCell>
-                            <TableCell className="text-right font-semibold">{fmtMoney(r.total_net ?? 0)}</TableCell>
-                            <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedRun(r); }}>Open</Button></TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+              <DataTable
+                tableId="payroll-runs"
+                columns={runColumns}
+                data={runs}
+                loading={loading}
+                searchPlaceholder={null}
+                empty="No runs yet. Use the Generate tab to create your first monthly run."
+                onRowClick={r => setSelectedRun(r)}
+              />
             </CardContent>
           </Card>
 
@@ -313,6 +308,18 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     toast.success("Export downloaded");
   };
 
+  if (editing) {
+    return (
+      <EditSlipForm
+        slip={editing}
+        run={run}
+        userId={userId}
+        onClose={() => setEditing(null)}
+        onSaved={() => { setEditing(null); load(); onChanged(); }}
+      />
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -409,7 +416,6 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
         </div>
       </CardContent>
 
-      {editing && <EditSlipDialog slip={editing} run={run} userId={userId} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); onChanged(); }} />}
     </Card>
   );
 }
@@ -676,7 +682,7 @@ function Totals({ label, value, accent }: { label: string; value: number; accent
 
 /* ================= Edit slip dialog ================= */
 
-function EditSlipDialog({ slip, run, userId, onClose, onSaved }: { slip: Slip & { employee: Employee }; run: Run; userId: string; onClose: () => void; onSaved: () => void }) {
+function EditSlipForm({ slip, run, userId, onClose, onSaved }: { slip: Slip & { employee: Employee }; run: Run; userId: string; onClose: () => void; onSaved: () => void }) {
   const [basic, setBasic] = useState(Number(slip.basic_salary ?? 0));
   const [notes, setNotes] = useState(slip.notes ?? "");
   const [loanBalance, setLoanBalance] = useState(Number(slip.loan_balance ?? 0));
@@ -694,24 +700,26 @@ function EditSlipDialog({ slip, run, userId, onClose, onSaved }: { slip: Slip & 
   };
 
   return (
-    <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Edit payslip — {slip.employee.first_name} {slip.employee.last_name}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Basic Salary</Label><Input type="number" value={basic} onChange={e => setBasic(Number(e.target.value))} /></div>
-            <div><Label>Loan Balance</Label><Input type="number" value={loanBalance} onChange={e => setLoanBalance(Number(e.target.value))} /></div>
-          </div>
-          <div><Label>Notes</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
-          <div className="text-xs text-slate-500">To recompute earnings/deductions from scratch, delete this run and regenerate. Individual figures on the payslip come from the run.</div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button variant="save" onClick={save} disabled={saving} >{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save</Button>
-          </div>
-        </div>
-        <div className="text-[10px] text-slate-400">Run {run.run_number}</div>
-      </DialogContent>
-    </Dialog>
+    <div className="p-4 sm:p-6">
+      <SifoFormPage
+        module="payroll"
+        icon={Banknote}
+        title={`Edit payslip — ${slip.employee.first_name} ${slip.employee.last_name}`}
+        subtitle={`Run ${run.run_number}`}
+        onCancel={onClose}
+        onSave={save}
+        saving={saving}
+        saveLabel="Save"
+      >
+        <SifoFormSection title="Payslip">
+          <SifoField label="Basic salary"><Input type="number" value={basic} onChange={e => setBasic(Number(e.target.value))} /></SifoField>
+          <SifoField label="Loan balance"><Input type="number" value={loanBalance} onChange={e => setLoanBalance(Number(e.target.value))} /></SifoField>
+          <SifoField label="Notes" wide help="To recompute earnings/deductions from scratch, delete this run and regenerate. Individual figures on the payslip come from the run.">
+            <Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
+          </SifoField>
+        </SifoFormSection>
+      </SifoFormPage>
+    </div>
   );
 }
 

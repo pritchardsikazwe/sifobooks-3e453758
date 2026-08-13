@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { toast } from "sonner";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -62,6 +62,18 @@ function PeriodClose() {
     load();
   };
 
+  const periodColumns: DTColumn<any>[] = [
+    { key: "period_type", header: "Type", cell: p => <span className="capitalize">{p.period_type}</span> },
+    { key: "fiscal_year", header: "Year" },
+    { key: "period_month", header: "Month", cell: p => p.period_month ? MONTHS[p.period_month - 1] : "\u2014" },
+    { key: "status", header: "Status" },
+    { key: "closed_at", header: "Closed At", cell: p => p.closed_at ? new Date(p.closed_at).toLocaleString() : "\u2014" },
+    { key: "notes", header: "Notes", cell: p => <span className="text-xs text-muted-foreground max-w-xs truncate block">{p.notes || ""}</span> },
+    { key: "actions", header: "", sortable: false, cell: p => p.status === "closed" ? (
+        <Button size="sm" variant="ghost" onClick={() => reopen(p)}><Unlock className="h-4 w-4 mr-1" /> Reopen</Button>
+      ) : null },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -104,37 +116,14 @@ function PeriodClose() {
       <Card>
         <CardHeader><CardTitle>Closed periods</CardTitle></CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-          ) : periods.length === 0 ? (
-            <div className="text-muted-foreground text-center py-8">No periods recorded yet.</div>
-          ) : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Type</TableHead><TableHead>Year</TableHead><TableHead>Month</TableHead>
-                <TableHead>Status</TableHead><TableHead>Closed At</TableHead><TableHead>Notes</TableHead><TableHead></TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {periods.map(p => (
-                  <TableRow key={p.id}>
-                    <TableCell className="capitalize">{p.period_type}</TableCell>
-                    <TableCell>{p.fiscal_year}</TableCell>
-                    <TableCell>{p.period_month ? MONTHS[p.period_month-1] : "—"}</TableCell>
-                    <TableCell>{p.status}</TableCell>
-                    <TableCell>{p.closed_at ? new Date(p.closed_at).toLocaleString() : "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-xs truncate">{p.notes || ""}</TableCell>
-                    <TableCell>
-                      {p.status === "closed" && (
-                        <Button size="sm" variant="ghost" onClick={() => reopen(p)}>
-                          <Unlock className="h-4 w-4 mr-1" /> Reopen
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <DataTable
+            tableId="period-close-periods"
+            columns={periodColumns}
+            data={periods}
+            loading={loading}
+            searchPlaceholder={null}
+            empty="No periods recorded yet."
+          />
         </CardContent>
       </Card>
     </div>

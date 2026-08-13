@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, BookOpen, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,30 @@ export const Route = createFileRoute("/_authenticated/teaching-materials")({
 });
 
 function Page() {
+  const requestColumns: DTColumn<any>[] = [
+    { key: "request_no", header: "Req #", cell: r => <span className="font-mono text-xs">{r.request_no}</span> },
+    { key: "item_name", header: "Item", cell: r => <span className="font-medium">{r.item_name}</span> },
+    { key: "category", header: "Category", cell: r => <Badge variant="outline">{r.category}</Badge> },
+    { key: "quantity", header: "Qty", align: "right" },
+    { key: "estimated_cost", header: "Est.", align: "right", cell: r => fmtMoney(Number(r.estimated_cost)) },
+    { key: "status", header: "Status", cell: r => <Badge>{r.status}</Badge> },
+    { key: "quotes", header: "Quotes", sortable: false, cell: r => {
+        const qs = quotes[r.id] || [];
+        return (
+          <div className="flex flex-col gap-1">
+            {qs.map((quote: any) => (
+              <div key={quote.id} className="flex items-center gap-2 text-xs">
+                <span>{quote.supplier_name}: {fmtMoney(Number(quote.quoted_amount))}</span>
+                {quote.is_selected ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> :
+                  <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => selectQuote(quote.id, r.id, Number(quote.quoted_amount))}>Select</Button>}
+              </div>
+            ))}
+            <Button size="sm" variant="outline" className="h-7 mt-1" onClick={() => setQOpen(r.id)}>+ Add Quote</Button>
+          </div>
+        );
+      } },
+  ];
+
   const [rows, setRows] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
@@ -160,43 +184,14 @@ function Page() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {loading ? <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> :
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Req #</TableHead><TableHead>Item</TableHead><TableHead>Category</TableHead>
-              <TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Est.</TableHead>
-              <TableHead>Status</TableHead><TableHead>Quotes</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => {
-                const qs = quotes[r.id] || [];
-                return (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-mono text-xs">{r.request_no}</TableCell>
-                    <TableCell className="font-medium">{r.item_name}</TableCell>
-                    <TableCell><Badge variant="outline">{r.category}</Badge></TableCell>
-                    <TableCell className="text-right">{r.quantity}</TableCell>
-                    <TableCell className="text-right">{fmtMoney(Number(r.estimated_cost))}</TableCell>
-                    <TableCell><Badge>{r.status}</Badge></TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {qs.map(quote => (
-                          <div key={quote.id} className="flex items-center gap-2 text-xs">
-                            <span>{quote.supplier_name}: {fmtMoney(Number(quote.quoted_amount))}</span>
-                            {quote.is_selected ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> :
-                              <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => selectQuote(quote.id, r.id, Number(quote.quoted_amount))}>Select</Button>}
-                          </div>
-                        ))}
-                        <Button size="sm" variant="outline" className="h-7 mt-1" onClick={() => setQOpen(r.id)}>+ Add Quote</Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {!rows.length && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No requests yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        }
+        <DataTable
+          tableId="teaching-materials"
+          columns={requestColumns}
+          data={rows}
+          loading={loading}
+          empty="No requests yet."
+          totals={rs => ({ estimated_cost: fmtMoney(rs.reduce((s, r) => s + Number(r.estimated_cost || 0), 0)) })}
+        />
       </Card>
     </div>
   );
