@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -233,6 +233,33 @@ function ReceiptsPage() {
     w.document.write(html); w.document.close(); w.focus(); w.print();
   };
 
+  const receiptColumns: DTColumn<any>[] = [
+    { key: "number", header: "#", cell: r => <span className="font-mono text-xs">{r.number}</span> },
+    { key: "receipt_date", header: "Date", cell: r => <span className="text-xs">{r.receipt_date}</span> },
+    { key: "receipt_type", header: "Type", cell: r => <span className="text-xs capitalize">{(r.receipt_type ?? "customer").replace("_", " ")}</span> },
+    { key: "payer", header: "Payer", accessor: r => r.customers?.name ?? r.payer_name ?? "", cell: r => r.customers?.name ?? r.payer_name ?? "—" },
+    { key: "invoice", header: "Invoice", accessor: r => r.invoices?.number ?? "", cell: r => <span className="font-mono text-xs">{r.invoices?.number ?? <span className="text-muted-foreground">—</span>}</span> },
+    { key: "voucher_no", header: "Voucher", cell: r => <span className="font-mono text-xs">{r.voucher_no ?? ""}</span> },
+    { key: "method", header: "Method", cell: r => <span className="text-xs capitalize">{(r.method ?? "").replace("_", " ")}</span> },
+    { key: "status", header: "Status", cell: r => badgeFor((r as any).status ?? "posted") },
+    { key: "amount", header: "Amount", align: "right", cell: r => {
+        const status = (r as any).status ?? "posted";
+        return <span className={`font-medium ${status === "reversed" ? "line-through" : "text-emerald-700"}`}>{fmtMoney(r.amount, r.currency)}</span>;
+      } },
+    { key: "actions", header: "", sortable: false, cell: r => {
+        const status = (r as any).status ?? "posted";
+        return (
+          <div className="inline-flex items-center gap-1">
+            <Button size="icon" variant="ghost" onClick={() => printReceipt(r)} title="Print"><Printer className="h-4 w-4" /></Button>
+            <ShareDoc kind="receipt" id={r.id} docNumber={r.number} />
+            {status === "posted" && (
+              <Button size="icon" variant="ghost" onClick={() => reverseReceipt(r)} title="Reverse"><RotateCcw className="h-4 w-4 text-red-600" /></Button>
+            )}
+          </div>
+        );
+      } },
+  ];
+
   const badgeFor = (s: string) => {
     if (s === "reversed") return <Badge variant="destructive" className="text-[10px]">Reversed</Badge>;
     if (s === "draft")    return <Badge variant="outline" className="text-[10px]">Draft</Badge>;
@@ -403,45 +430,16 @@ function ReceiptsPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {loading ? <div className="py-8 text-center text-muted-foreground">Loading…</div> :
-          filtered.length === 0 ? <div className="py-12 text-center text-muted-foreground">No receipts in this range.</div> :
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>#</TableHead><TableHead>Date</TableHead><TableHead>Type</TableHead>
-                <TableHead>Payer</TableHead><TableHead>Invoice</TableHead>
-                <TableHead>Voucher</TableHead><TableHead>Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead><TableHead></TableHead>
-              </TableRow></TableHeader>
-              <TableBody>{filtered.map(r => {
-                const status = (r as any).status ?? "posted";
-                return (
-                  <TableRow key={r.id} className={status==="reversed" ? "opacity-60" : ""}>
-                    <TableCell className="font-mono text-xs">{r.number}</TableCell>
-                    <TableCell className="text-xs">{r.receipt_date}</TableCell>
-                    <TableCell className="text-xs capitalize">{(r.receipt_type ?? "customer").replace("_"," ")}</TableCell>
-                    <TableCell>{r.customers?.name ?? r.payer_name ?? "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">{r.invoices?.number ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                    <TableCell className="font-mono text-xs">{r.voucher_no ?? ""}</TableCell>
-                    <TableCell className="text-xs capitalize">{(r.method ?? "").replace("_", " ")}</TableCell>
-                    <TableCell>{badgeFor(status)}</TableCell>
-                    <TableCell className={`text-right font-medium ${status==="reversed" ? "line-through" : "text-emerald-700"}`}>{fmtMoney(r.amount, r.currency)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => printReceipt(r)} title="Print"><Printer className="h-4 w-4" /></Button>
-                        <ShareDoc kind="receipt" id={r.id} docNumber={r.number} />
-                        {status === "posted" && (
-                          <Button size="icon" variant="ghost" onClick={() => reverseReceipt(r)} title="Reverse"><RotateCcw className="h-4 w-4 text-red-600" /></Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}</TableBody>
-            </Table>
-          </div>}
+        <CardContent className="p-0">
+          <DataTable
+            tableId="receipts-history"
+            columns={receiptColumns}
+            data={filtered}
+            loading={loading}
+            searchPlaceholder={null}
+            empty="No receipts in this range."
+            totals={rows => ({ amount: fmtMoney(rows.reduce((s, r) => s + Number(r.amount || 0), 0)) })}
+          />
         </CardContent>
       </Card>
     </div>
