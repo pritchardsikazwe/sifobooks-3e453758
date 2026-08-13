@@ -11,15 +11,6 @@ import { toast } from "sonner";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-const periodColumns: DTColumn<any>[] = [
-  { key: "period_type", header: "Type", cell: p => <span className="capitalize">{p.period_type}</span> },
-  { key: "fiscal_year", header: "Year" },
-  { key: "period_month", header: "Month", cell: p => p.period_month ? MONTHS[p.period_month - 1] : "\u2014" },
-  { key: "status", header: "Status" },
-  { key: "closed_at", header: "Closed At", cell: p => p.closed_at ? new Date(p.closed_at).toLocaleString() : "\u2014" },
-  { key: "notes", header: "Notes", cell: p => <span className="text-xs text-muted-foreground max-w-xs truncate block">{p.notes || ""}</span> },
-];
-
 function PeriodClose() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -70,6 +61,18 @@ function PeriodClose() {
     toast.success("Reopened");
     load();
   };
+
+  const periodColumns: DTColumn<any>[] = [
+    { key: "period_type", header: "Type", cell: p => <span className="capitalize">{p.period_type}</span> },
+    { key: "fiscal_year", header: "Year" },
+    { key: "period_month", header: "Month", cell: p => p.period_month ? MONTHS[p.period_month - 1] : "\u2014" },
+    { key: "status", header: "Status" },
+    { key: "closed_at", header: "Closed At", cell: p => p.closed_at ? new Date(p.closed_at).toLocaleString() : "\u2014" },
+    { key: "notes", header: "Notes", cell: p => <span className="text-xs text-muted-foreground max-w-xs truncate block">{p.notes || ""}</span> },
+    { key: "actions", header: "", sortable: false, cell: p => p.status === "closed" ? (
+        <Button size="sm" variant="ghost" onClick={() => reopen(p)}><Unlock className="h-4 w-4 mr-1" /> Reopen</Button>
+      ) : null },
+  ];
 
   return (
     <div className="p-6 space-y-6">
