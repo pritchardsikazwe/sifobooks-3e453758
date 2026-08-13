@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -101,6 +101,15 @@ function Page() {
     );
   }
 
+  const tuckshopColumns: DTColumn<any>[] = [
+    { key: "txn_date", header: "Date", sticky: true },
+    { key: "txn_type", header: "Type", cell: (r) => <Badge variant={r.txn_type === "sale" ? "default" : "outline"}>{r.txn_type}</Badge> },
+    { key: "description", header: "Description", cell: (r) => r.description ?? "—" },
+    { key: "quantity", header: "Qty", align: "right" },
+    { key: "amount", header: "Amount", align: "right", cell: (r) => <span className={r.txn_type === "sale" ? "font-semibold text-emerald-700" : "font-semibold"}>{fmtMoney(Number(r.amount))}</span> },
+    { key: "payment_method", header: "Method" },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -121,27 +130,18 @@ function Page() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        {loading ? <div className="p-6 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div> :
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Description</TableHead>
-              <TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Method</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell>{r.txn_date}</TableCell>
-                  <TableCell><Badge variant={r.txn_type === "sale" ? "default" : "outline"}>{r.txn_type}</Badge></TableCell>
-                  <TableCell>{r.description ?? "—"}</TableCell>
-                  <TableCell className="text-right">{r.quantity}</TableCell>
-                  <TableCell className={`text-right font-semibold ${r.txn_type === "sale" ? "text-emerald-700" : ""}`}>{fmtMoney(Number(r.amount))}</TableCell>
-                  <TableCell>{r.payment_method}</TableCell>
-                </TableRow>
-              ))}
-              {!rows.length && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No transactions yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        }
+        <DataTable
+          tableId="tuckshop-transactions"
+          columns={tuckshopColumns}
+          data={rows}
+          loading={loading}
+          empty="No transactions yet."
+          searchPlaceholder="Search transactions…"
+          totals={(list) => ({
+            quantity: list.reduce((s, r) => s + Number(r.quantity || 0), 0),
+            amount: fmtMoney(list.reduce((s, r) => s + Number(r.amount || 0), 0)),
+          })}
+        />
       </Card>
     </div>
   );

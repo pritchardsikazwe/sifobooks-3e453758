@@ -83,15 +83,41 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
+const NAV_TABS = [
+  { id: "modules", label: "Modules" },
+  { id: "features", label: "Features" },
+  { id: "compliance", label: "Compliance" },
+  { id: "learn", label: "Academy" },
+  { id: "contact", label: "Contact" },
+];
+
 function Landing() {
   const heading = { fontFamily: "Outfit, sans-serif" } as const;
   const body = { fontFamily: "Figtree, sans-serif" } as const;
   const [signedIn, setSignedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [section, setSection] = useState<string>("modules");
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Scroll-spy: highlight the nav tab for the section in view.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const els = NAV_TABS.map(n => document.getElementById(n.id)).filter(Boolean) as HTMLElement[];
+    const io = new IntersectionObserver(
+      entries => {
+        const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setSection(visible.target.id);
+      },
+      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.25, 0.5] },
+    );
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
 
 
   return (
