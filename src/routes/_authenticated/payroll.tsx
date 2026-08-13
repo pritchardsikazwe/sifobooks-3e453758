@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
@@ -85,6 +85,18 @@ function PayrollPage() {
   };
   useEffect(() => { load(); }, []);
 
+    const runColumns: DTColumn<any>[] = [
+    { key: "run_number", header: "Run #", cell: r => <span className="font-mono text-xs">{r.run_number}</span> },
+    { key: "period", header: "Period", accessor: r => `${monthName(r.period_month)} ${r.period_year}`, cell: r => <>{monthName(r.period_month)} {r.period_year}</> },
+    { key: "pay_date", header: "Pay date", cell: r => r.pay_date ?? "—" },
+    { key: "status", header: "Status", cell: r => <Badge variant={r.status === "paid" ? "default" : r.status === "approved" ? "secondary" : "outline"}>{r.status}</Badge> },
+    { key: "total_gross", header: "Gross", align: "right", cell: r => fmtMoney(r.total_gross ?? 0) },
+    { key: "total_paye", header: "PAYE", align: "right", cell: r => fmtMoney(r.total_paye ?? 0) },
+    { key: "total_napsa", header: "NAPSA", align: "right", cell: r => fmtMoney(r.total_napsa ?? 0) },
+    { key: "total_net", header: "Net", align: "right", cell: r => <span className="font-semibold">{fmtMoney(r.total_net ?? 0)}</span> },
+    { key: "actions", header: "", sortable: false, cell: r => <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedRun(r); }}>Open</Button> },
+  ];
+
   return (
     <div className="px-6 py-6 max-w-7xl">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -106,34 +118,15 @@ function PayrollPage() {
           <Card>
             <CardHeader className="pb-2"><CardTitle>Payroll runs</CardTitle><CardDescription>All monthly payroll runs.</CardDescription></CardHeader>
             <CardContent>
-              {loading ? <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
-                : runs.length === 0 ? <div className="py-8 text-center text-slate-400">No runs yet. Use the Generate tab to create your first monthly run.</div>
-                : (
-                  <div className="rounded-md border overflow-hidden">
-                    <Table>
-                      <TableHeader><TableRow>
-                        <TableHead>Run #</TableHead><TableHead>Period</TableHead><TableHead>Pay date</TableHead><TableHead>Status</TableHead>
-                        <TableHead className="text-right">Gross</TableHead><TableHead className="text-right">PAYE</TableHead>
-                        <TableHead className="text-right">NAPSA</TableHead><TableHead className="text-right">Net</TableHead><TableHead />
-                      </TableRow></TableHeader>
-                      <TableBody>
-                        {runs.map(r => (
-                          <TableRow key={r.id} className="cursor-pointer" onClick={() => setSelectedRun(r)}>
-                            <TableCell className="font-mono text-xs">{r.run_number}</TableCell>
-                            <TableCell>{monthName(r.period_month)} {r.period_year}</TableCell>
-                            <TableCell>{r.pay_date ?? "—"}</TableCell>
-                            <TableCell><Badge variant={r.status === "paid" ? "default" : r.status === "approved" ? "secondary" : "outline"}>{r.status}</Badge></TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_gross ?? 0)}</TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_paye ?? 0)}</TableCell>
-                            <TableCell className="text-right">{fmtMoney(r.total_napsa ?? 0)}</TableCell>
-                            <TableCell className="text-right font-semibold">{fmtMoney(r.total_net ?? 0)}</TableCell>
-                            <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedRun(r); }}>Open</Button></TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+              <DataTable
+                tableId="payroll-runs"
+                columns={runColumns}
+                data={runs}
+                loading={loading}
+                searchPlaceholder={null}
+                empty="No runs yet. Use the Generate tab to create your first monthly run."
+                onRowClick={r => setSelectedRun(r)}
+              />
             </CardContent>
           </Card>
 

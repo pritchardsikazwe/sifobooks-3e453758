@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,21 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { postSpendMoney } from "@/lib/bank-posting";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { Landmark } from "lucide-react";
 
 type Alloc = { accountId: string; amount: number; side: "DR" | "CR"; description?: string };
 
 const METHODS = ["Manual", "EFT", "Cheque", "Cash", "Mobile Money", "Card"];
 
-export function SpendMoneyDialog({
-  open,
-  onOpenChange,
+export function SpendMoneyForm({
   defaultBankAccountId,
+  onCancel,
   onRecorded,
   mode = "spend",
 }: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
   defaultBankAccountId?: string;
+  onCancel: () => void;
   onRecorded?: () => void;
   mode?: "spend" | "receive";
 }) {
@@ -46,7 +45,6 @@ export function SpendMoneyDialog({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
     (async () => {
       const [{ data: ba }, { data: rb }, { data: acc }, { data: sup }] = await Promise.all([
         supabase.from("bank_accounts" as any).select("*").eq("is_active", true).order("name"),
@@ -64,7 +62,7 @@ export function SpendMoneyDialog({
       if (!bankAccountId && ba && ba.length) setBankAccountId((ba as any)[0].id);
     })();
     // eslint-disable-next-line
-  }, [open]);
+  }, []);
 
   const totalAlloc = useMemo(
     () => allocations.reduce((s, a) => s + (Number(a.amount) || 0), 0),
@@ -110,23 +108,23 @@ export function SpendMoneyDialog({
     setSaving(false);
     if (!res.ok) return toast.error(res.error ?? "Failed");
     toast.success(isSpend ? "Payment recorded" : "Receipt recorded");
-    onOpenChange(false);
     onRecorded?.();
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-white/10 bg-slate-900/95 text-slate-100 backdrop-blur-xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{isSpend ? "Spend Money" : "Receive Money"}</DialogTitle>
-          <DialogDescription className="text-slate-400">
-            {isSpend
-              ? "Enter a payment or purchase transaction and allocate the amount to one or more accounts."
-              : "Record a customer payment or other inflow and allocate to one or more accounts."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4">
+    <SifoFormPage
+      module="banking"
+      icon={Landmark}
+      title={isSpend ? "Spend Money" : "Receive Money"}
+      subtitle={isSpend
+        ? "Enter a payment or purchase transaction and allocate the amount to one or more accounts."
+        : "Record a customer payment or other inflow and allocate to one or more accounts."}
+      onCancel={onCancel}
+      onSave={record}
+      saving={saving}
+      saveLabel="Record"
+    >
+      <SifoFormSection title="Transaction">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-slate-300">Account {isSpend ? "Paid From" : "Received Into"}</Label>
@@ -212,16 +210,7 @@ export function SpendMoneyDialog({
               </Button>
             </div>
           </div>
-        </div>
-
-        <div className="mt-2 flex items-center justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-300">Cancel</Button>
-          <Button variant="update" onClick={record} disabled={saving} >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Record
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </SifoFormSection>
+    </SifoFormPage>
   );
 }
