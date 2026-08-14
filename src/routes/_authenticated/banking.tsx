@@ -94,8 +94,7 @@ function BankingPage() {
 
   const [reverseAlloc, setReverseAlloc] = useState<Allocation | null>(null);
   const [reverseReason, setReverseReason] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [clearTxn, setClearTxn] = useState<Txn | null>(null);
+    const [clearTxn, setClearTxn] = useState<Txn | null>(null);
   const [clearRef, setClearRef] = useState("");
 
   const money = (n: number) => formatMoney(n, currency);
@@ -209,28 +208,22 @@ function BankingPage() {
     return c;
   }, [txns]);
 
-  const toggleSelect = (id: string) =>
-    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleSelectAll = () =>
-    setSelected(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)));
-
   const runClear = async (txn: Txn, ref: string) => {
     const { error } = await supabase.rpc("clear_bank_transaction" as any, { _txn_id: txn.id, _reference: ref || undefined });
     if (error) { toast.error(error.message); return false; }
     return true;
   };
 
-  const bulkClear = async () => {
-    if (!selected.size) return;
+  const bulkClear = async (rows: Txn[], clear: () => void) => {
+    if (!rows.length) return;
     let ok = 0, skip = 0, fail = 0;
-    for (const id of selected) {
-      const t = txns.find(x => x.id === id); if (!t) continue;
+    for (const t of rows) {
       if (t.is_cleared) { skip++; continue; }
       const good = await runClear(t, "");
       good ? ok++ : fail++;
     }
-    toast.success(`${selected.size} selected · ${ok} cleared · ${skip} already · ${fail} failed`);
-    setSelected(new Set());
+    toast.success(`${rows.length} selected · ${ok} cleared · ${skip} already · ${fail} failed`);
+    clear();
     await load();
   };
 
@@ -488,8 +481,8 @@ function BankingPage() {
               loading={loading}
               searchPlaceholder={null}
               empty="No transactions match."
-              bulkActions={() => (
-                <Button size="sm" variant="outline" onClick={bulkClear}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear selected</Button>
+              bulkActions={(rows, clear) => (
+                <Button size="sm" variant="outline" onClick={() => bulkClear(rows, clear)}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear selected</Button>
               )}
               totals={rows => ({
                 amount: money(rows.reduce((s, t) => s + Number(t.amount), 0)),

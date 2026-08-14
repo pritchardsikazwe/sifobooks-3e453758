@@ -455,6 +455,37 @@ function Landing() {
         ))}
       </section>
 
+      {/* HOW IT WORKS */}
+      <section id="how" className="max-w-7xl mx-auto px-6 pb-24">
+        <Reveal className="mb-10 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">From zero to filed</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            Three steps. No accounting degree.
+          </h2>
+        </Reveal>
+        <div className="relative grid gap-4 md:grid-cols-3">
+          <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-16 hidden h-px bg-gradient-to-r from-transparent via-[#0e8f4a]/40 to-transparent md:block" />
+          {STEPS.map((s, i) => (
+            <Reveal key={s.n} delay={i * 90}>
+              <div className="relative h-full rounded-2xl border border-white/10 bg-[#0d1f16] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#0e8f4a]/40">
+                <div className="mb-5 inline-grid h-12 w-12 place-items-center rounded-2xl border border-[#0e8f4a]/30 bg-[#0e8f4a]/15 text-sm font-bold text-[#7dd3a5]" style={heading}>
+                  {s.n}
+                </div>
+                <h3 className="text-xl font-bold text-white" style={heading}>{s.title}</h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-slate-400">{s.desc}</p>
+                <ul className="mt-5 space-y-2">
+                  {s.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0e8f4a]" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
 
       {/* FEATURES */}
