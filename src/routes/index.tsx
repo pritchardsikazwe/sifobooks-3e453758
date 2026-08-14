@@ -44,7 +44,21 @@ export const Route = createFileRoute("/")({
           },
         }),
       },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            ["Do I need an accountant to use SifoBooks?", "No. SifoBooks posts every invoice, receipt, bill and bank allocation to the correct GL accounts automatically."],
+            ["Is it Zambia-compliant out of the box?", "Yes. TPIN and VAT on documents, PAYE 2026 bands, NAPSA and NHIMA caps, WCF and SDL are shipped, and rates are configurable per financial year."],
+            ["Can I run multiple companies?", "Yes — one login, unlimited companies, with role-based permissions per user."],
+            ["How does pricing work?", "Start free for 14 days with no credit card, then pick a plan that fits your team size and modules."],
+          ].map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+        }),
+      },
     ],
+
   }),
   component: Landing,
 });
