@@ -91,6 +91,7 @@ import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
+import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
 import { Route as AuthenticatedReportsTurnoverTaxRouteImport } from './routes/_authenticated/reports.turnover-tax'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
@@ -127,6 +128,7 @@ import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenti
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as AuthenticatedTeachingMaterialsIdQuoteRouteImport } from './routes/_authenticated/teaching-materials.$id.quote'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -568,6 +570,12 @@ const AuthenticatedCustomersIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
+const AuthenticatedTeachingMaterialsNewRoute =
+  AuthenticatedTeachingMaterialsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedTeachingMaterialsRoute,
+  } as any)
 const AuthenticatedReportsVatReturnRoute =
   AuthenticatedReportsVatReturnRouteImport.update({
     id: '/vat-return',
@@ -779,6 +787,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTeachingMaterialsIdQuoteRoute =
+  AuthenticatedTeachingMaterialsIdQuoteRouteImport.update({
+    id: '/$id/quote',
+    path: '/$id/quote',
+    getParentRoute: () => AuthenticatedTeachingMaterialsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -851,7 +865,7 @@ export interface FileRoutesByFullPath {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
-  '/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
+  '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
   '/tuckshop': typeof AuthenticatedTuckshopRoute
@@ -890,11 +904,13 @@ export interface FileRoutesByFullPath {
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -966,7 +982,7 @@ export interface FileRoutesByTo {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
-  '/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
+  '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
   '/tuckshop': typeof AuthenticatedTuckshopRoute
@@ -1005,11 +1021,13 @@ export interface FileRoutesByTo {
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
+  '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -1087,7 +1105,7 @@ export interface FileRoutesById {
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
-  '/_authenticated/teaching-materials': typeof AuthenticatedTeachingMaterialsRoute
+  '/_authenticated/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/_authenticated/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/_authenticated/timesheet': typeof AuthenticatedTimesheetRoute
   '/_authenticated/tuckshop': typeof AuthenticatedTuckshopRoute
@@ -1126,11 +1144,13 @@ export interface FileRoutesById {
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/_authenticated/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
+  '/_authenticated/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -1247,11 +1267,13 @@ export interface FileRouteTypes {
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat-return'
+    | '/teaching-materials/new'
     | '/customers/'
     | '/invoices/'
     | '/learn/'
     | '/quotes/'
     | '/reports/'
+    | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1362,11 +1384,13 @@ export interface FileRouteTypes {
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat-return'
+    | '/teaching-materials/new'
     | '/customers'
     | '/invoices'
     | '/learn'
     | '/quotes'
     | '/reports'
+    | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -1482,11 +1506,13 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/trial-balance'
     | '/_authenticated/reports/turnover-tax'
     | '/_authenticated/reports/vat-return'
+    | '/_authenticated/teaching-materials/new'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
+    | '/_authenticated/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -2079,6 +2105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedCustomersRoute
     }
+    '/_authenticated/teaching-materials/new': {
+      id: '/_authenticated/teaching-materials/new'
+      path: '/new'
+      fullPath: '/teaching-materials/new'
+      preLoaderRoute: typeof AuthenticatedTeachingMaterialsNewRouteImport
+      parentRoute: typeof AuthenticatedTeachingMaterialsRoute
+    }
     '/_authenticated/reports/vat-return': {
       id: '/_authenticated/reports/vat-return'
       path: '/vat-return'
@@ -2331,6 +2364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/teaching-materials/$id/quote': {
+      id: '/_authenticated/teaching-materials/$id/quote'
+      path: '/$id/quote'
+      fullPath: '/teaching-materials/$id/quote'
+      preLoaderRoute: typeof AuthenticatedTeachingMaterialsIdQuoteRouteImport
+      parentRoute: typeof AuthenticatedTeachingMaterialsRoute
+    }
   }
 }
 
@@ -2448,6 +2488,24 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
 const AuthenticatedReportsRouteWithChildren =
   AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
 
+interface AuthenticatedTeachingMaterialsRouteChildren {
+  AuthenticatedTeachingMaterialsNewRoute: typeof AuthenticatedTeachingMaterialsNewRoute
+  AuthenticatedTeachingMaterialsIdQuoteRoute: typeof AuthenticatedTeachingMaterialsIdQuoteRoute
+}
+
+const AuthenticatedTeachingMaterialsRouteChildren: AuthenticatedTeachingMaterialsRouteChildren =
+  {
+    AuthenticatedTeachingMaterialsNewRoute:
+      AuthenticatedTeachingMaterialsNewRoute,
+    AuthenticatedTeachingMaterialsIdQuoteRoute:
+      AuthenticatedTeachingMaterialsIdQuoteRoute,
+  }
+
+const AuthenticatedTeachingMaterialsRouteWithChildren =
+  AuthenticatedTeachingMaterialsRoute._addFileChildren(
+    AuthenticatedTeachingMaterialsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
@@ -2515,7 +2573,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
-  AuthenticatedTeachingMaterialsRoute: typeof AuthenticatedTeachingMaterialsRoute
+  AuthenticatedTeachingMaterialsRoute: typeof AuthenticatedTeachingMaterialsRouteWithChildren
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedTimesheetRoute: typeof AuthenticatedTimesheetRoute
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
@@ -2599,7 +2657,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
-  AuthenticatedTeachingMaterialsRoute: AuthenticatedTeachingMaterialsRoute,
+  AuthenticatedTeachingMaterialsRoute:
+    AuthenticatedTeachingMaterialsRouteWithChildren,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
   AuthenticatedTimesheetRoute: AuthenticatedTimesheetRoute,
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,

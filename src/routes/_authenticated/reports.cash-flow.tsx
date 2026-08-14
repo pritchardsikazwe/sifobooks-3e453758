@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/cash-flow")({
   head: () => ({ meta: [{ title: "Cash Flow — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/reports/cash-flow")({
 });
 
 function CashFlowPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const { from, to, label } = filters.range;
   const [loading, setLoading] = useState(true);
   const [txns, setTxns] = useState<any[]>([]);
 
@@ -17,11 +21,13 @@ function CashFlowPage() {
     (async () => {
       setLoading(true);
       const { data } = await supabase.from("bank_transactions")
-        .select("txn_date,amount,description,category").order("txn_date");
+        .select("txn_date,amount,description,category")
+        .gte("txn_date", from).lte("txn_date", to)
+        .order("txn_date");
       setTxns(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [from, to]);
 
   const rows = useMemo(() => {
     const map = new Map<string, { month: string; inflow: number; outflow: number }>();
@@ -40,8 +46,9 @@ function CashFlowPage() {
   const csv = rows.map((r) => ({ Month: r.month, Inflow: r.inflow.toFixed(2), Outflow: r.outflow.toFixed(2), Net: (r.inflow - r.outflow).toFixed(2) }));
 
   return (
-    <ReportShell title="Cash Flow (simple)" subtitle="Monthly bank movement summary" loading={loading} filename="cash-flow" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Cash Flow (simple)" subtitle={`Monthly bank movement summary · ${label}`} loading={loading} filename="cash-flow" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr><th className="text-left py-2">Month</th><th className="text-right">Inflow</th><th className="text-right">Outflow</th><th className="text-right">Net</th></tr>
         </thead>

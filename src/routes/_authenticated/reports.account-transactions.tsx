@@ -4,16 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/account-transactions")({
   head: () => ({ meta: [{ title: "Account Transactions — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     account: (s.account as string) || "",
-    from: (s.from as string) || "",
-    to: (s.to as string) || "",
   }),
   component: AccountTransactionsPage,
 });
@@ -25,10 +24,10 @@ function AccountTransactionsPage() {
   const [lines, setLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingBalance, setOpeningBalance] = useState(0);
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
 
   const acctId = search.account;
-  const from = search.from || "";
-  const to = search.to || "";
+  const { from, to, label } = filters.range;
 
   useEffect(() => {
     (async () => {
@@ -93,31 +92,34 @@ function AccountTransactionsPage() {
   return (
     <ReportShell
       title="Account Transactions"
-      subtitle={acct ? `${acct.account_code} — ${acct.account_name}` : "Pick an account"}
+      subtitle={acct ? `${acct.account_code} — ${acct.account_name} · ${label}` : "Pick an account"}
       loading={loading} filename={`acct-${acct?.account_code ?? "all"}`} rows={csv}
     >
       <div className="flex items-center gap-2 mb-4 flex-wrap text-sm">
         <Link to="/chart-of-accounts" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900">
           <ArrowLeft className="h-4 w-4" />Back to COA
         </Link>
-        <div className="ml-auto flex items-end gap-2 flex-wrap">
+      </div>
+
+      <ReportFilterBar
+        initial={{ periodKey: "this-month" }}
+        onApply={setFilters}
+        extraFilters={
           <div className="min-w-[220px]">
-            <Label className="text-xs">Account</Label>
+            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Account</Label>
             <Select value={acctId} onValueChange={v => navigate({ search: { ...search, account: v } })}>
-              <SelectTrigger><SelectValue placeholder="Select account…" /></SelectTrigger>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select account…" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_code} — {a.account_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label className="text-xs">From</Label><Input type="date" value={from} onChange={e => navigate({ search: { ...search, from: e.target.value } })} /></div>
-          <div><Label className="text-xs">To</Label><Input type="date" value={to} onChange={e => navigate({ search: { ...search, to: e.target.value } })} /></div>
-        </div>
-      </div>
+        }
+      />
 
       {acctId && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 mt-4">
             <div className="p-3 rounded border bg-slate-50"><div className="text-xs text-slate-500">Opening</div><div className="font-semibold">{fmt(openingBalance)}</div></div>
             <div className="p-3 rounded border bg-slate-50"><div className="text-xs text-slate-500">Debits</div><div className="font-semibold">{fmt(totalDr)}</div></div>
             <div className="p-3 rounded border bg-slate-50"><div className="text-xs text-slate-500">Credits</div><div className="font-semibold">{fmt(totalCr)}</div></div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/opening-balances")({
@@ -127,49 +127,53 @@ function OpeningBalancesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Debit</TableHead>
-                <TableHead className="text-right">Credit</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lines.map((l, i) => (
-                <TableRow key={i}>
-                  <TableCell><Input value={l.account_code} onChange={e => updateLine(i, { account_code: e.target.value })} className="w-24" /></TableCell>
-                  <TableCell><Input value={l.account_name} onChange={e => updateLine(i, { account_name: e.target.value })} /></TableCell>
-                  <TableCell>
-                    <select className="border rounded px-2 py-1 text-sm bg-background" value={l.account_type} onChange={e => updateLine(i, { account_type: e.target.value })}>
-                      <option value="asset">Asset</option>
-                      <option value="liability">Liability</option>
-                      <option value="equity">Equity</option>
-                      <option value="revenue">Revenue</option>
-                      <option value="expense">Expense</option>
-                    </select>
-                  </TableCell>
-                  <TableCell><Input type="number" step="0.01" className="text-right" value={l.debit || ""} onChange={e => updateLine(i, { debit: Number(e.target.value) || 0 })} /></TableCell>
-                  <TableCell><Input type="number" step="0.01" className="text-right" value={l.credit || ""} onChange={e => updateLine(i, { credit: Number(e.target.value) || 0 })} /></TableCell>
-                  <TableCell><Button size="sm" variant="ghost" onClick={() => removeLine(i)}><Trash2 className="h-4 w-4" /></Button></TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="font-semibold bg-muted/40">
-                <TableCell colSpan={3} className="text-right">Totals</TableCell>
-                <TableCell className="text-right">{fmt(totalDebit)}</TableCell>
-                <TableCell className="text-right">{fmt(totalCredit)}</TableCell>
-                <TableCell />
-              </TableRow>
-              <TableRow className={balanced ? "text-emerald-600" : "text-amber-600"}>
-                <TableCell colSpan={3} className="text-right">Difference</TableCell>
-                <TableCell colSpan={2} className="text-right">{fmt(diff)}</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableBody>
-          </Table>
+          <DataTable<Line & { __i: number }>
+            tableId="opening-balances.lines"
+            data={lines.map((l, i) => ({ ...l, __i: i }))}
+            rowKey={r => String(r.__i)}
+            searchPlaceholder={null}
+            resizable={false}
+            pageSize={250}
+            totals={() => ({
+              account_code: <span className={balanced ? "text-emerald-600" : "text-amber-600"}>Difference: {fmt(diff)}</span>,
+              debit: fmt(totalDebit),
+              credit: fmt(totalCredit),
+            })}
+            columns={[
+              {
+                key: "account_code", header: "Code",
+                cell: r => <Input value={r.account_code} onChange={e => updateLine(r.__i, { account_code: e.target.value })} className="w-24" />,
+              },
+              {
+                key: "account_name", header: "Name",
+                cell: r => <Input value={r.account_name} onChange={e => updateLine(r.__i, { account_name: e.target.value })} />,
+              },
+              {
+                key: "account_type", header: "Type",
+                cell: r => (
+                  <select className="border rounded px-2 py-1 text-sm bg-background" value={r.account_type} onChange={e => updateLine(r.__i, { account_type: e.target.value })}>
+                    <option value="asset">Asset</option>
+                    <option value="liability">Liability</option>
+                    <option value="equity">Equity</option>
+                    <option value="revenue">Revenue</option>
+                    <option value="expense">Expense</option>
+                  </select>
+                ),
+              },
+              {
+                key: "debit", header: "Debit", align: "right", accessor: r => r.debit,
+                cell: r => <Input type="number" step="0.01" className="text-right" value={r.debit || ""} onChange={e => updateLine(r.__i, { debit: Number(e.target.value) || 0 })} />,
+              },
+              {
+                key: "credit", header: "Credit", align: "right", accessor: r => r.credit,
+                cell: r => <Input type="number" step="0.01" className="text-right" value={r.credit || ""} onChange={e => updateLine(r.__i, { credit: Number(e.target.value) || 0 })} />,
+              },
+              {
+                key: "actions", header: "", sortable: false,
+                cell: r => <Button size="sm" variant="ghost" onClick={() => removeLine(r.__i)}><Trash2 className="h-4 w-4" /></Button>,
+              },
+            ]}
+          />
           <div className="flex justify-end mt-4">
             <Button onClick={post} disabled={!balanced || saving}>{saving ? "Posting…" : "Post Opening Balances"}</Button>
           </div>

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/trial-balance")({
   head: () => ({ meta: [{ title: "Trial Balance — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,13 +12,15 @@ export const Route = createFileRoute("/_authenticated/reports/trial-balance")({
 });
 
 function TrialBalancePage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("ytd"), periodKey: "ytd" });
+  const asAt = filters.range.to;
   const [loading, setLoading] = useState(true);
   const [lines, setLines] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: entries } = await supabase.from("journal_entries").select("id").eq("status", "posted");
+      const { data: entries } = await supabase.from("journal_entries").select("id").eq("status", "posted").lte("entry_date", asAt);
       const ids = (entries ?? []).map((e: any) => e.id);
       if (!ids.length) { setLines([]); setLoading(false); return; }
       const { data: jl } = await supabase.from("journal_lines")
@@ -25,7 +29,7 @@ function TrialBalancePage() {
       setLines(jl ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [asAt]);
 
   const rows = useMemo(() => {
     const byAcc = new Map<string, any>();
@@ -44,8 +48,9 @@ function TrialBalancePage() {
   const csv = rows.map((r) => ({ Code: r.code, Account: r.name, Type: r.type, Debit: r.debit.toFixed(2), Credit: r.credit.toFixed(2) }));
 
   return (
-    <ReportShell title="Trial Balance" subtitle="All posted journal entries" loading={loading} filename="trial-balance" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Trial Balance" subtitle={`As at ${asAt} · ${filters.range.label} · all posted journal entries`} loading={loading} filename="trial-balance" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "ytd" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr><th className="text-left py-2">Code</th><th className="text-left">Account</th><th className="text-left">Type</th><th className="text-right">Debit</th><th className="text-right">Credit</th></tr>
         </thead>

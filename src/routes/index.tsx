@@ -44,7 +44,21 @@ export const Route = createFileRoute("/")({
           },
         }),
       },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            ["Do I need an accountant to use SifoBooks?", "No. SifoBooks posts every invoice, receipt, bill and bank allocation to the correct GL accounts automatically."],
+            ["Is it Zambia-compliant out of the box?", "Yes. TPIN and VAT on documents, PAYE 2026 bands, NAPSA and NHIMA caps, WCF and SDL are shipped, and rates are configurable per financial year."],
+            ["Can I run multiple companies?", "Yes — one login, unlimited companies, with role-based permissions per user."],
+            ["How does pricing work?", "Start free for 14 days with no credit card, then pick a plan that fits your team size and modules."],
+          ].map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+        }),
+      },
     ],
+
   }),
   component: Landing,
 });
@@ -85,11 +99,69 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 
 const NAV_TABS = [
   { id: "modules", label: "Modules" },
+  { id: "how", label: "How it works" },
   { id: "features", label: "Features" },
+  { id: "pricing", label: "Pricing" },
   { id: "compliance", label: "Compliance" },
   { id: "learn", label: "Academy" },
   { id: "contact", label: "Contact" },
 ];
+
+const STATS = [
+  { value: "8", label: "Integrated modules" },
+  { value: "100%", label: "Double-entry posted" },
+  { value: "2026", label: "PAYE bands shipped" },
+  { value: "< 5 min", label: "To your first invoice" },
+];
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Set up your company",
+    desc: "Company details, TPIN, VAT status and financial year. Pick a ready-made chart of accounts or import your own.",
+    points: ["Guided onboarding", "COA templates (SME, NGO, School)", "Opening balances wizard"],
+  },
+  {
+    n: "02",
+    title: "Capture and post",
+    desc: "Raise invoices, record bills and expenses, import bank statements. Every document posts itself to the ledger.",
+    points: ["VAT invoices & receipts", "Smart bank matching", "Reversals for wrong postings"],
+  },
+  {
+    n: "03",
+    title: "Report and file",
+    desc: "Close the period, run management and statutory reports, then export branded PDFs ready for ZRA and your auditor.",
+    points: ["Monthly management pack", "IFRS-for-SME statements", "PAYE / NAPSA / VAT schedules"],
+  },
+];
+
+const PLANS = [
+  {
+    name: "Starter",
+    price: "K450",
+    cadence: "per month",
+    tagline: "Sole traders and small shops finding their feet.",
+    features: ["1 company · 2 users", "Sales, purchases & expenses", "Cashbook & bank import", "Core reports + PDF export", "Email support"],
+    highlight: false,
+  },
+  {
+    name: "Business",
+    price: "K1,200",
+    cadence: "per month",
+    tagline: "Growing companies with staff and stock to manage.",
+    features: ["3 companies · 10 users", "Everything in Starter", "Full payroll & HR (PAYE, NAPSA, NHIMA)", "Inventory & reconciliation sessions", "Management report pack", "Priority WhatsApp support"],
+    highlight: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Talk to us",
+    cadence: "tailored",
+    tagline: "Groups, NGOs and schools with audit requirements.",
+    features: ["Unlimited companies & users", "Everything in Business", "NGO grants & fund accounting", "School management ERP", "IFRS-for-SME annual statements", "Onboarding & training included"],
+    highlight: false,
+  },
+];
+
 
 const MODULES = [
   { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "A real double-entry engine: every document posts itself to the correct accounts, with reversals and a locked period close.",
@@ -324,6 +396,20 @@ function Landing() {
         </div>
       </section>
 
+      {/* STATS BAND */}
+      <section className="border-y border-white/5 bg-[#0a1a12]">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 gap-px overflow-hidden px-6 py-10 md:grid-cols-4">
+          {STATS.map((s, i) => (
+            <Reveal key={s.label} delay={i * 70} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={heading}>{s.value}</div>
+              <div className="mt-1.5 text-xs uppercase tracking-widest text-slate-500">{s.label}</div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+
+
       {/* MODULES — interactive tabbed explorer, mirrors the in-app module identity system */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="mb-10 max-w-2xl">
@@ -397,6 +483,37 @@ function Landing() {
         ))}
       </section>
 
+      {/* HOW IT WORKS */}
+      <section id="how" className="max-w-7xl mx-auto px-6 pb-24">
+        <Reveal className="mb-10 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">From zero to filed</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            Three steps. No accounting degree.
+          </h2>
+        </Reveal>
+        <div className="relative grid gap-4 md:grid-cols-3">
+          <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-16 hidden h-px bg-gradient-to-r from-transparent via-[#0e8f4a]/40 to-transparent md:block" />
+          {STEPS.map((s, i) => (
+            <Reveal key={s.n} delay={i * 90}>
+              <div className="relative h-full rounded-2xl border border-white/10 bg-[#0d1f16] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#0e8f4a]/40">
+                <div className="mb-5 inline-grid h-12 w-12 place-items-center rounded-2xl border border-[#0e8f4a]/30 bg-[#0e8f4a]/15 text-sm font-bold text-[#7dd3a5]" style={heading}>
+                  {s.n}
+                </div>
+                <h3 className="text-xl font-bold text-white" style={heading}>{s.title}</h3>
+                <p className="mt-2.5 text-sm leading-relaxed text-slate-400">{s.desc}</p>
+                <ul className="mt-5 space-y-2">
+                  {s.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0e8f4a]" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
 
       {/* FEATURES */}
@@ -557,7 +674,76 @@ function Landing() {
         </div>
       </section>
 
+      {/* PRICING */}
+      <section id="pricing" className="max-w-7xl mx-auto px-6 py-24">
+        <Reveal className="mb-12 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Simple, kwacha pricing</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            Pay for the team you have.
+          </h2>
+          <p className="mt-4 text-slate-400">
+            Every plan starts with a 14-day free trial — no credit card, no setup fee, cancel any time.
+          </p>
+        </Reveal>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {PLANS.map((p, i) => (
+            <Reveal key={p.name} delay={i * 80}>
+              <div
+                className={`relative flex h-full flex-col rounded-3xl border p-7 transition-all duration-300 ${
+                  p.highlight
+                    ? "border-[#0e8f4a]/60 bg-gradient-to-b from-[#0f3a24] to-[#0d1f16] shadow-[0_25px_70px_-35px_#0e8f4a] lg:-translate-y-2"
+                    : "border-white/10 bg-[#0d1f16] hover:border-[#0e8f4a]/40 hover:-translate-y-1"
+                }`}
+              >
+                {p.highlight && (
+                  <span className="absolute -top-3 left-7 rounded-full bg-[#0e8f4a] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                    Most popular
+                  </span>
+                )}
+                <h3 className="text-xl font-bold text-white" style={heading}>{p.name}</h3>
+                <p className="mt-1.5 text-sm text-slate-400">{p.tagline}</p>
+                <div className="mt-6 flex items-end gap-2">
+                  <span className="text-4xl font-bold text-white" style={heading}>{p.price}</span>
+                  <span className="pb-1.5 text-xs uppercase tracking-widest text-slate-500">{p.cadence}</span>
+                </div>
+                <ul className="mt-6 space-y-2.5">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0e8f4a]" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 pt-2">
+                  {p.price === "Talk to us" ? (
+                    <a
+                      href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20enterprise%20pricing.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
+                    >
+                      Talk to Sales
+                    </a>
+                  ) : (
+                    <Link
+                      to="/auth"
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-transform hover:scale-[1.02] ${
+                        p.highlight ? "bg-[#0e8f4a] text-white" : "border border-white/15 text-white hover:bg-white/10"
+                      }`}
+                    >
+                      Start free trial <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
       {/* CONTACT */}
+
       <section id="contact" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="text-center mb-12">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Talk to us</div>
