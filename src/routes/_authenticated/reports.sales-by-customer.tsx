@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/sales-by-customer")({
   head: () => ({ meta: [{ title: "Sales by Customer — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/reports/sales-by-customer"
 });
 
 function SalesByCustomerPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const { from, to, label } = filters.range;
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
 
@@ -17,12 +21,13 @@ function SalesByCustomerPage() {
     (async () => {
       setLoading(true);
       const { data } = await supabase.from("invoices")
-        .select("total,vat_amount,subtotal,status,customer:customer_id(name)")
-        .neq("status", "voided").neq("status", "draft");
+        .select("total,vat_amount,subtotal,status,issue_date,customer:customer_id(name)")
+        .neq("status", "voided").neq("status", "draft")
+        .gte("issue_date", from).lte("issue_date", to);
       setInvoices(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [from, to]);
 
   const rows = useMemo(() => {
     const map = new Map<string, { customer: string; count: number; net: number; vat: number; total: number }>();
@@ -46,8 +51,9 @@ function SalesByCustomerPage() {
   }));
 
   return (
-    <ReportShell title="Sales by Customer" subtitle="Posted invoices only" loading={loading} filename="sales-by-customer" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Sales by Customer" subtitle={`Posted invoices only · ${label}`} loading={loading} filename="sales-by-customer" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr>
             <th className="text-left py-2">Customer</th>

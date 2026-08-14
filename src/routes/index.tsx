@@ -382,6 +382,20 @@ function Landing() {
         </div>
       </section>
 
+      {/* STATS BAND */}
+      <section className="border-y border-white/5 bg-[#0a1a12]">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 gap-px overflow-hidden px-6 py-10 md:grid-cols-4">
+          {STATS.map((s, i) => (
+            <Reveal key={s.label} delay={i * 70} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={heading}>{s.value}</div>
+              <div className="mt-1.5 text-xs uppercase tracking-widest text-slate-500">{s.label}</div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+
+
       {/* MODULES — interactive tabbed explorer, mirrors the in-app module identity system */}
       <section id="modules" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="mb-10 max-w-2xl">

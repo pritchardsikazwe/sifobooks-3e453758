@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/inventory-valuation")({
   head: () => ({ meta: [{ title: "Inventory Valuation — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/reports/inventory-valuatio
 });
 
 function InvValPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("ytd"), periodKey: "ytd" });
+  const asAt = filters.range.to;
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
 
@@ -21,7 +25,7 @@ function InvValPage() {
       setItems(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [asAt]);
 
   const rows = useMemo(() => items.map((i: any) => ({
     ...i,
@@ -36,8 +40,9 @@ function InvValPage() {
   }));
 
   return (
-    <ReportShell title="Inventory Valuation" subtitle={`${rows.length} SKUs · Total value ${fmt(total)}`} loading={loading} filename="inventory-valuation" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Inventory Valuation" subtitle={`As at ${asAt} · ${rows.length} SKUs · Total value ${fmt(total)}`} loading={loading} filename="inventory-valuation" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "ytd" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr>
             <th className="text-left py-2">SKU</th><th className="text-left">Item</th>

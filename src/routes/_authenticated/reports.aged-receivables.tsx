@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, ageBucket } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/aged-receivables")({
   head: () => ({ meta: [{ title: "Aged Receivables — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -12,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/reports/aged-receivables")
 const BUCKETS = ["current", "1-30", "31-60", "61-90", "90+"] as const;
 
 function AgedRecPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const { from, to, label } = filters.range;
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
 
@@ -20,11 +24,13 @@ function AgedRecPage() {
       setLoading(true);
       const { data } = await supabase.from("invoices")
         .select("id,number,issue_date,due_date,total,balance_due,status,customer:customer_id(name)")
-        .neq("status", "voided").gt("balance_due", 0).order("due_date");
+        .neq("status", "voided").gt("balance_due", 0)
+        .gte("issue_date", from).lte("issue_date", to)
+        .order("due_date");
       setInvoices(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [from, to]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { customer: string; buckets: Record<string, number>; total: number }>();
@@ -45,8 +51,9 @@ function AgedRecPage() {
   const csv = grouped.map((r) => ({ Customer: r.customer, ...r.buckets, Total: r.total.toFixed(2) }));
 
   return (
-    <ReportShell title="Aged Receivables" subtitle="Outstanding invoices bucketed by days overdue" loading={loading} filename="aged-receivables" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Aged Receivables" subtitle={`Outstanding invoices bucketed by days overdue · ${label}`} loading={loading} filename="aged-receivables" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr><th className="text-left py-2">Customer</th>{BUCKETS.map((b) => <th key={b} className="text-right">{b}</th>)}<th className="text-right">Total</th></tr>
         </thead>

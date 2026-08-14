@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/balance-sheet")({
   head: () => ({ meta: [{ title: "Balance Sheet — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,13 +12,15 @@ export const Route = createFileRoute("/_authenticated/reports/balance-sheet")({
 });
 
 function BalanceSheetPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("ytd"), periodKey: "ytd" });
+  const asAt = filters.range.to;
   const [loading, setLoading] = useState(true);
   const [lines, setLines] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: entries } = await supabase.from("journal_entries").select("id").eq("status", "posted");
+      const { data: entries } = await supabase.from("journal_entries").select("id").eq("status", "posted").lte("entry_date", asAt);
       const ids = (entries ?? []).map((e: any) => e.id);
       if (!ids.length) { setLines([]); setLoading(false); return; }
       const { data: jl } = await supabase.from("journal_lines")
@@ -25,7 +29,7 @@ function BalanceSheetPage() {
       setLines(jl ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [asAt]);
 
   const groups = useMemo(() => {
     const byAcc = new Map<string, { code: string; name: string; type: string; balance: number }>();
@@ -61,8 +65,9 @@ function BalanceSheetPage() {
   ];
 
   return (
-    <ReportShell title="Balance Sheet" subtitle="As of today · posted entries only" loading={loading} filename="balance-sheet" rows={csvRows}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <ReportShell title="Balance Sheet" subtitle={`As at ${asAt} · ${filters.range.label} · posted entries only`} loading={loading} filename="balance-sheet" rows={csvRows}>
+      <ReportFilterBar initial={{ periodKey: "ytd" }} onApply={setFilters} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
         <Side title="Assets" items={groups.assets} total={totalAssets} />
         <div>
           <Side title="Liabilities" items={groups.liabilities} total={totalLiab} />

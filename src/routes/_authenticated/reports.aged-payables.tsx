@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, ageBucket } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/aged-payables")({
   head: () => ({ meta: [{ title: "Aged Payables — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -12,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/reports/aged-payables")({
 const BUCKETS = ["current", "1-30", "31-60", "61-90", "90+"] as const;
 
 function AgedPayPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const { from, to, label } = filters.range;
   const [loading, setLoading] = useState(true);
   const [bills, setBills] = useState<any[]>([]);
 
@@ -20,11 +24,13 @@ function AgedPayPage() {
       setLoading(true);
       const { data } = await supabase.from("bills")
         .select("id,bill_number,bill_date,due_date,total,balance_due,status,supplier:supplier_id(name)")
-        .gt("balance_due", 0).order("due_date");
+        .gt("balance_due", 0)
+        .gte("bill_date", from).lte("bill_date", to)
+        .order("due_date");
       setBills(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [from, to]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { supplier: string; buckets: Record<string, number>; total: number }>();
@@ -44,8 +50,9 @@ function AgedPayPage() {
   const csv = grouped.map((r) => ({ Supplier: r.supplier, ...r.buckets, Total: r.total.toFixed(2) }));
 
   return (
-    <ReportShell title="Aged Payables" subtitle="Outstanding bills bucketed by days overdue" loading={loading} filename="aged-payables" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Aged Payables" subtitle={`Outstanding bills bucketed by days overdue · ${label}`} loading={loading} filename="aged-payables" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr><th className="text-left py-2">Supplier</th>{BUCKETS.map((b) => <th key={b} className="text-right">{b}</th>)}<th className="text-right">Total</th></tr>
         </thead>

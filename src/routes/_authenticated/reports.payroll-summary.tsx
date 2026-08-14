@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
+import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { resolvePeriod } from "@/lib/reports/format";
 
 export const Route = createFileRoute("/_authenticated/reports/payroll-summary")({
   head: () => ({ meta: [{ title: "Payroll Summary — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -10,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/reports/payroll-summary")(
 });
 
 function PayrollPage() {
+  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const { from, to, label } = filters.range;
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<any[]>([]);
 
@@ -18,11 +22,12 @@ function PayrollPage() {
       setLoading(true);
       const { data } = await supabase.from("payroll_runs")
         .select("run_number,period_year,period_month,pay_date,status,total_gross,total_paye,total_napsa,total_nhima,total_net")
+        .gte("pay_date", from).lte("pay_date", to)
         .order("period_year", { ascending: false }).order("period_month", { ascending: false });
       setRuns(data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [from, to]);
 
   const totals = useMemo(() => runs.reduce((acc, r) => ({
     gross: acc.gross + num(r.total_gross),
@@ -40,8 +45,9 @@ function PayrollPage() {
   }));
 
   return (
-    <ReportShell title="Payroll Summary" subtitle={`${runs.length} runs`} loading={loading} filename="payroll-summary" rows={csv}>
-      <table className="w-full text-sm">
+    <ReportShell title="Payroll Summary" subtitle={`${runs.length} runs · ${label}`} loading={loading} filename="payroll-summary" rows={csv}>
+      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr>
             <th className="text-left py-2">Run</th><th className="text-left">Period</th><th className="text-left">Status</th>
