@@ -4,7 +4,7 @@ import { Coins, ReceiptText, ListChecks, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { SimpleCrud } from "@/components/SimpleCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -187,23 +187,24 @@ function FeesPage() {
               <div className="font-medium">Fee arrears by student</div>
               <ExportMenu rows={arrears.map(a => ({ Student: a.student, Billed: a.billed, Paid: a.paid, Balance: a.balance }))} filename="fee-arrears" title="Fee Arrears" />
             </div>
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Student</TableHead><TableHead className="text-right">Billed</TableHead>
-                <TableHead className="text-right">Paid</TableHead><TableHead className="text-right">Balance</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {arrears.map((a, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{a.student}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(a.billed)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtMoney(a.paid)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{fmtMoney(a.balance)}</TableCell>
-                  </TableRow>
-                ))}
-                {!arrears.length && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No outstanding fees.</TableCell></TableRow>}
-              </TableBody>
-            </Table>
+            <DataTable
+              tableId="school-fees.arrears"
+              data={arrears.map((a, i) => ({ ...a, id: String(i) }))}
+              searchPlaceholder="Search students…"
+              empty="No outstanding fees."
+              totals={rows => ({
+                student: "Total",
+                billed: fmtMoney(rows.reduce((s, r) => s + r.billed, 0)),
+                paid: fmtMoney(rows.reduce((s, r) => s + r.paid, 0)),
+                balance: <span className="font-semibold">{fmtMoney(rows.reduce((s, r) => s + r.balance, 0))}</span>,
+              })}
+              columns={[
+                { key: "student", header: "Student" },
+                { key: "billed", header: "Billed", align: "right", accessor: r => r.billed, cell: r => fmtMoney(r.billed) },
+                { key: "paid", header: "Paid", align: "right", accessor: r => r.paid, cell: r => fmtMoney(r.paid) },
+                { key: "balance", header: "Balance", align: "right", accessor: r => r.balance, cell: r => <span className="font-semibold">{fmtMoney(r.balance)}</span> },
+              ]}
+            />
           </Card>
         </TabsContent>
       </Tabs>

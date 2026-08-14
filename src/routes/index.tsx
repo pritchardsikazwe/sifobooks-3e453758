@@ -85,11 +85,69 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 
 const NAV_TABS = [
   { id: "modules", label: "Modules" },
+  { id: "how", label: "How it works" },
   { id: "features", label: "Features" },
+  { id: "pricing", label: "Pricing" },
   { id: "compliance", label: "Compliance" },
   { id: "learn", label: "Academy" },
   { id: "contact", label: "Contact" },
 ];
+
+const STATS = [
+  { value: "8", label: "Integrated modules" },
+  { value: "100%", label: "Double-entry posted" },
+  { value: "2026", label: "PAYE bands shipped" },
+  { value: "< 5 min", label: "To your first invoice" },
+];
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Set up your company",
+    desc: "Company details, TPIN, VAT status and financial year. Pick a ready-made chart of accounts or import your own.",
+    points: ["Guided onboarding", "COA templates (SME, NGO, School)", "Opening balances wizard"],
+  },
+  {
+    n: "02",
+    title: "Capture and post",
+    desc: "Raise invoices, record bills and expenses, import bank statements. Every document posts itself to the ledger.",
+    points: ["VAT invoices & receipts", "Smart bank matching", "Reversals for wrong postings"],
+  },
+  {
+    n: "03",
+    title: "Report and file",
+    desc: "Close the period, run management and statutory reports, then export branded PDFs ready for ZRA and your auditor.",
+    points: ["Monthly management pack", "IFRS-for-SME statements", "PAYE / NAPSA / VAT schedules"],
+  },
+];
+
+const PLANS = [
+  {
+    name: "Starter",
+    price: "K450",
+    cadence: "per month",
+    tagline: "Sole traders and small shops finding their feet.",
+    features: ["1 company · 2 users", "Sales, purchases & expenses", "Cashbook & bank import", "Core reports + PDF export", "Email support"],
+    highlight: false,
+  },
+  {
+    name: "Business",
+    price: "K1,200",
+    cadence: "per month",
+    tagline: "Growing companies with staff and stock to manage.",
+    features: ["3 companies · 10 users", "Everything in Starter", "Full payroll & HR (PAYE, NAPSA, NHIMA)", "Inventory & reconciliation sessions", "Management report pack", "Priority WhatsApp support"],
+    highlight: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Talk to us",
+    cadence: "tailored",
+    tagline: "Groups, NGOs and schools with audit requirements.",
+    features: ["Unlimited companies & users", "Everything in Business", "NGO grants & fund accounting", "School management ERP", "IFRS-for-SME annual statements", "Onboarding & training included"],
+    highlight: false,
+  },
+];
+
 
 const MODULES = [
   { name: "Accounting", hex: "#15803D", icon: Wallet, desc: "A real double-entry engine: every document posts itself to the correct accounts, with reversals and a locked period close.",
