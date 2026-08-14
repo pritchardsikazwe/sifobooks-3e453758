@@ -4,7 +4,7 @@ import { ArrowLeft, Upload, Landmark, TrendingUp, TrendingDown, Wallet, Trash2, 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -480,130 +480,131 @@ function BankingPage() {
               <div className="text-xs text-muted-foreground ml-auto">{filtered.length} shown</div>
             </div>
 
-            {selected.size > 0 && (
-              <div className="flex items-center gap-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-                <span className="font-medium">{selected.size} selected</span>
+            <DataTable
+              tableId="banking.transactions"
+              data={filtered}
+              rowKey={t => t.id}
+              selectable
+              loading={loading}
+              searchPlaceholder={null}
+              empty="No transactions match."
+              bulkActions={() => (
                 <Button size="sm" variant="outline" onClick={bulkClear}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear selected</Button>
-                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Deselect</Button>
-              </div>
-            )}
-
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8">
-                      <input type="checkbox"
-                        checked={filtered.length > 0 && selected.size === filtered.length}
-                        onChange={toggleSelectAll} />
-                    </TableHead>
-                    <TableHead className="w-6"></TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Allocated</TableHead>
-                    <TableHead className="text-right">Remaining</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
-                  ) : filtered.length === 0 ? (
-                    <TableRow><TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">No transactions match.</TableCell></TableRow>
-                  ) : filtered.map(t => {
-                    const abs = Math.abs(Number(t.amount));
-                    const allocated = Number(t.allocated_amount ?? 0);
-                    const remaining = Math.max(0, abs - allocated);
+              )}
+              totals={rows => ({
+                amount: money(rows.reduce((s, t) => s + Number(t.amount), 0)),
+                allocated: money(rows.reduce((s, t) => s + Number(t.allocated_amount ?? 0), 0)),
+              })}
+              columns={[
+                {
+                  key: "expand", header: "", sortable: false, width: 32,
+                  cell: t => (allocs[t.id] ?? []).length > 0 && (
+                    <button onClick={() => toggleExpand(t.id)} className="text-muted-foreground hover:text-foreground">
+                      {expanded.has(t.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                  ),
+                },
+                {
+                  key: "txn_date", header: "Date", accessor: t => t.txn_date,
+                  cell: t => <span className="text-muted-foreground whitespace-nowrap">{t.txn_date}</span>,
+                },
+                {
+                  key: "description", header: "Description",
+                  cell: t => {
                     const list = allocs[t.id] ?? [];
                     const isOpen = expanded.has(t.id);
                     return (
-                      <>
-                        <TableRow key={t.id}>
-                          <TableCell className="pr-0">
-                            <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
-                          </TableCell>
-                          <TableCell className="pr-0">
-                            {list.length > 0 && (
-                              <button onClick={() => toggleExpand(t.id)} className="text-muted-foreground hover:text-foreground">
-                                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                              </button>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground whitespace-nowrap">{t.txn_date}</TableCell>
-                          <TableCell className="max-w-xs truncate">
-                            {t.description}
-                            {t.reference && <span className="ml-2 text-xs text-muted-foreground">{t.reference}</span>}
-                          </TableCell>
-                          <TableCell>{statusBadge(t)}</TableCell>
-                          <TableCell className={`text-right font-medium whitespace-nowrap ${t.amount >= 0 ? "text-emerald-700" : "text-red-700"}`}>{t.amount >= 0 ? "+" : ""}{money(Number(t.amount))}</TableCell>
-                          <TableCell className="text-right whitespace-nowrap text-muted-foreground">{allocated > 0 ? money(allocated) : "—"}</TableCell>
-                          <TableCell className="text-right whitespace-nowrap font-medium">{remaining > 0.005 ? money(remaining) : <span className="text-emerald-700">✓</span>}</TableCell>
-                          <TableCell className="text-right whitespace-nowrap">
-                            {remaining > 0.005 && (
-                              <Button size="sm" variant="outline" className="mr-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50" onClick={() => openAllocate(t)}>
-                                <BookOpen className="h-3.5 w-3.5 mr-1" />Allocate
-                              </Button>
-                            )}
-                            {t.is_allocated && !t.is_cleared && (
-                              <Button size="sm" variant="outline" className="mr-1 border-indigo-300 text-indigo-700 hover:bg-indigo-50" onClick={() => { setClearTxn(t); setClearRef(""); }}>
-                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                          </TableCell>
-                        </TableRow>
+                      <div>
+                        <div className="max-w-xs truncate">
+                          {t.description}
+                          {t.reference && <span className="ml-2 text-xs text-muted-foreground">{t.reference}</span>}
+                        </div>
                         {isOpen && (
-                          <TableRow key={t.id + "-exp"} className="bg-muted/40">
-                            <TableCell colSpan={9} className="py-2">
-                              <div className="pl-6 pb-2 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-                                {t.allocated_at && <span>✓ Allocated · {t.allocated_at.slice(0,16).replace("T"," ")}</span>}
-                                {t.posted_at && <span>✓ Posted · {t.posted_at.slice(0,16).replace("T"," ")}</span>}
-                                {t.reconciled_at && <span>✓ Reconciled · {t.reconciled_at.slice(0,16).replace("T"," ")}</span>}
-                                {t.cleared_at && <span>✓ Cleared · {t.cleared_at.slice(0,16).replace("T"," ")}{t.cleared_reference ? ` (${t.cleared_reference})` : ""}</span>}
-                              </div>
-                              {list.length > 0 && (
-                                <>
-                                  <div className="text-xs font-medium text-muted-foreground mb-2 pl-6">Allocations</div>
-                                  <table className="w-full text-xs">
-                                    <thead className="text-muted-foreground">
-                                      <tr><th className="text-left pl-6 py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
-                                    </thead>
-                                    <tbody>
-                                      {list.map(a => (
-                                        <tr key={a.id} className="border-t border-border/50">
-                                          <td className="pl-6 py-1.5">{a.allocated_at.slice(0, 10)}</td>
-                                          <td>{a.memo ?? "—"}</td>
-                                          <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
-                                          <td className="text-right font-medium">{money(Number(a.amount))}</td>
-                                          <td className="pl-4">
-                                            {a.is_reversed
-                                              ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
-                                              : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
-                                          </td>
-                                          <td className="text-right">
-                                            {!a.is_reversed && (
-                                              <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
-                                                <RotateCcw className="h-3 w-3 mr-1" />Reverse
-                                              </Button>
-                                            )}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </>
-                              )}
-                            </TableCell>
-                          </TableRow>
+                          <div className="mt-2 -mx-1 rounded-md bg-muted/40 p-2">
+                            <div className="pb-2 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                              {t.allocated_at && <span>✓ Allocated · {t.allocated_at.slice(0,16).replace("T"," ")}</span>}
+                              {t.posted_at && <span>✓ Posted · {t.posted_at.slice(0,16).replace("T"," ")}</span>}
+                              {t.reconciled_at && <span>✓ Reconciled · {t.reconciled_at.slice(0,16).replace("T"," ")}</span>}
+                              {t.cleared_at && <span>✓ Cleared · {t.cleared_at.slice(0,16).replace("T"," ")}{t.cleared_reference ? ` (${t.cleared_reference})` : ""}</span>}
+                            </div>
+                            {list.length > 0 && (
+                              <>
+                                <div className="text-xs font-medium text-muted-foreground mb-2">Allocations</div>
+                                <table className="w-full text-xs">
+                                  <thead className="text-muted-foreground">
+                                    <tr><th className="text-left py-1">Date</th><th className="text-left">Memo</th><th className="text-left">Ref</th><th className="text-right">Amount</th><th className="text-left pl-4">Status</th><th></th></tr>
+                                  </thead>
+                                  <tbody>
+                                    {list.map(a => (
+                                      <tr key={a.id} className="border-t border-border/50">
+                                        <td className="py-1.5">{a.allocated_at.slice(0, 10)}</td>
+                                        <td>{a.memo ?? "—"}</td>
+                                        <td className="text-muted-foreground">{a.target_ref ?? a.target_type}</td>
+                                        <td className="text-right font-medium">{money(Number(a.amount))}</td>
+                                        <td className="pl-4">
+                                          {a.is_reversed
+                                            ? <Badge variant="outline" className="text-slate-500">Reversed{a.reverse_reason ? ` — ${a.reverse_reason}` : ""}</Badge>
+                                            : <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Live</Badge>}
+                                        </td>
+                                        <td className="text-right">
+                                          {!a.is_reversed && (
+                                            <Button size="sm" variant="ghost" className="text-red-600 h-7" onClick={() => { setReverseAlloc(a); setReverseReason(""); }}>
+                                              <RotateCcw className="h-3 w-3 mr-1" />Reverse
+                                            </Button>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </>
+                            )}
+                          </div>
                         )}
-                      </>
+                      </div>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                  },
+                },
+                { key: "status", header: "Status", accessor: t => t.status ?? "unallocated", cell: t => statusBadge(t) },
+                {
+                  key: "amount", header: "Amount", align: "right", accessor: t => Number(t.amount),
+                  cell: t => <span className={`font-medium whitespace-nowrap ${t.amount >= 0 ? "text-emerald-700" : "text-red-700"}`}>{t.amount >= 0 ? "+" : ""}{money(Number(t.amount))}</span>,
+                },
+                {
+                  key: "allocated", header: "Allocated", align: "right", accessor: t => Number(t.allocated_amount ?? 0),
+                  cell: t => { const allocated = Number(t.allocated_amount ?? 0); return <span className="whitespace-nowrap text-muted-foreground">{allocated > 0 ? money(allocated) : "—"}</span>; },
+                },
+                {
+                  key: "remaining", header: "Remaining", align: "right",
+                  accessor: t => Math.max(0, Math.abs(Number(t.amount)) - Number(t.allocated_amount ?? 0)),
+                  cell: t => {
+                    const remaining = Math.max(0, Math.abs(Number(t.amount)) - Number(t.allocated_amount ?? 0));
+                    return <span className="whitespace-nowrap font-medium">{remaining > 0.005 ? money(remaining) : <span className="text-emerald-700">✓</span>}</span>;
+                  },
+                },
+                {
+                  key: "actions", header: "Actions", align: "right", sortable: false,
+                  cell: t => {
+                    const remaining = Math.max(0, Math.abs(Number(t.amount)) - Number(t.allocated_amount ?? 0));
+                    return (
+                      <div className="whitespace-nowrap">
+                        {remaining > 0.005 && (
+                          <Button size="sm" variant="outline" className="mr-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50" onClick={() => openAllocate(t)}>
+                            <BookOpen className="h-3.5 w-3.5 mr-1" />Allocate
+                          </Button>
+                        )}
+                        {t.is_allocated && !t.is_cleared && (
+                          <Button size="sm" variant="outline" className="mr-1 border-indigo-300 text-indigo-700 hover:bg-indigo-50" onClick={() => { setClearTxn(t); setClearRef(""); }}>
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Clear
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      </div>
+                    );
+                  },
+                },
+              ]}
+            />
           </CardContent>
         </Card>
       </main>

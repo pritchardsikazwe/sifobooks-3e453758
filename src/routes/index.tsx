@@ -615,7 +615,76 @@ function Landing() {
         </div>
       </section>
 
+      {/* PRICING */}
+      <section id="pricing" className="max-w-7xl mx-auto px-6 py-24">
+        <Reveal className="mb-12 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Simple, kwacha pricing</div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
+            Pay for the team you have.
+          </h2>
+          <p className="mt-4 text-slate-400">
+            Every plan starts with a 14-day free trial — no credit card, no setup fee, cancel any time.
+          </p>
+        </Reveal>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {PLANS.map((p, i) => (
+            <Reveal key={p.name} delay={i * 80}>
+              <div
+                className={`relative flex h-full flex-col rounded-3xl border p-7 transition-all duration-300 ${
+                  p.highlight
+                    ? "border-[#0e8f4a]/60 bg-gradient-to-b from-[#0f3a24] to-[#0d1f16] shadow-[0_25px_70px_-35px_#0e8f4a] lg:-translate-y-2"
+                    : "border-white/10 bg-[#0d1f16] hover:border-[#0e8f4a]/40 hover:-translate-y-1"
+                }`}
+              >
+                {p.highlight && (
+                  <span className="absolute -top-3 left-7 rounded-full bg-[#0e8f4a] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                    Most popular
+                  </span>
+                )}
+                <h3 className="text-xl font-bold text-white" style={heading}>{p.name}</h3>
+                <p className="mt-1.5 text-sm text-slate-400">{p.tagline}</p>
+                <div className="mt-6 flex items-end gap-2">
+                  <span className="text-4xl font-bold text-white" style={heading}>{p.price}</span>
+                  <span className="pb-1.5 text-xs uppercase tracking-widest text-slate-500">{p.cadence}</span>
+                </div>
+                <ul className="mt-6 space-y-2.5">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0e8f4a]" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 pt-2">
+                  {p.price === "Talk to us" ? (
+                    <a
+                      href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20enterprise%20pricing.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
+                    >
+                      Talk to Sales
+                    </a>
+                  ) : (
+                    <Link
+                      to="/auth"
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-transform hover:scale-[1.02] ${
+                        p.highlight ? "bg-[#0e8f4a] text-white" : "border border-white/15 text-white hover:bg-white/10"
+                      }`}
+                    >
+                      Start free trial <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
       {/* CONTACT */}
+
       <section id="contact" className="max-w-7xl mx-auto px-6 py-24">
         <Reveal className="text-center mb-12">
           <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3">Talk to us</div>
