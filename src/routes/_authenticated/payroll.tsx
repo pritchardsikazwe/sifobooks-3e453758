@@ -128,6 +128,12 @@ function PayrollPage() {
                 searchPlaceholder={null}
                 empty="No runs yet. Use the Generate tab to create your first monthly run."
                 onRowClick={r => setSelectedRun(r)}
+                totals={rows => ({
+                  total_gross: fmtMoney(rows.reduce((s, r) => s + Number(r.total_gross ?? 0), 0)),
+                  total_paye: fmtMoney(rows.reduce((s, r) => s + Number(r.total_paye ?? 0), 0)),
+                  total_napsa: fmtMoney(rows.reduce((s, r) => s + Number(r.total_napsa ?? 0), 0)),
+                  total_net: fmtMoney(rows.reduce((s, r) => s + Number(r.total_net ?? 0), 0)),
+                })}
               />
             </CardContent>
           </Card>
@@ -308,6 +314,34 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     toast.success("Export downloaded");
   };
 
+  const slipColumns: DTColumn<Slip & { employee: Employee }>[] = [
+    {
+      key: "employee", header: "Employee", sticky: true,
+      accessor: s => `${s.employee.first_name} ${s.employee.last_name}`,
+      cell: s => (
+        <div>
+          <div className="font-medium">{s.employee.first_name} {s.employee.last_name}</div>
+          <div className="text-xs text-slate-400">{s.employee.employee_code ?? ""}</div>
+        </div>
+      ),
+    },
+    { key: "basic_salary", header: "Basic", align: "right", cell: s => fmtMoney(s.basic_salary ?? 0) },
+    { key: "gross_pay", header: "Gross", align: "right", cell: s => fmtMoney(s.gross_pay ?? 0) },
+    { key: "paye", header: "PAYE", align: "right", cell: s => fmtMoney(s.paye ?? 0) },
+    { key: "napsa", header: "NAPSA", align: "right", cell: s => fmtMoney(s.napsa ?? 0) },
+    { key: "nhima", header: "NHIMA", align: "right", cell: s => fmtMoney(s.nhima ?? 0) },
+    { key: "net_pay", header: "Net", align: "right", cell: s => <span className="font-semibold">{fmtMoney(s.net_pay ?? 0)}</span> },
+    {
+      key: "actions", header: "", sortable: false, sticky: true,
+      cell: s => (
+        <div className="whitespace-nowrap" onClick={e => e.stopPropagation()}>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(s)}><FileText className="h-4 w-4" /></Button>
+          <Button size="sm" variant="ghost" onClick={() => downloadSlip(s)}><Download className="h-4 w-4" /></Button>
+        </div>
+      ),
+    },
+  ];
+
   if (editing) {
     return (
       <EditSlipForm
@@ -361,40 +395,23 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? <div className="py-6 text-center text-slate-400"><Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading payslips…</div>
-          : slips.length === 0 ? <div className="py-6 text-center text-slate-400">No payslips.</div>
-          : (
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Employee</TableHead><TableHead className="text-right">Basic</TableHead>
-                  <TableHead className="text-right">Gross</TableHead><TableHead className="text-right">PAYE</TableHead>
-                  <TableHead className="text-right">NAPSA</TableHead><TableHead className="text-right">NHIMA</TableHead>
-                  <TableHead className="text-right">Net</TableHead><TableHead />
-                </TableRow></TableHeader>
-                <TableBody>
-                  {slips.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell>
-                        <div className="font-medium">{s.employee.first_name} {s.employee.last_name}</div>
-                        <div className="text-xs text-slate-400">{s.employee.employee_code ?? ""}</div>
-                      </TableCell>
-                      <TableCell className="text-right">{fmtMoney(s.basic_salary ?? 0)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(s.gross_pay ?? 0)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(s.paye ?? 0)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(s.napsa ?? 0)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(s.nhima ?? 0)}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmtMoney(s.net_pay ?? 0)}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(s)}><FileText className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="ghost" onClick={() => downloadSlip(s)}><Download className="h-4 w-4" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+        <DataTable
+          tableId="payroll-payslips"
+          columns={slipColumns}
+          data={slips}
+          loading={loading}
+          searchPlaceholder="Search employee…"
+          empty="No payslips."
+          onRowClick={s => setEditing(s)}
+          totals={rows => ({
+            basic_salary: fmtMoney(rows.reduce((sum, s) => sum + Number(s.basic_salary ?? 0), 0)),
+            gross_pay: fmtMoney(rows.reduce((sum, s) => sum + Number(s.gross_pay ?? 0), 0)),
+            paye: fmtMoney(rows.reduce((sum, s) => sum + Number(s.paye ?? 0), 0)),
+            napsa: fmtMoney(rows.reduce((sum, s) => sum + Number(s.napsa ?? 0), 0)),
+            nhima: fmtMoney(rows.reduce((sum, s) => sum + Number(s.nhima ?? 0), 0)),
+            net_pay: fmtMoney(rows.reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)),
+          })}
+        />
       </CardContent>
 
       <CardContent className="pt-0">
