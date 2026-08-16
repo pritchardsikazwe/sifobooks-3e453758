@@ -314,6 +314,34 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     toast.success("Export downloaded");
   };
 
+  const slipColumns: DTColumn<Slip & { employee: Employee }>[] = [
+    {
+      key: "employee", header: "Employee", sticky: true,
+      accessor: s => `${s.employee.first_name} ${s.employee.last_name}`,
+      cell: s => (
+        <div>
+          <div className="font-medium">{s.employee.first_name} {s.employee.last_name}</div>
+          <div className="text-xs text-slate-400">{s.employee.employee_code ?? ""}</div>
+        </div>
+      ),
+    },
+    { key: "basic_salary", header: "Basic", align: "right", cell: s => fmtMoney(s.basic_salary ?? 0) },
+    { key: "gross_pay", header: "Gross", align: "right", cell: s => fmtMoney(s.gross_pay ?? 0) },
+    { key: "paye", header: "PAYE", align: "right", cell: s => fmtMoney(s.paye ?? 0) },
+    { key: "napsa", header: "NAPSA", align: "right", cell: s => fmtMoney(s.napsa ?? 0) },
+    { key: "nhima", header: "NHIMA", align: "right", cell: s => fmtMoney(s.nhima ?? 0) },
+    { key: "net_pay", header: "Net", align: "right", cell: s => <span className="font-semibold">{fmtMoney(s.net_pay ?? 0)}</span> },
+    {
+      key: "actions", header: "", sortable: false, sticky: true,
+      cell: s => (
+        <div className="whitespace-nowrap" onClick={e => e.stopPropagation()}>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(s)}><FileText className="h-4 w-4" /></Button>
+          <Button size="sm" variant="ghost" onClick={() => downloadSlip(s)}><Download className="h-4 w-4" /></Button>
+        </div>
+      ),
+    },
+  ];
+
   if (editing) {
     return (
       <EditSlipForm
