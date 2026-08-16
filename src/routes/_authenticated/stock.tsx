@@ -137,29 +137,33 @@ function StockPage() {
           </CardContent></Card>
         </div>
 
-        <div className="mt-8">
-          <GroupedStockTable
-            items={filtered}
-            locationLabel={businessName || "Main Store"}
-            money={money}
-            onMove={setMoveFor}
-            onDelete={removeItem}
-            loading={loading}
-            q={q}
-            setQ={setQ}
-          />
-        </div>
+        <Card className="mt-8">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base"><Package className="h-4 w-4" /> Items</CardTitle>
+            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name or SKU…" className="sm:w-72" />
+          </CardHeader>
+          <CardContent className="px-0">
+            <GroupedStockTable
+              items={filtered}
+              locationLabel={businessName || "Main Store"}
+              money={money}
+              onMove={setMoveFor}
+              onDelete={removeItem}
+              loading={loading}
+            />
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
 }
 
 function GroupedStockTable({
-  items, locationLabel, money, onMove, onDelete, loading, q, setQ,
+  items, locationLabel, money, onMove, onDelete, loading,
 }: {
   items: Item[]; locationLabel: string; money: (n: number) => string;
   onMove: (i: Item) => void; onDelete: (id: string) => void;
-  loading: boolean; q: string; setQ: (v: string) => void;
+  loading: boolean;
 }) {
   const groups = useMemo(() => {
     const m = new Map<string, Item[]>();
@@ -249,8 +253,7 @@ function GroupedStockTable({
               columns={columns}
               data={rows}
               loading={loading}
-              searchPlaceholder={groups.length <= 1 ? "Search name or SKU…" : null}
-              toolbarLeft={groups.length <= 1 ? undefined : undefined}
+              searchPlaceholder={null}
               empty="No items in this category."
               className="rounded-t-none"
               totals={rowsIn => ({
