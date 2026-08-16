@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { BookText, Printer, Loader2 } from "lucide-react";
+import { BookText, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -209,6 +208,24 @@ function CashbookPage() {
       ) },
   ];
 
+  const ledgerColumns: DTColumn<typeof enriched[number]>[] = [
+    { key: "txn_date", header: "Date", width: 100 },
+    { key: "voucher_no", header: "Voucher #", cell: r => <span className="text-xs font-mono">{r.voucher_no ?? ""}</span> },
+    { key: "receipt_no", header: "Receipt #", cell: r => <span className="text-xs font-mono">{r.receipt_no ?? ""}</span> },
+    { key: "reference", header: "Reference", cell: r => <span className="text-xs">{r.reference ?? ""}</span> },
+    { key: "payee", header: "Payee", cell: r => r.payee ?? "" },
+    { key: "description", header: "Description", cell: r => (
+        <span className="block max-w-[240px] truncate" title={r.description ?? ""}>{r.description ?? ""}</span>
+      ) },
+    { key: "account", header: "Account", accessor: r => acctName(r.bank_account_id), cell: r => <span className="text-xs">{acctName(r.bank_account_id)}</span> },
+    { key: "cost_centre", header: "Cost centre", cell: r => <span className="text-xs">{r.cost_centre ?? ""}</span> },
+    { key: "project_ref", header: "Project", cell: r => <span className="text-xs">{r.project_ref ?? ""}</span> },
+    { key: "fund_source", header: "Fund", cell: r => <span className="text-xs">{r.fund_source ?? ""}</span> },
+    { key: "receipts", header: "Receipts", align: "right", cell: r => r.receipts ? <span className="text-emerald-700">{fmtMoney(r.receipts)}</span> : "" },
+    { key: "payments", header: "Payments", align: "right", cell: r => r.payments ? <span className="text-red-600">{fmtMoney(r.payments)}</span> : "" },
+    { key: "balance", header: "Balance", align: "right", cell: r => <span className="font-medium">{fmtMoney(r.balance)}</span> },
+  ];
+
   const exportRows = enriched.map(r => ({
     Date: r.txn_date,
     "Voucher #": r.voucher_no ?? "",
@@ -306,68 +323,29 @@ function CashbookPage() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm">Cashbook — {filtered.length} entries</CardTitle>
-          <div className="text-xs text-muted-foreground">
-            Opening: <b>{fmtMoney(opening)}</b> · Receipts: <b className="text-emerald-700">{fmtMoney(totals.receipts)}</b> · Payments: <b className="text-red-600">{fmtMoney(totals.payments)}</b> · Closing: <b>{fmtMoney(totals.closing)}</b>
-          </div>
         </CardHeader>
-        <CardContent className="p-0 overflow-auto">
-          {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Date</TableHead>
-                  <TableHead>Voucher #</TableHead>
-                  <TableHead>Receipt #</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Payee</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead>Cost centre</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Fund</TableHead>
-                  <TableHead className="text-right">Receipts</TableHead>
-                  <TableHead className="text-right">Payments</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="font-medium">
-                  <TableCell>{range.from || "—"}</TableCell>
-                  <TableCell colSpan={9}>BALANCE B/F</TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell className="text-right">{fmtMoney(opening)}</TableCell>
-                </TableRow>
-                {enriched.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell>{r.txn_date}</TableCell>
-                    <TableCell className="text-xs font-mono">{r.voucher_no ?? ""}</TableCell>
-                    <TableCell className="text-xs font-mono">{r.receipt_no ?? ""}</TableCell>
-                    <TableCell className="text-xs">{r.reference ?? ""}</TableCell>
-                    <TableCell>{r.payee ?? ""}</TableCell>
-                    <TableCell className="max-w-[240px] truncate" title={r.description ?? ""}>{r.description ?? ""}</TableCell>
-                    <TableCell className="text-xs">{acctName(r.bank_account_id)}</TableCell>
-                    <TableCell className="text-xs">{r.cost_centre ?? ""}</TableCell>
-                    <TableCell className="text-xs">{r.project_ref ?? ""}</TableCell>
-                    <TableCell className="text-xs">{r.fund_source ?? ""}</TableCell>
-                    <TableCell className="text-right text-emerald-700">{r.receipts ? fmtMoney(r.receipts) : ""}</TableCell>
-                    <TableCell className="text-right text-red-600">{r.payments ? fmtMoney(r.payments) : ""}</TableCell>
-                    <TableCell className="text-right font-medium">{fmtMoney(r.balance)}</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted font-bold">
-                  <TableCell colSpan={10}>TOTAL</TableCell>
-                  <TableCell className="text-right">{fmtMoney(totals.receipts)}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(totals.payments)}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(totals.closing)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="p-0">
+          <DataTable
+            tableId="cashbook-ledger"
+            columns={ledgerColumns}
+            data={enriched}
+            loading={loading}
+            searchPlaceholder={null}
+            empty="No cashbook entries for the selected filters."
+            toolbarLeft={
+              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                BALANCE B/F ({range.from || "—"}): <b className="text-foreground">{fmtMoney(opening)}</b>
+              </div>
+            }
+            totals={rows => ({
+              voucher_no: "TOTAL",
+              receipts: <span>{fmtMoney(rows.reduce((s, r) => s + r.receipts, 0))}</span>,
+              payments: <span>{fmtMoney(rows.reduce((s, r) => s + r.payments, 0))}</span>,
+              balance: <span>{fmtMoney(totals.closing)}</span>,
+            })}
+          />
         </CardContent>
       </Card>
     </div>

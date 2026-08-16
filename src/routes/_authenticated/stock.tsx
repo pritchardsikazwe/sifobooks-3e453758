@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DTColumn } from "@/components/data-table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppNav } from "@/components/AppNav";
@@ -137,40 +137,29 @@ function StockPage() {
           </CardContent></Card>
         </div>
 
-        <Card className="mt-8">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base"><Package className="h-4 w-4" /> Items</CardTitle>
-            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name or SKU…" className="sm:w-72" />
-          </CardHeader>
-          <CardContent className="px-0">
-            {loading ? (
-              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-            ) : filtered.length === 0 ? (
-              <div className="py-10 text-center text-sm text-muted-foreground">
-                No stock items yet. Click "New item" to add your first product.
-              </div>
-            ) : (
-              <GroupedStockTable
-                items={filtered}
-                locationLabel={businessName || "Main Store"}
-                money={money}
-                onMove={setMoveFor}
-                onDelete={removeItem}
-              />
-            )}
-
-          </CardContent>
-        </Card>
+        <div className="mt-8">
+          <GroupedStockTable
+            items={filtered}
+            locationLabel={businessName || "Main Store"}
+            money={money}
+            onMove={setMoveFor}
+            onDelete={removeItem}
+            loading={loading}
+            q={q}
+            setQ={setQ}
+          />
+        </div>
       </main>
     </div>
   );
 }
 
 function GroupedStockTable({
-  items, locationLabel, money, onMove, onDelete,
+  items, locationLabel, money, onMove, onDelete, loading, q, setQ,
 }: {
   items: Item[]; locationLabel: string; money: (n: number) => string;
   onMove: (i: Item) => void; onDelete: (id: string) => void;
+  loading: boolean; q: string; setQ: (v: string) => void;
 }) {
   const groups = useMemo(() => {
     const m = new Map<string, Item[]>();
@@ -182,70 +171,95 @@ function GroupedStockTable({
     return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [items]);
 
+  const columns: DTColumn<Item>[] = [
+    {
+      key: "name", header: "Category / Item", sticky: true,
+      cell: i => (
+        <div>
+          <div className="font-medium">{i.name}</div>
+          {i.sku && <div className="text-xs text-muted-foreground">SKU {i.sku}</div>}
+        </div>
+      ),
+    },
+    { key: "unit", header: "Order By Unit", cell: i => <span className="text-xs">{i.unit || "unit"}</span> },
+    { key: "cost_price", header: "Cost", align: "right", cell: i => money(Number(i.cost_price)) },
+    { key: "qty_per_unit", header: "Qty/Unit", align: "right", sortable: false, cell: i => (i.unit ? 1 : "—") },
+    { key: "description", header: "Item Size", cell: i => <span className="text-xs">{i.description ?? "—"}</span> },
+    { key: "cost_per_item", header: "Cost per Item", align: "right", accessor: i => Number(i.cost_price), cell: i => money(Number(i.cost_price)) },
+    { key: "quantity_on_hand", header: "Stock Qty", align: "right", cell: i => <span className="font-medium">{Number(i.quantity_on_hand)}</span> },
+    { key: "reorder_level", header: "Reorder Level", align: "right", cell: i => Number(i.reorder_level) || "—" },
+    {
+      key: "reorder_status", header: "Reorder", align: "center", sortable: false,
+      cell: i => {
+        const isLow = Number(i.reorder_level) > 0 && Number(i.quantity_on_hand) <= Number(i.reorder_level);
+        return (
+          <span className={`inline-block rounded px-3 py-1 text-xs font-bold ${isLow ? "bg-amber-500 text-primary-foreground" : "bg-sky-400 text-primary-foreground"}`}>
+            {isLow ? "REORDER" : "OK"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "reorder_qty", header: "Item Reorder Qty", align: "right", sortable: false,
+      accessor: i => {
+        const qty = Number(i.quantity_on_hand);
+        const rl = Number(i.reorder_level);
+        const isLow = rl > 0 && qty <= rl;
+        return isLow ? Math.max(rl * 2 - qty, rl) : 0;
+      },
+      cell: i => {
+        const qty = Number(i.quantity_on_hand);
+        const rl = Number(i.reorder_level);
+        const isLow = rl > 0 && qty <= rl;
+        const reorderQty = isLow ? Math.max(rl * 2 - qty, rl) : 0;
+        return <span className="font-medium">{reorderQty || 0}</span>;
+      },
+    },
+    {
+      key: "actions", header: "", sortable: false, sticky: true,
+      cell: i => (
+        <div className="whitespace-nowrap text-right">
+          <Button size="sm" variant="ghost" onClick={() => onMove(i)}><Sliders className="h-3 w-3" /></Button>
+          <Button size="icon" variant="ghost" onClick={() => onDelete(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="overflow-hidden">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white">
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground">
         Location: {locationLabel}
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-blue-900/90 hover:bg-blue-900/90">
-            <TableHead className="pl-6 text-white">Category / Item</TableHead>
-            <TableHead className="text-white">Order By Unit</TableHead>
-            <TableHead className="text-right text-white">Cost</TableHead>
-            <TableHead className="text-right text-white">Qty/Unit</TableHead>
-            <TableHead className="text-white">Item Size</TableHead>
-            <TableHead className="text-right text-white">Cost per Item</TableHead>
-            <TableHead className="text-right text-white">Stock Qty</TableHead>
-            <TableHead className="text-right text-white">Reorder Level</TableHead>
-            <TableHead className="text-center text-white">Reorder</TableHead>
-            <TableHead className="text-right text-white">Item Reorder Qty</TableHead>
-            <TableHead className="w-24" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {groups.map(([cat, rows]) => (
-            <Fragment key={cat}>
-              <TableRow className="bg-amber-100/60 hover:bg-amber-100/60 dark:bg-amber-950/30">
-                <TableCell colSpan={11} className="pl-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
-                  {cat}
-                </TableCell>
-              </TableRow>
-              {rows.map(i => {
-                const qty = Number(i.quantity_on_hand);
-                const rl = Number(i.reorder_level);
-                const isLow = rl > 0 && qty <= rl;
-                const reorderQty = isLow ? Math.max(rl * 2 - qty, rl) : 0;
-                return (
-                  <TableRow key={i.id} className="odd:bg-muted/20">
-                    <TableCell className="pl-6">
-                      <div className="font-medium">{i.name}</div>
-                      {i.sku && <div className="text-xs text-muted-foreground">SKU {i.sku}</div>}
-                    </TableCell>
-                    <TableCell className="text-xs">{i.unit || "unit"}</TableCell>
-                    <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
-                    <TableCell className="text-right">{i.unit ? 1 : "—"}</TableCell>
-                    <TableCell className="text-xs">{i.description ?? "—"}</TableCell>
-                    <TableCell className="text-right">{money(Number(i.cost_price))}</TableCell>
-                    <TableCell className="text-right font-medium">{qty}</TableCell>
-                    <TableCell className="text-right">{rl || "—"}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`inline-block rounded px-3 py-1 text-xs font-bold ${isLow ? "bg-amber-500 text-white" : "bg-sky-400 text-white"}`}>
-                        {isLow ? "REORDER" : "OK"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{reorderQty || 0}</TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <Button size="sm" variant="ghost" onClick={() => onMove(i)}><Sliders className="h-3 w-3" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => onDelete(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-                    </TableCell>
-                  </TableRow>
-                );
+      <div className="space-y-4 bg-card p-4">
+        {groups.length === 0 && !loading && (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            No stock items yet. Click "New item" to add your first product.
+          </div>
+        )}
+        {(loading ? [["", []]] as [string, Item[]][] : groups).map(([cat, rows]) => (
+          <div key={cat || "loading"}>
+            {cat && (
+              <div className="rounded-t-md bg-amber-100/60 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+                {cat}
+              </div>
+            )}
+            <DataTable
+              tableId={`stock-items-${cat || "all"}`}
+              columns={columns}
+              data={rows}
+              loading={loading}
+              searchPlaceholder={groups.length <= 1 ? "Search name or SKU…" : null}
+              toolbarLeft={groups.length <= 1 ? undefined : undefined}
+              empty="No items in this category."
+              className="rounded-t-none"
+              totals={rowsIn => ({
+                cost_per_item: money(rowsIn.reduce((s, i) => s + Number(i.cost_price) * Number(i.quantity_on_hand), 0)),
               })}
-            </Fragment>
-          ))}
-        </TableBody>
-      </Table>
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

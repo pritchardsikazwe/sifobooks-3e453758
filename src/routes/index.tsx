@@ -308,87 +308,117 @@ function Landing() {
 
 
 
-      {/* HERO — split screen */}
+      {/* HERO — 2026 aurora split */}
       <section className="relative overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#0e8f4a]/20 blur-[120px]" />
-        <div className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[#f39200]/15 blur-[120px]" />
-        <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-28 grid lg:grid-cols-2 gap-16 items-center">
-          <Reveal className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f3a24] border border-[#0e8f4a]/30 text-[#7dd3a5] text-xs font-bold uppercase tracking-wider">
+        <div aria-hidden className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(to_right,#ffffff12_1px,transparent_1px),linear-gradient(to_bottom,#ffffff12_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_50%_0%,black,transparent_75%)]" />
+        <div aria-hidden className="absolute -top-52 -left-40 h-[560px] w-[560px] rounded-full bg-[#0e8f4a]/25 blur-[130px]" />
+        <div aria-hidden className="absolute top-24 -right-44 h-[520px] w-[520px] rounded-full bg-[#f39200]/15 blur-[130px]" />
+        <div aria-hidden className="absolute bottom-0 left-1/3 h-[380px] w-[380px] rounded-full bg-[#d21034]/10 blur-[130px]" />
+
+        <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-14 md:pt-24 md:pb-20 grid lg:grid-cols-[1.05fr_1fr] gap-14 items-center">
+          <Reveal className="space-y-7">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#0e8f4a]/30 bg-[#0f3a24]/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#7dd3a5] backdrop-blur">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0e8f4a] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0e8f4a]" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#0e8f4a]" />
               </span>
-              Zambia-focused · Aligned with IFRS-for-SMEs · Configurable statutory rules
+              Live in Zambia · IFRS-for-SMEs · ZRA-ready
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] text-white tracking-tight" style={heading}>
-              A Finance Operating System{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0e8f4a] via-[#f39200] to-[#d21034]">
-                built for Zambia.
+
+            <h1 className="text-[2.75rem] leading-[1.03] md:text-6xl lg:text-7xl font-bold tracking-tight text-white" style={heading}>
+              Run the whole business
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#0e8f4a] via-[#f39200] to-[#d21034]">
+                on one clean ledger.
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
-              Accounting engine, reporting engine, compliance centre, audit trail and in-app training — one system for owners, bookkeepers, accountants, finance managers and auditors.
-              Aligned with applicable financial reporting frameworks and configurable Zambian statutory rules (PAYE, NAPSA, NHIMA, WCF, SDL, VAT, TOT, WHT).
+
+            <p className="max-w-xl text-lg leading-relaxed text-slate-400">
+              Invoicing, payroll, banking, inventory, compliance and reporting — posted automatically, double-entry, in kwacha.
+              Built for Zambian owners, bookkeepers and auditors.
             </p>
-            <div className="flex flex-wrap gap-4 pt-2">
+
+            <div className="flex flex-wrap gap-3 pt-1">
               <Link
                 to="/auth"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#0e8f4a] text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_35px_-5px_#0e8f4a]"
+                className="group inline-flex items-center gap-3 rounded-xl bg-[#0e8f4a] px-7 py-4 font-bold text-white transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_35px_-5px_#0e8f4a]"
               >
-                Start Free Trial
-                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                Start free — 14 days
+                <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <a
                 href={`https://wa.me/${WHATSAPP}?text=Hi%20SifoBooks%2C%20I%27d%20like%20a%20demo.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#0d1f16] text-white border border-white/10 rounded-xl font-bold hover:bg-[#0f3a24] hover:border-[#0e8f4a]/40 transition-all duration-300"
+                className="group inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-7 py-4 font-bold text-white backdrop-blur transition-all duration-300 hover:border-[#0e8f4a]/40 hover:bg-[#0f3a24]"
               >
-                <MessageCircle className="w-5 h-5 text-[#0e8f4a] transition-transform duration-300 group-hover:scale-110" />
-                Chat on WhatsApp
+                <MessageCircle className="h-5 w-5 text-[#0e8f4a] transition-transform duration-300 group-hover:scale-110" />
+                Book a demo
               </a>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-xs text-slate-500">
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-[#0e8f4a]" /> No card required</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-[#0e8f4a]" /> Unlimited companies on Enterprise</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-[#0e8f4a]" /> Cancel anytime</span>
             </div>
           </Reveal>
 
+          {/* App window mockup */}
           <Reveal delay={120} className="relative">
-            <div className="absolute -inset-6 bg-gradient-to-tr from-[#0e8f4a]/30 to-transparent blur-3xl opacity-70" />
-            <div className="relative bg-[#0d1f16] rounded-3xl border border-white/10 p-2 shadow-2xl">
-              <div className="bg-[#06110c] rounded-2xl border border-white/5 p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="space-y-1.5">
-                    <div className="h-3 w-28 bg-white/10 rounded-full" />
-                    <div className="h-2.5 w-20 bg-white/5 rounded-full" />
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5" />
-                    <div className="w-8 h-8 rounded-full bg-[#0e8f4a]/30 border border-[#0e8f4a]/30" />
-                  </div>
+            <div aria-hidden className="absolute -inset-8 bg-gradient-to-tr from-[#0e8f4a]/25 via-transparent to-[#f39200]/15 blur-3xl" />
+            <div className="relative rounded-3xl border border-white/10 bg-[#0d1f16]/90 p-2 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center gap-2 px-3 py-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#d21034]/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#f39200]/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#0e8f4a]/70" />
+                <span className="ml-3 rounded-md bg-white/5 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-400">
+                  sifobooks.com / dashboard
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-white/5 bg-[#06110c] p-5">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Revenue MTD", value: "K 482,650", tone: "#0e8f4a" },
+                    { label: "Cash at bank", value: "K 196,204", tone: "#2563EB" },
+                    { label: "VAT due", value: "K 34,118", tone: "#f39200" },
+                  ].map((k) => (
+                    <div key={k.label} className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500">{k.label}</div>
+                      <div className="mt-1.5 text-sm font-bold text-white" style={heading}>{k.value}</div>
+                      <div className="mt-2 h-1 w-full rounded-full bg-white/5">
+                        <div className="h-1 rounded-full" style={{ width: "68%", background: k.tone }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="h-32 bg-gradient-to-br from-[#0f3a24]/60 to-[#0e8f4a]/10 border border-[#0e8f4a]/20 rounded-xl p-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#0e8f4a]/40 mb-3 grid place-items-center">
-                      <ReceiptText className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="h-3 w-full bg-white/10 rounded mb-2" />
-                    <div className="h-3 w-2/3 bg-white/5 rounded" />
+
+                <div className="mt-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-300">Cash in vs out</span>
+                    <span className="rounded-full bg-[#0e8f4a]/15 px-2 py-0.5 text-[10px] font-bold text-[#7dd3a5]">Live</span>
                   </div>
-                  <div className="h-32 bg-white/[0.02] border border-white/5 rounded-xl p-4">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 mb-3 grid place-items-center">
-                      <BarChart3 className="w-5 h-5 text-slate-500" />
-                    </div>
-                    <div className="h-3 w-full bg-white/10 rounded mb-2" />
-                    <div className="h-3 w-2/3 bg-white/5 rounded" />
-                  </div>
-                  <div className="col-span-2 h-24 bg-white/[0.02] border border-white/5 rounded-xl p-4 flex items-end gap-2">
-                    {[40, 65, 30, 80, 55, 90, 70].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 rounded-t bg-gradient-to-t from-[#0e8f4a]/70 to-[#d21034]/70"
-                        style={{ height: `${h}%` }}
-                      />
+                  <div className="flex h-24 items-end gap-2">
+                    {[42, 68, 34, 82, 57, 91, 73, 60, 88].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#0e8f4a]/80 to-[#7dd3a5]/60" style={{ height: `${h}%` }} />
                     ))}
                   </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {[
+                    { icon: ReceiptText, text: "INV-1042 · Kabwe Traders", amt: "+ K 12,400", tone: "#0e8f4a" },
+                    { icon: Banknote, text: "Payroll · June run posted", amt: "− K 88,320", tone: "#7C3AED" },
+                    { icon: Landmark, text: "ZANACO statement matched", amt: "24 lines", tone: "#2563EB" },
+                  ].map((r) => (
+                    <div key={r.text} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+                      <span className="grid h-7 w-7 place-items-center rounded-md" style={{ background: `${r.tone}22`, color: r.tone }}>
+                        <r.icon className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="flex-1 truncate text-xs text-slate-300">{r.text}</span>
+                      <span className="text-xs font-semibold text-slate-400">{r.amt}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -396,13 +426,30 @@ function Landing() {
         </div>
       </section>
 
+      {/* MODULE MARQUEE */}
+      <div className="relative overflow-hidden border-y border-white/5 bg-[#0a1a12] py-4">
+        <div className="flex min-w-max animate-[sifo-marquee_38s_linear_infinite] gap-3 hover:[animation-play-state:paused]">
+          {[...MODULES, ...MODULES].map((m, i) => (
+            <span
+              key={`${m.name}-${i}`}
+              className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold text-slate-300"
+              style={{ borderColor: `${m.hex}40`, background: `${m.hex}14` }}
+            >
+              <m.icon className="h-3.5 w-3.5" style={{ color: m.hex }} />
+              {m.name}
+            </span>
+          ))}
+        </div>
+        <style>{`@keyframes sifo-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
+      </div>
+
       {/* STATS BAND */}
-      <section className="border-y border-white/5 bg-[#0a1a12]">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 gap-px overflow-hidden px-6 py-10 md:grid-cols-4">
+      <section className="border-b border-white/5 bg-[#06110c]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 px-6 py-12 md:grid-cols-4">
           {STATS.map((s, i) => (
-            <Reveal key={s.label} delay={i * 70} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={heading}>{s.value}</div>
-              <div className="mt-1.5 text-xs uppercase tracking-widest text-slate-500">{s.label}</div>
+            <Reveal key={s.label} delay={i * 70} className="border-white/5 px-2 text-center md:border-l md:first:border-l-0">
+              <div className="text-3xl md:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400" style={heading}>{s.value}</div>
+              <div className="mt-1.5 text-[11px] uppercase tracking-[0.16em] text-slate-500">{s.label}</div>
             </Reveal>
           ))}
         </div>

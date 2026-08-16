@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { postBankAllocation } from "@/lib/bank-posting";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { DataTable, type DTColumn } from "@/components/data-table";
 
 
 export const Route = createFileRoute("/_authenticated/reconciliation")({
@@ -417,6 +418,47 @@ function Reconciliation() {
 
   const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const txnColumns: DTColumn<Txn>[] = useMemo(() => [
+    { key: "txn_date", header: "Date" },
+    { key: "description", header: "Description", cell: t => <span className="max-w-[320px] truncate block">{t.description}</span> },
+    { key: "reference", header: "Ref", cell: t => <span className="text-xs text-muted-foreground">{t.reference}</span> },
+    {
+      key: "amount", header: "Amount", align: "right",
+      accessor: t => Number(t.amount),
+      cell: t => <span className={`font-mono ${Number(t.amount) < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(Number(t.amount))}</span>,
+    },
+    {
+      key: "status", header: "Status",
+      accessor: t => t.reconciled ? "reconciled" : "open",
+      cell: t => {
+        const top = !t.reconciled ? suggest(t)[0] : null;
+        return t.reconciled ? (
+          <Badge variant="secondary" className="gap-1"><CheckCircle2 className="h-3 w-3" />{t.matched_type ?? "manual"}</Badge>
+        ) : top?.exact ? <Badge className="bg-emerald-600 hover:bg-emerald-700">Exact match ready</Badge>
+          : top?.near ? <Badge variant="outline" className="border-amber-500 text-amber-700 gap-1"><AlertTriangle className="h-3 w-3" />Near-match — review</Badge>
+          : <Badge variant="outline">Open</Badge>;
+      },
+    },
+    {
+      key: "actions", header: "Actions", align: "right", sortable: false,
+      cell: t => (
+        <div className="space-x-1">
+          {!t.reconciled && (
+            <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => openAllocate(t)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+              <BookOpen className="h-3 w-3 mr-1" />Post
+            </Button>
+          )}
+          <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => setMatchTxn(t)}>
+            <Link2 className="h-3 w-3 mr-1" />Match
+          </Button>
+          <Button size="sm" variant="ghost" disabled={busy === t.id} onClick={() => toggle(t)}>
+            {t.reconciled ? <><Unlink className="h-3 w-3 mr-1" />Unreconcile</> : <><CheckCircle2 className="h-3 w-3 mr-1" />Mark</>}
+          </Button>
+        </div>
+      ),
+    },
+  ], [busy, suggest, toggle, openAllocate, fmt]);
+
   if (allocTxn) {
     return (
       <div className="p-4 sm:p-6">
@@ -500,57 +542,14 @@ function Reconciliation() {
       <Card>
         <CardHeader><CardTitle className="text-base">Transactions</CardTitle></CardHeader>
         <CardContent>
-          {loading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin inline" /></div> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Ref</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions in range.</TableCell></TableRow>
-                ) : filtered.map(t => {
-                  const amt = Number(t.amount);
-                  const top = !t.reconciled ? suggest(t)[0] : null;
-                  return (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.txn_date}</TableCell>
-                      <TableCell className="max-w-[320px] truncate">{t.description}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{t.reference}</TableCell>
-                      <TableCell className={`text-right font-mono ${amt < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(amt)}</TableCell>
-                      <TableCell>
-                        {t.reconciled ? (
-                          <Badge variant="secondary" className="gap-1"><CheckCircle2 className="h-3 w-3" />{t.matched_type ?? "manual"}</Badge>
-                        ) : top?.exact ? <Badge className="bg-emerald-600 hover:bg-emerald-700">Exact match ready</Badge>
-                          : top?.near ? <Badge variant="outline" className="border-amber-500 text-amber-700 gap-1"><AlertTriangle className="h-3 w-3" />Near-match — review</Badge>
-                          : <Badge variant="outline">Open</Badge>}
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        {!t.reconciled && (
-                          <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => openAllocate(t)} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
-                            <BookOpen className="h-3 w-3 mr-1" />Post
-                          </Button>
-                        )}
-                        <Button size="sm" variant="outline" disabled={busy === t.id} onClick={() => setMatchTxn(t)}>
-                          <Link2 className="h-3 w-3 mr-1" />Match
-                        </Button>
-                        <Button size="sm" variant="ghost" disabled={busy === t.id} onClick={() => toggle(t)}>
-                          {t.reconciled ? <><Unlink className="h-3 w-3 mr-1" />Unreconcile</> : <><CheckCircle2 className="h-3 w-3 mr-1" />Mark</>}
-                        </Button>
-                      </TableCell>
-
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+          <DataTable
+            tableId="reconciliation-transactions"
+            data={filtered}
+            columns={txnColumns}
+            loading={loading}
+            searchPlaceholder={null}
+            empty="No transactions in range."
+          />
         </CardContent>
       </Card>
 

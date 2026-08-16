@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -330,6 +329,26 @@ function SessionDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
   const locked = session.status === "locked";
 
+  const txnColumns: DTColumn<Txn>[] = useMemo(() => [
+    {
+      key: "clear", header: "Clear", sortable: false, width: 60,
+      cell: t => <Checkbox checked={clearedIds.has(t.id)} disabled={locked} onCheckedChange={() => toggle(t.id)} />,
+    },
+    { key: "txn_date", header: "Date" },
+    { key: "description", header: "Description", cell: t => <span className="max-w-md truncate block">{t.description}</span> },
+    { key: "reference", header: "Reference", cell: t => <span className="text-xs text-muted-foreground">{t.reference}</span> },
+    {
+      key: "deposit", header: "Deposit", align: "right",
+      accessor: t => Number(t.amount) > 0 ? Number(t.amount) : null,
+      cell: t => { const a = Number(t.amount) || 0; return <span className="text-emerald-600">{a > 0 ? fmt(a) : ""}</span>; },
+    },
+    {
+      key: "payment", header: "Payment", align: "right",
+      accessor: t => Number(t.amount) < 0 ? -Number(t.amount) : null,
+      cell: t => { const a = Number(t.amount) || 0; return <span className="text-rose-600">{a < 0 ? fmt(-a) : ""}</span>; },
+    },
+  ], [clearedIds, locked, toggle]);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -366,34 +385,13 @@ function SessionDetail({ id, onBack }: { id: string; onBack: () => void }) {
       <Card>
         <CardHeader><CardTitle>Transactions up to {session.statement_date}</CardTitle></CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">Clear</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead className="text-right">Deposit</TableHead>
-                <TableHead className="text-right">Payment</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {txns.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No transactions in this period.</TableCell></TableRow>}
-              {txns.map(t => {
-                const a = Number(t.amount) || 0;
-                return (
-                  <TableRow key={t.id}>
-                    <TableCell><Checkbox checked={clearedIds.has(t.id)} disabled={locked} onCheckedChange={() => toggle(t.id)} /></TableCell>
-                    <TableCell>{t.txn_date}</TableCell>
-                    <TableCell className="max-w-md truncate">{t.description}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{t.reference}</TableCell>
-                    <TableCell className="text-right text-emerald-600">{a > 0 ? fmt(a) : ""}</TableCell>
-                    <TableCell className="text-right text-rose-600">{a < 0 ? fmt(-a) : ""}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            tableId="reconciliation-session-detail"
+            data={txns}
+            columns={txnColumns}
+            searchPlaceholder="Search description or reference"
+            empty="No transactions in this period."
+          />
         </CardContent>
       </Card>
 
