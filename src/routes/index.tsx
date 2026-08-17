@@ -103,7 +103,6 @@ const NAV_TABS = [
   { id: "features", label: "Features" },
   { id: "pricing", label: "Pricing" },
   { id: "compliance", label: "Compliance" },
-  { id: "learn", label: "Academy" },
   { id: "contact", label: "Contact" },
 ];
 
@@ -157,7 +156,7 @@ const PLANS = [
     price: "Talk to us",
     cadence: "tailored",
     tagline: "Groups, NGOs and schools with audit requirements.",
-    features: ["Unlimited companies & users", "Everything in Business", "NGO grants & fund accounting", "School management ERP", "IFRS-for-SME annual statements", "Onboarding & training included"],
+    features: ["Unlimited companies & users", "Everything in Business", "NGO grants & fund accounting", "School management ERP", "IFRS-for-SME annual statements", "Priority onboarding & support"],
     highlight: false,
   },
 ];
@@ -614,51 +613,6 @@ function Landing() {
           </div>
         </div>
       </div>
-
-      {/* LEARN & RESOURCES */}
-      <section id="learn" className="max-w-7xl mx-auto px-6 py-24">
-        <Reveal className="mb-12 max-w-2xl">
-          <div className="text-xs font-bold uppercase tracking-widest text-[#7dd3a5] mb-3 inline-flex items-center gap-2">
-            <GraduationCap className="w-3.5 h-3.5" /> SifoBooks Academy
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight" style={heading}>
-            Learn accounting the Zambian way.
-          </h2>
-          <p className="mt-4 text-slate-400">
-            Short, practical guides written for owners, bookkeepers and accountants. Real ZMW examples, real statutory rates — no jargon.
-          </p>
-        </Reveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { title: "Quick Start (10 min)", desc: "Company setup → chart of accounts → first invoice → first report.", href: signedIn ? "/learn/quick-start" : "/auth", tag: "Beginner" },
-            { title: "Zambian Payroll", desc: "2026 PAYE bands, NAPSA, NHIMA, WCF & SDL — worked examples in ZMW.", href: signedIn ? "/learn/payroll" : "/auth", tag: "Intermediate" },
-            { title: "VAT & ZRA Compliance", desc: "Standard, zero-rated, exempt and TOT — plus the filing calendar.", href: signedIn ? "/learn/vat-zra" : "/auth", tag: "Intermediate" },
-            { title: "Bank Reconciliation", desc: "Import statements, rules, splits and formal reconciliation sessions.", href: signedIn ? "/learn/bank-reconciliation" : "/auth", tag: "Beginner" },
-            { title: "Reading Reports", desc: "P&L, Balance Sheet, TB and Cash Flow — what each really tells you.", href: signedIn ? "/learn/reports" : "/auth", tag: "Intermediate" },
-            { title: "Accounting Basics", desc: "Debits, credits, double-entry and the Zambian statutory framework.", href: signedIn ? "/learn/accounting-basics" : "/auth", tag: "Beginner" },
-          ].map((t, i) => (
-            <Reveal key={t.title} delay={i * 60}>
-              <Link
-                to={t.href}
-                className="group block h-full bg-[#0d1f16] border border-white/10 rounded-2xl p-6 hover:border-[#0e8f4a]/50 hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-11 h-11 rounded-xl bg-[#0e8f4a]/15 border border-[#0e8f4a]/30 grid place-items-center">
-                    <PlayCircle className="w-5 h-5 text-[#7dd3a5]" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 border border-white/10 rounded-full px-2 py-1">{t.tag}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-1.5" style={heading}>{t.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{t.desc}</p>
-                <div className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7dd3a5] group-hover:gap-2.5 transition-all">
-                  {signedIn ? "Open lesson" : "Start free to unlock"} <ArrowRight className="w-3.5 h-3.5" />
-                </div>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
 
       {/* TESTIMONIALS */}
       <section className="max-w-7xl mx-auto px-6 pb-8">
