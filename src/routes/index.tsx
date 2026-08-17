@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle2, ShieldCheck, Zap, BarChart3, Wallet,
   FileText, ReceiptText, Boxes, Landmark, Banknote, Building2,
-  Phone, Mail, MessageCircle, GraduationCap, Quote, PlayCircle, Star, HelpCircle, Menu, X,
+  Phone, Mail, MessageCircle, Quote, Star, HelpCircle, Menu, X,
 } from "lucide-react";
 import logo from "@/assets/sifobooks-logo.png";
 import { supabase } from "@/integrations/supabase/client";
