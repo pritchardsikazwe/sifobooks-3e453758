@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ChevronUp, ChevronDown, ChevronsUpDown, Search, SlidersHorizontal, Rows3, Rows2,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Bookmark, BookmarkCheck, Check, Trash2, Save, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,9 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 
 } from "@/components/ui/dropdown-menu";
+import { loadViews, persistViews, newViewId, type SavedView, type TableViewState } from "@/lib/table-views";
 import { cn } from "@/lib/utils";
+
 
 export type DTColumn<T> = {
   key: string;
@@ -118,11 +120,72 @@ export function DataTable<T extends Record<string, any>>({
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
 
+  // ---- Saved views: persist filters, sorting, pagination + column layout ----
+  const [viewStore, setViewStore] = useState(() => loadViews(tableId));
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const applied = useRef(false);
+
+  const currentState = (): TableViewState => ({ q, sortKey, sortDir, hidden, widths, density, pageSize, page });
+
+  const applyView = (v: SavedView) => {
+    setQ(v.state.q ?? "");
+    setSortKey(v.state.sortKey ?? null);
+    setSortDir(v.state.sortDir ?? "asc");
+    setHidden(v.state.hidden ?? {});
+    setWidths(v.state.widths ?? {});
+    setDensity(v.state.density ?? "comfortable");
+    setPageSize(v.state.pageSize ?? initialPageSize);
+    setPage(v.state.page ?? 0);
+    const next = { ...viewStore, activeId: v.id };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const saveView = (name: string) => {
+    const view: SavedView = { id: newViewId(), name: name.trim() || `View ${viewStore.views.length + 1}`, state: currentState() };
+    const next = { views: [...viewStore.views, view], activeId: view.id };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const updateActiveView = () => {
+    if (!viewStore.activeId) return;
+    const next = {
+      ...viewStore,
+      views: viewStore.views.map(v => v.id === viewStore.activeId ? { ...v, state: currentState() } : v),
+    };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const deleteView = (id: string) => {
+    const next = {
+      views: viewStore.views.filter(v => v.id !== id),
+      activeId: viewStore.activeId === id ? null : viewStore.activeId,
+    };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const activeView = viewStore.views.find(v => v.id === viewStore.activeId) ?? null;
+
+  // Re-apply the last active view once on mount.
+  useEffect(() => {
+    if (applied.current) return;
+    applied.current = true;
+    const store = loadViews(tableId);
+    const v = store.views.find(x => x.id === store.activeId);
+    if (v) applyView(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableId]);
+
   // Remember the user's table layout between visits.
   useEffect(() => {
     if (!tableId || typeof window === "undefined") return;
     window.localStorage.setItem(`sifo.table.${tableId}`, JSON.stringify({ hidden, widths, density }));
   }, [tableId, hidden, widths, density]);
+
 
   const drag = useRef<{ key: string; startX: number; startW: number } | null>(null);
   const startResize = useCallback((key: string, e: React.PointerEvent<HTMLSpanElement>) => {
@@ -233,6 +296,88 @@ export function DataTable<T extends Record<string, any>>({
         </div>
         <div className="flex items-center gap-1.5">
           {toolbarRight}
+          {tableId && (
+            <DropdownMenu onOpenChange={(o) => { if (!o) { setRenaming(false); setDraftName(""); } }}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn("h-9 gap-1.5 px-2 text-muted-foreground hover:text-foreground", activeView && "text-primary")}
+                  title="Saved views"
+                >
+                  {activeView ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                  <span className="hidden sm:inline max-w-[9rem] truncate text-xs font-medium">
+                    {activeView ? activeView.name : "Views"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Saved views
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {viewStore.views.length === 0 && (
+                  <div className="px-2 py-2 text-xs text-muted-foreground">
+                    No saved views yet. Set your filters, sorting and columns, then save them here.
+                  </div>
+                )}
+                {viewStore.views.map(v => (
+                  <div key={v.id} className="flex items-center gap-1 pr-1">
+                    <DropdownMenuItem className="flex-1" onSelect={() => applyView(v)}>
+                      <Check className={cn("h-3.5 w-3.5", v.id === viewStore.activeId ? "opacity-100" : "opacity-0")} />
+                      <span className="truncate">{v.name}</span>
+                    </DropdownMenuItem>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      title="Delete view"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteView(v.id); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <DropdownMenuSeparator />
+                {renaming ? (
+                  <div className="flex items-center gap-1.5 p-2" onKeyDown={e => e.stopPropagation()}>
+                    <Input
+                      autoFocus
+                      value={draftName}
+                      onChange={e => setDraftName(e.target.value)}
+                      placeholder="View name"
+                      className="h-8 text-xs"
+                      onKeyDown={e => { if (e.key === "Enter") { saveView(draftName); setRenaming(false); setDraftName(""); } }}
+                    />
+                    <Button size="sm" className="h-8 px-2 text-xs" onClick={() => { saveView(draftName); setRenaming(false); setDraftName(""); }}>
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <DropdownMenuItem onSelect={e => { e.preventDefault(); setRenaming(true); }}>
+                    <Plus className="h-3.5 w-3.5" /> Save current view
+                  </DropdownMenuItem>
+                )}
+                {activeView && (
+                  <DropdownMenuItem onSelect={updateActiveView}>
+                    <Save className="h-3.5 w-3.5" /> Update “{activeView.name}”
+                  </DropdownMenuItem>
+                )}
+                {activeView && (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      const next = { ...viewStore, activeId: null };
+                      setViewStore(next);
+                      persistViews(tableId, next);
+                    }}
+                  >
+                    Clear active view
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <Button
             variant="ghost"
             size="sm"
