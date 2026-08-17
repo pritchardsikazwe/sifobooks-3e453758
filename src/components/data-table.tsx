@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ChevronUp, ChevronDown, ChevronsUpDown, Search, SlidersHorizontal, Rows3, Rows2,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Bookmark, BookmarkCheck, Check, Trash2, Save, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,9 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 
 } from "@/components/ui/dropdown-menu";
+import { loadViews, persistViews, newViewId, type SavedView, type TableViewState } from "@/lib/table-views";
 import { cn } from "@/lib/utils";
+
 
 export type DTColumn<T> = {
   key: string;
