@@ -120,11 +120,72 @@ export function DataTable<T extends Record<string, any>>({
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
 
+  // ---- Saved views: persist filters, sorting, pagination + column layout ----
+  const [viewStore, setViewStore] = useState(() => loadViews(tableId));
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const applied = useRef(false);
+
+  const currentState = (): TableViewState => ({ q, sortKey, sortDir, hidden, widths, density, pageSize, page: currentPageRef.current });
+
+  const applyView = (v: SavedView) => {
+    setQ(v.state.q ?? "");
+    setSortKey(v.state.sortKey ?? null);
+    setSortDir(v.state.sortDir ?? "asc");
+    setHidden(v.state.hidden ?? {});
+    setWidths(v.state.widths ?? {});
+    setDensity(v.state.density ?? "comfortable");
+    setPageSize(v.state.pageSize ?? initialPageSize);
+    setPage(v.state.page ?? 0);
+    const next = { ...viewStore, activeId: v.id };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const saveView = (name: string) => {
+    const view: SavedView = { id: newViewId(), name: name.trim() || `View ${viewStore.views.length + 1}`, state: currentState() };
+    const next = { views: [...viewStore.views, view], activeId: view.id };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const updateActiveView = () => {
+    if (!viewStore.activeId) return;
+    const next = {
+      ...viewStore,
+      views: viewStore.views.map(v => v.id === viewStore.activeId ? { ...v, state: currentState() } : v),
+    };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const deleteView = (id: string) => {
+    const next = {
+      views: viewStore.views.filter(v => v.id !== id),
+      activeId: viewStore.activeId === id ? null : viewStore.activeId,
+    };
+    setViewStore(next);
+    persistViews(tableId, next);
+  };
+
+  const activeView = viewStore.views.find(v => v.id === viewStore.activeId) ?? null;
+
+  // Re-apply the last active view once on mount.
+  useEffect(() => {
+    if (applied.current) return;
+    applied.current = true;
+    const store = loadViews(tableId);
+    const v = store.views.find(x => x.id === store.activeId);
+    if (v) applyView(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableId]);
+
   // Remember the user's table layout between visits.
   useEffect(() => {
     if (!tableId || typeof window === "undefined") return;
     window.localStorage.setItem(`sifo.table.${tableId}`, JSON.stringify({ hidden, widths, density }));
   }, [tableId, hidden, widths, density]);
+
 
   const drag = useRef<{ key: string; startX: number; startW: number } | null>(null);
   const startResize = useCallback((key: string, e: React.PointerEvent<HTMLSpanElement>) => {
