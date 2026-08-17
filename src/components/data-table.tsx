@@ -126,7 +126,7 @@ export function DataTable<T extends Record<string, any>>({
   const [draftName, setDraftName] = useState("");
   const applied = useRef(false);
 
-  const currentState = (): TableViewState => ({ q, sortKey, sortDir, hidden, widths, density, pageSize, page: currentPageRef.current });
+  const currentState = (): TableViewState => ({ q, sortKey, sortDir, hidden, widths, density, pageSize, page });
 
   const applyView = (v: SavedView) => {
     setQ(v.state.q ?? "");
