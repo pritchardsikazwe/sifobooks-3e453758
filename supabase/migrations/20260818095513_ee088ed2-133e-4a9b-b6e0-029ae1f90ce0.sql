@@ -1,0 +1,1 @@
+ALTER VIEW public.bank_running_balance SET (security_invoker = true);
