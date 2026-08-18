@@ -97,8 +97,9 @@
   --radius: 0.875rem;
 
   /* Deep Emerald Pro — light workspace */
-  --background: oklch(0.985 0.003 160);
-  --foreground: oklch(0.18 0.02 220);
+  --background: oklch(0.973 0.005 165);
+  --foreground: oklch(0.24 0.015 200);
+
 
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 220);
