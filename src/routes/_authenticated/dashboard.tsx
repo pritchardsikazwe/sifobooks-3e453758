@@ -470,7 +470,7 @@ const tooltipStyle = {
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-border bg-card p-4 shadow-sm", className)}>
+    <div className={cn("rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between mb-3">
           <div>
