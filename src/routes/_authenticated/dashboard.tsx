@@ -360,6 +360,8 @@ function DashboardPage() {
               </tbody>
             </table>
           </div>
+          </>
+
         )}
       </Panel>
     ),
