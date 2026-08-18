@@ -297,12 +297,44 @@ function DashboardPage() {
         </div>
       </Panel>
     ),
+    "compliance": (
+      <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+        <div className="space-y-1">
+          <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
+          <Row icon={ShieldCheck} label="PAYE" value="View" to="/reports/payroll-summary" />
+          <Row icon={ShieldCheck} label="NAPSA & NHIMA" value="View" to="/payroll-dashboard" />
+          <Row icon={ShieldCheck} label="Tax Summary" value="View" to="/reports/tax-summary" />
+          <Row icon={ShieldCheck} label="PACRA & Filings" value="Manage" to="/compliance" />
+        </div>
+      </Panel>
+    ),
     "recent-activity": (
       <Panel title="Recent Activity" subtitle="Latest bank transactions" action={<Link to="/banking" className="text-xs text-primary hover:underline font-semibold">View all →</Link>}>
         {loading ? <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
         : recent.length === 0 ? <EmptyState label="No transactions yet. Import a bank statement to get started." cta="Import statement" to="/banking" />
         : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile: compact transaction cards */}
+          <div className="space-y-2 sm:hidden">
+            {recent.map(t => (
+              <div key={t.id} className="rounded-2xl border border-border bg-background/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-[14px] font-semibold text-foreground">{t.description}</div>
+                    <div className="mt-0.5 text-[12px] text-muted-foreground">
+                      {new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}
+                      {t.category ? ` · ${t.category}` : ""}
+                    </div>
+                  </div>
+                  <div className={cn("shrink-0 text-[14px] font-bold num", t.amount >= 0 ? "text-state-paid" : "text-state-overdue")}>
+                    {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
+
             <table className="w-full text-sm">
               <thead className="text-[11px] uppercase tracking-widest text-muted-foreground border-b border-border">
                 <tr>
