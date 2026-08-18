@@ -370,33 +370,39 @@ function DashboardPage() {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
-        {/* Compact header */}
+        {/* Header — greeting + dominant primary action */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between"
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
-            <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">
-              {greeting}, <span className="text-primary">{firstName || "there"}</span> 👋
+            <h1 className="truncate text-[22px] font-bold tracking-tight sm:text-[28px]">
+              {greeting}, <span className="text-primary">{firstName || "there"}</span>
             </h1>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-[13px] text-muted-foreground">
               {companyName || "SifoBooks"} · {dateLabel}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto no-scrollbar px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+            <Button
+              asChild
+              className="h-12 shrink-0 rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground shadow-[0_6px_18px_rgba(20,80,60,0.25)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+            >
+              <Link to="/posting-wizard"><Plus className="mr-1.5 h-5 w-5" /> New Transaction</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/reports">Reports</Link></Button>
             <Button
               variant={editMode ? "default" : "outline"}
-              size="sm"
               onClick={() => setEditMode(v => !v)}
-              className="h-9"
+              className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"
             >
               {editMode ? <><Check className="h-4 w-4 mr-1.5" /> Done</> : <><LayoutGrid className="h-4 w-4 mr-1.5" /> Customize</>}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
-                  <Plus className="h-4 w-4 mr-1.5" /> Widgets
+                <Button variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold">
+                  <Eye className="h-4 w-4 mr-1.5" /> Widgets
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -415,10 +421,9 @@ function DashboardPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild variant="outline" size="sm" className="h-9 border-border"><Link to="/reports">Reports</Link></Button>
-            <Button asChild size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"><Link to="/posting-wizard"><Plus className="mr-1.5 h-4 w-4" /> New Transaction</Link></Button>
           </div>
         </motion.div>
+
 
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
