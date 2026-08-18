@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   TrendingUp, Wallet, Landmark, Receipt, FileText, Package, CreditCard,
   ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Banknote, BookText, Truck, Boxes, ClipboardList,
-  LayoutGrid, Check, Eye, RotateCcw, Plus,
+  LayoutGrid, Check, Eye, RotateCcw, Plus, ShieldCheck,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
