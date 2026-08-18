@@ -130,7 +130,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -152,6 +152,7 @@ function DashboardPage() {
     "revenue-categories": "col-span-12 lg:col-span-4",
     "quick-actions": "col-span-12 lg:col-span-4",
     "snapshot": "col-span-12 lg:col-span-4",
+    "compliance": "col-span-12 lg:col-span-4",
     "recent-activity": "col-span-12",
   };
 
@@ -164,31 +165,35 @@ function DashboardPage() {
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
     "snapshot": "Module snapshot",
+    "compliance": "Compliance",
     "recent-activity": "Recent activity",
   };
 
+
   const widgetContent: Record<string, React.ReactNode> = {
     "quick-bar": (
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="rounded-3xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5">
+        <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold">What do you want to do?</div>
-            <div className="text-[11px] text-muted-foreground">One-click accounting actions</div>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">Quick Actions</span>
+            <h2 className="mt-1 text-[20px] font-bold leading-tight tracking-tight text-foreground sm:text-[22px]">What would you like to do?</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">Quickly manage your business finances.</p>
           </div>
-          <span className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
+          <span className="hidden shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" hint="Raise a customer invoice" />
-          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" hint="Enter a supplier bill" />
-          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" hint="Capture a business expense" />
-          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" hint="Log money received" />
-          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" hint="Pay a supplier" />
-          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" hint="Match bank to ledger" />
-          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" hint="Process a pay run" />
-          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" hint="Open the reports centre" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" description="Create a new sales transaction" />
+          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" description="Capture supplier purchases" />
+          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" description="Record business expenses" />
+          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" description="Record incoming payments" />
+          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" description="Record outgoing payments" />
+          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" description="Match bank transactions" />
+          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" description="Process employee payroll" />
+          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" description="View financial reports" />
         </div>
       </div>
     ),
+
     "kpis": (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
