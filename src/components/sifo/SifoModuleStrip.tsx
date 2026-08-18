@@ -13,13 +13,13 @@ const ICONS: Partial<Record<ModuleKey, any>> = {
 };
 
 /**
- * Horizontal, colour-coded module navigation shown under the page header.
- * Pill design, scrolls horizontally on small screens, each entry carries its hue.
+ * Unified segmented module navigation shown under the page header.
+ * One rounded container, scrolls horizontally on small screens.
  */
 export function SifoModuleStrip({ active, className }: { active?: ModuleKey; className?: string }) {
   return (
-    <div className={cn("-mx-1 overflow-x-auto no-scrollbar", className)}>
-      <div className="flex min-w-max items-center gap-2 px-1 py-1">
+    <div className={cn("overflow-x-auto no-scrollbar rounded-2xl border border-border bg-card p-1 shadow-[0_4px_18px_rgba(20,50,40,0.04)]", className)}>
+      <div className="flex min-w-max items-center gap-1">
         {ORDER.map(key => {
           const m = MODULE_THEMES[key];
           const Icon = ICONS[key];
@@ -28,19 +28,18 @@ export function SifoModuleStrip({ active, className }: { active?: ModuleKey; cla
             <Link
               key={key}
               to={m.to}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group relative flex min-h-[42px] items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5",
+                "group flex min-h-[40px] items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-all duration-200",
                 isActive
-                  ? cn(m.soft, m.border, m.text, "shadow-sm")
-                  : "border-border bg-card text-muted-foreground hover:text-foreground hover:shadow-sm",
-                m.hoverBorder,
+                  ? cn(m.soft, m.text)
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               )}
             >
               {Icon
-                ? <Icon className={cn("h-4 w-4 transition-transform group-hover:scale-110", isActive ? m.text : "opacity-70")} />
+                ? <Icon className={cn("h-[18px] w-[18px]", isActive ? m.text : "opacity-60")} />
                 : <span className={cn("h-2 w-2 rounded-full", m.bar)} />}
               {m.label}
-              {isActive && <span className={cn("absolute inset-x-4 -bottom-px h-[2px] rounded-full", m.bar)} />}
             </Link>
           );
         })}
