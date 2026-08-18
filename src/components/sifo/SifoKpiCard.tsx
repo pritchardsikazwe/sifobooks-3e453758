@@ -29,9 +29,10 @@ export function SifoKpiCard({
 
   const body = (
     <div className={cn(
-      "group relative overflow-hidden rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-3.5",
+      "group relative overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-[0_4px_18px_rgba(20,50,40,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(20,50,40,0.10)] sm:p-4",
       className,
     )}>
+
       <span className={cn("absolute inset-y-0 left-0 w-[3px]", theme.bar)} />
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
         <div className="min-w-0">

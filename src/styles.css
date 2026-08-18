@@ -73,8 +73,9 @@
   --spacing-8: 2rem;
 
   --shadow-glow: 0 20px 60px -20px oklch(0.42 0.11 160 / 0.35);
-  --shadow-card: 0 10px 30px -12px oklch(0.2 0.05 200 / 0.15);
-  --shadow-elevated: 0 24px 60px -24px oklch(0.2 0.05 200 / 0.28);
+  --shadow-card: 0 4px 18px rgba(20, 50, 40, 0.05);
+  --shadow-elevated: 0 12px 32px -12px rgba(20, 50, 40, 0.14);
+
 
   --gradient-hero: linear-gradient(135deg, oklch(0.985 0.005 160) 0%, oklch(0.96 0.02 158) 100%);
   --gradient-brand: linear-gradient(135deg, oklch(0.32 0.09 162) 0%, oklch(0.62 0.15 158) 100%);
@@ -96,8 +97,9 @@
   --radius: 0.875rem;
 
   /* Deep Emerald Pro — light workspace */
-  --background: oklch(0.985 0.003 160);
-  --foreground: oklch(0.18 0.02 220);
+  --background: oklch(0.973 0.005 165);
+  --foreground: oklch(0.24 0.015 200);
+
 
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 220);
@@ -127,8 +129,9 @@
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.92 0.008 210);
-  --input: oklch(0.92 0.008 210);
+  --border: oklch(0.925 0.008 165);
+  --input: oklch(0.925 0.008 165);
+
   --ring: oklch(0.42 0.11 160);
 
   /* Module identity — official SifoBooks 2026 palette (light) */

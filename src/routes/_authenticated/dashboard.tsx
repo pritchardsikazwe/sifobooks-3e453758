@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   TrendingUp, Wallet, Landmark, Receipt, FileText, Package, CreditCard,
   ShoppingCart, PiggyBank, ArrowUpRight, ArrowDownRight, Banknote, BookText, Truck, Boxes, ClipboardList,
-  LayoutGrid, Check, Eye, RotateCcw, Plus,
+  LayoutGrid, Check, Eye, RotateCcw, Plus, ShieldCheck,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
@@ -130,7 +130,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -152,6 +152,7 @@ function DashboardPage() {
     "revenue-categories": "col-span-12 lg:col-span-4",
     "quick-actions": "col-span-12 lg:col-span-4",
     "snapshot": "col-span-12 lg:col-span-4",
+    "compliance": "col-span-12 lg:col-span-4",
     "recent-activity": "col-span-12",
   };
 
@@ -164,31 +165,35 @@ function DashboardPage() {
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
     "snapshot": "Module snapshot",
+    "compliance": "Compliance",
     "recent-activity": "Recent activity",
   };
 
+
   const widgetContent: Record<string, React.ReactNode> = {
     "quick-bar": (
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="rounded-3xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5">
+        <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold">What do you want to do?</div>
-            <div className="text-[11px] text-muted-foreground">One-click accounting actions</div>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">Quick Actions</span>
+            <h2 className="mt-1 text-[20px] font-bold leading-tight tracking-tight text-foreground sm:text-[22px]">What would you like to do?</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">Quickly manage your business finances.</p>
           </div>
-          <span className="hidden shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
+          <span className="hidden shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" hint="Raise a customer invoice" />
-          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" hint="Enter a supplier bill" />
-          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" hint="Capture a business expense" />
-          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" hint="Log money received" />
-          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" hint="Pay a supplier" />
-          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" hint="Match bank to ledger" />
-          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" hint="Process a pay run" />
-          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" hint="Open the reports centre" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          <SifoQuickAction to="/invoices/new" icon={FileText} label="Record Sale" module="sales" description="Create a new sales transaction" />
+          <SifoQuickAction to="/bills" icon={ShoppingCart} label="Record Purchase" module="purchases" description="Capture supplier purchases" />
+          <SifoQuickAction to="/expenses" icon={Receipt} label="Record Expense" module="purchases" description="Record business expenses" />
+          <SifoQuickAction to="/receipts" icon={CreditCard} label="Receive Money" module="sales" description="Record incoming payments" />
+          <SifoQuickAction to="/bill-payments" icon={Wallet} label="Pay Money" module="purchases" description="Record outgoing payments" />
+          <SifoQuickAction to="/reconciliation" icon={Landmark} label="Bank Reconcile" module="banking" description="Match bank transactions" />
+          <SifoQuickAction to="/payroll" icon={Banknote} label="Run Payroll" module="payroll" description="Process employee payroll" />
+          <SifoQuickAction to="/reports" icon={FileText} label="Reports" module="reports" description="View financial reports" />
         </div>
       </div>
     ),
+
     "kpis": (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
@@ -292,12 +297,44 @@ function DashboardPage() {
         </div>
       </Panel>
     ),
+    "compliance": (
+      <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+        <div className="space-y-1">
+          <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
+          <Row icon={ShieldCheck} label="PAYE" value="View" to="/reports/payroll-summary" />
+          <Row icon={ShieldCheck} label="NAPSA & NHIMA" value="View" to="/payroll-dashboard" />
+          <Row icon={ShieldCheck} label="Tax Summary" value="View" to="/reports/tax-summary" />
+          <Row icon={ShieldCheck} label="PACRA & Filings" value="Manage" to="/compliance" />
+        </div>
+      </Panel>
+    ),
     "recent-activity": (
       <Panel title="Recent Activity" subtitle="Latest bank transactions" action={<Link to="/banking" className="text-xs text-primary hover:underline font-semibold">View all →</Link>}>
         {loading ? <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
         : recent.length === 0 ? <EmptyState label="No transactions yet. Import a bank statement to get started." cta="Import statement" to="/banking" />
         : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile: compact transaction cards */}
+          <div className="space-y-2 sm:hidden">
+            {recent.map(t => (
+              <div key={t.id} className="rounded-2xl border border-border bg-background/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-[14px] font-semibold text-foreground">{t.description}</div>
+                    <div className="mt-0.5 text-[12px] text-muted-foreground">
+                      {new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}
+                      {t.category ? ` · ${t.category}` : ""}
+                    </div>
+                  </div>
+                  <div className={cn("shrink-0 text-[14px] font-bold num", t.amount >= 0 ? "text-state-paid" : "text-state-overdue")}>
+                    {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
+
             <table className="w-full text-sm">
               <thead className="text-[11px] uppercase tracking-widest text-muted-foreground border-b border-border">
                 <tr>
@@ -323,6 +360,8 @@ function DashboardPage() {
               </tbody>
             </table>
           </div>
+          </>
+
         )}
       </Panel>
     ),
@@ -331,33 +370,39 @@ function DashboardPage() {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
-        {/* Compact header */}
+        {/* Header — greeting + dominant primary action */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between"
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
-            <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">
-              {greeting}, <span className="text-primary">{firstName || "there"}</span> 👋
+            <h1 className="truncate text-[22px] font-bold tracking-tight sm:text-[28px]">
+              {greeting}, <span className="text-primary">{firstName || "there"}</span>
             </h1>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-[13px] text-muted-foreground">
               {companyName || "SifoBooks"} · {dateLabel}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto no-scrollbar px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+            <Button
+              asChild
+              className="h-12 shrink-0 rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground shadow-[0_6px_18px_rgba(20,80,60,0.25)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+            >
+              <Link to="/posting-wizard"><Plus className="mr-1.5 h-5 w-5" /> New Transaction</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/reports">Reports</Link></Button>
             <Button
               variant={editMode ? "default" : "outline"}
-              size="sm"
               onClick={() => setEditMode(v => !v)}
-              className="h-9"
+              className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"
             >
               {editMode ? <><Check className="h-4 w-4 mr-1.5" /> Done</> : <><LayoutGrid className="h-4 w-4 mr-1.5" /> Customize</>}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
-                  <Plus className="h-4 w-4 mr-1.5" /> Widgets
+                <Button variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold">
+                  <Eye className="h-4 w-4 mr-1.5" /> Widgets
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -376,10 +421,9 @@ function DashboardPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild variant="outline" size="sm" className="h-9 border-border"><Link to="/reports">Reports</Link></Button>
-            <Button asChild size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"><Link to="/posting-wizard"><Plus className="mr-1.5 h-4 w-4" /> New Transaction</Link></Button>
           </div>
         </motion.div>
+
 
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
@@ -426,7 +470,7 @@ const tooltipStyle = {
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-border bg-card p-4 shadow-sm", className)}>
+    <div className={cn("rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between mb-3">
           <div>
