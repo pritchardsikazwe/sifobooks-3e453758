@@ -67,6 +67,12 @@ function Shell() {
   }, []);
 
   const handleSignOut = async () => {
+    // Clear cached business data on logout (pending offline writes are kept so
+    // no captured transaction is ever silently lost).
+    try {
+      const { clearCachedBusinessData } = await import("@/lib/offline-db");
+      await clearCachedBusinessData();
+    } catch (e) { console.error(e); }
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
     window.location.assign("/auth");
   };
