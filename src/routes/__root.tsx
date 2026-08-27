@@ -14,7 +14,10 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InstallAppPrompt } from "@/components/InstallAppPrompt";
+import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
 import { installOfflineAutoDrain } from "@/lib/offline-queue";
+import { registerServiceWorker } from "@/lib/pwa/register-sw";
+import { startMonitor } from "@/lib/network-status";
 
 function NotFoundComponent() {
   return (
