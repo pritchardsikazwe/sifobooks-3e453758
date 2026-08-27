@@ -8,6 +8,9 @@ import {
 /** Live online/offline/syncing state plus pending-transaction counters. */
 export function useNetworkStatus(): NetworkSnapshot {
   const [snap, setSnap] = useState<NetworkSnapshot>(getNetworkSnapshot);
-  useEffect(() => subscribeNetwork(setSnap), []);
+  useEffect(() => {
+    const off = subscribeNetwork(setSnap);
+    return () => { off(); };
+  }, []);
   return snap;
 }
