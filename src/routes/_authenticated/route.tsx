@@ -12,14 +12,36 @@ import { QuickCreate } from "@/components/QuickCreate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // Offline: keep the user inside the app on the current route. A network
+    // failure is NOT a logout — only a real auth failure sends them to /auth.
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    if (offline) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return { user: data.session.user };
+      throw redirect({ to: "/auth" });
+    }
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) return { user: data.user };
+      // Distinguish an auth rejection from a transport failure.
+      const msg = error?.message ?? "";
+      if (/fetch|network|timeout|Failed to fetch|NetworkError/i.test(msg)) {
+        const { data: s } = await supabase.auth.getSession();
+        if (s.session) return { user: s.session.user };
+      }
+      throw redirect({ to: "/auth" });
+    } catch (e: any) {
+      if (e?.isRedirect || e?.to) throw e;
+      const { data: s } = await supabase.auth.getSession();
+      if (s.session) return { user: s.session.user };
+      throw redirect({ to: "/auth" });
+    }
   },
   component: Shell,
 });
