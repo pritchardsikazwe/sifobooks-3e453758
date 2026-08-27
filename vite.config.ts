@@ -29,6 +29,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff,woff2}"],
         navigateFallback: "/",
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/lovable\//],
+        // Adds the SKIP_WAITING message listener used by the in-app update prompt.
+        importScripts: ["/sw-skip-waiting.js"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: false, // update prompt controls activation
