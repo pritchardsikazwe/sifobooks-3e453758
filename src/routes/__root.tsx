@@ -14,7 +14,10 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InstallAppPrompt } from "@/components/InstallAppPrompt";
+import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
 import { installOfflineAutoDrain } from "@/lib/offline-queue";
+import { registerServiceWorker } from "@/lib/pwa/register-sw";
+import { startMonitor } from "@/lib/network-status";
 
 function NotFoundComponent() {
   return (
@@ -131,7 +134,11 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  useEffect(() => { installOfflineAutoDrain(); }, []);
+  useEffect(() => {
+    installOfflineAutoDrain();
+    startMonitor();
+    registerServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -139,6 +146,7 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <InstallAppPrompt />
+        <PwaUpdatePrompt />
         <Toaster position="top-right" richColors closeButton />
       </ThemeProvider>
     </QueryClientProvider>

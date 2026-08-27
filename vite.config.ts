@@ -21,11 +21,16 @@ export default defineConfig({
       injectRegister: null,
       devOptions: { enabled: false },
       filename: "sw.js",
+      // The served static root is dist/client — emit the SW there, not dist/.
+      outDir: "dist/client",
       manifest: false, // public/manifest.webmanifest is authored by hand
       workbox: {
+        globDirectory: "dist/client",
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff,woff2}"],
         navigateFallback: "/",
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/lovable\//],
+        // Adds the SKIP_WAITING message listener used by the in-app update prompt.
+        importScripts: ["/sw-skip-waiting.js"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: false, // update prompt controls activation
