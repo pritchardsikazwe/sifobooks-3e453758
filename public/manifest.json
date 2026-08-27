@@ -1,0 +1,21 @@
+{
+  "name": "Sifobooks — Accounting ERP",
+  "short_name": "Sifobooks",
+  "description": "Zambian accounting, payroll, inventory and compliance ERP that keeps working offline.",
+  "start_url": "/dashboard",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#06110c",
+  "theme_color": "#0e8f4a",
+  "lang": "en",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
