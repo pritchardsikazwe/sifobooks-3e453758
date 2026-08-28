@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, CreditCard, AlertTriangle, RotateCcw, Printer, X } from "lucide-react";
+import { Plus, CreditCard, AlertTriangle, RotateCcw, Printer, X, Scale } from "lucide-react";
+import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,7 @@ function ReceiptsPage() {
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [ledger, setLedger] = useState<LedgerTarget | null>(null);
 
   // Shared selectors + balanced posting preview
   const { accounts, defaultFor } = useCoaAccounts();
@@ -446,6 +448,8 @@ function ReceiptsPage() {
           />
         </CardContent>
       </Card>
+
+      <LedgerImpactSheet target={ledger} onOpenChange={o => { if (!o) setLedger(null); }} />
     </div>
   );
 }
