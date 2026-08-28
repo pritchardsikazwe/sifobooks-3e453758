@@ -10,6 +10,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { PAYMENT_METHODS, recordPayments, statusTone, toneClass, today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
@@ -144,7 +145,12 @@ function Orders() {
                         <Button size="sm" variant="destructive" onClick={() => voidOrder(o)}>Void</Button>
                       </div>
                     )}
-                    {o.journal_entry_id && <p className="text-xs text-muted-foreground">Posted to the general ledger.</p>}
+                    {o.status !== "void" && (
+                      <div className="rounded-xl border bg-muted/30 p-3">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Accounting impact</div>
+                        <DocumentImpact kind="pos" reference={`RPOS:${o.id}`} entryId={o.journal_entry_id ?? null} />
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>

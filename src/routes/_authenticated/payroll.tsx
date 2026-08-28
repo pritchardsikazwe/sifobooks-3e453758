@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
+import { postPayrollRunLedger, reversePayrollRunLedger, type PayrollJournalLine } from "@/lib/payroll-posting";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
@@ -224,6 +226,64 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
     if (error) toast.error(error.message);
     else { toast.success(`Run ${status}`); onChanged(); }
   };
+
+  const ledgerLines = (): PayrollJournalLine[] => {
+    const n = (v: any) => Number(v) || 0;
+    const t = slips.reduce((a, s: any) => ({
+      gross: a.gross + n(s.gross_pay),
+      paye: a.paye + n(s.paye),
+      napsaEe: a.napsaEe + n(s.napsa),
+      napsaEr: a.napsaEr + n(s.napsa_employer ?? s.napsa),
+      nhimaEe: a.nhimaEe + n(s.nhima),
+      nhimaEr: a.nhimaEr + n(s.nhima_employer ?? s.nhima),
+      other: a.other + n(s.other_deductions) + n(s.loan_deduction),
+      net: a.net + n(s.net_pay),
+    }), { gross: 0, paye: 0, napsaEe: 0, napsaEr: 0, nhimaEe: 0, nhimaEr: 0, other: 0, net: 0 });
+    const p = `${monthName(run.period_month)} ${run.period_year}`;
+    const employer = t.napsaEr + t.nhimaEr;
+    return [
+      { accountId: jl.wages ?? "", debit: t.gross, credit: 0, description: `Gross pay — ${p}` },
+      { accountId: jl.employer ?? jl.wages ?? "", debit: employer, credit: 0, description: `Employer NAPSA + NHIMA — ${p}` },
+      { accountId: jl.paye ?? "", debit: 0, credit: t.paye, description: "PAYE due to ZRA" },
+      { accountId: jl.napsa ?? "", debit: 0, credit: t.napsaEe + t.napsaEr, description: "NAPSA (employee + employer)" },
+      { accountId: jl.nhima ?? "", debit: 0, credit: t.nhimaEe + t.nhimaEr, description: "NHIMA (employee + employer)" },
+      { accountId: jl.other ?? "", debit: 0, credit: t.other, description: "Loans, unions & other deductions" },
+      { accountId: jl.net ?? "", debit: 0, credit: t.net, description: `Net pay to staff — ${p}` },
+    ];
+  };
+
+  const [posting, setPosting] = useState(false);
+  const markPaidAndPost = async () => {
+    setPosting(true);
+    try {
+      const res = await postPayrollRunLedger({
+        userId,
+        runNumber: run.run_number,
+        payDate: run.pay_date ?? new Date().toISOString().slice(0, 10),
+        periodLabel: `${monthName(run.period_month)} ${run.period_year}`,
+        lines: ledgerLines(),
+      });
+      if (!res.ok) { toast.error(res.error ?? "Could not post the payroll journal"); return; }
+      const { error } = await supabase.from("payroll_runs").update({ status: "paid" }).eq("id", run.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(res.alreadyPosted ? "Run marked paid — journal already existed" : "Run marked paid and posted to the ledger");
+      setLedgerKey(k => k + 1);
+      onChanged();
+    } finally { setPosting(false); }
+  };
+
+  const reopen = async () => {
+    if (run.status === "paid") {
+      const reason = window.prompt("Reopening a paid run reverses its payroll journal. Reason?");
+      if (!reason) return;
+      const res = await reversePayrollRunLedger(userId, run.run_number, reason);
+      if (!res.ok) { toast.error(res.error ?? "Could not reverse the payroll journal"); return; }
+      if (!res.nothingToReverse) toast.success("Payroll journal reversed");
+      setLedgerKey(k => k + 1);
+    }
+    await setStatus("draft");
+  };
+  const [ledgerKey, setLedgerKey] = useState(0);
   const remove = async () => {
     if (!confirm(`Delete run ${run.run_number} and all its payslips?`)) return;
     await supabase.from("payslips").delete().eq("payroll_run_id", run.id);
@@ -368,8 +428,12 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
                 title={journalBalanced ? undefined : "The payroll journal must balance before approval"}
                 onClick={() => setStatus("approved")}>Approve</Button>
             )}
-            {run.status === "approved" && <Button size="sm" onClick={() => setStatus("paid")}>Mark Paid</Button>}
-            {run.status !== "draft" && <Button size="sm" variant="outline" onClick={() => setStatus("draft")}>Reopen</Button>}
+            {run.status === "approved" && (
+              <Button size="sm" disabled={posting || !journalBalanced}
+                title={journalBalanced ? "Marks the run paid and posts the payroll journal" : "The payroll journal must balance before posting"}
+                onClick={markPaidAndPost}>{posting ? "Posting…" : "Mark Paid & Post"}</Button>
+            )}
+            {run.status !== "draft" && <Button size="sm" variant="outline" onClick={reopen}>Reopen</Button>}
             <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
             <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
           </div>
@@ -431,7 +495,13 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
             <p className="text-xs text-rose-600">Approval is blocked until every account is chosen and the journal balances.</p>
           )}
         </div>
+
+        <div className="mt-4 rounded-lg border bg-white p-3 space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Accounting impact</div>
+          <DocumentImpact key={ledgerKey} kind="payroll" reference={`PR:${run.run_number}`} />
+        </div>
       </CardContent>
+
 
     </Card>
   );

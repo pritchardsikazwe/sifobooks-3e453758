@@ -175,6 +175,7 @@ export const MODULES: ModuleDef[] = [
     routes: [
       { title: "SifoPOS Hub", url: "/sifopos", iconName: "LayoutGrid" },
       { title: "Retail POS", url: "/pos", iconName: "ShoppingBag" },
+      { title: "POS Sales History", url: "/pos-sales", iconName: "Receipt" },
       { title: "Worker Command Center", url: "/pos/command-center", iconName: "LayoutGrid" },
       { title: "Worker Terminal (POS shell)", url: "/w", iconName: "Monitor" },
       { title: "Worker Access & Roles", url: "/pos-workers", iconName: "ShieldCheck" },
