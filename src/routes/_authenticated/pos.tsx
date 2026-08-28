@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/pos")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <RequireModule moduleKey="inventory"><RetailPos /></RequireModule>,
+  component: () => <RequireModule moduleKey="retail_pos"><RetailPos /></RequireModule>,
 });
 
 const TENDERS = [
