@@ -34,7 +34,13 @@ export const Route = createFileRoute("/_authenticated/bills")({
         { key: "total", header: "Total", render: r => fmtMoney(r.total ?? 0) },
         { key: "balance_due", header: "Balance", render: r => fmtMoney(r.balance_due ?? 0) },
       ]}
+      posting={{
+        kind: "bill",
+        reference: r => (r.bill_number ? `BILL:${r.bill_number}` : null),
+        label: r => `Bill ${r.bill_number ?? ""} — accounting impact`,
+      }}
       rowActions={[
+
         {
           label: "Mark Paid", icon: CheckCircle2, variant: "outline",
           className: "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
