@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>SifoBooks Restaurant POS — Prototype</title>
+<style>
+:root{
+  --navy:#0d1b2a; --navy-2:#132a3f; --teal:#0f6b66; --teal-2:#14867f; --teal-3:#0a4f4b;
+  --green:#1f9d55; --blue:#1b6fd6; --white:#ffffff; --grey:#eef1f4; --grey-2:#dde3e9;
+  --ink:#16222e; --muted:#61707d; --amber:#c98a06; --red:#c0392b;
+  --line:#c9d3dc; --radius:6px;
+  --shadow:0 1px 2px rgba(13,27,42,.12), 0 6px 18px rgba(13,27,42,.08);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:13px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink);background:var(--grey);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+.hidden{display:none !important}
+
+/* ---------- generic controls ---------- */
+.btn{border:1px solid var(--line);background:linear-gradient(#fff,#f3f6f9);border-radius:var(--radius);padding:8px 12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:hover{background:linear-gradient(#fff,#e9eef3)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(var(--teal-2),var(--teal));border-color:var(--teal-3);color:#fff}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.green{background:linear-gradient(#2bb265,var(--green));border-color:#177a41;color:#fff}
+.btn.blue{background:linear-gradient(#2b81e6,var(--blue));border-color:#14549f;color:#fff}
+.btn.danger{background:linear-gradient(#d9584a,var(--red));border-color:#95291d;color:#fff}
+.btn.ghost{background:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.field{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid transparent}
+.b-open{background:#e6f4ff;color:#14549f;border-color:#b6d8f7}
+.b-sent{background:#fff4d6;color:#8a5f00;border-color:#f0d492}
+.b-ready{background:#e3f7ea;color:#166b39;border-color:#b3e6c6}
+.b-paid{background:#e6f2f1;color:var(--teal-3);border-color:#a9d5d2}
+.b-free{background:#eef1f4;color:#4a5964;border-color:var(--grey-2)}
+
+/* ---------- shell ---------- */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.titlebar{display:flex;align-items:center;gap:12px;padding:0 12px;height:46px;background:linear-gradient(90deg,var(--navy),var(--navy-2) 55%,var(--teal-3));color:#fff;flex:0 0 auto}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.3px}
+.logo{width:24px;height:24px;border-radius:6px;background:linear-gradient(140deg,var(--green),var(--teal-2));display:grid;place-items:center;font-size:12px;font-weight:900;color:#04211f}
+.tb-meta{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:12px;color:#cfe0e2;flex-wrap:wrap}
+.tb-meta b{color:#fff;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 0 0 rgba(31,157,85,.6);animation:pulse 2.4s infinite}
+.dot.off{background:var(--amber);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(31,157,85,.5)}70%{box-shadow:0 0 0 7px rgba(31,157,85,0)}100%{box-shadow:0 0 0 0 rgba(31,157,85,0)}}
+.switcher{position:relative}
+.switch-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 10px;border-radius:var(--radius);font-weight:700}
+.menu-pop{position:absolute;right:0;top:36px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);min-width:250px;padding:6px;z-index:60}
+.menu-pop button{display:block;width:100%;text-align:left;padding:9px 10px;border:0;background:transparent;border-radius:6px}
+.menu-pop button:hover{background:var(--grey)}
+.menu-pop .cap{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:8px 10px 4px}
+.menu-pop small{display:block;color:var(--muted);font-weight:400}
+
+.navbar{display:flex;gap:2px;padding:0 8px;background:linear-gradient(#f7f9fb,#e9eef3);border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
+.navbar button{border:0;background:transparent;padding:9px 14px;font-weight:700;color:#42535f;border-bottom:3px solid transparent;white-space:nowrap}
+.navbar button.active{color:var(--teal-3);border-bottom-color:var(--teal);background:#fff}
+.main{flex:1 1 auto;min-height:0;overflow:hidden}
+.view{height:100%;overflow:auto;padding:10px}
+.view.pos{padding:0}
+
+/* ---------- POS layout ---------- */
+.pos-grid{display:grid;grid-template-columns:210px 1fr 330px;grid-template-rows:1fr auto;height:100%}
+.panel{background:#fff;border-right:1px solid var(--line);overflow:auto}
+.panel h4{margin:0;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);background:var(--grey);border-bottom:1px solid var(--line);position:sticky;top:0}
+.stack{padding:8px;display:grid;gap:6px}
+.opt{border:1px solid var(--line);background:linear-gradient(#fff,#f4f7fa);border-radius:var(--radius);padding:10px;font-weight:700;text-align:left}
+.opt.active{background:linear-gradient(var(--teal-2),var(--teal));color:#fff;border-color:var(--teal-3)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:10px;align-content:start}
+.tile{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(#fff,#eef3f7);min-height:78px;padding:10px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.tile:hover{border-color:var(--teal);box-shadow:0 0 0 2px rgba(15,107,102,.15)}
+.tile .nm{font-weight:700}
+.tile .pr{color:var(--teal-3);font-weight:800}
+.tile .st{font-size:11px;color:var(--muted)}
+.center{overflow:auto;background:#f6f8fa}
+.centerbar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+
+/* ticket */
+.ticket{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.ticket-head{padding:8px 10px;background:linear-gradient(var(--navy),var(--navy-2));color:#fff}
+.ticket-head .row{display:flex;justify-content:space-between;font-size:12px;color:#cfe0e2}
+.ticket-head b{color:#fff}
+.lines{flex:1;overflow:auto}
+.line{display:grid;grid-template-columns:1fr auto;gap:4px;padding:8px 10px;border-bottom:1px solid var(--grey-2)}
+.line .qty{display:flex;gap:4px;align-items:center;margin-top:4px}
+.qbtn{width:26px;height:26px;border:1px solid var(--line);background:#fff;border-radius:4px;font-weight:800}
+.line small{color:var(--muted)}
+.totals{border-top:2px solid var(--line);padding:8px 10px;background:#fbfcfd}
+.totals div{display:flex;justify-content:space-between;padding:2px 0}
+.totals .grand{font-size:18px;font-weight:900;color:var(--teal-3);border-top:1px dashed var(--line);margin-top:4px;padding-top:6px}
+.posted{margin:6px 10px;padding:6px 8px;border:1px solid #b3e6c6;background:#e9f8ef;color:#166b39;border-radius:6px;font-size:12px;font-weight:700}
+
+.actionbar{grid-column:1/-1;display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding:8px;background:linear-gradient(#eef2f6,#e2e8ee);border-top:1px solid var(--line)}
+.actionbar .btn{padding:12px 6px;font-size:12px}
+
+/* tables */
+.floor{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.tbl{border:2px solid var(--line);border-radius:8px;background:#fff;padding:12px;text-align:center;font-weight:800}
+.tbl.free{border-color:#b7c4cf}
+.tbl.occupied{border-color:var(--amber);background:#fff9e8}
+.tbl.bill{border-color:var(--blue);background:#eaf2fd}
+.tbl small{display:block;font-weight:600;color:var(--muted);margin-top:4px}
+
+/* cards + tables */
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);margin-bottom:10px}
+.card h3{margin:0;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--teal-3)}
+.card .body{padding:12px}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--grey);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--grey-2)}
+tr:hover td{background:#f7fafb}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px}
+.kpi{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:8px;padding:12px;box-shadow:var(--shadow)}
+.kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.kpi b{font-size:22px;color:var(--navy)}
+.kds{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.kds .card{margin:0}
+.kds .card.late{border-color:var(--amber)}
+
+/* modals */
+.overlay{position:fixed;inset:0;background:rgba(13,27,42,.55);display:grid;place-items:center;z-index:100;padding:14px}
+.win{background:#fff;border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(560px,100%);max-height:92vh;overflow:auto;animation:pop .14s ease-out}
+.win.wide{width:min(880px,100%)}
+@keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.win-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(90deg,var(--navy),var(--teal-3));color:#fff;font-weight:700}
+.win-head button{background:transparent;border:0;color:#fff;font-size:18px}
+.win-body{padding:14px}
+.win-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line);background:#f7f9fb}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.keypad button{padding:14px;font-size:16px;font-weight:800;border:1px solid var(--line);border-radius:6px;background:linear-gradient(#fff,#eef3f7)}
+.toast{position:fixed;right:14px;bottom:14px;background:var(--navy);color:#fff;padding:10px 14px;border-radius:8px;box-shadow:var(--shadow);z-index:200;animation:pop .15s;font-weight:600}
+.success{display:grid;place-items:center;gap:8px;padding:18px;text-align:center}
+.check{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#fff;font-size:32px;animation:pop .25s}
+
+/* accounting view */
+.acct{background:#f4f7f9;height:100%;overflow:auto;padding:12px}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:700;color:var(--teal-3)}
+.flow span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+
+/* onboarding */
+.onb{background:linear-gradient(140deg,var(--navy),var(--teal-3));position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:16px;overflow:auto}
+.onb-card{background:#fff;border-radius:14px;width:min(880px,100%);box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden}
+.onb-head{padding:18px 22px;background:linear-gradient(90deg,var(--navy),var(--teal-3));color:#fff}
+.onb-head h1{margin:0 0 4px;font-size:20px}
+.onb-head p{margin:0;color:#cfe0e2;font-size:13px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;padding:18px}
+.mode{border:2px solid var(--line);border-radius:10px;padding:14px;text-align:left;background:#fff}
+.mode:hover{border-color:var(--teal)}
+.mode.sel{border-color:var(--teal);background:#f0f8f7;box-shadow:0 0 0 3px rgba(15,107,102,.12)}
+.mode b{display:block;font-size:15px;color:var(--navy);margin-bottom:4px}
+.mode small{color:var(--muted);line-height:1.5}
+.steps{display:flex;gap:6px;padding:0 22px}
+.steps i{height:4px;flex:1;background:var(--grey-2);border-radius:2px}
+.steps i.on{background:var(--teal)}
+
+@media (max-width:1100px){
+  .pos-grid{grid-template-columns:170px 1fr 290px}
+  .actionbar{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width:820px){
+  .pos-grid{grid-template-columns:1fr;grid-template-rows:auto 1fr auto auto}
+  .panel{border-right:0;border-bottom:1px solid var(--line);max-height:150px}
+  .ticket{border-left:0;border-top:1px solid var(--line);max-height:44vh}
+  .tb-meta{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= ONBOARDING ================= -->
+<div class="onb" id="onb">
+  <div class="onb-card">
+    <div class="onb-head">
+      <h1>Welcome to SifoBooks</h1>
+      <p>Choose how your business runs. You can switch or add modules later.</p>
+    </div>
+    <div class="steps"><i class="on"></i><i id="step2"></i></div>
+    <div id="onbStep1">
+      <div class="modes" id="modes"></div>
+      <div class="win-foot"><button class="btn primary" id="onbNext" disabled>Continue</button></div>
+    </div>
+    <div id="onbStep2" class="hidden">
+      <div class="win-body">
+        <div class="grid2">
+          <label>Business name<input class="field" id="obName" value="Kalahari Grill &amp; Bar"></label>
+          <label>Branch<input class="field" id="obBranch" value="Cairo Road"></label>
+          <label>Terminal<input class="field" id="obTerm" value="POS-01"></label>
+          <label>Cashier on duty<input class="field" id="obUser" value="M. Banda"></label>
+          <label>Currency<select class="field" id="obCur"><option>ZMW</option><option>USD</option></select></label>
+          <label>VAT rate %<input class="field" id="obVat" value="16"></label>
+        </div>
+        <p style="color:var(--muted)">Restaurant Mode configures tables, kitchen stations, modifiers, courses and takeaway. Every sale posts automatically to the SifoBooks accounting engine in the background.</p>
+      </div>
+      <div class="win-foot">
+        <button class="btn ghost" id="obBack">Back</button>
+        <button class="btn green" id="obFinish">Finish setup &amp; open POS</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="app hidden" id="app">
+  <div class="titlebar">
+    <div class="brand"><span class="logo">S</span> SifoBooks <span id="modeTag" style="font-weight:600;opacity:.8"></span></div>
+    <div class="tb-meta">
+      <div>Branch <b id="mBranch"></b></div>
+      <div>Terminal <b id="mTerm"></b></div>
+      <div>Cashier <b id="mUser"></b></div>
+      <div id="mClock"><b>--:--</b></div>
+      <div><span class="dot" id="netDot"></span> <b id="netTxt">Online</b></div>
+    </div>
+    <div class="switcher">
+      <button class="switch-btn" id="swBtn">SIFOBOOKS ▾</button>
+      <div class="menu-pop hidden" id="swMenu">
+        <div class="cap">Workspace</div>
+        <button data-ws="restaurant">Restaurant Operations<small>POS, tables, kitchen, cashier</small></button>
+        <button data-ws="accounting">SifoBooks Accounting<small>Ledger, tax, reports, payroll</small></button>
+        <button data-ws="general">General POS (Retail)<small>Shop, supermarket, hardware</small></button>
+        <div class="cap">Terminal</div>
+        <button id="toggleNet">Toggle online / offline</button>
+        <button id="reonboard">Re-run onboarding</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="navbar" id="navbar"></div>
+
+  <div class="main">
+    <!-- POS -->
+    <div class="view pos hidden" id="v-pos">
+      <div class="pos-grid">
+        <div class="panel">
+          <h4>Order type</h4>
+          <div class="stack" id="orderTypes"></div>
+          <h4>Categories</h4>
+          <div class="stack" id="cats"></div>
+          <h4>Table</h4>
+          <div class="stack" id="tableQuick"></div>
+        </div>
+        <div class="center">
+          <div class="centerbar">
+            <input class="field" id="search" placeholder="Search menu (F2)" style="max-width:280px">
+            <span style="color:var(--muted)" id="catLabel"></span>
+            <span style="margin-left:auto;color:var(--muted)">F4 Pay · F6 Send · F8 Hold</span>
+          </div>
+          <div class="tiles" id="menuTiles"></div>
+        </div>
+        <div class="ticket">
+          <div class="ticket-head">
+            <div class="row"><span>Check <b id="tkNo">—</b></span><span id="tkType">Dine-in</span></div>
+            <div class="row"><span id="tkTable">No table</span><span>Guests <b id="tkGuests">2</b></span></div>
+          </div>
+          <div class="lines" id="lines"></div>
+          <div class="posted hidden" id="postedTag">✔ Posted to SifoBooks Accounting</div>
+          <div class="totals">
+            <div><span>Subtotal</span><span id="tSub">K0.00</span></div>
+            <div><span>Discount</span><span id="tDisc">K0.00</span></div>
+            <div><span>VAT <span id="vatLbl">16%</span></span><span id="tVat">K0.00</span></div>
+            <div class="grand"><span>TOTAL</span><span id="tTot">K0.00</span></div>
+          </div>
+        </div>
+        <div class="actionbar">
+          <button class="btn" data-act="hold">Hold</button>
+          <button class="btn blue" data-act="send">Send to Kitchen</button>
+          <button class="btn" data-act="discount">Discount</button>
+          <button class="btn danger" data-act="void">Void</button>
+          <button class="btn" data-act="customer">Customer</button>
+          <button class="btn" data-act="split">Split</button>
+          <button class="btn green" data-act="pay">PAY</button>
+          <button class="btn" data-act="manager">Manager</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="view hidden" id="v-orders"></div>
+    <div class="view hidden" id="v-tables"></div>
+    <div class="view hidden" id="v-kitchen"></div>
+    <div class="view hidden" id="v-menu"></div>
+    <div class="view hidden" id="v-customers"></div>
+    <div class="view hidden" id="v-reservations"></div>
+    <div class="view hidden" id="v-inventory"></div>
+    <div class="view hidden" id="v-cashier"></div>
+    <div class="view hidden" id="v-reports"></div>
+    <div class="view hidden" id="v-manager"></div>
+    <div class="acct hidden" id="v-accounting"></div>
+    <div class="view hidden" id="v-general"></div>
+  </div>
+</div>
+
+<div id="modals"></div>
+<div id="toasts"></div>
+
+<script>
+/* ============ state ============ */
+const S = {
+  mode:null, ws:'restaurant', tab:'POS', online:true,
+  co:{name:'Kalahari Grill & Bar',branch:'Cairo Road',term:'POS-01',user:'M. Banda',cur:'ZMW',vat:16},
+  cat:'All', search:'', seq:1041,
+  ticket:null, orders:[], journals:[],
+  tables:[], menu:[], customers:[], reservations:[], stock:[]
+};
+const K = n => 'K'+(Number(n)||0).toFixed(2);
+const now = () => new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+const ORDER_TYPES = ['Dine-in','Bar','Takeaway','Delivery','Counter'];
+
+function seed(){
+  S.menu = [
+    ['Beef Burger','Mains',95,42,'Grill'],['Grilled T-Bone','Mains',185,96,'Grill'],
+    ['Chicken Curry','Mains',110,48,'Kitchen'],['Nshima & Village Chicken','Mains',105,44,'Kitchen'],
+    ['Fish & Chips','Mains',130,60,'Kitchen'],['Veg Stir Fry','Mains',85,32,'Kitchen'],
+    ['Chicken Wings','Starters',75,30,'Grill'],['Samosa (3pc)','Starters',35,12,'Kitchen'],
+    ['Soup of the Day','Starters',45,15,'Kitchen'],['Garden Salad','Starters',55,18,'Cold'],
+    ['Chips','Sides',35,10,'Kitchen'],['Rice','Sides',25,7,'Kitchen'],['Coleslaw','Sides',25,8,'Cold'],
+    ['Mosi Lager','Drinks',25,14,'Bar'],['Castle Lite','Drinks',28,16,'Bar'],
+    ['Coke 500ml','Drinks',15,8,'Bar'],['Still Water','Drinks',12,5,'Bar'],
+    ['House Red Glass','Drinks',60,26,'Bar'],['Cappuccino','Drinks',35,10,'Bar'],
+    ['Malva Pudding','Desserts',55,18,'Kitchen'],['Ice Cream','Desserts',40,14,'Cold'],
+  ].map((m,i)=>({id:'M'+(i+1),name:m[0],cat:m[1],price:m[2],cost:m[3],station:m[4],active:true}));
+
+  S.tables = [];
+  for(let i=1;i<=16;i++) S.tables.push({id:'T'+i,name:'Table '+i,seats:i%4===0?6:4,status:'free',check:null});
+  S.tables[2].status='occupied'; S.tables[2].check='#1038';
+  S.tables[6].status='bill'; S.tables[6].check='#1039';
+
+  S.customers = [
+    {id:'C1',name:'Walk-in',phone:'—',visits:0,spend:0,notes:''},
+    {id:'C2',name:'Chanda Mwale',phone:'0977 112 334',visits:14,spend:4820,notes:'Regular — window table'},
+    {id:'C3',name:'Zambia Sugar Ltd',phone:'0211 224 400',visits:26,spend:38150,notes:'Corporate account, 30-day terms'},
+    {id:'C4',name:'Natasha Phiri',phone:'0966 887 221',visits:6,spend:1310,notes:'Vegetarian'},
+  ];
+  S.reservations = [
+    {id:'R1',name:'Mwansa party',size:8,time:'18:30',table:'Table 12',status:'Confirmed'},
+    {id:'R2',name:'Banda anniversary',size:2,time:'19:00',table:'Table 4',status:'Confirmed'},
+    {id:'R3',name:'Copper Ltd dinner',size:12,time:'20:00',table:'Terrace',status:'Pending'},
+  ];
+  S.stock = [
+    {id:'S1',item:'Beef patty 150g',unit:'ea',qty:48,par:60},
+    {id:'S2',item:'Chicken portions',unit:'kg',qty:22,par:20},
+    {id:'S3',item:'Cooking oil',unit:'L',qty:9,par:15},
+    {id:'S4',item:'Mosi Lager',unit:'btl',qty:96,par:120},
+    {id:'S5',item:'Mealie meal',unit:'kg',qty:35,par:30},
+  ];
+  S.orders = [
+    {no:'#1038',type:'Dine-in',table:'Table 3',guests:4,items:[{name:'Beef Burger',qty:2,price:95,station:'Grill'},{name:'Mosi Lager',qty:4,price:25,station:'Bar'}],status:'sent',opened:'12:41',disc:0,paid:false,pay:null},
+    {no:'#1039',type:'Dine-in',table:'Table 7',guests:2,items:[{name:'Grilled T-Bone',qty:1,price:185,station:'Grill'},{name:'Chips',qty:1,price:35,station:'Kitchen'}],status:'ready',opened:'13:02',disc:0,paid:false,pay:null},
+    {no:'#1040',type:'Takeaway',table:null,guests:1,items:[{name:'Fish & Chips',qty:1,price:130,station:'Kitchen'},{name:'Coke 500ml',qty:1,price:15,station:'Bar'}],status:'paid',opened:'12:15',disc:0,paid:true,pay:'Mobile Money'},
+  ];
+  S.orders.filter(o=>o.paid).forEach(postJournal);
+}
+function calc(o){
+  const sub = o.items.reduce((s,i)=>s+i.qty*i.price,0);
+  const disc = o.disc||0, net = Math.max(0,sub-disc);
+  const vat = net - net/(1+S.co.vat/100);
+  return {sub,disc,vat,total:net,cogs:o.items.reduce((s,i)=>s+i.qty*(menuCost(i.name)),0)};
+}
+const menuCost = n => (S.menu.find(m=>m.name===n)||{cost:0}).cost;
+
+function postJournal(o){
+  const t = calc(o);
+  S.journals.push({ref:o.no,time:o.opened,lines:[
+    {ac:'1100 Cash / Bank ('+(o.pay||'Cash')+')',dr:t.total,cr:0},
+    {ac:'4000 Restaurant Revenue',dr:0,cr:t.total-t.vat},
+    {ac:'2200 VAT Output',dr:0,cr:t.vat},
+    {ac:'5000 Cost of Sales',dr:t.cogs,cr:0},
+    {ac:'1300 Inventory',dr:0,cr:t.cogs},
+  ]});
+}
+
+/* ============ ticket ============ */
+function newTicket(type){
+  S.ticket = {no:'#'+(++S.seq),type:type||'Dine-in',table:null,guests:2,items:[],status:'open',opened:now(),disc:0,paid:false,pay:null,customer:'Walk-in'};
+}
+function addItem(m){
+  if(!S.ticket) newTicket();
+  const ex = S.ticket.items.find(i=>i.name===m.name);
+  if(ex) ex.qty++; else S.ticket.items.push({name:m.name,qty:1,price:m.price,station:m.station,note:''});
+  renderTicket();
+}
+function renderTicket(){
+  const t=S.ticket, box=document.getElementById('lines');
+  document.getElementById('tkNo').textContent=t?t.no:'—';
+  document.getElementById('tkType').textContent=t?t.type:'—';
+  document.getElementById('tkTable').textContent=t&&t.table?t.table:'No table';
+  document.getElementById('tkGuests').textContent=t?t.guests:0;
+  document.getElementById('postedTag').classList.toggle('hidden',!(t&&t.paid));
+  if(!t||!t.items.length){
+    box.innerHTML='<div style="padding:26px;text-align:center;color:var(--muted)">No items on this check.<br>Tap a product to start.</div>';
+  } else {
+    box.innerHTML=t.items.map((i,ix)=>`<div class="line">
+      <div><div style="font-weight:700">${i.name}</div><small>${i.station} · ${K(i.price)}${i.note?' · '+i.note:''}</small>
+        <div class="qty"><button class="qbtn" data-q="-1" data-i="${ix}">−</button><b>${i.qty}</b>
+        <button class="qbtn" data-q="1" data-i="${ix}">+</button>
+        <button class="qbtn" data-note="${ix}" title="Modifier">✎</button>
+        <button class="qbtn" data-rm="${ix}">✕</button></div></div>
+      <div style="font-weight:800">${K(i.qty*i.price)}</div></div>`).join('');
+  }
+  const c = t?calc(t):{sub:0,disc:0,vat:0,total:0};
+  document.getElementById('tSub').textContent=K(c.sub);
+  document.getElementById('tDisc').textContent=K(c.disc);
+  document.getElementById('tVat').textContent=K(c.vat);
+  document.getElementById('vatLbl').textContent=S.co.vat+'%';
+  document.getElementById('tTot').textContent=K(c.total);
+}
+
+/* ============ POS render ============ */
+function renderPOS(){
+  document.getElementById('orderTypes').innerHTML = ORDER_TYPES.map(t=>
+    `<button class="opt ${S.ticket&&S.ticket.type===t?'active':''}" data-ot="${t}">${t}</button>`).join('');
+  const cats=['All',...new Set(S.menu.map(m=>m.cat))];
+  document.getElementById('cats').innerHTML=cats.map(c=>
+    `<button class="opt ${S.cat===c?'active':''}" data-cat="${c}">${c}</button>`).join('');
+  document.getElementById('tableQuick').innerHTML=S.tables.slice(0,8).map(t=>
+    `<button class="opt ${S.ticket&&S.ticket.table===t.name?'active':''}" data-tbl="${t.name}">${t.name} <small style="float:right;color:inherit;opacity:.7">${t.status}</small></button>`).join('')
+    +'<button class="opt" data-tbl="">Clear table</button>';
+  document.getElementById('catLabel').textContent=S.cat+' · '+S.menu.filter(m=>S.cat==='All'||m.cat===S.cat).length+' items';
+  const q=S.search.toLowerCase();
+  const list=S.menu.filter(m=>m.active&&(S.cat==='All'||m.cat===S.cat)&&m.name.toLowerCase().includes(q));
+  document.getElementById('menuTiles').innerHTML=list.length?list.map(m=>
+    `<button class="tile" data-add="${m.id}"><span class="nm">${m.name}</span><span class="st">${m.station}</span><span class="pr">${K(m.price)}</span></button>`).join('')
+    :'<div style="padding:24px;color:var(--muted)">No products match.</div>';
+  renderTicket();
+}
+
+/* ============ other views ============ */
+const statusBadge = s => ({open:'b-open',sent:'b-sent',ready:'b-ready',paid:'b-paid'})[s]||'b-free';
+function renderOrders(){
+  const rows=S.orders.slice().reverse().map(o=>{const c=calc(o);return `<tr>
+    <td><b>${o.no}</b></td><td>${o.type}</td><td>${o.table||'—'}</td><td>${o.items.length}</td>
+    <td>${K(c.total)}</td><td><span class="badge ${statusBadge(o.status)}">${o.status.toUpperCase()}</span></td>
+    <td>${o.opened}</td><td>${o.paid?'<span class="badge b-paid">POSTED</span>':'—'}</td>
+    <td><button class="btn ghost" data-recall="${o.no}">Recall</button></td></tr>`}).join('');
+  document.getElementById('v-orders').innerHTML=`<div class="card"><h3>Orders — today</h3>
+    <div style="max-height:calc(100vh - 200px);overflow:auto"><table><thead><tr><th>Check</th><th>Type</th><th>Table</th><th>Lines</th><th>Total</th><th>Status</th><th>Opened</th><th>Accounting</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function renderTables(){
+  const legend='<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap"><span class="badge b-free">FREE</span><span class="badge b-sent">OCCUPIED</span><span class="badge b-open">BILL REQUESTED</span></div>';
+  document.getElementById('v-tables').innerHTML=`<div class="card"><h3>Table plan — ${S.co.branch}</h3><div class="body">${legend}
+    <div class="floor">${S.tables.map(t=>`<button class="tbl ${t.status}" data-seat="${t.name}">${t.name}<small>${t.seats} seats</small><small>${t.check||t.status}</small></button>`).join('')}</div></div></div>`;
+}
+function renderKitchen(){
+  const live=S.orders.filter(o=>o.status==='sent'||o.status==='ready');
+  document.getElementById('v-kitchen').innerHTML=`<div class="kpis">
+    <div class="kpi"><span>Live tickets</span><b>${live.length}</b></div>
+    <div class="kpi"><span>Ready to serve</span><b>${live.filter(o=>o.status==='ready').length}</b></div>
+    <div class="kpi"><span>Avg prep</span><b>11 min</b></div></div>
+    <div class="kds">${live.length?live.map(o=>`<div class="card ${o.status==='sent'?'late':''}"><h3>${o.no} · ${o.table||o.type}</h3>
+      <div class="body"><div>${o.items.map(i=>`<div>${i.qty} × ${i.name} <small style="color:var(--muted)">(${i.station})</small></div>`).join('')}</div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+      ${o.status==='sent'?`<button class="btn green" data-kds="${o.no}">Mark ready</button>`:`<button class="btn" data-serve="${o.no}">Served</button>`}
+      </div></div></div>`).join('')
+      :'<div class="card"><div class="body">Kitchen display is clear.</div></div>'}</div>`;
+}
+function renderMenu(){
+  document.getElementById('v-menu').innerHTML=`<div class="card"><h3>Menu engineering</h3>
+   <div style="max-height:calc(100vh - 180px);overflow:auto"><table><thead><tr><th>Item</th><th>Category</th><th>Station</th><th>Price</th><th>Cost</th><th>GP %</th><th>Active</th></tr></thead><tbody>
+   ${S.menu.map(m=>`<tr><td><b>${m.name}</b></td><td>${m.cat}</td><td>${m.station}</td><td>${K(m.price)}</td><td>${K(m.cost)}</td>
+   <td><b style="color:${(m.price-m.cost)/m.price>0.6?'var(--green)':'var(--amber)'}">${Math.round((m.price-m.cost)/m.price*100)}%</b></td>
+   <td><button class="btn ghost" data-tog="${m.id}">${m.active?'Available':'86\'d'}</button></td></tr>`).join('')}
+   </tbody></table></div></div>`;
+}
+function renderCustomers(){
+  document.getElementById('v-customers').innerHTML=`<div class="card"><h3>Guests &amp; accounts</h3><table>
+   <thead><tr><th>Name</th><th>Phone</th><th>Visits</th><th>Lifetime spend</th><th>Notes</th><th></th></tr></thead><tbody>
+   ${S.customers.map(c=>`<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>${c.visits}</td><td>${K(c.spend)}</td><td>${c.notes||'—'}</td>
+   <td><button class="btn ghost" data-cust="${c.name}">Attach to check</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderReservations(){
+  document.getElementById('v-reservations').innerHTML=`<div class="card"><h3>Reservations — tonight</h3><table>
+   <thead><tr><th>Guest</th><th>Party</th><th>Time</th><th>Table</th><th>Status</th><th></th></tr></thead><tbody>
+   ${S.reservations.map(r=>`<tr><td><b>${r.name}</b></td><td>${r.size}</td><td>${r.time}</td><td>${r.table}</td>
+   <td><span class="badge ${r.status==='Confirmed'?'b-ready':'b-sent'}">${r.status}</span></td>
+   <td><button class="btn ghost" data-seatres="${r.id}">Seat now</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderInventory(){
+  document.getElementById('v-inventory').innerHTML=`<div class="card"><h3>Stock on hand (depletes on each sale)</h3><table>
+   <thead><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Par</th><th>Status</th></tr></thead><tbody>
+   ${S.stock.map(s=>`<tr><td><b>${s.item}</b></td><td>${s.unit}</td><td>${s.qty}</td><td>${s.par}</td>
+   <td><span class="badge ${s.qty<s.par?'b-sent':'b-ready'}">${s.qty<s.par?'RE-ORDER':'OK'}</span></td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderCashier(){
+  const paid=S.orders.filter(o=>o.paid), tot=paid.reduce((s,o)=>s+calc(o).total,0);
+  const by = {}; paid.forEach(o=>{by[o.pay||'Cash']=(by[o.pay||'Cash']||0)+calc(o).total});
+  document.getElementById('v-cashier').innerHTML=`<div class="kpis">
+    <div class="kpi"><span>Sales banked</span><b>${K(tot)}</b></div>
+    <div class="kpi"><span>Transactions</span><b>${paid.length}</b></div>
+    <div class="kpi"><span>Open checks</span><b>${S.orders.filter(o=>!o.paid).length}</b></div>
+    <div class="kpi"><span>Float</span><b>K1,000.00</b></div></div>
+    <div class="card"><h3>Payment breakdown</h3><table><thead><tr><th>Method</th><th>Amount</th></tr></thead><tbody>
+    ${Object.keys(by).length?Object.entries(by).map(([k,v])=>`<tr><td>${k}</td><td><b>${K(v)}</b></td></tr>`).join(''):'<tr><td colspan="2">No payments yet.</td></tr>'}
+    </tbody></table></div>
+    <div class="card"><h3>End of day</h3><div class="body" style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" data-act="xread">X Read</button><button class="btn primary" data-act="zread">Z Read &amp; cash-up</button>
+    <button class="btn ghost" data-ws="accounting">Open in Accounting</button></div></div>`;
+}
+function renderReports(){
+  const paid=S.orders.filter(o=>o.paid); const t=paid.reduce((s,o)=>s+calc(o).total,0);
+  const cogs=paid.reduce((s,o)=>s+calc(o).cogs,0);
+  const sold={}; S.orders.forEach(o=>o.items.forEach(i=>sold[i.name]=(sold[i.name]||0)+i.qty));
+  const top=Object.entries(sold).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('v-reports').innerHTML=`<div class="kpis">
+    <div class="kpi"><span>Net sales</span><b>${K(t)}</b></div>
+    <div class="kpi"><span>Cost of sales</span><b>${K(cogs)}</b></div>
+    <div class="kpi"><span>Gross profit</span><b>${K(t-cogs)}</b></div>
+    <div class="kpi"><span>Avg check</span><b>${K(paid.length?t/paid.length:0)}</b></div></div>
+    <div class="card"><h3>Top sellers</h3><table><thead><tr><th>Item</th><th>Qty</th></tr></thead><tbody>
+    ${top.map(([n,q])=>`<tr><td>${n}</td><td><b>${q}</b></td></tr>`).join('')}</tbody></table></div>
+    <div class="card"><h3>Accounting hand-off</h3><div class="body">Every settled check posts revenue, VAT, cost of sales and inventory movement into SifoBooks.
+    <div style="margin-top:8px"><button class="btn primary" data-ws="accounting">View in SifoBooks Accounting</button></div></div></div>`;
+}
+function renderManager(){
+  document.getElementById('v-manager').innerHTML=`<div class="card"><h3>Manager functions</h3><div class="body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+    <button class="btn" data-mgr="void">Approve void</button>
+    <button class="btn" data-mgr="disc">Authorise discount</button>
+    <button class="btn" data-mgr="refund">Process refund</button>
+    <button class="btn" data-mgr="drawer">No-sale / open drawer</button>
+    <button class="btn" data-mgr="shift">Shift change</button>
+    <button class="btn" data-mgr="price">Price override</button></div></div>
+    <div class="card"><h3>Staff on shift</h3><table><thead><tr><th>Name</th><th>Role</th><th>Terminal</th><th>Sales</th></tr></thead><tbody>
+    <tr><td>M. Banda</td><td>Cashier</td><td>POS-01</td><td>${K(S.orders.filter(o=>o.paid).reduce((s,o)=>s+calc(o).total,0))}</td></tr>
+    <tr><td>J. Tembo</td><td>Server</td><td>Handheld</td><td>K0.00</td></tr>
+    <tr><td>P. Zulu</td><td>Chef</td><td>KDS</td><td>—</td></tr></tbody></table></div>`;
+}
+function renderAccounting(){
+  const paid=S.orders.filter(o=>o.paid); const rev=paid.reduce((s,o)=>{const c=calc(o);return s+c.total-c.vat},0);
+  const vat=paid.reduce((s,o)=>s+calc(o).vat,0); const cogs=paid.reduce((s,o)=>s+calc(o).cogs,0);
+  document.getElementById('v-accounting').innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <h2 style="margin:0;color:var(--navy)">SifoBooks Accounting</h2>
+    <span class="badge b-paid">Restaurant data live</span>
+    <button class="btn primary" style="margin-left:auto" data-ws="restaurant">← Back to Restaurant Operations</button>
+  </div>
+  <div class="card"><div class="body"><div class="flow"><span>POS SALE</span>→<span>Payment</span>→<span>Inventory</span>→<span>Tax</span>→<span>Revenue</span>→<span>COGS</span>→<span>SifoBooks Ledger</span></div></div></div>
+  <div class="kpis">
+    <div class="kpi"><span>Revenue (4000)</span><b>${K(rev)}</b></div>
+    <div class="kpi"><span>VAT output (2200)</span><b>${K(vat)}</b></div>
+    <div class="kpi"><span>Cost of sales (5000)</span><b>${K(cogs)}</b></div>
+    <div class="kpi"><span>Gross profit</span><b>${K(rev-cogs)}</b></div></div>
+  <div class="card"><h3>Journals posted from POS</h3><table><thead><tr><th>Ref</th><th>Time</th><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody>
+  ${S.journals.length?S.journals.flatMap(j=>j.lines.map((l,ix)=>`<tr><td>${ix?'':'<b>'+j.ref+'</b>'}</td><td>${ix?'':j.time}</td><td>${l.ac}</td><td>${l.dr?K(l.dr):''}</td><td>${l.cr?K(l.cr):''}</td></tr>`)).join('')
+   :'<tr><td colspan="5">No POS journals yet — settle a check in the POS.</td></tr>'}</tbody></table></div>
+  <div class="card"><h3>Full accounting suite</h3><div class="body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px">
+  ${['Chart of Accounts','Sales & Invoicing','Purchases & Bills','Banking','Reconciliation','Payroll','VAT Return','Trial Balance','Annual Financial Statements'].map(x=>`<button class="btn ghost">${x}</button>`).join('')}
+  </div></div>`;
+}
+function renderGeneral(){
+  document.getElementById('v-general').innerHTML=`<div class="card"><h3>General POS (Retail)</h3><div class="body">
+    Separate retail terminal for shops, supermarkets and hardware — barcode scanning, price lookup, no tables or kitchen.
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary">Open retail till</button>
+    <button class="btn ghost" data-ws="restaurant">Back to Restaurant</button></div></div></div>`;
+}
+
+/* ============ navigation ============ */
+const TABS = {
+  restaurant:['POS','ORDERS','TABLES','KITCHEN','MENU','CUSTOMERS','RESERVATIONS','INVENTORY','CASHIER','REPORTS','MANAGER'],
+  accounting:['ACCOUNTING'], general:['GENERAL']
+};
+const VIEW = {POS:'v-pos',ORDERS:'v-orders',TABLES:'v-tables',KITCHEN:'v-kitchen',MENU:'v-menu',CUSTOMERS:'v-customers',
+  RESERVATIONS:'v-reservations',INVENTORY:'v-inventory',CASHIER:'v-cashier',REPORTS:'v-reports',MANAGER:'v-manager',
+  ACCOUNTING:'v-accounting',GENERAL:'v-general'};
+const RENDER = {POS:renderPOS,ORDERS:renderOrders,TABLES:renderTables,KITCHEN:renderKitchen,MENU:renderMenu,
+  CUSTOMERS:renderCustomers,RESERVATIONS:renderReservations,INVENTORY:renderInventory,CASHIER:renderCashier,
+  REPORTS:renderReports,MANAGER:renderManager,ACCOUNTING:renderAccounting,GENERAL:renderGeneral};
+
+function setWorkspace(ws){
+  S.ws=ws;
+  const tabs=TABS[ws];
+  if(!tabs.includes(S.tab)) S.tab=tabs[0];
+  document.getElementById('navbar').innerHTML=tabs.map(t=>`<button class="${S.tab===t?'active':''}" data-tab="${t}">${t}</button>`).join('');
+  document.getElementById('modeTag').textContent = ws==='restaurant'?'Restaurant POS':ws==='accounting'?'Accounting':'General POS';
+  show();
+}
+function setTab(t){ S.tab=t; document.querySelectorAll('#navbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t)); show(); }
+function show(){
+  Object.values(VIEW).forEach(id=>document.getElementById(id).classList.add('hidden'));
+  const id=VIEW[S.tab]; document.getElementById(id).classList.remove('hidden');
+  RENDER[S.tab]();
+}
+
+/* ============ modals ============ */
+function modal(title,bodyHtml,footHtml,wide){
+  document.getElementById('modals').innerHTML=`<div class="overlay" id="ov"><div class="win ${wide?'wide':''}">
+    <div class="win-head"><span>${title}</span><button data-close>✕</button></div>
+    <div class="win-body">${bodyHtml}</div>${footHtml?`<div class="win-foot">${footHtml}</div>`:''}</div></div>`;
+}
+const closeModal = () => document.getElementById('modals').innerHTML='';
+function toast(msg){
+  const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.getElementById('toasts').appendChild(el); setTimeout(()=>el.remove(),2200);
+}
+
+function payWindow(){
+  const t=S.ticket; if(!t||!t.items.length) return toast('Nothing to pay');
+  const c=calc(t);
+  modal('Payment — '+t.no, `
+    <div class="grid2">
+      <div>
+        <div style="font-size:12px;color:var(--muted)">AMOUNT DUE</div>
+        <div style="font-size:34px;font-weight:900;color:var(--teal-3)" id="due">${K(c.total)}</div>
+        <label style="display:block;margin-top:10px">Tendered<input class="field" id="tend" value="${c.total.toFixed(2)}"></label>
+        <div style="margin-top:8px">Change: <b id="chg">K0.00</b></div>
+        <div style="margin-top:10px;display:grid;gap:6px">
+          ${['Cash','Card','Mobile Money','Account (30 days)','Split'].map(m=>`<button class="opt" data-pm="${m}">${m}</button>`).join('')}
+        </div>
+      </div>
+      <div class="keypad">${[1,2,3,4,5,6,7,8,9,'.',0,'←'].map(k=>`<button data-kp="${k}">${k}</button>`).join('')}</div>
+    </div>
+    <div style="margin-top:10px;padding:8px;background:#eef7f6;border:1px solid #a9d5d2;border-radius:6px;font-size:12px">
+      On settlement this check posts revenue, VAT ${S.co.vat}%, cost of sales and inventory movement to SifoBooks Accounting.
+    </div>`,
+    `<button class="btn ghost" data-close>Cancel</button><button class="btn green" id="settle">Settle &amp; print</button>`,true);
+  let method='Cash';
+  const ov=document.getElementById('ov');
+  const upd=()=>{const v=parseFloat(document.getElementById('tend').value||0);
+    document.getElementById('chg').textContent=K(Math.max(0,v-c.total));};
+  ov.addEventListener('input',upd);
+  ov.addEventListener('click',e=>{
+    const kp=e.target.dataset.kp, pm=e.target.dataset.pm, f=document.getElementById('tend');
+    if(kp!==undefined){ f.value = kp==='←'?f.value.slice(0,-1):(f.value==='0'?'':f.value)+kp; upd(); }
+    if(pm){ method=pm; ov.querySelectorAll('[data-pm]').forEach(b=>b.classList.toggle('active',b.dataset.pm===pm)); }
+    if(e.target.id==='settle') settle(method);
+  });
+}
+function settle(method){
+  const t=S.ticket; t.paid=true; t.status='paid'; t.pay=method;
+  if(!S.orders.includes(t)) S.orders.push(t);
+  postJournal(t);
+  t.items.forEach(i=>{ const s=S.stock[Math.floor(Math.random()*S.stock.length)]; s.qty=Math.max(0,s.qty-i.qty); });
+  if(t.table){ const tb=S.tables.find(x=>x.name===t.table); if(tb){tb.status='free';tb.check=null;} }
+  modal('Payment complete',`<div class="success"><div class="check">✓</div>
+    <div style="font-size:20px;font-weight:800">${K(calc(t).total)} paid by ${method}</div>
+    <div class="badge b-paid">POSTED TO SIFOBOOKS ACCOUNTING</div>
+    <div style="color:var(--muted)">Check ${t.no} closed at ${now()}</div></div>`,
+    `<button class="btn ghost" data-close>Print receipt</button><button class="btn primary" id="nextSale">New sale</button>`);
+  document.getElementById('nextSale').onclick=()=>{closeModal();newTicket();renderPOS();};
+}
+
+/* ============ actions ============ */
+function doAction(a){
+  const t=S.ticket;
+  if(a==='hold'){ if(!t||!t.items.length) return toast('Nothing to hold');
+    if(!S.orders.includes(t)) S.orders.push(t); toast('Check '+t.no+' held'); newTicket(); renderPOS(); }
+  else if(a==='send'){ if(!t||!t.items.length) return toast('Nothing to send');
+    t.status='sent'; if(!S.orders.includes(t)) S.orders.push(t); toast('Sent to kitchen & bar'); renderTicket(); }
+  else if(a==='discount'){ if(!t) return toast('No open check');
+    modal('Discount',`<label>Discount amount (${S.co.cur})<input class="field" id="dv" value="${t.disc||0}"></label>
+      <div style="margin-top:8px;display:flex;gap:6px">${[5,10,15].map(p=>`<button class="btn" data-pc="${p}">${p}%</button>`).join('')}</div>
+      <p style="color:var(--muted)">Manager authorisation required above 15%.</p>`,
+      `<button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="applyD">Apply</button>`);
+    const ov=document.getElementById('ov');
+    ov.addEventListener('click',e=>{
+      if(e.target.dataset.pc) document.getElementById('dv').value=(calc(t).sub*e.target.dataset.pc/100).toFixed(2);
+      if(e.target.id==='applyD'){ t.disc=parseFloat(document.getElementById('dv').value||0); closeModal(); renderTicket(); toast('Discount applied'); }
+    });
+  }
+  else if(a==='void'){ if(!t||!t.items.length) return toast('Nothing to void');
+    modal('Void check',`<p>Void <b>${t.no}</b>? A manager PIN is required and the void is written to the audit trail.</p>
+      <label>Manager PIN<input class="field" type="password" value="1234"></label>
+      <label>Reason<input class="field" placeholder="e.g. guest cancelled"></label>`,
+      `<button class="btn ghost" data-close>Cancel</button><button class="btn danger" id="ok">Void check</button>`);
+    document.getElementById('ok').onclick=()=>{closeModal();newTicket();renderPOS();toast('Check voided — logged');};
+  }
+  else if(a==='customer'){
+    modal('Attach guest',S.customers.map(c=>`<button class="opt" data-cust="${c.name}" style="width:100%;margin-bottom:6px">${c.name}<small style="float:right;color:var(--muted)">${c.phone}</small></button>`).join(''),
+      `<button class="btn ghost" data-close>Close</button>`);
+  }
+  else if(a==='split'){ if(!t||!t.items.length) return toast('Nothing to split');
+    const c=calc(t);
+    modal('Split bill',`<div class="grid2"><label>Split ways<input class="field" id="sw" type="number" value="2" min="2"></label>
+      <div><div style="font-size:12px;color:var(--muted)">PER GUEST</div><div id="per" style="font-size:26px;font-weight:900;color:var(--teal-3)">${K(c.total/2)}</div></div></div>`,
+      `<button class="btn ghost" data-close>Cancel</button><button class="btn green" id="sp">Take payments</button>`);
+    const ov=document.getElementById('ov');
+    ov.addEventListener('input',()=>{const n=Math.max(2,+document.getElementById('sw').value||2);document.getElementById('per').textContent=K(c.total/n)});
+    document.getElementById('sp').onclick=()=>{closeModal();payWindow()};
+  }
+  else if(a==='pay') payWindow();
+  else if(a==='manager'){
+    modal('Manager login',`<label>Manager PIN<input class="field" type="password" value="1234" autofocus></label>
+      <p style="color:var(--muted)">Voids, refunds, discounts over 15%, price overrides and Z-reads require authorisation.</p>`,
+      `<button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mo">Open manager</button>`);
+    document.getElementById('mo').onclick=()=>{closeModal();setTab('MANAGER')};
+  }
+  else if(a==='zread'){
+    modal('Z Read — cash-up',`<div class="success"><div class="check">✓</div><div style="font-weight:800">Day closed</div>
+      <div>${S.orders.filter(o=>o.paid).length} transactions · ${K(S.orders.filter(o=>o.paid).reduce((s,o)=>s+calc(o).total,0))}</div>
+      <div class="badge b-paid">SUMMARY POSTED TO ACCOUNTING</div></div>`,`<button class="btn primary" data-close>Done</button>`);
+  }
+  else if(a==='xread') toast('X Read printed to terminal');
+}
+
+/* ============ events ============ */
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-tab],[data-ws],[data-cat],[data-ot],[data-tbl],[data-add],[data-act],[data-q],[data-rm],[data-note],[data-close],[data-recall],[data-seat],[data-kds],[data-serve],[data-tog],[data-cust],[data-seatres],[data-mgr]');
+  if(!d) { if(!e.target.closest('#swBtn')) document.getElementById('swMenu')?.classList.add('hidden'); return; }
+  const s=d.dataset;
+  if(s.close!==undefined) return closeModal();
+  if(s.tab) return setTab(s.tab);
+  if(s.ws){ document.getElementById('swMenu').classList.add('hidden'); closeModal(); return setWorkspace(s.ws); }
+  if(s.cat){ S.cat=s.cat; return renderPOS(); }
+  if(s.ot){ if(!S.ticket) newTicket(s.ot); else S.ticket.type=s.ot; return renderPOS(); }
+  if(s.tbl!==undefined){ if(!S.ticket) newTicket();
+    S.ticket.table=s.tbl||null;
+    if(s.tbl){const tb=S.tables.find(x=>x.name===s.tbl); if(tb){tb.status='occupied';tb.check=S.ticket.no;}}
+    return renderPOS(); }
+  if(s.add){ const m=S.menu.find(x=>x.id===s.add); if(m) addItem(m); return; }
+  if(s.q){ S.ticket.items[s.i].qty=Math.max(1,S.ticket.items[s.i].qty+ +s.q); return renderTicket(); }
+  if(s.rm!==undefined){ S.ticket.items.splice(+s.rm,1); return renderTicket(); }
+  if(s.note!==undefined){ const i=S.ticket.items[+s.note];
+    modal('Modifiers — '+i.name, ['No onion','Extra cheese','Well done','Medium rare','Spicy','On the side','Allergy: nuts']
+      .map(x=>`<button class="opt" data-mod="${x}" style="width:100%;margin-bottom:6px">${x}</button>`).join(''),
+      `<button class="btn ghost" data-close>Close</button>`);
+    document.getElementById('ov').addEventListener('click',ev=>{ if(ev.target.dataset.mod){ i.note=ev.target.dataset.mod; closeModal(); renderTicket(); toast('Modifier added'); }});
+    return; }
+  if(s.recall){ const o=S.orders.find(x=>x.no===s.recall); if(o&&!o.paid){S.ticket=o;setTab('POS');toast('Recalled '+o.no)} else toast('Check already settled'); return; }
+  if(s.seat){ if(!S.ticket) newTicket(); S.ticket.table=s.seat; const tb=S.tables.find(x=>x.name===s.seat);
+    if(tb){tb.status='occupied';tb.check=S.ticket.no;} setTab('POS'); return toast('Seated at '+s.seat); }
+  if(s.kds){ const o=S.orders.find(x=>x.no===s.kds); o.status='ready'; renderKitchen(); return toast(o.no+' ready'); }
+  if(s.serve){ const o=S.orders.find(x=>x.no===s.serve); o.status='open'; renderKitchen(); return toast(o.no+' served'); }
+  if(s.tog){ const m=S.menu.find(x=>x.id===s.tog); m.active=!m.active; renderMenu(); return toast(m.name+(m.active?' available':" 86'd")); }
+  if(s.cust){ if(!S.ticket) newTicket(); S.ticket.customer=s.cust; closeModal(); setTab('POS'); return toast('Guest: '+s.cust); }
+  if(s.seatres){ const r=S.reservations.find(x=>x.id===s.seatres); r.status='Confirmed'; if(!S.ticket) newTicket();
+    S.ticket.table=r.table; S.ticket.guests=r.size; setTab('POS'); return toast('Seated '+r.name); }
+  if(s.mgr) return toast('Manager action authorised — written to audit trail');
+  if(s.act) return doAction(s.act);
+});
+document.getElementById('swBtn').onclick=e=>{e.stopPropagation();document.getElementById('swMenu').classList.toggle('hidden')};
+document.getElementById('toggleNet').onclick=()=>{
+  S.online=!S.online;
+  document.getElementById('netDot').classList.toggle('off',!S.online);
+  document.getElementById('netTxt').textContent=S.online?'Online':'Offline — queued';
+  toast(S.online?'Back online — syncing queued sales':'Offline mode: sales stored locally');
+};
+document.getElementById('reonboard').onclick=()=>{document.getElementById('app').classList.add('hidden');document.getElementById('onb').classList.remove('hidden')};
+document.getElementById('search').addEventListener('input',e=>{S.search=e.target.value;renderPOS()});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeModal();
+  if(e.key==='F2'){e.preventDefault();document.getElementById('search')?.focus()}
+  if(e.key==='F4'){e.preventDefault();payWindow()}
+  if(e.key==='F6'){e.preventDefault();doAction('send')}
+  if(e.key==='F8'){e.preventDefault();doAction('hold')}
+});
+setInterval(()=>{document.getElementById('mClock').innerHTML='<b>'+new Date().toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+'</b>'},1000);
+
+/* ============ onboarding ============ */
+const MODE_DEFS=[
+  {k:'general',t:'General POS',d:'Retail, shop, supermarket, hardware. Barcode till, no tables or kitchen.'},
+  {k:'restaurant',t:'Restaurant',d:'Tables, kitchen display, modifiers, courses, reservations, servers, delivery.'},
+  {k:'accounting',t:'Accounting',d:'Full SifoBooks ledger, VAT, payroll, banking and financial statements.'},
+  {k:'both',t:'POS + Accounting',d:'Run the till day-to-day with the full accounting engine behind it.'},
+];
+document.getElementById('modes').innerHTML=MODE_DEFS.map(m=>`<button class="mode" data-mode="${m.k}"><b>${m.t}</b><small>${m.d}</small></button>`).join('');
+document.getElementById('modes').addEventListener('click',e=>{
+  const b=e.target.closest('[data-mode]'); if(!b) return;
+  document.querySelectorAll('.mode').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+  S.mode=b.dataset.mode; document.getElementById('onbNext').disabled=false;
+});
+document.getElementById('onbNext').onclick=()=>{
+  document.getElementById('onbStep1').classList.add('hidden');
+  document.getElementById('onbStep2').classList.remove('hidden');
+  document.getElementById('step2').classList.add('on');
+};
+document.getElementById('obBack').onclick=()=>{
+  document.getElementById('onbStep2').classList.add('hidden');
+  document.getElementById('onbStep1').classList.remove('hidden');
+  document.getElementById('step2').classList.remove('on');
+};
+document.getElementById('obFinish').onclick=()=>{
+  S.co={name:obName.value,branch:obBranch.value,term:obTerm.value,user:obUser.value,cur:obCur.value,vat:+obVat.value||16};
+  document.getElementById('mBranch').textContent=S.co.branch;
+  document.getElementById('mTerm').textContent=S.co.term;
+  document.getElementById('mUser').textContent=S.co.user;
+  document.getElementById('onb').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if(!S.menu.length) seed();
+  newTicket('Dine-in');
+  const ws = S.mode==='accounting'?'accounting':S.mode==='general'?'general':'restaurant';
+  S.tab = ws==='restaurant'?'POS':TABS[ws][0];
+  setWorkspace(ws);
+  toast(S.mode==='restaurant'||S.mode==='both'?'Restaurant Mode configured — POS ready':'Workspace ready');
+};
+seed();
+</script>
+</body>
+</html>
