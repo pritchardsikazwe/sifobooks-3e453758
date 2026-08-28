@@ -132,42 +132,57 @@ function Page() {
   };
 
   /* ---- cart maths ---- */
-  const subtotal = cart.reduce((s, l) => s + l.price * l.qty, 0);
+  const gross = cart.reduce((s, l) => s + l.price * l.qty, 0);
+  const discount = gross * (discountPct / 100);
+  const subtotal = gross - discount;
   const tax = subtotal * VAT_RATE;
   const total = subtotal + tax;
 
+  const key = (l: CartLine) => `${l.name}__${l.note ?? ""}`;
   const addToCart = (mi: MenuItem) => {
     setCart(c => {
-      const i = c.findIndex(l => l.name === mi.name);
+      const i = c.findIndex(l => l.name === mi.name && !l.note);
       if (i >= 0) { const n = [...c]; n[i] = { ...n[i], qty: n[i].qty + 1 }; return n; }
       return [...c, { name: mi.name, station: mi.station, price: Number(mi.price), qty: 1 }];
     });
   };
-  const bump = (name: string, d: number) =>
-    setCart(c => c.flatMap(l => l.name === name ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]));
+  const bump = (k: string, d: number) =>
+    setCart(c => c.flatMap(l => key(l) === k ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]));
+  const setNote = (k: string, note: string) =>
+    setCart(c => c.map(l => key(l) === k ? { ...l, note: note || undefined } : l));
 
-  const sendOrder = async (pay?: string) => {
+  const clearCheck = () => { setCart([]); setDiscountPct(0); setTableId(null); setRecalled(null); };
+
+  /** Persist the current cart. `pay` settles it, `hold` parks it for later recall. */
+  const sendOrder = async (pay?: string, hold?: boolean) => {
     if (!cart.length) return toast.error("Add items to the check first");
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     setBusy(true);
     const uid = u.user.id;
-    const { data: ord, error } = await supabase.from("restaurant_orders").insert({
-      user_id: uid, order_no: `CHK-${Date.now().toString().slice(-6)}`, table_id: mode === "DINE IN" ? tableId : null,
-      order_type: mode, guests, subtotal, tax, total,
-      status: pay ? "paid" : "open", payment_method: pay ?? null, closed_at: pay ? new Date().toISOString() : null,
-    } as any).select("*").single();
+    const status = pay ? "paid" : hold ? "held" : "open";
+    if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
+    const payload: any = {
+      user_id: uid, table_id: mode === "DINE IN" ? tableId : null,
+      order_type: mode, guests, subtotal, tax, total, discount,
+      server_name: server || null,
+      status, payment_method: pay ?? null, closed_at: pay ? new Date().toISOString() : null,
+    };
+    const q = recalled
+      ? supabase.from("restaurant_orders").update(payload).eq("id", recalled.id).select("*").single()
+      : supabase.from("restaurant_orders").insert({ ...payload, order_no: `CHK-${Date.now().toString().slice(-6)}` }).select("*").single();
+    const { data: ord, error } = await q;
     if (error || !ord) { setBusy(false); return toast.error(error?.message ?? "Could not save check"); }
     const { error: ie } = await supabase.from("restaurant_order_items").insert(cart.map(l => ({
       user_id: uid, order_id: (ord as any).id, item_name: l.name, station: l.station, qty: l.qty, price: l.price,
-      kds_status: pay ? "served" : "queued",
+      notes: l.note ?? null,
+      kds_status: pay ? "served" : hold ? "queued" : "queued",
     })) as any);
     if (ie) { setBusy(false); return toast.error(ie.message); }
-    if (tableId && !pay) await supabase.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
-    if (tableId && pay) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", tableId);
+    if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     setBusy(false);
-    toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : "Sent to kitchen");
-    setCart([]); setTableId(null); load();
+    toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : hold ? "Check held — recall it from Orders" : "Sent to kitchen");
+    clearCheck(); load();
   };
 
   const settle = async (o: Order, method: string) => {
@@ -177,11 +192,29 @@ function Page() {
     load();
   };
 
+  /** Load a held/open check back into the POS check panel. */
+  const recall = (o: Order) => {
+    const lines = items.filter(i => i.order_id === o.id)
+      .map(i => ({ name: i.item_name, station: i.station, price: Number(i.price), qty: Number(i.qty), note: (i as any).notes ?? undefined }));
+    setCart(lines); setRecalled(o); setMode(o.order_type); setTableId(o.table_id); setGuests(o.guests || 1);
+    setDiscountPct(0); setScreen("pos");
+    toast.success(`Recalled ${o.order_no}`);
+  };
+
+  const voidCheck = async (o: Order) => {
+    await supabase.from("restaurant_orders").update({ status: "void", closed_at: new Date().toISOString() }).eq("id", o.id);
+    if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
+    setPin(null);
+    toast.success(`${o.order_no} voided`);
+    load();
+  };
+
   const advanceItem = async (it: OrderItem) => {
     const next = it.kds_status === "queued" ? "cooking" : it.kds_status === "cooking" ? "ready" : "served";
     await supabase.from("restaurant_order_items").update({ kds_status: next }).eq("id", it.id);
     setItems(list => list.map(x => x.id === it.id ? { ...x, kds_status: next } : x));
   };
+
 
   const cats = useMemo(() => ["All", ...Array.from(new Set(menu.map(m => m.category)))], [menu]);
   const shown = menu.filter(m => m.active && (cat === "All" || m.category === cat));
