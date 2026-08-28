@@ -144,6 +144,7 @@ import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
+import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
 import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenticated/learn.vat-zra'
 import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
 import { Route as AuthenticatedLearnQuickStartRouteImport } from './routes/_authenticated/learn.quick-start'
@@ -907,6 +908,12 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
+const AuthenticatedPosCommandCenterRoute =
+  AuthenticatedPosCommandCenterRouteImport.update({
+    id: '/command-center',
+    path: '/command-center',
+    getParentRoute: () => AuthenticatedPosRoute,
+  } as any)
 const AuthenticatedLearnVatZraRoute =
   AuthenticatedLearnVatZraRouteImport.update({
     id: '/learn/vat-zra',
@@ -1037,7 +1044,7 @@ export interface FileRoutesByFullPath {
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/pos': typeof AuthenticatedPosRoute
+  '/pos': typeof AuthenticatedPosRouteWithChildren
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1081,6 +1088,7 @@ export interface FileRoutesByFullPath {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1184,7 +1192,7 @@ export interface FileRoutesByTo {
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/pos': typeof AuthenticatedPosRoute
+  '/pos': typeof AuthenticatedPosRouteWithChildren
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1225,6 +1233,7 @@ export interface FileRoutesByTo {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1332,7 +1341,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/pos': typeof AuthenticatedPosRouteWithChildren
   '/_authenticated/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1376,6 +1385,7 @@ export interface FileRoutesById {
   '/_authenticated/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/_authenticated/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/_authenticated/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1527,6 +1537,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/pos/command-center'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1671,6 +1682,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/pos/command-center'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1821,6 +1833,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn/quick-start'
     | '/_authenticated/learn/reports'
     | '/_authenticated/learn/vat-zra'
+    | '/_authenticated/pos/command-center'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
@@ -2833,6 +2846,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
     }
+    '/_authenticated/pos/command-center': {
+      id: '/_authenticated/pos/command-center'
+      path: '/command-center'
+      fullPath: '/pos/command-center'
+      preLoaderRoute: typeof AuthenticatedPosCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedPosRoute
+    }
     '/_authenticated/learn/vat-zra': {
       id: '/_authenticated/learn/vat-zra'
       path: '/learn/vat-zra'
@@ -2957,6 +2977,17 @@ const AuthenticatedInvoicesRouteWithChildren =
   AuthenticatedInvoicesRoute._addFileChildren(
     AuthenticatedInvoicesRouteChildren,
   )
+
+interface AuthenticatedPosRouteChildren {
+  AuthenticatedPosCommandCenterRoute: typeof AuthenticatedPosCommandCenterRoute
+}
+
+const AuthenticatedPosRouteChildren: AuthenticatedPosRouteChildren = {
+  AuthenticatedPosCommandCenterRoute: AuthenticatedPosCommandCenterRoute,
+}
+
+const AuthenticatedPosRouteWithChildren =
+  AuthenticatedPosRoute._addFileChildren(AuthenticatedPosRouteChildren)
 
 interface AuthenticatedQuotesRouteChildren {
   AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
@@ -3154,7 +3185,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
-  AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedPosRoute: typeof AuthenticatedPosRouteWithChildren
   AuthenticatedPostingCentreRoute: typeof AuthenticatedPostingCentreRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedPrintingSettingsRoute: typeof AuthenticatedPrintingSettingsRoute
@@ -3248,7 +3279,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
-  AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedPosRoute: AuthenticatedPosRouteWithChildren,
   AuthenticatedPostingCentreRoute: AuthenticatedPostingCentreRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedPrintingSettingsRoute: AuthenticatedPrintingSettingsRoute,
