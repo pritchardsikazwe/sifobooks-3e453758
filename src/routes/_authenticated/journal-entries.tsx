@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BalanceChip } from "@/components/accounting/JournalImpact";
+
 import { BookText, CheckCircle2, XCircle, Undo2 } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
