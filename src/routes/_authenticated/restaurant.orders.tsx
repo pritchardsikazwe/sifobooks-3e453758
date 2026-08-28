@@ -10,6 +10,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { PAYMENT_METHODS, recordPayments, statusTone, toneClass, today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
