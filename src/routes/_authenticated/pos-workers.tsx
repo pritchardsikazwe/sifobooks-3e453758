@@ -152,7 +152,43 @@ function PosWorkers() {
       </div>
 
 
+      {resets.length > 0 && (
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          <div className="px-4 py-3 font-semibold border-b flex items-center gap-2">
+            PIN reset requests
+            <span className="rounded-full bg-amber-500/15 text-amber-600 text-xs px-2 py-0.5">{resets.length}</span>
+          </div>
+          <div className="divide-y">
+            {resets.map((r) => {
+              const w = rows.find((x) => x.id === r.permission_id);
+              return (
+                <div key={r.id} className="p-4 flex flex-wrap items-center gap-3 justify-between">
+                  <div className="text-sm">
+                    <div className="font-medium">{w?.full_name ?? w?.email ?? "Worker"}</div>
+                    <div className="text-muted-foreground">
+                      {r.status === "pending"
+                        ? `Requested ${new Date(r.created_at).toLocaleString()} — old PIN already disabled`
+                        : `New PIN issued — waiting for the worker to confirm on the terminal (${r.attempts}/5 attempts used)`}
+                      {r.reason ? ` · "${r.reason}"` : ""}
+                    </div>
+                  </div>
+                  {r.status === "pending" ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => approveReset(r.id)}>Approve &amp; issue PIN</Button>
+                      <Button size="sm" variant="outline" onClick={() => denyReset(r.id)}>Decline</Button>
+                    </div>
+                  ) : (
+                    <span className="text-xs rounded-full bg-emerald-500/15 text-emerald-600 px-3 py-1">Awaiting confirmation</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border overflow-hidden">
+
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>{["Name", "Email", "Role", "PIN", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
