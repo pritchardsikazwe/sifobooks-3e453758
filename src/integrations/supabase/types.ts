@@ -2786,6 +2786,8 @@ export type Database = {
           id: string
           is_active: boolean
           pin: string | null
+          pin_locked: boolean
+          pin_set_at: string | null
           pos_role: string
           updated_at: string
           user_id: string
@@ -2802,6 +2804,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           pin?: string | null
+          pin_locked?: boolean
+          pin_set_at?: string | null
           pos_role?: string
           updated_at?: string
           user_id: string
@@ -2818,6 +2822,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           pin?: string | null
+          pin_locked?: boolean
+          pin_set_at?: string | null
           pos_role?: string
           updated_at?: string
           user_id?: string
@@ -5448,6 +5454,68 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_pin_resets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attempts: number
+          confirmed_at: string | null
+          created_at: string
+          denied_reason: string | null
+          id: string
+          new_pin: string | null
+          owner_user_id: string
+          permission_id: string
+          reason: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string
+          worker_user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attempts?: number
+          confirmed_at?: string | null
+          created_at?: string
+          denied_reason?: string | null
+          id?: string
+          new_pin?: string | null
+          owner_user_id: string
+          permission_id: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          worker_user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attempts?: number
+          confirmed_at?: string | null
+          created_at?: string
+          denied_reason?: string | null
+          id?: string
+          new_pin?: string | null
+          owner_user_id?: string
+          permission_id?: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          worker_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_pin_resets_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "employee_pos_permissions"
             referencedColumns: ["id"]
           },
         ]
@@ -9366,6 +9434,10 @@ export type Database = {
     }
     Functions: {
       apply_bank_rules: { Args: never; Returns: Json }
+      approve_pos_pin_reset: {
+        Args: { _new_pin: string; _reset_id: string }
+        Returns: Json
+      }
       approver_role_for_request: { Args: { _req: string }; Returns: string }
       auto_match_bank_transactions: { Args: never; Returns: Json }
       can_act_on_request: {
@@ -9380,9 +9452,14 @@ export type Database = {
       close_year: { Args: { _year: number }; Returns: Json }
       complete_pos_sale: { Args: { _sale_id: string }; Returns: string }
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
+      confirm_pos_pin_reset: { Args: { _pin: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      deny_pos_pin_reset: {
+        Args: { _reason?: string; _reset_id: string }
+        Returns: Json
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
@@ -9474,6 +9551,7 @@ export type Database = {
         Args: { _month: number; _period_type?: string; _year: number }
         Returns: Json
       }
+      request_pos_pin_reset: { Args: { _reason?: string }; Returns: string }
       reverse_bank_allocation: {
         Args: { _alloc_id: string; _reason?: string }
         Returns: Json

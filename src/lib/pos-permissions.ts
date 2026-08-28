@@ -63,6 +63,11 @@ export type PosContext = {
   displayName: string;
   allow: PosFeature[];
   deny: PosFeature[];
+  /** terminal PIN required to unlock this worker's session (null = no PIN set) */
+  pin?: string | null;
+  /** true while a PIN reset is in flight — the old PIN is void */
+  pinLocked?: boolean;
+  permissionId?: string | null;
 };
 
 export function levelOf(ctx: PosContext | null, feature: PosFeature): Level {
@@ -98,6 +103,9 @@ export async function loadPosContext(): Promise<PosContext | null> {
       displayName: (data.full_name as string) || user.email || "Worker",
       allow: ((data.allow as any) ?? []) as PosFeature[],
       deny: ((data.deny as any) ?? []) as PosFeature[],
+      pin: (data as any).pin ?? null,
+      pinLocked: Boolean((data as any).pin_locked),
+      permissionId: data.id as string,
     };
   }
 

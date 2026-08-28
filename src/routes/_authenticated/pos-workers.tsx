@@ -23,16 +23,38 @@ export const Route = createFileRoute("/_authenticated/pos-workers")({
 
 function PosWorkers() {
   const [rows, setRows] = useState<any[]>([]);
+  const [resets, setResets] = useState<any[]>([]);
   const [mode, setMode] = useState<"email" | "id">("email");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
   const invite = useServerFn(invitePosWorker);
 
   const load = async () => {
-    const { data } = await supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false });
+    const [{ data }, { data: rs }] = await Promise.all([
+      supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false }),
+      supabase.from("pos_pin_resets").select("*").in("status", ["pending", "approved"]).order("created_at", { ascending: false }),
+    ]);
     setRows(data ?? []);
+    setResets(rs ?? []);
   };
   useEffect(() => { load(); }, []);
+
+  const approveReset = async (id: string) => {
+    const newPin = window.prompt("Issue a new PIN for this worker (4-8 digits)") ?? "";
+    if (!newPin) return;
+    if (!/^\d{4,8}$/.test(newPin)) return toast.error("PIN must be 4-8 digits");
+    const { error } = await supabase.rpc("approve_pos_pin_reset", { _reset_id: id, _new_pin: newPin });
+    if (error) return toast.error(error.message);
+    toast.success("New PIN issued — the worker must confirm it on the terminal"); load();
+  };
+
+  const denyReset = async (id: string) => {
+    const reason = window.prompt("Reason for declining (optional)") ?? "";
+    const { error } = await supabase.rpc("deny_pos_pin_reset", { _reset_id: id, _reason: reason });
+    if (error) return toast.error(error.message);
+    toast.success("Request declined — terminal stays locked"); load();
+  };
+
 
   const reset = () => setForm({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier", pin: "" });
 
@@ -72,7 +94,8 @@ function PosWorkers() {
     const pin = window.prompt("Terminal PIN (4-8 digits, blank to remove)", current ?? "");
     if (pin === null) return;
     if (pin && !/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
-    const { error } = await supabase.from("employee_pos_permissions").update({ pin: pin || null }).eq("id", id);
+    const { error } = await supabase.from("employee_pos_permissions")
+      .update({ pin: pin || null, pin_locked: false, pin_set_at: pin ? new Date().toISOString() : null }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(pin ? "PIN updated" : "PIN removed"); load();
   };
@@ -129,7 +152,43 @@ function PosWorkers() {
       </div>
 
 
+      {resets.length > 0 && (
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          <div className="px-4 py-3 font-semibold border-b flex items-center gap-2">
+            PIN reset requests
+            <span className="rounded-full bg-amber-500/15 text-amber-600 text-xs px-2 py-0.5">{resets.length}</span>
+          </div>
+          <div className="divide-y">
+            {resets.map((r) => {
+              const w = rows.find((x) => x.id === r.permission_id);
+              return (
+                <div key={r.id} className="p-4 flex flex-wrap items-center gap-3 justify-between">
+                  <div className="text-sm">
+                    <div className="font-medium">{w?.full_name ?? w?.email ?? "Worker"}</div>
+                    <div className="text-muted-foreground">
+                      {r.status === "pending"
+                        ? `Requested ${new Date(r.created_at).toLocaleString()} — old PIN already disabled`
+                        : `New PIN issued — waiting for the worker to confirm on the terminal (${r.attempts}/5 attempts used)`}
+                      {r.reason ? ` · "${r.reason}"` : ""}
+                    </div>
+                  </div>
+                  {r.status === "pending" ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => approveReset(r.id)}>Approve &amp; issue PIN</Button>
+                      <Button size="sm" variant="outline" onClick={() => denyReset(r.id)}>Decline</Button>
+                    </div>
+                  ) : (
+                    <span className="text-xs rounded-full bg-emerald-500/15 text-emerald-600 px-3 py-1">Awaiting confirmation</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border overflow-hidden">
+
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>{["Name", "Email", "Role", "PIN", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
