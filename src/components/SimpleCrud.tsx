@@ -21,6 +21,9 @@ import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
 import { SifoModuleAI } from "@/components/sifo/SifoModuleAI";
 import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
+import { type FlowKind } from "@/components/accounting/PostingFlow";
+import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
+
 
 /** Ledger account picker shown inside the create/edit dialog. */
 export type AccountField = {
