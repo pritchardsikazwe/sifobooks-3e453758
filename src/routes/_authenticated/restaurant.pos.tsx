@@ -337,9 +337,9 @@ function Page() {
   }
 
   return (
-    <div className="min-h-[650px] overflow-hidden rounded-[10px] border border-[#6f9694] bg-[#174b4b] text-white shadow-[0_12px_30px_#173c4030]">
+    <div className="flex h-[calc(100dvh-9.5rem)] min-h-[620px] flex-col overflow-hidden rounded-[10px] border border-[#6f9694] bg-[#174b4b] text-white shadow-[0_12px_30px_#173c4030]">
       {/* top bar — order types */}
-      <div className="flex h-[54px] items-center gap-[7px] overflow-x-auto border-b border-[#87a7a6] bg-[#315e64] p-[7px]">
+      <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#87a7a6] bg-[#315e64] p-[7px]">
         {typeLabels.map(t => (
           <button key={t} onClick={() => { setMode(t); setTableId(null); }}
             className={cn("h-[39px] shrink-0 rounded-[21px] border-2 px-[17px] text-[11px] font-extrabold tracking-wide transition active:scale-[.97]",
