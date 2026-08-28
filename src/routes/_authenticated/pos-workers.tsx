@@ -1,0 +1,131 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { POS_ROLES, POS_FEATURES, POS_MATRIX, type PosRole } from "@/lib/pos-permissions";
+
+export const Route = createFileRoute("/_authenticated/pos-workers")({
+  head: () => ({
+    meta: [
+      { title: "POS Worker Access & Roles — SifoBooks" },
+      { name: "description", content: "Assign cashier, waiter, supervisor, manager and kitchen roles to staff logins and control what each may do at the till." },
+      { property: "og:title", content: "POS Worker Access & Roles — SifoBooks" },
+      { property: "og:description", content: "Role permission matrix enforced in the database, not just hidden buttons." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: PosWorkers,
+});
+
+function PosWorkers() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [form, setForm] = useState({ full_name: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
+
+  const load = async () => {
+    const { data } = await supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false });
+    setRows(data ?? []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return;
+    if (!form.worker_user_id) return toast.error("Paste the staff member's user ID");
+    const { error } = await supabase.from("employee_pos_permissions").insert({
+      user_id: auth.user.id, worker_user_id: form.worker_user_id, full_name: form.full_name || null,
+      pos_role: form.pos_role, pin: form.pin || null,
+    });
+    if (error) return toast.error(error.message);
+    setForm({ full_name: "", worker_user_id: "", pos_role: "cashier", pin: "" });
+    toast.success("Worker access granted"); load();
+  };
+
+  const setRole = async (id: string, pos_role: string) => {
+    const { error } = await supabase.from("employee_pos_permissions").update({ pos_role }).eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const toggle = async (id: string, is_active: boolean) => {
+    await supabase.from("employee_pos_permissions").update({ is_active }).eq("id", id);
+    load();
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">POS worker access &amp; roles</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          Workers sign in to the separate POS shell at <code>/w</code> — they never see the accounting sidebar. Permissions are enforced by database rules.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border bg-card p-5 space-y-3">
+        <div className="font-semibold">Grant access</div>
+        <div className="grid sm:grid-cols-4 gap-2">
+          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Full name"
+            value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Staff auth user ID"
+            value={form.worker_user_id} onChange={(e) => setForm({ ...form, worker_user_id: e.target.value })} />
+          <select className="rounded-lg border bg-background px-3 py-2 text-sm"
+            value={form.pos_role} onChange={(e) => setForm({ ...form, pos_role: e.target.value as PosRole })}>
+            {POS_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+          </select>
+          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Terminal PIN (optional)"
+            value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value })} />
+        </div>
+        <Button onClick={add}>Grant access</Button>
+      </div>
+
+      <div className="rounded-2xl border overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50">
+            <tr>{["Name", "Role", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t">
+                <td className="px-3 py-2">{r.full_name ?? r.worker_user_id}</td>
+                <td className="px-3 py-2">
+                  <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
+                    {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+                  </select>
+                </td>
+                <td className="px-3 py-2">{r.is_active ? "Yes" : "No"}</td>
+                <td className="px-3 py-2 text-right">
+                  <Button size="sm" variant="ghost" onClick={() => toggle(r.id, !r.is_active)}>{r.is_active ? "Disable" : "Enable"}</Button>
+                </td>
+              </tr>
+            ))}
+            {!rows.length && <tr><td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">No POS workers yet.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rounded-2xl border overflow-x-auto">
+        <div className="px-3 py-2 font-semibold bg-muted/50">Permission matrix</div>
+        <table className="w-full text-xs">
+          <thead>
+            <tr><th className="px-3 py-2 text-left">Feature</th>
+              {POS_ROLES.map((r) => <th key={r.key} className="px-3 py-2">{r.label}</th>)}</tr>
+          </thead>
+          <tbody>
+            {POS_FEATURES.map((f) => (
+              <tr key={f.key} className="border-t">
+                <td className="px-3 py-1.5">{f.label}</td>
+                {POS_ROLES.map((r) => {
+                  const lvl = POS_MATRIX[r.key][f.key];
+                  return <td key={r.key} className="px-3 py-1.5 text-center">
+                    {lvl === "full" ? "✅" : lvl === "limited" ? "Limited" : "—"}
+                  </td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
