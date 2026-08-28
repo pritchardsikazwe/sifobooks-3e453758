@@ -337,31 +337,59 @@ function Page() {
                     </div>
                   )}
                   <div className="min-h-[140px] flex-1 space-y-1.5 overflow-auto rounded-xl bg-[#f4f5f4] p-2 text-[#365454]">
-                    {cart.map(l => (
-                      <div key={l.name} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[12px] font-bold">{l.name}</div>
-                          <div className="text-[11px] opacity-70">{fmtMoney(l.price)} each</div>
+                    {cart.map(l => {
+                      const k = key(l);
+                      return (
+                        <div key={k} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[12px] font-bold">{l.name}</div>
+                            <button
+                              onClick={() => {
+                                const n = window.prompt("Modifier / kitchen note", l.note ?? "");
+                                if (n !== null) setNote(k, n.trim());
+                              }}
+                              className="text-left text-[11px] italic text-[#0b6d5f] underline-offset-2 hover:underline">
+                              {l.note ? l.note : "+ add note"}
+                            </button>
+                          </div>
+                          <button onClick={() => bump(k, -1)} className="rounded-md bg-[#e9eef0] p-1"><Minus className="h-3.5 w-3.5" /></button>
+                          <span className="w-5 text-center text-[12px] font-extrabold">{l.qty}</span>
+                          <button onClick={() => bump(k, 1)} className="rounded-md bg-[#e9eef0] p-1"><Plus className="h-3.5 w-3.5" /></button>
+                          <span className="w-16 text-right text-[12px] font-extrabold">{fmtMoney(l.price * l.qty)}</span>
                         </div>
-                        <button onClick={() => bump(l.name, -1)} className="rounded-md bg-[#e9eef0] p-1"><Minus className="h-3.5 w-3.5" /></button>
-                        <span className="w-5 text-center text-[12px] font-extrabold">{l.qty}</span>
-                        <button onClick={() => bump(l.name, 1)} className="rounded-md bg-[#e9eef0] p-1"><Plus className="h-3.5 w-3.5" /></button>
-                        <span className="w-16 text-right text-[12px] font-extrabold">{fmtMoney(l.price * l.qty)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {!cart.length && <div className="py-10 text-center text-[12px] opacity-60">Tap menu items to start a check.</div>}
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold opacity-80">Discount</span>
+                    {[0, 5, 10, 15].map(p => (
+                      <button key={p} onClick={() => setDiscountPct(p)}
+                        className={cn("rounded-lg border-2 border-[#9aaab5] px-2 py-1 text-[11px] font-bold", discountPct === p ? "bg-[#19b52a]" : "bg-[#71879a]")}>{p}%</button>
+                    ))}
+                  </div>
                   <div className="mt-2 space-y-1 rounded-xl bg-[#315d5a] p-3 text-[12px]">
+                    <Row label="Gross" value={fmtMoney(gross)} />
+                    {discount > 0 && <Row label={`Discount ${discountPct}%`} value={`- ${fmtMoney(discount)}`} />}
                     <Row label="Subtotal" value={fmtMoney(subtotal)} />
                     <Row label={`VAT ${Math.round(VAT_RATE * 100)}%`} value={fmtMoney(tax)} />
                     <div className="flex justify-between border-t border-white/20 pt-1 text-sm font-extrabold"><span>Total</span><span>{fmtMoney(total)}</span></div>
+                    {guests > 1 && <Row label={`Split ${guests} ways`} value={fmtMoney(total / guests)} />}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-[11px] font-bold">
+                    <span className="opacity-80">Guests</span>
+                    <button onClick={() => setGuests(g => Math.max(1, g - 1))} className="rounded-md bg-[#71879a] px-2 py-1">−</button>
+                    <span className="w-5 text-center">{guests}</span>
+                    <button onClick={() => setGuests(g => g + 1)} className="rounded-md bg-[#71879a] px-2 py-1">+</button>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <PosBtn onClick={() => sendOrder()} disabled={busy} className="bg-[#4e89bc]"><Send className="h-4 w-4" /> Send</PosBtn>
-                    <PosBtn onClick={() => sendOrder("Cash")} disabled={busy} className="bg-[#0b9d19]"><CreditCard className="h-4 w-4" /> Cash</PosBtn>
+                    <PosBtn onClick={() => setTender({ method: "Cash", amount: total })} disabled={busy || !cart.length} className="bg-[#0b9d19]"><CreditCard className="h-4 w-4" /> Cash</PosBtn>
                     <PosBtn onClick={() => sendOrder("Mobile Money")} disabled={busy} className="bg-[#7310c9]">Mobile Money</PosBtn>
-                    <PosBtn onClick={() => setCart([])} className="bg-[#f00000]"><Trash2 className="h-4 w-4" /> Void</PosBtn>
+                    <PosBtn onClick={() => sendOrder(undefined, true)} disabled={busy} className="bg-[#e66f08]">Hold check</PosBtn>
+                    <PosBtn onClick={clearCheck} className="col-span-2 bg-[#f00000]"><Trash2 className="h-4 w-4" /> Clear check</PosBtn>
                   </div>
+
                 </Card>
               </div>
             ) : screen === "tables" ? (
