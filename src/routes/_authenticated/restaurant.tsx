@@ -31,7 +31,7 @@ type MenuItem = { id: string; name: string; category: string; price: number; cos
 type RTable = { id: string; name: string; seats: number; area: string; status: string };
 type Order = { id: string; order_no: string | null; table_id: string | null; order_type: string; status: string; guests: number; subtotal: number; tax: number; total: number; payment_method: string | null; opened_at: string };
 type OrderItem = { id: string; order_id: string; item_name: string; station: string; qty: number; price: number; kds_status: string };
-type CartLine = { name: string; station: string; price: number; qty: number };
+type CartLine = { name: string; station: string; price: number; qty: number; note?: string };
 
 const MODES = [
   { key: "DINE IN", icon: UtensilsCrossed },
