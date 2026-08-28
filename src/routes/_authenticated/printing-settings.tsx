@@ -15,7 +15,8 @@ import {
   getPrinterConfiguration, savePrinterConfiguration, getPrinterForType,
   type PrinterConfiguration,
 } from "@/services/printerConfiguration";
-import { getPrintQueue, clearPrintQueue, type QueuedPrintJob } from "@/services/printQueue";
+import { getPrintQueue, clearPrintQueue, syncPrintQueueToCloud, fetchCloudPrintQueue, type QueuedPrintJob } from "@/services/printQueue";
+import { supabase } from "@/integrations/supabase/client";
 import { printTableDocument } from "@/services/printDocument";
 
 export const Route = createFileRoute("/_authenticated/printing-settings")({
@@ -47,6 +48,8 @@ function PrintingSettings() {
   const [status, setStatus] = useState<{ online: boolean; mode: string } | null>(null);
   const [agents, setAgents] = useState({ windows: "", android: "" });
   const [queue, setQueue] = useState<QueuedPrintJob[]>([]);
+  const [cloudQueue, setCloudQueue] = useState<any[]>([]);
+  const [terminal, setTerminal] = useState({ terminal_name: "", branch_name: "", company_name: "" });
   const [loading, setLoading] = useState(false);
   const device = typeof window === "undefined" ? "web" : getDeviceType();
 
@@ -56,19 +59,46 @@ function PrintingSettings() {
     setStatus({ online: !!s.online, mode: String(s.mode) });
     setPrinters(p.printers ?? []);
     setQueue(getPrintQueue());
+    void syncPrintQueueToCloud();
+    setCloudQueue(await fetchCloudPrintQueue());
     setLoading(false);
   };
 
   useEffect(() => {
     setConfig(getPrinterConfiguration());
     setAgents(getAgentUrls());
+    void (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data } = await supabase.from("print_devices").select("terminal_name, branch_name, company_name")
+        .eq("device_id", getDeviceId()).maybeSingle();
+      if (data) setTerminal({
+        terminal_name: (data as any).terminal_name ?? "",
+        branch_name: (data as any).branch_name ?? "",
+        company_name: (data as any).company_name ?? "",
+      });
+    })();
     void refresh();
   }, []);
 
-  const save = () => {
+  /** Save locally (works offline) and register this terminal in the backend. */
+  const save = async () => {
     savePrinterConfiguration(config);
     setAgentUrls(agents);
     toast.success("Printer configuration saved for this terminal");
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const { error } = await supabase.from("print_devices").upsert({
+      user_id: u.user.id,
+      device_id: getDeviceId(),
+      device_type: device,
+      terminal_name: terminal.terminal_name || null,
+      branch_name: terminal.branch_name || null,
+      company_name: terminal.company_name || null,
+      printer_config: config as any,
+      last_seen_at: new Date().toISOString(),
+    } as any, { onConflict: "user_id,device_id" });
+    if (error) toast.error(`Terminal not registered: ${error.message}`);
   };
 
   const testReceipt = async () => {
@@ -147,6 +177,30 @@ function PrintingSettings() {
         )}
       </Card>
 
+      <Card className="p-5 space-y-3">
+        <h2 className="font-medium">Terminal registration</h2>
+        <p className="text-xs text-muted-foreground">
+          Links this device to a company, branch and till so its printer assignments are recoverable.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1">
+            <Label>Company</Label>
+            <Input value={terminal.company_name} placeholder="Sifa Restaurant"
+              onChange={(e) => setTerminal({ ...terminal, company_name: e.target.value })} />
+          </div>
+          <div className="space-y-1">
+            <Label>Branch</Label>
+            <Input value={terminal.branch_name} placeholder="Main Branch"
+              onChange={(e) => setTerminal({ ...terminal, branch_name: e.target.value })} />
+          </div>
+          <div className="space-y-1">
+            <Label>Terminal</Label>
+            <Input value={terminal.terminal_name} placeholder="POS-01"
+              onChange={(e) => setTerminal({ ...terminal, terminal_name: e.target.value })} />
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-5 space-y-4">
         <h2 className="font-medium">Printer assignment</h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -166,7 +220,7 @@ function PrintingSettings() {
           </datalist>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={save}>Save configuration</Button>
+          <Button onClick={() => void save()}>Save configuration</Button>
           <Button variant="outline" onClick={() => void testReceipt()}>Test receipt</Button>
           <Button variant="outline" onClick={() => void testA4()}>Test A4</Button>
           <Button variant="outline" onClick={() => void testKitchen()}>Test kitchen</Button>
@@ -192,6 +246,19 @@ function PrintingSettings() {
               ))}
             </ul>
           )}
+        {cloudQueue.length > 0 && (
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground mb-1">Pending on other terminals ({cloudQueue.length})</p>
+            <ul className="text-sm divide-y">
+              {cloudQueue.map((j) => (
+                <li key={j.id} className="py-1.5 flex items-center justify-between gap-3">
+                  <span className="capitalize">{j.job_type}{j.title ? ` · ${j.title}` : ""}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{String(j.device_id ?? "").slice(0, 8)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Card>
     </div>
   );
