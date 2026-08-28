@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, UtensilsCrossed, LayoutGrid, CalendarClock, ListOrdered, ChefHat,
   BookOpen, PhoneCall, Banknote, MoonStar, BarChart3, Settings, Wallet,
+  Star, Clock, Layers, Bike,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant")({
