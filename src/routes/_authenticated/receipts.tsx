@@ -249,7 +249,12 @@ function ReceiptsPage() {
         const status = (r as any).status ?? "posted";
         return (
           <div className="inline-flex items-center gap-1">
+            <Button size="icon" variant="ghost" title="Accounting impact"
+              onClick={() => setLedger({ kind: "receipt", reference: `RCT:${r.number}`, title: `Receipt ${r.number} — accounting impact` })}>
+              <Scale className="h-4 w-4" />
+            </Button>
             <Button size="icon" variant="ghost" onClick={() => printReceipt(r)} title="Print"><Printer className="h-4 w-4" /></Button>
+
             <ShareDoc kind="receipt" id={r.id} docNumber={r.number} />
             {status === "posted" && (
               <Button size="icon" variant="ghost" onClick={() => reverseReceipt(r)} title="Reverse"><RotateCcw className="h-4 w-4 text-red-600" /></Button>
