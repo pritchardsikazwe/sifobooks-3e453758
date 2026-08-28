@@ -1,9 +1,10 @@
 // Central module registry. Drives sidebar visibility, /modules install page, and route guards.
 
 export type ModuleCategory =
-  | "Core" | "Sales" | "Purchases" | "Finance" | "Inventory"
-  | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
-  | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Admin";
+  | "Core" | "Sales" | "Purchases" | "Inventory" | "POS" | "Restaurant"
+  | "Finance" | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
+  | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Administration"
+  | "Platform";
 
 export type ModuleRoute = { title: string; url: string; iconName?: string; superAdminOnly?: boolean };
 
@@ -169,7 +170,7 @@ export const MODULES: ModuleDef[] = [
     ] },
 
   // ---------- RETAIL POS ----------
-  { key: "retail_pos", label: "Retail POS", category: "Inventory", defaultInstalled: true,
+  { key: "retail_pos", label: "Retail POS", category: "POS", defaultInstalled: true,
     description: "Fast touchscreen shop till: barcode scanning, product grid, split payments, shifts, cash drawer and automatic stock & GL posting.",
     routes: [
       { title: "SifoPOS Hub", url: "/sifopos", iconName: "LayoutGrid" },
@@ -177,9 +178,20 @@ export const MODULES: ModuleDef[] = [
     ] },
 
   // ---------- RESTAURANT ----------
-  { key: "restaurant", label: "Restaurant POS", category: "Inventory", defaultInstalled: false,
+  { key: "restaurant", label: "Restaurant", category: "Restaurant", defaultInstalled: false,
     description: "Touch POS for dine-in, bar and takeaway with tables, kitchen display, menu costing, analytics and end-of-day cash-up.",
-    routes: [{ title: "Restaurant POS", url: "/restaurant", iconName: "UtensilsCrossed" }] },
+    routes: [
+      { title: "Command Centre", url: "/restaurant", iconName: "UtensilsCrossed" },
+      { title: "Restaurant POS", url: "/restaurant/pos", iconName: "ShoppingBag" },
+      { title: "Tables & Floor", url: "/restaurant/tables", iconName: "LayoutGrid" },
+      { title: "Reservations", url: "/restaurant/reservations", iconName: "CalendarDays" },
+      { title: "Kitchen Display", url: "/restaurant/kitchen", iconName: "ChefHat" },
+      { title: "Delivery Dispatch", url: "/restaurant/dispatch", iconName: "Bike" },
+      { title: "Menu & Recipes", url: "/restaurant/menu", iconName: "BookOpen" },
+      { title: "Cash Drawers", url: "/restaurant/cash", iconName: "Wallet" },
+      { title: "End of Day", url: "/restaurant/end-of-day", iconName: "CalendarClock" },
+      { title: "Restaurant Reports", url: "/restaurant/reports", iconName: "BarChart3" },
+    ] },
 
 
 
@@ -192,27 +204,33 @@ export const MODULES: ModuleDef[] = [
       { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" },
     ] },
 
-  // ---------- ADMIN ----------
-  { key: "admin", label: "Administration", category: "Admin", core: true, defaultInstalled: true,
-    description: "Company setup, roles, approvals, audit and notifications.",
+  // ---------- COMPANY ADMINISTRATION ----------
+  { key: "admin", label: "Administration", category: "Administration", core: true, defaultInstalled: true,
+    description: "Company setup, users, roles, approvals, devices, audit and notifications.",
     routes: [
       { title: "Admin Home", url: "/admin", iconName: "UserCog" },
+      { title: "Company Setup", url: "/setup", iconName: "Building2" },
+      { title: "Business Configuration", url: "/industry", iconName: "SlidersHorizontal" },
       { title: "Roles & Permissions", url: "/roles", iconName: "ShieldCheck" },
       { title: "Approvals", url: "/approvals", iconName: "Inbox" },
-      { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
-      { title: "Company Setup", url: "/setup", iconName: "Building2" },
-      { title: "Printing", url: "/printing-settings", iconName: "Printer" },
-      { title: "Industry & Business", url: "/industry", iconName: "Building2" },
+      { title: "Devices & Printing", url: "/printing-settings", iconName: "Printer" },
       { title: "Subscription", url: "/subscription", iconName: "Sparkles" },
-      { title: "Audit Logs", url: "/audit-logs", iconName: "ShieldCheck" },
+      { title: "Audit Logs", url: "/audit-logs", iconName: "ScrollText" },
       { title: "Notifications", url: "/notifications", iconName: "Bell" },
+    ] },
+
+  // ---------- PLATFORM (SifoBooks operators only) ----------
+  { key: "platform", label: "Platform", category: "Platform", core: true, defaultInstalled: true,
+    description: "SifoBooks platform operations — companies, subscriptions, plans, feature flags and global audit.",
+    routes: [
+      { title: "Super Admin Console", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
     ] },
 ];
 
 export const CATEGORY_ORDER: ModuleCategory[] = [
-  "Core", "Sales", "Purchases", "Finance", "Inventory", "HR & Payroll",
-  "CRM", "Projects & Service", "Reports", "School ERP", "NGO", "Mining",
-  "Help & Learning", "Admin",
+  "Core", "Sales", "Purchases", "Inventory", "POS", "Restaurant", "Finance",
+  "HR & Payroll", "CRM", "Projects & Service", "Reports",
+  "School ERP", "NGO", "Mining", "Help & Learning", "Administration", "Platform",
 ];
 
 export function getModule(key: string): ModuleDef | undefined {
