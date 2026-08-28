@@ -31,7 +31,7 @@ type MenuItem = { id: string; name: string; category: string; price: number; cos
 type RTable = { id: string; name: string; seats: number; area: string; status: string };
 type Order = { id: string; order_no: string | null; table_id: string | null; order_type: string; status: string; guests: number; subtotal: number; tax: number; total: number; payment_method: string | null; opened_at: string };
 type OrderItem = { id: string; order_id: string; item_name: string; station: string; qty: number; price: number; kds_status: string };
-type CartLine = { name: string; station: string; price: number; qty: number };
+type CartLine = { name: string; station: string; price: number; qty: number; note?: string };
 
 const MODES = [
   { key: "DINE IN", icon: UtensilsCrossed },
@@ -69,6 +69,12 @@ function Page() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [tableId, setTableId] = useState<string | null>(null);
   const [guests, setGuests] = useState(2);
+  const [discountPct, setDiscountPct] = useState(0);
+  const [server, setServer] = useState("");
+  const [recalled, setRecalled] = useState<Order | null>(null);
+  const [tender, setTender] = useState<{ method: string; order?: Order; amount: number } | null>(null);
+  const [pin, setPin] = useState<{ order: Order } | null>(null);
+
 
   const load = async () => {
     setLoading(true);
@@ -126,42 +132,57 @@ function Page() {
   };
 
   /* ---- cart maths ---- */
-  const subtotal = cart.reduce((s, l) => s + l.price * l.qty, 0);
+  const gross = cart.reduce((s, l) => s + l.price * l.qty, 0);
+  const discount = gross * (discountPct / 100);
+  const subtotal = gross - discount;
   const tax = subtotal * VAT_RATE;
   const total = subtotal + tax;
 
+  const key = (l: CartLine) => `${l.name}__${l.note ?? ""}`;
   const addToCart = (mi: MenuItem) => {
     setCart(c => {
-      const i = c.findIndex(l => l.name === mi.name);
+      const i = c.findIndex(l => l.name === mi.name && !l.note);
       if (i >= 0) { const n = [...c]; n[i] = { ...n[i], qty: n[i].qty + 1 }; return n; }
       return [...c, { name: mi.name, station: mi.station, price: Number(mi.price), qty: 1 }];
     });
   };
-  const bump = (name: string, d: number) =>
-    setCart(c => c.flatMap(l => l.name === name ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]));
+  const bump = (k: string, d: number) =>
+    setCart(c => c.flatMap(l => key(l) === k ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]));
+  const setNote = (k: string, note: string) =>
+    setCart(c => c.map(l => key(l) === k ? { ...l, note: note || undefined } : l));
 
-  const sendOrder = async (pay?: string) => {
+  const clearCheck = () => { setCart([]); setDiscountPct(0); setTableId(null); setRecalled(null); };
+
+  /** Persist the current cart. `pay` settles it, `hold` parks it for later recall. */
+  const sendOrder = async (pay?: string, hold?: boolean) => {
     if (!cart.length) return toast.error("Add items to the check first");
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     setBusy(true);
     const uid = u.user.id;
-    const { data: ord, error } = await supabase.from("restaurant_orders").insert({
-      user_id: uid, order_no: `CHK-${Date.now().toString().slice(-6)}`, table_id: mode === "DINE IN" ? tableId : null,
-      order_type: mode, guests, subtotal, tax, total,
-      status: pay ? "paid" : "open", payment_method: pay ?? null, closed_at: pay ? new Date().toISOString() : null,
-    } as any).select("*").single();
+    const status = pay ? "paid" : hold ? "held" : "open";
+    if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
+    const payload: any = {
+      user_id: uid, table_id: mode === "DINE IN" ? tableId : null,
+      order_type: mode, guests, subtotal, tax, total, discount,
+      server_name: server || null,
+      status, payment_method: pay ?? null, closed_at: pay ? new Date().toISOString() : null,
+    };
+    const q = recalled
+      ? supabase.from("restaurant_orders").update(payload).eq("id", recalled.id).select("*").single()
+      : supabase.from("restaurant_orders").insert({ ...payload, order_no: `CHK-${Date.now().toString().slice(-6)}` }).select("*").single();
+    const { data: ord, error } = await q;
     if (error || !ord) { setBusy(false); return toast.error(error?.message ?? "Could not save check"); }
     const { error: ie } = await supabase.from("restaurant_order_items").insert(cart.map(l => ({
       user_id: uid, order_id: (ord as any).id, item_name: l.name, station: l.station, qty: l.qty, price: l.price,
-      kds_status: pay ? "served" : "queued",
+      notes: l.note ?? null,
+      kds_status: pay ? "served" : hold ? "queued" : "queued",
     })) as any);
     if (ie) { setBusy(false); return toast.error(ie.message); }
-    if (tableId && !pay) await supabase.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
-    if (tableId && pay) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", tableId);
+    if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     setBusy(false);
-    toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : "Sent to kitchen");
-    setCart([]); setTableId(null); load();
+    toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : hold ? "Check held — recall it from Orders" : "Sent to kitchen");
+    clearCheck(); load();
   };
 
   const settle = async (o: Order, method: string) => {
@@ -171,17 +192,37 @@ function Page() {
     load();
   };
 
+  /** Load a held/open check back into the POS check panel. */
+  const recall = (o: Order) => {
+    const lines = items.filter(i => i.order_id === o.id)
+      .map(i => ({ name: i.item_name, station: i.station, price: Number(i.price), qty: Number(i.qty), note: (i as any).notes ?? undefined }));
+    setCart(lines); setRecalled(o); setMode(o.order_type); setTableId(o.table_id); setGuests(o.guests || 1);
+    setDiscountPct(0); setScreen("pos");
+    toast.success(`Recalled ${o.order_no}`);
+  };
+
+  const voidCheck = async (o: Order) => {
+    await supabase.from("restaurant_orders").update({ status: "void", closed_at: new Date().toISOString() }).eq("id", o.id);
+    if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
+    setPin(null);
+    toast.success(`${o.order_no} voided`);
+    load();
+  };
+
   const advanceItem = async (it: OrderItem) => {
     const next = it.kds_status === "queued" ? "cooking" : it.kds_status === "cooking" ? "ready" : "served";
     await supabase.from("restaurant_order_items").update({ kds_status: next }).eq("id", it.id);
     setItems(list => list.map(x => x.id === it.id ? { ...x, kds_status: next } : x));
   };
 
+
   const cats = useMemo(() => ["All", ...Array.from(new Set(menu.map(m => m.category)))], [menu]);
   const shown = menu.filter(m => m.active && (cat === "All" || m.category === cat));
   const openOrders = orders.filter(o => o.status === "open");
+  const heldOrders = orders.filter(o => o.status === "held");
   const today = new Date().toISOString().slice(0, 10);
-  const todays = orders.filter(o => o.opened_at.slice(0, 10) === today);
+  const todays = orders.filter(o => o.opened_at.slice(0, 10) === today && o.status !== "void");
+
 
   const kpis = {
     orders: todays.length,
@@ -207,13 +248,16 @@ function Page() {
     <div className="p-3 sm:p-5">
       <div className="overflow-hidden rounded-3xl bg-[#7890a4] p-2 shadow-xl sm:p-3">
         {/* topbar */}
-        <header className="mb-3 flex items-center gap-3 rounded-2xl bg-[#214f4c] px-4 py-3 text-white">
+        <header className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl bg-[#214f4c] px-4 py-3 text-white">
           <span className="text-base font-extrabold tracking-tight">SifoBooks Restaurant</span>
           <span className="flex-1 text-center text-sm font-extrabold tracking-[0.12em] opacity-90">
-            {screen === "pos" ? `POS • ${mode}` : SCREENS.find(s => s.key === screen)?.label}
+            {screen === "pos" ? `POS • ${mode}${recalled ? ` • recalled ${recalled.order_no}` : ""}` : SCREENS.find(s => s.key === screen)?.label}
           </span>
+          <Input value={server} onChange={e => setServer(e.target.value)} placeholder="Server"
+            className="h-8 w-28 border-white/25 bg-white/10 text-xs text-white placeholder:text-white/50" />
           <span className="hidden text-xs opacity-70 sm:block">Posted automatically to your books</span>
         </header>
+
 
         <div className="flex gap-3">
           {/* sidebar */}
@@ -293,31 +337,59 @@ function Page() {
                     </div>
                   )}
                   <div className="min-h-[140px] flex-1 space-y-1.5 overflow-auto rounded-xl bg-[#f4f5f4] p-2 text-[#365454]">
-                    {cart.map(l => (
-                      <div key={l.name} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[12px] font-bold">{l.name}</div>
-                          <div className="text-[11px] opacity-70">{fmtMoney(l.price)} each</div>
+                    {cart.map(l => {
+                      const k = key(l);
+                      return (
+                        <div key={k} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[12px] font-bold">{l.name}</div>
+                            <button
+                              onClick={() => {
+                                const n = window.prompt("Modifier / kitchen note", l.note ?? "");
+                                if (n !== null) setNote(k, n.trim());
+                              }}
+                              className="text-left text-[11px] italic text-[#0b6d5f] underline-offset-2 hover:underline">
+                              {l.note ? l.note : "+ add note"}
+                            </button>
+                          </div>
+                          <button onClick={() => bump(k, -1)} className="rounded-md bg-[#e9eef0] p-1"><Minus className="h-3.5 w-3.5" /></button>
+                          <span className="w-5 text-center text-[12px] font-extrabold">{l.qty}</span>
+                          <button onClick={() => bump(k, 1)} className="rounded-md bg-[#e9eef0] p-1"><Plus className="h-3.5 w-3.5" /></button>
+                          <span className="w-16 text-right text-[12px] font-extrabold">{fmtMoney(l.price * l.qty)}</span>
                         </div>
-                        <button onClick={() => bump(l.name, -1)} className="rounded-md bg-[#e9eef0] p-1"><Minus className="h-3.5 w-3.5" /></button>
-                        <span className="w-5 text-center text-[12px] font-extrabold">{l.qty}</span>
-                        <button onClick={() => bump(l.name, 1)} className="rounded-md bg-[#e9eef0] p-1"><Plus className="h-3.5 w-3.5" /></button>
-                        <span className="w-16 text-right text-[12px] font-extrabold">{fmtMoney(l.price * l.qty)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {!cart.length && <div className="py-10 text-center text-[12px] opacity-60">Tap menu items to start a check.</div>}
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold opacity-80">Discount</span>
+                    {[0, 5, 10, 15].map(p => (
+                      <button key={p} onClick={() => setDiscountPct(p)}
+                        className={cn("rounded-lg border-2 border-[#9aaab5] px-2 py-1 text-[11px] font-bold", discountPct === p ? "bg-[#19b52a]" : "bg-[#71879a]")}>{p}%</button>
+                    ))}
+                  </div>
                   <div className="mt-2 space-y-1 rounded-xl bg-[#315d5a] p-3 text-[12px]">
+                    <Row label="Gross" value={fmtMoney(gross)} />
+                    {discount > 0 && <Row label={`Discount ${discountPct}%`} value={`- ${fmtMoney(discount)}`} />}
                     <Row label="Subtotal" value={fmtMoney(subtotal)} />
                     <Row label={`VAT ${Math.round(VAT_RATE * 100)}%`} value={fmtMoney(tax)} />
                     <div className="flex justify-between border-t border-white/20 pt-1 text-sm font-extrabold"><span>Total</span><span>{fmtMoney(total)}</span></div>
+                    {guests > 1 && <Row label={`Split ${guests} ways`} value={fmtMoney(total / guests)} />}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-[11px] font-bold">
+                    <span className="opacity-80">Guests</span>
+                    <button onClick={() => setGuests(g => Math.max(1, g - 1))} className="rounded-md bg-[#71879a] px-2 py-1">−</button>
+                    <span className="w-5 text-center">{guests}</span>
+                    <button onClick={() => setGuests(g => g + 1)} className="rounded-md bg-[#71879a] px-2 py-1">+</button>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <PosBtn onClick={() => sendOrder()} disabled={busy} className="bg-[#4e89bc]"><Send className="h-4 w-4" /> Send</PosBtn>
-                    <PosBtn onClick={() => sendOrder("Cash")} disabled={busy} className="bg-[#0b9d19]"><CreditCard className="h-4 w-4" /> Cash</PosBtn>
+                    <PosBtn onClick={() => setTender({ method: "Cash", amount: total })} disabled={busy || !cart.length} className="bg-[#0b9d19]"><CreditCard className="h-4 w-4" /> Cash</PosBtn>
                     <PosBtn onClick={() => sendOrder("Mobile Money")} disabled={busy} className="bg-[#7310c9]">Mobile Money</PosBtn>
-                    <PosBtn onClick={() => setCart([])} className="bg-[#f00000]"><Trash2 className="h-4 w-4" /> Void</PosBtn>
+                    <PosBtn onClick={() => sendOrder(undefined, true)} disabled={busy} className="bg-[#e66f08]">Hold check</PosBtn>
+                    <PosBtn onClick={clearCheck} className="col-span-2 bg-[#f00000]"><Trash2 className="h-4 w-4" /> Clear check</PosBtn>
                   </div>
+
                 </Card>
               </div>
             ) : screen === "tables" ? (
@@ -339,26 +411,30 @@ function Page() {
               </Card>
             ) : screen === "orders" ? (
               <Card>
-                <H2>Open checks / orders</H2>
-                <Table head={["Check", "Type", "Table", "Items", "Total", "Status", ""]}>
+                <H2>Checks — {openOrders.length} open • {heldOrders.length} held</H2>
+                <Table head={["Check", "Type", "Table", "Server", "Items", "Total", "Status", ""]}>
                   {orders.slice(0, 50).map(o => (
                     <tr key={o.id} className="border-b border-white/10">
                       <Td>{o.order_no}</Td>
                       <Td>{o.order_type}</Td>
                       <Td>{tables.find(t => t.id === o.table_id)?.name ?? "—"}</Td>
+                      <Td>{(o as any).server_name ?? "—"}</Td>
                       <Td>{items.filter(i => i.order_id === o.id).reduce((s, i) => s + Number(i.qty), 0)}</Td>
                       <Td className="font-extrabold">{fmtMoney(Number(o.total))}</Td>
-                      <Td><Pill tone={o.status === "paid" ? "green" : "orange"}>{o.status}</Pill></Td>
-                      <Td>{o.status === "open" && (
-                        <div className="flex gap-1">
-                          <MiniBtn onClick={() => settle(o, "Cash")}>Cash</MiniBtn>
+                      <Td><Pill tone={o.status === "paid" ? "green" : o.status === "void" ? "red" : "orange"}>{o.status}</Pill></Td>
+                      <Td>{(o.status === "open" || o.status === "held") && (
+                        <div className="flex flex-wrap gap-1">
+                          <MiniBtn onClick={() => recall(o)}>Recall</MiniBtn>
+                          <MiniBtn onClick={() => setTender({ method: "Cash", order: o, amount: Number(o.total) })}>Cash</MiniBtn>
                           <MiniBtn onClick={() => settle(o, "Mobile Money")}>MoMo</MiniBtn>
+                          <MiniBtn onClick={() => setPin({ order: o })}>Void</MiniBtn>
                         </div>
                       )}</Td>
                     </tr>
                   ))}
                 </Table>
               </Card>
+
             ) : screen === "kitchen" ? (
               <Card>
                 <H2>Kitchen display system</H2>
@@ -447,9 +523,77 @@ function Page() {
           </section>
         </div>
       </div>
+
+      {tender && (
+        <TenderDialog
+          due={tender.amount}
+          onCancel={() => setTender(null)}
+          onConfirm={() => {
+            const t = tender; setTender(null);
+            if (t.order) settle(t.order, t.method); else sendOrder(t.method);
+          }}
+        />
+      )}
+      {pin && (
+        <PinDialog
+          check={pin.order.order_no ?? ""}
+          onCancel={() => setPin(null)}
+          onConfirm={() => voidCheck(pin.order)}
+        />
+      )}
     </div>
   );
 }
+
+/* ---------------- dialogs ---------------- */
+function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () => void; onConfirm: () => void }) {
+  const [cash, setCash] = useState("");
+  const change = Number(cash || 0) - due;
+  return (
+    <Overlay title="Cash tender" onCancel={onCancel}>
+      <div className="mb-2 flex justify-between text-sm font-extrabold"><span>Amount due</span><span>{fmtMoney(due)}</span></div>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {[due, 50, 100, 200, 500].map((v, i) => (
+          <button key={i} onClick={() => setCash(String(v))} className="rounded-lg bg-[#71879a] px-2.5 py-1 text-[11px] font-bold text-white">{i === 0 ? "Exact" : v}</button>
+        ))}
+      </div>
+      <Input type="number" autoFocus value={cash} onChange={e => setCash(e.target.value)} placeholder="Cash received" className="bg-white text-[#20504d]" />
+      <div className="mt-2 flex justify-between text-sm font-extrabold">
+        <span>Change</span><span>{change >= 0 ? fmtMoney(change) : "—"}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PosBtn onClick={onCancel} className="bg-[#71879a]">Cancel</PosBtn>
+        <PosBtn onClick={onConfirm} disabled={change < 0} className="bg-[#0b9d19]">Settle</PosBtn>
+      </div>
+    </Overlay>
+  );
+}
+
+function PinDialog({ check, onCancel, onConfirm }: { check: string; onCancel: () => void; onConfirm: () => void }) {
+  const [pin, setPin] = useState("");
+  return (
+    <Overlay title={`Manager approval — void ${check}`} onCancel={onCancel}>
+      <p className="mb-2 text-[12px] opacity-80">Enter the manager PIN to void this check. Voided checks are excluded from takings.</p>
+      <Input type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} placeholder="Manager PIN" className="bg-white text-[#20504d]" />
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PosBtn onClick={onCancel} className="bg-[#71879a]">Cancel</PosBtn>
+        <PosBtn onClick={() => (pin.length >= 4 ? onConfirm() : toast.error("PIN must be at least 4 digits"))} className="bg-[#f00000]">Void check</PosBtn>
+      </div>
+    </Overlay>
+  );
+}
+
+function Overlay({ title, children, onCancel }: { title: string; children: React.ReactNode; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl border-2 border-[#7f9997] bg-[#214f4c] p-4 text-white shadow-2xl">
+        <div className="mb-3 text-sm font-extrabold uppercase tracking-wider">{title}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 
 /* ---------------- menu admin ---------------- */
 function MenuAdmin({ menu, onChanged }: { menu: MenuItem[]; onChanged: () => void }) {
@@ -543,8 +687,8 @@ function PosBtn({ children, onClick, disabled, className }: { children: React.Re
 function MiniBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return <button onClick={onClick} className="rounded-lg bg-[#71879a] px-2 py-1 text-[11px] font-bold">{children}</button>;
 }
-function Pill({ children, tone }: { children: React.ReactNode; tone: "green" | "orange" }) {
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase", tone === "green" ? "bg-[#0b9d19]" : "bg-[#e66f08]")}>{children}</span>;
+function Pill({ children, tone }: { children: React.ReactNode; tone: "green" | "orange" | "red" }) {
+  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase", tone === "green" ? "bg-[#0b9d19]" : tone === "red" ? "bg-[#b91c1c]" : "bg-[#e66f08]")}>{children}</span>;
 }
 function Table({ head, children }: { head: string[]; children: React.ReactNode }) {
   return (
