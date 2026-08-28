@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { payrollJournalLines } from "@/lib/posting-lines";
+import { postPayrollRunLedger, reversePayrollRunLedger, type PayrollJournalLine } from "@/lib/payroll-posting";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { Badge } from "@/components/ui/badge";
 import { Banknote, Loader2, Plus, FileText, Download, Wand2, Calculator, Trash2 } from "lucide-react";
