@@ -353,9 +353,9 @@ function Page() {
       </div>
 
       {/* body */}
-      <div className="grid min-h-0 gap-[6px] bg-[#1d5555] p-[6px] md:grid-cols-[62px_1fr] lg:grid-cols-[82px_285px_105px_1fr]">
+      <div className="grid min-h-0 flex-1 gap-[6px] overflow-y-auto bg-[#1d5555] p-[6px] md:grid-cols-[66px_minmax(255px,320px)_1fr] md:overflow-hidden lg:grid-cols-[82px_300px_105px_1fr]">
         {/* action rail */}
-        <aside className="flex max-h-[720px] flex-col gap-[5px] overflow-auto">
+        <aside className="flex min-h-0 flex-row gap-[5px] overflow-x-auto md:h-full md:flex-col md:overflow-x-visible md:overflow-y-auto">
           {sideKeys.map(k => (
             <button key={k.label} onClick={k.run}
               className="flex min-h-[52px] flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] px-[2px] py-[5px] text-[9px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
