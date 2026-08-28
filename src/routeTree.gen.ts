@@ -24,6 +24,7 @@ import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedStockSerialsRouteImport } from './routes/_authenticated/stock-serials'
 import { Route as AuthenticatedStockCountsRouteImport } from './routes/_authenticated/stock-counts'
 import { Route as AuthenticatedStockBatchesRouteImport } from './routes/_authenticated/stock-batches'
 import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
@@ -227,6 +228,12 @@ const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStockSerialsRoute =
+  AuthenticatedStockSerialsRouteImport.update({
+    id: '/stock-serials',
+    path: '/stock-serials',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStockCountsRoute =
   AuthenticatedStockCountsRouteImport.update({
     id: '/stock-counts',
@@ -1003,6 +1010,7 @@ export interface FileRoutesByFullPath {
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/stock-batches': typeof AuthenticatedStockBatchesRoute
   '/stock-counts': typeof AuthenticatedStockCountsRoute
+  '/stock-serials': typeof AuthenticatedStockSerialsRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
@@ -1139,6 +1147,7 @@ export interface FileRoutesByTo {
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/stock-batches': typeof AuthenticatedStockBatchesRoute
   '/stock-counts': typeof AuthenticatedStockCountsRoute
+  '/stock-serials': typeof AuthenticatedStockSerialsRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
@@ -1282,6 +1291,7 @@ export interface FileRoutesById {
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/_authenticated/stock-batches': typeof AuthenticatedStockBatchesRoute
   '/_authenticated/stock-counts': typeof AuthenticatedStockCountsRoute
+  '/_authenticated/stock-serials': typeof AuthenticatedStockSerialsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
@@ -1425,6 +1435,7 @@ export interface FileRouteTypes {
     | '/stock-adjustments'
     | '/stock-batches'
     | '/stock-counts'
+    | '/stock-serials'
     | '/students'
     | '/subscription'
     | '/super-admin'
@@ -1561,6 +1572,7 @@ export interface FileRouteTypes {
     | '/stock-adjustments'
     | '/stock-batches'
     | '/stock-counts'
+    | '/stock-serials'
     | '/students'
     | '/subscription'
     | '/super-admin'
@@ -1703,6 +1715,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stock-adjustments'
     | '/_authenticated/stock-batches'
     | '/_authenticated/stock-counts'
+    | '/_authenticated/stock-serials'
     | '/_authenticated/students'
     | '/_authenticated/subscription'
     | '/_authenticated/super-admin'
@@ -1890,6 +1903,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students'
       preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stock-serials': {
+      id: '/_authenticated/stock-serials'
+      path: '/stock-serials'
+      fullPath: '/stock-serials'
+      preLoaderRoute: typeof AuthenticatedStockSerialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/stock-counts': {
@@ -3015,6 +3035,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
   AuthenticatedStockBatchesRoute: typeof AuthenticatedStockBatchesRoute
   AuthenticatedStockCountsRoute: typeof AuthenticatedStockCountsRoute
+  AuthenticatedStockSerialsRoute: typeof AuthenticatedStockSerialsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
@@ -3103,6 +3124,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
   AuthenticatedStockBatchesRoute: AuthenticatedStockBatchesRoute,
   AuthenticatedStockCountsRoute: AuthenticatedStockCountsRoute,
+  AuthenticatedStockSerialsRoute: AuthenticatedStockSerialsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,

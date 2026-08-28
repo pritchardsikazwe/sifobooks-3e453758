@@ -114,6 +114,9 @@ export const MODULE_TABS: Record<ModuleKey, Array<{ label: string; to: string }>
   inventory: [
     { label: "Stock Items", to: "/stock" },
     { label: "Adjustments", to: "/stock-adjustments" },
+    { label: "Counts", to: "/stock-counts" },
+    { label: "Batches", to: "/stock-batches" },
+    { label: "Serials", to: "/stock-serials" },
     { label: "Warehouses", to: "/warehouses" },
     { label: "Stock Sheets", to: "/inventory-sheets" },
     { label: "Valuation", to: "/reports/inventory-valuation" },
