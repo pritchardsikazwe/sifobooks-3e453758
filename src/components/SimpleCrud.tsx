@@ -284,13 +284,28 @@ export function SimpleCrud({
               </Button>
             );
           })}
+          {posting && (
+            <Button
+              size="sm" variant="ghost" className="h-7 px-2 text-xs"
+              title="Accounting impact"
+              onClick={() => setLedger({
+                kind: posting.kind,
+                reference: posting.reference(r),
+                entryId: posting.entryId?.(r) ?? null,
+                title: posting.label?.(r) ?? `${title} — accounting impact`,
+              })}
+            >
+              <Scale className="h-3.5 w-3.5 mr-1" />Ledger
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(r)} title="Edit"><Edit2 className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(r)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
       ),
     });
     return cols;
-  }, [columns, rowActions, statusField]);
+  }, [columns, rowActions, statusField, posting]);
+
   const DEFAULT_GROUP = "Details";
   const groupNames = useMemo(() => {
     const seen: string[] = [];
