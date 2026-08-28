@@ -168,10 +168,16 @@ export const MODULES: ModuleDef[] = [
       { title: "Tuckshop POS", url: "/tuckshop", iconName: "ShoppingBag" },
     ] },
 
+  // ---------- RETAIL POS ----------
+  { key: "retail_pos", label: "Retail POS", category: "Inventory", defaultInstalled: true,
+    description: "Fast touchscreen shop till: barcode scanning, product grid, split payments, shifts, cash drawer and automatic stock & GL posting.",
+    routes: [{ title: "Retail POS", url: "/pos", iconName: "ShoppingBag" }] },
+
   // ---------- RESTAURANT ----------
   { key: "restaurant", label: "Restaurant POS", category: "Inventory", defaultInstalled: false,
     description: "Touch POS for dine-in, bar and takeaway with tables, kitchen display, menu costing, analytics and end-of-day cash-up.",
     routes: [{ title: "Restaurant POS", url: "/restaurant", iconName: "UtensilsCrossed" }] },
+
 
 
   // ---------- HELP & LEARNING ----------
