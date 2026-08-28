@@ -90,13 +90,24 @@ type Props = {
   module?: ModuleKey;
   /** Sub-title shown under the module title. */
   description?: string;
+  /** Adds a per-row "Ledger" action showing the posting flow and real GL effect. */
+  posting?: {
+    kind: FlowKind;
+    /** Journal reference for the row, e.g. r => `INV:${r.invoice_number}`. */
+    reference: (row: any) => string | null;
+    /** Known journal entry id column, when the table stores one. */
+    entryId?: (row: any) => string | null;
+    label?: (row: any) => string;
+  };
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
-  accountFields, previewLines, requireBalanced, module, description,
+  accountFields, previewLines, requireBalanced, module, description, posting,
 }: Props) {
+  const [ledger, setLedger] = useState<LedgerTarget | null>(null);
+
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
