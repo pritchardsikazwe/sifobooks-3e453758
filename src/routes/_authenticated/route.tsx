@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
+import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
