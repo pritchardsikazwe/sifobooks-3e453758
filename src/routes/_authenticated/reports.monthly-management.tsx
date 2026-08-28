@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { buildMonthlyReport, type MonthlyReport } from "@/lib/reports/monthly-management";
 import { exportMonthlyManagementPdf } from "@/lib/reports/monthly-management-pdf";
 import { exportCSV, exportExcel } from "@/lib/exports";
+import { printCurrentView } from "@/services/printDocument";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/reports/monthly-management")({
@@ -153,7 +154,7 @@ function MonthlyManagementReport() {
         <div className="flex flex-wrap items-center gap-2">
           <Input type="month" value={period} onChange={e => setPeriod(e.target.value)} className="h-9 w-40" />
           <Button size="sm" variant="outline" onClick={() => generate()}><RefreshCw className="h-4 w-4 mr-1" /> Generate</Button>
-          <Button size="sm" variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print</Button>
+          <Button size="sm" variant="outline" onClick={() => void printCurrentView("Monthly Management Report", period, excelRows)}><Printer className="h-4 w-4 mr-1" /> Print</Button>
           <Button size="sm" variant="outline" disabled={!data} onClick={() => data && exportMonthlyManagementPdf(data, { preparedBy, reviewedBy, status, comments })}>
             <FileText className="h-4 w-4 mr-1" /> PDF
           </Button>

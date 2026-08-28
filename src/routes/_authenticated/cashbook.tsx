@@ -10,6 +10,7 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { printCurrentView } from "@/services/printDocument";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 
@@ -267,7 +268,7 @@ function CashbookPage() {
               </button>
             ))}
           </div>
-          <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Print</Button>
+          <Button variant="outline" onClick={() => void printCurrentView("Cashbook Report", undefined, exportRows)}><Printer className="h-4 w-4 mr-2" />Print</Button>
           <ExportMenu rows={exportRows} filename="cashbook" title="Cashbook Report" />
         </div>
       </div>

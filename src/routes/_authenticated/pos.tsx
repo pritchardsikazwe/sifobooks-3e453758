@@ -23,6 +23,9 @@ import {
   saveSettings, shiftSummary, toggleFavorite, todayMetrics, voidSale,
   type CartLine, type PosCustomer, type PosProduct, type PosSettings, type PriceLevel, type SalePayment,
 } from "@/lib/pos";
+import { printReceipt as sendReceiptToPrinter, type ReceiptData } from "@/services/universalPrintService";
+import { getPrinterForType } from "@/services/printerConfiguration";
+import { savePrintQueueJob } from "@/services/printQueue";
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
@@ -84,7 +87,7 @@ function RetailPos() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shiftOpen, setShiftOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [receipt, setReceipt] = useState<{ sale_no: string; total: number; offline: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ sale_no: string; total: number; offline: boolean; snapshot?: any } | null>(null);
   const [voidFor, setVoidFor] = useState<any>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
@@ -217,13 +220,53 @@ function RetailPos() {
   const openHeld = async () => { setHeld(await listHeldSales()); setHeldOpen(true); };
   const openRecent = async () => { setRecent(await listRecentSales()); setRecentOpen(true); };
 
+  /** Printing must never block or reverse a completed sale. */
+  const printSaleReceipt = useCallback(async (snapshot: {
+    saleNo: string; saleId?: string; lines: CartLine[];
+    totals: ReturnType<typeof computeTotals>; payments: SalePayment[]; change: number;
+  }) => {
+    const data: ReceiptData = {
+      businessName: register?.branch ?? "SifoBooks",
+      branchName: register?.name,
+      receiptNumber: snapshot.saleNo,
+      date: new Date().toISOString(),
+      items: snapshot.lines.map((l) => ({
+        name: l.name,
+        quantity: l.qty,
+        price: l.price,
+        total: round2(l.qty * l.price * (1 - (l.discount_pct || 0) / 100)),
+      })),
+      subtotal: snapshot.totals.subtotal,
+      discount: round2(snapshot.totals.lineDiscount + snapshot.totals.saleDiscount),
+      tax: snapshot.totals.tax,
+      total: snapshot.totals.total,
+      paymentMethod: snapshot.payments.map((p) => p.method).join(", "),
+      amountPaid: round2(snapshot.payments.reduce((a, p) => a + Number(p.amount || 0), 0)),
+      change: snapshot.change,
+      footer: settings.receipt_footer ?? "Thank you for your business",
+    };
+    try {
+      await sendReceiptToPrinter(data, getPrinterForType("receipt"), 1);
+    } catch (error: any) {
+      console.error("Receipt printing failed:", error);
+      await savePrintQueueJob({
+        type: "receipt", saleId: snapshot.saleId, title: snapshot.saleNo,
+        status: "queued", error: String(error?.message ?? error),
+      });
+      toast.message("Printer unavailable — receipt queued");
+    }
+  }, [register, settings]);
+
   const finishSale = async (payments: SalePayment[], change: number) => {
     const res = await completeSale(
       { lines, totals, customer, customerName: customer?.name ?? settings.default_customer, priceLevel, saleDiscountPct, shiftId: shift?.id ?? null, registerId: register?.id ?? null },
       payments, change,
     );
+    const snapshot = { saleNo: res.sale_no, saleId: (res as any).id as string | undefined, lines, totals, payments, change };
     setPayOpen(false);
-    setReceipt({ sale_no: res.sale_no, total: totals.total, offline: res.offline });
+    setReceipt({ sale_no: res.sale_no, total: totals.total, offline: res.offline, snapshot });
+    // Fire-and-forget: the sale is already saved and must never be reversed by a print failure.
+    if (settings.auto_print_receipt !== false) void printSaleReceipt(snapshot);
     newSale();
     void refresh();
   };
@@ -525,7 +568,7 @@ function RetailPos() {
           <div className="text-4xl font-black tabular-nums">{fmtMoney(receipt?.total ?? 0)}</div>
           {receipt?.offline && <p className="text-xs text-amber-600">Saved on this device — it will sync when you're back online.</p>}
           <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button variant="outline" className="h-12" onClick={() => window.print()}><Printer className="mr-1.5 h-4 w-4" />Print</Button>
+            <Button variant="outline" className="h-12" onClick={() => receipt?.snapshot && void printSaleReceipt(receipt.snapshot)}><Printer className="mr-1.5 h-4 w-4" />Print</Button>
             <Button className="h-12" onClick={() => setReceipt(null)}>New sale</Button>
           </div>
         </DialogContent>
