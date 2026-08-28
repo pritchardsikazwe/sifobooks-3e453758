@@ -5707,6 +5707,90 @@ export type Database = {
           },
         ]
       }
+      print_devices: {
+        Row: {
+          branch_name: string | null
+          company_name: string | null
+          created_at: string
+          device_id: string
+          device_type: string
+          id: string
+          last_seen_at: string
+          printer_config: Json
+          terminal_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_name?: string | null
+          company_name?: string | null
+          created_at?: string
+          device_id: string
+          device_type?: string
+          id?: string
+          last_seen_at?: string
+          printer_config?: Json
+          terminal_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_name?: string | null
+          company_name?: string | null
+          created_at?: string
+          device_id?: string
+          device_type?: string
+          id?: string
+          last_seen_at?: string
+          printer_config?: Json
+          terminal_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      print_jobs: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          error: string | null
+          id: string
+          job_type: string
+          payload: Json | null
+          reference_id: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          error?: string | null
+          id?: string
+          job_type: string
+          payload?: Json | null
+          reference_id?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          error?: string | null
+          id?: string
+          job_type?: string
+          payload?: Json | null
+          reference_id?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_company_id: string | null
