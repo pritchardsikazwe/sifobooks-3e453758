@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as WorkerRouteRouteImport } from './routes/_worker/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWorkshopsRouteImport } from './routes/_authenticated/workshops'
@@ -48,6 +49,7 @@ import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authent
 import { Route as AuthenticatedPrintingSettingsRouteImport } from './routes/_authenticated/printing-settings'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPostingCentreRouteImport } from './routes/_authenticated/posting-centre'
+import { Route as AuthenticatedPosWorkersRouteImport } from './routes/_authenticated/pos-workers'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
@@ -97,6 +99,7 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as WorkerWIndexRouteImport } from './routes/_worker/w.index'
 import { Route as AuthenticatedRestaurantIndexRouteImport } from './routes/_authenticated/restaurant.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
@@ -104,6 +107,13 @@ import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
+import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
+import { Route as WorkerWStockRouteImport } from './routes/_worker/w.stock'
+import { Route as WorkerWReportsRouteImport } from './routes/_worker/w.reports'
+import { Route as WorkerWPosRouteImport } from './routes/_worker/w.pos'
+import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
+import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
+import { Route as WorkerWCashRouteImport } from './routes/_worker/w.cash'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
 import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
@@ -172,6 +182,10 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkerRouteRoute = WorkerRouteRouteImport.update({
+  id: '/_worker',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -370,6 +384,11 @@ const AuthenticatedPostingCentreRoute =
     path: '/posting-centre',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPosWorkersRoute = AuthenticatedPosWorkersRouteImport.update({
+  id: '/pos-workers',
+  path: '/pos-workers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -631,6 +650,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const WorkerWIndexRoute = WorkerWIndexRouteImport.update({
+  id: '/w/',
+  path: '/w/',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
 const AuthenticatedRestaurantIndexRoute =
   AuthenticatedRestaurantIndexRouteImport.update({
     id: '/',
@@ -670,6 +694,41 @@ const ApiPrintingJobsRoute = ApiPrintingJobsRouteImport.update({
   id: '/api/printing/jobs',
   path: '/api/printing/jobs',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WorkerWTablesRoute = WorkerWTablesRouteImport.update({
+  id: '/w/tables',
+  path: '/w/tables',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWStockRoute = WorkerWStockRouteImport.update({
+  id: '/w/stock',
+  path: '/w/stock',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWReportsRoute = WorkerWReportsRouteImport.update({
+  id: '/w/reports',
+  path: '/w/reports',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWPosRoute = WorkerWPosRouteImport.update({
+  id: '/w/pos',
+  path: '/w/pos',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWOrdersRoute = WorkerWOrdersRouteImport.update({
+  id: '/w/orders',
+  path: '/w/orders',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWKitchenRoute = WorkerWKitchenRouteImport.update({
+  id: '/w/kitchen',
+  path: '/w/kitchen',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWCashRoute = WorkerWCashRouteImport.update({
+  id: '/w/cash',
+  path: '/w/cash',
+  getParentRoute: () => WorkerRouteRoute,
 } as any)
 const AuthenticatedTeachingMaterialsNewRoute =
   AuthenticatedTeachingMaterialsNewRouteImport.update({
@@ -1045,6 +1104,7 @@ export interface FileRoutesByFullPath {
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRouteWithChildren
+  '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1129,6 +1189,13 @@ export interface FileRoutesByFullPath {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/w/cash': typeof WorkerWCashRoute
+  '/w/kitchen': typeof WorkerWKitchenRoute
+  '/w/orders': typeof WorkerWOrdersRoute
+  '/w/pos': typeof WorkerWPosRoute
+  '/w/reports': typeof WorkerWReportsRoute
+  '/w/stock': typeof WorkerWStockRoute
+  '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -1136,6 +1203,7 @@ export interface FileRoutesByFullPath {
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
+  '/w/': typeof WorkerWIndexRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1193,6 +1261,7 @@ export interface FileRoutesByTo {
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRouteWithChildren
+  '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1274,6 +1343,13 @@ export interface FileRoutesByTo {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/w/cash': typeof WorkerWCashRoute
+  '/w/kitchen': typeof WorkerWKitchenRoute
+  '/w/orders': typeof WorkerWOrdersRoute
+  '/w/pos': typeof WorkerWPosRoute
+  '/w/reports': typeof WorkerWReportsRoute
+  '/w/stock': typeof WorkerWStockRoute
+  '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
@@ -1281,6 +1357,7 @@ export interface FileRoutesByTo {
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/restaurant': typeof AuthenticatedRestaurantIndexRoute
+  '/w': typeof WorkerWIndexRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1290,6 +1367,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_worker': typeof WorkerRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -1342,6 +1420,7 @@ export interface FileRoutesById {
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
   '/_authenticated/pos': typeof AuthenticatedPosRouteWithChildren
+  '/_authenticated/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/_authenticated/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1426,6 +1505,13 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/_worker/w/cash': typeof WorkerWCashRoute
+  '/_worker/w/kitchen': typeof WorkerWKitchenRoute
+  '/_worker/w/orders': typeof WorkerWOrdersRoute
+  '/_worker/w/pos': typeof WorkerWPosRoute
+  '/_worker/w/reports': typeof WorkerWReportsRoute
+  '/_worker/w/stock': typeof WorkerWStockRoute
+  '/_worker/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -1433,6 +1519,7 @@ export interface FileRoutesById {
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
+  '/_worker/w/': typeof WorkerWIndexRoute
   '/_authenticated/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1494,6 +1581,7 @@ export interface FileRouteTypes {
     | '/period-close'
     | '/petty-cash'
     | '/pos'
+    | '/pos-workers'
     | '/posting-centre'
     | '/posting-wizard'
     | '/printing-settings'
@@ -1578,6 +1666,13 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/w/cash'
+    | '/w/kitchen'
+    | '/w/orders'
+    | '/w/pos'
+    | '/w/reports'
+    | '/w/stock'
+    | '/w/tables'
     | '/api/printing/jobs'
     | '/customers/'
     | '/invoices/'
@@ -1585,6 +1680,7 @@ export interface FileRouteTypes {
     | '/quotes/'
     | '/reports/'
     | '/restaurant/'
+    | '/w/'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1642,6 +1738,7 @@ export interface FileRouteTypes {
     | '/period-close'
     | '/petty-cash'
     | '/pos'
+    | '/pos-workers'
     | '/posting-centre'
     | '/posting-wizard'
     | '/printing-settings'
@@ -1723,6 +1820,13 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/w/cash'
+    | '/w/kitchen'
+    | '/w/orders'
+    | '/w/pos'
+    | '/w/reports'
+    | '/w/stock'
+    | '/w/tables'
     | '/api/printing/jobs'
     | '/customers'
     | '/invoices'
@@ -1730,6 +1834,7 @@ export interface FileRouteTypes {
     | '/quotes'
     | '/reports'
     | '/restaurant'
+    | '/w'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1738,6 +1843,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_worker'
     | '/auth'
     | '/reset-password'
     | '/sitemap.xml'
@@ -1790,6 +1896,7 @@ export interface FileRouteTypes {
     | '/_authenticated/period-close'
     | '/_authenticated/petty-cash'
     | '/_authenticated/pos'
+    | '/_authenticated/pos-workers'
     | '/_authenticated/posting-centre'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/printing-settings'
@@ -1874,6 +1981,13 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
+    | '/_worker/w/cash'
+    | '/_worker/w/kitchen'
+    | '/_worker/w/orders'
+    | '/_worker/w/pos'
+    | '/_worker/w/reports'
+    | '/_worker/w/stock'
+    | '/_worker/w/tables'
     | '/api/printing/jobs'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
@@ -1881,6 +1995,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/_authenticated/restaurant/'
+    | '/_worker/w/'
     | '/_authenticated/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1890,6 +2005,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  WorkerRouteRoute: typeof WorkerRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1920,6 +2036,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_worker': {
+      id: '/_worker'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkerRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -2172,6 +2295,13 @@ declare module '@tanstack/react-router' {
       path: '/posting-centre'
       fullPath: '/posting-centre'
       preLoaderRoute: typeof AuthenticatedPostingCentreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pos-workers': {
+      id: '/_authenticated/pos-workers'
+      path: '/pos-workers'
+      fullPath: '/pos-workers'
+      preLoaderRoute: typeof AuthenticatedPosWorkersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos': {
@@ -2517,6 +2647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_worker/w/': {
+      id: '/_worker/w/'
+      path: '/w'
+      fullPath: '/w/'
+      preLoaderRoute: typeof WorkerWIndexRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
     '/_authenticated/restaurant/': {
       id: '/_authenticated/restaurant/'
       path: '/'
@@ -2565,6 +2702,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/printing/jobs'
       preLoaderRoute: typeof ApiPrintingJobsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_worker/w/tables': {
+      id: '/_worker/w/tables'
+      path: '/w/tables'
+      fullPath: '/w/tables'
+      preLoaderRoute: typeof WorkerWTablesRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/stock': {
+      id: '/_worker/w/stock'
+      path: '/w/stock'
+      fullPath: '/w/stock'
+      preLoaderRoute: typeof WorkerWStockRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/reports': {
+      id: '/_worker/w/reports'
+      path: '/w/reports'
+      fullPath: '/w/reports'
+      preLoaderRoute: typeof WorkerWReportsRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/pos': {
+      id: '/_worker/w/pos'
+      path: '/w/pos'
+      fullPath: '/w/pos'
+      preLoaderRoute: typeof WorkerWPosRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/orders': {
+      id: '/_worker/w/orders'
+      path: '/w/orders'
+      fullPath: '/w/orders'
+      preLoaderRoute: typeof WorkerWOrdersRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/kitchen': {
+      id: '/_worker/w/kitchen'
+      path: '/w/kitchen'
+      fullPath: '/w/kitchen'
+      preLoaderRoute: typeof WorkerWKitchenRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/cash': {
+      id: '/_worker/w/cash'
+      path: '/w/cash'
+      fullPath: '/w/cash'
+      preLoaderRoute: typeof WorkerWCashRouteImport
+      parentRoute: typeof WorkerRouteRoute
     }
     '/_authenticated/teaching-materials/new': {
       id: '/_authenticated/teaching-materials/new'
@@ -3186,6 +3372,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRouteWithChildren
+  AuthenticatedPosWorkersRoute: typeof AuthenticatedPosWorkersRoute
   AuthenticatedPostingCentreRoute: typeof AuthenticatedPostingCentreRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedPrintingSettingsRoute: typeof AuthenticatedPrintingSettingsRoute
@@ -3280,6 +3467,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
   AuthenticatedPosRoute: AuthenticatedPosRouteWithChildren,
+  AuthenticatedPosWorkersRoute: AuthenticatedPosWorkersRoute,
   AuthenticatedPostingCentreRoute: AuthenticatedPostingCentreRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedPrintingSettingsRoute: AuthenticatedPrintingSettingsRoute,
@@ -3331,9 +3519,36 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface WorkerRouteRouteChildren {
+  WorkerWCashRoute: typeof WorkerWCashRoute
+  WorkerWKitchenRoute: typeof WorkerWKitchenRoute
+  WorkerWOrdersRoute: typeof WorkerWOrdersRoute
+  WorkerWPosRoute: typeof WorkerWPosRoute
+  WorkerWReportsRoute: typeof WorkerWReportsRoute
+  WorkerWStockRoute: typeof WorkerWStockRoute
+  WorkerWTablesRoute: typeof WorkerWTablesRoute
+  WorkerWIndexRoute: typeof WorkerWIndexRoute
+}
+
+const WorkerRouteRouteChildren: WorkerRouteRouteChildren = {
+  WorkerWCashRoute: WorkerWCashRoute,
+  WorkerWKitchenRoute: WorkerWKitchenRoute,
+  WorkerWOrdersRoute: WorkerWOrdersRoute,
+  WorkerWPosRoute: WorkerWPosRoute,
+  WorkerWReportsRoute: WorkerWReportsRoute,
+  WorkerWStockRoute: WorkerWStockRoute,
+  WorkerWTablesRoute: WorkerWTablesRoute,
+  WorkerWIndexRoute: WorkerWIndexRoute,
+}
+
+const WorkerRouteRouteWithChildren = WorkerRouteRoute._addFileChildren(
+  WorkerRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  WorkerRouteRoute: WorkerRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
