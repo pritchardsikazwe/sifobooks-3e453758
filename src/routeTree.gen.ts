@@ -20,6 +20,7 @@ import { Route as AuthenticatedTuckshopRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedTimesheetRouteImport } from './routes/_authenticated/timesheet'
 import { Route as AuthenticatedTimeEntriesRouteImport } from './routes/_authenticated/time-entries'
 import { Route as AuthenticatedTeachingMaterialsRouteImport } from './routes/_authenticated/teaching-materials'
+import { Route as AuthenticatedSystemHealthRouteImport } from './routes/_authenticated/system-health'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
@@ -210,6 +211,12 @@ const AuthenticatedTeachingMaterialsRoute =
   AuthenticatedTeachingMaterialsRouteImport.update({
     id: '/teaching-materials',
     path: '/teaching-materials',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSystemHealthRoute =
+  AuthenticatedSystemHealthRouteImport.update({
+    id: '/system-health',
+    path: '/system-health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
@@ -1050,6 +1057,7 @@ export interface FileRoutesByFullPath {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/system-health': typeof AuthenticatedSystemHealthRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
@@ -1192,6 +1200,7 @@ export interface FileRoutesByTo {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/system-health': typeof AuthenticatedSystemHealthRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
@@ -1341,6 +1350,7 @@ export interface FileRoutesById {
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
+  '/_authenticated/system-health': typeof AuthenticatedSystemHealthRoute
   '/_authenticated/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/_authenticated/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/_authenticated/timesheet': typeof AuthenticatedTimesheetRoute
@@ -1490,6 +1500,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
+    | '/system-health'
     | '/teaching-materials'
     | '/time-entries'
     | '/timesheet'
@@ -1632,6 +1643,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/super-admin'
     | '/suppliers'
+    | '/system-health'
     | '/teaching-materials'
     | '/time-entries'
     | '/timesheet'
@@ -1780,6 +1792,7 @@ export interface FileRouteTypes {
     | '/_authenticated/subscription'
     | '/_authenticated/super-admin'
     | '/_authenticated/suppliers'
+    | '/_authenticated/system-health'
     | '/_authenticated/teaching-materials'
     | '/_authenticated/time-entries'
     | '/_authenticated/timesheet'
@@ -1937,6 +1950,13 @@ declare module '@tanstack/react-router' {
       path: '/teaching-materials'
       fullPath: '/teaching-materials'
       preLoaderRoute: typeof AuthenticatedTeachingMaterialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/system-health': {
+      id: '/_authenticated/system-health'
+      path: '/system-health'
+      fullPath: '/system-health'
+      preLoaderRoute: typeof AuthenticatedSystemHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/suppliers': {
@@ -3141,6 +3161,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
+  AuthenticatedSystemHealthRoute: typeof AuthenticatedSystemHealthRoute
   AuthenticatedTeachingMaterialsRoute: typeof AuthenticatedTeachingMaterialsRouteWithChildren
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedTimesheetRoute: typeof AuthenticatedTimesheetRoute
@@ -3234,6 +3255,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
+  AuthenticatedSystemHealthRoute: AuthenticatedSystemHealthRoute,
   AuthenticatedTeachingMaterialsRoute:
     AuthenticatedTeachingMaterialsRouteWithChildren,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
