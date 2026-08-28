@@ -421,10 +421,31 @@ export async function buildDocPdf(doc: PdfDoc) {
   return pdf;
 }
 
+/**
+ * Opens the document for the user without a browser popup or print dialog.
+ * Silent printing goes through printAccountingPdf() instead.
+ */
 export async function previewPdf(doc: PdfDoc) {
   const pdf = await buildDocPdf(doc);
-  const url = pdf.output("bloburl");
-  window.open(url as unknown as string, "_blank", "noopener");
+  pdf.save(`${doc.kind}-${doc.number}.pdf`);
+}
+
+/** Silent print of an accounting document via the SifoPrint agent / network gateway. */
+export async function printAccountingPdf(doc: PdfDoc) {
+  const pdf = await buildDocPdf(doc);
+  const base64 = String(pdf.output("datauristring")).split(",")[1] ?? "";
+  const { printPdf } = await import("@/services/universalPrintService");
+  const { getPrinterForType } = await import("@/services/printerConfiguration");
+  const { savePrintQueueJob } = await import("@/services/printQueue");
+  try {
+    await printPdf(base64, getPrinterForType("pdf"), 1, `${doc.kind}-${doc.number}.pdf`);
+  } catch (error: any) {
+    console.error("Accounting PDF print failed:", error);
+    await savePrintQueueJob({
+      type: "pdf", title: `${doc.kind} ${doc.number}`, status: "queued",
+      error: String(error?.message ?? error),
+    });
+  }
 }
 
 export async function downloadPdf(doc: PdfDoc) {
