@@ -411,26 +411,30 @@ function Page() {
               </Card>
             ) : screen === "orders" ? (
               <Card>
-                <H2>Open checks / orders</H2>
-                <Table head={["Check", "Type", "Table", "Items", "Total", "Status", ""]}>
+                <H2>Checks — {openOrders.length} open • {heldOrders.length} held</H2>
+                <Table head={["Check", "Type", "Table", "Server", "Items", "Total", "Status", ""]}>
                   {orders.slice(0, 50).map(o => (
                     <tr key={o.id} className="border-b border-white/10">
                       <Td>{o.order_no}</Td>
                       <Td>{o.order_type}</Td>
                       <Td>{tables.find(t => t.id === o.table_id)?.name ?? "—"}</Td>
+                      <Td>{(o as any).server_name ?? "—"}</Td>
                       <Td>{items.filter(i => i.order_id === o.id).reduce((s, i) => s + Number(i.qty), 0)}</Td>
                       <Td className="font-extrabold">{fmtMoney(Number(o.total))}</Td>
-                      <Td><Pill tone={o.status === "paid" ? "green" : "orange"}>{o.status}</Pill></Td>
-                      <Td>{o.status === "open" && (
-                        <div className="flex gap-1">
-                          <MiniBtn onClick={() => settle(o, "Cash")}>Cash</MiniBtn>
+                      <Td><Pill tone={o.status === "paid" ? "green" : o.status === "void" ? "red" : "orange"}>{o.status}</Pill></Td>
+                      <Td>{(o.status === "open" || o.status === "held") && (
+                        <div className="flex flex-wrap gap-1">
+                          <MiniBtn onClick={() => recall(o)}>Recall</MiniBtn>
+                          <MiniBtn onClick={() => setTender({ method: "Cash", order: o, amount: Number(o.total) })}>Cash</MiniBtn>
                           <MiniBtn onClick={() => settle(o, "Mobile Money")}>MoMo</MiniBtn>
+                          <MiniBtn onClick={() => setPin({ order: o })}>Void</MiniBtn>
                         </div>
                       )}</Td>
                     </tr>
                   ))}
                 </Table>
               </Card>
+
             ) : screen === "kitchen" ? (
               <Card>
                 <H2>Kitchen display system</H2>
