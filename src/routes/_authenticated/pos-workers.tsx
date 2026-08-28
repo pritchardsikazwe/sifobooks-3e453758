@@ -94,7 +94,8 @@ function PosWorkers() {
     const pin = window.prompt("Terminal PIN (4-8 digits, blank to remove)", current ?? "");
     if (pin === null) return;
     if (pin && !/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
-    const { error } = await supabase.from("employee_pos_permissions").update({ pin: pin || null }).eq("id", id);
+    const { error } = await supabase.from("employee_pos_permissions")
+      .update({ pin: pin || null, pin_locked: false, pin_set_at: pin ? new Date().toISOString() : null }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(pin ? "PIN updated" : "PIN removed"); load();
   };
