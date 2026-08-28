@@ -1,9 +1,10 @@
 // Central module registry. Drives sidebar visibility, /modules install page, and route guards.
 
 export type ModuleCategory =
-  | "Core" | "Sales" | "Purchases" | "Finance" | "Inventory"
-  | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
-  | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Admin";
+  | "Core" | "Sales" | "Purchases" | "Inventory" | "POS" | "Restaurant"
+  | "Finance" | "HR & Payroll" | "CRM" | "Projects & Service" | "Reports"
+  | "School ERP" | "NGO" | "Mining" | "Help & Learning" | "Administration"
+  | "Platform";
 
 export type ModuleRoute = { title: string; url: string; iconName?: string; superAdminOnly?: boolean };
 
