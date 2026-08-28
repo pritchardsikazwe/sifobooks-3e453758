@@ -170,7 +170,7 @@ export const MODULES: ModuleDef[] = [
     ] },
 
   // ---------- RETAIL POS ----------
-  { key: "retail_pos", label: "Retail POS", category: "Inventory", defaultInstalled: true,
+  { key: "retail_pos", label: "Retail POS", category: "POS", defaultInstalled: true,
     description: "Fast touchscreen shop till: barcode scanning, product grid, split payments, shifts, cash drawer and automatic stock & GL posting.",
     routes: [
       { title: "SifoPOS Hub", url: "/sifopos", iconName: "LayoutGrid" },
@@ -178,9 +178,20 @@ export const MODULES: ModuleDef[] = [
     ] },
 
   // ---------- RESTAURANT ----------
-  { key: "restaurant", label: "Restaurant POS", category: "Inventory", defaultInstalled: false,
+  { key: "restaurant", label: "Restaurant", category: "Restaurant", defaultInstalled: false,
     description: "Touch POS for dine-in, bar and takeaway with tables, kitchen display, menu costing, analytics and end-of-day cash-up.",
-    routes: [{ title: "Restaurant POS", url: "/restaurant", iconName: "UtensilsCrossed" }] },
+    routes: [
+      { title: "Command Centre", url: "/restaurant", iconName: "UtensilsCrossed" },
+      { title: "Restaurant POS", url: "/restaurant/pos", iconName: "ShoppingBag" },
+      { title: "Tables & Floor", url: "/restaurant/tables", iconName: "LayoutGrid" },
+      { title: "Reservations", url: "/restaurant/reservations", iconName: "CalendarDays" },
+      { title: "Kitchen Display", url: "/restaurant/kitchen", iconName: "ChefHat" },
+      { title: "Delivery Dispatch", url: "/restaurant/dispatch", iconName: "Bike" },
+      { title: "Menu & Recipes", url: "/restaurant/menu", iconName: "BookOpen" },
+      { title: "Cash Drawers", url: "/restaurant/cash", iconName: "Wallet" },
+      { title: "End of Day", url: "/restaurant/end-of-day", iconName: "CalendarClock" },
+      { title: "Restaurant Reports", url: "/restaurant/reports", iconName: "BarChart3" },
+    ] },
 
 
 
