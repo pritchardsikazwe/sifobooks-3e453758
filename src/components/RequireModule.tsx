@@ -26,12 +26,12 @@ export function RequireModule({
     return (
       <div className="max-w-lg mx-auto mt-16 p-8 border rounded-xl bg-card text-center">
         <PackageOpen className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-        <h2 className="text-xl font-semibold">{m?.label ?? "Module"} is not installed</h2>
+        <h2 className="text-xl font-semibold">{m?.label ?? "Module"} is not enabled</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          {m?.description ?? "Install this module to access these features."}
+          {m?.description ?? "Enable this area from Industry & Business to access these features."}
         </p>
         <Button asChild className="mt-4">
-          <Link to="/modules">Go to Modules</Link>
+          <Link to="/industry">Industry & Business</Link>
         </Button>
       </div>
     );
