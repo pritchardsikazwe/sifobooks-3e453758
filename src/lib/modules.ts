@@ -216,6 +216,7 @@ export const MODULES: ModuleDef[] = [
       { title: "Devices & Printing", url: "/printing-settings", iconName: "Printer" },
       { title: "Subscription", url: "/subscription", iconName: "Sparkles" },
       { title: "Audit Logs", url: "/audit-logs", iconName: "ScrollText" },
+      { title: "System Health", url: "/system-health", iconName: "Activity" },
       { title: "Notifications", url: "/notifications", iconName: "Bell" },
     ] },
 
