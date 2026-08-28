@@ -6039,40 +6039,70 @@ export type Database = {
       }
       print_devices: {
         Row: {
+          agent_seen_at: string | null
+          agent_status: string
+          agent_url: string | null
+          auto_print_kitchen: boolean
+          auto_print_receipt: boolean
+          branch_id: string | null
           branch_name: string | null
+          company_id: string | null
           company_name: string | null
           created_at: string
           device_id: string
           device_type: string
           id: string
           last_seen_at: string
+          open_cash_drawer: boolean
           printer_config: Json
+          queue_when_offline: boolean
+          retry_failed: boolean
           terminal_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          agent_seen_at?: string | null
+          agent_status?: string
+          agent_url?: string | null
+          auto_print_kitchen?: boolean
+          auto_print_receipt?: boolean
+          branch_id?: string | null
           branch_name?: string | null
+          company_id?: string | null
           company_name?: string | null
           created_at?: string
           device_id: string
           device_type?: string
           id?: string
           last_seen_at?: string
+          open_cash_drawer?: boolean
           printer_config?: Json
+          queue_when_offline?: boolean
+          retry_failed?: boolean
           terminal_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          agent_seen_at?: string | null
+          agent_status?: string
+          agent_url?: string | null
+          auto_print_kitchen?: boolean
+          auto_print_receipt?: boolean
+          branch_id?: string | null
           branch_name?: string | null
+          company_id?: string | null
           company_name?: string | null
           created_at?: string
           device_id?: string
           device_type?: string
           id?: string
           last_seen_at?: string
+          open_cash_drawer?: boolean
           printer_config?: Json
+          queue_when_offline?: boolean
+          retry_failed?: boolean
           terminal_name?: string | null
           updated_at?: string
           user_id?: string
@@ -6081,45 +6111,188 @@ export type Database = {
       }
       print_jobs: {
         Row: {
+          attempt_count: number
+          branch_id: string | null
+          company_id: string | null
+          copies: number
           created_at: string
           device_id: string | null
           error: string | null
           id: string
+          job_key: string | null
           job_type: string
           payload: Json | null
+          printed_at: string | null
+          printer_id: string | null
+          printer_name: string | null
           reference_id: string | null
           status: string
+          terminal_name: string | null
           title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          attempt_count?: number
+          branch_id?: string | null
+          company_id?: string | null
+          copies?: number
           created_at?: string
           device_id?: string | null
           error?: string | null
           id?: string
+          job_key?: string | null
           job_type: string
           payload?: Json | null
+          printed_at?: string | null
+          printer_id?: string | null
+          printer_name?: string | null
           reference_id?: string | null
           status?: string
+          terminal_name?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          attempt_count?: number
+          branch_id?: string | null
+          company_id?: string | null
+          copies?: number
           created_at?: string
           device_id?: string | null
           error?: string | null
           id?: string
+          job_key?: string | null
           job_type?: string
           payload?: Json | null
+          printed_at?: string | null
+          printer_id?: string | null
+          printer_name?: string | null
           reference_id?: string | null
           status?: string
+          terminal_name?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      print_printers: {
+        Row: {
+          branch_id: string | null
+          company_id: string | null
+          connection: string
+          created_at: string
+          device_id: string | null
+          id: string
+          ip_address: string | null
+          is_default: boolean
+          is_system_default: boolean
+          label: string | null
+          last_seen_at: string | null
+          name: string
+          port: number | null
+          printer_type: string
+          protocol: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id?: string | null
+          connection?: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          is_default?: boolean
+          is_system_default?: boolean
+          label?: string | null
+          last_seen_at?: string | null
+          name: string
+          port?: number | null
+          printer_type?: string
+          protocol?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string | null
+          connection?: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          is_default?: boolean
+          is_system_default?: boolean
+          label?: string | null
+          last_seen_at?: string | null
+          name?: string
+          port?: number | null
+          printer_type?: string
+          protocol?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      print_routing: {
+        Row: {
+          branch_id: string | null
+          company_id: string | null
+          copies: number
+          created_at: string
+          device_id: string | null
+          enabled: boolean
+          id: string
+          job_type: string
+          printer_id: string | null
+          printer_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id?: string | null
+          copies?: number
+          created_at?: string
+          device_id?: string | null
+          enabled?: boolean
+          id?: string
+          job_type: string
+          printer_id?: string | null
+          printer_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string | null
+          copies?: number
+          created_at?: string
+          device_id?: string | null
+          enabled?: boolean
+          id?: string
+          job_type?: string
+          printer_id?: string | null
+          printer_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_routing_printer_id_fkey"
+            columns: ["printer_id"]
+            isOneToOne: false
+            referencedRelation: "print_printers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
