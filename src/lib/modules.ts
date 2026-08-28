@@ -171,7 +171,10 @@ export const MODULES: ModuleDef[] = [
   // ---------- RETAIL POS ----------
   { key: "retail_pos", label: "Retail POS", category: "Inventory", defaultInstalled: true,
     description: "Fast touchscreen shop till: barcode scanning, product grid, split payments, shifts, cash drawer and automatic stock & GL posting.",
-    routes: [{ title: "Retail POS", url: "/pos", iconName: "ShoppingBag" }] },
+    routes: [
+      { title: "SifoPOS Hub", url: "/sifopos", iconName: "LayoutGrid" },
+      { title: "Retail POS", url: "/pos", iconName: "ShoppingBag" },
+    ] },
 
   // ---------- RESTAURANT ----------
   { key: "restaurant", label: "Restaurant POS", category: "Inventory", defaultInstalled: false,

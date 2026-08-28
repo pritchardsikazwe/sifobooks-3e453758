@@ -29,6 +29,7 @@ import { Route as AuthenticatedStockCountsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedStockBatchesRouteImport } from './routes/_authenticated/stock-batches'
 import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
 import { Route as AuthenticatedStockRouteImport } from './routes/_authenticated/stock'
+import { Route as AuthenticatedSifoposRouteImport } from './routes/_authenticated/sifopos'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
 import { Route as AuthenticatedSchoolGrantsRouteImport } from './routes/_authenticated/school-grants'
@@ -256,6 +257,11 @@ const AuthenticatedStockAdjustmentsRoute =
 const AuthenticatedStockRoute = AuthenticatedStockRouteImport.update({
   id: '/stock',
   path: '/stock',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSifoposRoute = AuthenticatedSifoposRouteImport.update({
+  id: '/sifopos',
+  path: '/sifopos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
@@ -1013,6 +1019,7 @@ export interface FileRoutesByFullPath {
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/sifopos': typeof AuthenticatedSifoposRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/stock-batches': typeof AuthenticatedStockBatchesRoute
@@ -1151,6 +1158,7 @@ export interface FileRoutesByTo {
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/sifopos': typeof AuthenticatedSifoposRoute
   '/stock': typeof AuthenticatedStockRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/stock-batches': typeof AuthenticatedStockBatchesRoute
@@ -1296,6 +1304,7 @@ export interface FileRoutesById {
   '/_authenticated/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
+  '/_authenticated/sifopos': typeof AuthenticatedSifoposRoute
   '/_authenticated/stock': typeof AuthenticatedStockRoute
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/_authenticated/stock-batches': typeof AuthenticatedStockBatchesRoute
@@ -1441,6 +1450,7 @@ export interface FileRouteTypes {
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
+    | '/sifopos'
     | '/stock'
     | '/stock-adjustments'
     | '/stock-batches'
@@ -1579,6 +1589,7 @@ export interface FileRouteTypes {
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
+    | '/sifopos'
     | '/stock'
     | '/stock-adjustments'
     | '/stock-batches'
@@ -1723,6 +1734,7 @@ export interface FileRouteTypes {
     | '/_authenticated/school-grants'
     | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
+    | '/_authenticated/sifopos'
     | '/_authenticated/stock'
     | '/_authenticated/stock-adjustments'
     | '/_authenticated/stock-batches'
@@ -1950,6 +1962,13 @@ declare module '@tanstack/react-router' {
       path: '/stock'
       fullPath: '/stock'
       preLoaderRoute: typeof AuthenticatedStockRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sifopos': {
+      id: '/_authenticated/sifopos'
+      path: '/sifopos'
+      fullPath: '/sifopos'
+      preLoaderRoute: typeof AuthenticatedSifoposRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/setup': {
@@ -3051,6 +3070,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSchoolGrantsRoute: typeof AuthenticatedSchoolGrantsRoute
   AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
+  AuthenticatedSifoposRoute: typeof AuthenticatedSifoposRoute
   AuthenticatedStockRoute: typeof AuthenticatedStockRoute
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
   AuthenticatedStockBatchesRoute: typeof AuthenticatedStockBatchesRoute
@@ -3141,6 +3161,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSchoolGrantsRoute: AuthenticatedSchoolGrantsRoute,
   AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
+  AuthenticatedSifoposRoute: AuthenticatedSifoposRoute,
   AuthenticatedStockRoute: AuthenticatedStockRoute,
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
   AuthenticatedStockBatchesRoute: AuthenticatedStockBatchesRoute,
