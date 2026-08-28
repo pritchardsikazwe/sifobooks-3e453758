@@ -274,7 +274,7 @@ export function DataTable<T extends Record<string, any>>({
     setSortKey(null);
   };
 
-  const rowPad = density === "compact" ? "py-1.5" : "py-2.5";
+  const rowPad = density === "compact" ? "py-2" : "py-3.5";
 
   return (
     <div className={cn("rounded-lg border border-border bg-card shadow-sm overflow-hidden", className)}>
