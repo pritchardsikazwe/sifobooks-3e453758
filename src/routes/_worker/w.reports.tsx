@@ -50,8 +50,8 @@ function WorkerReports() {
   const endOfDay = async () => {
     if (!can(ctx, "end_of_day")) return toast.error("Only a manager can close the day");
     const { error } = await supabase.from("restaurant_end_of_day").insert({
-      user_id: ctx!.tenantId, business_date: date, gross_sales: gross, tax_total: vat,
-      orders_count: paid.length, status: "closed", closed_by: ctx!.displayName,
+      user_id: ctx!.tenantId, business_date: date, gross_sales: gross, tax: vat,
+      orders_count: paid.length, net_total: gross - vat, status: "closed", approved_by: ctx!.displayName,
     } as any);
     if (error) return toast.error(error.message);
     toast.success("Business day closed — accounting already has the journals");
