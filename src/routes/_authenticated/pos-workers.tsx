@@ -23,16 +23,38 @@ export const Route = createFileRoute("/_authenticated/pos-workers")({
 
 function PosWorkers() {
   const [rows, setRows] = useState<any[]>([]);
+  const [resets, setResets] = useState<any[]>([]);
   const [mode, setMode] = useState<"email" | "id">("email");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
   const invite = useServerFn(invitePosWorker);
 
   const load = async () => {
-    const { data } = await supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false });
+    const [{ data }, { data: rs }] = await Promise.all([
+      supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false }),
+      supabase.from("pos_pin_resets").select("*").in("status", ["pending", "approved"]).order("created_at", { ascending: false }),
+    ]);
     setRows(data ?? []);
+    setResets(rs ?? []);
   };
   useEffect(() => { load(); }, []);
+
+  const approveReset = async (id: string) => {
+    const newPin = window.prompt("Issue a new PIN for this worker (4-8 digits)") ?? "";
+    if (!newPin) return;
+    if (!/^\d{4,8}$/.test(newPin)) return toast.error("PIN must be 4-8 digits");
+    const { error } = await supabase.rpc("approve_pos_pin_reset", { _reset_id: id, _new_pin: newPin });
+    if (error) return toast.error(error.message);
+    toast.success("New PIN issued — the worker must confirm it on the terminal"); load();
+  };
+
+  const denyReset = async (id: string) => {
+    const reason = window.prompt("Reason for declining (optional)") ?? "";
+    const { error } = await supabase.rpc("deny_pos_pin_reset", { _reset_id: id, _reason: reason });
+    if (error) return toast.error(error.message);
+    toast.success("Request declined — terminal stays locked"); load();
+  };
+
 
   const reset = () => setForm({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier", pin: "" });
 
