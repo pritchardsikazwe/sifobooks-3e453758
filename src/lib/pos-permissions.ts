@@ -103,6 +103,9 @@ export async function loadPosContext(): Promise<PosContext | null> {
       displayName: (data.full_name as string) || user.email || "Worker",
       allow: ((data.allow as any) ?? []) as PosFeature[],
       deny: ((data.deny as any) ?? []) as PosFeature[],
+      pin: (data as any).pin ?? null,
+      pinLocked: Boolean((data as any).pin_locked),
+      permissionId: data.id as string,
     };
   }
 
