@@ -2780,6 +2780,7 @@ export type Database = {
           company_id: string | null
           created_at: string
           deny: Json
+          email: string | null
           employee_id: string | null
           full_name: string | null
           id: string
@@ -2795,6 +2796,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           deny?: Json
+          email?: string | null
           employee_id?: string | null
           full_name?: string | null
           id?: string
@@ -2810,6 +2812,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           deny?: Json
+          email?: string | null
           employee_id?: string | null
           full_name?: string | null
           id?: string
