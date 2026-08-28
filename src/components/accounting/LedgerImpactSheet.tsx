@@ -75,3 +75,30 @@ export function LedgerImpactSheet({
     </Sheet>
   );
 }
+
+/** Inline accounting-impact block for detail drawers and full-page documents. */
+export function DocumentImpact({
+  kind,
+  reference,
+  entryId,
+  className,
+}: {
+  kind: FlowKind;
+  reference: string | null;
+  entryId?: string | null;
+  className?: string;
+}) {
+  const { entryId: resolved, loading } = useJournalByReference(reference, entryId);
+  return (
+    <div className={className}>
+      <div className="space-y-3">
+        <PostingFlow kind={kind} reference={reference} activeStep={resolved ? undefined : 0} />
+        {loading ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <JournalImpact entryId={resolved} />
+        )}
+      </div>
+    </div>
+  );
+}
