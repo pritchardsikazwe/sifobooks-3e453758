@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { invitePosWorker } from "@/lib/pos-workers.functions";
 import { POS_ROLES, POS_FEATURES, POS_MATRIX, type PosRole } from "@/lib/pos-permissions";
 
 export const Route = createFileRoute("/_authenticated/pos-workers")({
