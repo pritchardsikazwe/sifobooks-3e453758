@@ -95,14 +95,14 @@ function Shell() {
       <div className="min-h-screen flex w-full bg-background text-foreground">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b border-border bg-card/90 backdrop-blur-xl flex items-center gap-3 px-3 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          <header className="h-14 w-full min-w-0 border-b border-border bg-card/90 backdrop-blur-xl flex items-center gap-1.5 sm:gap-3 px-2 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
+            <SidebarTrigger className="shrink-0 text-muted-foreground hover:text-foreground" />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.history.back()}
               title="Back"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="hidden sm:inline-flex h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -111,7 +111,7 @@ function Shell() {
               <span className="text-border">/</span>
               <span className="text-muted-foreground">{crumb}</span>
             </div>
-            <div className="ml-1 flex items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
+            <div className="flex min-w-0 items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
             <button
               onClick={() => setCmdOpen(true)}
               className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 hover:bg-card hover:border-primary/30 transition text-left text-sm text-muted-foreground"
@@ -123,23 +123,26 @@ function Shell() {
               </kbd>
             </button>
             <div className="flex-1 md:hidden" />
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
               <ConnectionIndicator />
-              <SifoAssistantButton />
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden sm:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>
+              <div className="hidden sm:flex items-center gap-1">
+                <SifoAssistantButton />
+                <ThemeToggle />
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>
+              </div>
               <QuickCreate />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account">
                     <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="truncate">{userEmail || "Signed in"}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem className="sm:hidden" onClick={() => router.history.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Back</DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/setup"><SettingsIcon className="h-4 w-4 mr-2" /> Settings</Link></DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="h-4 w-4 mr-2" /> Sign out
@@ -148,6 +151,8 @@ function Shell() {
               </DropdownMenu>
             </div>
           </header>
+
+
 
 
 
