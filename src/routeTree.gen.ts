@@ -162,6 +162,7 @@ import { Route as AuthenticatedLearnPayrollRouteImport } from './routes/_authent
 import { Route as AuthenticatedLearnNewCompanyRouteImport } from './routes/_authenticated/learn.new-company'
 import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './routes/_authenticated/learn.bank-reconciliation'
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
+import { Route as AuthenticatedJournalEntryIdRouteImport } from './routes/_authenticated/journal-entry.$id'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -1015,6 +1016,12 @@ const AuthenticatedLearnAccountingBasicsRoute =
     path: '/learn/accounting-basics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJournalEntryIdRoute =
+  AuthenticatedJournalEntryIdRouteImport.update({
+    id: '/journal-entry/$id',
+    path: '/journal-entry/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInvoicesNewRoute =
   AuthenticatedInvoicesNewRouteImport.update({
     id: '/new',
@@ -1141,6 +1148,7 @@ export interface FileRoutesByFullPath {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
   '/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
@@ -1295,6 +1303,7 @@ export interface FileRoutesByTo {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
   '/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
@@ -1457,6 +1466,7 @@ export interface FileRoutesById {
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
+  '/_authenticated/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
   '/_authenticated/learn/bank-reconciliation': typeof AuthenticatedLearnBankReconciliationRoute
   '/_authenticated/learn/new-company': typeof AuthenticatedLearnNewCompanyRoute
@@ -1618,6 +1628,7 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/invoices/new'
+    | '/journal-entry/$id'
     | '/learn/accounting-basics'
     | '/learn/bank-reconciliation'
     | '/learn/new-company'
@@ -1772,6 +1783,7 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/invoices/new'
+    | '/journal-entry/$id'
     | '/learn/accounting-basics'
     | '/learn/bank-reconciliation'
     | '/learn/new-company'
@@ -1933,6 +1945,7 @@ export interface FileRouteTypes {
     | '/_authenticated/workshops'
     | '/_authenticated/customers/$id'
     | '/_authenticated/invoices/new'
+    | '/_authenticated/journal-entry/$id'
     | '/_authenticated/learn/accounting-basics'
     | '/_authenticated/learn/bank-reconciliation'
     | '/_authenticated/learn/new-company'
@@ -3088,6 +3101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnAccountingBasicsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/journal-entry/$id': {
+      id: '/_authenticated/journal-entry/$id'
+      path: '/journal-entry/$id'
+      fullPath: '/journal-entry/$id'
+      preLoaderRoute: typeof AuthenticatedJournalEntryIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invoices/new': {
       id: '/_authenticated/invoices/new'
       path: '/new'
@@ -3407,6 +3427,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedJournalEntryIdRoute: typeof AuthenticatedJournalEntryIdRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
   AuthenticatedLearnBankReconciliationRoute: typeof AuthenticatedLearnBankReconciliationRoute
   AuthenticatedLearnNewCompanyRoute: typeof AuthenticatedLearnNewCompanyRoute
@@ -3504,6 +3525,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedJournalEntryIdRoute: AuthenticatedJournalEntryIdRoute,
   AuthenticatedLearnAccountingBasicsRoute:
     AuthenticatedLearnAccountingBasicsRoute,
   AuthenticatedLearnBankReconciliationRoute:

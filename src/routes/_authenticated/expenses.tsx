@@ -344,8 +344,19 @@ function ExpensesPage() {
             {drawer.notes && (
               <DrawerSection title="Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{drawer.notes}</p></DrawerSection>
             )}
+            <DrawerSection title="Accounting impact">
+              <div className="space-y-3">
+                <PostingFlow
+                  kind="expense"
+                  reference={drawer.expense_number ? `EXP:${drawer.expense_number}` : null}
+                  activeStep={drawer.journal_entry_id ? undefined : 0}
+                />
+                <JournalImpact entryId={drawer.journal_entry_id} />
+              </div>
+            </DrawerSection>
           </div>
         )}
+
       </DetailDrawer>
     </div>
   );
