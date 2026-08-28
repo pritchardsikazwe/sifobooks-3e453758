@@ -5117,6 +5117,415 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_favorites: {
+        Row: {
+          created_at: string
+          group_name: string
+          id: string
+          item_id: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          item_id: string
+          sort_order?: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          item_id?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_favorites_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          reference: string | null
+          sale_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          reference?: string | null
+          sale_id: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          reference?: string | null
+          sale_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_registers: {
+        Row: {
+          branch: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_sale_items: {
+        Row: {
+          created_at: string
+          discount: number
+          id: string
+          item_id: string | null
+          line_total: number
+          name: string
+          note: string | null
+          price: number
+          qty: number
+          sale_id: string
+          sku: string | null
+          tax_rate: number
+          unit_cost: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount?: number
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name: string
+          note?: string | null
+          price?: number
+          qty?: number
+          sale_id: string
+          sku?: string | null
+          tax_rate?: number
+          unit_cost?: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          discount?: number
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name?: string
+          note?: string | null
+          price?: number
+          qty?: number
+          sale_id?: string
+          sku?: string | null
+          tax_rate?: number
+          unit_cost?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sale_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sales: {
+        Row: {
+          change_due: number
+          client_ref: string | null
+          cost_total: number
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          discount: number
+          id: string
+          journal_entry_id: string | null
+          note: string | null
+          paid: number
+          price_level: string
+          refund_of: string | null
+          register_id: string | null
+          sale_no: string | null
+          shift_id: string | null
+          sold_at: string
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+          user_id: string
+          void_reason: string | null
+        }
+        Insert: {
+          change_due?: number
+          client_ref?: string | null
+          cost_total?: number
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          discount?: number
+          id?: string
+          journal_entry_id?: string | null
+          note?: string | null
+          paid?: number
+          price_level?: string
+          refund_of?: string | null
+          register_id?: string | null
+          sale_no?: string | null
+          shift_id?: string | null
+          sold_at?: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          void_reason?: string | null
+        }
+        Update: {
+          change_due?: number
+          client_ref?: string | null
+          cost_total?: number
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          discount?: number
+          id?: string
+          journal_entry_id?: string | null
+          note?: string | null
+          paid?: number
+          price_level?: string
+          refund_of?: string | null
+          register_id?: string | null
+          sale_no?: string | null
+          shift_id?: string | null
+          sold_at?: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "pos_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "pos_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_settings: {
+        Row: {
+          allow_negative_stock: boolean
+          allow_price_change: boolean
+          auto_new_sale: boolean
+          auto_print_receipt: boolean
+          created_at: string
+          default_customer: string
+          default_payment: string
+          default_price_level: string
+          enable_fast_sellers: boolean
+          enable_quick_discounts: boolean
+          enable_quick_qty: boolean
+          products_per_row: number
+          receipt_footer: string | null
+          show_images: boolean
+          show_sku: boolean
+          show_stock: boolean
+          silent_print: boolean
+          tax_inclusive: boolean
+          tax_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_negative_stock?: boolean
+          allow_price_change?: boolean
+          auto_new_sale?: boolean
+          auto_print_receipt?: boolean
+          created_at?: string
+          default_customer?: string
+          default_payment?: string
+          default_price_level?: string
+          enable_fast_sellers?: boolean
+          enable_quick_discounts?: boolean
+          enable_quick_qty?: boolean
+          products_per_row?: number
+          receipt_footer?: string | null
+          show_images?: boolean
+          show_sku?: boolean
+          show_stock?: boolean
+          silent_print?: boolean
+          tax_inclusive?: boolean
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          allow_negative_stock?: boolean
+          allow_price_change?: boolean
+          auto_new_sale?: boolean
+          auto_print_receipt?: boolean
+          created_at?: string
+          default_customer?: string
+          default_payment?: string
+          default_price_level?: string
+          enable_fast_sellers?: boolean
+          enable_quick_discounts?: boolean
+          enable_quick_qty?: boolean
+          products_per_row?: number
+          receipt_footer?: string | null
+          show_images?: boolean
+          show_sku?: boolean
+          show_stock?: boolean
+          silent_print?: boolean
+          tax_inclusive?: boolean
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_shifts: {
+        Row: {
+          actual_cash: number | null
+          cash_in: number
+          cash_out: number
+          cashier_name: string | null
+          closed_at: string | null
+          created_at: string
+          expected_cash: number
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_float: number
+          register_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          variance: number | null
+        }
+        Insert: {
+          actual_cash?: number | null
+          cash_in?: number
+          cash_out?: number
+          cashier_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          expected_cash?: number
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_float?: number
+          register_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          variance?: number | null
+        }
+        Update: {
+          actual_cash?: number | null
+          cash_in?: number
+          cash_out?: number
+          cashier_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          expected_cash?: number
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_float?: number
+          register_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_shifts_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "pos_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positions: {
         Row: {
           company_id: string
@@ -8623,6 +9032,7 @@ export type Database = {
       }
       close_month: { Args: { _month: number; _year: number }; Returns: Json }
       close_year: { Args: { _year: number }; Returns: Json }
+      complete_pos_sale: { Args: { _sale_id: string }; Returns: string }
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
