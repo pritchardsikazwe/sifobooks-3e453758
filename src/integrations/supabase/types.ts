@@ -5999,6 +5999,184 @@ export type Database = {
           },
         ]
       }
+      restaurant_menu_items: {
+        Row: {
+          active: boolean
+          category: string
+          cost: number
+          created_at: string
+          id: string
+          name: string
+          price: number
+          station: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          name: string
+          price?: number
+          station?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          station?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      restaurant_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string
+          kds_status: string
+          notes: string | null
+          order_id: string
+          price: number
+          qty: number
+          station: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name: string
+          kds_status?: string
+          notes?: string | null
+          order_id: string
+          price?: number
+          qty?: number
+          station?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string
+          kds_status?: string
+          notes?: string | null
+          order_id?: string
+          price?: number
+          qty?: number
+          station?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_orders: {
+        Row: {
+          business_date: string
+          closed_at: string | null
+          discount: number
+          guests: number
+          id: string
+          opened_at: string
+          order_no: string | null
+          order_type: string
+          payment_method: string | null
+          server_name: string | null
+          status: string
+          subtotal: number
+          table_id: string | null
+          tax: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          business_date?: string
+          closed_at?: string | null
+          discount?: number
+          guests?: number
+          id?: string
+          opened_at?: string
+          order_no?: string | null
+          order_type?: string
+          payment_method?: string | null
+          server_name?: string | null
+          status?: string
+          subtotal?: number
+          table_id?: string | null
+          tax?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          business_date?: string
+          closed_at?: string | null
+          discount?: number
+          guests?: number
+          id?: string
+          opened_at?: string
+          order_no?: string | null
+          order_type?: string
+          payment_method?: string | null
+          server_name?: string | null
+          status?: string
+          subtotal?: number
+          table_id?: string | null
+          tax?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_tables: {
+        Row: {
+          area: string
+          created_at: string
+          id: string
+          name: string
+          seats: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          area?: string
+          created_at?: string
+          id?: string
+          name: string
+          seats?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          id?: string
+          name?: string
+          seats?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       role_module_permissions: {
         Row: {
           can_manage: boolean
