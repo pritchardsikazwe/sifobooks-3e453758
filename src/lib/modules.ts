@@ -83,6 +83,9 @@ export const MODULES: ModuleDef[] = [
       { title: "Items", url: "/stock", iconName: "Boxes" },
       { title: "Warehouses", url: "/warehouses", iconName: "Warehouse" },
       { title: "Stock Adjustments", url: "/stock-adjustments", iconName: "ClipboardEdit" },
+      { title: "Stock Counts", url: "/stock-counts", iconName: "ClipboardList" },
+      { title: "Batches & Expiry", url: "/stock-batches", iconName: "Layers" },
+      { title: "Serial Numbers", url: "/stock-serials", iconName: "Barcode" },
       { title: "Inventory Sheets", url: "/inventory-sheets", iconName: "ClipboardList" },
     ] },
 
