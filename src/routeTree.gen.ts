@@ -62,6 +62,7 @@ import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedLaunchRouteImport } from './routes/_authenticated/launch'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
@@ -440,6 +441,11 @@ const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
 const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLaunchRoute = AuthenticatedLaunchRouteImport.update({
+  id: '/launch',
+  path: '/launch',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedJournalEntriesRoute =
@@ -1001,6 +1007,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/launch': typeof AuthenticatedLaunchRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/loans': typeof AuthenticatedLoansRoute
@@ -1145,6 +1152,7 @@ export interface FileRoutesByTo {
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/launch': typeof AuthenticatedLaunchRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/loans': typeof AuthenticatedLoansRoute
@@ -1290,6 +1298,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
+  '/_authenticated/launch': typeof AuthenticatedLaunchRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
@@ -1438,6 +1447,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/job-cards'
     | '/journal-entries'
+    | '/launch'
     | '/leads'
     | '/leave'
     | '/loans'
@@ -1582,6 +1592,7 @@ export interface FileRouteTypes {
     | '/inventory-sheets'
     | '/job-cards'
     | '/journal-entries'
+    | '/launch'
     | '/leads'
     | '/leave'
     | '/loans'
@@ -1726,6 +1737,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
     | '/_authenticated/journal-entries'
+    | '/_authenticated/launch'
     | '/_authenticated/leads'
     | '/_authenticated/leave'
     | '/_authenticated/loans'
@@ -2219,6 +2231,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/leads'
       preLoaderRoute: typeof AuthenticatedLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/launch': {
+      id: '/_authenticated/launch'
+      path: '/launch'
+      fullPath: '/launch'
+      preLoaderRoute: typeof AuthenticatedLaunchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/journal-entries': {
@@ -3079,6 +3098,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
+  AuthenticatedLaunchRoute: typeof AuthenticatedLaunchRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
@@ -3170,6 +3190,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
+  AuthenticatedLaunchRoute: AuthenticatedLaunchRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
