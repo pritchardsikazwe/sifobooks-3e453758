@@ -193,7 +193,7 @@ function ReceiptsPage() {
       // Find the JE created by trg_post_receipt (reference = RCT:<number>)
       const { data: je } = await supabase.from("journal_entries")
         .select("id").eq("user_id", r.user_id).eq("reference", `RCT:${r.number}`).maybeSingle();
-      if (je?.id) await reverseJournalEntry(je.id);
+      if (je?.id) await reverseJournalEntry(je.id, reason);
       const { data: u } = await supabase.auth.getUser();
       await supabase.from("receipts").update({
         status: "reversed",

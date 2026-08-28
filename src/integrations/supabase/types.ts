@@ -3806,6 +3806,8 @@ export type Database = {
           id: string
           reference: string | null
           reversal_of: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
           reversed_by: string | null
           status: string
           total_credit: number | null
@@ -3827,6 +3829,8 @@ export type Database = {
           id?: string
           reference?: string | null
           reversal_of?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
           reversed_by?: string | null
           status?: string
           total_credit?: number | null
@@ -3848,6 +3852,8 @@ export type Database = {
           id?: string
           reference?: string | null
           reversal_of?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
           reversed_by?: string | null
           status?: string
           total_credit?: number | null
@@ -9213,6 +9219,10 @@ export type Database = {
         Returns: Json
       }
       run_notification_scans: { Args: never; Returns: Json }
+      safe_reverse_journal_entry: {
+        Args: { _entry_id: string; _reason: string; _reversal_date?: string }
+        Returns: Json
+      }
       user_can_manage_module: {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
