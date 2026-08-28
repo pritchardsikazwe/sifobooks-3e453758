@@ -18,6 +18,9 @@ import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { JournalImpact } from "@/components/accounting/JournalImpact";
+import { PostingFlow } from "@/components/accounting/PostingFlow";
+
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({ meta: [{ title: "Expenses — SifoBooks" }, { name: "robots", content: "noindex" }] }),
