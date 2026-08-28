@@ -69,6 +69,12 @@ function Page() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [tableId, setTableId] = useState<string | null>(null);
   const [guests, setGuests] = useState(2);
+  const [discountPct, setDiscountPct] = useState(0);
+  const [server, setServer] = useState("");
+  const [recalled, setRecalled] = useState<Order | null>(null);
+  const [tender, setTender] = useState<{ method: string; order?: Order; amount: number } | null>(null);
+  const [pin, setPin] = useState<{ order: Order } | null>(null);
+
 
   const load = async () => {
     setLoading(true);
