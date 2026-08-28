@@ -49,6 +49,7 @@ import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authent
 import { Route as AuthenticatedPrintingSettingsRouteImport } from './routes/_authenticated/printing-settings'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPostingCentreRouteImport } from './routes/_authenticated/posting-centre'
+import { Route as AuthenticatedPosWorkersRouteImport } from './routes/_authenticated/pos-workers'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
@@ -383,6 +384,11 @@ const AuthenticatedPostingCentreRoute =
     path: '/posting-centre',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPosWorkersRoute = AuthenticatedPosWorkersRouteImport.update({
+  id: '/pos-workers',
+  path: '/pos-workers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -1098,6 +1104,7 @@ export interface FileRoutesByFullPath {
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRouteWithChildren
+  '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1254,6 +1261,7 @@ export interface FileRoutesByTo {
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRouteWithChildren
+  '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1412,6 +1420,7 @@ export interface FileRoutesById {
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
   '/_authenticated/pos': typeof AuthenticatedPosRouteWithChildren
+  '/_authenticated/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/_authenticated/posting-centre': typeof AuthenticatedPostingCentreRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
   '/_authenticated/printing-settings': typeof AuthenticatedPrintingSettingsRoute
@@ -1572,6 +1581,7 @@ export interface FileRouteTypes {
     | '/period-close'
     | '/petty-cash'
     | '/pos'
+    | '/pos-workers'
     | '/posting-centre'
     | '/posting-wizard'
     | '/printing-settings'
@@ -1728,6 +1738,7 @@ export interface FileRouteTypes {
     | '/period-close'
     | '/petty-cash'
     | '/pos'
+    | '/pos-workers'
     | '/posting-centre'
     | '/posting-wizard'
     | '/printing-settings'
@@ -1885,6 +1896,7 @@ export interface FileRouteTypes {
     | '/_authenticated/period-close'
     | '/_authenticated/petty-cash'
     | '/_authenticated/pos'
+    | '/_authenticated/pos-workers'
     | '/_authenticated/posting-centre'
     | '/_authenticated/posting-wizard'
     | '/_authenticated/printing-settings'
@@ -2283,6 +2295,13 @@ declare module '@tanstack/react-router' {
       path: '/posting-centre'
       fullPath: '/posting-centre'
       preLoaderRoute: typeof AuthenticatedPostingCentreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pos-workers': {
+      id: '/_authenticated/pos-workers'
+      path: '/pos-workers'
+      fullPath: '/pos-workers'
+      preLoaderRoute: typeof AuthenticatedPosWorkersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos': {
@@ -3353,6 +3372,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRouteWithChildren
+  AuthenticatedPosWorkersRoute: typeof AuthenticatedPosWorkersRoute
   AuthenticatedPostingCentreRoute: typeof AuthenticatedPostingCentreRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
   AuthenticatedPrintingSettingsRoute: typeof AuthenticatedPrintingSettingsRoute
@@ -3447,6 +3467,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
   AuthenticatedPosRoute: AuthenticatedPosRouteWithChildren,
+  AuthenticatedPosWorkersRoute: AuthenticatedPosWorkersRoute,
   AuthenticatedPostingCentreRoute: AuthenticatedPostingCentreRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
   AuthenticatedPrintingSettingsRoute: AuthenticatedPrintingSettingsRoute,
