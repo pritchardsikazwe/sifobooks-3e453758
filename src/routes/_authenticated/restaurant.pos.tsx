@@ -188,6 +188,7 @@ function Page() {
   const settle = async (o: Order, method: string) => {
     await supabase.from("restaurant_orders").update({ status: "paid", payment_method: method, closed_at: new Date().toISOString() }).eq("id", o.id);
     if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
+    try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
     toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
     load();
   };
