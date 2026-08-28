@@ -219,8 +219,10 @@ function Page() {
   const cats = useMemo(() => ["All", ...Array.from(new Set(menu.map(m => m.category)))], [menu]);
   const shown = menu.filter(m => m.active && (cat === "All" || m.category === cat));
   const openOrders = orders.filter(o => o.status === "open");
+  const heldOrders = orders.filter(o => o.status === "held");
   const today = new Date().toISOString().slice(0, 10);
-  const todays = orders.filter(o => o.opened_at.slice(0, 10) === today);
+  const todays = orders.filter(o => o.opened_at.slice(0, 10) === today && o.status !== "void");
+
 
   const kpis = {
     orders: todays.length,
