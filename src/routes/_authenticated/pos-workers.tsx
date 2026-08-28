@@ -132,16 +132,22 @@ function PosWorkers() {
       <div className="rounded-2xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
-            <tr>{["Name", "Role", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
+            <tr>{["Name", "Email", "Role", "PIN", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t">
                 <td className="px-3 py-2">{r.full_name ?? r.worker_user_id}</td>
+                <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
                 <td className="px-3 py-2">
                   <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
                     {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
                   </select>
+                </td>
+                <td className="px-3 py-2">
+                  <button className="underline underline-offset-2" onClick={() => setPin(r.id, r.pin)}>
+                    {r.pin ? "••••" : "Set PIN"}
+                  </button>
                 </td>
                 <td className="px-3 py-2">{r.is_active ? "Yes" : "No"}</td>
                 <td className="px-3 py-2 text-right">
@@ -149,7 +155,8 @@ function PosWorkers() {
                 </td>
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">No POS workers yet.</td></tr>}
+            {!rows.length && <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">No POS workers yet.</td></tr>}
+
           </tbody>
         </table>
       </div>
