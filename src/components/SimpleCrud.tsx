@@ -483,9 +483,12 @@ export function SimpleCrud({
           </div>
         }
       />
+
+      <LedgerImpactSheet target={ledger} onOpenChange={o => { if (!o) setLedger(null); }} />
     </div>
   );
 }
+
 
 
 /** Helper: mark a record as posted (or set any status). */
