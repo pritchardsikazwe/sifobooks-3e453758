@@ -248,13 +248,16 @@ function Page() {
     <div className="p-3 sm:p-5">
       <div className="overflow-hidden rounded-3xl bg-[#7890a4] p-2 shadow-xl sm:p-3">
         {/* topbar */}
-        <header className="mb-3 flex items-center gap-3 rounded-2xl bg-[#214f4c] px-4 py-3 text-white">
+        <header className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl bg-[#214f4c] px-4 py-3 text-white">
           <span className="text-base font-extrabold tracking-tight">SifoBooks Restaurant</span>
           <span className="flex-1 text-center text-sm font-extrabold tracking-[0.12em] opacity-90">
-            {screen === "pos" ? `POS • ${mode}` : SCREENS.find(s => s.key === screen)?.label}
+            {screen === "pos" ? `POS • ${mode}${recalled ? ` • recalled ${recalled.order_no}` : ""}` : SCREENS.find(s => s.key === screen)?.label}
           </span>
+          <Input value={server} onChange={e => setServer(e.target.value)} placeholder="Server"
+            className="h-8 w-28 border-white/25 bg-white/10 text-xs text-white placeholder:text-white/50" />
           <span className="hidden text-xs opacity-70 sm:block">Posted automatically to your books</span>
         </header>
+
 
         <div className="flex gap-3">
           {/* sidebar */}
