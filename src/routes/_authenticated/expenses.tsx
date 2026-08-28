@@ -87,9 +87,10 @@ function ExpensesPage() {
 
   const reverseExpense = async (r: Expense) => {
     if (r.status === "reversed") return;
-    if (!confirm(`Reverse expense ${r.expense_number ?? ""}? This creates a mirror journal entry to cancel the posting.`)) return;
+    const reason = window.prompt(`Reverse expense ${r.expense_number ?? ""}? Enter a reason (required):`);
+    if (!reason?.trim()) return;
     try {
-      if (r.journal_entry_id) await reverseJournalEntry(r.journal_entry_id);
+      if (r.journal_entry_id) await reverseJournalEntry(r.journal_entry_id, reason);
       await supabase.from("expenses").update({ status: "reversed" }).eq("id", r.id);
       toast.success("Expense reversed"); setDrawer(null); load();
     } catch (e: any) { toast.error(e.message); }

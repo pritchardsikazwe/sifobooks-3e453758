@@ -54,8 +54,9 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
           className: "border-amber-300 text-amber-700 hover:bg-amber-50",
           show: r => r.status === "posted" && !r.reversed_by,
           run: async (r, reload) => {
-            if (!confirm(`Reverse entry ${r.entry_number}? This creates a mirror journal entry cancelling all lines.`)) return;
-            try { await reverseJournalEntry(r.id); toast.success("Reversed"); reload(); }
+            const reason = window.prompt(`Reverse entry ${r.entry_number}? Enter a reason (required):`);
+            if (!reason?.trim()) return;
+            try { await reverseJournalEntry(r.id, reason); toast.success("Reversed"); reload(); }
             catch (e: any) { toast.error(e.message); }
           },
         },
