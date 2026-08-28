@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BalanceChip } from "@/components/accounting/JournalImpact";
+
 import { BookText, CheckCircle2, XCircle, Undo2 } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
@@ -27,14 +29,24 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
       statusField="status"
       dateField="entry_date"
       columns={[
-        { key: "entry_number", header: "Entry #" },
+        { key: "entry_number", header: "Entry #", render: r => (
+          <Link to="/journal-entry/$id" params={{ id: r.id }} className="font-mono text-xs font-medium text-primary hover:underline">
+            {r.entry_number ?? "—"}
+          </Link>
+        ) },
         { key: "entry_date", header: "Date" },
         { key: "reference", header: "Reference" },
         { key: "description", header: "Description" },
         { key: "status", header: "Status", render: r => <Badge className={STATUS_COLOR[r.status] ?? ""} variant="secondary">{r.status}</Badge> },
-        { key: "total_debit", header: "Debit", render: r => fmtMoney(r.total_debit ?? 0) },
-        { key: "total_credit", header: "Credit", render: r => fmtMoney(r.total_credit ?? 0) },
+        { key: "total_debit", header: "Debit", render: r => <span className="tabular-nums">{fmtMoney(r.total_debit ?? 0)}</span> },
+        { key: "total_credit", header: "Credit", render: r => <span className="tabular-nums">{fmtMoney(r.total_credit ?? 0)}</span> },
+        { key: "balance_check", header: "Balance", render: r => {
+          const d = Number(r.total_debit ?? 0), c = Number(r.total_credit ?? 0);
+          const ok = Math.abs(d - c) < 0.005 && d > 0;
+          return <BalanceChip balanced={ok} diff={d - c} />;
+        } },
         { key: "attachment_url", header: "Source Doc", render: r => <AttachmentCell table="journal_entries" row={r} /> },
+
       ]}
       rowActions={[
         {
