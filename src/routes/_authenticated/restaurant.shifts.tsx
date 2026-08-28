@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/restaurant/shifts")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Shifts;
+  component: Shifts,
 });
 
 const db: any = supabase;
