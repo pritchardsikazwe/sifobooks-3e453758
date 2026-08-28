@@ -21,7 +21,10 @@ export const Route = createFileRoute("/_authenticated/pos-workers")({
 
 function PosWorkers() {
   const [rows, setRows] = useState<any[]>([]);
-  const [form, setForm] = useState({ full_name: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
+  const [mode, setMode] = useState<"email" | "id">("email");
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
+  const invite = useServerFn(invitePosWorker);
 
   const load = async () => {
     const { data } = await supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false });
@@ -29,23 +32,47 @@ function PosWorkers() {
   };
   useEffect(() => { load(); }, []);
 
+  const reset = () => setForm({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier", pin: "" });
+
   const add = async () => {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) return;
-    if (!form.worker_user_id) return toast.error("Paste the staff member's user ID");
-    const { error } = await supabase.from("employee_pos_permissions").insert({
-      user_id: auth.user.id, worker_user_id: form.worker_user_id, full_name: form.full_name || null,
-      pos_role: form.pos_role, pin: form.pin || null,
-    });
-    if (error) return toast.error(error.message);
-    setForm({ full_name: "", worker_user_id: "", pos_role: "cashier", pin: "" });
-    toast.success("Worker access granted"); load();
+    if (form.pin && !/^\d{4,8}$/.test(form.pin)) return toast.error("PIN must be 4-8 digits");
+    setBusy(true);
+    try {
+      if (mode === "email") {
+        const res = await invite({ data: { email: form.email, full_name: form.full_name, pos_role: form.pos_role, pin: form.pin } });
+        toast.success(res.invited ? `Invite sent to ${res.email}` : `${res.email} linked to the POS terminal`);
+      } else {
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth.user) return;
+        if (!form.worker_user_id) return toast.error("Paste the staff member's user ID");
+        const { error } = await supabase.from("employee_pos_permissions").insert({
+          user_id: auth.user.id, worker_user_id: form.worker_user_id, full_name: form.full_name || null,
+          pos_role: form.pos_role, pin: form.pin || null,
+        });
+        if (error) throw new Error(error.message);
+        toast.success("Worker access granted");
+      }
+      reset(); load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not grant access");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const setRole = async (id: string, pos_role: string) => {
     const { error } = await supabase.from("employee_pos_permissions").update({ pos_role }).eq("id", id);
     if (error) return toast.error(error.message);
     load();
+  };
+
+  const setPin = async (id: string, current: string | null) => {
+    const pin = window.prompt("Terminal PIN (4-8 digits, blank to remove)", current ?? "");
+    if (pin === null) return;
+    if (pin && !/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
+    const { error } = await supabase.from("employee_pos_permissions").update({ pin: pin || null }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(pin ? "PIN updated" : "PIN removed"); load();
   };
 
   const toggle = async (id: string, is_active: boolean) => {
@@ -63,21 +90,42 @@ function PosWorkers() {
       </div>
 
       <div className="rounded-2xl border bg-card p-5 space-y-3">
-        <div className="font-semibold">Grant access</div>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="font-semibold">Grant access</div>
+          <div className="flex rounded-lg border p-0.5 text-xs">
+            {(["email", "id"] as const).map((m) => (
+              <button key={m} onClick={() => setMode(m)}
+                className={`px-3 py-1.5 rounded-md ${mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                {m === "email" ? "Invite by email" : "By user ID"}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid sm:grid-cols-4 gap-2">
           <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Full name"
             value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Staff auth user ID"
-            value={form.worker_user_id} onChange={(e) => setForm({ ...form, worker_user_id: e.target.value })} />
+          {mode === "email" ? (
+            <input type="email" className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="staff@company.com"
+              value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          ) : (
+            <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Staff auth user ID"
+              value={form.worker_user_id} onChange={(e) => setForm({ ...form, worker_user_id: e.target.value })} />
+          )}
           <select className="rounded-lg border bg-background px-3 py-2 text-sm"
             value={form.pos_role} onChange={(e) => setForm({ ...form, pos_role: e.target.value as PosRole })}>
             {POS_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
           </select>
-          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Terminal PIN (optional)"
+          <input inputMode="numeric" className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Terminal PIN (4-8 digits)"
             value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value })} />
         </div>
-        <Button onClick={add}>Grant access</Button>
+        <p className="text-xs text-muted-foreground">
+          {mode === "email"
+            ? "If the email has no SifoBooks login yet, an invite is emailed automatically. The PIN unlocks the POS terminal on shared devices."
+            : "Use this when the staff member already signed in and you have their user ID."}
+        </p>
+        <Button onClick={add} disabled={busy}>{busy ? "Working…" : mode === "email" ? "Invite worker" : "Grant access"}</Button>
       </div>
+
 
       <div className="rounded-2xl border overflow-hidden">
         <table className="w-full text-sm">
