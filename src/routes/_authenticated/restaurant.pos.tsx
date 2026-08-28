@@ -358,23 +358,23 @@ function Page() {
         <aside className="flex min-h-0 flex-row gap-[5px] overflow-x-auto md:h-full md:flex-col md:overflow-x-visible md:overflow-y-auto">
           {sideKeys.map(k => (
             <button key={k.label} onClick={k.run}
-              className="flex min-h-[52px] flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] px-[2px] py-[5px] text-[9px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
+              className="flex min-h-[52px] w-[62px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] md:w-auto px-[2px] py-[5px] text-[9px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
               <span className="text-[19px] leading-[18px]">{k.icon}</span>{k.label}
             </button>
           ))}
-          <div className="my-[3px] h-px bg-[#709190]" />
+          <div className="my-[3px] hidden h-px bg-[#709190] md:block" />
           <button onClick={() => navigate({ to: "/dashboard" })}
-            className="mt-auto flex min-h-[52px] flex-col items-center justify-center rounded-[13px] border border-[#789695] bg-[#6a6d70] text-[9px] font-extrabold">
+            className="flex min-h-[52px] w-[62px] shrink-0 flex-col items-center justify-center rounded-[13px] border border-[#789695] bg-[#6a6d70] md:mt-auto md:w-auto text-[9px] font-extrabold">
             <span className="text-[19px] leading-[18px]">⚙</span>ACCOUNTING
           </button>
           <button onClick={() => navigate({ to: "/restaurant" })}
-            className="flex min-h-[52px] flex-col items-center justify-center rounded-[13px] border border-[#ff5b5b] bg-[#d71818] text-[9px] font-extrabold">
+            className="flex min-h-[52px] w-[62px] shrink-0 flex-col items-center justify-center rounded-[13px] border border-[#ff5b5b] bg-[#d71818] md:w-auto text-[9px] font-extrabold">
             <span className="text-[19px] leading-[18px]">⎋</span>EXIT
           </button>
         </aside>
 
         {/* check panel */}
-        <section className="grid min-h-0 grid-rows-[auto_auto_1fr_auto_auto] overflow-hidden rounded-[8px] bg-[#f6f7f4] text-[#214047]">
+        <section className="grid min-h-[320px] grid-rows-[auto_auto_1fr_auto_auto] overflow-hidden rounded-[8px] bg-[#f6f7f4] text-[#214047] md:h-full md:min-h-0">
           <div className="flex items-center justify-between border-b border-[#d4dddd] bg-white px-3 py-2">
             <div>
               <strong className="block text-[12px]">{recalled ? `RECALLED ${recalled.order_no}` : `NEW ${mode} ORDER`}</strong>
@@ -390,7 +390,7 @@ function Page() {
             <span>GUEST {guests} OF {guests}</span>
             <button onClick={() => setGuests(g => g + 1)}>＋</button>
           </div>
-          <div className="min-h-[160px] overflow-auto bg-white">
+          <div className="min-h-0 overflow-y-auto bg-white">
             {cart.map((l, i) => (
               <div key={key(l, i)} className="grid grid-cols-[24px_28px_1fr_auto] items-start gap-1 border-b border-[#e2e7e6] p-2 text-[11px]">
                 <button onClick={() => removeLine(i)} className="h-[18px] w-[18px] rounded-full bg-[#e84943] font-black text-white">×</button>
@@ -430,7 +430,7 @@ function Page() {
         </section>
 
         {/* category rail */}
-        <aside className="hidden max-h-[720px] flex-col gap-[5px] overflow-auto p-[2px] lg:flex">
+        <aside className="hidden min-h-0 flex-col gap-[5px] overflow-y-auto p-[2px] lg:flex lg:h-full">
           {cats.map((c, i) => (
             <button key={c} onClick={() => setCat(c)}
               className={cn("flex min-h-[62px] flex-col items-center justify-center gap-[3px] rounded-[13px] border-2 border-[#87a09f] font-black text-white transition",
@@ -442,7 +442,7 @@ function Page() {
         </aside>
 
         {/* menu + bottom actions */}
-        <section className="grid min-h-0 min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051]">
+        <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:col-span-2 md:h-full md:min-h-0 lg:col-span-1">
           <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[7px]">
             <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div>
             <select value={cat} onChange={e => setCat(e.target.value)}
@@ -475,7 +475,7 @@ function Page() {
       </div>
 
       {/* footer status */}
-      <div className="flex items-center justify-between border-t border-[#799695] bg-[#315e64] px-4 py-1.5 text-[10px] opacity-85">
+      <div className="flex shrink-0 items-center justify-between border-t border-[#799695] bg-[#315e64] px-4 py-1.5 text-[10px] opacity-85">
         <span>SifoBooks Restaurant • {server || "Terminal"} • {openOrders.length} open checks</span>
         <span>Posted automatically to your books</span>
       </div>
