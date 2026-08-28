@@ -95,14 +95,18 @@ import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
+import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
 import { Route as AuthenticatedRestaurantSettingsRouteImport } from './routes/_authenticated/restaurant.settings'
 import { Route as AuthenticatedRestaurantReservationsRouteImport } from './routes/_authenticated/restaurant.reservations'
 import { Route as AuthenticatedRestaurantReportsRouteImport } from './routes/_authenticated/restaurant.reports'
 import { Route as AuthenticatedRestaurantPosRouteImport } from './routes/_authenticated/restaurant.pos'
 import { Route as AuthenticatedRestaurantOrdersRouteImport } from './routes/_authenticated/restaurant.orders'
 import { Route as AuthenticatedRestaurantMenuRouteImport } from './routes/_authenticated/restaurant.menu'
+import { Route as AuthenticatedRestaurantLoyaltyRouteImport } from './routes/_authenticated/restaurant.loyalty'
 import { Route as AuthenticatedRestaurantKitchenRouteImport } from './routes/_authenticated/restaurant.kitchen'
 import { Route as AuthenticatedRestaurantEndOfDayRouteImport } from './routes/_authenticated/restaurant.end-of-day'
+import { Route as AuthenticatedRestaurantDispatchRouteImport } from './routes/_authenticated/restaurant.dispatch'
+import { Route as AuthenticatedRestaurantCombosRouteImport } from './routes/_authenticated/restaurant.combos'
 import { Route as AuthenticatedRestaurantCashRouteImport } from './routes/_authenticated/restaurant.cash'
 import { Route as AuthenticatedRestaurantCallCenterRouteImport } from './routes/_authenticated/restaurant.call-center'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
@@ -606,6 +610,12 @@ const AuthenticatedRestaurantTablesRoute =
     path: '/tables',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
+const AuthenticatedRestaurantShiftsRoute =
+  AuthenticatedRestaurantShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
 const AuthenticatedRestaurantSettingsRoute =
   AuthenticatedRestaurantSettingsRouteImport.update({
     id: '/settings',
@@ -642,6 +652,12 @@ const AuthenticatedRestaurantMenuRoute =
     path: '/menu',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
+const AuthenticatedRestaurantLoyaltyRoute =
+  AuthenticatedRestaurantLoyaltyRouteImport.update({
+    id: '/loyalty',
+    path: '/loyalty',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
 const AuthenticatedRestaurantKitchenRoute =
   AuthenticatedRestaurantKitchenRouteImport.update({
     id: '/kitchen',
@@ -652,6 +668,18 @@ const AuthenticatedRestaurantEndOfDayRoute =
   AuthenticatedRestaurantEndOfDayRouteImport.update({
     id: '/end-of-day',
     path: '/end-of-day',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantDispatchRoute =
+  AuthenticatedRestaurantDispatchRouteImport.update({
+    id: '/dispatch',
+    path: '/dispatch',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantCombosRoute =
+  AuthenticatedRestaurantCombosRouteImport.update({
+    id: '/combos',
+    path: '/combos',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
 const AuthenticatedRestaurantCashRoute =
@@ -997,14 +1025,18 @@ export interface FileRoutesByFullPath {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/restaurant/loyalty': typeof AuthenticatedRestaurantLoyaltyRoute
   '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
   '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -1126,14 +1158,18 @@ export interface FileRoutesByTo {
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/restaurant/loyalty': typeof AuthenticatedRestaurantLoyaltyRoute
   '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
   '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
@@ -1262,14 +1298,18 @@ export interface FileRoutesById {
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/_authenticated/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/_authenticated/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/_authenticated/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/_authenticated/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/_authenticated/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/_authenticated/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/_authenticated/restaurant/loyalty': typeof AuthenticatedRestaurantLoyaltyRoute
   '/_authenticated/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/_authenticated/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/_authenticated/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
   '/_authenticated/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/_authenticated/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/_authenticated/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -1398,14 +1438,18 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/restaurant/call-center'
     | '/restaurant/cash'
+    | '/restaurant/combos'
+    | '/restaurant/dispatch'
     | '/restaurant/end-of-day'
     | '/restaurant/kitchen'
+    | '/restaurant/loyalty'
     | '/restaurant/menu'
     | '/restaurant/orders'
     | '/restaurant/pos'
     | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/settings'
+    | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers/'
@@ -1527,14 +1571,18 @@ export interface FileRouteTypes {
     | '/reports/vat-return'
     | '/restaurant/call-center'
     | '/restaurant/cash'
+    | '/restaurant/combos'
+    | '/restaurant/dispatch'
     | '/restaurant/end-of-day'
     | '/restaurant/kitchen'
+    | '/restaurant/loyalty'
     | '/restaurant/menu'
     | '/restaurant/orders'
     | '/restaurant/pos'
     | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/settings'
+    | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers'
@@ -1662,14 +1710,18 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/vat-return'
     | '/_authenticated/restaurant/call-center'
     | '/_authenticated/restaurant/cash'
+    | '/_authenticated/restaurant/combos'
+    | '/_authenticated/restaurant/dispatch'
     | '/_authenticated/restaurant/end-of-day'
     | '/_authenticated/restaurant/kitchen'
+    | '/_authenticated/restaurant/loyalty'
     | '/_authenticated/restaurant/menu'
     | '/_authenticated/restaurant/orders'
     | '/_authenticated/restaurant/pos'
     | '/_authenticated/restaurant/reports'
     | '/_authenticated/restaurant/reservations'
     | '/_authenticated/restaurant/settings'
+    | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
     | '/_authenticated/customers/'
@@ -2299,6 +2351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRestaurantTablesRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
+    '/_authenticated/restaurant/shifts': {
+      id: '/_authenticated/restaurant/shifts'
+      path: '/shifts'
+      fullPath: '/restaurant/shifts'
+      preLoaderRoute: typeof AuthenticatedRestaurantShiftsRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
     '/_authenticated/restaurant/settings': {
       id: '/_authenticated/restaurant/settings'
       path: '/settings'
@@ -2341,6 +2400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRestaurantMenuRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
+    '/_authenticated/restaurant/loyalty': {
+      id: '/_authenticated/restaurant/loyalty'
+      path: '/loyalty'
+      fullPath: '/restaurant/loyalty'
+      preLoaderRoute: typeof AuthenticatedRestaurantLoyaltyRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
     '/_authenticated/restaurant/kitchen': {
       id: '/_authenticated/restaurant/kitchen'
       path: '/kitchen'
@@ -2353,6 +2419,20 @@ declare module '@tanstack/react-router' {
       path: '/end-of-day'
       fullPath: '/restaurant/end-of-day'
       preLoaderRoute: typeof AuthenticatedRestaurantEndOfDayRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/dispatch': {
+      id: '/_authenticated/restaurant/dispatch'
+      path: '/dispatch'
+      fullPath: '/restaurant/dispatch'
+      preLoaderRoute: typeof AuthenticatedRestaurantDispatchRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/combos': {
+      id: '/_authenticated/restaurant/combos'
+      path: '/combos'
+      fullPath: '/restaurant/combos'
+      preLoaderRoute: typeof AuthenticatedRestaurantCombosRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
     '/_authenticated/restaurant/cash': {
@@ -2748,14 +2828,18 @@ const AuthenticatedReportsRouteWithChildren =
 interface AuthenticatedRestaurantRouteChildren {
   AuthenticatedRestaurantCallCenterRoute: typeof AuthenticatedRestaurantCallCenterRoute
   AuthenticatedRestaurantCashRoute: typeof AuthenticatedRestaurantCashRoute
+  AuthenticatedRestaurantCombosRoute: typeof AuthenticatedRestaurantCombosRoute
+  AuthenticatedRestaurantDispatchRoute: typeof AuthenticatedRestaurantDispatchRoute
   AuthenticatedRestaurantEndOfDayRoute: typeof AuthenticatedRestaurantEndOfDayRoute
   AuthenticatedRestaurantKitchenRoute: typeof AuthenticatedRestaurantKitchenRoute
+  AuthenticatedRestaurantLoyaltyRoute: typeof AuthenticatedRestaurantLoyaltyRoute
   AuthenticatedRestaurantMenuRoute: typeof AuthenticatedRestaurantMenuRoute
   AuthenticatedRestaurantOrdersRoute: typeof AuthenticatedRestaurantOrdersRoute
   AuthenticatedRestaurantPosRoute: typeof AuthenticatedRestaurantPosRoute
   AuthenticatedRestaurantReportsRoute: typeof AuthenticatedRestaurantReportsRoute
   AuthenticatedRestaurantReservationsRoute: typeof AuthenticatedRestaurantReservationsRoute
   AuthenticatedRestaurantSettingsRoute: typeof AuthenticatedRestaurantSettingsRoute
+  AuthenticatedRestaurantShiftsRoute: typeof AuthenticatedRestaurantShiftsRoute
   AuthenticatedRestaurantTablesRoute: typeof AuthenticatedRestaurantTablesRoute
   AuthenticatedRestaurantIndexRoute: typeof AuthenticatedRestaurantIndexRoute
 }
@@ -2765,8 +2849,11 @@ const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren
     AuthenticatedRestaurantCallCenterRoute:
       AuthenticatedRestaurantCallCenterRoute,
     AuthenticatedRestaurantCashRoute: AuthenticatedRestaurantCashRoute,
+    AuthenticatedRestaurantCombosRoute: AuthenticatedRestaurantCombosRoute,
+    AuthenticatedRestaurantDispatchRoute: AuthenticatedRestaurantDispatchRoute,
     AuthenticatedRestaurantEndOfDayRoute: AuthenticatedRestaurantEndOfDayRoute,
     AuthenticatedRestaurantKitchenRoute: AuthenticatedRestaurantKitchenRoute,
+    AuthenticatedRestaurantLoyaltyRoute: AuthenticatedRestaurantLoyaltyRoute,
     AuthenticatedRestaurantMenuRoute: AuthenticatedRestaurantMenuRoute,
     AuthenticatedRestaurantOrdersRoute: AuthenticatedRestaurantOrdersRoute,
     AuthenticatedRestaurantPosRoute: AuthenticatedRestaurantPosRoute,
@@ -2774,6 +2861,7 @@ const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren
     AuthenticatedRestaurantReservationsRoute:
       AuthenticatedRestaurantReservationsRoute,
     AuthenticatedRestaurantSettingsRoute: AuthenticatedRestaurantSettingsRoute,
+    AuthenticatedRestaurantShiftsRoute: AuthenticatedRestaurantShiftsRoute,
     AuthenticatedRestaurantTablesRoute: AuthenticatedRestaurantTablesRoute,
     AuthenticatedRestaurantIndexRoute: AuthenticatedRestaurantIndexRoute,
   }

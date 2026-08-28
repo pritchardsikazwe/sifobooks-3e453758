@@ -6673,11 +6673,15 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          delivered_at: string | null
           delivery_address: string | null
           delivery_fee: number
           delivery_zone_id: string | null
           discount: number
+          dispatched_at: string | null
           drawer_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
           eod_id: string | null
           gratuity: number
           guests: number
@@ -6710,11 +6714,15 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
           discount?: number
+          dispatched_at?: string | null
           drawer_id?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
           eod_id?: string | null
           gratuity?: number
           guests?: number
@@ -6747,11 +6755,15 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_fee?: number
           delivery_zone_id?: string | null
           discount?: number
+          dispatched_at?: string | null
           drawer_id?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
           eod_id?: string | null
           gratuity?: number
           guests?: number
