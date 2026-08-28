@@ -2774,6 +2774,101 @@ export type Database = {
           },
         ]
       }
+      employee_pos_permissions: {
+        Row: {
+          allow: Json
+          company_id: string | null
+          created_at: string
+          deny: Json
+          employee_id: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean
+          pin: string | null
+          pos_role: string
+          updated_at: string
+          user_id: string
+          worker_user_id: string | null
+        }
+        Insert: {
+          allow?: Json
+          company_id?: string | null
+          created_at?: string
+          deny?: Json
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          pin?: string | null
+          pos_role?: string
+          updated_at?: string
+          user_id: string
+          worker_user_id?: string | null
+        }
+        Update: {
+          allow?: Json
+          company_id?: string | null
+          created_at?: string
+          deny?: Json
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          pin?: string | null
+          pos_role?: string
+          updated_at?: string
+          user_id?: string
+          worker_user_id?: string | null
+        }
+        Relationships: []
+      }
+      employee_pos_sessions: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          ended_at: string | null
+          id: string
+          permission_id: string | null
+          pos_role: string | null
+          started_at: string
+          terminal: string | null
+          user_id: string
+          worker_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          permission_id?: string | null
+          pos_role?: string | null
+          started_at?: string
+          terminal?: string | null
+          user_id: string
+          worker_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          ended_at?: string | null
+          id?: string
+          permission_id?: string | null
+          pos_role?: string | null
+          started_at?: string
+          terminal?: string | null
+          user_id?: string
+          worker_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_pos_sessions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "employee_pos_permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           address: string | null
@@ -3548,6 +3643,161 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      inventory_locations: {
+        Row: {
+          code: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          location_type: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          code?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_type?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          code?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_type?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_locations_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transfer_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          item_id: string | null
+          quantity: number
+          transfer_id: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string | null
+          quantity?: number
+          transfer_id: string
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string | null
+          quantity?: number
+          transfer_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfer_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfer_items_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transfers: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          from_location_id: string | null
+          id: string
+          notes: string | null
+          reference: string | null
+          status: string
+          to_location_id: string | null
+          transfer_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location_id?: string | null
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          to_location_id?: string | null
+          transfer_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location_id?: string | null
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          to_location_id?: string | null
+          transfer_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfers_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {
@@ -9176,6 +9426,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      pos_can: {
+        Args: { _feature: string; _tenant?: string; _worker: string }
+        Returns: boolean
+      }
+      pos_has_books: { Args: { _tenant: string }; Returns: boolean }
+      pos_matrix: { Args: { _feature: string; _role: string }; Returns: string }
+      pos_tenant_for: { Args: { _worker: string }; Returns: string }
       post_allowance: { Args: { _id: string }; Returns: string }
       post_asset_disposal: { Args: { _disposal_id: string }; Returns: string }
       post_bill: { Args: { _bill_id: string }; Returns: string }
