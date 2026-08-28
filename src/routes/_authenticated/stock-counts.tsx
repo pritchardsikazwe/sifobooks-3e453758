@@ -130,8 +130,9 @@ function StockCountsPage() {
   if (mode === "new") {
     return (
       <SifoFormPage
+        module="inventory"
         title="New stock count"
-        description="Generates a count sheet from current on-hand quantities."
+        subtitle="Generates a count sheet from current on-hand quantities."
         onCancel={() => setMode("list")}
         onSave={createCount}
         saving={busy}
