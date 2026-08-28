@@ -353,9 +353,9 @@ function Page() {
       </div>
 
       {/* body */}
-      <div className="grid min-h-0 flex-1 gap-[6px] overflow-y-auto bg-[#1d5555] p-[6px] md:grid-cols-[66px_minmax(255px,320px)_1fr] md:overflow-hidden lg:grid-cols-[82px_300px_105px_1fr]">
+      <div className="grid min-h-0 flex-1 gap-[6px] overflow-y-auto bg-[#1d5555] p-[6px] md:grid-cols-[66px_minmax(0,1fr)] md:grid-rows-[minmax(240px,40%)_minmax(0,1fr)] md:overflow-hidden lg:grid-cols-[82px_300px_105px_minmax(0,1fr)] lg:grid-rows-1">
         {/* action rail */}
-        <aside className="flex min-h-0 flex-row gap-[5px] overflow-x-auto md:h-full md:flex-col md:overflow-x-visible md:overflow-y-auto">
+        <aside className="flex min-h-0 flex-row gap-[5px] overflow-x-auto md:row-span-2 md:h-full lg:row-span-1 md:flex-col md:overflow-x-visible md:overflow-y-auto">
           {sideKeys.map(k => (
             <button key={k.label} onClick={k.run}
               className="flex min-h-[52px] w-[62px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] md:w-auto px-[2px] py-[5px] text-[9px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
@@ -442,7 +442,7 @@ function Page() {
         </aside>
 
         {/* menu + bottom actions */}
-        <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:col-span-2 md:h-full md:min-h-0 lg:col-span-1">
+        <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:h-full md:min-h-0">
           <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[7px]">
             <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div>
             <select value={cat} onChange={e => setCat(e.target.value)}
