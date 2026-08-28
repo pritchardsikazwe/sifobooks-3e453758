@@ -495,7 +495,13 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
             <p className="text-xs text-rose-600">Approval is blocked until every account is chosen and the journal balances.</p>
           )}
         </div>
+
+        <div className="mt-4 rounded-lg border bg-white p-3 space-y-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Accounting impact</div>
+          <DocumentImpact key={ledgerKey} kind="payroll" reference={`PR:${run.run_number}`} />
+        </div>
       </CardContent>
+
 
     </Card>
   );
