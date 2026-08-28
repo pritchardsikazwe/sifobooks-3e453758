@@ -7445,14 +7445,23 @@ export type Database = {
       }
       stock_items: {
         Row: {
+          barcode: string | null
+          bin: string | null
+          category: string | null
           cost_price: number
           created_at: string
           description: string | null
           hs_code: string | null
           id: string
+          is_active: boolean
+          item_type: string
+          max_stock: number
           name: string
+          on_order_qty: number
           quantity_on_hand: number
           reorder_level: number
+          reserved_qty: number
+          safety_stock: number
           sell_price: number
           sku: string | null
           tax_category: string
@@ -7460,16 +7469,26 @@ export type Database = {
           updated_at: string
           user_id: string
           vat_rate: number
+          warehouse_id: string | null
         }
         Insert: {
+          barcode?: string | null
+          bin?: string | null
+          category?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
           hs_code?: string | null
           id?: string
+          is_active?: boolean
+          item_type?: string
+          max_stock?: number
           name: string
+          on_order_qty?: number
           quantity_on_hand?: number
           reorder_level?: number
+          reserved_qty?: number
+          safety_stock?: number
           sell_price?: number
           sku?: string | null
           tax_category?: string
@@ -7477,16 +7496,26 @@ export type Database = {
           updated_at?: string
           user_id: string
           vat_rate?: number
+          warehouse_id?: string | null
         }
         Update: {
+          barcode?: string | null
+          bin?: string | null
+          category?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
           hs_code?: string | null
           id?: string
+          is_active?: boolean
+          item_type?: string
+          max_stock?: number
           name?: string
+          on_order_qty?: number
           quantity_on_hand?: number
           reorder_level?: number
+          reserved_qty?: number
+          safety_stock?: number
           sell_price?: number
           sku?: string | null
           tax_category?: string
@@ -7494,8 +7523,17 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vat_rate?: number
+          warehouse_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_movements: {
         Row: {
