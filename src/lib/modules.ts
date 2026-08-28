@@ -204,27 +204,33 @@ export const MODULES: ModuleDef[] = [
       { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" },
     ] },
 
-  // ---------- ADMIN ----------
-  { key: "admin", label: "Administration", category: "Admin", core: true, defaultInstalled: true,
-    description: "Company setup, roles, approvals, audit and notifications.",
+  // ---------- COMPANY ADMINISTRATION ----------
+  { key: "admin", label: "Administration", category: "Administration", core: true, defaultInstalled: true,
+    description: "Company setup, users, roles, approvals, devices, audit and notifications.",
     routes: [
       { title: "Admin Home", url: "/admin", iconName: "UserCog" },
+      { title: "Company Setup", url: "/setup", iconName: "Building2" },
+      { title: "Business Configuration", url: "/industry", iconName: "SlidersHorizontal" },
       { title: "Roles & Permissions", url: "/roles", iconName: "ShieldCheck" },
       { title: "Approvals", url: "/approvals", iconName: "Inbox" },
-      { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
-      { title: "Company Setup", url: "/setup", iconName: "Building2" },
-      { title: "Printing", url: "/printing-settings", iconName: "Printer" },
-      { title: "Industry & Business", url: "/industry", iconName: "Building2" },
+      { title: "Devices & Printing", url: "/printing-settings", iconName: "Printer" },
       { title: "Subscription", url: "/subscription", iconName: "Sparkles" },
-      { title: "Audit Logs", url: "/audit-logs", iconName: "ShieldCheck" },
+      { title: "Audit Logs", url: "/audit-logs", iconName: "ScrollText" },
       { title: "Notifications", url: "/notifications", iconName: "Bell" },
+    ] },
+
+  // ---------- PLATFORM (SifoBooks operators only) ----------
+  { key: "platform", label: "Platform", category: "Platform", core: true, defaultInstalled: true,
+    description: "SifoBooks platform operations — companies, subscriptions, plans, feature flags and global audit.",
+    routes: [
+      { title: "Super Admin Console", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
     ] },
 ];
 
 export const CATEGORY_ORDER: ModuleCategory[] = [
-  "Core", "Sales", "Purchases", "Finance", "Inventory", "HR & Payroll",
-  "CRM", "Projects & Service", "Reports", "School ERP", "NGO", "Mining",
-  "Help & Learning", "Admin",
+  "Core", "Sales", "Purchases", "Inventory", "POS", "Restaurant", "Finance",
+  "HR & Payroll", "CRM", "Projects & Service", "Reports",
+  "School ERP", "NGO", "Mining", "Help & Learning", "Administration", "Platform",
 ];
 
 export function getModule(key: string): ModuleDef | undefined {
