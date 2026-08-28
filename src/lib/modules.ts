@@ -79,6 +79,7 @@ export const MODULES: ModuleDef[] = [
   { key: "inventory", label: "Inventory", category: "Inventory", defaultInstalled: true,
     description: "Stock items, warehouses, adjustments and printable inventory sheets.",
     routes: [
+      { title: "Inventory Dashboard", url: "/inventory", iconName: "LayoutDashboard" },
       { title: "Items", url: "/stock", iconName: "Boxes" },
       { title: "Warehouses", url: "/warehouses", iconName: "Warehouse" },
       { title: "Stock Adjustments", url: "/stock-adjustments", iconName: "ClipboardEdit" },
