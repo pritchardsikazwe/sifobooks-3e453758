@@ -428,8 +428,12 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
                 title={journalBalanced ? undefined : "The payroll journal must balance before approval"}
                 onClick={() => setStatus("approved")}>Approve</Button>
             )}
-            {run.status === "approved" && <Button size="sm" onClick={() => setStatus("paid")}>Mark Paid</Button>}
-            {run.status !== "draft" && <Button size="sm" variant="outline" onClick={() => setStatus("draft")}>Reopen</Button>}
+            {run.status === "approved" && (
+              <Button size="sm" disabled={posting || !journalBalanced}
+                title={journalBalanced ? "Marks the run paid and posts the payroll journal" : "The payroll journal must balance before posting"}
+                onClick={markPaidAndPost}>{posting ? "Posting…" : "Mark Paid & Post"}</Button>
+            )}
+            {run.status !== "draft" && <Button size="sm" variant="outline" onClick={reopen}>Reopen</Button>}
             <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
             <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
           </div>
