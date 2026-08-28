@@ -33,7 +33,10 @@ const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> 
   "NGO":                { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
   "Mining":             { dot: "bg-mod-inventory",     text: "text-mod-inventory",     soft: "bg-mod-inventory/10" },
   "Help & Learning":    { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
-  "Admin":              { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
+  "POS":                { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
+  "Restaurant":         { dot: "bg-mod-inventory",     text: "text-mod-inventory",     soft: "bg-mod-inventory/10" },
+  "Administration":     { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
+  "Platform":           { dot: "bg-destructive",       text: "text-destructive",       soft: "bg-destructive/10" },
 };
 const hueFor = (c: string) => CATEGORY_HUE[c] ?? CATEGORY_HUE["Core"];
 
