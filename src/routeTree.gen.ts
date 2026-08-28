@@ -96,6 +96,7 @@ import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
 import { Route as AuthenticatedRestaurantReservationsRouteImport } from './routes/_authenticated/restaurant.reservations'
+import { Route as AuthenticatedRestaurantReportsRouteImport } from './routes/_authenticated/restaurant.reports'
 import { Route as AuthenticatedRestaurantPosRouteImport } from './routes/_authenticated/restaurant.pos'
 import { Route as AuthenticatedRestaurantOrdersRouteImport } from './routes/_authenticated/restaurant.orders'
 import { Route as AuthenticatedRestaurantMenuRouteImport } from './routes/_authenticated/restaurant.menu'
@@ -610,6 +611,12 @@ const AuthenticatedRestaurantReservationsRoute =
     path: '/reservations',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
+const AuthenticatedRestaurantReportsRoute =
+  AuthenticatedRestaurantReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
 const AuthenticatedRestaurantPosRoute =
   AuthenticatedRestaurantPosRouteImport.update({
     id: '/pos',
@@ -988,6 +995,7 @@ export interface FileRoutesByFullPath {
   '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
@@ -1115,6 +1123,7 @@ export interface FileRoutesByTo {
   '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
@@ -1249,6 +1258,7 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
   '/_authenticated/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
   '/_authenticated/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/_authenticated/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/_authenticated/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
@@ -1383,6 +1393,7 @@ export interface FileRouteTypes {
     | '/restaurant/menu'
     | '/restaurant/orders'
     | '/restaurant/pos'
+    | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/tables'
     | '/teaching-materials/new'
@@ -1510,6 +1521,7 @@ export interface FileRouteTypes {
     | '/restaurant/menu'
     | '/restaurant/orders'
     | '/restaurant/pos'
+    | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/tables'
     | '/teaching-materials/new'
@@ -1643,6 +1655,7 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/menu'
     | '/_authenticated/restaurant/orders'
     | '/_authenticated/restaurant/pos'
+    | '/_authenticated/restaurant/reports'
     | '/_authenticated/restaurant/reservations'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
@@ -2280,6 +2293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRestaurantReservationsRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
+    '/_authenticated/restaurant/reports': {
+      id: '/_authenticated/restaurant/reports'
+      path: '/reports'
+      fullPath: '/restaurant/reports'
+      preLoaderRoute: typeof AuthenticatedRestaurantReportsRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
     '/_authenticated/restaurant/pos': {
       id: '/_authenticated/restaurant/pos'
       path: '/pos'
@@ -2713,6 +2733,7 @@ interface AuthenticatedRestaurantRouteChildren {
   AuthenticatedRestaurantMenuRoute: typeof AuthenticatedRestaurantMenuRoute
   AuthenticatedRestaurantOrdersRoute: typeof AuthenticatedRestaurantOrdersRoute
   AuthenticatedRestaurantPosRoute: typeof AuthenticatedRestaurantPosRoute
+  AuthenticatedRestaurantReportsRoute: typeof AuthenticatedRestaurantReportsRoute
   AuthenticatedRestaurantReservationsRoute: typeof AuthenticatedRestaurantReservationsRoute
   AuthenticatedRestaurantTablesRoute: typeof AuthenticatedRestaurantTablesRoute
   AuthenticatedRestaurantIndexRoute: typeof AuthenticatedRestaurantIndexRoute
@@ -2728,6 +2749,7 @@ const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren
     AuthenticatedRestaurantMenuRoute: AuthenticatedRestaurantMenuRoute,
     AuthenticatedRestaurantOrdersRoute: AuthenticatedRestaurantOrdersRoute,
     AuthenticatedRestaurantPosRoute: AuthenticatedRestaurantPosRoute,
+    AuthenticatedRestaurantReportsRoute: AuthenticatedRestaurantReportsRoute,
     AuthenticatedRestaurantReservationsRoute:
       AuthenticatedRestaurantReservationsRoute,
     AuthenticatedRestaurantTablesRoute: AuthenticatedRestaurantTablesRoute,
