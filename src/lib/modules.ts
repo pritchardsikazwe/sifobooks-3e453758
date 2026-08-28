@@ -164,6 +164,11 @@ export const MODULES: ModuleDef[] = [
       { title: "Tuckshop POS", url: "/tuckshop", iconName: "ShoppingBag" },
     ] },
 
+  // ---------- RESTAURANT ----------
+  { key: "restaurant", label: "Restaurant POS", category: "Inventory", defaultInstalled: false,
+    description: "Touch POS for dine-in, bar and takeaway with tables, kitchen display, menu costing, analytics and end-of-day cash-up.",
+    routes: [{ title: "Restaurant POS", url: "/restaurant", iconName: "UtensilsCrossed" }] },
+
 
   // ---------- HELP & LEARNING ----------
   { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true,

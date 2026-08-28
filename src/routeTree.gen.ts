@@ -31,6 +31,7 @@ import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authe
 import { Route as AuthenticatedSchoolGrantsRouteImport } from './routes/_authenticated/school-grants'
 import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school-fees'
 import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
+import { Route as AuthenticatedRestaurantRouteImport } from './routes/_authenticated/restaurant'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedReconciliationSessionsRouteImport } from './routes/_authenticated/reconciliation-sessions'
 import { Route as AuthenticatedReconciliationRouteImport } from './routes/_authenticated/reconciliation'
@@ -243,6 +244,11 @@ const AuthenticatedSchoolFeesRoute = AuthenticatedSchoolFeesRouteImport.update({
 const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRestaurantRoute = AuthenticatedRestaurantRouteImport.update({
+  id: '/restaurant',
+  path: '/restaurant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
@@ -854,6 +860,7 @@ export interface FileRoutesByFullPath {
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
+  '/restaurant': typeof AuthenticatedRestaurantRoute
   '/roles': typeof AuthenticatedRolesRoute
   '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -971,6 +978,7 @@ export interface FileRoutesByTo {
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
+  '/restaurant': typeof AuthenticatedRestaurantRoute
   '/roles': typeof AuthenticatedRolesRoute
   '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -1094,6 +1102,7 @@ export interface FileRoutesById {
   '/_authenticated/reconciliation': typeof AuthenticatedReconciliationRoute
   '/_authenticated/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
+  '/_authenticated/restaurant': typeof AuthenticatedRestaurantRoute
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
   '/_authenticated/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/_authenticated/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -1217,6 +1226,7 @@ export interface FileRouteTypes {
     | '/reconciliation'
     | '/reconciliation-sessions'
     | '/reports'
+    | '/restaurant'
     | '/roles'
     | '/school-fees'
     | '/school-grants'
@@ -1334,6 +1344,7 @@ export interface FileRouteTypes {
     | '/receipts'
     | '/reconciliation'
     | '/reconciliation-sessions'
+    | '/restaurant'
     | '/roles'
     | '/school-fees'
     | '/school-grants'
@@ -1456,6 +1467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reconciliation'
     | '/_authenticated/reconciliation-sessions'
     | '/_authenticated/reports'
+    | '/_authenticated/restaurant'
     | '/_authenticated/roles'
     | '/_authenticated/school-fees'
     | '/_authenticated/school-grants'
@@ -1683,6 +1695,13 @@ declare module '@tanstack/react-router' {
       path: '/roles'
       fullPath: '/roles'
       preLoaderRoute: typeof AuthenticatedRolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/restaurant': {
+      id: '/_authenticated/restaurant'
+      path: '/restaurant'
+      fullPath: '/restaurant'
+      preLoaderRoute: typeof AuthenticatedRestaurantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -2562,6 +2581,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReconciliationRoute: typeof AuthenticatedReconciliationRoute
   AuthenticatedReconciliationSessionsRoute: typeof AuthenticatedReconciliationSessionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
+  AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRoute
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
   AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
   AuthenticatedSchoolGrantsRoute: typeof AuthenticatedSchoolGrantsRoute
@@ -2646,6 +2666,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReconciliationSessionsRoute:
     AuthenticatedReconciliationSessionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
+  AuthenticatedRestaurantRoute: AuthenticatedRestaurantRoute,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
   AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
   AuthenticatedSchoolGrantsRoute: AuthenticatedSchoolGrantsRoute,
