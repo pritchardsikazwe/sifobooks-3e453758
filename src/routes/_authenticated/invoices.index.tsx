@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
+
 import { voidInvoiceLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
 import { toast } from "sonner";
