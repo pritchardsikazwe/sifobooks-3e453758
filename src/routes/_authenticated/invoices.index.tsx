@@ -164,7 +164,7 @@ function InvoicesPage() {
               <DrawerSection title="Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{drawer.notes}</p></DrawerSection>
             )}
             <DrawerSection title="Accounting impact">
-              <DocumentImpact kind="invoice" reference={drawer.invoice_number ? `INV:${drawer.invoice_number}` : null} />
+              <DocumentImpact kind="invoice" reference={drawer.number ? `INV:${drawer.number}` : null} />
             </DrawerSection>
 
           </div>
