@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
+import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -110,7 +111,7 @@ function Shell() {
               <span className="text-border">/</span>
               <span className="text-muted-foreground">{crumb}</span>
             </div>
-            <div className="ml-1"><CompanySwitcher /></div>
+            <div className="ml-1 flex items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
             <button
               onClick={() => setCmdOpen(true)}
               className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 hover:bg-card hover:border-primary/30 transition text-left text-sm text-muted-foreground"

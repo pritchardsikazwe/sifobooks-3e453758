@@ -1558,6 +1558,7 @@ export type Database = {
           vat_number: string | null
           vat_registered: boolean
           website: string | null
+          workspace_mode: string
         }
         Insert: {
           address?: string | null
@@ -1583,6 +1584,7 @@ export type Database = {
           vat_number?: string | null
           vat_registered?: boolean
           website?: string | null
+          workspace_mode?: string
         }
         Update: {
           address?: string | null
@@ -1608,6 +1610,7 @@ export type Database = {
           vat_number?: string | null
           vat_registered?: boolean
           website?: string | null
+          workspace_mode?: string
         }
         Relationships: []
       }

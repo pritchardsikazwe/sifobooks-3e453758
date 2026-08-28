@@ -52,7 +52,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) navigate({ to: "/launch" });
     });
   }, [navigate]);
 
@@ -60,7 +60,7 @@ function AuthPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
     const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", userData.user.id).maybeSingle();
-    navigate({ to: profile?.onboarded ? "/dashboard" : "/onboarding" });
+    navigate({ to: profile?.onboarded ? "/launch" : "/onboarding" });
   };
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
