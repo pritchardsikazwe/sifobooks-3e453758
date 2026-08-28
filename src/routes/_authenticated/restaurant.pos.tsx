@@ -11,6 +11,8 @@ import { accrueLoyaltyForOrder } from "@/lib/restaurant-rewards";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
+
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
   head: () => ({
