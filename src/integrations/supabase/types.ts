@@ -7443,6 +7443,167 @@ export type Database = {
           },
         ]
       }
+      stock_batches: {
+        Row: {
+          batch_no: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          item_id: string
+          manufactured_date: string | null
+          note: string | null
+          quantity: number
+          status: string
+          unit_cost: number
+          updated_at: string
+          user_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          batch_no: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          item_id: string
+          manufactured_date?: string | null
+          note?: string | null
+          quantity?: number
+          status?: string
+          unit_cost?: number
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          batch_no?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          item_id?: string
+          manufactured_date?: string | null
+          note?: string | null
+          quantity?: number
+          status?: string
+          unit_cost?: number
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_batches_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_batches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_lines: {
+        Row: {
+          count_id: string
+          counted_qty: number | null
+          created_at: string
+          expected_qty: number
+          id: string
+          item_id: string
+          note: string | null
+          user_id: string
+          variance: number | null
+        }
+        Insert: {
+          count_id: string
+          counted_qty?: number | null
+          created_at?: string
+          expected_qty?: number
+          id?: string
+          item_id: string
+          note?: string | null
+          user_id?: string
+          variance?: number | null
+        }
+        Update: {
+          count_id?: string
+          counted_qty?: number | null
+          created_at?: string
+          expected_qty?: number
+          id?: string
+          item_id?: string
+          note?: string | null
+          user_id?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_counts: {
+        Row: {
+          count_date: string
+          count_number: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          posted_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          count_date?: string
+          count_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          posted_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          count_date?: string
+          count_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          posted_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_items: {
         Row: {
           barcode: string | null
@@ -7575,6 +7736,76 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_serials: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          id: string
+          item_id: string
+          note: string | null
+          received_date: string | null
+          reference: string | null
+          serial_no: string
+          sold_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          note?: string | null
+          received_date?: string | null
+          reference?: string | null
+          serial_no: string
+          sold_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          note?: string | null
+          received_date?: string | null
+          reference?: string | null
+          serial_no?: string
+          sold_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_serials_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "stock_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_serials_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_serials_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -8455,6 +8686,7 @@ export type Database = {
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
       post_restaurant_order: { Args: { _order_id: string }; Returns: string }
       post_school_grant: { Args: { _id: string }; Returns: string }
+      post_stock_count: { Args: { _count_id: string }; Returns: Json }
       post_tuckshop: { Args: { _id: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
