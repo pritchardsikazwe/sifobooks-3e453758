@@ -109,6 +109,7 @@ import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
 import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
 import { Route as WorkerWPosRouteImport } from './routes/_worker/w.pos'
 import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
+import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
 import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
@@ -700,6 +701,11 @@ const WorkerWOrdersRoute = WorkerWOrdersRouteImport.update({
   path: '/w/orders',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
+const WorkerWKitchenRoute = WorkerWKitchenRouteImport.update({
+  id: '/w/kitchen',
+  path: '/w/kitchen',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
 const AuthenticatedTeachingMaterialsNewRoute =
   AuthenticatedTeachingMaterialsNewRouteImport.update({
     id: '/new',
@@ -1158,6 +1164,7 @@ export interface FileRoutesByFullPath {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
   '/w/tables': typeof WorkerWTablesRoute
@@ -1307,6 +1314,7 @@ export interface FileRoutesByTo {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
   '/w/tables': typeof WorkerWTablesRoute
@@ -1464,6 +1472,7 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/_worker/w/kitchen': typeof WorkerWKitchenRoute
   '/_worker/w/orders': typeof WorkerWOrdersRoute
   '/_worker/w/pos': typeof WorkerWPosRoute
   '/_worker/w/tables': typeof WorkerWTablesRoute
@@ -1620,6 +1629,7 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/w/kitchen'
     | '/w/orders'
     | '/w/pos'
     | '/w/tables'
@@ -1769,6 +1779,7 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/w/kitchen'
     | '/w/orders'
     | '/w/pos'
     | '/w/tables'
@@ -1925,6 +1936,7 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
+    | '/_worker/w/kitchen'
     | '/_worker/w/orders'
     | '/_worker/w/pos'
     | '/_worker/w/tables'
@@ -2655,6 +2667,13 @@ declare module '@tanstack/react-router' {
       path: '/w/orders'
       fullPath: '/w/orders'
       preLoaderRoute: typeof WorkerWOrdersRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/kitchen': {
+      id: '/_worker/w/kitchen'
+      path: '/w/kitchen'
+      fullPath: '/w/kitchen'
+      preLoaderRoute: typeof WorkerWKitchenRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
     '/_authenticated/teaching-materials/new': {
@@ -3423,6 +3442,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface WorkerRouteRouteChildren {
+  WorkerWKitchenRoute: typeof WorkerWKitchenRoute
   WorkerWOrdersRoute: typeof WorkerWOrdersRoute
   WorkerWPosRoute: typeof WorkerWPosRoute
   WorkerWTablesRoute: typeof WorkerWTablesRoute
@@ -3430,6 +3450,7 @@ interface WorkerRouteRouteChildren {
 }
 
 const WorkerRouteRouteChildren: WorkerRouteRouteChildren = {
+  WorkerWKitchenRoute: WorkerWKitchenRoute,
   WorkerWOrdersRoute: WorkerWOrdersRoute,
   WorkerWPosRoute: WorkerWPosRoute,
   WorkerWTablesRoute: WorkerWTablesRoute,
