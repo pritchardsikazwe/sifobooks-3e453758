@@ -523,9 +523,77 @@ function Page() {
           </section>
         </div>
       </div>
+
+      {tender && (
+        <TenderDialog
+          due={tender.amount}
+          onCancel={() => setTender(null)}
+          onConfirm={() => {
+            const t = tender; setTender(null);
+            if (t.order) settle(t.order, t.method); else sendOrder(t.method);
+          }}
+        />
+      )}
+      {pin && (
+        <PinDialog
+          check={pin.order.order_no ?? ""}
+          onCancel={() => setPin(null)}
+          onConfirm={() => voidCheck(pin.order)}
+        />
+      )}
     </div>
   );
 }
+
+/* ---------------- dialogs ---------------- */
+function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () => void; onConfirm: () => void }) {
+  const [cash, setCash] = useState("");
+  const change = Number(cash || 0) - due;
+  return (
+    <Overlay title="Cash tender" onCancel={onCancel}>
+      <div className="mb-2 flex justify-between text-sm font-extrabold"><span>Amount due</span><span>{fmtMoney(due)}</span></div>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {[due, 50, 100, 200, 500].map((v, i) => (
+          <button key={i} onClick={() => setCash(String(v))} className="rounded-lg bg-[#71879a] px-2.5 py-1 text-[11px] font-bold text-white">{i === 0 ? "Exact" : v}</button>
+        ))}
+      </div>
+      <Input type="number" autoFocus value={cash} onChange={e => setCash(e.target.value)} placeholder="Cash received" className="bg-white text-[#20504d]" />
+      <div className="mt-2 flex justify-between text-sm font-extrabold">
+        <span>Change</span><span>{change >= 0 ? fmtMoney(change) : "—"}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PosBtn onClick={onCancel} className="bg-[#71879a]">Cancel</PosBtn>
+        <PosBtn onClick={onConfirm} disabled={change < 0} className="bg-[#0b9d19]">Settle</PosBtn>
+      </div>
+    </Overlay>
+  );
+}
+
+function PinDialog({ check, onCancel, onConfirm }: { check: string; onCancel: () => void; onConfirm: () => void }) {
+  const [pin, setPin] = useState("");
+  return (
+    <Overlay title={`Manager approval — void ${check}`} onCancel={onCancel}>
+      <p className="mb-2 text-[12px] opacity-80">Enter the manager PIN to void this check. Voided checks are excluded from takings.</p>
+      <Input type="password" autoFocus value={pin} onChange={e => setPin(e.target.value)} placeholder="Manager PIN" className="bg-white text-[#20504d]" />
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PosBtn onClick={onCancel} className="bg-[#71879a]">Cancel</PosBtn>
+        <PosBtn onClick={() => (pin.length >= 4 ? onConfirm() : toast.error("PIN must be at least 4 digits"))} className="bg-[#f00000]">Void check</PosBtn>
+      </div>
+    </Overlay>
+  );
+}
+
+function Overlay({ title, children, onCancel }: { title: string; children: React.ReactNode; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl border-2 border-[#7f9997] bg-[#214f4c] p-4 text-white shadow-2xl">
+        <div className="mb-3 text-sm font-extrabold uppercase tracking-wider">{title}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 
 /* ---------------- menu admin ---------------- */
 function MenuAdmin({ menu, onChanged }: { menu: MenuItem[]; onChanged: () => void }) {
