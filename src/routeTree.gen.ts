@@ -87,12 +87,21 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRestaurantIndexRouteImport } from './routes/_authenticated/restaurant.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
+import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
+import { Route as AuthenticatedRestaurantReservationsRouteImport } from './routes/_authenticated/restaurant.reservations'
+import { Route as AuthenticatedRestaurantPosRouteImport } from './routes/_authenticated/restaurant.pos'
+import { Route as AuthenticatedRestaurantOrdersRouteImport } from './routes/_authenticated/restaurant.orders'
+import { Route as AuthenticatedRestaurantMenuRouteImport } from './routes/_authenticated/restaurant.menu'
+import { Route as AuthenticatedRestaurantKitchenRouteImport } from './routes/_authenticated/restaurant.kitchen'
+import { Route as AuthenticatedRestaurantEndOfDayRouteImport } from './routes/_authenticated/restaurant.end-of-day'
+import { Route as AuthenticatedRestaurantCashRouteImport } from './routes/_authenticated/restaurant.cash'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
 import { Route as AuthenticatedReportsTurnoverTaxRouteImport } from './routes/_authenticated/reports.turnover-tax'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
@@ -547,6 +556,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRestaurantIndexRoute =
+  AuthenticatedRestaurantIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
 const AuthenticatedReportsIndexRoute =
   AuthenticatedReportsIndexRouteImport.update({
     id: '/',
@@ -581,6 +596,54 @@ const AuthenticatedTeachingMaterialsNewRoute =
     id: '/new',
     path: '/new',
     getParentRoute: () => AuthenticatedTeachingMaterialsRoute,
+  } as any)
+const AuthenticatedRestaurantTablesRoute =
+  AuthenticatedRestaurantTablesRouteImport.update({
+    id: '/tables',
+    path: '/tables',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantReservationsRoute =
+  AuthenticatedRestaurantReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantPosRoute =
+  AuthenticatedRestaurantPosRouteImport.update({
+    id: '/pos',
+    path: '/pos',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantOrdersRoute =
+  AuthenticatedRestaurantOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantMenuRoute =
+  AuthenticatedRestaurantMenuRouteImport.update({
+    id: '/menu',
+    path: '/menu',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantKitchenRoute =
+  AuthenticatedRestaurantKitchenRouteImport.update({
+    id: '/kitchen',
+    path: '/kitchen',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantEndOfDayRoute =
+  AuthenticatedRestaurantEndOfDayRouteImport.update({
+    id: '/end-of-day',
+    path: '/end-of-day',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantCashRoute =
+  AuthenticatedRestaurantCashRouteImport.update({
+    id: '/cash',
+    path: '/cash',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
 const AuthenticatedReportsVatReturnRoute =
   AuthenticatedReportsVatReturnRouteImport.update({
@@ -860,7 +923,7 @@ export interface FileRoutesByFullPath {
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
-  '/restaurant': typeof AuthenticatedRestaurantRoute
+  '/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
   '/roles': typeof AuthenticatedRolesRoute
   '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -911,12 +974,21 @@ export interface FileRoutesByFullPath {
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
+  '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
+  '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
+  '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
+  '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -978,7 +1050,6 @@ export interface FileRoutesByTo {
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
-  '/restaurant': typeof AuthenticatedRestaurantRoute
   '/roles': typeof AuthenticatedRolesRoute
   '/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -1029,12 +1100,21 @@ export interface FileRoutesByTo {
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
+  '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
+  '/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
+  '/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
+  '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
+  '/restaurant': typeof AuthenticatedRestaurantIndexRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1102,7 +1182,7 @@ export interface FileRoutesById {
   '/_authenticated/reconciliation': typeof AuthenticatedReconciliationRoute
   '/_authenticated/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
-  '/_authenticated/restaurant': typeof AuthenticatedRestaurantRoute
+  '/_authenticated/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
   '/_authenticated/school-fees': typeof AuthenticatedSchoolFeesRoute
   '/_authenticated/school-grants': typeof AuthenticatedSchoolGrantsRoute
@@ -1153,12 +1233,21 @@ export interface FileRoutesById {
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/_authenticated/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
+  '/_authenticated/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
+  '/_authenticated/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
+  '/_authenticated/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
+  '/_authenticated/restaurant/menu': typeof AuthenticatedRestaurantMenuRoute
+  '/_authenticated/restaurant/orders': typeof AuthenticatedRestaurantOrdersRoute
+  '/_authenticated/restaurant/pos': typeof AuthenticatedRestaurantPosRoute
+  '/_authenticated/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
+  '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
+  '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
   '/_authenticated/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1277,12 +1366,21 @@ export interface FileRouteTypes {
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat-return'
+    | '/restaurant/cash'
+    | '/restaurant/end-of-day'
+    | '/restaurant/kitchen'
+    | '/restaurant/menu'
+    | '/restaurant/orders'
+    | '/restaurant/pos'
+    | '/restaurant/reservations'
+    | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers/'
     | '/invoices/'
     | '/learn/'
     | '/quotes/'
     | '/reports/'
+    | '/restaurant/'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1344,7 +1442,6 @@ export interface FileRouteTypes {
     | '/receipts'
     | '/reconciliation'
     | '/reconciliation-sessions'
-    | '/restaurant'
     | '/roles'
     | '/school-fees'
     | '/school-grants'
@@ -1395,12 +1492,21 @@ export interface FileRouteTypes {
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat-return'
+    | '/restaurant/cash'
+    | '/restaurant/end-of-day'
+    | '/restaurant/kitchen'
+    | '/restaurant/menu'
+    | '/restaurant/orders'
+    | '/restaurant/pos'
+    | '/restaurant/reservations'
+    | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers'
     | '/invoices'
     | '/learn'
     | '/quotes'
     | '/reports'
+    | '/restaurant'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1518,12 +1624,21 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/trial-balance'
     | '/_authenticated/reports/turnover-tax'
     | '/_authenticated/reports/vat-return'
+    | '/_authenticated/restaurant/cash'
+    | '/_authenticated/restaurant/end-of-day'
+    | '/_authenticated/restaurant/kitchen'
+    | '/_authenticated/restaurant/menu'
+    | '/_authenticated/restaurant/orders'
+    | '/_authenticated/restaurant/pos'
+    | '/_authenticated/restaurant/reservations'
+    | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
+    | '/_authenticated/restaurant/'
     | '/_authenticated/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -2089,6 +2204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/restaurant/': {
+      id: '/_authenticated/restaurant/'
+      path: '/'
+      fullPath: '/restaurant/'
+      preLoaderRoute: typeof AuthenticatedRestaurantIndexRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
     '/_authenticated/reports/': {
       id: '/_authenticated/reports/'
       path: '/'
@@ -2130,6 +2252,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/teaching-materials/new'
       preLoaderRoute: typeof AuthenticatedTeachingMaterialsNewRouteImport
       parentRoute: typeof AuthenticatedTeachingMaterialsRoute
+    }
+    '/_authenticated/restaurant/tables': {
+      id: '/_authenticated/restaurant/tables'
+      path: '/tables'
+      fullPath: '/restaurant/tables'
+      preLoaderRoute: typeof AuthenticatedRestaurantTablesRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/reservations': {
+      id: '/_authenticated/restaurant/reservations'
+      path: '/reservations'
+      fullPath: '/restaurant/reservations'
+      preLoaderRoute: typeof AuthenticatedRestaurantReservationsRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/pos': {
+      id: '/_authenticated/restaurant/pos'
+      path: '/pos'
+      fullPath: '/restaurant/pos'
+      preLoaderRoute: typeof AuthenticatedRestaurantPosRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/orders': {
+      id: '/_authenticated/restaurant/orders'
+      path: '/orders'
+      fullPath: '/restaurant/orders'
+      preLoaderRoute: typeof AuthenticatedRestaurantOrdersRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/menu': {
+      id: '/_authenticated/restaurant/menu'
+      path: '/menu'
+      fullPath: '/restaurant/menu'
+      preLoaderRoute: typeof AuthenticatedRestaurantMenuRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/kitchen': {
+      id: '/_authenticated/restaurant/kitchen'
+      path: '/kitchen'
+      fullPath: '/restaurant/kitchen'
+      preLoaderRoute: typeof AuthenticatedRestaurantKitchenRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/end-of-day': {
+      id: '/_authenticated/restaurant/end-of-day'
+      path: '/end-of-day'
+      fullPath: '/restaurant/end-of-day'
+      preLoaderRoute: typeof AuthenticatedRestaurantEndOfDayRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/cash': {
+      id: '/_authenticated/restaurant/cash'
+      path: '/cash'
+      fullPath: '/restaurant/cash'
+      preLoaderRoute: typeof AuthenticatedRestaurantCashRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
     }
     '/_authenticated/reports/vat-return': {
       id: '/_authenticated/reports/vat-return'
@@ -2507,6 +2685,37 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
 const AuthenticatedReportsRouteWithChildren =
   AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
 
+interface AuthenticatedRestaurantRouteChildren {
+  AuthenticatedRestaurantCashRoute: typeof AuthenticatedRestaurantCashRoute
+  AuthenticatedRestaurantEndOfDayRoute: typeof AuthenticatedRestaurantEndOfDayRoute
+  AuthenticatedRestaurantKitchenRoute: typeof AuthenticatedRestaurantKitchenRoute
+  AuthenticatedRestaurantMenuRoute: typeof AuthenticatedRestaurantMenuRoute
+  AuthenticatedRestaurantOrdersRoute: typeof AuthenticatedRestaurantOrdersRoute
+  AuthenticatedRestaurantPosRoute: typeof AuthenticatedRestaurantPosRoute
+  AuthenticatedRestaurantReservationsRoute: typeof AuthenticatedRestaurantReservationsRoute
+  AuthenticatedRestaurantTablesRoute: typeof AuthenticatedRestaurantTablesRoute
+  AuthenticatedRestaurantIndexRoute: typeof AuthenticatedRestaurantIndexRoute
+}
+
+const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren =
+  {
+    AuthenticatedRestaurantCashRoute: AuthenticatedRestaurantCashRoute,
+    AuthenticatedRestaurantEndOfDayRoute: AuthenticatedRestaurantEndOfDayRoute,
+    AuthenticatedRestaurantKitchenRoute: AuthenticatedRestaurantKitchenRoute,
+    AuthenticatedRestaurantMenuRoute: AuthenticatedRestaurantMenuRoute,
+    AuthenticatedRestaurantOrdersRoute: AuthenticatedRestaurantOrdersRoute,
+    AuthenticatedRestaurantPosRoute: AuthenticatedRestaurantPosRoute,
+    AuthenticatedRestaurantReservationsRoute:
+      AuthenticatedRestaurantReservationsRoute,
+    AuthenticatedRestaurantTablesRoute: AuthenticatedRestaurantTablesRoute,
+    AuthenticatedRestaurantIndexRoute: AuthenticatedRestaurantIndexRoute,
+  }
+
+const AuthenticatedRestaurantRouteWithChildren =
+  AuthenticatedRestaurantRoute._addFileChildren(
+    AuthenticatedRestaurantRouteChildren,
+  )
+
 interface AuthenticatedTeachingMaterialsRouteChildren {
   AuthenticatedTeachingMaterialsNewRoute: typeof AuthenticatedTeachingMaterialsNewRoute
   AuthenticatedTeachingMaterialsIdQuoteRoute: typeof AuthenticatedTeachingMaterialsIdQuoteRoute
@@ -2581,7 +2790,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReconciliationRoute: typeof AuthenticatedReconciliationRoute
   AuthenticatedReconciliationSessionsRoute: typeof AuthenticatedReconciliationSessionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
-  AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRoute
+  AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRouteWithChildren
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
   AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
   AuthenticatedSchoolGrantsRoute: typeof AuthenticatedSchoolGrantsRoute
@@ -2666,7 +2875,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReconciliationSessionsRoute:
     AuthenticatedReconciliationSessionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
-  AuthenticatedRestaurantRoute: AuthenticatedRestaurantRoute,
+  AuthenticatedRestaurantRoute: AuthenticatedRestaurantRouteWithChildren,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
   AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
   AuthenticatedSchoolGrantsRoute: AuthenticatedSchoolGrantsRoute,
