@@ -144,7 +144,12 @@ function Orders() {
                         <Button size="sm" variant="destructive" onClick={() => voidOrder(o)}>Void</Button>
                       </div>
                     )}
-                    {o.journal_entry_id && <p className="text-xs text-muted-foreground">Posted to the general ledger.</p>}
+                    {o.status !== "void" && (
+                      <div className="rounded-xl border bg-muted/30 p-3">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Accounting impact</div>
+                        <DocumentImpact kind="pos" reference={`RPOS:${o.id}`} entryId={o.journal_entry_id ?? null} />
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>
