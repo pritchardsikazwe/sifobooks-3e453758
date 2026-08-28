@@ -23,7 +23,13 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
         { key: "reference", header: "Reference" },
         { key: "amount", header: "Amount", render: r => fmtMoney(r.amount ?? 0) },
       ]}
+      posting={{
+        kind: "bill",
+        reference: r => (r.id ? `PAY:${r.id}` : null),
+        label: r => `Payment ${r.payment_number ?? ""} — accounting impact`,
+      }}
       fields={[
+
         { name: "payment_number", label: "Payment Number", required: true },
         { name: "payment_date", label: "Payment Date", type: "date", defaultValue: new Date().toISOString().slice(0,10) },
         { name: "amount", label: "Amount", type: "number", required: true },
