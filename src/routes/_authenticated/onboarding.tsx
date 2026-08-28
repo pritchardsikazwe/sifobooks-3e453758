@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Clock } from "lucide-react";
+import { INDUSTRY_SOLUTIONS, getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -34,7 +35,7 @@ type Form = z.infer<typeof schema>;
 const COUNTRIES = ["Nigeria", "Kenya", "South Africa", "Ghana", "Zambia", "Tanzania", "Uganda", "Egypt", "Rwanda", "Ivory Coast", "Other"];
 const CURRENCIES = ["USD", "NGN", "KES", "ZAR", "GHS", "ZMW", "TZS", "UGX", "EGP", "RWF", "XOF", "EUR", "GBP"];
 const TEAM_SIZES = ["Just me", "2–10", "11–50", "51–200", "200+"];
-const INDUSTRIES = ["Retail", "Hospitality", "Manufacturing", "Professional services", "Logistics", "Telecom", "Agriculture", "Technology", "Other"];
+
 
 function OnboardingPage() {
   const navigate = useNavigate();
@@ -84,9 +85,20 @@ function OnboardingPage() {
       industry: parsed.data.industry,
       onboarded: true,
     }).eq("id", u.user.id);
+    if (error) { setLoading(false); return setError(error.message); }
+
+    // Apply the chosen industry solution to the company workspace (non-destructive).
+    const sol = getSolution(parsed.data.industry);
+    let landing = "/dashboard";
+    try {
+      const { data: c } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+      if (sol && c?.[0]?.id) {
+        await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
+        if (sol.status === "available") landing = sol.landing;
+      }
+    } catch { /* workspace defaults to the dashboard */ }
     setLoading(false);
-    if (error) return setError(error.message);
-    navigate({ to: "/dashboard" });
+    navigate({ to: landing });
   };
 
   return (
@@ -138,11 +150,32 @@ function OnboardingPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Industry</Label>
-                  <Select value={form.industry} onValueChange={v => set("industry", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>{INDUSTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <Label>What type of business do you operate?</Label>
+                  <p className="text-xs text-muted-foreground">SifoBooks configures your workspace from this — you never have to install modules one by one.</p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {INDUSTRY_SOLUTIONS.map(s => {
+                      const active = form.industry === s.id;
+                      const soon = s.status === "coming_soon";
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => set("industry", s.id)}
+                          className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${active ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>{s.emoji}</span>
+                            <span className="text-sm font-medium truncate">{s.label}</span>
+                          </div>
+                          <div className="mt-1">
+                            {soon
+                              ? <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"><Clock className="h-3 w-3" /> Coming soon</span>
+                              : <span className="text-[10px] uppercase tracking-wide text-emerald-600">Available</span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </>
             )}

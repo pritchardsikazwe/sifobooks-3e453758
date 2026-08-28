@@ -145,11 +145,10 @@ export const MODULE_TABS: Record<ModuleKey, Array<{ label: string; to: string }>
   ],
   admin: [
     { label: "Admin Home", to: "/admin" },
-    { label: "Modules", to: "/modules" },
     { label: "Roles & Permissions", to: "/roles" },
     { label: "Approvals", to: "/approvals" },
     { label: "Company Setup", to: "/setup" },
-    { label: "Industry Presets", to: "/industry" },
+    { label: "Industry & Business", to: "/industry" },
   ],
   learning: [
     { label: "Learn Centre", to: "/learn" },

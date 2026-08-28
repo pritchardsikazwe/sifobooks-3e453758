@@ -50,7 +50,7 @@ const JUMPS: { label: string; url: string; icon: any }[] = [
   { label: "Chart of Accounts", url: "/chart-of-accounts", icon: BookText },
   { label: "Period Close", url: "/period-close", icon: CalendarClock },
   { label: "Compliance", url: "/compliance", icon: ShieldCheck },
-  { label: "Modules", url: "/modules", icon: Sparkles },
+  { label: "Industry & Business", url: "/industry", icon: Sparkles },
   { label: "Company Setup", url: "/setup", icon: Building2 },
 ];
 
