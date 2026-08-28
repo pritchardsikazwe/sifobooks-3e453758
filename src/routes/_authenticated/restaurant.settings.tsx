@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/restaurant/settings")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: RestaurantSettings;
+  component: RestaurantSettings,
 });
 
 const db: any = supabase;
