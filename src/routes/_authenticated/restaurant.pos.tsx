@@ -11,6 +11,8 @@ import { accrueLoyaltyForOrder } from "@/lib/restaurant-rewards";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
+
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
   head: () => ({
@@ -215,14 +217,29 @@ function Page() {
       ? supabase.from("restaurant_orders").update(payload).eq("id", recalled.id).select("*").single()
       : supabase.from("restaurant_orders").insert({ ...payload, order_no: `CHK-${Date.now().toString().slice(-6)}` }).select("*").single();
     const { data: ord, error } = await q;
-    if (error || !ord) { setBusy(false); return toast.error(error?.message ?? "Could not save check"); }
-    const { error: ie } = await supabase.from("restaurant_order_items").insert(cart.map(l => ({
-      user_id: uid, order_id: (ord as any).id, item_name: l.name, station: l.station, qty: l.qty,
-      price: l.price + (l.mods ?? []).reduce((s, m) => s + Number(m.price), 0),
-      notes: [(l.mods ?? []).map(m => m.name).join(", "), l.note].filter(Boolean).join(" • ") || null,
-      kds_status: pay ? "served" : "queued",
-    })) as any);
-    if (ie) { setBusy(false); return toast.error(ie.message); }
+    if (error || !ord) { setBusy(false); return toast.error(posErrorMessage(error)); }
+    const rows = cart.map(l => {
+      const n = normalizeOrderItem({
+        item_name: l.name, station: l.station, qty: l.qty, price: l.price,
+        modifiers: (l.mods ?? []).map(m => ({ name: m.name, price: Number(m.price) })),
+        notes: l.note ?? "",
+      });
+      return {
+        user_id: uid, order_id: (ord as any).id, item_name: n.item_name, station: n.station,
+        qty: n.qty, price: n.price, unit_cost: n.unit_cost, discount: n.discount,
+        modifiers: n.modifiers,
+        notes: [n.modifiers.map(m => m.name).join(", "), n.notes].filter(Boolean).join(" • ") || null,
+        kds_status: pay ? "served" : "queued",
+      };
+    });
+    const { error: ie } = await supabase.from("restaurant_order_items").insert(rows as any);
+    if (ie) {
+      console.error("[POS] order items failed", ie);
+      if (!recalled) await supabase.from("restaurant_orders").delete().eq("id", (ord as any).id);
+      setBusy(false);
+      return toast.error(posErrorMessage(ie));
+    }
+
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
     // Kitchen / bar tickets and customer receipt — never block the order.
