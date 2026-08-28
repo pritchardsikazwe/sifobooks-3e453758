@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { printTableDocument } from "@/services/printDocument";
 import {
   FileText, ClipboardList, TrendingUp, ArrowLeftRight, Download, Printer,
   RefreshCw, MoreVertical, Copy,
@@ -235,32 +236,17 @@ function InventorySheetsPage() {
 
   const printReport = () => {
     const cols = columns.filter((c) => c.key !== "actions");
-    const head = cols.map((c) => `<th>${c.header}</th>`).join("");
-    const body = rows.map((r) =>
-      `<tr>${cols.map((c) => `<td>${escapeHtml(String(c.accessor ? c.accessor(r) ?? "" : r[c.key] ?? ""))}</td>`).join("")}</tr>`).join("");
     const t = reportTotals(report, rows);
-    const totalsHtml = Object.entries(t).map(([k, v]) => `<span><b>${k}:</b> ${v}</span>`).join(" &nbsp;•&nbsp; ");
-    const w = window.open("", "_blank", "width=1200,height=800");
-    if (!w) return toast.error("Allow pop-ups to print");
-    w.document.write(`<!doctype html><html><head><title>${reportLabel}</title>
-      <style>
-        body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#0f172a}
-        h1{font-size:18px;margin:0} h2{font-size:14px;margin:2px 0 10px;font-weight:600;color:#334155}
-        .meta{font-size:11px;color:#475569;margin-bottom:12px;line-height:1.5}
-        table{width:100%;border-collapse:collapse;font-size:10px}
-        th,td{border:1px solid #cbd5e1;padding:4px 6px;text-align:left}
-        th{background:#ecfdf5}
-        tr:nth-child(even) td{background:#f8fafc}
-        .totals{margin-top:12px;font-size:11px}
-      </style></head><body>
-      <h1>SIFOBOOKS</h1><h2>${reportLabel}</h2>
-      <div class="meta">${headerLines().join("<br/>")}</div>
-      <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
-      <div class="totals">${totalsHtml}</div>
-      </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+    void printTableDocument({
+      title: reportLabel,
+      subtitle: "SifoBooks Inventory",
+      meta: headerLines(),
+      columns: cols.map((c) => c.header),
+      rows: rows.map((r) => cols.map((c) => String((c.accessor ? c.accessor(r) : r[c.key]) ?? ""))),
+      totals: t as Record<string, string | number>,
+      landscape: cols.length > 7,
+      fileName: `${reportLabel.replace(/\s+/g, "-").toLowerCase()}.pdf`,
+    });
   };
 
   const copyTable = async () => {

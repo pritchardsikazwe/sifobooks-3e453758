@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExportMenu } from "@/lib/exports";
+import { printCurrentView } from "@/services/printDocument";
 import type { ReactNode } from "react";
 
 export function ReportShell({
@@ -24,7 +25,7 @@ export function ReportShell({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {filters}
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
+          <Button size="sm" variant="outline" onClick={() => void printCurrentView(title, subtitle, rows)}>
             <Printer className="h-4 w-4 mr-1" /> Print
           </Button>
           <ExportMenu rows={rows} filename={filename} title={title} />

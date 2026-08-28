@@ -44,6 +44,7 @@ import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
+import { Route as AuthenticatedPrintingSettingsRouteImport } from './routes/_authenticated/printing-settings'
 import { Route as AuthenticatedPostingWizardRouteImport } from './routes/_authenticated/posting-wizard'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
@@ -99,6 +100,7 @@ import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
+import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
 import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
@@ -338,6 +340,12 @@ const AuthenticatedProjectTasksRoute =
   AuthenticatedProjectTasksRouteImport.update({
     id: '/project-tasks',
     path: '/project-tasks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPrintingSettingsRoute =
+  AuthenticatedPrintingSettingsRouteImport.update({
+    id: '/printing-settings',
+    path: '/printing-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPostingWizardRoute =
@@ -637,6 +645,11 @@ const AuthenticatedCustomersIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
+const ApiPrintingJobsRoute = ApiPrintingJobsRouteImport.update({
+  id: '/api/printing/jobs',
+  path: '/api/printing/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTeachingMaterialsNewRoute =
   AuthenticatedTeachingMaterialsNewRouteImport.update({
     id: '/new',
@@ -1005,6 +1018,7 @@ export interface FileRoutesByFullPath {
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
+  '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -1084,6 +1098,7 @@ export interface FileRoutesByFullPath {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
@@ -1147,6 +1162,7 @@ export interface FileRoutesByTo {
   '/petty-cash': typeof AuthenticatedPettyCashRoute
   '/pos': typeof AuthenticatedPosRoute
   '/posting-wizard': typeof AuthenticatedPostingWizardRoute
+  '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -1223,6 +1239,7 @@ export interface FileRoutesByTo {
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
@@ -1290,6 +1307,7 @@ export interface FileRoutesById {
   '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/posting-wizard': typeof AuthenticatedPostingWizardRoute
+  '/_authenticated/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -1369,6 +1387,7 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
+  '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
@@ -1436,6 +1455,7 @@ export interface FileRouteTypes {
     | '/petty-cash'
     | '/pos'
     | '/posting-wizard'
+    | '/printing-settings'
     | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
@@ -1515,6 +1535,7 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/api/printing/jobs'
     | '/customers/'
     | '/invoices/'
     | '/learn/'
@@ -1578,6 +1599,7 @@ export interface FileRouteTypes {
     | '/petty-cash'
     | '/pos'
     | '/posting-wizard'
+    | '/printing-settings'
     | '/project-tasks'
     | '/projects'
     | '/purchase-orders'
@@ -1654,6 +1676,7 @@ export interface FileRouteTypes {
     | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
+    | '/api/printing/jobs'
     | '/customers'
     | '/invoices'
     | '/learn'
@@ -1720,6 +1743,7 @@ export interface FileRouteTypes {
     | '/_authenticated/petty-cash'
     | '/_authenticated/pos'
     | '/_authenticated/posting-wizard'
+    | '/_authenticated/printing-settings'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
     | '/_authenticated/purchase-orders'
@@ -1799,6 +1823,7 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
+    | '/api/printing/jobs'
     | '/_authenticated/customers/'
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
@@ -1817,6 +1842,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPrintingJobsRoute: typeof ApiPrintingJobsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -2067,6 +2093,13 @@ declare module '@tanstack/react-router' {
       path: '/project-tasks'
       fullPath: '/project-tasks'
       preLoaderRoute: typeof AuthenticatedProjectTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/printing-settings': {
+      id: '/_authenticated/printing-settings'
+      path: '/printing-settings'
+      fullPath: '/printing-settings'
+      preLoaderRoute: typeof AuthenticatedPrintingSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/posting-wizard': {
@@ -2453,6 +2486,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/customers/'
       preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedCustomersRoute
+    }
+    '/api/printing/jobs': {
+      id: '/api/printing/jobs'
+      path: '/api/printing/jobs'
+      fullPath: '/api/printing/jobs'
+      preLoaderRoute: typeof ApiPrintingJobsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/teaching-materials/new': {
       id: '/_authenticated/teaching-materials/new'
@@ -3056,6 +3096,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedPostingWizardRoute: typeof AuthenticatedPostingWizardRoute
+  AuthenticatedPrintingSettingsRoute: typeof AuthenticatedPrintingSettingsRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
@@ -3146,6 +3187,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedPostingWizardRoute: AuthenticatedPostingWizardRoute,
+  AuthenticatedPrintingSettingsRoute: AuthenticatedPrintingSettingsRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
@@ -3199,6 +3241,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPrintingJobsRoute: ApiPrintingJobsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

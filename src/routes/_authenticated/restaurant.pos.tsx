@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
+import { printKitchenOrder, printBarOrder, printReceipt } from "@/services/universalPrintService";
+import { getPrinterForType } from "@/services/printerConfiguration";
+import { savePrintQueueJob } from "@/services/printQueue";
 import { accrueLoyaltyForOrder } from "@/lib/restaurant-rewards";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
@@ -222,9 +225,51 @@ function Page() {
     if (ie) { setBusy(false); return toast.error(ie.message); }
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
+    // Kitchen / bar tickets and customer receipt — never block the order.
+    if (!hold) void printOrderTickets(ord as any, cart, pay, total);
     setBusy(false);
     toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : hold ? "Check held — recall it from the RECALL key" : "Sent to kitchen");
     clearCheck(); load();
+  };
+
+  /** Silent kitchen/bar ticket + receipt routing. Failures are queued, never fatal. */
+  const printOrderTickets = async (ord: any, items: typeof cart, pay?: string, grand?: number) => {
+    const base = {
+      orderNumber: ord.order_no ?? ord.id,
+      tableNumber: tables.find(t => t.id === ord.table_id)?.name ?? undefined,
+      waiter: server || undefined,
+      orderType: mode,
+    };
+    const map = (l: (typeof cart)[number]) => ({
+      name: l.name, quantity: l.qty,
+      modifiers: (l.mods ?? []).map(m => m.name),
+      notes: l.note ?? undefined,
+    });
+    const bar = items.filter(l => (l.station ?? "").toLowerCase().includes("bar"));
+    const kitchen = items.filter(l => !bar.includes(l));
+    try {
+      if (kitchen.length) await printKitchenOrder({ ...base, items: kitchen.map(map) }, getPrinterForType("kitchen"));
+      if (bar.length) await printBarOrder({ ...base, items: bar.map(map) }, getPrinterForType("bar"));
+    } catch (error: any) {
+      console.error("Kitchen printing failed:", error);
+      await savePrintQueueJob({ type: "kitchen", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) });
+    }
+    if (!pay) return;
+    try {
+      await printReceipt({
+        businessName: "SifoBooks Restaurant",
+        receiptNumber: base.orderNumber,
+        date: new Date().toISOString(),
+        cashier: server || undefined,
+        items: items.map(l => ({ name: l.name, quantity: l.qty, price: l.price, total: l.qty * l.price, modifiers: (l.mods ?? []).map(m => m.name) })),
+        total: Number(grand ?? 0),
+        paymentMethod: pay,
+        footer: "Thank you for dining with us",
+      }, getPrinterForType("receipt"));
+    } catch (error: any) {
+      console.error("Receipt printing failed:", error);
+      await savePrintQueueJob({ type: "receipt", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) });
+    }
   };
 
   const settle = async (o: Order, method: string) => {

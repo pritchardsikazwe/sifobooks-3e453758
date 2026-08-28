@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Printer, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { printCurrentView } from "@/services/printDocument";
 import { ExportMenu } from "@/lib/exports";
 import { exportBrandedPdf } from "@/lib/reports/pdf";
 import { toggleFavorite, isFavorite, markGenerated, trackVisit } from "@/lib/reports/favorites";
@@ -67,7 +68,7 @@ export function ReportsShell({
           >
             <Star className={cn("h-4 w-4", fav && "fill-amber-400 text-amber-400")} />
           </Button>
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
+          <Button size="sm" variant="outline" onClick={() => void printCurrentView(title, subtitle, exportRows)}>
             <Printer className="h-4 w-4 mr-1" /> Print
           </Button>
           {pdfHead && pdfBody && (

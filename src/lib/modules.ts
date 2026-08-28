@@ -202,6 +202,7 @@ export const MODULES: ModuleDef[] = [
       { title: "Approvals", url: "/approvals", iconName: "Inbox" },
       { title: "Super Admin", url: "/super-admin", iconName: "ShieldAlert", superAdminOnly: true },
       { title: "Company Setup", url: "/setup", iconName: "Building2" },
+      { title: "Printing", url: "/printing-settings", iconName: "Printer" },
       { title: "Industry Presets", url: "/industry", iconName: "Sparkles" },
       { title: "Subscription", url: "/subscription", iconName: "Sparkles" },
       { title: "Audit Logs", url: "/audit-logs", iconName: "ShieldCheck" },
