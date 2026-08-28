@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, CreditCard, AlertTriangle, RotateCcw, Printer, X } from "lucide-react";
+import { Plus, CreditCard, AlertTriangle, RotateCcw, Printer, X, Scale } from "lucide-react";
+import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,7 @@ function ReceiptsPage() {
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [ledger, setLedger] = useState<LedgerTarget | null>(null);
 
   // Shared selectors + balanced posting preview
   const { accounts, defaultFor } = useCoaAccounts();
@@ -249,7 +251,12 @@ function ReceiptsPage() {
         const status = (r as any).status ?? "posted";
         return (
           <div className="inline-flex items-center gap-1">
+            <Button size="icon" variant="ghost" title="Accounting impact"
+              onClick={() => setLedger({ kind: "receipt", reference: `RCT:${r.number}`, title: `Receipt ${r.number} — accounting impact` })}>
+              <Scale className="h-4 w-4" />
+            </Button>
             <Button size="icon" variant="ghost" onClick={() => printReceipt(r)} title="Print"><Printer className="h-4 w-4" /></Button>
+
             <ShareDoc kind="receipt" id={r.id} docNumber={r.number} />
             {status === "posted" && (
               <Button size="icon" variant="ghost" onClick={() => reverseReceipt(r)} title="Reverse"><RotateCcw className="h-4 w-4 text-red-600" /></Button>
@@ -441,6 +448,8 @@ function ReceiptsPage() {
           />
         </CardContent>
       </Card>
+
+      <LedgerImpactSheet target={ledger} onOpenChange={o => { if (!o) setLedger(null); }} />
     </div>
   );
 }

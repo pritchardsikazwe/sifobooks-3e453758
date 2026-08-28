@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,9 @@ import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
 import { SifoModuleAI } from "@/components/sifo/SifoModuleAI";
 import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
+import { type FlowKind } from "@/components/accounting/PostingFlow";
+import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
+
 
 /** Ledger account picker shown inside the create/edit dialog. */
 export type AccountField = {
@@ -90,13 +93,24 @@ type Props = {
   module?: ModuleKey;
   /** Sub-title shown under the module title. */
   description?: string;
+  /** Adds a per-row "Ledger" action showing the posting flow and real GL effect. */
+  posting?: {
+    kind: FlowKind;
+    /** Journal reference for the row, e.g. r => `INV:${r.invoice_number}`. */
+    reference: (row: any) => string | null;
+    /** Known journal entry id column, when the table stores one. */
+    entryId?: (row: any) => string | null;
+    label?: (row: any) => string;
+  };
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
-  accountFields, previewLines, requireBalanced, module, description,
+  accountFields, previewLines, requireBalanced, module, description, posting,
 }: Props) {
+  const [ledger, setLedger] = useState<LedgerTarget | null>(null);
+
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -270,13 +284,28 @@ export function SimpleCrud({
               </Button>
             );
           })}
+          {posting && (
+            <Button
+              size="sm" variant="ghost" className="h-7 px-2 text-xs"
+              title="Accounting impact"
+              onClick={() => setLedger({
+                kind: posting.kind,
+                reference: posting.reference(r),
+                entryId: posting.entryId?.(r) ?? null,
+                title: posting.label?.(r) ?? `${title} — accounting impact`,
+              })}
+            >
+              <Scale className="h-3.5 w-3.5 mr-1" />Ledger
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(r)} title="Edit"><Edit2 className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(r)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
       ),
     });
     return cols;
-  }, [columns, rowActions, statusField]);
+  }, [columns, rowActions, statusField, posting]);
+
   const DEFAULT_GROUP = "Details";
   const groupNames = useMemo(() => {
     const seen: string[] = [];
@@ -454,9 +483,12 @@ export function SimpleCrud({
           </div>
         }
       />
+
+      <LedgerImpactSheet target={ledger} onOpenChange={o => { if (!o) setLedger(null); }} />
     </div>
   );
 }
+
 
 
 /** Helper: mark a record as posted (or set any status). */

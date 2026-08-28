@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
+
 import { voidInvoiceLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
 import { toast } from "sonner";
@@ -161,6 +163,10 @@ function InvoicesPage() {
             {drawer.notes && (
               <DrawerSection title="Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{drawer.notes}</p></DrawerSection>
             )}
+            <DrawerSection title="Accounting impact">
+              <DocumentImpact kind="invoice" reference={drawer.number ? `INV:${drawer.number}` : null} />
+            </DrawerSection>
+
           </div>
         )}
       </DetailDrawer>
