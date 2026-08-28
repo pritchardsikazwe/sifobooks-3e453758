@@ -108,6 +108,7 @@ import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authe
 import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
 import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
 import { Route as WorkerWStockRouteImport } from './routes/_worker/w.stock'
+import { Route as WorkerWReportsRouteImport } from './routes/_worker/w.reports'
 import { Route as WorkerWPosRouteImport } from './routes/_worker/w.pos'
 import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
 import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
@@ -698,6 +699,11 @@ const WorkerWStockRoute = WorkerWStockRouteImport.update({
   path: '/w/stock',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
+const WorkerWReportsRoute = WorkerWReportsRouteImport.update({
+  id: '/w/reports',
+  path: '/w/reports',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
 const WorkerWPosRoute = WorkerWPosRouteImport.update({
   id: '/w/pos',
   path: '/w/pos',
@@ -1180,6 +1186,7 @@ export interface FileRoutesByFullPath {
   '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
+  '/w/reports': typeof WorkerWReportsRoute
   '/w/stock': typeof WorkerWStockRoute
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
@@ -1332,6 +1339,7 @@ export interface FileRoutesByTo {
   '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
+  '/w/reports': typeof WorkerWReportsRoute
   '/w/stock': typeof WorkerWStockRoute
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
@@ -1492,6 +1500,7 @@ export interface FileRoutesById {
   '/_worker/w/kitchen': typeof WorkerWKitchenRoute
   '/_worker/w/orders': typeof WorkerWOrdersRoute
   '/_worker/w/pos': typeof WorkerWPosRoute
+  '/_worker/w/reports': typeof WorkerWReportsRoute
   '/_worker/w/stock': typeof WorkerWStockRoute
   '/_worker/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
@@ -1651,6 +1660,7 @@ export interface FileRouteTypes {
     | '/w/kitchen'
     | '/w/orders'
     | '/w/pos'
+    | '/w/reports'
     | '/w/stock'
     | '/w/tables'
     | '/api/printing/jobs'
@@ -1803,6 +1813,7 @@ export interface FileRouteTypes {
     | '/w/kitchen'
     | '/w/orders'
     | '/w/pos'
+    | '/w/reports'
     | '/w/stock'
     | '/w/tables'
     | '/api/printing/jobs'
@@ -1962,6 +1973,7 @@ export interface FileRouteTypes {
     | '/_worker/w/kitchen'
     | '/_worker/w/orders'
     | '/_worker/w/pos'
+    | '/_worker/w/reports'
     | '/_worker/w/stock'
     | '/_worker/w/tables'
     | '/api/printing/jobs'
@@ -2684,6 +2696,13 @@ declare module '@tanstack/react-router' {
       path: '/w/stock'
       fullPath: '/w/stock'
       preLoaderRoute: typeof WorkerWStockRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/reports': {
+      id: '/_worker/w/reports'
+      path: '/w/reports'
+      fullPath: '/w/reports'
+      preLoaderRoute: typeof WorkerWReportsRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
     '/_worker/w/pos': {
@@ -3484,6 +3503,7 @@ interface WorkerRouteRouteChildren {
   WorkerWKitchenRoute: typeof WorkerWKitchenRoute
   WorkerWOrdersRoute: typeof WorkerWOrdersRoute
   WorkerWPosRoute: typeof WorkerWPosRoute
+  WorkerWReportsRoute: typeof WorkerWReportsRoute
   WorkerWStockRoute: typeof WorkerWStockRoute
   WorkerWTablesRoute: typeof WorkerWTablesRoute
   WorkerWIndexRoute: typeof WorkerWIndexRoute
@@ -3494,6 +3514,7 @@ const WorkerRouteRouteChildren: WorkerRouteRouteChildren = {
   WorkerWKitchenRoute: WorkerWKitchenRoute,
   WorkerWOrdersRoute: WorkerWOrdersRoute,
   WorkerWPosRoute: WorkerWPosRoute,
+  WorkerWReportsRoute: WorkerWReportsRoute,
   WorkerWStockRoute: WorkerWStockRoute,
   WorkerWTablesRoute: WorkerWTablesRoute,
   WorkerWIndexRoute: WorkerWIndexRoute,
