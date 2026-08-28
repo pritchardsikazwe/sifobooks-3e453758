@@ -95,6 +95,7 @@ import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
+import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
 import { Route as AuthenticatedRestaurantSettingsRouteImport } from './routes/_authenticated/restaurant.settings'
 import { Route as AuthenticatedRestaurantReservationsRouteImport } from './routes/_authenticated/restaurant.reservations'
 import { Route as AuthenticatedRestaurantReportsRouteImport } from './routes/_authenticated/restaurant.reports'
@@ -607,6 +608,12 @@ const AuthenticatedRestaurantTablesRoute =
     path: '/tables',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
+const AuthenticatedRestaurantShiftsRoute =
+  AuthenticatedRestaurantShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
 const AuthenticatedRestaurantSettingsRoute =
   AuthenticatedRestaurantSettingsRouteImport.update({
     id: '/settings',
@@ -1013,6 +1020,7 @@ export interface FileRoutesByFullPath {
   '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -1143,6 +1151,7 @@ export interface FileRoutesByTo {
   '/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
@@ -1280,6 +1289,7 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/reports': typeof AuthenticatedRestaurantReportsRoute
   '/_authenticated/restaurant/reservations': typeof AuthenticatedRestaurantReservationsRoute
   '/_authenticated/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
+  '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
@@ -1417,6 +1427,7 @@ export interface FileRouteTypes {
     | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/settings'
+    | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers/'
@@ -1547,6 +1558,7 @@ export interface FileRouteTypes {
     | '/restaurant/reports'
     | '/restaurant/reservations'
     | '/restaurant/settings'
+    | '/restaurant/shifts'
     | '/restaurant/tables'
     | '/teaching-materials/new'
     | '/customers'
@@ -1683,6 +1695,7 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/reports'
     | '/_authenticated/restaurant/reservations'
     | '/_authenticated/restaurant/settings'
+    | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
     | '/_authenticated/teaching-materials/new'
     | '/_authenticated/customers/'
@@ -2312,6 +2325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRestaurantTablesRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
+    '/_authenticated/restaurant/shifts': {
+      id: '/_authenticated/restaurant/shifts'
+      path: '/shifts'
+      fullPath: '/restaurant/shifts'
+      preLoaderRoute: typeof AuthenticatedRestaurantShiftsRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
     '/_authenticated/restaurant/settings': {
       id: '/_authenticated/restaurant/settings'
       path: '/settings'
@@ -2777,6 +2797,7 @@ interface AuthenticatedRestaurantRouteChildren {
   AuthenticatedRestaurantReportsRoute: typeof AuthenticatedRestaurantReportsRoute
   AuthenticatedRestaurantReservationsRoute: typeof AuthenticatedRestaurantReservationsRoute
   AuthenticatedRestaurantSettingsRoute: typeof AuthenticatedRestaurantSettingsRoute
+  AuthenticatedRestaurantShiftsRoute: typeof AuthenticatedRestaurantShiftsRoute
   AuthenticatedRestaurantTablesRoute: typeof AuthenticatedRestaurantTablesRoute
   AuthenticatedRestaurantIndexRoute: typeof AuthenticatedRestaurantIndexRoute
 }
@@ -2796,6 +2817,7 @@ const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren
     AuthenticatedRestaurantReservationsRoute:
       AuthenticatedRestaurantReservationsRoute,
     AuthenticatedRestaurantSettingsRoute: AuthenticatedRestaurantSettingsRoute,
+    AuthenticatedRestaurantShiftsRoute: AuthenticatedRestaurantShiftsRoute,
     AuthenticatedRestaurantTablesRoute: AuthenticatedRestaurantTablesRoute,
     AuthenticatedRestaurantIndexRoute: AuthenticatedRestaurantIndexRoute,
   }
