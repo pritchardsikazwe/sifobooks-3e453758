@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { INDUSTRY_SOLUTIONS, getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
+import { WORKSPACE_MODES, landingFor, type WorkspaceMode } from "@/lib/workspace";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -45,6 +46,7 @@ function OnboardingPage() {
   const [form, setForm] = useState<Form>({
     business_name: "", country: "Nigeria", currency: "NGN", tax_id: "", phone: "", team_size: "", industry: "",
   });
+  const [mode, setMode] = useState<WorkspaceMode>("accounting");
 
   useEffect(() => {
     (async () => {
@@ -92,10 +94,11 @@ function OnboardingPage() {
     let landing = "/dashboard";
     try {
       const { data: c } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
-      if (sol && c?.[0]?.id) {
-        await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
-        if (sol.status === "available") landing = sol.landing;
+      if (c?.[0]?.id) {
+        if (sol) await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
+        await supabase.from("companies").update({ workspace_mode: mode }).eq("id", c[0].id);
       }
+      landing = landingFor(mode);
     } catch { /* workspace defaults to the dashboard */ }
     setLoading(false);
     navigate({ to: landing });
@@ -142,6 +145,23 @@ function OnboardingPage() {
             )}
             {step === 2 && (
               <>
+                <div className="space-y-2">
+                  <Label>What will you primarily use SifoBooks for?</Label>
+                  <p className="text-xs text-muted-foreground">This sets your home screen. Everything still posts to one accounting engine, and you can switch later.</p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {WORKSPACE_MODES.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setMode(m.id)}
+                        className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${mode === m.id ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
+                      >
+                        <div className="flex items-center gap-2"><span>{m.emoji}</span><span className="text-sm font-medium truncate">{m.label}</span></div>
+                        <div className="mt-1 text-[11px] text-muted-foreground leading-snug">{m.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Team size</Label>
                   <Select value={form.team_size} onValueChange={v => set("team_size", v)}>
