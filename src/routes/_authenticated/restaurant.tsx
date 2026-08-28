@@ -687,8 +687,8 @@ function PosBtn({ children, onClick, disabled, className }: { children: React.Re
 function MiniBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return <button onClick={onClick} className="rounded-lg bg-[#71879a] px-2 py-1 text-[11px] font-bold">{children}</button>;
 }
-function Pill({ children, tone }: { children: React.ReactNode; tone: "green" | "orange" }) {
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase", tone === "green" ? "bg-[#0b9d19]" : "bg-[#e66f08]")}>{children}</span>;
+function Pill({ children, tone }: { children: React.ReactNode; tone: "green" | "orange" | "red" }) {
+  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase", tone === "green" ? "bg-[#0b9d19]" : tone === "red" ? "bg-[#b91c1c]" : "bg-[#e66f08]")}>{children}</span>;
 }
 function Table({ head, children }: { head: string[]; children: React.ReactNode }) {
   return (
