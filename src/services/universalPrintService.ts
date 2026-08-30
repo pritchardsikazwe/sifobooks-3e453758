@@ -1,18 +1,45 @@
 /**
- * SifoBooks Universal Silent Printing
- * ------------------------------------------------------------------
- * The ONLY printing entry points in the application:
+ * SifoBooks Universal Silent Printing — dispatcher.
+ *
+ * Every print in the application goes through here:
  *   printPdf() · printReceipt() · printKitchenOrder() · printBarOrder() · printLabel()
  *
- * Windows  → SifoPrint Agent   (http://127.0.0.1:17890)
- * Android  → SifoPOS Bridge    (http://127.0.0.1:17891)
- * iOS/web  → cloud print gateway (/api/printing/jobs) → network / AirPrint
+ * Dispatch order (never a manual URL as the primary experience):
+ *   1. Discovered SifoPrint agent   (Windows 17890 / Android bridge 17891)
+ *   2. Cloud / network gateway      (/api/printing/jobs)
+ *   3. Browser system default       (only when the terminal chose it)
+ *   4. Offline queue + automatic retry
  *
- * The app must NEVER call window.print().
+ * Only an agent- or gateway-confirmed acceptance counts as printed.
  */
+import {
+  discoverAgent,
+  agentFetch,
+  discoverPrinters,
+  fetchSystemDefaultPrinter,
+  detectDevice,
+  BROWSER_PRINTER,
+  type AgentState,
+  type DeviceType,
+  type DiscoveredPrinter,
+} from "./printDiscovery";
+import {
+  printerForJob,
+  copiesForJob,
+  getPreferences,
+  type PrintJobType as RoutedJobType,
+} from "./printRouting";
+import { getDeviceId, getTerminalInfo, registerTerminal } from "./printTerminal";
+import {
+  recordJob,
+  updatePrintQueueJob,
+  newJobId,
+  setQueueDispatcher,
+  flushPrintQueue,
+  type QueuedPrintJob,
+} from "./printQueue";
 
-export type DeviceType = "windows" | "android" | "ios" | "web";
-
+export type { DeviceType };
 export type PrintJobType = "pdf" | "receipt" | "kitchen" | "bar" | "label";
 
 export interface ReceiptItem {
@@ -61,181 +88,372 @@ export interface PrintJob {
   receipt?: ReceiptData;
   kitchenOrder?: KitchenOrder;
   deviceId?: string;
+  terminalName?: string;
   metadata?: Record<string, unknown>;
 }
 
-/* ------------------------------------------------------------------ */
-/* Agent endpoints — env configurable, overridable per terminal        */
-/* ------------------------------------------------------------------ */
-
-const AGENT_OVERRIDE_KEY = "sifobooks_print_agents";
-
-const ENV_WINDOWS_AGENT =
-  (import.meta.env['VITE_WINDOWS_PRINT_AGENT_URL'] as string | undefined) || "http://127.0.0.1:17890";
-
-const ENV_ANDROID_AGENT =
-  (import.meta.env['VITE_ANDROID_PRINT_AGENT_URL'] as string | undefined) || "http://127.0.0.1:17891";
-
-function overrides(): { windows?: string; android?: string } {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(AGENT_OVERRIDE_KEY) || "{}");
-  } catch {
-    return {};
-  }
+export interface PrintOptions {
+  /** Routing key — decides which printer handles the job. */
+  jobType?: RoutedJobType;
+  /** Explicit printer overrides routing. */
+  printer?: string;
+  copies?: number;
+  /** SifoBooks document reference so a retry re-prints the same document. */
+  reference?: string;
+  title?: string;
+  /** Stable id — same id never prints twice. */
+  jobId?: string;
+  openCashDrawer?: boolean;
 }
 
+export interface PrintResult {
+  ok: boolean;
+  jobId: string;
+  transport: "agent" | "gateway" | "browser" | "queued";
+  printer?: string;
+  error?: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Compatibility shims for existing callers                            */
+/* ------------------------------------------------------------------ */
+
+const AGENT_OVERRIDE_KEY = "sifobooks_print_advanced";
+
 export function getAgentUrls() {
-  const o = overrides();
-  return {
-    windows: o.windows || ENV_WINDOWS_AGENT,
-    android: o.android || ENV_ANDROID_AGENT,
-  };
+  if (typeof localStorage === "undefined") return { windows: "", android: "" };
+  try {
+    const adv = JSON.parse(localStorage.getItem(AGENT_OVERRIDE_KEY) || "{}");
+    return { windows: adv.windowsAgentUrl ?? "", android: adv.androidAgentUrl ?? "" };
+  } catch {
+    return { windows: "", android: "" };
+  }
 }
 
 export function setAgentUrls(next: { windows?: string; android?: string }) {
   if (typeof localStorage === "undefined") return;
-  localStorage.setItem(AGENT_OVERRIDE_KEY, JSON.stringify(next));
-}
-
-/* ------------------------------------------------------------------ */
-/* Device                                                              */
-/* ------------------------------------------------------------------ */
-
-function detectDevice(): DeviceType {
-  if (typeof navigator === "undefined") return "web";
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("android")) return "android";
-  if (/iphone|ipad|ipod/.test(ua)) return "ios";
-  if (ua.includes("windows")) return "windows";
-  return "web";
+  let adv: any = {};
+  try {
+    adv = JSON.parse(localStorage.getItem(AGENT_OVERRIDE_KEY) || "{}");
+  } catch {
+    adv = {};
+  }
+  localStorage.setItem(
+    AGENT_OVERRIDE_KEY,
+    JSON.stringify({ ...adv, windowsAgentUrl: next.windows || undefined, androidAgentUrl: next.android || undefined }),
+  );
 }
 
 export function getDeviceType(): DeviceType {
   return detectDevice();
 }
 
-const DEVICE_ID_KEY = "sifobooks_device_id";
+export { getDeviceId, BROWSER_PRINTER };
 
-export function getDeviceId(): string {
-  if (typeof localStorage === "undefined") return "server";
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
+export async function getPrintStatus(): Promise<{ online: boolean; mode: string; agent?: string }> {
+  const state = await discoverAgent(true);
+  return { online: state.online, mode: state.online ? state.device : state.transport, agent: state.url ?? undefined };
 }
 
-function newJobId() {
-  try {
-    return crypto.randomUUID();
-  } catch {
-    return `job_${Date.now()}_${Math.round(Math.random() * 1e6)}`;
-  }
+export async function getPrinters(): Promise<{ printers: string[]; detailed: DiscoveredPrinter[] }> {
+  const detailed = await discoverPrinters();
+  return { printers: detailed.map((p) => p.name), detailed };
 }
+
+export { discoverAgent, discoverPrinters, fetchSystemDefaultPrinter };
 
 /* ------------------------------------------------------------------ */
-/* Transport                                                           */
+/* Transports                                                          */
 /* ------------------------------------------------------------------ */
 
-async function request(baseUrl: string, endpoint: string, body?: unknown, timeoutMs = 8000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      method: body ? "POST" : "GET",
-      headers: { "Content-Type": "application/json" },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error(`Print service returned ${response.status}`);
-    return await response.json();
-  } finally {
-    clearTimeout(timer);
-  }
+const ENDPOINTS: Record<PrintJobType, string> = {
+  pdf: "/print/pdf",
+  receipt: "/print/receipt",
+  kitchen: "/print/kitchen",
+  bar: "/print/bar",
+  label: "/print/label",
+};
+
+async function sendToAgent(agent: AgentState, job: PrintJob) {
+  if (!agent.url) throw new Error("No agent");
+  const res: any = await agentFetch(agent.url, ENDPOINTS[job.type], {
+    method: "POST",
+    body: JSON.stringify(job),
+    timeoutMs: 15000,
+  });
+  // Only an explicit acceptance counts as printed.
+  if (res && res.ok === false) throw new Error(res.error || "Printer rejected the job");
+  return res;
 }
 
-async function sendNetworkPrintJob(job: PrintJob) {
-  const response = await fetch("/api/printing/jobs", {
+async function sendToGateway(job: PrintJob) {
+  const res = await fetch("/api/printing/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(job),
   });
-  if (!response.ok) throw new Error("Cloud print service unavailable");
-  return response.json();
+  if (!res.ok) throw new Error(`Print gateway responded ${res.status}`);
+  const body: any = await res.json().catch(() => ({}));
+  if (body && body.ok === false) throw new Error(body.error || "Print gateway rejected the job");
+  return body;
 }
 
-function agentFor(device: DeviceType): string | null {
-  const urls = getAgentUrls();
-  if (device === "windows") return urls.windows;
-  if (device === "android") return urls.android;
-  return null;
+/** Browser system default printer — used only when the terminal selects it. */
+async function sendToBrowser(job: PrintJob): Promise<void> {
+  if (typeof document === "undefined") throw new Error("No browser context");
+  const html = renderJobHtml(job);
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(frame);
+  const doc = frame.contentDocument;
+  if (!doc) {
+    frame.remove();
+    throw new Error("Browser printing unavailable");
+  }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  await new Promise((r) => setTimeout(r, 250));
+  frame.contentWindow?.focus();
+  frame.contentWindow?.print();
+  setTimeout(() => frame.remove(), 2000);
 }
 
-async function dispatch(job: PrintJob, endpoint: string) {
-  const device = detectDevice();
-  const agent = agentFor(device);
-  const payload: PrintJob = { ...job, deviceId: getDeviceId() };
-  if (agent) return request(agent, endpoint, payload);
-  return sendNetworkPrintJob(payload);
+function money(n?: number) {
+  return (n ?? 0).toLocaleString("en-ZM", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderJobHtml(job: PrintJob): string {
+  const width = job.type === "pdf" ? "210mm" : "80mm";
+  let body = "";
+
+  if (job.type === "pdf" && job.pdfBase64) {
+    body = `<embed style="width:100%;height:100vh" type="application/pdf" src="data:application/pdf;base64,${job.pdfBase64}" />`;
+  } else if (job.receipt) {
+    const r = job.receipt;
+    body = `
+      <div class="c b">${r.businessName}</div>
+      ${r.branchName ? `<div class="c">${r.branchName}</div>` : ""}
+      ${r.address ? `<div class="c">${r.address}</div>` : ""}
+      ${r.phone ? `<div class="c">${r.phone}</div>` : ""}
+      <hr/>
+      <div>Receipt: ${r.receiptNumber}</div>
+      <div>${r.date}</div>
+      ${r.cashier ? `<div>Cashier: ${r.cashier}</div>` : ""}
+      <hr/>
+      ${r.items
+        .map(
+          (i) =>
+            `<div class="row"><span>${i.quantity} x ${i.name}</span><span>${money(i.total ?? i.price * i.quantity)}</span></div>` +
+            (i.modifiers?.length ? `<div class="sm">  + ${i.modifiers.join(", ")}</div>` : ""),
+        )
+        .join("")}
+      <hr/>
+      ${r.subtotal != null ? `<div class="row"><span>Subtotal</span><span>${money(r.subtotal)}</span></div>` : ""}
+      ${r.discount ? `<div class="row"><span>Discount</span><span>-${money(r.discount)}</span></div>` : ""}
+      ${r.tax != null ? `<div class="row"><span>Tax</span><span>${money(r.tax)}</span></div>` : ""}
+      <div class="row b"><span>TOTAL</span><span>ZMW ${money(r.total)}</span></div>
+      ${r.paymentMethod ? `<div class="row"><span>${r.paymentMethod}</span><span>${money(r.amountPaid)}</span></div>` : ""}
+      ${r.change != null ? `<div class="row"><span>Change</span><span>${money(r.change)}</span></div>` : ""}
+      <hr/>
+      <div class="c sm">${r.footer ?? "Thank you"}</div>`;
+  } else if (job.kitchenOrder) {
+    const k = job.kitchenOrder;
+    body = `
+      <div class="c b">${job.type === "bar" ? "BAR" : "KITCHEN"} ORDER</div>
+      <div class="c b">#${k.orderNumber}</div>
+      ${k.tableNumber ? `<div>Table: ${k.tableNumber}</div>` : ""}
+      ${k.orderType ? `<div>Type: ${k.orderType}</div>` : ""}
+      ${k.waiter ? `<div>Waiter: ${k.waiter}</div>` : ""}
+      <hr/>
+      ${k.items
+        .map(
+          (i) =>
+            `<div class="b">${i.quantity} x ${i.name}</div>` +
+            (i.modifiers?.length ? `<div class="sm">  + ${i.modifiers.join(", ")}</div>` : "") +
+            (i.notes ? `<div class="sm">  ${i.notes}</div>` : ""),
+        )
+        .join("")}
+      ${k.notes ? `<hr/><div>${k.notes}</div>` : ""}`;
+  } else {
+    body = `<pre>${JSON.stringify(job.metadata ?? {}, null, 2)}</pre>`;
+  }
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${job.fileName ?? "SifoBooks"}</title>
+  <style>
+    @page { size: ${width} auto; margin: ${job.type === "pdf" ? "12mm" : "3mm"}; }
+    body { font-family: ui-monospace, "Courier New", monospace; font-size: 12px; margin: 0; }
+    .c { text-align: center } .b { font-weight: 700 } .sm { font-size: 10px }
+    .row { display: flex; justify-content: space-between; gap: 8px }
+    hr { border: 0; border-top: 1px dashed #000; margin: 4px 0 }
+  </style></head><body>${body}</body></html>`;
 }
 
 /* ------------------------------------------------------------------ */
-/* Status / discovery                                                  */
+/* Core dispatch                                                       */
 /* ------------------------------------------------------------------ */
 
-export async function getPrintStatus(): Promise<{ online: boolean; mode: string; agent?: string }> {
-  const device = detectDevice();
-  const agent = agentFor(device);
+async function transportJob(job: PrintJob): Promise<{ transport: PrintResult["transport"] }> {
+  if (job.printer === BROWSER_PRINTER) {
+    await sendToBrowser(job);
+    return { transport: "browser" };
+  }
+  const agent = await discoverAgent();
+  if (agent.online && agent.url) {
+    await sendToAgent(agent, job);
+    return { transport: "agent" };
+  }
+  await sendToGateway(job);
+  return { transport: "gateway" };
+}
+
+// The queue retries with the exact same payload — never a new document.
+setQueueDispatcher(async (queued: QueuedPrintJob) => {
+  const payload = queued.payload as PrintJob | undefined;
+  if (!payload) throw new Error("Job payload missing");
+  await transportJob({ ...payload, printer: queued.printer ?? payload.printer });
+});
+
+async function dispatch(
+  type: PrintJobType,
+  partial: Omit<PrintJob, "id" | "type">,
+  options: PrintOptions = {},
+): Promise<PrintResult> {
+  const prefs = getPreferences();
+  const routedType: RoutedJobType | undefined = options.jobType;
+  const printer =
+    options.printer ?? (routedType ? printerForJob(routedType) : undefined) ?? prefs.assignedPrinter ?? prefs.systemDefault;
+  const copies = options.copies ?? (routedType ? copiesForJob(routedType) : 1);
+  const id = options.jobId ?? newJobId();
+  const terminal = getTerminalInfo();
+
+  const job: PrintJob = {
+    ...partial,
+    id,
+    type,
+    printer,
+    copies,
+    deviceId: getDeviceId(),
+    terminalName: terminal.terminal_name,
+  };
+
+  const existing = recordJob({
+    id,
+    type,
+    jobType: routedType,
+    printer,
+    copies,
+    title: options.title ?? partial.fileName ?? type,
+    reference: options.reference,
+    payload: job,
+  });
+  if (existing.status === "printed") {
+    return { ok: true, jobId: id, transport: "agent", printer };
+  }
+
+  updatePrintQueueJob(id, { status: "printing", attempts: existing.attempts + 1 });
+
   try {
-    if (agent) {
-      const res = await request(agent, "/health", undefined, 3000);
-      return { online: true, mode: device, agent, ...res };
-    }
-    if (device === "ios") return { online: true, mode: "network" };
-    return { online: false, mode: "web" };
-  } catch {
-    return { online: false, mode: device, agent: agent ?? undefined };
+    const { transport } = await transportJob(job);
+    updatePrintQueueJob(id, { status: "printed", printedAt: new Date().toISOString(), error: undefined });
+    if (options.openCashDrawer && prefs.openCashDrawer) void openCashDrawer().catch(() => {});
+    return { ok: true, jobId: id, transport, printer };
+  } catch (error: any) {
+    const message = String(error?.message ?? error);
+    updatePrintQueueJob(id, { status: prefs.queueWhenOffline ? "queued" : "failed", error: message });
+    return { ok: false, jobId: id, transport: "queued", printer, error: message };
   }
 }
 
-export async function getPrinters(): Promise<{ printers: string[] }> {
-  const device = detectDevice();
-  const agent = agentFor(device);
-  if (!agent) return { printers: [] };
-  try {
-    const res = await request(agent, "/printers", undefined, 4000);
-    const list = Array.isArray(res) ? res : res?.printers ?? [];
-    return { printers: list.map((p: any) => (typeof p === "string" ? p : p?.name)).filter(Boolean) };
-  } catch {
-    return { printers: [] };
-  }
-}
-
 /* ------------------------------------------------------------------ */
-/* Print entry points                                                  */
+/* Entry points                                                        */
 /* ------------------------------------------------------------------ */
 
 export async function printPdf(pdfBase64: string, printer?: string, copies = 1, fileName?: string) {
-  return dispatch(
-    { id: newJobId(), type: "pdf", pdfBase64, printer, copies, fileName },
-    "/print/pdf",
-  );
+  const res = await dispatch("pdf", { pdfBase64, fileName }, { printer, copies, jobType: "report", title: fileName });
+  if (!res.ok) throw new Error(res.error ?? "Print failed");
+  return res;
 }
 
 export async function printReceipt(receipt: ReceiptData, printer?: string, copies = 1) {
-  return dispatch({ id: newJobId(), type: "receipt", printer, copies, receipt }, "/print/receipt");
+  return dispatch(
+    "receipt",
+    { receipt },
+    {
+      printer,
+      copies,
+      jobType: "pos_receipt",
+      title: `Receipt ${receipt.receiptNumber}`,
+      reference: receipt.receiptNumber,
+      jobId: `receipt:${receipt.receiptNumber}`,
+      openCashDrawer: true,
+    },
+  );
 }
 
 export async function printKitchenOrder(order: KitchenOrder, printer?: string) {
-  return dispatch({ id: newJobId(), type: "kitchen", printer, kitchenOrder: order }, "/print/kitchen");
+  return dispatch(
+    "kitchen",
+    { kitchenOrder: order },
+    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}` },
+  );
 }
 
 export async function printBarOrder(order: KitchenOrder, printer?: string) {
-  return dispatch({ id: newJobId(), type: "bar", printer, kitchenOrder: order }, "/print/bar");
+  return dispatch(
+    "bar",
+    { kitchenOrder: order },
+    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}` },
+  );
 }
 
 export async function printLabel(metadata: Record<string, unknown>, printer?: string, copies = 1) {
-  return dispatch({ id: newJobId(), type: "label", printer, copies, metadata }, "/print/label");
+  return dispatch("label", { metadata }, { printer, copies, jobType: "label", title: "Label" });
+}
+
+/** Kick the cash drawer through the agent (no-op without one). */
+export async function openCashDrawer(printer?: string) {
+  const agent = await discoverAgent();
+  if (!agent.online || !agent.url) return false;
+  try {
+    await agentFetch(agent.url, "/drawer/open", {
+      method: "POST",
+      body: JSON.stringify({ printer: printer ?? printerForJob("cash_drawer") ?? getPreferences().assignedPrinter }),
+      timeoutMs: 5000,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Send a small test page so an operator can confirm an assignment works. */
+export async function printTestPage(printer: string) {
+  return dispatch(
+    "receipt",
+    {
+      receipt: {
+        businessName: getTerminalInfo().company_name || "SifoBooks",
+        branchName: getTerminalInfo().branch_name,
+        receiptNumber: "TEST",
+        date: new Date().toLocaleString(),
+        items: [{ name: "Printer test", quantity: 1, price: 0, total: 0 }],
+        total: 0,
+        footer: `${printer} — test successful`,
+      },
+    },
+    { printer, title: `Test page — ${printer}`, jobId: newJobId() },
+  );
+}
+
+/**
+ * Boot the print stack for this terminal: discover the agent, register the
+ * terminal, then flush anything queued while the printer was away.
+ */
+export async function initPrinting() {
+  const agent = await discoverAgent(true);
+  void registerTerminal(agent, { preferences: getPreferences() });
+  if (agent.online || agent.transport === "gateway") void flushPrintQueue();
+  return agent;
 }
