@@ -92,7 +92,8 @@ function PrintingSettings() {
         setRouting(cloud);
       }
     });
-    return subscribeToQueue(() => setQueue(getPrintQueue()));
+    const unsubscribe = subscribeToQueue(() => setQueue(getPrintQueue()));
+    return () => { unsubscribe(); };
   }, [refresh]);
 
   const printerNames = printers.map((p) => p.name);
