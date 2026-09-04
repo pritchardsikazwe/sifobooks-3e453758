@@ -69,8 +69,9 @@ function SetupPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-9 h-auto p-1">
+        <TabsList className="grid grid-cols-3 md:grid-cols-10 h-auto p-1">
           <TabsTrigger value="profile" className="gap-1"><Building2 className="h-3.5 w-3.5" /><span className="hidden md:inline">Profile</span></TabsTrigger>
+          <TabsTrigger value="companies" className="gap-1"><Building2 className="h-3.5 w-3.5" /><span className="hidden md:inline">Companies</span></TabsTrigger>
           <TabsTrigger value="branches" className="gap-1"><MapPin className="h-3.5 w-3.5" /><span className="hidden md:inline">Branches</span></TabsTrigger>
           <TabsTrigger value="departments" className="gap-1"><Users className="h-3.5 w-3.5" /><span className="hidden md:inline">Departments</span></TabsTrigger>
           <TabsTrigger value="costs" className="gap-1"><Wallet className="h-3.5 w-3.5" /><span className="hidden md:inline">Cost Centres</span></TabsTrigger>
@@ -82,14 +83,16 @@ function SetupPage() {
         </TabsList>
 
         <TabsContent value="profile" className="mt-4"><ProfileTab company={company} onSaved={setCompany} /></TabsContent>
+        <TabsContent value="companies" className="mt-4"><CompaniesTab userId={userId} activeId={company.id} /></TabsContent>
         <TabsContent value="branches" className="mt-4"><BranchesTab userId={userId} companyId={company.id} /></TabsContent>
         <TabsContent value="departments" className="mt-4"><DepartmentsTab userId={userId} companyId={company.id} /></TabsContent>
         <TabsContent value="costs" className="mt-4"><CostCentresTab userId={userId} companyId={company.id} /></TabsContent>
         <TabsContent value="fy" className="mt-4"><FinancialYearTab company={company} onSaved={setCompany} /></TabsContent>
         <TabsContent value="tax" className="mt-4"><TaxTab userId={userId} companyId={company.id} /></TabsContent>
         <TabsContent value="positions" className="mt-4"><PositionsTab userId={userId} companyId={company.id} /></TabsContent>
-        <TabsContent value="roles" className="mt-4"><RolesTab /></TabsContent>
+        <TabsContent value="roles" className="mt-4"><RolesTab userId={userId} companyId={company.id} /></TabsContent>
         <TabsContent value="approvals" className="mt-4"><ApprovalsTab userId={userId} companyId={company.id} /></TabsContent>
+
       </Tabs>
     </div>
   );
