@@ -337,19 +337,180 @@ function ApprovalsTab({ userId, companyId }: { userId: string; companyId: string
     transform={(v, k) => ["min_amount","max_amount","level"].includes(k) ? Number(v || 0) : v} />;
 }
 
-function RolesTab() {
+const MEMBER_ROLES = ["owner", "admin", "manager", "staff", "viewer"] as const;
+
+function RolesTab({ userId, companyId }: { userId: string; companyId: string }) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("staff");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("company_members")
+      .select("*, profiles:user_id(email, full_name)")
+      .eq("company_id", companyId).order("created_at");
+    let rows = data ?? [];
+    if (userId && !rows.some((r: any) => r.user_id === userId)) {
+      await supabase.from("company_members").insert({ company_id: companyId, user_id: userId, role: "owner", created_by: userId });
+      const { data: d2 } = await supabase.from("company_members")
+        .select("*, profiles:user_id(email, full_name)")
+        .eq("company_id", companyId).order("created_at");
+      rows = d2 ?? rows;
+    }
+    setMembers(rows);
+    setLoading(false);
+  };
+  useEffect(() => { if (companyId) load(); /* eslint-disable-next-line */ }, [companyId, userId]);
+
+  const add = async () => {
+    if (!email.trim()) return toast.error("Email required");
+    setBusy(true);
+    const { data: prof } = await supabase.from("profiles").select("id").eq("email", email.trim().toLowerCase()).maybeSingle();
+    if (!prof) { setBusy(false); return toast.error("No user with that email — ask them to sign up first, then add them."); }
+    const { error } = await supabase.from("company_members").insert({
+      company_id: companyId, user_id: prof.id, role: role as any, created_by: userId, invited_email: email.trim().toLowerCase(),
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Added ${email} as ${role}`);
+    setEmail(""); load();
+  };
+
+  const updateRole = async (id: string, newRole: string) => {
+    const { error } = await supabase.from("company_members").update({ role: newRole as any }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Role updated"); load();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Remove this member?")) return;
+    const { error } = await supabase.from("company_members").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
   return (
     <Card>
-      <CardHeader><CardTitle>Roles & Permissions</CardTitle><CardDescription>Multi-user role management.</CardDescription></CardHeader>
-      <CardContent>
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-          Role-based access will be enabled in the next phase alongside the HR module (employee records, invites, and permission grants).
-          For now every account acts as company owner with full access.
+      <CardHeader><CardTitle>Roles & Permissions</CardTitle><CardDescription>Multi-user role management for this company.</CardDescription></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_auto] gap-2 items-end">
+          <Field label="Add teammate by email"><Input value={email} onChange={e => setEmail(e.target.value)} placeholder="teammate@company.com" /></Field>
+          <Field label="Role">
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{MEMBER_ROLES.filter(r => r !== "owner").map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
+          <Button variant="save" onClick={add} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Add</Button>
         </div>
+
+        {loading ? (
+          <div className="py-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading members…</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-xs text-slate-500 border-b">
+                <tr><th className="text-left font-medium py-2">Name</th><th className="text-left font-medium py-2">Email</th><th className="text-left font-medium py-2">Role</th><th className="text-right font-medium py-2">Actions</th></tr>
+              </thead>
+              <tbody>
+                {members.length === 0 ? (
+                  <tr><td colSpan={4} className="py-6 text-center text-slate-500">No members yet.</td></tr>
+                ) : members.map(m => (
+                  <tr key={m.id} className="border-b last:border-0">
+                    <td className="py-2">{m.profiles?.full_name ?? "—"}</td>
+                    <td className="py-2 text-slate-500">{m.profiles?.email ?? m.invited_email ?? "—"}</td>
+                    <td className="py-2">
+                      <Select value={m.role} onValueChange={v => updateRole(m.id, v)} disabled={m.role === "owner"}>
+                        <SelectTrigger className="h-8 w-32 text-xs capitalize"><SelectValue /></SelectTrigger>
+                        <SelectContent>{MEMBER_ROLES.map(r => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </td>
+                    <td className="py-2 text-right">
+                      <Button size="icon" variant="ghost" onClick={() => remove(m.id)} disabled={m.role === "owner"}><Trash2 className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
+function CompaniesTab({ userId, activeId }: { userId: string; activeId: string }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [country, setCountry] = useState("Zambia");
+  const [currency, setCurrency] = useState("ZMW");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("companies").select("id,name,country,base_currency,created_at").eq("user_id", userId).order("created_at");
+    setRows(data ?? []);
+    setLoading(false);
+  };
+  useEffect(() => { if (userId) load(); /* eslint-disable-next-line */ }, [userId]);
+
+  const create = async () => {
+    if (!name.trim()) return toast.error("Company name required");
+    setBusy(true);
+    const { data, error } = await supabase.from("companies")
+      .insert({ user_id: userId, name: name.trim(), country, base_currency: currency })
+      .select().single();
+    if (error) { setBusy(false); return toast.error(error.message); }
+    await supabase.from("profiles").update({ active_company_id: data.id }).eq("id", userId);
+    await supabase.from("company_members").insert({ company_id: data.id, user_id: userId, role: "owner", created_by: userId });
+    setBusy(false); setName("");
+    toast.success(`${data.name} created — switching…`);
+    setTimeout(() => window.location.reload(), 400);
+  };
+
+  const switchTo = async (id: string) => {
+    await supabase.from("profiles").update({ active_company_id: id }).eq("id", userId);
+    toast.success("Switched company");
+    setTimeout(() => window.location.reload(), 300);
+  };
+
+  return (
+    <Card>
+      <CardHeader><CardTitle>Companies</CardTitle><CardDescription>Run several businesses from one account — each keeps its own books.</CardDescription></CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_120px_auto] gap-2 items-end">
+          <Field label="New company name"><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Sifo Trading Ltd" /></Field>
+          <Field label="Country"><Input value={country} onChange={e => setCountry(e.target.value)} /></Field>
+          <Field label="Currency"><Input value={currency} onChange={e => setCurrency(e.target.value.toUpperCase())} maxLength={3} /></Field>
+          <Button variant="save" onClick={create} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Create</Button>
+        </div>
+
+        {loading ? (
+          <div className="py-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading companies…</div>
+        ) : (
+          <div className="divide-y rounded-md border">
+            {rows.map(c => (
+              <div key={c.id} className="flex items-center gap-3 p-3">
+                <Building2 className="h-4 w-4 text-slate-500" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{c.name}</div>
+                  <div className="text-xs text-slate-500">{c.country ?? "—"} · {c.base_currency ?? "ZMW"}</div>
+                </div>
+                {c.id === activeId
+                  ? <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">Active</span>
+                  : <Button size="sm" variant="outline" onClick={() => switchTo(c.id)}>Switch</Button>}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
