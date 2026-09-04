@@ -180,8 +180,15 @@ function FinancialYearTab({ company, onSaved }: { company: Company; onSaved: (c:
           </Select>
         </Field>
         <div className="rounded-md bg-slate-50 border p-3 text-sm text-slate-600">
-          Current FY: <b>{monthName(m)} {new Date().getFullYear()}</b> → <b>{monthName(((m - 2 + 12) % 12) + 1)} {new Date().getFullYear() + 1}</b>
+          {(() => {
+            const today = new Date();
+            const startYear = today.getMonth() + 1 >= m ? today.getFullYear() : today.getFullYear() - 1;
+            const endMonth = ((m - 2 + 12) % 12) + 1;
+            const endYear = m === 1 ? startYear : startYear + 1;
+            return <>Current FY: <b>{monthName(m)} {startYear}</b> → <b>{monthName(endMonth)} {endYear}</b></>;
+          })()}
         </div>
+
         <Button variant="save" onClick={save} >Save</Button>
       </CardContent>
     </Card>
