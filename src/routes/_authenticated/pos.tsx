@@ -387,13 +387,20 @@ function RetailPos() {
             ))}
           </div>
 
+          <div className="mb-3 flex items-center gap-2 rounded-lg bg-till-nav px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-till-nav-foreground">
+            <LayoutGrid className="h-3.5 w-3.5 opacity-70" />
+            <button onClick={() => setCategory("ALL")} className="opacity-70 hover:opacity-100">All products</button>
+            {category !== "ALL" && <><span className="opacity-50">›</span><span>{category}</span></>}
+            <span className="ml-auto opacity-70">{visible.length} items</span>
+          </div>
+
           {visible.length === 0 ? (
             <div className="grid h-64 place-items-center rounded-2xl border border-dashed text-sm text-muted-foreground">
               No products here — add stock items in Inventory, or clear the search.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
-              {visible.map((p, i) => {
+              {visible.map((p) => {
                 const price = round2(p.price * factor);
                 const out = p.stock <= 0;
                 const low = !out && p.reorder_level > 0 && p.stock <= p.reorder_level;
