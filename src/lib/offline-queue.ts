@@ -240,18 +240,21 @@ export async function drainQueue(): Promise<{ ok: number; failed: number }> {
       notifyChange();
 
       // Duplicate protection for retries of a possibly-accepted write.
-      if (it.attempts > 0 && (await alreadyOnServer(it))) {
+      if (it.kind !== "rpc" && it.attempts > 0 && (await alreadyOnServer(it))) {
         ok++;
         if (it.id != null) await removeItem(it.id);
         continue;
       }
 
       try {
-        const { data, error } = await supabase
-          .from(it.table as any)
-          .insert(it.payload)
-          .select("id")
-          .maybeSingle();
+        const { data, error } =
+          it.kind === "rpc"
+            ? await supabase.rpc(it.table as any, it.payload).then((r) => ({ data: { id: r.data as any }, error: r.error }))
+            : await supabase
+                .from(it.table as any)
+                .insert(it.payload)
+                .select("id")
+                .maybeSingle();
 
         if (error) {
           it.attempts += 1;
