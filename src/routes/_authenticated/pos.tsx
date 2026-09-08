@@ -588,6 +588,17 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function Stat({ label, value, className }: { label: string; value: number; className?: string }) {
+  return (
+    <div className="px-2 py-2 text-center">
+      <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className={cn("font-display text-xl font-black tabular-nums leading-tight", className)}>
+        {fmtMoney(value)}
+      </div>
+    </div>
+  );
+}
+
 function Act({ label, icon: Icon, onClick, className }: { label: string; icon: any; onClick: () => void; className?: string }) {
   return (
     <button onClick={onClick}
