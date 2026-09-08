@@ -8645,10 +8645,13 @@ export type Database = {
           created_at: string
           id: string
           item_id: string | null
+          location_id: string | null
           notes: string | null
           quantity_after: number
           quantity_before: number | null
           reason: string | null
+          reason_code: string | null
+          source_count_id: string | null
           user_id: string
           warehouse_id: string | null
         }
@@ -8659,10 +8662,13 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string | null
+          location_id?: string | null
           notes?: string | null
           quantity_after: number
           quantity_before?: number | null
           reason?: string | null
+          reason_code?: string | null
+          source_count_id?: string | null
           user_id: string
           warehouse_id?: string | null
         }
@@ -8673,10 +8679,13 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string | null
+          location_id?: string | null
           notes?: string | null
           quantity_after?: number
           quantity_before?: number | null
           reason?: string | null
+          reason_code?: string | null
+          source_count_id?: string | null
           user_id?: string
           warehouse_id?: string | null
         }
@@ -8686,6 +8695,20 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_source_count_id_fkey"
+            columns: ["source_count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
             referencedColumns: ["id"]
           },
           {
@@ -8813,7 +8836,9 @@ export type Database = {
           expected_qty: number
           id: string
           item_id: string
+          location_id: string | null
           note: string | null
+          reason_code: string | null
           user_id: string
           variance: number | null
         }
@@ -8824,7 +8849,9 @@ export type Database = {
           expected_qty?: number
           id?: string
           item_id: string
+          location_id?: string | null
           note?: string | null
+          reason_code?: string | null
           user_id?: string
           variance?: number | null
         }
@@ -8835,7 +8862,9 @@ export type Database = {
           expected_qty?: number
           id?: string
           item_id?: string
+          location_id?: string | null
           note?: string | null
+          reason_code?: string | null
           user_id?: string
           variance?: number | null
         }
@@ -8854,14 +8883,25 @@ export type Database = {
             referencedRelation: "stock_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_count_lines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_counts: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           count_date: string
           count_number: string | null
+          counted_by: string | null
           created_at: string
           id: string
+          location_id: string | null
           notes: string | null
           posted_at: string | null
           status: string
@@ -8870,10 +8910,14 @@ export type Database = {
           warehouse_id: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           count_date?: string
           count_number?: string | null
+          counted_by?: string | null
           created_at?: string
           id?: string
+          location_id?: string | null
           notes?: string | null
           posted_at?: string | null
           status?: string
@@ -8882,10 +8926,14 @@ export type Database = {
           warehouse_id?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           count_date?: string
           count_number?: string | null
+          counted_by?: string | null
           created_at?: string
           id?: string
+          location_id?: string | null
           notes?: string | null
           posted_at?: string | null
           status?: string
@@ -8894,6 +8942,13 @@ export type Database = {
           warehouse_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_counts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_counts_warehouse_id_fkey"
             columns: ["warehouse_id"]
@@ -10006,6 +10061,7 @@ export type Database = {
         Args: { _new_pin: string; _reset_id: string }
         Returns: Json
       }
+      approve_stock_count: { Args: { _count_id: string }; Returns: Json }
       approver_role_for_request: { Args: { _req: string }; Returns: string }
       auto_match_bank_transactions: { Args: never; Returns: Json }
       branch_ok: { Args: { _row_branch: string }; Returns: boolean }
@@ -10077,6 +10133,10 @@ export type Database = {
         Returns: number
       }
       my_access: { Args: never; Returns: Json }
+      next_doc_number: {
+        Args: { _prefix: string; _uid: string }
+        Returns: string
+      }
       notify_once: {
         Args: {
           _key: string
