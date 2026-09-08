@@ -5,6 +5,7 @@ import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WORKER_NAV, can, loadPosContext, type PosContext } from "@/lib/pos-permissions";
 import { PosContextProvider } from "@/components/pos/PosContextProvider";
+import { verifyOwnPin } from "@/lib/cashier-auth.functions";
 
 export const Route = createFileRoute("/_worker")({
   ssr: false,
@@ -41,7 +42,7 @@ function WorkerShell() {
       if (c.pinLocked) {
         setLocked(true);
         setMode(r?.status === "approved" ? "confirm" : "waiting");
-      } else if (c.pin) {
+      } else if (c.pinSet) {
         setLocked(true);
         setMode("unlock");
       }
@@ -69,8 +70,16 @@ function WorkerShell() {
       return;
     }
     if (mode === "waiting") return;
-    if (ctx?.pin && pin === ctx.pin) { setPin(""); setLocked(false); return; }
-    setPin(""); setError("Incorrect PIN");
+    // The PIN is verified in the database (hashed + rate limited), never here.
+    try {
+      const res = await verifyOwnPin({ data: { pin } });
+      setPin("");
+      if (res.ok) { setLocked(false); return; }
+      setError(res.error);
+    } catch (err) {
+      setPin("");
+      setError(err instanceof Error ? err.message : "Could not check that PIN");
+    }
   };
 
   const requestReset = async () => {

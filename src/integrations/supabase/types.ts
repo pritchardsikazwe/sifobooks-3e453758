@@ -1483,10 +1483,12 @@ export type Database = {
           selling_price: number | null
           sold_qty: number
           source_image_url: string | null
+          source_type: string
           status: string
           updated_at: string
           user_id: string
           variance: number | null
+          verified: boolean
         }
         Insert: {
           cashier_name?: string | null
@@ -1506,10 +1508,12 @@ export type Database = {
           selling_price?: number | null
           sold_qty?: number
           source_image_url?: string | null
+          source_type?: string
           status?: string
           updated_at?: string
           user_id: string
           variance?: number | null
+          verified?: boolean
         }
         Update: {
           cashier_name?: string | null
@@ -1529,10 +1533,12 @@ export type Database = {
           selling_price?: number | null
           sold_qty?: number
           source_image_url?: string | null
+          source_type?: string
           status?: string
           updated_at?: string
           user_id?: string
           variance?: number | null
+          verified?: boolean
         }
         Relationships: [
           {
@@ -2864,54 +2870,81 @@ export type Database = {
       employee_pos_permissions: {
         Row: {
           allow: Json
+          branch_id: string | null
           company_id: string | null
           created_at: string
           deny: Json
+          drawer_name: string | null
           email: string | null
           employee_id: string | null
+          failed_pin_attempts: number
           full_name: string | null
           id: string
           is_active: boolean
+          last_pin_login_at: string | null
+          location_id: string | null
           pin: string | null
+          pin_disabled: boolean
+          pin_hash: string | null
           pin_locked: boolean
+          pin_locked_until: string | null
           pin_set_at: string | null
           pos_role: string
+          register_id: string | null
           updated_at: string
           user_id: string
           worker_user_id: string | null
         }
         Insert: {
           allow?: Json
+          branch_id?: string | null
           company_id?: string | null
           created_at?: string
           deny?: Json
+          drawer_name?: string | null
           email?: string | null
           employee_id?: string | null
+          failed_pin_attempts?: number
           full_name?: string | null
           id?: string
           is_active?: boolean
+          last_pin_login_at?: string | null
+          location_id?: string | null
           pin?: string | null
+          pin_disabled?: boolean
+          pin_hash?: string | null
           pin_locked?: boolean
+          pin_locked_until?: string | null
           pin_set_at?: string | null
           pos_role?: string
+          register_id?: string | null
           updated_at?: string
           user_id: string
           worker_user_id?: string | null
         }
         Update: {
           allow?: Json
+          branch_id?: string | null
           company_id?: string | null
           created_at?: string
           deny?: Json
+          drawer_name?: string | null
           email?: string | null
           employee_id?: string | null
+          failed_pin_attempts?: number
           full_name?: string | null
           id?: string
           is_active?: boolean
+          last_pin_login_at?: string | null
+          location_id?: string | null
           pin?: string | null
+          pin_disabled?: boolean
+          pin_hash?: string | null
           pin_locked?: boolean
+          pin_locked_until?: string | null
           pin_set_at?: string | null
           pos_role?: string
+          register_id?: string | null
           updated_at?: string
           user_id?: string
           worker_user_id?: string | null
@@ -5988,19 +6021,33 @@ export type Database = {
         Row: {
           actual_cash: number | null
           branch_id: string | null
+          card_sales: number
           cash_in: number
           cash_out: number
+          cash_sales: number
           cashier_name: string | null
+          cashier_user_id: string | null
           closed_at: string | null
           created_at: string
           created_by: string | null
+          drawer_name: string | null
           expected_cash: number
           id: string
+          location_id: string | null
+          manager_comment: string | null
+          momo_sales: number
           notes: string | null
           opened_at: string
           opening_float: number
+          other_sales: number
+          refunds_total: number
           register_id: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          station: string | null
           status: string
+          submitted_at: string | null
           updated_at: string
           user_id: string
           variance: number | null
@@ -6008,19 +6055,33 @@ export type Database = {
         Insert: {
           actual_cash?: number | null
           branch_id?: string | null
+          card_sales?: number
           cash_in?: number
           cash_out?: number
+          cash_sales?: number
           cashier_name?: string | null
+          cashier_user_id?: string | null
           closed_at?: string | null
           created_at?: string
           created_by?: string | null
+          drawer_name?: string | null
           expected_cash?: number
           id?: string
+          location_id?: string | null
+          manager_comment?: string | null
+          momo_sales?: number
           notes?: string | null
           opened_at?: string
           opening_float?: number
+          other_sales?: number
+          refunds_total?: number
           register_id?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          station?: string | null
           status?: string
+          submitted_at?: string | null
           updated_at?: string
           user_id?: string
           variance?: number | null
@@ -6028,19 +6089,33 @@ export type Database = {
         Update: {
           actual_cash?: number | null
           branch_id?: string | null
+          card_sales?: number
           cash_in?: number
           cash_out?: number
+          cash_sales?: number
           cashier_name?: string | null
+          cashier_user_id?: string | null
           closed_at?: string | null
           created_at?: string
           created_by?: string | null
+          drawer_name?: string | null
           expected_cash?: number
           id?: string
+          location_id?: string | null
+          manager_comment?: string | null
+          momo_sales?: number
           notes?: string | null
           opened_at?: string
           opening_float?: number
+          other_sales?: number
+          refunds_total?: number
           register_id?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          station?: string | null
           status?: string
+          submitted_at?: string | null
           updated_at?: string
           user_id?: string
           variance?: number | null
@@ -10393,6 +10468,15 @@ export type Database = {
       }
       is_staff_of: { Args: { _tenant: string }; Returns: boolean }
       lock_reconciliation: { Args: { _session_id: string }; Returns: Json }
+      log_cashier_activity: {
+        Args: {
+          _action: string
+          _details?: Json
+          _entity?: string
+          _tenant: string
+        }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -10473,9 +10557,21 @@ export type Database = {
         Args: { _alloc_id: string; _reason?: string }
         Returns: Json
       }
+      review_cashier_shift: {
+        Args: { _comment?: string; _decision: string; _shift_id: string }
+        Returns: Json
+      }
       run_notification_scans: { Args: never; Returns: Json }
       safe_reverse_journal_entry: {
         Args: { _entry_id: string; _reason: string; _reversal_date?: string }
+        Returns: Json
+      }
+      set_cashier_pin: {
+        Args: { _permission_id: string; _pin: string }
+        Returns: Json
+      }
+      set_cashier_pin_state: {
+        Args: { _disabled: boolean; _permission_id: string; _unlock?: boolean }
         Returns: Json
       }
       staff_branch: { Args: never; Returns: string }
@@ -10497,6 +10593,10 @@ export type Database = {
           unit: string
         }[]
       }
+      submit_cashier_shift: {
+        Args: { _actual_cash: number; _breakdown?: Json; _shift_id: string }
+        Returns: Json
+      }
       sync_pos_sale: {
         Args: { _items?: Json; _payments?: Json; _sale: Json }
         Returns: string
@@ -10509,6 +10609,10 @@ export type Database = {
       user_can_view_module: {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
+      }
+      verify_cashier_pin: {
+        Args: { _permission_id: string; _pin: string }
+        Returns: Json
       }
     }
     Enums: {
