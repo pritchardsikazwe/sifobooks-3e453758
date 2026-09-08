@@ -543,11 +543,12 @@ function RetailPos() {
                   <div className="truncate font-semibold">{s.sale_no} · {s.customer_name}</div>
                   <div className="text-xs text-muted-foreground">
                     {new Date(s.sold_at).toLocaleString()} · <span className="uppercase">{s.status}</span>
+                    {s.__offline && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[10px] font-semibold text-amber-700">WAITING TO UPLOAD</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-black tabular-nums">{fmtMoney(Number(s.total))}</span>
-                  {s.status === "completed" && (
+                  {s.status === "completed" && !s.__offline && (
                     <>
                       <Button size="sm" variant="outline" onClick={async () => {
                         try { await refundSale(s.id); toast.success("Refunded"); setRecent(await listRecentSales()); void refresh(); }
