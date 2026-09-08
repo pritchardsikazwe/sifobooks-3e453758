@@ -6,8 +6,12 @@
  * which posts the GL entry and stock movements in one transaction.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { cacheRows, readCached } from "@/lib/offline-db";
-import { newClientId, queueInsert } from "@/lib/offline-queue";
+import { cacheRow, cacheRows, readCached, withStore } from "@/lib/offline-db";
+import { listQueue, newClientId, queueRpc } from "@/lib/offline-queue";
+
+async function clearStore(store: "pos_transactions") {
+  await withStore(store, "readwrite", (os) => os.clear());
+}
 
 export type PriceLevel = "normal" | "retail" | "wholesale" | "vip" | "customer";
 
