@@ -48,6 +48,15 @@ const TENDERS = [
   { key: "credit", label: "CREDIT", icon: User },
 ];
 
+const PAY_KEYS: { label: string; icon: any; bg: string }[] = [
+  { label: "Cash", icon: Wallet, bg: "bg-till-cash" },
+  { label: "Split", icon: Percent, bg: "bg-till-discount" },
+  { label: "Visa", icon: CreditCard, bg: "bg-till-card" },
+  { label: "MoMo", icon: Smartphone, bg: "bg-till-momo" },
+  { label: "Account", icon: User, bg: "bg-till-nav" },
+  { label: "Returns", icon: Undo2, bg: "bg-till-void" },
+];
+
 const DENOMS = [5, 10, 20, 50, 100, 200, 500];
 const QUICK_QTY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24];
 const VOID_REASONS = ["Wrong product", "Wrong quantity", "Customer cancelled", "Duplicate sale", "Other"];
