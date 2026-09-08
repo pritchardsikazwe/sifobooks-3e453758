@@ -55,3 +55,30 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
       pos_role: (perm.pos_role as string | null) ?? "cashier",
     };
   });
+
+/**
+ * Unlock the terminal for the cashier who is already signed in.
+ * Verification happens in the database (hash + rate limit + audit).
+ */
+export const verifyOwnPin = createServerFn({ method: "POST" })
+  .middleware([(await import("@/integrations/supabase/auth-middleware")).requireSupabaseAuth])
+  .inputValidator((input: { pin: string }) => {
+    const pin = String(input?.pin ?? "").trim();
+    if (!/^\d{4,8}$/.test(pin)) throw new Error("Enter your PIN");
+    return { pin };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: perm } = await supabaseAdmin
+      .from("employee_pos_permissions")
+      .select("id")
+      .eq("worker_user_id", context.userId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!perm) return { ok: false as const, error: "No till profile found for this login" };
+    const { data: res } = await supabaseAdmin.rpc("verify_cashier_pin" as never, {
+      _permission_id: perm.id, _pin: data.pin,
+    } as never);
+    const out = res as unknown as { ok: boolean; error?: string };
+    return out?.ok ? { ok: true as const } : { ok: false as const, error: out?.error ?? "Incorrect PIN" };
+  });
