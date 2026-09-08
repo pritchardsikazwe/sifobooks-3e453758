@@ -10,9 +10,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/sifobooks-logo.png";
-import { MODULES, CATEGORY_ORDER, type ModuleCategory } from "@/lib/modules";
+import { MODULES, CATEGORY_ORDER } from "@/lib/modules";
 import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
+import { staffNav } from "@/lib/rbac";
 
 const LogOut = Icons.LogOut;
 const GraduationCap = Icons.GraduationCap;
@@ -103,10 +104,18 @@ export function AppSidebar() {
 
 
   const { installed } = useInstalledModules();
-  const { canView, isSuperAdmin } = usePermissions();
+  const { canView, isSuperAdmin, isStaff, access, loading: permsLoading } = usePermissions();
 
   const sections = useMemo(() => {
-    const groups: { label: ModuleCategory; items: { title: string; url: string; icon: any }[] }[] = [];
+    const groups: { label: string; items: { title: string; url: string; icon: any }[] }[] = [];
+    if (permsLoading) return groups;
+    if (isStaff) {
+      // Staff: least-privilege navigation built from permissions only.
+      for (const g of staffNav(access)) {
+        groups.push({ label: g.label, items: g.items.map(i => ({ title: i.title, url: i.url, icon: iconFor(i.iconName) })) });
+      }
+      return groups;
+    }
     for (const cat of CATEGORY_ORDER) {
       const items: { title: string; url: string; icon: any }[] = [];
       for (const m of MODULES) {
@@ -121,7 +130,7 @@ export function AppSidebar() {
       if (items.length > 0) groups.push({ label: cat, items });
     }
     return groups;
-  }, [installed, canView, isSuperAdmin]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading]);
 
   const isOpen = (label: string) => {
     // Default: open if it contains the active route, otherwise open unless user closed it
@@ -153,6 +162,11 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="mt-3 rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-semibold text-foreground truncate">
             {companyName}
+            {isStaff && access?.role_name && (
+              <div className="text-[10px] font-medium text-muted-foreground truncate">
+                {access.role_name}{access.branch_name ? ` · ${access.branch_name}` : ""}
+              </div>
+            )}
           </div>
         )}
       </SidebarHeader>

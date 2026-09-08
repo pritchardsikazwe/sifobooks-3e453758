@@ -11,6 +11,7 @@ import {
 import { MODULES } from "@/lib/modules";
 import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
+import { staffNav } from "@/lib/rbac";
 import { supabase } from "@/integrations/supabase/client";
 
 const RECENT_KEY = "sifobooks.cmdk.recent";
@@ -87,7 +88,8 @@ type RecentDoc = {
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const navigate = useNavigate();
   const { installed } = useInstalledModules();
-  const { canView } = usePermissions();
+  const { canView, isStaff, access, has } = usePermissions();
+  const canSeeDocs = !isStaff || has("accounting.view");
   const [recents, setRecents] = useState<Recent[]>([]);
   const [docs, setDocs] = useState<RecentDoc[]>([]);
 
@@ -95,6 +97,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   useEffect(() => {
     if (!open) return;
+    if (!canSeeDocs) { setDocs([]); return; }
     let cancelled = false;
     (async () => {
       const [inv, bl, ex, cs, sp] = await Promise.all([
@@ -118,13 +121,17 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   const navigable = useMemo(() => {
     const out: { title: string; url: string; group: string }[] = [];
+    if (isStaff) {
+      for (const g of staffNav(access)) for (const i of g.items) out.push({ title: i.title, url: i.url, group: g.label });
+      return out;
+    }
     for (const m of MODULES) {
       if (!m.core && !installed.has(m.key)) continue;
       if (!canView(m.key)) continue;
       for (const r of m.routes) out.push({ title: r.title, url: r.url, group: m.category });
     }
     return out;
-  }, [installed, canView]);
+  }, [installed, canView, isStaff, access]);
 
   const go = (label: string, url: string, group = "Navigate") => {
     pushRecent({ label, url, group });

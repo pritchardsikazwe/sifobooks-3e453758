@@ -15,32 +15,47 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
+import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
+import { toast } from "sonner";
+
+/** Staff may only open routes their permissions allow — typed URLs included. */
+async function enforceRoute(pathname: string) {
+  let access: Access | null = null;
+  try { access = await loadAccess(); } catch { access = null; }
+  if (!access) return { access };
+  if (canAccessPath(access, pathname)) return { access };
+  const landing = landingFor(access);
+  if (typeof window !== "undefined") {
+    setTimeout(() => toast.error("You don't have permission to open that page"), 50);
+  }
+  throw redirect({ to: landing === pathname ? "/dashboard" : landing, replace: true });
+}
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     // Offline: keep the user inside the app on the current route. A network
     // failure is NOT a logout — only a real auth failure sends them to /auth.
     const offline = typeof navigator !== "undefined" && !navigator.onLine;
     if (offline) {
       const { data } = await supabase.auth.getSession();
-      if (data.session) return { user: data.session.user };
+      if (data.session) return { user: data.session.user, ...(await enforceRoute(location.pathname)) };
       throw redirect({ to: "/auth" });
     }
     try {
       const { data, error } = await supabase.auth.getUser();
-      if (data?.user) return { user: data.user };
+      if (data?.user) return { user: data.user, ...(await enforceRoute(location.pathname)) };
       // Distinguish an auth rejection from a transport failure.
       const msg = error?.message ?? "";
       if (/fetch|network|timeout|Failed to fetch|NetworkError/i.test(msg)) {
         const { data: s } = await supabase.auth.getSession();
-        if (s.session) return { user: s.session.user };
+        if (s.session) return { user: s.session.user, ...(await enforceRoute(location.pathname)) };
       }
       throw redirect({ to: "/auth" });
     } catch (e: any) {
       if (e?.isRedirect || e?.to) throw e;
       const { data: s } = await supabase.auth.getSession();
-      if (s.session) return { user: s.session.user };
+      if (s.session) return { user: s.session.user, ...(await enforceRoute(location.pathname)) };
       throw redirect({ to: "/auth" });
     }
   },
@@ -62,6 +77,11 @@ function Shell() {
   const crumb = useBreadcrumb();
   const pageKey = useRouterState({ select: r => r.location.pathname });
   const router = useRouter();
+  const { access } = Route.useRouteContext() as { access?: Access | null };
+  const isStaff = Boolean(access && !access.is_owner && !access.is_super_admin);
+  const canSettings = !isStaff || hasPerm(access, "settings.manage");
+  const canCreate = !isStaff || hasPerm(access, "accounting.manage");
+  const canSwitchCompany = !isStaff;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? ""));
@@ -74,6 +94,7 @@ function Shell() {
       const { clearCachedBusinessData } = await import("@/lib/offline-db");
       await clearCachedBusinessData();
     } catch (e) { console.error(e); }
+    clearAccessCache();
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
     window.location.assign("/auth");
   };
@@ -111,7 +132,13 @@ function Shell() {
               <span className="text-border">/</span>
               <span className="text-muted-foreground">{crumb}</span>
             </div>
-            <div className="flex min-w-0 items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
+            {canSwitchCompany ? (
+              <div className="flex min-w-0 items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
+            ) : (
+              <div className="hidden sm:flex min-w-0 items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground truncate">
+                {access?.role_name}{access?.branch_name ? ` · ${access.branch_name}` : ""}
+              </div>
+            )}
             <button
               onClick={() => setCmdOpen(true)}
               className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 hover:bg-card hover:border-primary/30 transition text-left text-sm text-muted-foreground"
@@ -130,9 +157,9 @@ function Shell() {
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>
+                {canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>}
               </div>
-              <QuickCreate />
+              {canCreate && <QuickCreate />}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account">
@@ -143,7 +170,7 @@ function Shell() {
                   <DropdownMenuLabel className="truncate">{userEmail || "Signed in"}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="sm:hidden" onClick={() => router.history.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Back</DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/setup"><SettingsIcon className="h-4 w-4 mr-2" /> Settings</Link></DropdownMenuItem>
+                  {canSettings && <DropdownMenuItem asChild><Link to="/setup"><SettingsIcon className="h-4 w-4 mr-2" /> Settings</Link></DropdownMenuItem>}
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="h-4 w-4 mr-2" /> Sign out
                   </DropdownMenuItem>

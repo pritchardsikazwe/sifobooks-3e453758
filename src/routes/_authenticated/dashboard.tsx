@@ -20,15 +20,24 @@ import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
+import type { Access } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: DashboardPage,
+  component: DashboardGate,
 });
 
 type Txn = { id: string; txn_date: string; description: string; amount: number; reference: string | null; category: string | null };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/** Staff get a simple, permission-scoped home; owners get the full dashboard. */
+function DashboardGate() {
+  const { access } = Route.useRouteContext() as { access?: Access | null };
+  if (access && !access.is_owner && !access.is_super_admin) return <StaffDashboard access={access} />;
+  return <DashboardPage />;
+}
 
 function DashboardPage() {
   const navigate = useNavigate();

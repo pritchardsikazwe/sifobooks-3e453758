@@ -156,6 +156,7 @@ import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
+import { Route as AuthenticatedPosRetailCommandCenterRouteImport } from './routes/_authenticated/pos.retail-command-center'
 import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
 import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenticated/learn.vat-zra'
 import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
@@ -981,6 +982,12 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
+const AuthenticatedPosRetailCommandCenterRoute =
+  AuthenticatedPosRetailCommandCenterRouteImport.update({
+    id: '/retail-command-center',
+    path: '/retail-command-center',
+    getParentRoute: () => AuthenticatedPosRoute,
+  } as any)
 const AuthenticatedPosCommandCenterRoute =
   AuthenticatedPosCommandCenterRouteImport.update({
     id: '/command-center',
@@ -1172,6 +1179,7 @@ export interface FileRoutesByFullPath {
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
+  '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1329,6 +1337,7 @@ export interface FileRoutesByTo {
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
+  '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1494,6 +1503,7 @@ export interface FileRoutesById {
   '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/_authenticated/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
   '/_authenticated/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
+  '/_authenticated/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1658,6 +1668,7 @@ export interface FileRouteTypes {
     | '/learn/reports'
     | '/learn/vat-zra'
     | '/pos/command-center'
+    | '/pos/retail-command-center'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1815,6 +1826,7 @@ export interface FileRouteTypes {
     | '/learn/reports'
     | '/learn/vat-zra'
     | '/pos/command-center'
+    | '/pos/retail-command-center'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1979,6 +1991,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn/reports'
     | '/_authenticated/learn/vat-zra'
     | '/_authenticated/pos/command-center'
+    | '/_authenticated/pos/retail-command-center'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
@@ -3084,6 +3097,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
     }
+    '/_authenticated/pos/retail-command-center': {
+      id: '/_authenticated/pos/retail-command-center'
+      path: '/retail-command-center'
+      fullPath: '/pos/retail-command-center'
+      preLoaderRoute: typeof AuthenticatedPosRetailCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedPosRoute
+    }
     '/_authenticated/pos/command-center': {
       id: '/_authenticated/pos/command-center'
       path: '/command-center'
@@ -3225,10 +3245,13 @@ const AuthenticatedInvoicesRouteWithChildren =
 
 interface AuthenticatedPosRouteChildren {
   AuthenticatedPosCommandCenterRoute: typeof AuthenticatedPosCommandCenterRoute
+  AuthenticatedPosRetailCommandCenterRoute: typeof AuthenticatedPosRetailCommandCenterRoute
 }
 
 const AuthenticatedPosRouteChildren: AuthenticatedPosRouteChildren = {
   AuthenticatedPosCommandCenterRoute: AuthenticatedPosCommandCenterRoute,
+  AuthenticatedPosRetailCommandCenterRoute:
+    AuthenticatedPosRetailCommandCenterRoute,
 }
 
 const AuthenticatedPosRouteWithChildren =
