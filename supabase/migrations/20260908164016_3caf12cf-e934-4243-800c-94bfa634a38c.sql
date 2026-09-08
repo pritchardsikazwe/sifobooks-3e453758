@@ -1,0 +1,13 @@
+REVOKE EXECUTE ON FUNCTION public.ensure_transit_location(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.transfer_can_manage(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.dispatch_stock_transfer(uuid, boolean) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.receive_stock_transfer(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.next_doc_number(uuid, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.approve_stock_count(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.post_stock_count(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.transfer_can_manage(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.dispatch_stock_transfer(uuid, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.receive_stock_transfer(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.next_doc_number(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.approve_stock_count(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.post_stock_count(uuid) TO authenticated;
