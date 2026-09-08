@@ -5719,6 +5719,7 @@ export type Database = {
           discount: number
           id: string
           journal_entry_id: string | null
+          location_id: string | null
           note: string | null
           paid: number
           price_level: string
@@ -5747,6 +5748,7 @@ export type Database = {
           discount?: number
           id?: string
           journal_entry_id?: string | null
+          location_id?: string | null
           note?: string | null
           paid?: number
           price_level?: string
@@ -5775,6 +5777,7 @@ export type Database = {
           discount?: number
           id?: string
           journal_entry_id?: string | null
+          location_id?: string | null
           note?: string | null
           paid?: number
           price_level?: string
@@ -5797,6 +5800,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
             referencedColumns: ["id"]
           },
           {
@@ -10151,6 +10161,10 @@ export type Database = {
       pos_can: {
         Args: { _feature: string; _tenant?: string; _worker: string }
         Returns: boolean
+      }
+      pos_default_location: {
+        Args: { _uid: string; _worker: string }
+        Returns: string
       }
       pos_has_books: { Args: { _tenant: string }; Returns: boolean }
       pos_matrix: { Args: { _feature: string; _role: string }; Returns: string }
