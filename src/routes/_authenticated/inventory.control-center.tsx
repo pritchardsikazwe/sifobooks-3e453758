@@ -28,7 +28,9 @@ export const Route = createFileRoute("/_authenticated/inventory/control-center")
 
 type BalanceRow = {
   item_id: string; location_id: string; quantity: number;
-  item_name?: string; sku?: string | null; unit?: string; cost_price?: number | null;
+  name: string; sku: string | null; unit: string;
+  cost_price: number; sell_price: number;
+  needs_cost_review: boolean; needs_unit_verification: boolean;
 };
 
 function ControlCenterPage() {
@@ -36,25 +38,22 @@ function ControlCenterPage() {
   const [balances, setBalances] = useState<BalanceRow[]>([]);
   const [produced, setProduced] = useState(0);
   const [batches, setBatches] = useState(0);
-  const [openTransfers, setOpenTransfers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [locs, bal, prod, trf] = await Promise.all([
+      const [locs, bal, prod] = await Promise.all([
         fetchLocations(),
         fetchBalances(),
         supabase.from("stock_movements").select("quantity").eq("movement_type", "production"),
-        supabase.from("inventory_transfers").select("id, status"),
       ]);
       setLocations(locs);
       setBalances(bal as unknown as BalanceRow[]);
       const rows = (prod.data ?? []) as { quantity: number }[];
       setProduced(rows.reduce((s, r) => s + Number(r.quantity ?? 0), 0));
       setBatches(rows.length);
-      setOpenTransfers(((trf.data ?? []) as { status: string }[]).filter((t) => t.status !== "received" && t.status !== "cancelled").length);
     } catch (e: any) { setError(e.message ?? "Could not load the control center"); }
     finally { setLoading(false); }
   }, []);
@@ -64,16 +63,48 @@ function ControlCenterPage() {
   const byLocation = useMemo(() => {
     return locations.map((l) => {
       const rows = balances.filter((b) => b.location_id === l.id);
-      const qty = rows.reduce((s, r) => s + Number(r.quantity ?? 0), 0);
-      const value = rows.reduce((s, r) => s + Number(r.quantity ?? 0) * Number(r.cost_price ?? 0), 0);
-      return { id: l.id, name: l.name, code: l.code, type: l.location_type, lines: rows.length, qty, value };
+      const qty = rows.reduce((s, r) => s + r.quantity, 0);
+      const value = rows.reduce((s, r) => s + r.quantity * r.cost_price, 0);
+      const retail = rows.reduce((s, r) => s + r.quantity * r.sell_price, 0);
+      return {
+        id: l.id, name: l.name, code: l.code, type: l.location_type,
+        lines: rows.length, qty, value, retail, margin: retail - value,
+      };
     });
   }, [locations, balances]);
 
-  const transitQty = byLocation.filter((l) => l.type === "transit").reduce((s, l) => s + l.qty, 0);
-  const warehouseQty = byLocation.filter((l) => l.type === "warehouse").reduce((s, l) => s + l.qty, 0);
-  const outletQty = byLocation.filter((l) => l.type !== "warehouse" && l.type !== "transit").reduce((s, l) => s + l.qty, 0);
-  const totalValue = byLocation.reduce((s, l) => s + l.value, 0);
+  const sumBy = (pred: (t: string) => boolean, key: "qty" | "value") =>
+    byLocation.filter((l) => pred(l.type)).reduce((s, l) => s + l[key], 0);
+
+  const isTransit = (t: string) => t === "transit";
+  const isWarehouse = (t: string) => t === "warehouse";
+  const isOutlet = (t: string) => t !== "warehouse" && t !== "transit";
+
+  const totalCost = byLocation.reduce((s, l) => s + l.value, 0);
+  const totalRetail = byLocation.reduce((s, l) => s + l.retail, 0);
+
+  /** Products still holding stock but with no usable cost, unit or price. */
+  const exceptions = useMemo(() => {
+    const seen = new Map<string, { item: string; sku: string | null; unit: string; qty: number; cost: number; sell: number; issues: string[] }>();
+    for (const b of balances) {
+      if (b.quantity === 0) continue;
+      const issues: string[] = [];
+      if (!b.cost_price) issues.push("Zero cost");
+      if (b.needs_cost_review) issues.push("Cost flagged for review");
+      if (!b.sell_price) issues.push("No selling price");
+      if (!b.unit || b.unit === "each") issues.push("Unit not set");
+      if (b.needs_unit_verification) issues.push("Unit needs verification");
+      if (!b.sku) issues.push("No SKU");
+      if (!issues.length) continue;
+      const prev = seen.get(b.item_id);
+      if (prev) { prev.qty += b.quantity; continue; }
+      seen.set(b.item_id, {
+        item: b.name, sku: b.sku, unit: b.unit, qty: b.quantity,
+        cost: b.cost_price, sell: b.sell_price, issues,
+      });
+    }
+    return [...seen.values()].map((r) => ({ ...r, issue: r.issues.join(", ") }));
+  }, [balances]);
 
   const cols: DTColumn<(typeof byLocation)[number]>[] = [
     { key: "name", header: "Location", sortable: true, sticky: true },
@@ -81,7 +112,19 @@ function ControlCenterPage() {
     { key: "type", header: "Type" },
     { key: "lines", header: "Products", align: "right" },
     { key: "qty", header: "Units on hand", align: "right", sortable: true },
-    { key: "value", header: "Stock value", align: "right", cell: (r) => fmtMoney(r.value) },
+    { key: "value", header: "Inventory value (cost)", align: "right", sortable: true, cell: (r) => fmtMoney(r.value) },
+    { key: "retail", header: "Potential sales value", align: "right", cell: (r) => fmtMoney(r.retail) },
+    { key: "margin", header: "Potential gross margin", align: "right", cell: (r) => fmtMoney(r.margin) },
+  ];
+
+  const exceptionCols: DTColumn<(typeof exceptions)[number]>[] = [
+    { key: "item", header: "Product", sortable: true, sticky: true },
+    { key: "sku", header: "SKU" },
+    { key: "unit", header: "Unit" },
+    { key: "qty", header: "Quantity", align: "right" },
+    { key: "cost", header: "Cost", align: "right", cell: (r) => fmtMoney(r.cost) },
+    { key: "sell", header: "Selling price", align: "right", cell: (r) => fmtMoney(r.sell) },
+    { key: "issue", header: "Needs review", cell: (r) => <span className="text-destructive">{r.issue}</span> },
   ];
 
   return (
@@ -89,18 +132,23 @@ function ControlCenterPage() {
       <SifoModuleHeader
         module="inventory"
         title="Inventory control center"
-        description="Production, warehouse, stock in transit and outlet stock in one place."
+        description="Production, warehouse, stock in transit and outlet stock, valued at cost with the retail upside beside it."
         icon={Gauge}
         actions={<Button variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <SifoKpiCard label="Produced (all time)" value={String(produced)} />
-        <SifoKpiCard label="Production batches" value={String(batches)} />
-        <SifoKpiCard label="Warehouse units" value={String(warehouseQty)} />
-        <SifoKpiCard label="In transit" value={String(transitQty)} />
-        <SifoKpiCard label="Outlet units" value={String(outletQty)} />
-        <SifoKpiCard label="Stock value" value={fmtMoney(totalValue)} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SifoKpiCard label="Total inventory value (cost)" value={fmtMoney(totalCost)} />
+        <SifoKpiCard label="Potential sales value" value={fmtMoney(totalRetail)} />
+        <SifoKpiCard label="Potential gross margin" value={fmtMoney(totalRetail - totalCost)} />
+        <SifoKpiCard label="Produced (all time)" value={`${produced} units · ${batches} lines`} />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SifoKpiCard label="Warehouse value" value={fmtMoney(sumBy(isWarehouse, "value"))} hint={`${sumBy(isWarehouse, "qty")} units`} />
+        <SifoKpiCard label="Store / outlet value" value={fmtMoney(sumBy(isOutlet, "value"))} hint={`${sumBy(isOutlet, "qty")} units`} />
+        <SifoKpiCard label="Stock in transit value" value={fmtMoney(sumBy(isTransit, "value"))} hint={`${sumBy(isTransit, "qty")} units`} />
+        <SifoKpiCard label="Company total (no double count)" value={fmtMoney(totalCost)} />
       </div>
 
       <Card>
@@ -126,6 +174,20 @@ function ControlCenterPage() {
         empty="No stock locations yet."
         toolbarRight={<ExportMenu rows={byLocation} filename="inventory-control-center" title="Inventory control center" />}
       />
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Inventory cost exceptions</h2>
+        <DataTable
+          tableId="inventory-cost-exceptions"
+          data={exceptions}
+          columns={exceptionCols}
+          loading={loading}
+          searchPlaceholder="Search exceptions…"
+          empty="Every product holding stock has a cost, a unit and a selling price."
+          toolbarRight={<ExportMenu rows={exceptions} filename="inventory-cost-exceptions" title="Inventory cost exceptions" />}
+        />
+      </div>
     </div>
   );
 }
+
