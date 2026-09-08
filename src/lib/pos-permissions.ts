@@ -63,8 +63,8 @@ export type PosContext = {
   displayName: string;
   allow: PosFeature[];
   deny: PosFeature[];
-  /** terminal PIN required to unlock this worker's session (null = no PIN set) */
-  pin?: string | null;
+  /** true when this worker has a PIN configured (the PIN itself never leaves the server) */
+  pinSet?: boolean;
   /** true while a PIN reset is in flight — the old PIN is void */
   pinLocked?: boolean;
   permissionId?: string | null;
@@ -103,7 +103,7 @@ export async function loadPosContext(): Promise<PosContext | null> {
       displayName: (data.full_name as string) || user.email || "Worker",
       allow: ((data.allow as any) ?? []) as PosFeature[],
       deny: ((data.deny as any) ?? []) as PosFeature[],
-      pin: (data as any).pin ?? null,
+      pinSet: Boolean((data as any).pin_hash),
       pinLocked: Boolean((data as any).pin_locked),
       permissionId: data.id as string,
     };
@@ -127,6 +127,8 @@ export const WORKER_NAV: { to: string; label: string; icon: string; feature?: Po
   { to: "/w/tables", label: "Tables", icon: "LayoutGrid", feature: "tables" },
   { to: "/w/orders", label: "Orders", icon: "ReceiptText", feature: "pos_sales" },
   { to: "/w/kitchen", label: "Kitchen", icon: "ChefHat", feature: "kitchen_display" },
+  { to: "/w/sales", label: "My sales", icon: "ReceiptText", feature: "pos_sales" },
+  { to: "/w/shift", label: "My shift", icon: "Clock", feature: "pos_sales" },
   { to: "/w/cash", label: "Cash", icon: "Banknote", feature: "cash_drawer" },
   { to: "/w/stock", label: "Stock", icon: "Boxes", feature: "stock_view" },
   { to: "/w/reports", label: "Reports", icon: "BarChart3", feature: "reports" },
