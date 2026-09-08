@@ -483,7 +483,8 @@ export async function listRecentSales(limit = 30) {
 }
 
 export async function voidSale(saleId: string, reason: string) {
-  await supabase.from("pos_sales").update({ status: "voided", void_reason: reason } as any).eq("id", saleId);
+  const { error } = await supabase.from("pos_sales").update({ status: "voided", void_reason: reason } as any).eq("id", saleId);
+  if (error) throw new Error(error.message);
 }
 
 /** Full refund: reverses stock and posts a mirrored negative sale. */
