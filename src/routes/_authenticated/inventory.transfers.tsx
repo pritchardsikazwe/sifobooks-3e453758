@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/inventory/transfers")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: TransfersPage;
+  component: TransfersPage,
 });
 
 type Draft = { item_id: string; quantity: string; unit_cost: string; batch_no: string; expiry_date: string };
