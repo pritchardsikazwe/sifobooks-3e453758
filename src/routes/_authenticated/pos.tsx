@@ -736,13 +736,17 @@ function SalePanel(props: {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t p-3">
-        {TENDERS.map((t) => (
-          <Button key={t.key} variant={t.key === "cash" ? "default" : "outline"} className="h-14 text-sm font-bold" onClick={onPay}>
-            <t.icon className="mr-1.5 h-4 w-4" />{t.label}
-          </Button>
+      <div className="grid grid-cols-3 gap-1.5 border-t p-2">
+        {PAY_KEYS.map((t) => (
+          <button key={t.label} onClick={onPay}
+            className={cn("flex h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-black uppercase tracking-wide text-till-key-foreground transition-transform active:scale-95", t.bg)}>
+            <t.icon className="h-4 w-4" />{t.label}
+          </button>
         ))}
-        <Button className="col-span-2 h-16 text-lg font-black" onClick={onPay}>PAY {fmtMoney(totals.total)}</Button>
+        <button onClick={onPay}
+          className="col-span-3 h-16 rounded-xl bg-till-cash text-lg font-black uppercase text-till-key-foreground transition-transform active:scale-[0.98]">
+          Pay {fmtMoney(totals.total)}
+        </button>
       </div>
     </div>
   );
