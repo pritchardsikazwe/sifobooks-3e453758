@@ -328,6 +328,9 @@ function RetailPos() {
             <span className={cn("flex items-center gap-1 font-semibold",
               net.state === "offline" ? "text-destructive" : net.state === "syncing" ? "text-amber-600" : "text-emerald-600")}>
               ● {net.state === "offline" ? "OFFLINE" : net.state === "syncing" ? "SYNCING" : "ONLINE"}
+              {net.pending > 0 && (
+                <span className="ml-1 rounded-full bg-amber-500/15 px-1.5 text-[10px] text-amber-700">{net.pending} to upload</span>
+              )}
             </span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
