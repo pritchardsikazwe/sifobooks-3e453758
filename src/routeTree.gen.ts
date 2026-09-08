@@ -169,7 +169,11 @@ import { Route as AuthenticatedJournalEntryIdRouteImport } from './routes/_authe
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedInventoryTransfersRouteImport } from './routes/_authenticated/inventory.transfers'
 import { Route as AuthenticatedInventoryStockCardRouteImport } from './routes/_authenticated/inventory.stock-card'
+import { Route as AuthenticatedInventoryReconciliationRouteImport } from './routes/_authenticated/inventory.reconciliation'
+import { Route as AuthenticatedInventoryProductionRouteImport } from './routes/_authenticated/inventory.production'
 import { Route as AuthenticatedInventoryLocationsRouteImport } from './routes/_authenticated/inventory.locations'
+import { Route as AuthenticatedInventoryControlCenterRouteImport } from './routes/_authenticated/inventory.control-center'
+import { Route as AuthenticatedInventoryCashierRecordsRouteImport } from './routes/_authenticated/inventory.cashier-records'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -1064,10 +1068,34 @@ const AuthenticatedInventoryStockCardRoute =
     path: '/inventory/stock-card',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInventoryReconciliationRoute =
+  AuthenticatedInventoryReconciliationRouteImport.update({
+    id: '/inventory/reconciliation',
+    path: '/inventory/reconciliation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryProductionRoute =
+  AuthenticatedInventoryProductionRouteImport.update({
+    id: '/inventory/production',
+    path: '/inventory/production',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventoryLocationsRoute =
   AuthenticatedInventoryLocationsRouteImport.update({
     id: '/inventory/locations',
     path: '/inventory/locations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryControlCenterRoute =
+  AuthenticatedInventoryControlCenterRouteImport.update({
+    id: '/inventory/control-center',
+    path: '/inventory/control-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryCashierRecordsRoute =
+  AuthenticatedInventoryCashierRecordsRouteImport.update({
+    id: '/inventory/cashier-records',
+    path: '/inventory/cashier-records',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCustomersIdRoute =
@@ -1190,7 +1218,11 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
+  '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/production': typeof AuthenticatedInventoryProductionRoute
+  '/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -1351,7 +1383,11 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
+  '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/production': typeof AuthenticatedInventoryProductionRoute
+  '/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -1520,7 +1556,11 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/_authenticated/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
+  '/_authenticated/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
   '/_authenticated/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/_authenticated/inventory/production': typeof AuthenticatedInventoryProductionRoute
+  '/_authenticated/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/_authenticated/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/_authenticated/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
@@ -1688,7 +1728,11 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/customers/$id'
+    | '/inventory/cashier-records'
+    | '/inventory/control-center'
     | '/inventory/locations'
+    | '/inventory/production'
+    | '/inventory/reconciliation'
     | '/inventory/stock-card'
     | '/inventory/transfers'
     | '/invoices/new'
@@ -1849,7 +1893,11 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/customers/$id'
+    | '/inventory/cashier-records'
+    | '/inventory/control-center'
     | '/inventory/locations'
+    | '/inventory/production'
+    | '/inventory/reconciliation'
     | '/inventory/stock-card'
     | '/inventory/transfers'
     | '/invoices/new'
@@ -2017,7 +2065,11 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
     | '/_authenticated/customers/$id'
+    | '/_authenticated/inventory/cashier-records'
+    | '/_authenticated/inventory/control-center'
     | '/_authenticated/inventory/locations'
+    | '/_authenticated/inventory/production'
+    | '/_authenticated/inventory/reconciliation'
     | '/_authenticated/inventory/stock-card'
     | '/_authenticated/inventory/transfers'
     | '/_authenticated/invoices/new'
@@ -3228,11 +3280,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryStockCardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory/reconciliation': {
+      id: '/_authenticated/inventory/reconciliation'
+      path: '/inventory/reconciliation'
+      fullPath: '/inventory/reconciliation'
+      preLoaderRoute: typeof AuthenticatedInventoryReconciliationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/production': {
+      id: '/_authenticated/inventory/production'
+      path: '/inventory/production'
+      fullPath: '/inventory/production'
+      preLoaderRoute: typeof AuthenticatedInventoryProductionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inventory/locations': {
       id: '/_authenticated/inventory/locations'
       path: '/inventory/locations'
       fullPath: '/inventory/locations'
       preLoaderRoute: typeof AuthenticatedInventoryLocationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/control-center': {
+      id: '/_authenticated/inventory/control-center'
+      path: '/inventory/control-center'
+      fullPath: '/inventory/control-center'
+      preLoaderRoute: typeof AuthenticatedInventoryControlCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/cashier-records': {
+      id: '/_authenticated/inventory/cashier-records'
+      path: '/inventory/cashier-records'
+      fullPath: '/inventory/cashier-records'
+      preLoaderRoute: typeof AuthenticatedInventoryCashierRecordsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/customers/$id': {
@@ -3551,7 +3631,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedInventoryCashierRecordsRoute: typeof AuthenticatedInventoryCashierRecordsRoute
+  AuthenticatedInventoryControlCenterRoute: typeof AuthenticatedInventoryControlCenterRoute
   AuthenticatedInventoryLocationsRoute: typeof AuthenticatedInventoryLocationsRoute
+  AuthenticatedInventoryProductionRoute: typeof AuthenticatedInventoryProductionRoute
+  AuthenticatedInventoryReconciliationRoute: typeof AuthenticatedInventoryReconciliationRoute
   AuthenticatedInventoryStockCardRoute: typeof AuthenticatedInventoryStockCardRoute
   AuthenticatedInventoryTransfersRoute: typeof AuthenticatedInventoryTransfersRoute
   AuthenticatedJournalEntryIdRoute: typeof AuthenticatedJournalEntryIdRoute
@@ -3654,7 +3738,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedInventoryCashierRecordsRoute:
+    AuthenticatedInventoryCashierRecordsRoute,
+  AuthenticatedInventoryControlCenterRoute:
+    AuthenticatedInventoryControlCenterRoute,
   AuthenticatedInventoryLocationsRoute: AuthenticatedInventoryLocationsRoute,
+  AuthenticatedInventoryProductionRoute: AuthenticatedInventoryProductionRoute,
+  AuthenticatedInventoryReconciliationRoute:
+    AuthenticatedInventoryReconciliationRoute,
   AuthenticatedInventoryStockCardRoute: AuthenticatedInventoryStockCardRoute,
   AuthenticatedInventoryTransfersRoute: AuthenticatedInventoryTransfersRoute,
   AuthenticatedJournalEntryIdRoute: AuthenticatedJournalEntryIdRoute,
