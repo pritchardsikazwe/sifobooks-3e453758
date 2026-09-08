@@ -64,6 +64,7 @@ import { Route as AuthenticatedOpeningBalancesRouteImport } from './routes/_auth
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
+import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedLoansRouteImport } from './routes/_authenticated/loans'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
@@ -104,6 +105,7 @@ import { Route as WorkerWIndexRouteImport } from './routes/_worker/w.index'
 import { Route as AuthenticatedRestaurantIndexRouteImport } from './routes/_authenticated/restaurant.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
+import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authenticated/manager.index'
 import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
@@ -160,6 +162,7 @@ import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './r
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
 import { Route as AuthenticatedPosRetailCommandCenterRouteImport } from './routes/_authenticated/pos.retail-command-center'
 import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
+import { Route as AuthenticatedManagerShiftsRouteImport } from './routes/_authenticated/manager.shifts'
 import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenticated/learn.vat-zra'
 import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
 import { Route as AuthenticatedLearnQuickStartRouteImport } from './routes/_authenticated/learn.quick-start'
@@ -480,6 +483,11 @@ const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
   path: '/modules',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedManagerRoute = AuthenticatedManagerRouteImport.update({
+  id: '/manager',
+  path: '/manager',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLoansRoute = AuthenticatedLoansRouteImport.update({
   id: '/loans',
   path: '/loans',
@@ -691,6 +699,12 @@ const AuthenticatedQuotesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedQuotesRoute,
+  } as any)
+const AuthenticatedManagerIndexRoute =
+  AuthenticatedManagerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedManagerRoute,
   } as any)
 const AuthenticatedLearnIndexRoute = AuthenticatedLearnIndexRouteImport.update({
   id: '/learn/',
@@ -1014,6 +1028,12 @@ const AuthenticatedPosCommandCenterRoute =
     path: '/command-center',
     getParentRoute: () => AuthenticatedPosRoute,
   } as any)
+const AuthenticatedManagerShiftsRoute =
+  AuthenticatedManagerShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
 const AuthenticatedLearnVatZraRoute =
   AuthenticatedLearnVatZraRouteImport.update({
     id: '/learn/vat-zra',
@@ -1180,6 +1200,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/loans': typeof AuthenticatedLoansRoute
+  '/manager': typeof AuthenticatedManagerRouteWithChildren
   '/modules': typeof AuthenticatedModulesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1246,6 +1267,7 @@ export interface FileRoutesByFullPath {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
@@ -1302,6 +1324,7 @@ export interface FileRoutesByFullPath {
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
+  '/manager/': typeof AuthenticatedManagerIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
@@ -1413,6 +1436,7 @@ export interface FileRoutesByTo {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
@@ -1469,6 +1493,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
+  '/manager': typeof AuthenticatedManagerIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/restaurant': typeof AuthenticatedRestaurantIndexRoute
@@ -1522,6 +1547,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/loans': typeof AuthenticatedLoansRoute
+  '/_authenticated/manager': typeof AuthenticatedManagerRouteWithChildren
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1588,6 +1614,7 @@ export interface FileRoutesById {
   '/_authenticated/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/_authenticated/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/_authenticated/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/_authenticated/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/_authenticated/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
@@ -1644,6 +1671,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
+  '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
@@ -1696,6 +1724,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/leave'
     | '/loans'
+    | '/manager'
     | '/modules'
     | '/notifications'
     | '/onboarding'
@@ -1762,6 +1791,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
     | '/quotes/new'
@@ -1818,6 +1848,7 @@ export interface FileRouteTypes {
     | '/inventory/'
     | '/invoices/'
     | '/learn/'
+    | '/manager/'
     | '/quotes/'
     | '/reports/'
     | '/restaurant/'
@@ -1929,6 +1960,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
     | '/quotes/new'
@@ -1985,6 +2017,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/invoices'
     | '/learn'
+    | '/manager'
     | '/quotes'
     | '/reports'
     | '/restaurant'
@@ -2037,6 +2070,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/leave'
     | '/_authenticated/loans'
+    | '/_authenticated/manager'
     | '/_authenticated/modules'
     | '/_authenticated/notifications'
     | '/_authenticated/onboarding'
@@ -2103,6 +2137,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn/quick-start'
     | '/_authenticated/learn/reports'
     | '/_authenticated/learn/vat-zra'
+    | '/_authenticated/manager/shifts'
     | '/_authenticated/pos/command-center'
     | '/_authenticated/pos/retail-command-center'
     | '/_authenticated/quotes/new'
@@ -2159,6 +2194,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory/'
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
+    | '/_authenticated/manager/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/_authenticated/restaurant/'
@@ -2569,6 +2605,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModulesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/manager': {
+      id: '/_authenticated/manager'
+      path: '/manager'
+      fullPath: '/manager'
+      preLoaderRoute: typeof AuthenticatedManagerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/loans': {
       id: '/_authenticated/loans'
       path: '/loans'
@@ -2848,6 +2891,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/quotes/'
       preLoaderRoute: typeof AuthenticatedQuotesIndexRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
+    }
+    '/_authenticated/manager/': {
+      id: '/_authenticated/manager/'
+      path: '/'
+      fullPath: '/manager/'
+      preLoaderRoute: typeof AuthenticatedManagerIndexRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
     }
     '/_authenticated/learn/': {
       id: '/_authenticated/learn/'
@@ -3241,6 +3291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPosCommandCenterRouteImport
       parentRoute: typeof AuthenticatedPosRoute
     }
+    '/_authenticated/manager/shifts': {
+      id: '/_authenticated/manager/shifts'
+      path: '/shifts'
+      fullPath: '/manager/shifts'
+      preLoaderRoute: typeof AuthenticatedManagerShiftsRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
     '/_authenticated/learn/vat-zra': {
       id: '/_authenticated/learn/vat-zra'
       path: '/learn/vat-zra'
@@ -3421,6 +3478,19 @@ const AuthenticatedInvoicesRouteWithChildren =
   AuthenticatedInvoicesRoute._addFileChildren(
     AuthenticatedInvoicesRouteChildren,
   )
+
+interface AuthenticatedManagerRouteChildren {
+  AuthenticatedManagerShiftsRoute: typeof AuthenticatedManagerShiftsRoute
+  AuthenticatedManagerIndexRoute: typeof AuthenticatedManagerIndexRoute
+}
+
+const AuthenticatedManagerRouteChildren: AuthenticatedManagerRouteChildren = {
+  AuthenticatedManagerShiftsRoute: AuthenticatedManagerShiftsRoute,
+  AuthenticatedManagerIndexRoute: AuthenticatedManagerIndexRoute,
+}
+
+const AuthenticatedManagerRouteWithChildren =
+  AuthenticatedManagerRoute._addFileChildren(AuthenticatedManagerRouteChildren)
 
 interface AuthenticatedPosRouteChildren {
   AuthenticatedPosCommandCenterRoute: typeof AuthenticatedPosCommandCenterRoute
@@ -3620,6 +3690,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedLoansRoute: typeof AuthenticatedLoansRoute
+  AuthenticatedManagerRoute: typeof AuthenticatedManagerRouteWithChildren
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -3725,6 +3796,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedLoansRoute: AuthenticatedLoansRoute,
+  AuthenticatedManagerRoute: AuthenticatedManagerRouteWithChildren,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
