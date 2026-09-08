@@ -11,7 +11,7 @@ import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoKpiCard } from "@/components/sifo/SifoKpiCard";
 import { ExportMenu } from "@/lib/exports";
 import { supabase } from "@/integrations/supabase/client";
-import { fmtCurrency } from "@/lib/format";
+import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
 import {
   LOCATION_TYPES, currentUserId, fetchBalances, fetchLocations, type BalanceRow, type Location,
@@ -92,7 +92,7 @@ function LocationsPage() {
     { key: "location_type", header: "Type", sortable: true, cell: (r) => <span className="capitalize">{r.location_type}</span> },
     { key: "skus", header: "Products", align: "right", sortable: true },
     { key: "units", header: "Units", align: "right", sortable: true },
-    { key: "value", header: "Stock value", align: "right", sortable: true, cell: (r) => fmtCurrency(r.value) },
+    { key: "value", header: "Stock value", align: "right", sortable: true, cell: (r) => fmtMoney(r.value) },
     { key: "low", header: "Low stock", align: "right", sortable: true },
   ];
 
@@ -113,7 +113,7 @@ function LocationsPage() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <SifoKpiCard label="Locations" value={String(rows.length)} />
-        <SifoKpiCard label="Total stock value" value={fmtCurrency(totalValue)} />
+        <SifoKpiCard label="Total stock value" value={fmtMoney(totalValue)} />
         <SifoKpiCard label="Units in transit" value={String(transitUnits)} />
       </div>
 
