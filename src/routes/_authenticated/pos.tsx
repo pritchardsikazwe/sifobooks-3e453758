@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { fmtMoney } from "@/lib/format";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { RequireModule } from "@/components/RequireModule";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ManagerAuthDialog, type OverrideAction } from "@/components/pos/ManagerAuthDialog";
 import {
   DEFAULT_SETTINGS, PRICE_LEVELS, closeShift, completeSale, computeTotals, currentShift,
   ensureRegister, holdSale, listHeldSales, listRecentSales, loadCustomers, loadFavorites,
@@ -64,6 +66,14 @@ const VOID_REASONS = ["Wrong product", "Wrong quantity", "Customer cancelled", "
 
 function RetailPos() {
   const net = useNetworkStatus();
+  const { has, isStaff } = usePermissions();
+  const can = (p: Parameters<typeof has>[0]) => !isStaff || has(p);
+  // Manager authorisation for cashier-restricted actions
+  const [authReq, setAuthReq] = useState<{ action: OverrideAction; entityId?: string | null; then: () => void | Promise<void> } | null>(null);
+  const guarded = (perm: OverrideAction, entityId: string | null | undefined, fn: () => void | Promise<void>) => {
+    if (can(perm as any)) return void fn();
+    setAuthReq({ action: perm, entityId, then: fn });
+  };
 
   const [products, setProducts] = useState<PosProduct[]>([]);
   const [customers, setCustomers] = useState<PosCustomer[]>([]);
@@ -473,15 +483,17 @@ function RetailPos() {
         <Act label="HOLD" icon={PauseCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void doHold()} />
         <Act label="RECALL" icon={PlayCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void openHeld()} />
         <Act label="CUSTOMER" icon={User} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setCustOpen(true)} />
-        <Act label="DISCOUNT" icon={Percent} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setSaleDiscountPct((d) => (d ? 0 : 10))} />
+        <Act label="DISCOUNT" icon={Percent} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => guarded("pos.discount", null, () => setSaleDiscountPct((d) => (d ? 0 : 10)))} />
         <Act label="CHANGE PRICE" icon={Barcode} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110"
           onClick={() => {
             if (!selectedLine) return toast.info("Select a cart line");
-            const v = window.prompt("New unit price", String(selectedLine.price));
-            if (v != null && !Number.isNaN(Number(v))) patchLine(selectedLine.key, { price: Number(v) });
+            guarded("prices.manage", null, () => {
+              const v = window.prompt("New unit price", String(selectedLine.price));
+              if (v != null && !Number.isNaN(Number(v))) patchLine(selectedLine.key, { price: Number(v) });
+            });
           }} />
         <Act label="QTY" icon={LayoutGrid} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
-        <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />
+        {can("cash_shift.open") && <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />}
         <Act label="REMOVE" icon={Trash2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
         <Act label="VOID" icon={Ban} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
         <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
@@ -559,11 +571,11 @@ function RetailPos() {
                   <span className="font-black tabular-nums">{fmtMoney(Number(s.total))}</span>
                   {s.status === "completed" && !s.__offline && (
                     <>
-                      <Button size="sm" variant="outline" onClick={async () => {
+                      <Button size="sm" variant="outline" onClick={() => guarded("pos.refund", s.id, async () => {
                         try { await refundSale(s.id); toast.success("Refunded"); setRecent(await listRecentSales()); void refresh(); }
                         catch (e: any) { toast.error(e.message ?? "Refund failed"); }
-                      }}>Refund</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setVoidFor(s)}>Void</Button>
+                      })}>{can("pos.refund") ? "Refund" : "Refund (manager)"}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => guarded("pos.void", s.id, () => setVoidFor(s))}>{can("pos.void") ? "Void" : "Void (manager)"}</Button>
                     </>
                   )}
                 </div>
@@ -579,13 +591,18 @@ function RetailPos() {
           <div className="grid gap-2">
             {VOID_REASONS.map((r) => (
               <Button key={r} variant="outline" className="h-12 justify-start" onClick={async () => {
-                await voidSale(voidFor.id, r); toast.success("Sale voided"); setVoidFor(null);
-                setRecent(await listRecentSales());
+                try { await voidSale(voidFor.id, r); toast.success("Sale voided"); setVoidFor(null); setRecent(await listRecentSales()); }
+                catch (e: any) { toast.error(e?.message ?? "Void failed"); }
               }}>{r}</Button>
             ))}
           </div>
         </DialogContent>
       </Dialog>
+
+      {authReq && (
+        <ManagerAuthDialog action={authReq.action} entityId={authReq.entityId} open onOpenChange={(o) => !o && setAuthReq(null)}
+          onAuthorised={async () => { const fn = authReq.then; setAuthReq(null); await fn(); }} />
+      )}
 
       <ShiftDialog
         open={shiftOpen} onOpenChange={setShiftOpen} shift={shift} register={register}
