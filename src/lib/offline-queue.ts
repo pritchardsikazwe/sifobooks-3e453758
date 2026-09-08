@@ -20,6 +20,8 @@ export type QueuedItem = {
   /** Idempotency key generated on this device. */
   clientId: string;
   device?: string;
+  /** "insert" (default) replays supabase.from(table).insert(payload); "rpc" replays supabase.rpc(table, payload). */
+  kind?: "insert" | "rpc";
   table: string;
   payload: any;
   status: QueueStatus;
@@ -32,6 +34,27 @@ export type QueuedItem = {
   /** Natural key used to detect a transaction the server already accepted. */
   dedupe?: { field: string; value: string } | null;
 };
+
+/** Queue an idempotent server routine call (the routine itself must dedupe by client ref). */
+export async function queueRpc(fn: string, args: any, clientId?: string) {
+  const now = Date.now();
+  const item: QueuedItem = {
+    clientId: clientId ?? newClientId(),
+    device: await deviceId(),
+    kind: "rpc",
+    table: fn,
+    payload: args,
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+    attempts: 0,
+    nextAttemptAt: now,
+    dedupe: null,
+  };
+  await withStore(QUEUE_STORE, "readwrite", (s) => idbReq(s.add(item)));
+  notifyChange();
+  return item.clientId;
+}
 
 const MAX_ATTEMPTS = 12;
 const EVT = "sifo-offline-queue-change";
