@@ -21,7 +21,7 @@ import { toast } from "sonner";
 
 type SearchParams = { q?: string; warehouse?: string; category?: string; status?: string };
 
-export const Route = createFileRoute("/_authenticated/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory/")({
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     q: typeof s.q === "string" ? s.q : undefined,
     warehouse: typeof s.warehouse === "string" ? s.warehouse : undefined,
