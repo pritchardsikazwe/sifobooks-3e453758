@@ -161,15 +161,15 @@ export function landingFor(a: Access | null): string {
 /* Staff navigation — built from permissions, never from the module map */
 /* ------------------------------------------------------------------ */
 export type StaffNavItem = { title: string; url: string; iconName: string; any: PermissionKey[] };
-export type StaffNavGroup = { label: string; items: StaffNavItem[] };
+export type StaffNavGroup = { label: string; items: StaffNavItem[]; requires?: PermissionKey[] };
 
 export const STAFF_NAV: StaffNavGroup[] = [
-  { label: "Retail POS", items: [
+  { label: "Retail POS", requires: ["pos.retail.access"], items: [
     { title: "New Sale", url: "/pos", iconName: "ShoppingCart", any: ["pos.retail.access"] },
     { title: "My Sales & Receipts", url: "/pos-sales", iconName: "ReceiptText", any: ["pos.retail.access"] },
     { title: "Retail Command Center", url: "/pos/retail-command-center", iconName: "Gauge", any: ["pos.sales.view_all"] },
   ] },
-  { label: "Restaurant", items: [
+  { label: "Restaurant", requires: ["pos.restaurant.access"], items: [
     { title: "Restaurant POS", url: "/restaurant/pos", iconName: "UtensilsCrossed", any: ["pos.restaurant.access"] },
     { title: "Tables", url: "/restaurant/tables", iconName: "LayoutGrid", any: ["pos.restaurant.access"] },
     { title: "Orders", url: "/restaurant/orders", iconName: "ClipboardList", any: ["pos.restaurant.access"] },
@@ -209,6 +209,7 @@ export const STAFF_NAV: StaffNavGroup[] = [
 export function staffNav(a: Access | null): StaffNavGroup[] {
   if (!a) return [];
   return STAFF_NAV
+    .filter((g) => !g.requires || hasAnyPerm(a, g.requires))
     .map((g) => ({ label: g.label, items: g.items.filter((i) => hasAnyPerm(a, i.any)) }))
     .filter((g) => g.items.length > 0);
 }
