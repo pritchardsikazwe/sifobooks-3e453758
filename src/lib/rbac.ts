@@ -84,6 +84,7 @@ export const ROUTE_RULES: Rule[] = [
   { prefix: "/super-admin", ownerOnly: true },
   // Retail POS
   { prefix: "/pos/command-center", any: ["pos.sales.view_all"] },
+  { prefix: "/pos/retail-command-center", any: ["pos.sales.view_all"] },
   { prefix: "/pos-sales", any: ["pos.retail.access"] },
   { prefix: "/pos-workers", any: ["users.manage"] },
   { prefix: "/pos", any: ["pos.retail.access"] },
@@ -166,7 +167,7 @@ export const STAFF_NAV: StaffNavGroup[] = [
   { label: "Retail POS", items: [
     { title: "New Sale", url: "/pos", iconName: "ShoppingCart", any: ["pos.retail.access"] },
     { title: "My Sales & Receipts", url: "/pos-sales", iconName: "ReceiptText", any: ["pos.retail.access"] },
-    { title: "Command Center", url: "/pos/command-center", iconName: "Gauge", any: ["pos.sales.view_all"] },
+    { title: "Retail Command Center", url: "/pos/retail-command-center", iconName: "Gauge", any: ["pos.sales.view_all"] },
   ] },
   { label: "Restaurant", items: [
     { title: "Restaurant POS", url: "/restaurant/pos", iconName: "UtensilsCrossed", any: ["pos.restaurant.access"] },
