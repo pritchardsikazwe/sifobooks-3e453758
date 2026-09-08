@@ -163,6 +163,7 @@ import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPosRetailCommandCenterRouteImport } from './routes/_authenticated/pos.retail-command-center'
 import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
 import { Route as AuthenticatedManagerShiftsRouteImport } from './routes/_authenticated/manager.shifts'
+import { Route as AuthenticatedManagerCashiersRouteImport } from './routes/_authenticated/manager.cashiers'
 import { Route as AuthenticatedLearnVatZraRouteImport } from './routes/_authenticated/learn.vat-zra'
 import { Route as AuthenticatedLearnReportsRouteImport } from './routes/_authenticated/learn.reports'
 import { Route as AuthenticatedLearnQuickStartRouteImport } from './routes/_authenticated/learn.quick-start'
@@ -1034,6 +1035,12 @@ const AuthenticatedManagerShiftsRoute =
     path: '/shifts',
     getParentRoute: () => AuthenticatedManagerRoute,
   } as any)
+const AuthenticatedManagerCashiersRoute =
+  AuthenticatedManagerCashiersRouteImport.update({
+    id: '/cashiers',
+    path: '/cashiers',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
 const AuthenticatedLearnVatZraRoute =
   AuthenticatedLearnVatZraRouteImport.update({
     id: '/learn/vat-zra',
@@ -1267,6 +1274,7 @@ export interface FileRoutesByFullPath {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/manager/cashiers': typeof AuthenticatedManagerCashiersRoute
   '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
@@ -1436,6 +1444,7 @@ export interface FileRoutesByTo {
   '/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/manager/cashiers': typeof AuthenticatedManagerCashiersRoute
   '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
@@ -1614,6 +1623,7 @@ export interface FileRoutesById {
   '/_authenticated/learn/quick-start': typeof AuthenticatedLearnQuickStartRoute
   '/_authenticated/learn/reports': typeof AuthenticatedLearnReportsRoute
   '/_authenticated/learn/vat-zra': typeof AuthenticatedLearnVatZraRoute
+  '/_authenticated/manager/cashiers': typeof AuthenticatedManagerCashiersRoute
   '/_authenticated/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/_authenticated/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/_authenticated/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
@@ -1791,6 +1801,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/manager/cashiers'
     | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
@@ -1960,6 +1971,7 @@ export interface FileRouteTypes {
     | '/learn/quick-start'
     | '/learn/reports'
     | '/learn/vat-zra'
+    | '/manager/cashiers'
     | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
@@ -2137,6 +2149,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn/quick-start'
     | '/_authenticated/learn/reports'
     | '/_authenticated/learn/vat-zra'
+    | '/_authenticated/manager/cashiers'
     | '/_authenticated/manager/shifts'
     | '/_authenticated/pos/command-center'
     | '/_authenticated/pos/retail-command-center'
@@ -3298,6 +3311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManagerShiftsRouteImport
       parentRoute: typeof AuthenticatedManagerRoute
     }
+    '/_authenticated/manager/cashiers': {
+      id: '/_authenticated/manager/cashiers'
+      path: '/cashiers'
+      fullPath: '/manager/cashiers'
+      preLoaderRoute: typeof AuthenticatedManagerCashiersRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
     '/_authenticated/learn/vat-zra': {
       id: '/_authenticated/learn/vat-zra'
       path: '/learn/vat-zra'
@@ -3480,11 +3500,13 @@ const AuthenticatedInvoicesRouteWithChildren =
   )
 
 interface AuthenticatedManagerRouteChildren {
+  AuthenticatedManagerCashiersRoute: typeof AuthenticatedManagerCashiersRoute
   AuthenticatedManagerShiftsRoute: typeof AuthenticatedManagerShiftsRoute
   AuthenticatedManagerIndexRoute: typeof AuthenticatedManagerIndexRoute
 }
 
 const AuthenticatedManagerRouteChildren: AuthenticatedManagerRouteChildren = {
+  AuthenticatedManagerCashiersRoute: AuthenticatedManagerCashiersRoute,
   AuthenticatedManagerShiftsRoute: AuthenticatedManagerShiftsRoute,
   AuthenticatedManagerIndexRoute: AuthenticatedManagerIndexRoute,
 }
