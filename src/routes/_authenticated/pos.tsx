@@ -61,10 +61,6 @@ const DENOMS = [5, 10, 20, 50, 100, 200, 500];
 const QUICK_QTY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24];
 const VOID_REASONS = ["Wrong product", "Wrong quantity", "Customer cancelled", "Duplicate sale", "Other"];
 
-const tileColour = (i: number) =>
-  ["bg-primary/10 text-primary", "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-   "bg-sky-500/10 text-sky-600 dark:text-sky-400", "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-   "bg-violet-500/10 text-violet-600 dark:text-violet-400", "bg-rose-500/10 text-rose-600 dark:text-rose-400"][i % 6];
 
 function RetailPos() {
   const net = useNetworkStatus();
