@@ -32,7 +32,6 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
     const { data: acc } = await supabase.rpc("my_access");
     const tenantId = (acc as any)?.tenant_id as string | undefined;
     if (!tenantId) throw new Error("No business found for your account");
-    if (tenantId === context.userId && false) { /* owners always fine */ }
 
     const { data: role } = await supabase.from("rbac_roles").select("id, key, pos_channel, tenant_id, is_system").eq("id", data.role_id).maybeSingle();
     if (!role) throw new Error("Role not found");
@@ -62,10 +61,11 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     // Keep the legacy PIN-till bridge in sync so /w/* terminals still work.
     const legacyRole = role.key?.includes("manager") ? "manager" : role.pos_channel === "restaurant" ? "waiter" : "cashier";
-    await supabaseAdmin.from("employee_pos_permissions").upsert(
-      { user_id: tenantId, worker_user_id: userId, email: data.email, full_name: data.full_name || data.email, pos_role: legacyRole, pin: data.pin || null, is_active: true } as any,
-      { onConflict: "user_id,worker_user_id" },
-    ).then(() => {}, () => {});
+    const { data: leg } = await supabaseAdmin.from("employee_pos_permissions").select("id").eq("user_id", tenantId).eq("worker_user_id", userId).maybeSingle();
+    const legacyRow: any = { email: data.email, full_name: data.full_name || data.email, pos_role: legacyRole, is_active: true };
+    if (data.pin) legacyRow.pin = data.pin;
+    if (leg) await supabaseAdmin.from("employee_pos_permissions").update(legacyRow).eq("id", leg.id);
+    else await supabaseAdmin.from("employee_pos_permissions").insert({ ...legacyRow, user_id: tenantId, worker_user_id: userId, pin: data.pin || null });
 
     return { ok: true, invited, user_id: userId };
   });
