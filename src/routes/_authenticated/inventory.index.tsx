@@ -46,7 +46,7 @@ const statusTone: Record<StockStatus, string> = {
 
 function InventoryDashboard() {
   const search = Route.useSearch();
-  const navigate = useNavigate({ from: "/inventory" });
+  const navigate = useNavigate({ from: "/inventory/" });
   const [items, setItems] = useState<InvItem[]>([]);
   const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
