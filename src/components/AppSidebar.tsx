@@ -41,6 +41,28 @@ const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> 
 };
 const hueFor = (c: string) => CATEGORY_HUE[c] ?? CATEGORY_HUE["Core"];
 
+/** Tailwind must see complete utility classes statically. */
+const CATEGORY_ACTIVE_CLASSES: Record<string, string> = {
+  "Core": "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:before:bg-primary",
+  "Sales": "data-[active=true]:bg-mod-sales/10 data-[active=true]:text-mod-sales data-[active=true]:before:bg-mod-sales",
+  "Purchases": "data-[active=true]:bg-mod-purchases/10 data-[active=true]:text-mod-purchases data-[active=true]:before:bg-mod-purchases",
+  "Finance": "data-[active=true]:bg-mod-accounting/10 data-[active=true]:text-mod-accounting data-[active=true]:before:bg-mod-accounting",
+  "Inventory": "data-[active=true]:bg-mod-inventory/10 data-[active=true]:text-mod-inventory data-[active=true]:before:bg-mod-inventory",
+  "HR & Payroll": "data-[active=true]:bg-mod-payroll/10 data-[active=true]:text-mod-payroll data-[active=true]:before:bg-mod-payroll",
+  "CRM": "data-[active=true]:bg-mod-sales/10 data-[active=true]:text-mod-sales data-[active=true]:before:bg-mod-sales",
+  "Projects & Service": "data-[active=true]:bg-mod-banking/10 data-[active=true]:text-mod-banking data-[active=true]:before:bg-mod-banking",
+  "Reports": "data-[active=true]:bg-mod-reports/10 data-[active=true]:text-mod-reports data-[active=true]:before:bg-mod-reports",
+  "School ERP": "data-[active=true]:bg-mod-learning/10 data-[active=true]:text-mod-learning data-[active=true]:before:bg-mod-learning",
+  "NGO": "data-[active=true]:bg-mod-learning/10 data-[active=true]:text-mod-learning data-[active=true]:before:bg-mod-learning",
+  "Mining": "data-[active=true]:bg-mod-inventory/10 data-[active=true]:text-mod-inventory data-[active=true]:before:bg-mod-inventory",
+  "Help & Learning": "data-[active=true]:bg-mod-learning/10 data-[active=true]:text-mod-learning data-[active=true]:before:bg-mod-learning",
+  "POS": "data-[active=true]:bg-mod-sales/10 data-[active=true]:text-mod-sales data-[active=true]:before:bg-mod-sales",
+  "Restaurant": "data-[active=true]:bg-mod-inventory/10 data-[active=true]:text-mod-inventory data-[active=true]:before:bg-mod-inventory",
+  "Administration": "data-[active=true]:bg-mod-admin/10 data-[active=true]:text-mod-admin data-[active=true]:before:bg-mod-admin",
+  "Platform": "data-[active=true]:bg-destructive/10 data-[active=true]:text-destructive data-[active=true]:before:bg-destructive",
+};
+const activeClassesFor = (c: string) => CATEGORY_ACTIVE_CLASSES[c] ?? CATEGORY_ACTIVE_CLASSES["Core"];
+
 function iconFor(name?: string): any {
   if (!name) return Icons.Circle;
   return (Icons as any)[name] ?? (Icons as any)[name.replace("Icon", "")] ?? Icons.Circle;
@@ -174,6 +196,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-card px-1 [&_[data-sidebar=content]]:bg-card">
         {sections.map(section => {
           const open = isOpen(section.label);
+          const activeClasses = activeClassesFor(section.label);
           if (collapsed) {
             // In collapsed mode, don't use Collapsible — just render items with tooltips
             return (
@@ -182,14 +205,13 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {section.items.map(item => {
                       const Icon = item.icon;
-                      const active = currentPath === item.url;
-                      const hue = hueFor(section.label);
+                      const active = currentPath === item.url || currentPath.startsWith(item.url + "/");
                       return (
                         <SidebarMenuItem key={item.url}>
                           <SidebarMenuButton
                             asChild
                             isActive={active}
-                            className={`text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text}`}
+                            className={`text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:font-semibold ${activeClasses}`}
                             tooltip={item.title}
                           >
                             <Link to={item.url}>
@@ -222,14 +244,13 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {section.items.map(item => {
                         const Icon = item.icon;
-                        const active = currentPath === item.url;
-                        const hue = hueFor(section.label);
+                        const active = currentPath === item.url || currentPath.startsWith(item.url + "/");
                         return (
                           <SidebarMenuItem key={item.url}>
                             <SidebarMenuButton
                               asChild
                               isActive={active}
-                              className={`relative text-muted-foreground transition-all hover:translate-x-0.5 hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text} data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r data-[active=true]:before:${hue.dot}`}
+                              className={`relative text-muted-foreground transition-all hover:translate-x-0.5 hover:bg-muted hover:text-foreground data-[active=true]:font-semibold ${activeClasses}`}
                               tooltip={item.title}
                             >
                               <Link to={item.url}>
