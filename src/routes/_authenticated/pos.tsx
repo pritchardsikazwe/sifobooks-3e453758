@@ -456,18 +456,29 @@ function RetailPos() {
       </div>
 
       {/* --------------------------- bottom action bar ------------------------ */}
-      <footer className="flex shrink-0 gap-2 overflow-x-auto border-t bg-card px-3 py-2">
-        <Act label="NEW" icon={Plus} onClick={newSale} />
-        <Act label="HOLD" icon={PauseCircle} onClick={() => void doHold()} />
-        <Act label="RECALL" icon={PlayCircle} onClick={() => void openHeld()} />
-        <Act label="CUSTOMER" icon={User} onClick={() => setCustOpen(true)} />
-        <Act label="DISCOUNT" icon={Percent} onClick={() => setSaleDiscountPct((d) => (d ? 0 : 10))} />
-        <Act label="QTY" icon={LayoutGrid} onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
-        <Act label="REMOVE" icon={Trash2} onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
-        <Act label="VOID" icon={Ban} onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
-        <Act label="REFUND" icon={Undo2} onClick={() => void openRecent()} />
-        <Act label="RECEIPTS" icon={Printer} onClick={() => void openRecent()} />
-        <Act label="CART" icon={ShoppingBag} onClick={() => setCartOpen(true)} className="lg:hidden" />
+      <footer className="flex shrink-0 gap-2 overflow-x-auto border-t bg-till-nav px-3 py-2">
+        <Act label="+1" icon={Plus} className="bg-till-cash text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => selectedLine ? patchLine(selectedLine.key, { qty: selectedLine.qty + 1 }) : toast.info("Select a cart line")} />
+        <Act label="−1" icon={Minus} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => selectedLine ? patchLine(selectedLine.key, { qty: selectedLine.qty - 1 }) : toast.info("Select a cart line")} />
+        <Act label="NEW" icon={RotateCcw} className="bg-till-momo text-till-key-foreground border-transparent hover:brightness-110" onClick={newSale} />
+        <Act label="HOLD" icon={PauseCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void doHold()} />
+        <Act label="RECALL" icon={PlayCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void openHeld()} />
+        <Act label="CUSTOMER" icon={User} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setCustOpen(true)} />
+        <Act label="DISCOUNT" icon={Percent} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setSaleDiscountPct((d) => (d ? 0 : 10))} />
+        <Act label="CHANGE PRICE" icon={Barcode} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => {
+            if (!selectedLine) return toast.info("Select a cart line");
+            const v = window.prompt("New unit price", String(selectedLine.price));
+            if (v != null && !Number.isNaN(Number(v))) patchLine(selectedLine.key, { price: Number(v) });
+          }} />
+        <Act label="QTY" icon={LayoutGrid} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
+        <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />
+        <Act label="REMOVE" icon={Trash2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
+        <Act label="VOID" icon={Ban} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
+        <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
+        <Act label="RECEIPTS" icon={Printer} className="bg-slate-600 text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
+        <Act label="CART" icon={ShoppingBag} onClick={() => setCartOpen(true)} className="bg-till-cash text-till-key-foreground border-transparent lg:hidden" />
         <div className="ml-auto hidden lg:block" />
       </footer>
 
