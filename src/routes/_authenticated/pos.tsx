@@ -111,6 +111,15 @@ function RetailPos() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  // Re-pull products/metrics once queued offline sales finish uploading.
+  const prevPending = useRef(0);
+  useEffect(() => {
+    if (prevPending.current > 0 && net.pending === 0 && net.state === "online") {
+      toast.success("Offline sales uploaded");
+      void refresh();
+    }
+    prevPending.current = net.pending;
+  }, [net.pending, net.state, refresh]);
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 30_000);
     return () => clearInterval(t);
