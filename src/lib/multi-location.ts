@@ -79,14 +79,17 @@ export type BalanceRow = {
   sku: string | null;
   unit: string;
   cost_price: number;
+  sell_price: number;
   reorder_level: number;
+  needs_cost_review: boolean;
+  needs_unit_verification: boolean;
 };
 
 /** Per-location quantities joined to the product master. */
 export async function fetchBalances(locationId?: string) {
   let q = supabase
     .from("stock_balances")
-    .select("item_id, location_id, quantity, stock_items(name, sku, unit, cost_price, reorder_level)");
+    .select("item_id, location_id, quantity, stock_items(name, sku, unit, cost_price, sell_price, reorder_level, needs_cost_review, needs_unit_verification)");
   if (locationId) q = q.eq("location_id", locationId);
   const { data, error } = await q;
   if (error) throw error;
@@ -98,9 +101,13 @@ export async function fetchBalances(locationId?: string) {
     sku: r.stock_items?.sku ?? null,
     unit: r.stock_items?.unit ?? "each",
     cost_price: Number(r.stock_items?.cost_price ?? 0),
+    sell_price: Number(r.stock_items?.sell_price ?? 0),
     reorder_level: Number(r.stock_items?.reorder_level ?? 0),
+    needs_cost_review: Boolean(r.stock_items?.needs_cost_review),
+    needs_unit_verification: Boolean(r.stock_items?.needs_unit_verification),
   })) as BalanceRow[];
 }
+
 
 export async function fetchTransfers() {
   const { data, error } = await supabase
