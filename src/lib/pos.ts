@@ -461,11 +461,25 @@ export async function recallSale(saleId: string): Promise<CartLine[]> {
 }
 
 export async function listRecentSales(limit = 30) {
-  const { data } = await supabase
-    .from("pos_sales").select("id,sale_no,customer_name,total,status,sold_at")
-    .in("status", ["completed", "refunded", "voided"])
-    .order("sold_at", { ascending: false }).limit(limit);
-  return (data ?? []) as any[];
+  await pruneSyncedOfflineSales();
+  const offline = await listOfflineSales();
+  let online: any[] = [];
+  if (isOnline()) {
+    try {
+      const { data } = await supabase
+        .from("pos_sales").select("id,sale_no,customer_name,total,status,sold_at")
+        .in("status", ["completed", "refunded", "voided"])
+        .order("sold_at", { ascending: false }).limit(limit);
+      online = (data ?? []) as any[];
+      void cacheRows("pos_transactions", online.map((r) => ({ ...r, __offline: false })));
+    } catch { /* fall through to cache */ }
+  }
+  if (!online.length) {
+    online = (await readCached<any>("pos_transactions")).filter((r) => !r.__offline);
+  }
+  return [...offline, ...online]
+    .sort((a, b) => new Date(b.sold_at).getTime() - new Date(a.sold_at).getTime())
+    .slice(0, limit);
 }
 
 export async function voidSale(saleId: string, reason: string) {
