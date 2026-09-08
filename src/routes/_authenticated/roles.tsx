@@ -22,13 +22,13 @@ import { getActiveCompanyId } from "@/lib/workspace";
 export const Route = createFileRoute("/_authenticated/roles")({
   head: () => ({ meta: [{ title: "Team & Roles — SifoBooks" }, { name: "robots", content: "noindex" }] }),
   component: () => (
-    <RequireModule moduleKey="admin" manage>
+    <RequireModule moduleKey="admin" requireManage>
       <TeamRolesPage />
     </RequireModule>
   ),
 });
 
-type Perm = { key: string; label: string; description: string | null; perm_group: string; sort_order?: number };
+type Perm = { key: string; label: string; description?: string | null; perm_group: string; sort?: number };
 type Role = { id: string; key: string; name: string; description: string | null; is_system: boolean; tenant_id: string | null; pos_channel: string | null };
 type Staff = { id: string; user_id: string; email: string | null; full_name: string | null; role_id: string | null; branch_id: string | null; is_active: boolean };
 type Branch = { id: string; name: string; code: string | null; active: boolean };
@@ -55,7 +55,7 @@ function TeamRolesPage() {
     setLoading(true);
     const [{ data: acc }, { data: p }, { data: r }, { data: rp }, { data: s }, { data: b }] = await Promise.all([
       supabase.rpc("my_access"),
-      supabase.from("rbac_permissions").select("*").order("perm_group").order("key"),
+      supabase.from("rbac_permissions").select("*").order("perm_group").order("sort"),
       supabase.from("rbac_roles").select("*").order("is_system", { ascending: false }).order("name"),
       supabase.from("rbac_role_permissions").select("role_id, permission_key"),
       supabase.from("staff_members").select("*").order("created_at"),
