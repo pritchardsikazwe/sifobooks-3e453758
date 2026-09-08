@@ -1464,6 +1464,93 @@ export type Database = {
           },
         ]
       }
+      cashier_records: {
+        Row: {
+          cashier_name: string | null
+          cashier_user_id: string | null
+          created_at: string
+          created_by: string | null
+          delivered_qty: number
+          id: string
+          item_id: string | null
+          location_id: string | null
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          physical_count: number | null
+          remaining_qty: number
+          sales_value: number | null
+          selling_price: number | null
+          sold_qty: number
+          source_image_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          variance: number | null
+        }
+        Insert: {
+          cashier_name?: string | null
+          cashier_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_qty?: number
+          id?: string
+          item_id?: string | null
+          location_id?: string | null
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          physical_count?: number | null
+          remaining_qty?: number
+          sales_value?: number | null
+          selling_price?: number | null
+          sold_qty?: number
+          source_image_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          variance?: number | null
+        }
+        Update: {
+          cashier_name?: string | null
+          cashier_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_qty?: number
+          id?: string
+          item_id?: string | null
+          location_id?: string | null
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          physical_count?: number | null
+          remaining_qty?: number
+          sales_value?: number | null
+          selling_price?: number | null
+          sold_qty?: number
+          source_image_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashier_records_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashier_records_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chart_of_accounts: {
         Row: {
           account_code: string
@@ -6406,6 +6493,170 @@ export type Database = {
           },
         ]
       }
+      product_price_history: {
+        Row: {
+          cashier_name: string | null
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          id: string
+          item_id: string
+          location_id: string | null
+          note: string | null
+          price: number
+          price_type: string
+          quantity: number | null
+          source_id: string | null
+          source_type: string | null
+          user_id: string
+        }
+        Insert: {
+          cashier_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          item_id: string
+          location_id?: string | null
+          note?: string | null
+          price: number
+          price_type?: string
+          quantity?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id: string
+        }
+        Update: {
+          cashier_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          item_id?: string
+          location_id?: string | null
+          note?: string | null
+          price?: number
+          price_type?: string
+          quantity?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_price_history_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_price_history_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batch_lines: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          item_id: string
+          note: string | null
+          quantity: number
+          unit_cost: number | null
+          user_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          note?: string | null
+          quantity?: number
+          unit_cost?: number | null
+          user_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          note?: string | null
+          quantity?: number
+          unit_cost?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batch_lines_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batch_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batches: {
+        Row: {
+          batch_date: string
+          batch_no: string
+          created_at: string
+          created_by: string | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          posted_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          batch_date?: string
+          batch_no: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          posted_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          batch_date?: string
+          batch_no?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          posted_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_company_id: string | null
@@ -8989,6 +9240,8 @@ export type Database = {
           max_stock: number
           min_stock: number
           name: string
+          needs_cost_review: boolean
+          needs_unit_verification: boolean
           notes: string | null
           on_order_qty: number
           preferred_supplier_id: string | null
@@ -9003,6 +9256,7 @@ export type Database = {
           sales_unit: string | null
           sell_price: number
           sku: string | null
+          source_unit: string | null
           tax_category: string
           track_batches: boolean
           track_expiry: boolean
@@ -9034,6 +9288,8 @@ export type Database = {
           max_stock?: number
           min_stock?: number
           name: string
+          needs_cost_review?: boolean
+          needs_unit_verification?: boolean
           notes?: string | null
           on_order_qty?: number
           preferred_supplier_id?: string | null
@@ -9048,6 +9304,7 @@ export type Database = {
           sales_unit?: string | null
           sell_price?: number
           sku?: string | null
+          source_unit?: string | null
           tax_category?: string
           track_batches?: boolean
           track_expiry?: boolean
@@ -9079,6 +9336,8 @@ export type Database = {
           max_stock?: number
           min_stock?: number
           name?: string
+          needs_cost_review?: boolean
+          needs_unit_verification?: boolean
           notes?: string | null
           on_order_qty?: number
           preferred_supplier_id?: string | null
@@ -9093,6 +9352,7 @@ export type Database = {
           sales_unit?: string | null
           sell_price?: number
           sku?: string | null
+          source_unit?: string | null
           tax_category?: string
           track_batches?: boolean
           track_expiry?: boolean
@@ -10219,6 +10479,24 @@ export type Database = {
         Returns: Json
       }
       staff_branch: { Args: never; Returns: string }
+      stock_reconciliation: {
+        Args: { _from: string; _location: string; _to: string; _uid: string }
+        Returns: {
+          adjustments: number
+          expected_closing: number
+          item_id: string
+          item_name: string
+          opening: number
+          other_in: number
+          produced: number
+          returns: number
+          sales: number
+          sku: string
+          transfers_in: number
+          transfers_out: number
+          unit: string
+        }[]
+      }
       sync_pos_sale: {
         Args: { _items?: Json; _payments?: Json; _sale: Json }
         Returns: string
