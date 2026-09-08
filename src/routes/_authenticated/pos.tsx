@@ -369,12 +369,16 @@ function RetailPos() {
         <Metric label="Avg sale" value={fmtMoney(metrics.average)} />
         <Metric label="Items in cart" value={String(totals.items)} />
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          <Link to="/restaurant/pos" className="flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold hover:bg-muted">
-            <Utensils className="h-3.5 w-3.5" /> Restaurant POS
-          </Link>
-          <Link to="/inventory" className="flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold hover:bg-muted">
-            <LayoutGrid className="h-3.5 w-3.5" /> Inventory
-          </Link>
+          {(!isStaff || has("pos.restaurant.access")) && (
+            <Link to="/restaurant/pos" className="flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold hover:bg-muted">
+              <Utensils className="h-3.5 w-3.5" /> Restaurant POS
+            </Link>
+          )}
+          {(!isStaff || has("inventory.view")) && (
+            <Link to="/inventory" className="flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold hover:bg-muted">
+              <LayoutGrid className="h-3.5 w-3.5" /> Inventory
+            </Link>
+          )}
         </span>
       </div>
 
