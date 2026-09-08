@@ -3655,39 +3655,51 @@ export type Database = {
       }
       inventory_locations: {
         Row: {
+          address: string | null
+          branch_id: string | null
           code: string | null
           company_id: string | null
           created_at: string
           id: string
           is_active: boolean
+          is_default: boolean
           location_type: string
           name: string
+          notes: string | null
           parent_id: string | null
           updated_at: string
           user_id: string
           warehouse_id: string | null
         }
         Insert: {
+          address?: string | null
+          branch_id?: string | null
           code?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           location_type?: string
           name: string
+          notes?: string | null
           parent_id?: string | null
           updated_at?: string
           user_id: string
           warehouse_id?: string | null
         }
         Update: {
+          address?: string | null
+          branch_id?: string | null
           code?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           location_type?: string
           name?: string
+          notes?: string | null
           parent_id?: string | null
           updated_at?: string
           user_id?: string
@@ -3705,28 +3717,40 @@ export type Database = {
       }
       inventory_transfer_items: {
         Row: {
+          batch_no: string | null
           created_at: string
           description: string | null
+          expiry_date: string | null
           id: string
           item_id: string | null
+          notes: string | null
+          qty_received: number
           quantity: number
           transfer_id: string
           unit_cost: number
         }
         Insert: {
+          batch_no?: string | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           item_id?: string | null
+          notes?: string | null
+          qty_received?: number
           quantity?: number
           transfer_id: string
           unit_cost?: number
         }
         Update: {
+          batch_no?: string | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           item_id?: string | null
+          notes?: string | null
+          qty_received?: number
           quantity?: number
           transfer_id?: string
           unit_cost?: number
@@ -3750,44 +3774,74 @@ export type Database = {
       }
       inventory_transfers: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
+          dispatched_at: string | null
+          dispatched_by: string | null
           from_location_id: string | null
           id: string
           notes: string | null
+          purpose: string | null
+          received_at: string | null
+          received_by: string | null
           reference: string | null
+          requested_by: string | null
           status: string
           to_location_id: string | null
+          total_value: number
           transfer_date: string
+          transfer_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          dispatched_at?: string | null
+          dispatched_by?: string | null
           from_location_id?: string | null
           id?: string
           notes?: string | null
+          purpose?: string | null
+          received_at?: string | null
+          received_by?: string | null
           reference?: string | null
+          requested_by?: string | null
           status?: string
           to_location_id?: string | null
+          total_value?: number
           transfer_date?: string
+          transfer_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          dispatched_at?: string | null
+          dispatched_by?: string | null
           from_location_id?: string | null
           id?: string
           notes?: string | null
+          purpose?: string | null
+          received_at?: string | null
+          received_by?: string | null
           reference?: string | null
+          requested_by?: string | null
           status?: string
           to_location_id?: string | null
+          total_value?: number
           transfer_date?: string
+          transfer_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -8643,6 +8697,51 @@ export type Database = {
           },
         ]
       }
+      stock_balances: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          location_id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          location_id: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          location_id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_balances_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_balances_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_batches: {
         Row: {
           batch_no: string
@@ -8809,85 +8908,136 @@ export type Database = {
           barcode: string | null
           bin: string | null
           branch_id: string | null
+          brand: string | null
           category: string | null
+          cogs_account_id: string | null
+          conversion_factor: number
           cost_price: number
           created_at: string
           description: string | null
           hs_code: string | null
           id: string
+          image_url: string | null
+          inventory_account_id: string | null
           is_active: boolean
           item_type: string
           max_stock: number
+          min_stock: number
           name: string
+          notes: string | null
           on_order_qty: number
+          preferred_supplier_id: string | null
+          purchase_account_id: string | null
+          purchase_unit: string | null
           quantity_on_hand: number
           reorder_level: number
           reserved_qty: number
+          retail_price: number
           safety_stock: number
+          sales_account_id: string | null
+          sales_unit: string | null
           sell_price: number
           sku: string | null
           tax_category: string
+          track_batches: boolean
+          track_expiry: boolean
+          track_serials: boolean
           unit: string
           updated_at: string
           user_id: string
           vat_rate: number
           warehouse_id: string | null
+          wholesale_price: number
         }
         Insert: {
           barcode?: string | null
           bin?: string | null
           branch_id?: string | null
+          brand?: string | null
           category?: string | null
+          cogs_account_id?: string | null
+          conversion_factor?: number
           cost_price?: number
           created_at?: string
           description?: string | null
           hs_code?: string | null
           id?: string
+          image_url?: string | null
+          inventory_account_id?: string | null
           is_active?: boolean
           item_type?: string
           max_stock?: number
+          min_stock?: number
           name: string
+          notes?: string | null
           on_order_qty?: number
+          preferred_supplier_id?: string | null
+          purchase_account_id?: string | null
+          purchase_unit?: string | null
           quantity_on_hand?: number
           reorder_level?: number
           reserved_qty?: number
+          retail_price?: number
           safety_stock?: number
+          sales_account_id?: string | null
+          sales_unit?: string | null
           sell_price?: number
           sku?: string | null
           tax_category?: string
+          track_batches?: boolean
+          track_expiry?: boolean
+          track_serials?: boolean
           unit?: string
           updated_at?: string
           user_id: string
           vat_rate?: number
           warehouse_id?: string | null
+          wholesale_price?: number
         }
         Update: {
           barcode?: string | null
           bin?: string | null
           branch_id?: string | null
+          brand?: string | null
           category?: string | null
+          cogs_account_id?: string | null
+          conversion_factor?: number
           cost_price?: number
           created_at?: string
           description?: string | null
           hs_code?: string | null
           id?: string
+          image_url?: string | null
+          inventory_account_id?: string | null
           is_active?: boolean
           item_type?: string
           max_stock?: number
+          min_stock?: number
           name?: string
+          notes?: string | null
           on_order_qty?: number
+          preferred_supplier_id?: string | null
+          purchase_account_id?: string | null
+          purchase_unit?: string | null
           quantity_on_hand?: number
           reorder_level?: number
           reserved_qty?: number
+          retail_price?: number
           safety_stock?: number
+          sales_account_id?: string | null
+          sales_unit?: string | null
           sell_price?: number
           sku?: string | null
           tax_category?: string
+          track_batches?: boolean
+          track_expiry?: boolean
+          track_serials?: boolean
           unit?: string
           updated_at?: string
           user_id?: string
           vat_rate?: number
           warehouse_id?: string | null
+          wholesale_price?: number
         }
         Relationships: [
           {
@@ -8902,34 +9052,58 @@ export type Database = {
       stock_movements: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           item_id: string
+          location_id: string | null
           movement_type: string
           note: string | null
           quantity: number
           reference: string | null
+          reversal_of: string | null
+          source_id: string | null
+          source_type: string | null
+          total_cost: number | null
+          transaction_date: string
+          transfer_id: string | null
           unit_cost: number | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           item_id: string
+          location_id?: string | null
           movement_type: string
           note?: string | null
           quantity: number
           reference?: string | null
+          reversal_of?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          total_cost?: number | null
+          transaction_date?: string
+          transfer_id?: string | null
           unit_cost?: number | null
           user_id: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           item_id?: string
+          location_id?: string | null
           movement_type?: string
           note?: string | null
           quantity?: number
           reference?: string | null
+          reversal_of?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          total_cost?: number | null
+          transaction_date?: string
+          transfer_id?: string | null
           unit_cost?: number | null
           user_id?: string
         }
@@ -8939,6 +9113,20 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transfers"
             referencedColumns: ["id"]
           },
         ]
@@ -9843,6 +10031,10 @@ export type Database = {
         Args: { _reason?: string; _reset_id: string }
         Returns: Json
       }
+      dispatch_stock_transfer: {
+        Args: { _allow_negative?: boolean; _transfer_id: string }
+        Returns: Json
+      }
       email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -9852,6 +10044,7 @@ export type Database = {
         Args: { _code: string; _name: string; _type: string; _uid: string }
         Returns: string
       }
+      ensure_transit_location: { Args: { _uid: string }; Returns: string }
       fx_rate: {
         Args: { _as_of?: string; _from: string; _to: string; _uid: string }
         Returns: number
@@ -9936,6 +10129,7 @@ export type Database = {
         Args: { _invoice_id: string }
         Returns: undefined
       }
+      receive_stock_transfer: { Args: { _transfer_id: string }; Returns: Json }
       reopen_period: {
         Args: { _month: number; _period_type?: string; _year: number }
         Returns: Json
@@ -9955,6 +10149,7 @@ export type Database = {
         Args: { _items?: Json; _payments?: Json; _sale: Json }
         Returns: string
       }
+      transfer_can_manage: { Args: { _uid: string }; Returns: boolean }
       user_can_manage_module: {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
