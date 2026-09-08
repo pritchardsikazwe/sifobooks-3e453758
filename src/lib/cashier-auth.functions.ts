@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * Cashier PIN sign-in.
@@ -61,7 +62,7 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
  * Verification happens in the database (hash + rate limit + audit).
  */
 export const verifyOwnPin = createServerFn({ method: "POST" })
-  .middleware([(await import("@/integrations/supabase/auth-middleware")).requireSupabaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { pin: string }) => {
     const pin = String(input?.pin ?? "").trim();
     if (!/^\d{4,8}$/.test(pin)) throw new Error("Enter your PIN");
