@@ -64,6 +64,24 @@
   --color-action-warn: #CA8A04;
   --color-action-delete: #DC2626;
 
+  /* Retail till palette — fixed, high-contrast keys for touch operation */
+  --color-till-tile: #1D4ED8;
+  --color-till-tile-foreground: #FFFFFF;
+  --color-till-nav: #1E293B;
+  --color-till-nav-foreground: #FFFFFF;
+  --color-till-cash: #16A34A;
+  --color-till-card: #2563EB;
+  --color-till-momo: #0D9488;
+  --color-till-hold: #F59E0B;
+  --color-till-void: #DC2626;
+  --color-till-discount: #EA580C;
+  --color-till-key-foreground: #FFFFFF;
+  --color-till-due: #B91C1C;
+  --color-till-tendered: #1D4ED8;
+  --color-till-change: #15803D;
+
+
+
   /* Global spacing scale */
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;

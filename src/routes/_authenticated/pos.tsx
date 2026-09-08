@@ -608,24 +608,49 @@ function SalePanel(props: {
   const { lines, selected, setSelected, totals, customerName, priceLevel, setPriceLevel,
     patchLine, removeLine, saleDiscountPct, setSaleDiscountPct, onPay, settings } = props;
   const sel = lines.find((l) => l.key === selected) ?? null;
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b p-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0">
-            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Current sale</div>
-            <div className="truncate text-sm font-semibold">{customerName}</div>
-          </div>
-          <select
-            value={priceLevel}
-            onChange={(e) => setPriceLevel(e.target.value as PriceLevel)}
-            className="h-9 rounded-lg border bg-background px-2 text-xs font-semibold uppercase"
-            disabled={!settings.allow_price_change}
-          >
-            {PRICE_LEVELS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-          </select>
+      {/* due / tendered / change */}
+      <div className="grid shrink-0 grid-cols-3 divide-x border-b">
+        <Stat label="Total due" value={totals.total} className="text-till-due" />
+        <Stat label="Tendered" value={0} className="text-till-tendered" />
+        <Stat label="Change" value={0} className="text-till-change" />
+      </div>
+
+      {/* live clock */}
+      <div className="shrink-0 border-b bg-muted/40 py-2 text-center">
+        <div className="font-display text-3xl font-black tabular-nums leading-none">
+          {now.toLocaleTimeString("en-GB", { hour12: false })}
         </div>
+        <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {now.toLocaleDateString(undefined, { weekday: "long", day: "2-digit", month: "short", year: "numeric" })}
+        </div>
+      </div>
+
+      <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b px-3 py-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Items · {totals.items}</div>
+          <div className="truncate text-sm font-semibold">{customerName}</div>
+        </div>
+        <select
+          value={priceLevel}
+          onChange={(e) => setPriceLevel(e.target.value as PriceLevel)}
+          className="h-9 rounded-lg border bg-background px-2 text-xs font-semibold uppercase"
+          disabled={!settings.allow_price_change}
+        >
+          {PRICE_LEVELS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+        </select>
+      </div>
+
+      {/* column headers */}
+      <div className="grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)_4.5rem_3.25rem_5rem] gap-1 border-b bg-muted/60 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span>Qty</span><span>Item</span><span className="text-right">Unit</span><span className="text-right">Tax</span><span className="text-right">Total</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -633,20 +658,22 @@ function SalePanel(props: {
           <div className="grid h-full place-items-center px-6 text-center text-sm text-muted-foreground">
             Scan a barcode or tap a product to start selling.
           </div>
-        ) : lines.map((l) => (
+        ) : lines.map((l) => {
+          const net = l.qty * l.price * (1 - l.discount_pct / 100);
+          const tax = settings.tax_inclusive ? 0 : round2(net * (settings.tax_rate / 100));
+          return (
           <div key={l.key}>
             <button onClick={() => setSelected(l.key === selected ? null : l.key)}
-              className={cn("grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2 border-b px-3 py-2.5 text-left",
+              className={cn("grid w-full grid-cols-[2.25rem_minmax(0,1fr)_4.5rem_3.25rem_5rem] items-center gap-1 border-b px-2 py-2 text-left text-sm tabular-nums",
                 l.key === selected ? "bg-primary/10" : "hover:bg-muted/60")}>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{l.name}</div>
-                <div className="text-xs text-muted-foreground tabular-nums">
-                  {l.qty} × {fmtMoney(l.price)}{l.discount_pct ? ` · −${l.discount_pct}%` : ""}
-                </div>
-              </div>
-              <div className="text-right font-bold tabular-nums">
-                {fmtMoney(l.qty * l.price * (1 - l.discount_pct / 100))}
-              </div>
+              <span className="font-bold">{l.qty}</span>
+              <span className="min-w-0">
+                <span className="block truncate font-semibold uppercase leading-tight">{l.name}</span>
+                {l.discount_pct ? <span className="text-[10px] text-muted-foreground">−{l.discount_pct}%</span> : null}
+              </span>
+              <span className="text-right">{l.price.toFixed(2)}</span>
+              <span className="text-right text-muted-foreground">{tax.toFixed(2)}</span>
+              <span className="text-right font-bold">{net.toFixed(2)}</span>
             </button>
             {l.key === selected && (
               <div className="flex flex-wrap items-center gap-2 border-b bg-muted/40 p-2">
@@ -671,8 +698,10 @@ function SalePanel(props: {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
+
 
       {settings.enable_quick_discounts && (
         <div className="flex gap-1.5 border-t p-2">
