@@ -21,7 +21,7 @@ import { toast } from "sonner";
 
 type SearchParams = { q?: string; warehouse?: string; category?: string; status?: string };
 
-export const Route = createFileRoute("/_authenticated/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory/")({
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     q: typeof s.q === "string" ? s.q : undefined,
     warehouse: typeof s.warehouse === "string" ? s.warehouse : undefined,
@@ -46,7 +46,7 @@ const statusTone: Record<StockStatus, string> = {
 
 function InventoryDashboard() {
   const search = Route.useSearch();
-  const navigate = useNavigate({ from: "/inventory" });
+  const navigate = useNavigate({ from: "/inventory/" });
   const [items, setItems] = useState<InvItem[]>([]);
   const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
   const [activity, setActivity] = useState<any[]>([]);

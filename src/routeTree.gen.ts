@@ -72,7 +72,6 @@ import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedInventorySheetsRouteImport } from './routes/_authenticated/inventory-sheets'
-import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
 import { Route as AuthenticatedFxRatesRouteImport } from './routes/_authenticated/fx-rates'
@@ -107,6 +106,7 @@ import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedQuotesIndexRouteImport } from './routes/_authenticated/quotes.index'
 import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authenticated/learn.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
+import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
 import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
 import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
@@ -167,6 +167,9 @@ import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './rout
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedJournalEntryIdRouteImport } from './routes/_authenticated/journal-entry.$id'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
+import { Route as AuthenticatedInventoryTransfersRouteImport } from './routes/_authenticated/inventory.transfers'
+import { Route as AuthenticatedInventoryStockCardRouteImport } from './routes/_authenticated/inventory.stock-card'
+import { Route as AuthenticatedInventoryLocationsRouteImport } from './routes/_authenticated/inventory.locations'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -513,11 +516,6 @@ const AuthenticatedInventorySheetsRoute =
     path: '/inventory-sheets',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedIndustryRoute = AuthenticatedIndustryRouteImport.update({
   id: '/industry',
   path: '/industry',
@@ -698,6 +696,12 @@ const AuthenticatedInvoicesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedInvoicesRoute,
+  } as any)
+const AuthenticatedInventoryIndexRoute =
+  AuthenticatedInventoryIndexRouteImport.update({
+    id: '/inventory/',
+    path: '/inventory/',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCustomersIndexRoute =
   AuthenticatedCustomersIndexRouteImport.update({
@@ -1048,6 +1052,24 @@ const AuthenticatedInvoicesNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
+const AuthenticatedInventoryTransfersRoute =
+  AuthenticatedInventoryTransfersRouteImport.update({
+    id: '/inventory/transfers',
+    path: '/inventory/transfers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryStockCardRoute =
+  AuthenticatedInventoryStockCardRouteImport.update({
+    id: '/inventory/stock-card',
+    path: '/inventory/stock-card',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryLocationsRoute =
+  AuthenticatedInventoryLocationsRouteImport.update({
+    id: '/inventory/locations',
+    path: '/inventory/locations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCustomersIdRoute =
   AuthenticatedCustomersIdRouteImport.update({
     id: '/$id',
@@ -1110,7 +1132,6 @@ export interface FileRoutesByFullPath {
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
@@ -1169,6 +1190,9 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1229,6 +1253,7 @@ export interface FileRoutesByFullPath {
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
+  '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
@@ -1272,7 +1297,6 @@ export interface FileRoutesByTo {
   '/fx-rates': typeof AuthenticatedFxRatesRoute
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -1327,6 +1351,9 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1387,6 +1414,7 @@ export interface FileRoutesByTo {
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
+  '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
@@ -1434,7 +1462,6 @@ export interface FileRoutesById {
   '/_authenticated/fx-rates': typeof AuthenticatedFxRatesRoute
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
-  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
@@ -1493,6 +1520,9 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/_authenticated/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/_authenticated/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/_authenticated/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1553,6 +1583,7 @@ export interface FileRoutesById {
   '/_worker/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
+  '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
@@ -1599,7 +1630,6 @@ export interface FileRouteTypes {
     | '/fx-rates'
     | '/imprest'
     | '/industry'
-    | '/inventory'
     | '/inventory-sheets'
     | '/invoices'
     | '/job-cards'
@@ -1658,6 +1688,9 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/customers/$id'
+    | '/inventory/locations'
+    | '/inventory/stock-card'
+    | '/inventory/transfers'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -1718,6 +1751,7 @@ export interface FileRouteTypes {
     | '/w/tables'
     | '/api/printing/jobs'
     | '/customers/'
+    | '/inventory/'
     | '/invoices/'
     | '/learn/'
     | '/quotes/'
@@ -1761,7 +1795,6 @@ export interface FileRouteTypes {
     | '/fx-rates'
     | '/imprest'
     | '/industry'
-    | '/inventory'
     | '/inventory-sheets'
     | '/job-cards'
     | '/journal-entries'
@@ -1816,6 +1849,9 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/customers/$id'
+    | '/inventory/locations'
+    | '/inventory/stock-card'
+    | '/inventory/transfers'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -1876,6 +1912,7 @@ export interface FileRouteTypes {
     | '/w/tables'
     | '/api/printing/jobs'
     | '/customers'
+    | '/inventory'
     | '/invoices'
     | '/learn'
     | '/quotes'
@@ -1922,7 +1959,6 @@ export interface FileRouteTypes {
     | '/_authenticated/fx-rates'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
-    | '/_authenticated/inventory'
     | '/_authenticated/inventory-sheets'
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
@@ -1981,6 +2017,9 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
     | '/_authenticated/customers/$id'
+    | '/_authenticated/inventory/locations'
+    | '/_authenticated/inventory/stock-card'
+    | '/_authenticated/inventory/transfers'
     | '/_authenticated/invoices/new'
     | '/_authenticated/journal-entry/$id'
     | '/_authenticated/learn/accounting-basics'
@@ -2041,6 +2080,7 @@ export interface FileRouteTypes {
     | '/_worker/w/tables'
     | '/api/printing/jobs'
     | '/_authenticated/customers/'
+    | '/_authenticated/inventory/'
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
     | '/_authenticated/quotes/'
@@ -2509,13 +2549,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventorySheetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/inventory': {
-      id: '/_authenticated/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/industry': {
       id: '/_authenticated/industry'
       path: '/industry'
@@ -2753,6 +2786,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invoices/'
       preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
+    }
+    '/_authenticated/inventory/': {
+      id: '/_authenticated/inventory/'
+      path: '/inventory'
+      fullPath: '/inventory/'
+      preLoaderRoute: typeof AuthenticatedInventoryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/customers/': {
       id: '/_authenticated/customers/'
@@ -3174,6 +3214,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
     }
+    '/_authenticated/inventory/transfers': {
+      id: '/_authenticated/inventory/transfers'
+      path: '/inventory/transfers'
+      fullPath: '/inventory/transfers'
+      preLoaderRoute: typeof AuthenticatedInventoryTransfersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/stock-card': {
+      id: '/_authenticated/inventory/stock-card'
+      path: '/inventory/stock-card'
+      fullPath: '/inventory/stock-card'
+      preLoaderRoute: typeof AuthenticatedInventoryStockCardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory/locations': {
+      id: '/_authenticated/inventory/locations'
+      path: '/inventory/locations'
+      fullPath: '/inventory/locations'
+      preLoaderRoute: typeof AuthenticatedInventoryLocationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customers/$id': {
       id: '/_authenticated/customers/$id'
       path: '/$id'
@@ -3433,7 +3494,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFxRatesRoute: typeof AuthenticatedFxRatesRoute
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
-  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedInventorySheetsRoute: typeof AuthenticatedInventorySheetsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
@@ -3491,6 +3551,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedInventoryLocationsRoute: typeof AuthenticatedInventoryLocationsRoute
+  AuthenticatedInventoryStockCardRoute: typeof AuthenticatedInventoryStockCardRoute
+  AuthenticatedInventoryTransfersRoute: typeof AuthenticatedInventoryTransfersRoute
   AuthenticatedJournalEntryIdRoute: typeof AuthenticatedJournalEntryIdRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
   AuthenticatedLearnBankReconciliationRoute: typeof AuthenticatedLearnBankReconciliationRoute
@@ -3499,6 +3562,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLearnQuickStartRoute: typeof AuthenticatedLearnQuickStartRoute
   AuthenticatedLearnReportsRoute: typeof AuthenticatedLearnReportsRoute
   AuthenticatedLearnVatZraRoute: typeof AuthenticatedLearnVatZraRoute
+  AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
 }
 
@@ -3531,7 +3595,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFxRatesRoute: AuthenticatedFxRatesRoute,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
-  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedInventorySheetsRoute: AuthenticatedInventorySheetsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
@@ -3591,6 +3654,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedInventoryLocationsRoute: AuthenticatedInventoryLocationsRoute,
+  AuthenticatedInventoryStockCardRoute: AuthenticatedInventoryStockCardRoute,
+  AuthenticatedInventoryTransfersRoute: AuthenticatedInventoryTransfersRoute,
   AuthenticatedJournalEntryIdRoute: AuthenticatedJournalEntryIdRoute,
   AuthenticatedLearnAccountingBasicsRoute:
     AuthenticatedLearnAccountingBasicsRoute,
@@ -3601,6 +3667,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLearnQuickStartRoute: AuthenticatedLearnQuickStartRoute,
   AuthenticatedLearnReportsRoute: AuthenticatedLearnReportsRoute,
   AuthenticatedLearnVatZraRoute: AuthenticatedLearnVatZraRoute,
+  AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
 }
 

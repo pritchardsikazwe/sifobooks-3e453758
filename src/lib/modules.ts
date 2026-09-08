@@ -82,9 +82,12 @@ export const MODULES: ModuleDef[] = [
     routes: [
       { title: "Inventory Dashboard", url: "/inventory", iconName: "LayoutDashboard" },
       { title: "Items", url: "/stock", iconName: "Boxes" },
+      { title: "Locations", url: "/inventory/locations", iconName: "Warehouse" },
+      { title: "Stock Transfers", url: "/inventory/transfers", iconName: "ArrowLeftRight" },
+      { title: "Stock Card", url: "/inventory/stock-card", iconName: "ScrollText" },
       { title: "Warehouses", url: "/warehouses", iconName: "Warehouse" },
       { title: "Stock Adjustments", url: "/stock-adjustments", iconName: "ClipboardEdit" },
-      { title: "Stock Counts", url: "/stock-counts", iconName: "ClipboardList" },
+      { title: "Stock Takes", url: "/stock-counts", iconName: "ClipboardList" },
       { title: "Batches & Expiry", url: "/stock-batches", iconName: "Layers" },
       { title: "Serial Numbers", url: "/stock-serials", iconName: "Barcode" },
       { title: "Inventory Sheets", url: "/inventory-sheets", iconName: "ClipboardList" },
