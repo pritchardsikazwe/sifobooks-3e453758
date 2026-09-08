@@ -301,7 +301,15 @@ export type SaleDraft = {
   registerId?: string | null;
 };
 
-/** Persist a completed sale. Falls back to the offline queue when unreachable. */
+function isOnline() {
+  return typeof navigator === "undefined" ? true : navigator.onLine;
+}
+
+/**
+ * Persist a completed sale (header + lines + payments + stock/ledger posting) through
+ * one idempotent server routine keyed by `client_ref`. When offline, or when the
+ * server is unreachable, the whole bundle is queued and replayed once — never twice.
+ */
 export async function completeSale(draft: SaleDraft, payments: SalePayment[], changeDue: number) {
   const sale_no = saleNumber();
   const client_ref = newClientId("possale");
@@ -326,37 +334,81 @@ export async function completeSale(draft: SaleDraft, payments: SalePayment[], ch
     note: draft.note ?? null,
     sold_at: new Date().toISOString(),
   };
+  const itemRows = draft.lines.map((l) => ({
+    item_id: l.item_id,
+    name: l.name,
+    sku: l.sku,
+    qty: l.qty,
+    price: l.price,
+    unit_cost: l.unit_cost,
+    discount: round2((l.qty * l.price * (l.discount_pct || 0)) / 100),
+    tax_rate: 0,
+    line_total: round2(l.qty * l.price * (1 - (l.discount_pct || 0) / 100)),
+    note: l.note ?? null,
+  }));
+  const payRows = payments.map((p) => ({ method: p.method, amount: round2(p.amount), reference: p.reference ?? null }));
+  const args = { _sale: salePayload, _items: itemRows, _payments: payRows };
+
+  const stash = async () => {
+    await queueRpc("sync_pos_sale", args, client_ref);
+    await cacheRow("pos_transactions", {
+      id: client_ref, sale_no, client_ref, customer_name: salePayload.customer_name,
+      total: salePayload.total, status: "completed", sold_at: salePayload.sold_at, __offline: true,
+    });
+    // Keep the local stock figures honest until the next refresh.
+    void adjustCachedStock(draft.lines);
+    return { ok: true as const, offline: true, sale_no, id: null };
+  };
+
+  if (!isOnline()) return stash();
 
   try {
-    const { data: sale, error } = await supabase.from("pos_sales").insert(salePayload).select("id,sale_no").maybeSingle();
-    if (error || !sale) throw error ?? new Error("Sale not saved");
-
-    const itemRows = draft.lines.map((l) => ({
-      sale_id: (sale as any).id,
-      item_id: l.item_id,
-      name: l.name,
-      sku: l.sku,
-      qty: l.qty,
-      price: l.price,
-      unit_cost: l.unit_cost,
-      discount: round2((l.qty * l.price * (l.discount_pct || 0)) / 100),
-      tax_rate: 0,
-      line_total: round2(l.qty * l.price * (1 - (l.discount_pct || 0) / 100)),
-      note: l.note ?? null,
-    }));
-    if (itemRows.length) await supabase.from("pos_sale_items").insert(itemRows as any);
-    if (payments.length) {
-      await supabase.from("pos_payments").insert(
-        payments.map((p) => ({ sale_id: (sale as any).id, method: p.method, amount: round2(p.amount), reference: p.reference ?? null })) as any,
-      );
+    const { data, error } = await supabase.rpc("sync_pos_sale" as any, args as any);
+    if (error) {
+      if (isNetworkError(error.message)) return stash();
+      throw error;
     }
-    await supabase.rpc("complete_pos_sale", { _sale_id: (sale as any).id } as any);
-    return { ok: true as const, offline: false, sale_no, id: (sale as any).id };
-  } catch {
-    // Offline: queue the header so it replays once the backend is reachable.
-    await queueInsert("pos_sales", { ...salePayload, status: "completed" }, client_ref);
-    return { ok: true as const, offline: true, sale_no, id: null };
+    return { ok: true as const, offline: false, sale_no, id: data as unknown as string };
+  } catch (e: any) {
+    if (e?.message && !isNetworkError(e.message)) throw e;
+    return stash();
   }
+}
+
+function isNetworkError(message: string) {
+  return /fetch|network|timeout|NetworkError|ECONN|502|503|504/i.test(message);
+}
+
+async function adjustCachedStock(lines: CartLine[]) {
+  try {
+    const products = await readCached<PosProduct>("products");
+    const by = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      const p = l.item_id ? by.get(l.item_id) : null;
+      if (p) p.stock = round2(n(p.stock) - n(l.qty));
+    }
+    await cacheRows("products", products);
+  } catch { /* cache only */ }
+}
+
+/** Sales completed on this device that are still waiting to upload. */
+export async function listOfflineSales() {
+  const rows = await readCached<any>("pos_transactions");
+  return rows.filter((r) => r.__offline);
+}
+
+/** Remove locally-cached offline sales once they have been uploaded. */
+export async function pruneSyncedOfflineSales() {
+  try {
+    const q = await listQueue();
+    const pendingRefs = new Set(q.map((i) => i.clientId));
+    const rows = await readCached<any>("pos_transactions");
+    const keep = rows.filter((r) => !r.__offline || pendingRefs.has(r.client_ref));
+    if (keep.length !== rows.length) {
+      await clearStore("pos_transactions");
+      if (keep.length) await cacheRows("pos_transactions", keep);
+    }
+  } catch { /* cache only */ }
 }
 
 export async function holdSale(draft: SaleDraft) {
