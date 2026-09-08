@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/inventory/control-center")
 
 type BalanceRow = { item_id: string; location_id: string; quantity: number; name: string; sku: string | null; unit: string; cost_price: number; sell_price: number; needs_cost_review: boolean; needs_unit_verification: boolean };
 type MkpRow = { item_id: string; name: string; sku: string | null; unit: string; cost_price: number; sell_price: number; warehouse_initial: number; warehouse_transferred_out: number; warehouse_transferred_in: number; warehouse_purchased: number; warehouse_returns: number; warehouse_adjustments: number; warehouse_current: number; chibombo_received: number; chibombo_sales: number; chibombo_returns: number; chibombo_adjustments: number; chibombo_transferred_out: number; chibombo_current: number };
+type ExceptionRow = { item: string; sku: string | null; unit: string; qty: number; cost: number; sell: number; issue: string };
 
 function ControlCenterPage() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -63,13 +64,9 @@ function ControlCenterPage() {
   }), [locations, balances]);
 
   const sumBy = (pred: (t: string) => boolean, key: "qty" | "value") => byLocation.filter((l) => pred(l.type)).reduce((s, l) => s + l[key], 0);
-  const isTransit = (t: string) => t === "transit";
-  const isWarehouse = (t: string) => t === "warehouse";
-  const isOutlet = (t: string) => t !== "warehouse" && t !== "transit";
   const totalCost = byLocation.reduce((s, l) => s + l.value, 0);
   const totalRetail = byLocation.reduce((s, l) => s + l.retail, 0);
-
-  const exceptions = useMemo(() => {
+  const exceptions = useMemo<ExceptionRow[]>(() => {
     const seen = new Map<string, { item: string; sku: string | null; unit: string; qty: number; cost: number; sell: number; issues: string[] }>();
     for (const b of balances) {
       if (b.quantity === 0) continue;
@@ -94,7 +91,6 @@ function ControlCenterPage() {
     { key: "value", header: "Inventory value (cost)", align: "right", sortable: true, cell: (r) => fmtMoney(r.value) },
     { key: "retail", header: "Potential sales value", align: "right", cell: (r) => fmtMoney(r.retail) }, { key: "margin", header: "Potential gross margin", align: "right", cell: (r) => fmtMoney(r.margin) },
   ];
-
   const mkpCols: DTColumn<MkpRow>[] = [
     { key: "name", header: "Product", sticky: true, sortable: true }, { key: "unit", header: "Unit" },
     { key: "warehouse_initial", header: "Warehouse Initial", align: "right" }, { key: "warehouse_transferred_out", header: "WH Transfer Out", align: "right" },
@@ -102,17 +98,22 @@ function ControlCenterPage() {
     { key: "chibombo_sales", header: "Posted Sales", align: "right" }, { key: "chibombo_returns", header: "Returns", align: "right" },
     { key: "chibombo_adjustments", header: "Adjustments", align: "right" }, { key: "chibombo_transferred_out", header: "Chibombo Transfer Out", align: "right" },
     { key: "chibombo_current", header: "Chibombo Remaining", align: "right", sortable: true },
-    { key: "total", header: "Company Total", align: "right", cell: (r) => r.warehouse_current + r.chibombo_current },
-    { key: "stock_value", header: "Company Cost Value", align: "right", cell: (r) => fmtMoney((Number(r.warehouse_current) + Number(r.chibombo_current)) * Number(r.cost_price)) },
+    { key: "chibombo_current", header: "Company Total", align: "right", cell: (r) => r.warehouse_current + r.chibombo_current },
+    { key: "cost_price", header: "Company Cost Value", align: "right", cell: (r) => fmtMoney((Number(r.warehouse_current) + Number(r.chibombo_current)) * Number(r.cost_price)) },
+  ];
+  const exceptionCols: DTColumn<ExceptionRow>[] = [
+    { key: "item", header: "Product", sortable: true, sticky: true }, { key: "sku", header: "SKU" }, { key: "unit", header: "Unit" },
+    { key: "qty", header: "Quantity", align: "right" }, { key: "cost", header: "Cost", align: "right", cell: (r) => fmtMoney(r.cost) },
+    { key: "sell", header: "Selling price", align: "right", cell: (r) => fmtMoney(r.sell) }, { key: "issue", header: "Needs review", cell: (r) => <span className="text-destructive">{r.issue}</span> },
   ];
 
   return <div className="space-y-4">
     <SifoModuleHeader module="inventory" title="Inventory control center" description="Production, warehouse, stock in transit and outlet stock, valued at cost with the retail upside beside it." icon={Gauge} actions={<Button variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>} />
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><SifoKpiCard label="Total inventory value (cost)" value={fmtMoney(totalCost)} /><SifoKpiCard label="Potential sales value" value={fmtMoney(totalRetail)} /><SifoKpiCard label="Potential gross margin" value={fmtMoney(totalRetail - totalCost)} /><SifoKpiCard label="Produced (all time)" value={`${produced} units · ${batches} lines`} /></div>
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><SifoKpiCard label="Warehouse value" value={fmtMoney(sumBy(isWarehouse, "value"))} hint={`${sumBy(isWarehouse, "qty")} units`} /><SifoKpiCard label="Store / outlet value" value={fmtMoney(sumBy(isOutlet, "value"))} hint={`${sumBy(isOutlet, "qty")} units`} /><SifoKpiCard label="Stock in transit value" value={fmtMoney(sumBy(isTransit, "value"))} hint={`${sumBy(isTransit, "qty")} units`} /><SifoKpiCard label="Company total (no double count)" value={fmtMoney(totalCost)} /></div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><SifoKpiCard label="Warehouse value" value={fmtMoney(sumBy((t) => t === "warehouse", "value"))} hint={`${sumBy((t) => t === "warehouse", "qty")} units`} /><SifoKpiCard label="Store / outlet value" value={fmtMoney(sumBy((t) => t !== "warehouse" && t !== "transit", "value"))} hint={`${sumBy((t) => t !== "warehouse" && t !== "transit", "qty")} units`} /><SifoKpiCard label="Stock in transit value" value={fmtMoney(sumBy((t) => t === "transit", "value"))} hint={`${sumBy((t) => t === "transit", "qty")} units`} /><SifoKpiCard label="Company total" value={fmtMoney(totalCost)} /></div>
     <Card><CardHeader><CardTitle className="text-base">MKP Warehouse vs Chibombo</CardTitle></CardHeader><CardContent><DataTable tableId="mkp-reconciliation" data={mkp} columns={mkpCols} loading={loading} searchPlaceholder="Search MKP products…" empty="No MKP reconciliation rows yet." toolbarRight={<ExportMenu rows={mkp} filename="mkp-inventory-reconciliation" title="MKP Warehouse vs Chibombo" />} /></CardContent></Card>
     <Card><CardHeader><CardTitle className="text-base">Where to go next</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2"><Button asChild variant="outline" size="sm"><Link to="/inventory/production">Production batches</Link></Button><Button asChild variant="outline" size="sm"><Link to="/inventory/transfers">Stock transfers</Link></Button><Button asChild variant="outline" size="sm"><Link to="/inventory/locations">Locations / Chibombo</Link></Button><Button asChild variant="outline" size="sm"><Link to="/inventory/stock-card">Stock card</Link></Button><Button asChild variant="outline" size="sm"><Link to="/inventory/reconciliation">Reconciliation</Link></Button><Button asChild variant="outline" size="sm"><Link to="/inventory/cashier-records">Cashier records</Link></Button></CardContent></Card>
     <DataTable tableId="inventory-control-center" data={byLocation} columns={cols} loading={loading} error={error} onRetry={load} searchPlaceholder="Search locations…" empty="No stock locations yet." toolbarRight={<ExportMenu rows={byLocation} filename="inventory-control-center" title="Inventory control center" />} />
-    <div className="space-y-2"><h2 className="text-lg font-semibold">Inventory cost exceptions</h2><DataTable tableId="inventory-cost-exceptions" data={exceptions} columns={[{ key: "item", header: "Product", sortable: true, sticky: true }, { key: "sku", header: "SKU" }, { key: "unit", header: "Unit" }, { key: "qty", header: "Quantity", align: "right" }, { key: "cost", header: "Cost", align: "right", cell: (r) => fmtMoney(r.cost) }, { key: "sell", header: "Selling price", align: "right", cell: (r) => fmtMoney(r.sell) }, { key: "issue", header: "Needs review", cell: (r) => <span className="text-destructive">{r.issue}</span> }]} data={exceptions} columns={[]} loading={loading} searchPlaceholder="Search exceptions…" empty="Every product holding stock has a cost, a unit and a selling price." toolbarRight={<ExportMenu rows={exceptions} filename="inventory-cost-exceptions" title="Inventory cost exceptions" />} /></div>
+    <div className="space-y-2"><h2 className="text-lg font-semibold">Inventory cost exceptions</h2><DataTable tableId="inventory-cost-exceptions" data={exceptions} columns={exceptionCols} loading={loading} searchPlaceholder="Search exceptions…" empty="Every product holding stock has a cost, a unit and a selling price." toolbarRight={<ExportMenu rows={exceptions} filename="inventory-cost-exceptions" title="Inventory cost exceptions" />} /></div>
   </div>;
 }
