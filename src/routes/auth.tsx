@@ -43,12 +43,16 @@ function pwStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; label: string; colo
   return { score: score as 0 | 1 | 2 | 3 | 4, ...map[score] };
 }
 
+type LoginMode = "cashier" | "manager" | "admin";
+
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<LoginMode | null>(null);
   const [tab, setTab] = useState<"signin" | "signup" | "reset">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
