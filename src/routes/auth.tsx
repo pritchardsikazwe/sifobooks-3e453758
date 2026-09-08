@@ -93,6 +93,50 @@ function AuthPage() {
     setNotice("Check your email for a password reset link.");
   };
 
+  if (mode === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md">
+          <Link to="/" className="mb-6 block text-center text-sm text-muted-foreground hover:text-foreground">
+            ← Back to SifoBooks
+          </Link>
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>SifoBooks</CardTitle>
+              <CardDescription>How are you signing in today?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {([
+                { key: "cashier", label: "Log in as Cashier", hint: "Till PIN — opens your cashier workspace", icon: User },
+                { key: "manager", label: "Log in as Manager", hint: "Branch operations, approvals and reports", icon: ShieldCheck },
+                { key: "admin", label: "Log in as Admin", hint: "Full accounting and system administration", icon: Building2 },
+              ] as const).map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => { setMode(o.key); setError(null); setNotice(null); }}
+                  className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition hover:border-primary hover:bg-primary/5"
+                >
+                  <o.icon className="h-5 w-5 text-primary" />
+                  <span className="flex-1">
+                    <span className="block font-semibold">{o.label}</span>
+                    <span className="block text-xs text-muted-foreground">{o.hint}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              ))}
+              <button
+                onClick={() => setMode("admin")}
+                className="w-full pt-2 text-center text-xs text-muted-foreground hover:text-foreground"
+              >
+                Or continue with the normal sign-in
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg">
@@ -101,10 +145,20 @@ function AuthPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Welcome to SifoBooks</CardTitle>
-            <CardDescription>Manage invoices and stay fiscally compliant</CardDescription>
+            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+              {mode === "cashier" ? "Cashier sign-in" : mode === "manager" ? "Manager sign-in" : "Welcome to SifoBooks"}
+            </CardTitle>
+            <CardDescription>
+              {mode === "cashier" ? "Enter your till PIN to open your workspace" : "Manage invoices and stay fiscally compliant"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {mode === "cashier" ? (
+              <CashierPinLogin onBack={() => setMode(null)} />
+            ) : (
+            <>
+            <button onClick={() => setMode(null)} className="mb-3 text-sm text-muted-foreground hover:text-foreground">← Choose a different login</button>
+
             <Tabs value={tab} onValueChange={v => { setTab(v as "signin" | "signup" | "reset"); setError(null); setNotice(null); }}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
