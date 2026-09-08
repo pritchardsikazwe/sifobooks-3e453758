@@ -182,8 +182,11 @@ export const STAFF_NAV: StaffNavGroup[] = [
   ] },
   { label: "Inventory", items: [
     { title: "Products & Stock", url: "/inventory", iconName: "Boxes", any: ["inventory.view"] },
+    { title: "Locations", url: "/inventory/locations", iconName: "Warehouse", any: ["inventory.view"] },
+    { title: "Stock Transfers", url: "/inventory/transfers", iconName: "ArrowLeftRight", any: ["inventory.manage"] },
+    { title: "Stock Card", url: "/inventory/stock-card", iconName: "ScrollText", any: ["inventory.view"] },
     { title: "Stock Adjustments", url: "/stock-adjustments", iconName: "SlidersHorizontal", any: ["inventory.manage"] },
-    { title: "Stock Counts", url: "/stock-counts", iconName: "ClipboardCheck", any: ["inventory.manage"] },
+    { title: "Stock Takes", url: "/stock-counts", iconName: "ClipboardCheck", any: ["inventory.manage"] },
   ] },
   { label: "Accounting", items: [
     { title: "Customers", url: "/customers", iconName: "Users", any: ["accounting.view"] },

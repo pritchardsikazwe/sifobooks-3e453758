@@ -167,6 +167,8 @@ import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './rout
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedJournalEntryIdRouteImport } from './routes/_authenticated/journal-entry.$id'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
+import { Route as AuthenticatedInventoryTransfersRouteImport } from './routes/_authenticated/inventory.transfers'
+import { Route as AuthenticatedInventoryStockCardRouteImport } from './routes/_authenticated/inventory.stock-card'
 import { Route as AuthenticatedInventoryLocationsRouteImport } from './routes/_authenticated/inventory.locations'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -1049,6 +1051,18 @@ const AuthenticatedInvoicesNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
+const AuthenticatedInventoryTransfersRoute =
+  AuthenticatedInventoryTransfersRouteImport.update({
+    id: '/transfers',
+    path: '/transfers',
+    getParentRoute: () => AuthenticatedInventoryRoute,
+  } as any)
+const AuthenticatedInventoryStockCardRoute =
+  AuthenticatedInventoryStockCardRouteImport.update({
+    id: '/stock-card',
+    path: '/stock-card',
+    getParentRoute: () => AuthenticatedInventoryRoute,
+  } as any)
 const AuthenticatedInventoryLocationsRoute =
   AuthenticatedInventoryLocationsRouteImport.update({
     id: '/locations',
@@ -1177,6 +1191,8 @@ export interface FileRoutesByFullPath {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1336,6 +1352,8 @@ export interface FileRoutesByTo {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1503,6 +1521,8 @@ export interface FileRoutesById {
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/_authenticated/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
+  '/_authenticated/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1669,6 +1689,8 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/inventory/locations'
+    | '/inventory/stock-card'
+    | '/inventory/transfers'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -1828,6 +1850,8 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/customers/$id'
     | '/inventory/locations'
+    | '/inventory/stock-card'
+    | '/inventory/transfers'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -1994,6 +2018,8 @@ export interface FileRouteTypes {
     | '/_authenticated/workshops'
     | '/_authenticated/customers/$id'
     | '/_authenticated/inventory/locations'
+    | '/_authenticated/inventory/stock-card'
+    | '/_authenticated/inventory/transfers'
     | '/_authenticated/invoices/new'
     | '/_authenticated/journal-entry/$id'
     | '/_authenticated/learn/accounting-basics'
@@ -3187,6 +3213,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
     }
+    '/_authenticated/inventory/transfers': {
+      id: '/_authenticated/inventory/transfers'
+      path: '/transfers'
+      fullPath: '/inventory/transfers'
+      preLoaderRoute: typeof AuthenticatedInventoryTransfersRouteImport
+      parentRoute: typeof AuthenticatedInventoryRoute
+    }
+    '/_authenticated/inventory/stock-card': {
+      id: '/_authenticated/inventory/stock-card'
+      path: '/stock-card'
+      fullPath: '/inventory/stock-card'
+      preLoaderRoute: typeof AuthenticatedInventoryStockCardRouteImport
+      parentRoute: typeof AuthenticatedInventoryRoute
+    }
     '/_authenticated/inventory/locations': {
       id: '/_authenticated/inventory/locations'
       path: '/locations'
@@ -3250,11 +3290,15 @@ const AuthenticatedCustomersRouteWithChildren =
 
 interface AuthenticatedInventoryRouteChildren {
   AuthenticatedInventoryLocationsRoute: typeof AuthenticatedInventoryLocationsRoute
+  AuthenticatedInventoryStockCardRoute: typeof AuthenticatedInventoryStockCardRoute
+  AuthenticatedInventoryTransfersRoute: typeof AuthenticatedInventoryTransfersRoute
 }
 
 const AuthenticatedInventoryRouteChildren: AuthenticatedInventoryRouteChildren =
   {
     AuthenticatedInventoryLocationsRoute: AuthenticatedInventoryLocationsRoute,
+    AuthenticatedInventoryStockCardRoute: AuthenticatedInventoryStockCardRoute,
+    AuthenticatedInventoryTransfersRoute: AuthenticatedInventoryTransfersRoute,
   }
 
 const AuthenticatedInventoryRouteWithChildren =
