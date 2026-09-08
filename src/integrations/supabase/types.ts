@@ -9734,6 +9734,10 @@ export type Database = {
         Args: { _entry_id: string; _reason: string; _reversal_date?: string }
         Returns: Json
       }
+      sync_pos_sale: {
+        Args: { _items?: Json; _payments?: Json; _sale: Json }
+        Returns: string
+      }
       user_can_manage_module: {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
