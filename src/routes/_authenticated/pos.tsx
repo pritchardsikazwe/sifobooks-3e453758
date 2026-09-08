@@ -48,14 +48,19 @@ const TENDERS = [
   { key: "credit", label: "CREDIT", icon: User },
 ];
 
+const PAY_KEYS: { label: string; icon: any; bg: string }[] = [
+  { label: "Cash", icon: Wallet, bg: "bg-till-cash" },
+  { label: "Split", icon: Percent, bg: "bg-till-discount" },
+  { label: "Visa", icon: CreditCard, bg: "bg-till-card" },
+  { label: "MoMo", icon: Smartphone, bg: "bg-till-momo" },
+  { label: "Account", icon: User, bg: "bg-till-nav" },
+  { label: "Returns", icon: Undo2, bg: "bg-till-void" },
+];
+
 const DENOMS = [5, 10, 20, 50, 100, 200, 500];
 const QUICK_QTY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24];
 const VOID_REASONS = ["Wrong product", "Wrong quantity", "Customer cancelled", "Duplicate sale", "Other"];
 
-const tileColour = (i: number) =>
-  ["bg-primary/10 text-primary", "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-   "bg-sky-500/10 text-sky-600 dark:text-sky-400", "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-   "bg-violet-500/10 text-violet-600 dark:text-violet-400", "bg-rose-500/10 text-rose-600 dark:text-rose-400"][i % 6];
 
 function RetailPos() {
   const net = useNetworkStatus();
@@ -378,13 +383,20 @@ function RetailPos() {
             ))}
           </div>
 
+          <div className="mb-3 flex items-center gap-2 rounded-lg bg-till-nav px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-till-nav-foreground">
+            <LayoutGrid className="h-3.5 w-3.5 opacity-70" />
+            <button onClick={() => setCategory("ALL")} className="opacity-70 hover:opacity-100">All products</button>
+            {category !== "ALL" && <><span className="opacity-50">›</span><span>{category}</span></>}
+            <span className="ml-auto opacity-70">{visible.length} items</span>
+          </div>
+
           {visible.length === 0 ? (
             <div className="grid h-64 place-items-center rounded-2xl border border-dashed text-sm text-muted-foreground">
               No products here — add stock items in Inventory, or clear the search.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
-              {visible.map((p, i) => {
+              {visible.map((p) => {
                 const price = round2(p.price * factor);
                 const out = p.stock <= 0;
                 const low = !out && p.reorder_level > 0 && p.stock <= p.reorder_level;
@@ -396,7 +408,7 @@ function RetailPos() {
                     onPointerDown={() => { pressTimer.current = setTimeout(() => setQtyPad(p), 550); }}
                     onPointerUp={() => pressTimer.current && clearTimeout(pressTimer.current)}
                     onPointerLeave={() => pressTimer.current && clearTimeout(pressTimer.current)}
-                    className={cn("group relative flex min-h-[9.5rem] flex-col overflow-hidden rounded-2xl border bg-card p-3 text-left shadow-sm transition-all active:scale-[0.98] hover:shadow-md",
+                    className={cn("group relative flex min-h-[9.5rem] flex-col overflow-hidden rounded-xl bg-till-tile p-3 text-left text-till-tile-foreground shadow-sm transition-all active:scale-[0.97] hover:brightness-110",
                       out && "opacity-60")}
                   >
                     <span
@@ -408,22 +420,22 @@ function RetailPos() {
                         setFavorites((f) => (on ? [...f, p.id] : f.filter((x) => x !== p.id)));
                         await toggleFavorite(p.id, on).catch(() => {});
                       }}
-                      className="absolute right-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-background/80"
+                      className="absolute right-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-black/25"
                     >
-                      <Star className={cn("h-3.5 w-3.5", favorites.includes(p.id) ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+                      <Star className={cn("h-3.5 w-3.5", favorites.includes(p.id) ? "fill-amber-300 text-amber-300" : "text-white/70")} />
                     </span>
                     {settings.show_images && (
-                      <div className={cn("mb-2 grid h-16 place-items-center rounded-xl text-xl font-black", tileColour(i))}>
+                      <div className="mb-2 grid h-16 place-items-center rounded-lg bg-white/15 text-xl font-black">
                         {p.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <div className="line-clamp-2 text-sm font-semibold leading-tight">{p.name}</div>
-                    {settings.show_sku && p.sku && <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{p.sku}</div>}
+                    <div className="line-clamp-2 text-sm font-bold uppercase leading-tight">{p.name}</div>
+                    {settings.show_sku && p.sku && <div className="mt-0.5 truncate text-[10px] text-white/70">{p.sku}</div>}
                     <div className="mt-auto flex items-end justify-between gap-2 pt-2">
                       <span className="text-lg font-black tabular-nums">{fmtMoney(price)}</span>
                       {settings.show_stock && (
-                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold",
-                          out ? "bg-destructive/10 text-destructive" : low ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" : "bg-muted text-muted-foreground")}>
+                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-black",
+                          out ? "bg-till-void text-white" : low ? "bg-till-hold text-black" : "bg-white/20 text-white")}>
                           {out ? "OUT" : low ? `LOW ${p.stock}` : `${p.stock}`}
                         </span>
                       )}
@@ -440,18 +452,29 @@ function RetailPos() {
       </div>
 
       {/* --------------------------- bottom action bar ------------------------ */}
-      <footer className="flex shrink-0 gap-2 overflow-x-auto border-t bg-card px-3 py-2">
-        <Act label="NEW" icon={Plus} onClick={newSale} />
-        <Act label="HOLD" icon={PauseCircle} onClick={() => void doHold()} />
-        <Act label="RECALL" icon={PlayCircle} onClick={() => void openHeld()} />
-        <Act label="CUSTOMER" icon={User} onClick={() => setCustOpen(true)} />
-        <Act label="DISCOUNT" icon={Percent} onClick={() => setSaleDiscountPct((d) => (d ? 0 : 10))} />
-        <Act label="QTY" icon={LayoutGrid} onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
-        <Act label="REMOVE" icon={Trash2} onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
-        <Act label="VOID" icon={Ban} onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
-        <Act label="REFUND" icon={Undo2} onClick={() => void openRecent()} />
-        <Act label="RECEIPTS" icon={Printer} onClick={() => void openRecent()} />
-        <Act label="CART" icon={ShoppingBag} onClick={() => setCartOpen(true)} className="lg:hidden" />
+      <footer className="flex shrink-0 gap-2 overflow-x-auto border-t bg-till-nav px-3 py-2">
+        <Act label="+1" icon={Plus} className="bg-till-cash text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => selectedLine ? patchLine(selectedLine.key, { qty: selectedLine.qty + 1 }) : toast.info("Select a cart line")} />
+        <Act label="−1" icon={Minus} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => selectedLine ? patchLine(selectedLine.key, { qty: selectedLine.qty - 1 }) : toast.info("Select a cart line")} />
+        <Act label="NEW" icon={RotateCcw} className="bg-till-momo text-till-key-foreground border-transparent hover:brightness-110" onClick={newSale} />
+        <Act label="HOLD" icon={PauseCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void doHold()} />
+        <Act label="RECALL" icon={PlayCircle} className="bg-till-hold text-black border-transparent hover:brightness-110" onClick={() => void openHeld()} />
+        <Act label="CUSTOMER" icon={User} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setCustOpen(true)} />
+        <Act label="DISCOUNT" icon={Percent} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setSaleDiscountPct((d) => (d ? 0 : 10))} />
+        <Act label="CHANGE PRICE" icon={Barcode} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110"
+          onClick={() => {
+            if (!selectedLine) return toast.info("Select a cart line");
+            const v = window.prompt("New unit price", String(selectedLine.price));
+            if (v != null && !Number.isNaN(Number(v))) patchLine(selectedLine.key, { price: Number(v) });
+          }} />
+        <Act label="QTY" icon={LayoutGrid} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
+        <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />
+        <Act label="REMOVE" icon={Trash2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
+        <Act label="VOID" icon={Ban} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
+        <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
+        <Act label="RECEIPTS" icon={Printer} className="bg-slate-600 text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
+        <Act label="CART" icon={ShoppingBag} onClick={() => setCartOpen(true)} className="bg-till-cash text-till-key-foreground border-transparent lg:hidden" />
         <div className="ml-auto hidden lg:block" />
       </footer>
 
@@ -585,6 +608,17 @@ function Metric({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}: </span>
       <span className="font-bold tabular-nums">{value}</span>
     </span>
+  );
+}
+
+function Stat({ label, value, className }: { label: string; value: number; className?: string }) {
+  return (
+    <div className="px-2 py-2 text-center">
+      <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className={cn("font-display text-xl font-black tabular-nums leading-tight", className)}>
+        {fmtMoney(value)}
+      </div>
+    </div>
   );
 }
 
@@ -725,13 +759,17 @@ function SalePanel(props: {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t p-3">
-        {TENDERS.map((t) => (
-          <Button key={t.key} variant={t.key === "cash" ? "default" : "outline"} className="h-14 text-sm font-bold" onClick={onPay}>
-            <t.icon className="mr-1.5 h-4 w-4" />{t.label}
-          </Button>
+      <div className="grid grid-cols-3 gap-1.5 border-t p-2">
+        {PAY_KEYS.map((t) => (
+          <button key={t.label} onClick={onPay}
+            className={cn("flex h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-black uppercase tracking-wide text-till-key-foreground transition-transform active:scale-95", t.bg)}>
+            <t.icon className="h-4 w-4" />{t.label}
+          </button>
         ))}
-        <Button className="col-span-2 h-16 text-lg font-black" onClick={onPay}>PAY {fmtMoney(totals.total)}</Button>
+        <button onClick={onPay}
+          className="col-span-3 h-16 rounded-xl bg-till-cash text-lg font-black uppercase text-till-key-foreground transition-transform active:scale-[0.98]">
+          Pay {fmtMoney(totals.total)}
+        </button>
       </div>
     </div>
   );
