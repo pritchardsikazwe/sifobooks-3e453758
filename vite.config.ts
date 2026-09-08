@@ -33,7 +33,8 @@ export default defineConfig({
         importScripts: ["/sw-skip-waiting.js"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false, // update prompt controls activation
+        // Old installs were getting stuck on a stale build: take over immediately.
+        skipWaiting: true,
         runtimeCaching: [
           {
             // App navigations: always try the network first so deploys land.

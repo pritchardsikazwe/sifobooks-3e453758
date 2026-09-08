@@ -80,6 +80,15 @@ export function registerServiceWorker() {
     return;
   }
 
+  // A new build now activates immediately (skipWaiting). Reload once when it
+  // takes control so installed apps never keep serving a stale build.
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+
   const register = async () => {
     try {
       const reg = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
