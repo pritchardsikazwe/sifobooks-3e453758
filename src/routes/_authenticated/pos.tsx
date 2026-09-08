@@ -405,7 +405,7 @@ function RetailPos() {
                     onPointerDown={() => { pressTimer.current = setTimeout(() => setQtyPad(p), 550); }}
                     onPointerUp={() => pressTimer.current && clearTimeout(pressTimer.current)}
                     onPointerLeave={() => pressTimer.current && clearTimeout(pressTimer.current)}
-                    className={cn("group relative flex min-h-[9.5rem] flex-col overflow-hidden rounded-2xl border bg-card p-3 text-left shadow-sm transition-all active:scale-[0.98] hover:shadow-md",
+                    className={cn("group relative flex min-h-[9.5rem] flex-col overflow-hidden rounded-xl bg-till-tile p-3 text-left text-till-tile-foreground shadow-sm transition-all active:scale-[0.97] hover:brightness-110",
                       out && "opacity-60")}
                   >
                     <span
@@ -417,22 +417,22 @@ function RetailPos() {
                         setFavorites((f) => (on ? [...f, p.id] : f.filter((x) => x !== p.id)));
                         await toggleFavorite(p.id, on).catch(() => {});
                       }}
-                      className="absolute right-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-background/80"
+                      className="absolute right-2 top-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-black/25"
                     >
-                      <Star className={cn("h-3.5 w-3.5", favorites.includes(p.id) ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+                      <Star className={cn("h-3.5 w-3.5", favorites.includes(p.id) ? "fill-amber-300 text-amber-300" : "text-white/70")} />
                     </span>
                     {settings.show_images && (
-                      <div className={cn("mb-2 grid h-16 place-items-center rounded-xl text-xl font-black", tileColour(i))}>
+                      <div className="mb-2 grid h-16 place-items-center rounded-lg bg-white/15 text-xl font-black">
                         {p.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <div className="line-clamp-2 text-sm font-semibold leading-tight">{p.name}</div>
-                    {settings.show_sku && p.sku && <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{p.sku}</div>}
+                    <div className="line-clamp-2 text-sm font-bold uppercase leading-tight">{p.name}</div>
+                    {settings.show_sku && p.sku && <div className="mt-0.5 truncate text-[10px] text-white/70">{p.sku}</div>}
                     <div className="mt-auto flex items-end justify-between gap-2 pt-2">
                       <span className="text-lg font-black tabular-nums">{fmtMoney(price)}</span>
                       {settings.show_stock && (
-                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold",
-                          out ? "bg-destructive/10 text-destructive" : low ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" : "bg-muted text-muted-foreground")}>
+                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-black",
+                          out ? "bg-till-void text-white" : low ? "bg-till-hold text-black" : "bg-white/20 text-white")}>
                           {out ? "OUT" : low ? `LOW ${p.stock}` : `${p.stock}`}
                         </span>
                       )}
