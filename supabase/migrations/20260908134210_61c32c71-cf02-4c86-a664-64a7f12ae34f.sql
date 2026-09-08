@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_pos_sale(jsonb, jsonb, jsonb) FROM PUBLIC, anon;

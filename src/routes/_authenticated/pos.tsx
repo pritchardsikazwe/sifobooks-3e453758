@@ -111,6 +111,15 @@ function RetailPos() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  // Re-pull products/metrics once queued offline sales finish uploading.
+  const prevPending = useRef(0);
+  useEffect(() => {
+    if (prevPending.current > 0 && net.pending === 0 && net.state === "online") {
+      toast.success("Offline sales uploaded");
+      void refresh();
+    }
+    prevPending.current = net.pending;
+  }, [net.pending, net.state, refresh]);
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 30_000);
     return () => clearInterval(t);
@@ -328,6 +337,9 @@ function RetailPos() {
             <span className={cn("flex items-center gap-1 font-semibold",
               net.state === "offline" ? "text-destructive" : net.state === "syncing" ? "text-amber-600" : "text-emerald-600")}>
               ● {net.state === "offline" ? "OFFLINE" : net.state === "syncing" ? "SYNCING" : "ONLINE"}
+              {net.pending > 0 && (
+                <span className="ml-1 rounded-full bg-amber-500/15 px-1.5 text-[10px] text-amber-700">{net.pending} to upload</span>
+              )}
             </span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
@@ -540,11 +552,12 @@ function RetailPos() {
                   <div className="truncate font-semibold">{s.sale_no} · {s.customer_name}</div>
                   <div className="text-xs text-muted-foreground">
                     {new Date(s.sold_at).toLocaleString()} · <span className="uppercase">{s.status}</span>
+                    {s.__offline && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[10px] font-semibold text-amber-700">WAITING TO UPLOAD</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-black tabular-nums">{fmtMoney(Number(s.total))}</span>
-                  {s.status === "completed" && (
+                  {s.status === "completed" && !s.__offline && (
                     <>
                       <Button size="sm" variant="outline" onClick={async () => {
                         try { await refundSale(s.id); toast.success("Refunded"); setRecent(await listRecentSales()); void refresh(); }
