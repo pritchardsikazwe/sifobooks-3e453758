@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.rbac_scope_tenant(), public.rbac_stamp_row(), public.guard_price_change(), public.guard_sale_reversal(), public.guard_discount(), public.guard_staff_assignment() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.current_tenant(), public.is_staff_of(uuid), public.staff_branch(), public.branch_ok(uuid), public.has_override(text,uuid), public.pos_has_books(uuid), public.pos_can(uuid,text,uuid), public.complete_pos_sale(uuid), public.sync_pos_sale(jsonb,jsonb,jsonb) FROM PUBLIC, anon;

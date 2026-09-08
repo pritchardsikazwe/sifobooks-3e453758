@@ -5420,6 +5420,42 @@ export type Database = {
           },
         ]
       }
+      pos_manager_overrides: {
+        Row: {
+          action: string
+          cashier_user_id: string
+          created_at: string
+          entity_id: string | null
+          expires_at: string
+          id: string
+          manager_user_id: string
+          tenant_id: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          cashier_user_id: string
+          created_at?: string
+          entity_id?: string | null
+          expires_at?: string
+          id?: string
+          manager_user_id: string
+          tenant_id: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          cashier_user_id?: string
+          created_at?: string
+          entity_id?: string | null
+          expires_at?: string
+          id?: string
+          manager_user_id?: string
+          tenant_id?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       pos_payments: {
         Row: {
           amount: number
@@ -5618,10 +5654,12 @@ export type Database = {
       }
       pos_sales: {
         Row: {
+          branch_id: string | null
           change_due: number
           client_ref: string | null
           cost_total: number
           created_at: string
+          created_by: string | null
           customer_id: string | null
           customer_name: string
           discount: number
@@ -5644,10 +5682,12 @@ export type Database = {
           void_reason: string | null
         }
         Insert: {
+          branch_id?: string | null
           change_due?: number
           client_ref?: string | null
           cost_total?: number
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           customer_name?: string
           discount?: number
@@ -5670,10 +5710,12 @@ export type Database = {
           void_reason?: string | null
         }
         Update: {
+          branch_id?: string | null
           change_due?: number
           client_ref?: string | null
           cost_total?: number
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           customer_name?: string
           discount?: number
@@ -5794,11 +5836,13 @@ export type Database = {
       pos_shifts: {
         Row: {
           actual_cash: number | null
+          branch_id: string | null
           cash_in: number
           cash_out: number
           cashier_name: string | null
           closed_at: string | null
           created_at: string
+          created_by: string | null
           expected_cash: number
           id: string
           notes: string | null
@@ -5812,11 +5856,13 @@ export type Database = {
         }
         Insert: {
           actual_cash?: number | null
+          branch_id?: string | null
           cash_in?: number
           cash_out?: number
           cashier_name?: string | null
           closed_at?: string | null
           created_at?: string
+          created_by?: string | null
           expected_cash?: number
           id?: string
           notes?: string | null
@@ -5830,11 +5876,13 @@ export type Database = {
         }
         Update: {
           actual_cash?: number | null
+          branch_id?: string | null
           cash_in?: number
           cash_out?: number
           cashier_name?: string | null
           closed_at?: string | null
           created_at?: string
+          created_by?: string | null
           expected_cash?: number
           id?: string
           notes?: string | null
@@ -6702,6 +6750,93 @@ export type Database = {
           },
         ]
       }
+      rbac_permissions: {
+        Row: {
+          key: string
+          label: string
+          perm_group: string
+          sort: number
+        }
+        Insert: {
+          key: string
+          label: string
+          perm_group: string
+          sort?: number
+        }
+        Update: {
+          key?: string
+          label?: string
+          perm_group?: string
+          sort?: number
+        }
+        Relationships: []
+      }
+      rbac_role_permissions: {
+        Row: {
+          permission_key: string
+          role_id: string
+        }
+        Insert: {
+          permission_key: string
+          role_id: string
+        }
+        Update: {
+          permission_key?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rbac_role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "rbac_permissions"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "rbac_role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rbac_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          key: string
+          name: string
+          pos_channel: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          key: string
+          name: string
+          pos_channel?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          key?: string
+          name?: string
+          pos_channel?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       receipt_allocations: {
         Row: {
           account_id: string | null
@@ -7005,6 +7140,7 @@ export type Database = {
           closed_by: string | null
           counted_cash: number
           created_at: string
+          created_by: string | null
           expected_cash: number
           id: string
           name: string
@@ -7026,6 +7162,7 @@ export type Database = {
           closed_by?: string | null
           counted_cash?: number
           created_at?: string
+          created_by?: string | null
           expected_cash?: number
           id?: string
           name?: string
@@ -7047,6 +7184,7 @@ export type Database = {
           closed_by?: string | null
           counted_cash?: number
           created_at?: string
+          created_by?: string | null
           expected_cash?: number
           id?: string
           name?: string
@@ -7666,6 +7804,7 @@ export type Database = {
           business_date: string
           change_due: number
           closed_at: string | null
+          created_by: string | null
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
@@ -7707,6 +7846,7 @@ export type Database = {
           business_date?: string
           change_due?: number
           closed_at?: string | null
+          created_by?: string | null
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
@@ -7748,6 +7888,7 @@ export type Database = {
           business_date?: string
           change_due?: number
           closed_at?: string | null
+          created_by?: string | null
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
@@ -8022,10 +8163,12 @@ export type Database = {
       }
       restaurant_shifts: {
         Row: {
+          branch_id: string | null
           business_date: string
           clock_in: string
           clock_out: string | null
           created_at: string
+          created_by: string | null
           declared_tips: number
           employee_id: string | null
           id: string
@@ -8034,10 +8177,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           business_date?: string
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          created_by?: string | null
           declared_tips?: number
           employee_id?: string | null
           id?: string
@@ -8046,10 +8191,12 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          branch_id?: string | null
           business_date?: string
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          created_by?: string | null
           declared_tips?: number
           employee_id?: string | null
           id?: string
@@ -8070,6 +8217,7 @@ export type Database = {
       restaurant_tables: {
         Row: {
           area: string
+          branch_id: string | null
           created_at: string
           current_order_id: string | null
           id: string
@@ -8086,6 +8234,7 @@ export type Database = {
         }
         Insert: {
           area?: string
+          branch_id?: string | null
           created_at?: string
           current_order_id?: string | null
           id?: string
@@ -8102,6 +8251,7 @@ export type Database = {
         }
         Update: {
           area?: string
+          branch_id?: string | null
           created_at?: string
           current_order_id?: string | null
           id?: string
@@ -8379,6 +8529,60 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_members: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean
+          role_id: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          role_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          role_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_members_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "rbac_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_adjustments: {
         Row: {
           adjustment_date: string
@@ -8604,6 +8808,7 @@ export type Database = {
         Row: {
           barcode: string | null
           bin: string | null
+          branch_id: string | null
           category: string | null
           cost_price: number
           created_at: string
@@ -8631,6 +8836,7 @@ export type Database = {
         Insert: {
           barcode?: string | null
           bin?: string | null
+          branch_id?: string | null
           category?: string | null
           cost_price?: number
           created_at?: string
@@ -8658,6 +8864,7 @@ export type Database = {
         Update: {
           barcode?: string | null
           bin?: string | null
+          branch_id?: string | null
           category?: string | null
           cost_price?: number
           created_at?: string
@@ -9613,6 +9820,7 @@ export type Database = {
       }
       approver_role_for_request: { Args: { _req: string }; Returns: string }
       auto_match_bank_transactions: { Args: never; Returns: Json }
+      branch_ok: { Args: { _row_branch: string }; Returns: boolean }
       can_act_on_request: {
         Args: { _req: string; _user: string }
         Returns: boolean
@@ -9626,6 +9834,7 @@ export type Database = {
       complete_pos_sale: { Args: { _sale_id: string }; Returns: string }
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
       confirm_pos_pin_reset: { Args: { _pin: string }; Returns: Json }
+      current_tenant: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -9647,6 +9856,11 @@ export type Database = {
         Args: { _as_of?: string; _from: string; _to: string; _uid: string }
         Returns: number
       }
+      has_override: {
+        Args: { _action: string; _entity: string }
+        Returns: boolean
+      }
+      has_perm: { Args: { _perm: string; _tenant?: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9658,6 +9872,7 @@ export type Database = {
         Args: { _company: string; _user: string }
         Returns: boolean
       }
+      is_staff_of: { Args: { _tenant: string }; Returns: boolean }
       lock_reconciliation: { Args: { _session_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {
@@ -9668,6 +9883,7 @@ export type Database = {
         }
         Returns: number
       }
+      my_access: { Args: never; Returns: Json }
       notify_once: {
         Args: {
           _key: string
@@ -9734,6 +9950,7 @@ export type Database = {
         Args: { _entry_id: string; _reason: string; _reversal_date?: string }
         Returns: Json
       }
+      staff_branch: { Args: never; Returns: string }
       sync_pos_sale: {
         Args: { _items?: Json; _payments?: Json; _sale: Json }
         Returns: string
