@@ -28,13 +28,13 @@ export function StaffDashboard({ access }: { access: Access }) {
         const { data } = await q;
         setTodaySales((data ?? []).reduce((s: number, r: any) => s + Number(r.total || 0), 0));
         setTodayCount((data ?? []).length);
-        const { data: sh } = await supabase.from("pos_shifts").select("id").is("closed_at", null).limit(1);
+        const { data: sh } = await supabase.from("pos_shifts").select("id").eq("status", "open").limit(1);
         setOpenShift(Boolean(sh?.length));
       } else if (resto) {
         const { data } = await supabase.from("restaurant_orders").select("total, status").gte("created_at", start.toISOString()).in("status", ["paid", "closed", "completed"]);
         setTodaySales((data ?? []).reduce((s: number, r: any) => s + Number(r.total || 0), 0));
         setTodayCount((data ?? []).length);
-        const { data: sh } = await supabase.from("restaurant_shifts").select("id").is("ended_at", null).limit(1);
+        const { data: sh } = await supabase.from("restaurant_shifts").select("id").is("clock_out", null).limit(1);
         setOpenShift(Boolean(sh?.length));
       }
     })();
