@@ -1,3 +1,4 @@
+import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -278,6 +279,7 @@ function ExpensesPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <SifoHubTabs hub="finance" active="/expenses" />
       <SifoModuleHeader
         module="purchases"
         icon={Receipt}

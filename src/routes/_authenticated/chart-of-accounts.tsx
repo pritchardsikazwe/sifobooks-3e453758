@@ -1,3 +1,4 @@
+import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Info } from "lucide-react";
@@ -144,6 +145,7 @@ function ChartOfAccountsPage() {
 
   return (
     <div className="p-6 space-y-4 max-w-7xl">
+      <SifoHubTabs hub="finance" active="/chart-of-accounts" />
       <SifoModuleHeader
         module="accounting"
         icon={BookOpen}

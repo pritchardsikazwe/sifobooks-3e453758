@@ -1,3 +1,4 @@
+import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Scale, Link2, Unlink, CheckCircle2, Loader2, Search, Upload, AlertTriangle, BookOpen } from "lucide-react";
@@ -478,6 +479,7 @@ function Reconciliation() {
 
   return (
     <div className="p-6 space-y-6">
+      <SifoHubTabs hub="finance" active="/reconciliation" />
       <div className="flex items-center gap-3 justify-between">
         <div className="flex items-center gap-3">
           <Scale className="h-6 w-6" />
