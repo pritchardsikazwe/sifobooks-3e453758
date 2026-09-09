@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { INDUSTRY_SOLUTIONS, getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
+import { ACCOUNTING_LEVELS, type AccountingLevel } from "@/lib/accounting-config";
 import { WORKSPACE_MODES, landingFor, type WorkspaceMode } from "@/lib/workspace";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -37,7 +38,6 @@ const COUNTRIES = ["Nigeria", "Kenya", "South Africa", "Ghana", "Zambia", "Tanza
 const CURRENCIES = ["USD", "NGN", "KES", "ZAR", "GHS", "ZMW", "TZS", "UGX", "EGP", "RWF", "XOF", "EUR", "GBP"];
 const TEAM_SIZES = ["Just me", "2–10", "11–50", "51–200", "200+"];
 
-
 function OnboardingPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -47,6 +47,7 @@ function OnboardingPage() {
     business_name: "", country: "Nigeria", currency: "NGN", tax_id: "", phone: "", team_size: "", industry: "",
   });
   const [mode, setMode] = useState<WorkspaceMode>("accounting");
+  const [accountingLevel, setAccountingLevel] = useState<AccountingLevel>("full");
 
   useEffect(() => {
     (async () => {
@@ -62,7 +63,7 @@ function OnboardingPage() {
   const steps = [
     { title: "Your business", desc: "Tell us who you're invoicing under" },
     { title: "Billing basics", desc: "Currency and tax identification" },
-    { title: "About your team", desc: "So we can tailor SifoBooks for you" },
+    { title: "Configure SifoBooks", desc: "Choose your business experience and accounting depth" },
   ];
 
   const canNext =
@@ -77,6 +78,7 @@ function OnboardingPage() {
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setLoading(false); return setError("Not signed in"); }
+
     const { error } = await supabase.from("profiles").update({
       business_name: parsed.data.business_name,
       country: parsed.data.country,
@@ -89,14 +91,16 @@ function OnboardingPage() {
     }).eq("id", u.user.id);
     if (error) { setLoading(false); return setError(error.message); }
 
-    // Apply the chosen industry solution to the company workspace (non-destructive).
     const sol = getSolution(parsed.data.industry);
     let landing = "/dashboard";
     try {
       const { data: c } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
       if (c?.[0]?.id) {
         if (sol) await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
-        await supabase.from("companies").update({ workspace_mode: mode }).eq("id", c[0].id);
+        await supabase.from("companies").update({
+          workspace_mode: mode,
+          accounting_level: accountingLevel,
+        }).eq("id", c[0].id);
       }
       landing = landingFor(mode);
     } catch { /* workspace defaults to the dashboard */ }
@@ -128,7 +132,7 @@ function OnboardingPage() {
                     <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label>Phone (optional)</Label><Input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+234 800 000 0000" /></div>
+                <div className="space-y-2"><Label>Phone (optional)</Label><Input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+260 97 000 0000" /></div>
               </>
             )}
             {step === 1 && (
@@ -146,30 +150,6 @@ function OnboardingPage() {
             {step === 2 && (
               <>
                 <div className="space-y-2">
-                  <Label>What will you primarily use SifoBooks for?</Label>
-                  <p className="text-xs text-muted-foreground">This sets your home screen. Everything still posts to one accounting engine, and you can switch later.</p>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {WORKSPACE_MODES.map(m => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setMode(m.id)}
-                        className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${mode === m.id ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
-                      >
-                        <div className="flex items-center gap-2"><span>{m.emoji}</span><span className="text-sm font-medium truncate">{m.label}</span></div>
-                        <div className="mt-1 text-[11px] text-muted-foreground leading-snug">{m.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Team size</Label>
-                  <Select value={form.team_size} onValueChange={v => set("team_size", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>{TEAM_SIZES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label>What type of business do you operate?</Label>
                   <p className="text-xs text-muted-foreground">SifoBooks configures your workspace from this — you never have to install modules one by one.</p>
                   <div className="grid grid-cols-2 gap-2 pt-1">
@@ -177,25 +157,55 @@ function OnboardingPage() {
                       const active = form.industry === s.id;
                       const soon = s.status === "coming_soon";
                       return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => set("industry", s.id)}
-                          className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${active ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{s.emoji}</span>
-                            <span className="text-sm font-medium truncate">{s.label}</span>
-                          </div>
-                          <div className="mt-1">
-                            {soon
-                              ? <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"><Clock className="h-3 w-3" /> Coming soon</span>
-                              : <span className="text-[10px] uppercase tracking-wide text-emerald-600">Available</span>}
-                          </div>
+                        <button key={s.id} type="button" onClick={() => set("industry", s.id)}
+                          className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${active ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}>
+                          <div className="flex items-center gap-2"><span>{s.emoji}</span><span className="text-sm font-medium truncate">{s.label}</span></div>
+                          <div className="mt-1">{soon
+                            ? <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"><Clock className="h-3 w-3" /> Coming soon</span>
+                            : <span className="text-[10px] uppercase tracking-wide text-emerald-600">Available</span>}</div>
                         </button>
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Accounting level</Label>
+                  <p className="text-xs text-muted-foreground">Choose how much of the accounting workspace you want exposed. This never deletes data and can be changed later.</p>
+                  <div className="space-y-2">
+                    {ACCOUNTING_LEVELS.map(level => (
+                      <button key={level.id} type="button" onClick={() => setAccountingLevel(level.id)}
+                        className={`w-full text-left rounded-lg border px-3 py-3 transition-colors ${accountingLevel === level.id ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-medium">{level.label}</span>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{level.bestFor}</span>
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground leading-snug">{level.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Primary workspace</Label>
+                  <p className="text-xs text-muted-foreground">This controls your landing experience, not the accounting engine.</p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {WORKSPACE_MODES.map(m => (
+                      <button key={m.id} type="button" onClick={() => setMode(m.id)}
+                        className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${mode === m.id ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}>
+                        <div className="flex items-center gap-2"><span>{m.emoji}</span><span className="text-sm font-medium truncate">{m.label}</span></div>
+                        <div className="mt-1 text-[11px] text-muted-foreground leading-snug">{m.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Team size</Label>
+                  <Select value={form.team_size} onValueChange={v => set("team_size", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                    <SelectContent>{TEAM_SIZES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
               </>
             )}
