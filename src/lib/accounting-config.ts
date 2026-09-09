@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveCompanyId } from "@/lib/workspace";
+import type { ModuleDef } from "@/lib/modules";
 
 export type AccountingLevel = "starter" | "standard" | "full";
 
@@ -64,11 +65,32 @@ export async function setAccountingLevel(level: AccountingLevel, companyId?: str
   return id;
 }
 
-/**
- * Returns the minimum accounting level needed for a capability.
- * This is intentionally configuration-only: routes/data are never deleted.
- */
+/** Minimum accounting level required for each optional module. */
+export const MODULE_MIN_ACCOUNTING_LEVEL: Record<string, AccountingLevel> = {
+  // Starter intentionally exposes the simple day-to-day business workflow.
+  inventory: "standard",
+  finance: "standard",
+  fixed_assets: "full",
+  budgets: "standard",
+  multi_currency: "full",
+  hr_payroll: "standard",
+  crm: "full",
+  projects: "full",
+  compliance: "standard",
+  loans: "full",
+  donors: "full",
+  school_erp: "full",
+  restaurant: "standard",
+  // Retail POS is useful at every level when selected as the workspace.
+  retail_pos: "starter",
+};
+
 export function accountingLevelAllows(current: AccountingLevel, minimum: AccountingLevel): boolean {
   const rank: Record<AccountingLevel, number> = { starter: 1, standard: 2, full: 3 };
   return rank[current] >= rank[minimum];
+}
+
+export function moduleAllowedForAccountingLevel(module: ModuleDef, level: AccountingLevel): boolean {
+  const minimum = MODULE_MIN_ACCOUNTING_LEVEL[module.key];
+  return !minimum || accountingLevelAllows(level, minimum);
 }
