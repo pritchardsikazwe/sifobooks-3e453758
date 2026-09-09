@@ -1,5 +1,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Sector ERP tables are not present in the generated types yet.
+const db: any = supabase;
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,25 +29,25 @@ export function SifoSectorConnectedWorkspace({ kind, screen }: { kind: "hotel" |
   const refresh = async (uid?: string, cid?: string) => {
     if (!uid || !cid) return;
     if (screen === "/hotel/reservations") {
-      const { data } = await supabase.from("hotel_reservations").select("reservation_no,check_in,check_out,status,total_amount,hotel_guests(first_name,last_name)").eq("company_id", cid).order("check_in", { ascending: false }).limit(50);
+      const { data } = await db.from("hotel_reservations").select("reservation_no,check_in,check_out,status,total_amount,hotel_guests(first_name,last_name)").eq("company_id", cid).order("check_in", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/school/students") {
-      const { data } = await supabase.from("school_students").select("admission_no,first_name,last_name,current_class,status").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
+      const { data } = await db.from("school_students").select("admission_no,first_name,last_name,current_class,status").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/school/attendance") {
-      const { data } = await supabase.from("school_attendance").select("attendance_date,status,notes,school_students(first_name,last_name,admission_no)").eq("company_id", cid).order("attendance_date", { ascending: false }).limit(50);
+      const { data } = await db.from("school_attendance").select("attendance_date,status,notes,school_students(first_name,last_name,admission_no)").eq("company_id", cid).order("attendance_date", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/school/exams") {
-      const { data } = await supabase.from("school_marks").select("marks,grade,remarks,school_students(first_name,last_name,admission_no),school_assessments(name,term,academic_year)").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
+      const { data } = await db.from("school_marks").select("marks,grade,remarks,school_students(first_name,last_name,admission_no),school_assessments(name,term,academic_year)").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/school/fees") {
-      const { data } = await supabase.from("school_fee_accounts").select("academic_year,term,charges,paid,balance,school_students(first_name,last_name,admission_no,current_class)").eq("company_id", cid).order("updated_at", { ascending: false }).limit(50);
+      const { data } = await db.from("school_fee_accounts").select("academic_year,term,charges,paid,balance,school_students(first_name,last_name,admission_no,current_class)").eq("company_id", cid).order("updated_at", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/hotel/folios") {
-      const { data } = await supabase.from("hotel_folios").select("folio_no,status,total_amount,paid_amount,hotel_guests(first_name,last_name)").eq("company_id", cid).order("updated_at", { ascending: false }).limit(50);
+      const { data } = await db.from("hotel_folios").select("folio_no,status,total_amount,paid_amount,hotel_guests(first_name,last_name)").eq("company_id", cid).order("updated_at", { ascending: false }).limit(50);
       setRows(data ?? []);
     } else if (screen === "/hotel/guests") {
-      const { data } = await supabase.from("hotel_guests").select("first_name,last_name,phone,email,nationality").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
+      const { data } = await db.from("hotel_guests").select("first_name,last_name,phone,email,nationality").eq("company_id", cid).order("created_at", { ascending: false }).limit(50);
       setRows(data ?? []);
     }
   };

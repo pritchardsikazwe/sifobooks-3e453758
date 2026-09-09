@@ -96,7 +96,7 @@ function InventoryFlowAudit() {
   };
 
   return <div className="p-4 sm:p-6 space-y-6 max-w-7xl">
-    <SifoModuleHeader title="Inventory Flow Audit" description="MKP Farms Limited 1 — follow inventory from its first entry through every transfer, sale and adjustment." icon={Activity} actions={<Button variant="outline" size="sm" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />Refresh</Button>} />
+    <SifoModuleHeader module="inventory" title="Inventory Flow Audit" description="MKP Farms Limited 1 — follow inventory from its first entry through every transfer, sale and adjustment." icon={Activity} actions={<Button variant="outline" size="sm" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />Refresh</Button>} />
 
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <AuditCard icon={Warehouse} title="Opening / Production" value={stats.opening} subtitle="Starting stock entering locations" />

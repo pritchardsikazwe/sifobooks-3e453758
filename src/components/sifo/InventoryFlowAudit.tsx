@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Activity, ArrowDownToLine, ArrowUpFromLine, Boxes, FileText, RefreshCw, ShoppingCart, Truck, Warehouse, AlertTriangle, Scale } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

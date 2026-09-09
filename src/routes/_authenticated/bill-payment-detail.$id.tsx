@@ -28,13 +28,14 @@ function BillPaymentDetailPage() {
       if (error) toast.error(error.message);
       setPayment(data);
       if (data) {
-        const candidates = ["bill_id", "invoice_id"].filter(k => data[k]);
+        const row = data as Record<string, any>;
+        const candidates = ["bill_id", "invoice_id"].filter(k => row[k]);
         if (candidates.length) {
           const key = candidates[0];
-          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("id", data[key]);
+          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("id", row[key!]);
           setBills(linked ?? []);
         } else {
-          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("reference", data.reference ?? "");
+          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("bill_number", row.reference ?? "");
           setBills(linked ?? []);
         }
       }

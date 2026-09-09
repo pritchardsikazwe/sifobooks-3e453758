@@ -1,13 +1,15 @@
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Activity, ArrowRight, BarChart3, BedDouble, BookOpen, CalendarCheck, CheckCircle2, CircleDollarSign, CreditCard, GraduationCap, Hotel, House, ReceiptText, School, Sparkles, Users, UtensilsCrossed, WalletCards } from "lucide-react";
 
-const hotelCards = [["Occupancy", "78%", "↑ 6.4% vs last week", BedDouble], ["Rooms available", "18", "6 arrivals today", Hotel], ["In-house guests", "64", "12 departures today", Users], ["Today's revenue", "K 86,420", "Rooms + F&B + events", CircleDollarSign]];
-const hotelQueues = [["Arrivals", "12", "Front desk", CalendarCheck], ["Housekeeping", "7", "Rooms need attention", Sparkles], ["Restaurant orders", "34", "Open checks", UtensilsCrossed], ["Night audit", "Ready", "0 exceptions", CheckCircle2]];
-const schoolCards = [["Active learners", "1,248", "98.6% enrolled", GraduationCap], ["Attendance today", "94.2%", "↑ 1.8% this week", CalendarCheck], ["Fees collected", "K 428,600", "72% of monthly target", WalletCards], ["Pending applications", "38", "14 require review", Users]];
-const schoolQueues = [["Admissions", "14", "Applications to review", Users], ["Attendance alerts", "23", "Follow-up required", Activity], ["Exams", "6", "Upcoming assessments", BookOpen], ["Fee balances", "K 182,400", "Outstanding", CreditCard]];
+type Tile = [string, string, string, LucideIcon];
+const hotelCards: Tile[] = [["Occupancy", "78%", "↑ 6.4% vs last week", BedDouble], ["Rooms available", "18", "6 arrivals today", Hotel], ["In-house guests", "64", "12 departures today", Users], ["Today's revenue", "K 86,420", "Rooms + F&B + events", CircleDollarSign]];
+const hotelQueues: Tile[] = [["Arrivals", "12", "Front desk", CalendarCheck], ["Housekeeping", "7", "Rooms need attention", Sparkles], ["Restaurant orders", "34", "Open checks", UtensilsCrossed], ["Night audit", "Ready", "0 exceptions", CheckCircle2]];
+const schoolCards: Tile[] = [["Active learners", "1,248", "98.6% enrolled", GraduationCap], ["Attendance today", "94.2%", "↑ 1.8% this week", CalendarCheck], ["Fees collected", "K 428,600", "72% of monthly target", WalletCards], ["Pending applications", "38", "14 require review", Users]];
+const schoolQueues: Tile[] = [["Admissions", "14", "Applications to review", Users], ["Attendance alerts", "23", "Follow-up required", Activity], ["Exams", "6", "Upcoming assessments", BookOpen], ["Fee balances", "K 182,400", "Outstanding", CreditCard]];
 
-function Metric({ item }: { item: any[] }) { const Icon = item[3]; return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><div className="text-sm font-medium text-slate-500">{item[0]}</div><div className="mt-2 text-2xl font-bold text-slate-950">{item[1]}</div><div className="mt-1 text-xs text-slate-500">{item[2]}</div></div><div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700"><Icon className="h-5 w-5" /></div></div></div>; }
+function Metric({ item }: { item: Tile }) { const Icon = item[3]; return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><div className="text-sm font-medium text-slate-500">{item[0]}</div><div className="mt-2 text-2xl font-bold text-slate-950">{item[1]}</div><div className="mt-1 text-xs text-slate-500">{item[2]}</div></div><div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700"><Icon className="h-5 w-5" /></div></div></div>; }
 
 export function SifoSectorDashboard({ kind }: { kind: "hotel" | "school" }) {
   const [view, setView] = useState("overview"); const hotel = kind === "hotel"; const cards = hotel ? hotelCards : schoolCards; const queues = hotel ? hotelQueues : schoolQueues; const Icon = hotel ? Hotel : School;

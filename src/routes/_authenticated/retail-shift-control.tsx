@@ -31,7 +31,7 @@ type Detail = { transactions: number; salesTotal: number; voids: number; refunds
 const money = (v: number) => new Intl.NumberFormat("en-ZM", { style: "currency", currency: "ZMW", maximumFractionDigits: 2 }).format(Number(v || 0));
 
 function RetailShiftControl() {
-  const { can } = usePermissions();
+  const { has } = usePermissions();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [details, setDetails] = useState<Record<string, Detail>>({});
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,7 @@ function RetailShiftControl() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  if (!can("reports.view")) return <div className="p-6"><Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8" /><h2 className="text-lg font-semibold">Manager access required</h2><p className="mt-1 text-sm text-muted-foreground">You need the reports.view permission to open Shift Control.</p></CardContent></Card></div>;
+  if (!has("reports.view")) return <div className="p-6"><Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8" /><h2 className="text-lg font-semibold">Manager access required</h2><p className="mt-1 text-sm text-muted-foreground">You need the reports.view permission to open Shift Control.</p></CardContent></Card></div>;
 
   const open = shifts.filter((s) => s.status === "open");
   const closedToday = shifts.filter((s) => s.status === "closed" && s.closed_at && new Date(s.closed_at).toDateString() === new Date().toDateString());

@@ -71,6 +71,7 @@ function InventoryControlCentre() {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl">
       <SifoModuleHeader
+        module="inventory"
         title="Inventory Control Centre"
         description="MKP Farms Limited 1 — see exactly what is held at each location and trace stock from origin to sale."
         icon={Boxes}
