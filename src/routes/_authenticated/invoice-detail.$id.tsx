@@ -8,6 +8,10 @@ import { fmtMoney } from "@/lib/format";
 import { SifoDocumentLayout, BackToDocumentList, type SifoDocumentLine } from "@/components/sifo/SifoDocumentLayout";
 import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { toast } from "sonner";
+import { SifoCompletionPanel } from "@/components/sifo/SifoNextActionPanel";
+import { DOCUMENT_GUIDANCE } from "@/lib/document-guidance";
+
+const INVOICE_GUIDANCE = DOCUMENT_GUIDANCE.invoice;
 
 export const Route = createFileRoute("/_authenticated/invoice-detail/$id")({
   head: () => ({ meta: [{ title: "Invoice Detail — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -70,7 +74,20 @@ function InvoiceDetailPage() {
     lines={lines}
     lineHeaders={["Item / SKU", "Qty", "Unit price", "VAT", "Line total"]}
     totals={<div className="space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{fmtMoney(invoice.subtotal ?? 0, invoice.currency)}</span></div><div className="flex justify-between"><span>VAT</span><span>{fmtMoney(invoice.vat_amount ?? 0, invoice.currency)}</span></div><div className="border-t pt-3 flex justify-between text-base font-bold"><span>Total</span><span>{fmtMoney(invoice.total ?? 0, invoice.currency)}</span></div><div className="flex justify-between text-emerald-700"><span>Paid</span><span>{fmtMoney(paid, invoice.currency)}</span></div><div className={`flex justify-between font-semibold ${balance > 0 ? "text-red-600" : "text-emerald-700"}`}><span>Balance due</span><span>{fmtMoney(balance, invoice.currency)}</span></div></div>}
-    impact={<div className="space-y-5"><DocumentImpact kind="invoice" reference={invoice.number ? `INV:${invoice.number}` : null} /><div><div className="text-sm font-semibold mb-2">Inventory depletion</div>{movements.length ? <div className="space-y-2">{movements.map(m => <div key={m.id} className="rounded-md border p-3 text-sm flex justify-between gap-3"><div><div className="font-medium">{m.stock_items?.name ?? "Stock item"}</div><div className="text-xs text-muted-foreground">{m.note ?? m.reference ?? "—"} · {m.created_at ? new Date(m.created_at).toLocaleString() : "—"}</div></div><span className="font-semibold">-{Number(m.quantity ?? 0).toLocaleString()}</span></div>)}</div> : <p className="text-sm text-muted-foreground">No stock movement linked by invoice reference.</p>}</div></div>}
+    impact={<div className="space-y-5"><SifoCompletionPanel
+      title={`Invoice ${invoice.number ?? ""} ${balance > 0 ? "is posted and unpaid" : "is settled"}`.trim()}
+      statusLabel={status}
+      lifecycle={INVOICE_GUIDANCE.lifecycle}
+      currentStage={balance > 0 ? (paid > 0 ? 2 : 1) : 3}
+      impact={INVOICE_GUIDANCE.impact({
+        amount: fmtMoney(invoice.total ?? 0, invoice.currency),
+        net: fmtMoney(invoice.subtotal ?? 0, invoice.currency),
+        tax: Number(invoice.vat_amount ?? 0) > 0 ? fmtMoney(invoice.vat_amount ?? 0, invoice.currency) : undefined,
+        party: invoice.customers?.name ?? "the customer",
+        hasStock: movements.length > 0,
+      })}
+      steps={INVOICE_GUIDANCE.steps({ id, reference: invoice.number })}
+    /><DocumentImpact kind="invoice" reference={invoice.number ? `INV:${invoice.number}` : null} /><div><div className="text-sm font-semibold mb-2">Inventory depletion</div>{movements.length ? <div className="space-y-2">{movements.map(m => <div key={m.id} className="rounded-md border p-3 text-sm flex justify-between gap-3"><div><div className="font-medium">{m.stock_items?.name ?? "Stock item"}</div><div className="text-xs text-muted-foreground">{m.note ?? m.reference ?? "—"} · {m.created_at ? new Date(m.created_at).toLocaleString() : "—"}</div></div><span className="font-semibold">-{Number(m.quantity ?? 0).toLocaleString()}</span></div>)}</div> : <p className="text-sm text-muted-foreground">No stock movement linked by invoice reference.</p>}</div></div>}
     footer={<div className="space-y-5"><div><div className="text-sm font-semibold mb-2">Payment allocation</div>{payments.length ? <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs text-muted-foreground"><th className="py-2">Receipt</th><th className="py-2">Date</th><th className="py-2">Method</th><th className="py-2 text-right">Amount</th><th className="py-2">Status</th></tr></thead><tbody>{payments.map(p => <tr key={p.id} className="border-b"><td className="py-2 font-mono text-xs">{p.receipt_number ?? "—"}</td><td className="py-2">{p.receipt_date ?? "—"}</td><td className="py-2 capitalize">{p.payment_method ?? "—"}</td><td className="py-2 text-right">{fmtMoney(p.amount ?? 0, invoice.currency)}</td><td className="py-2 capitalize">{p.status ?? "—"}</td></tr>)}</tbody></table></div> : <p className="text-sm text-muted-foreground">No payments allocated to this invoice.</p>}</div><div><div className="text-sm font-semibold">Audit metadata</div><div className="mt-2 grid gap-2 sm:grid-cols-3 text-sm"><div><span className="text-muted-foreground">Created:</span> {invoice.created_at ? new Date(invoice.created_at).toLocaleString() : "—"}</div><div><span className="text-muted-foreground">Updated:</span> {invoice.updated_at ? new Date(invoice.updated_at).toLocaleString() : "—"}</div><div><span className="text-muted-foreground">Quote ID:</span> {invoice.quote_id ?? "—"}</div></div></div></div>}
   />;
 }
