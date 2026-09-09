@@ -63,9 +63,20 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
     const legacyRole = role.key?.includes("manager") ? "manager" : role.pos_channel === "restaurant" ? "waiter" : "cashier";
     const { data: leg } = await supabaseAdmin.from("employee_pos_permissions").select("id").eq("user_id", tenantId).eq("worker_user_id", userId).maybeSingle();
     const legacyRow: any = { email: data.email, full_name: data.full_name || data.email, pos_role: legacyRole, is_active: true };
-    if (data.pin) legacyRow.pin = data.pin;
+    let permissionId = leg?.id as string | undefined;
     if (leg) await supabaseAdmin.from("employee_pos_permissions").update(legacyRow).eq("id", leg.id);
-    else await supabaseAdmin.from("employee_pos_permissions").insert({ ...legacyRow, user_id: tenantId, worker_user_id: userId, pin: data.pin || null });
+    else {
+      const { data: created } = await supabaseAdmin
+        .from("employee_pos_permissions")
+        .insert({ ...legacyRow, user_id: tenantId, worker_user_id: userId })
+        .select("id")
+        .maybeSingle();
+      permissionId = (created as any)?.id;
+    }
+    // PINs are never stored in plain text — hash them in the database.
+    if (data.pin && permissionId) {
+      await supabaseAdmin.rpc("set_cashier_pin" as never, { _permission_id: permissionId, _pin: data.pin } as never);
+    }
 
     return { ok: true, invited, user_id: userId };
   });
@@ -99,16 +110,18 @@ export const requestManagerOverride = createServerFn({ method: "POST" })
 
     // PIN lives on the legacy worker row (owners may also set one there).
     const { data: legacy } = await supabaseAdmin.from("employee_pos_permissions")
-      .select("pin, is_active").eq("user_id", tenantId).eq("worker_user_id", mgr.id).maybeSingle();
+      .select("id, is_active, pin_set_at, pin_disabled").eq("user_id", tenantId).eq("worker_user_id", mgr.id).maybeSingle();
     const isOwner = mgr.id === tenantId;
-    if (!isOwner) {
-      if (!legacy || legacy.is_active === false || !legacy.pin || legacy.pin !== data.manager_pin) throw new Error("Manager PIN incorrect");
-    } else if (legacy?.pin && legacy.pin !== data.manager_pin) {
-      throw new Error("Manager PIN incorrect");
-    } else if (!legacy?.pin) {
-      // Owner without a PIN: require they set one first (prevents email-only bypass).
-      throw new Error("The owner must set a manager PIN under Team & Roles before authorising");
+    const lg = legacy as any;
+    if (!lg || lg.is_active === false || !lg.pin_set_at || lg.pin_disabled) {
+      throw new Error(isOwner
+        ? "The owner must set a manager PIN under Team & Roles before authorising"
+        : "Manager PIN incorrect");
     }
+    const { data: check } = await supabaseAdmin.rpc("verify_cashier_pin" as never, {
+      _permission_id: lg.id, _pin: data.manager_pin,
+    } as never);
+    if (!(check as any)?.ok) throw new Error("Manager PIN incorrect");
 
     // Verify the manager actually holds the permission in this tenant.
     if (!isOwner) {
