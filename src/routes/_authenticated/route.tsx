@@ -16,8 +16,8 @@ import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
 import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
-import { getAccountingLevel, routeAllowedForAccountingLevel, moduleForRoute, moduleAllowedForAccountingLevel } from "@/lib/accounting-config";
-import { getModule } from "@/lib/modules";
+import { getAccountingLevel, routeAllowedForAccountingLevel, moduleAllowedForAccountingLevel } from "@/lib/accounting-config";
+import { moduleForRoute } from "@/lib/modules";
 import { toast } from "sonner";
 
 /** Staff may only open routes their permissions allow — typed URLs included. */
