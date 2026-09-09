@@ -45,11 +45,13 @@ function CashierHome() {
       const s = await currentShiftFor(asg.cashierUserId);
       setShift(s);
       if (s?.id) setTotals(await shiftTotals(s.id));
-      if (asg.locationId) {
+      const store = await resolveStoreLocation(asg);
+      setStoreName(store?.name ?? asg.branchName ?? asg.locationName ?? null);
+      if (store) {
         const { data } = await supabase
           .from("stock_balances")
           .select("qty, stock_items(reorder_level)")
-          .eq("location_id", asg.locationId);
+          .eq("location_id", store.id);
         setLowStock(
           (data ?? []).filter((r: any) => Number(r.qty ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
         );
