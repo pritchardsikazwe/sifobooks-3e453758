@@ -1,3 +1,4 @@
+import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { BookText, Printer } from "lucide-react";
@@ -247,6 +248,7 @@ function CashbookPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <SifoHubTabs hub="finance" active="/cashbook" />
       <div className="flex items-center justify-between flex-wrap gap-2 print:hidden">
         <div className="flex items-center gap-3">
           <BookText className="h-6 w-6 text-emerald-600" />
