@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  loadAssignment, currentShiftFor, shiftTotals, expectedCash, kw,
+  loadAssignment, currentShiftFor, shiftTotals, expectedCash, resolveStoreLocation, kw,
   type CashierAssignment, type ShiftTotals,
 } from "@/lib/cashier-workspace";
 import { usePosContext } from "@/components/pos/PosContextProvider";
@@ -30,6 +30,7 @@ function CashierHome() {
   const [shift, setShift] = useState<Record<string, any> | null>(null);
   const [totals, setTotals] = useState<ShiftTotals | null>(null);
   const [lowStock, setLowStock] = useState<number>(0);
+  const [storeName, setStoreName] = useState<string | null>(null);
   const [clock, setClock] = useState(new Date());
 
   useEffect(() => {
@@ -45,11 +46,13 @@ function CashierHome() {
       const s = await currentShiftFor(asg.cashierUserId);
       setShift(s);
       if (s?.id) setTotals(await shiftTotals(s.id));
-      if (asg.locationId) {
+      const store = await resolveStoreLocation(asg);
+      setStoreName(store?.name ?? asg.branchName ?? asg.locationName ?? null);
+      if (store) {
         const { data } = await supabase
           .from("stock_balances")
           .select("qty, stock_items(reorder_level)")
-          .eq("location_id", asg.locationId);
+          .eq("location_id", store.id);
         setLowStock(
           (data ?? []).filter((r: any) => Number(r.qty ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
         );
@@ -68,8 +71,9 @@ function CashierHome() {
   const actions: { label: string; icon: keyof typeof Icons; to?: string; onClick?: () => void; tone?: string }[] = [
     { label: "New sale", icon: "ShoppingCart", to: isRestaurant ? "/w/pos" : "/pos", tone: "bg-emerald-500 text-slate-950" },
     { label: "My sales", icon: "ReceiptText", to: "/w/sales" },
-    { label: "Stock lookup", icon: "Boxes", to: "/w/stock" },
-    { label: "Returns", icon: "Undo2", to: isRestaurant ? "/w/orders" : "/pos" },
+    { label: "Stock lookup", icon: "Boxes", to: "/w/lookup" },
+    { label: "Returns", icon: "Undo2", to: isRestaurant ? "/w/orders" : "/w/returns" },
+    { label: "Stock count", icon: "ClipboardList", to: "/w/count" },
     { label: "My shift", icon: "Clock", to: "/w/shift" },
     { label: "Cash drawer", icon: "Banknote", to: "/w/cash" },
     { label: "Log out", icon: "LogOut", onClick: signOut, tone: "bg-rose-500/15 text-rose-300" },
@@ -82,7 +86,7 @@ function CashierHome() {
           <div>
             <h1 className="text-xl font-bold">{a?.displayName ?? ctx?.displayName ?? "Cashier"}</h1>
             <p className="text-sm text-slate-400">
-              {a?.branchName ?? a?.locationName ?? "Your store"}
+              {storeName ?? a?.branchName ?? a?.locationName ?? "Your store"}
               {a?.stationName ? ` · ${a.stationName}` : ""}
               {a?.drawerName ? ` · ${a.drawerName}` : ""}
             </p>

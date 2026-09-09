@@ -130,6 +130,9 @@ export const WORKER_NAV: { to: string; label: string; icon: string; feature?: Po
   { to: "/w/sales", label: "My sales", icon: "ReceiptText", feature: "pos_sales" },
   { to: "/w/shift", label: "My shift", icon: "Clock", feature: "pos_sales" },
   { to: "/w/cash", label: "Cash", icon: "Banknote", feature: "cash_drawer" },
+  { to: "/w/returns", label: "Returns", icon: "Undo2", feature: "pos_sales" },
+  { to: "/w/lookup", label: "Lookup", icon: "Search", feature: "pos_sales" },
+  { to: "/w/count", label: "Count", icon: "ClipboardList", feature: "pos_sales" },
   { to: "/w/stock", label: "Stock", icon: "Boxes", feature: "stock_view" },
   { to: "/w/reports", label: "Reports", icon: "BarChart3", feature: "reports" },
 ];

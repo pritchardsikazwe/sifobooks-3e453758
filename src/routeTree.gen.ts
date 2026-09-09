@@ -129,10 +129,13 @@ import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
 import { Route as WorkerWStockRouteImport } from './routes/_worker/w.stock'
 import { Route as WorkerWShiftRouteImport } from './routes/_worker/w.shift'
 import { Route as WorkerWSalesRouteImport } from './routes/_worker/w.sales'
+import { Route as WorkerWReturnsRouteImport } from './routes/_worker/w.returns'
 import { Route as WorkerWReportsRouteImport } from './routes/_worker/w.reports'
 import { Route as WorkerWPosRouteImport } from './routes/_worker/w.pos'
 import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
+import { Route as WorkerWLookupRouteImport } from './routes/_worker/w.lookup'
 import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
+import { Route as WorkerWCountRouteImport } from './routes/_worker/w.count'
 import { Route as WorkerWCashRouteImport } from './routes/_worker/w.cash'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedSchoolTransportRouteImport } from './routes/_authenticated/school/transport'
@@ -890,6 +893,11 @@ const WorkerWSalesRoute = WorkerWSalesRouteImport.update({
   path: '/w/sales',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
+const WorkerWReturnsRoute = WorkerWReturnsRouteImport.update({
+  id: '/w/returns',
+  path: '/w/returns',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
 const WorkerWReportsRoute = WorkerWReportsRouteImport.update({
   id: '/w/reports',
   path: '/w/reports',
@@ -905,9 +913,19 @@ const WorkerWOrdersRoute = WorkerWOrdersRouteImport.update({
   path: '/w/orders',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
+const WorkerWLookupRoute = WorkerWLookupRouteImport.update({
+  id: '/w/lookup',
+  path: '/w/lookup',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
 const WorkerWKitchenRoute = WorkerWKitchenRouteImport.update({
   id: '/w/kitchen',
   path: '/w/kitchen',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWCountRoute = WorkerWCountRouteImport.update({
+  id: '/w/count',
+  path: '/w/count',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
 const WorkerWCashRoute = WorkerWCashRouteImport.update({
@@ -1765,10 +1783,13 @@ export interface FileRoutesByFullPath {
   '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
+  '/w/count': typeof WorkerWCountRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
+  '/w/lookup': typeof WorkerWLookupRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
   '/w/reports': typeof WorkerWReportsRoute
+  '/w/returns': typeof WorkerWReturnsRoute
   '/w/sales': typeof WorkerWSalesRoute
   '/w/shift': typeof WorkerWShiftRoute
   '/w/stock': typeof WorkerWStockRoute
@@ -1992,10 +2013,13 @@ export interface FileRoutesByTo {
   '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
+  '/w/count': typeof WorkerWCountRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
+  '/w/lookup': typeof WorkerWLookupRoute
   '/w/orders': typeof WorkerWOrdersRoute
   '/w/pos': typeof WorkerWPosRoute
   '/w/reports': typeof WorkerWReportsRoute
+  '/w/returns': typeof WorkerWReturnsRoute
   '/w/sales': typeof WorkerWSalesRoute
   '/w/shift': typeof WorkerWShiftRoute
   '/w/stock': typeof WorkerWStockRoute
@@ -2228,10 +2252,13 @@ export interface FileRoutesById {
   '/_authenticated/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_worker/w/cash': typeof WorkerWCashRoute
+  '/_worker/w/count': typeof WorkerWCountRoute
   '/_worker/w/kitchen': typeof WorkerWKitchenRoute
+  '/_worker/w/lookup': typeof WorkerWLookupRoute
   '/_worker/w/orders': typeof WorkerWOrdersRoute
   '/_worker/w/pos': typeof WorkerWPosRoute
   '/_worker/w/reports': typeof WorkerWReportsRoute
+  '/_worker/w/returns': typeof WorkerWReturnsRoute
   '/_worker/w/sales': typeof WorkerWSalesRoute
   '/_worker/w/shift': typeof WorkerWShiftRoute
   '/_worker/w/stock': typeof WorkerWStockRoute
@@ -2463,10 +2490,13 @@ export interface FileRouteTypes {
     | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
+    | '/w/count'
     | '/w/kitchen'
+    | '/w/lookup'
     | '/w/orders'
     | '/w/pos'
     | '/w/reports'
+    | '/w/returns'
     | '/w/sales'
     | '/w/shift'
     | '/w/stock'
@@ -2690,10 +2720,13 @@ export interface FileRouteTypes {
     | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
+    | '/w/count'
     | '/w/kitchen'
+    | '/w/lookup'
     | '/w/orders'
     | '/w/pos'
     | '/w/reports'
+    | '/w/returns'
     | '/w/sales'
     | '/w/shift'
     | '/w/stock'
@@ -2925,10 +2958,13 @@ export interface FileRouteTypes {
     | '/_authenticated/school/transport'
     | '/_authenticated/teaching-materials/new'
     | '/_worker/w/cash'
+    | '/_worker/w/count'
     | '/_worker/w/kitchen'
+    | '/_worker/w/lookup'
     | '/_worker/w/orders'
     | '/_worker/w/pos'
     | '/_worker/w/reports'
+    | '/_worker/w/returns'
     | '/_worker/w/sales'
     | '/_worker/w/shift'
     | '/_worker/w/stock'
@@ -3808,6 +3844,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkerWSalesRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
+    '/_worker/w/returns': {
+      id: '/_worker/w/returns'
+      path: '/w/returns'
+      fullPath: '/w/returns'
+      preLoaderRoute: typeof WorkerWReturnsRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
     '/_worker/w/reports': {
       id: '/_worker/w/reports'
       path: '/w/reports'
@@ -3829,11 +3872,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkerWOrdersRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
+    '/_worker/w/lookup': {
+      id: '/_worker/w/lookup'
+      path: '/w/lookup'
+      fullPath: '/w/lookup'
+      preLoaderRoute: typeof WorkerWLookupRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
     '/_worker/w/kitchen': {
       id: '/_worker/w/kitchen'
       path: '/w/kitchen'
       fullPath: '/w/kitchen'
       preLoaderRoute: typeof WorkerWKitchenRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/count': {
+      id: '/_worker/w/count'
+      path: '/w/count'
+      fullPath: '/w/count'
+      preLoaderRoute: typeof WorkerWCountRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
     '/_worker/w/cash': {
@@ -5159,10 +5216,13 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface WorkerRouteRouteChildren {
   WorkerWCashRoute: typeof WorkerWCashRoute
+  WorkerWCountRoute: typeof WorkerWCountRoute
   WorkerWKitchenRoute: typeof WorkerWKitchenRoute
+  WorkerWLookupRoute: typeof WorkerWLookupRoute
   WorkerWOrdersRoute: typeof WorkerWOrdersRoute
   WorkerWPosRoute: typeof WorkerWPosRoute
   WorkerWReportsRoute: typeof WorkerWReportsRoute
+  WorkerWReturnsRoute: typeof WorkerWReturnsRoute
   WorkerWSalesRoute: typeof WorkerWSalesRoute
   WorkerWShiftRoute: typeof WorkerWShiftRoute
   WorkerWStockRoute: typeof WorkerWStockRoute
@@ -5172,10 +5232,13 @@ interface WorkerRouteRouteChildren {
 
 const WorkerRouteRouteChildren: WorkerRouteRouteChildren = {
   WorkerWCashRoute: WorkerWCashRoute,
+  WorkerWCountRoute: WorkerWCountRoute,
   WorkerWKitchenRoute: WorkerWKitchenRoute,
+  WorkerWLookupRoute: WorkerWLookupRoute,
   WorkerWOrdersRoute: WorkerWOrdersRoute,
   WorkerWPosRoute: WorkerWPosRoute,
   WorkerWReportsRoute: WorkerWReportsRoute,
+  WorkerWReturnsRoute: WorkerWReturnsRoute,
   WorkerWSalesRoute: WorkerWSalesRoute,
   WorkerWShiftRoute: WorkerWShiftRoute,
   WorkerWStockRoute: WorkerWStockRoute,
