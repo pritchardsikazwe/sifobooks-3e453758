@@ -65,6 +65,7 @@ export const ROUTE_RULES: Rule[] = [
   { prefix: "/restaurant/cash", any: ["cash_shift.open"] }, { prefix: "/restaurant/shifts", any: ["cash_shift.open"] },
   { prefix: "/restaurant/end-of-day", any: ["cash_shift.close"] }, { prefix: "/restaurant/reports", any: ["reports.view"] },
   { prefix: "/restaurant/kitchen", any: ["kitchen.access"] }, { prefix: "/restaurant", any: ["pos.restaurant.access"] },
+  { prefix: "/inventory/smart-reconciliation", any: ["inventory.view", "inventory.manage"] },
   { prefix: "/inventory/end-of-day", any: ["inventory.view", "inventory.manage"] }, { prefix: "/inventory", any: ["inventory.view"] },
   { prefix: "/stock", any: ["inventory.view"] }, { prefix: "/warehouses", any: ["inventory.view"] },
   { prefix: "/reports/payroll", any: ["hr.manage"] }, { prefix: "/reports/inventory-valuation", any: ["inventory.view", "financial_reports.view"] },
@@ -103,6 +104,7 @@ export const STAFF_NAV: StaffNavGroup[] = [
   { label: "Inventory", items: [
     { title: "Products & Stock", url: "/inventory", iconName: "Boxes", any: ["inventory.view"] },
     { title: "Control Center", url: "/inventory/control-center", iconName: "Gauge", any: ["inventory.view"] },
+    { title: "Smart Reconciliation", url: "/inventory/smart-reconciliation", iconName: "ClipboardCheck", any: ["inventory.view"] },
     { title: "Locations", url: "/inventory/locations", iconName: "Warehouse", any: ["inventory.view"] },
     { title: "Production Batches", url: "/inventory/production", iconName: "Factory", any: ["inventory.manage"] },
     { title: "Stock Transfers", url: "/inventory/transfers", iconName: "ArrowLeftRight", any: ["inventory.manage"] },
