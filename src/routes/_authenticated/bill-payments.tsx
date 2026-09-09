@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
   component: () => (
     <SimpleCrud
       module="purchases"
-      description="Payments made against supplier bills"
+      description="Supplier payment vouchers, settlement accounts and ledger impact"
       title="Supplier Payments"
       icon={Wallet}
       table="bill_payments"
@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
       columns={[
         { key: "payment_number", header: "Payment #" },
         { key: "payment_date", header: "Date" },
-        { key: "payment_method", header: "Method" },
+        { key: "payment_method", header: "Method", render: r => <span className="capitalize">{String(r.payment_method ?? "").replace(/_/g, " ")}</span> },
         { key: "reference", header: "Reference" },
-        { key: "amount", header: "Amount", render: r => fmtMoney(r.amount ?? 0) },
+        { key: "amount", header: "Amount", align: "right", render: r => <span className="font-semibold tabular-nums">{fmtMoney(r.amount ?? 0)}</span> },
       ]}
       posting={{
         kind: "bill",
@@ -29,18 +29,17 @@ export const Route = createFileRoute("/_authenticated/bill-payments")({
         label: r => `Payment ${r.payment_number ?? ""} — accounting impact`,
       }}
       fields={[
-
-        { name: "payment_number", label: "Payment Number", required: true },
-        { name: "payment_date", label: "Payment Date", type: "date", defaultValue: new Date().toISOString().slice(0,10) },
-        { name: "amount", label: "Amount", type: "number", required: true },
-        { name: "payment_method", label: "Method", type: "select", defaultValue: "bank",
+        { name: "payment_number", label: "Payment Number", required: true, group: "Payment Details" },
+        { name: "payment_date", label: "Payment Date", type: "date", defaultValue: new Date().toISOString().slice(0,10), group: "Payment Details" },
+        { name: "amount", label: "Amount", type: "number", required: true, group: "Payment Details" },
+        { name: "payment_method", label: "Payment Method", type: "select", defaultValue: "bank", group: "Payment Details",
           options: [{value:"cash",label:"Cash"},{value:"bank",label:"Bank"},{value:"mobile_money",label:"Mobile Money"},{value:"cheque",label:"Cheque"}] },
-        { name: "reference", label: "Reference" },
-        { name: "notes", label: "Notes", type: "textarea" },
+        { name: "reference", label: "Reference / Voucher #", group: "Supporting Information" },
+        { name: "notes", label: "Notes", type: "textarea", colSpan: 2, group: "Supporting Information" },
       ]}
       accountFields={[
-        { key: "payable", label: "Debit — supplier payable", defaultCode: "2100", help: "Account holding what you owe the supplier." },
-        { key: "bank", label: "Credit — cash / bank", defaultCode: "1000", cashBankOnly: true, types: ["asset"], help: "Account the money leaves from." },
+        { key: "payable", label: "Debit — supplier payable", defaultCode: "2100", help: "Reduces the amount owed to suppliers." },
+        { key: "bank", label: "Credit — cash / bank", defaultCode: "1000", cashBankOnly: true, types: ["asset"], help: "The cash, bank or mobile-money account the payment leaves." },
       ]}
       previewLines={(form, account) => supplierPaymentLines({
         amount: Number(form.amount) || 0,
