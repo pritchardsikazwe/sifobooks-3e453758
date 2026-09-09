@@ -1,4 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  loadProducts, loadSettings, currentShift, completeSale, computeTotals, posErrorMessage,
+  DEFAULT_SETTINGS, type PosSettings, type CartLine,
+} from "@/lib/pos";
 import {
   ShoppingCart, Utensils, Coffee, Truck, Package, ArrowRightLeft, Wallet, BarChart3,
   Printer, LogOut, Menu, X, Search, Plus, Minus, Trash2, Pause, RotateCcw, Lock,
@@ -30,17 +35,13 @@ type FloorTable = {
   y: number;
 };
 
-const PRODUCTS: Product[] = [
-  { id: "p1", name: "Chicken Burger", category: "BURGERS", price: 65, stock: 24, color: "#b91c1c", modifiers: ["Extra Cheese", "No Onion", "Extra Sauce"] },
-  { id: "p2", name: "Beef Burger", category: "BURGERS", price: 75, stock: 18, color: "#991b1b", modifiers: ["Extra Cheese", "No Tomato", "Extra Sauce"] },
-  { id: "p3", name: "French Fries", category: "SIDES", price: 25, stock: 50, color: "#d97706" },
-  { id: "p4", name: "Chicken Wings", category: "CHICKEN", price: 55, stock: 31, color: "#ea580c" },
-  { id: "p5", name: "Pizza", category: "PIZZA", price: 95, stock: 15, color: "#dc2626", modifiers: ["Extra Cheese", "Pepperoni", "Mushroom"] },
-  { id: "p6", name: "Fish & Chips", category: "MEALS", price: 85, stock: 12, color: "#0369a1" },
-  { id: "p7", name: "Coke", category: "DRINKS", price: 15, stock: 100, color: "#111827" },
-  { id: "p8", name: "Fresh Juice", category: "DRINKS", price: 25, stock: 40, color: "#65a30d" },
-  { id: "p9", name: "Coffee", category: "DRINKS", price: 20, stock: 60, color: "#78350f" },
-];
+/** Tile colours are cosmetic only — real prices, stock and cost come from the inventory ledger. */
+const TILE_COLOURS = ["#b91c1c", "#991b1b", "#d97706", "#ea580c", "#dc2626", "#0369a1", "#111827", "#65a30d", "#78350f"];
+const tileColour = (key: string) => {
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = (hash * 31 + key.charCodeAt(i)) % 9973;
+  return TILE_COLOURS[hash % TILE_COLOURS.length]!;
+};
 
 const TABLES: FloorTable[] = [
   { id: "T1", name: "1", seats: 2, status: "available", x: 5, y: 5 },
@@ -79,20 +80,58 @@ export default function POSCommandCenter() {
   const [customerName, setCustomerName] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<PosSettings>(DEFAULT_SETTINGS);
+  const [shift, setShift] = useState<any | null>(null);
+  const [posting, setPosting] = useState(false);
 
-  const categories = ["ALL", "BURGERS", "PIZZA", "CHICKEN", "MEALS", "SIDES", "DRINKS"];
+  // Live catalogue, till settings and the cashier's open shift.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [items, cfg, openShift] = await Promise.all([loadProducts(), loadSettings(), currentShift()]);
+        if (!alive) return;
+        setProducts(
+          items
+            .filter((p) => p.is_active)
+            .map((p) => ({
+              id: p.id,
+              name: p.name,
+              category: (p.category ?? "GENERAL").toUpperCase(),
+              price: p.price,
+              stock: p.stock,
+              color: tileColour(p.category ?? p.name),
+            })),
+        );
+        setSettings(cfg);
+        setShift(openShift);
+      } catch {
+        toast.error("Could not load the till. Check your connection and retry.");
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const categories = useMemo(
+    () => ["ALL", ...Array.from(new Set(products.map((p) => p.category))).sort()],
+    [products],
+  );
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesCategory = category === "ALL" || product.category === category;
       const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [category, search]);
+  }, [products, category, search]);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.16;
-  const total = subtotal + tax;
+  // Display figures only — the server recomputes VAT, totals and cost of sales.
+  const gross = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const rate = Number(settings.tax_rate || 0) / 100;
+  const tax = settings.tax_inclusive ? gross - gross / (1 + rate) : gross * rate;
+  const subtotal = settings.tax_inclusive ? gross - tax : gross;
+  const total = settings.tax_inclusive ? gross : gross + tax;
 
   const addItem = (product: Product) => {
     setCart((current) => {
@@ -123,12 +162,59 @@ export default function POSCommandCenter() {
     setCart([]);
   };
 
-  const submitPayment = () => {
-    if (!cart.length) return;
-    setPaymentOpen(false);
-    setCart([]);
-    setCashReceived("");
-    setCustomerName("");
+  const submitPayment = async () => {
+    if (!cart.length || posting) return;
+    if (!shift) { toast.error("No open shift. Open your shift before selling."); return; }
+    setPosting(true);
+    try {
+      const lines: CartLine[] = cart.map((item, index) => ({
+        key: `${item.id}-${index}`,
+        item_id: item.id,
+        name: item.name,
+        sku: null,
+        qty: item.quantity,
+        price: item.price,
+        unit_cost: 0,
+        discount_pct: 0,
+        note: item.note,
+      }));
+      const totals = computeTotals(lines, 0, settings);
+      const method = paymentMethod === "CASH" ? "cash" : paymentMethod === "CARD" ? "card" : "momo";
+      const tendered = paymentMethod === "CASH" ? Math.max(Number(cashReceived || 0), totals.total) : totals.total;
+      const result = await completeSale(
+        {
+          lines,
+          totals,
+          customer: null,
+          customerName: customerName || settings.default_customer,
+          priceLevel: settings.default_price_level,
+          saleDiscountPct: 0,
+          shiftId: shift.id,
+          registerId: shift.register_id ?? null,
+          taxRate: settings.tax_rate,
+          taxInclusive: settings.tax_inclusive,
+          allowNegativeStock: settings.allow_negative_stock,
+        },
+        [{ method, amount: totals.total }],
+        Math.max(0, tendered - totals.total),
+      );
+      toast.success(result.offline ? "Saved offline — it will post when you reconnect." : `Sale ${result.sale_no} completed`);
+      setPaymentOpen(false);
+      setCart([]);
+      setCashReceived("");
+      setCustomerName("");
+      const refreshed = await loadProducts();
+      setProducts(
+        refreshed.filter((p) => p.is_active).map((p) => ({
+          id: p.id, name: p.name, category: (p.category ?? "GENERAL").toUpperCase(),
+          price: p.price, stock: p.stock, color: tileColour(p.category ?? p.name),
+        })),
+      );
+    } catch (e: any) {
+      toast.error(posErrorMessage(e?.message ?? ""));
+    } finally {
+      setPosting(false);
+    }
   };
 
   const change = paymentMethod === "CASH" ? Math.max(0, Number(cashReceived || 0) - total) : 0;

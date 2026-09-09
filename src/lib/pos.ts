@@ -64,14 +64,36 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   });
   if(!validation.ok) throw new Error(`POS validation failed: ${validation.errors.join("; ")}`);
   const sale_no=saleNumber(); const client_ref=newClientId("possale"); const paid=payments.reduce((a,p)=>a+n(p.amount),0);
-  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,register_id:draft.registerId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,status:"completed",subtotal:draft.totals.subtotal,discount:round2(draft.totals.lineDiscount+draft.totals.saleDiscount),tax:draft.totals.tax,total:draft.totals.total,paid:round2(paid),change_due:round2(changeDue),cost_total:draft.totals.cost,note:draft.note??null,sold_at:new Date().toISOString()};
-  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,name:l.name,sku:l.sku,qty:l.qty,price:l.price,unit_cost:l.unit_cost,discount:round2((l.qty*l.price*(l.discount_pct||0))/100),tax_rate:draft.taxRate??16,line_total:round2(l.qty*l.price*(1-(l.discount_pct||0)/100)),note:l.note??null}));
+  // The browser is never the accounting authority: the server re-prices every
+  // line, recomputes VAT/totals, derives COGS from inventory valuation and
+  // checks stock at the selling location before anything is posted.
+  const salePayload:any={sale_no,client_ref,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
+  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
   const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const args={_sale:salePayload,_items:itemRows,_payments:payRows};
-  const stash=async()=>{await queueRpc("sync_pos_sale",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:salePayload.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
+  const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
   if(!isOnline())return stash();
-  try{const {data,error}=await supabase.rpc("sync_pos_sale" as any,args as any);if(error){if(isNetworkError(error.message))return stash();throw error;}return {ok:true as const,offline:false,sale_no,id:data as unknown as string};}catch(e:any){if(e?.message&&!isNetworkError(e.message))throw e;return stash();}
+  try{
+    const {data,error}=await supabase.rpc("pos_checkout" as any,args as any);
+    if(error){if(isNetworkError(error.message))return stash();throw new Error(posErrorMessage(error.message));}
+    const res=data as any;
+    return {ok:true as const,offline:false,sale_no:res?.sale_no??sale_no,id:(res?.sale_id??null) as string|null,duplicate:Boolean(res?.duplicate)};
+  }catch(e:any){if(e?.message&&!isNetworkError(e.message))throw e;return stash();}
 }
 function isNetworkError(message:string){return /fetch|network|timeout|NetworkError|ECONN|502|503|504/i.test(message);}
+/** Turn a server checkout error code into something a cashier can act on. */
+export function posErrorMessage(raw:string):string{
+  const m=String(raw||"");
+  if(/NO_ACTIVE_SHIFT/.test(m))return "No open shift. Open your shift before selling.";
+  if(/NO_REGISTER/.test(m))return "Your shift is not linked to a till. Ask a manager to assign your register.";
+  if(/NO_LOCATION/.test(m))return "No selling location is set for this till. Ask a manager to assign your store.";
+  if(/INSUFFICIENT_STOCK:(.*)/.test(m))return `Not enough stock for ${m.split("INSUFFICIENT_STOCK:")[1]?.split(/["']/)[0]?.trim()||"an item"} at this store. A manager can authorise it.`;
+  if(/PAYMENT_SHORT/.test(m))return "The payment is less than the amount due.";
+  if(/EMPTY_SALE|BAD_QUANTITY/.test(m))return "Check the quantities on this sale.";
+  if(/NO_PRICE|UNKNOWN_ITEM|ITEM_REQUIRED/.test(m))return "One of the items is not set up for selling. Ask a manager to check it.";
+  if(/NOT_ALLOWED|permission|policy|denied/i.test(m))return "Your role is not allowed to complete sales.";
+  if(/CLIENT_REF_REQUIRED|NOT_SIGNED_IN/.test(m))return "Please sign in again and retry the sale.";
+  return "The sale could not be completed. Nothing was posted — please retry.";
+}
 async function adjustCachedStock(lines:CartLine[]){try{const products=await readCached<PosProduct>("products");const by=new Map(products.map((p)=>[p.id,p]));for(const l of lines){const p=l.item_id?by.get(l.item_id):null;if(p)p.stock=round2(n(p.stock)-n(l.qty));}await cacheRows("products",products);}catch{/* cache only */}}
 export async function listOfflineSales(){const rows=await readCached<any>("pos_transactions");return rows.filter((r)=>r.__offline);}
 export async function pruneSyncedOfflineSales(){try{const q=await listQueue();const pendingRefs=new Set(q.map((i)=>i.clientId));const rows=await readCached<any>("pos_transactions");const keep=rows.filter((r)=>!r.__offline||pendingRefs.has(r.client_ref));if(keep.length!==rows.length){await clearStore("pos_transactions");if(keep.length)await cacheRows("pos_transactions",keep);}}catch{/* cache only */}}
