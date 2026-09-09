@@ -326,3 +326,113 @@ export async function monthlyHistory(tenantId: string, cashierUserId: string) {
 
   return Object.values(months).sort((a, b) => b.month.localeCompare(a.month));
 }
+
+/* ------------------------- store (Chibombo) wiring ------------------------ */
+
+export type StoreLocation = { id: string; name: string; code: string | null };
+
+/**
+ * The store this cashier sells from. Uses the assigned location when there is
+ * one, otherwise falls back to the Chibombo outlet, then to any outlet/store.
+ */
+export async function resolveStoreLocation(a: CashierAssignment | null): Promise<StoreLocation | null> {
+  if (!a) return null;
+  const { data } = await supabase
+    .from("inventory_locations")
+    .select("id,name,code,location_type,is_active")
+    .eq("user_id", a.tenantId);
+  const rows = ((data ?? []) as any[]).filter((r) => r.is_active !== false);
+  if (!rows.length) return a.locationId ? { id: a.locationId, name: a.locationName ?? "Store", code: null } : null;
+
+  const pick =
+    rows.find((r) => r.id === a.locationId) ??
+    rows.find((r) => /chibombo/i.test(`${r.name} ${r.code ?? ""}`)) ??
+    rows.find((r) => ["outlet", "store", "pos", "shop"].includes(String(r.location_type ?? "").toLowerCase())) ??
+    rows[0];
+
+  return pick ? { id: pick.id, name: pick.name, code: pick.code ?? null } : null;
+}
+
+/* --------------------------------- returns -------------------------------- */
+
+export async function recentSalesForReturn(cashierUserId: string, limit = 40) {
+  const { data } = await supabase
+    .from("pos_sales")
+    .select("id,sale_no,customer_name,total,status,sold_at")
+    .eq("created_by", cashierUserId)
+    .in("status", ["completed", "refunded"])
+    .order("sold_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as Record<string, any>[];
+}
+
+export async function saleLines(saleId: string) {
+  const { data } = await supabase
+    .from("pos_sale_items")
+    .select("id,name,sku,qty,price,line_total")
+    .eq("sale_id", saleId);
+  return (data ?? []) as Record<string, any>[];
+}
+
+/* ------------------------------- stock count ------------------------------ */
+
+export type CountLine = { itemId: string; name: string; sku: string | null; expected: number; counted: string };
+
+/** Items held at this store, as the starting sheet for a cashier stock count. */
+export async function countSheet(tenantId: string, locationId: string): Promise<CountLine[]> {
+  const { data } = await supabase
+    .from("stock_balances")
+    .select("qty,item_id,stock_items(name,sku)")
+    .eq("user_id", tenantId)
+    .eq("location_id", locationId);
+  return ((data ?? []) as any[])
+    .map((r) => ({
+      itemId: r.item_id as string,
+      name: (r.stock_items?.name as string) ?? "Item",
+      sku: (r.stock_items?.sku as string) ?? null,
+      expected: n(r.qty),
+      counted: "",
+    }))
+    .sort((x, y) => x.name.localeCompare(y.name));
+}
+
+/** Saves the count as "counted" — a manager still approves and posts it. */
+export async function submitStockCount(a: CashierAssignment, locationId: string, lines: CountLine[], notes: string) {
+  const counted = lines.filter((l) => l.counted !== "");
+  if (!counted.length) throw new Error("Enter at least one counted quantity");
+
+  const { data: numberData } = await supabase.rpc("next_doc_number" as never, {
+    _uid: a.tenantId,
+    _prefix: "CNT",
+  } as never);
+
+  const { data: count, error } = await supabase
+    .from("stock_counts")
+    .insert({
+      user_id: a.tenantId,
+      count_number: (numberData as unknown as string) ?? `CNT-${Date.now().toString().slice(-6)}`,
+      count_date: new Date().toISOString().slice(0, 10),
+      location_id: locationId,
+      counted_by: a.cashierUserId,
+      status: "counted",
+      notes: notes || null,
+    } as never)
+    .select("id,count_number")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const { error: le } = await supabase.from("stock_count_lines").insert(
+    counted.map((l) => ({
+      user_id: a.tenantId,
+      count_id: (count as any).id,
+      item_id: l.itemId,
+      location_id: locationId,
+      expected_qty: l.expected,
+      counted_qty: Number(l.counted || 0),
+    })) as never,
+  );
+  if (le) throw new Error(le.message);
+
+  await logActivity(a.tenantId, "stock_count.submitted", (count as any).id, { location_id: locationId, lines: counted.length });
+  return count as Record<string, any>;
+}
