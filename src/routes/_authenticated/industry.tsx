@@ -4,6 +4,7 @@ import {
   INDUSTRY_SOLUTIONS, getSolution, loadIndustryState, isFeatureOn,
   setFeature, applyIndustrySolution, type IndustrySolution,
 } from "@/lib/industry-solutions";
+import { ACCOUNTING_LEVELS, getAccountingLevel, setAccountingLevel, type AccountingLevel } from "@/lib/accounting-config";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,14 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, CheckCircle2, Clock, Layers, Building2 } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, Layers, Building2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/industry")({
   head: () => ({
     meta: [
       { title: "Industry & Business — SifoBooks" },
-      { name: "description", content: "Configure your business type, industry solution and industry features." },
+      { name: "description", content: "Configure your business type, accounting level, industry solution and industry features." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -33,19 +34,38 @@ function IndustryPage() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [solutionId, setSolutionId] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const [accountingLevel, setAccountingLevelState] = useState<AccountingLevel>("full");
   const [switchTo, setSwitchTo] = useState<IndustrySolution | null>(null);
 
   useEffect(() => {
     (async () => {
-      const s = await loadIndustryState();
+      const [s, a] = await Promise.all([loadIndustryState(), getAccountingLevel()]);
       setUserId(s.userId); setCompanyId(s.companyId);
       setSolutionId(getSolution(s.solutionId)?.id ?? "general");
       setOverrides(s.overrides);
+      setAccountingLevelState(a.level);
       setLoading(false);
     })();
   }, []);
 
   const current = useMemo(() => getSolution(solutionId) ?? INDUSTRY_SOLUTIONS[0], [solutionId]);
+  const accountingMeta = useMemo(() => ACCOUNTING_LEVELS.find(x => x.id === accountingLevel) ?? ACCOUNTING_LEVELS[2], [accountingLevel]);
+
+  const changeAccountingLevel = async (next: AccountingLevel) => {
+    if (!companyId) { toast.error("No active company"); return; }
+    const previous = accountingLevel;
+    setAccountingLevelState(next);
+    setBusy("accounting");
+    try {
+      await setAccountingLevel(next, companyId);
+      toast.success(`${ACCOUNTING_LEVELS.find(x => x.id === next)?.label ?? next} enabled`, {
+        description: "Navigation and available accounting capabilities have been updated. Existing data is unchanged.",
+      });
+    } catch (e: any) {
+      setAccountingLevelState(previous);
+      toast.error(e.message ?? "Could not update accounting level");
+    } finally { setBusy(null); }
+  };
 
   const toggleFeature = async (key: string, next: boolean) => {
     if (!userId || !companyId) { toast.error("No active company"); return; }
@@ -86,12 +106,46 @@ function IndustryPage() {
             <Building2 className="h-5 w-5 text-primary" /> Industry &amp; Business
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            SifoBooks is one complete platform. Business suites are always available — your industry
-            solution simply configures the workspace, workflows, accounts and terminology around them.
+            Configure your business profile without installing or deleting modules. Industry controls
+            the business workflow, while accounting level controls accounting depth.
           </p>
         </div>
         <Button asChild variant="outline" size="sm"><Link to="/setup">Back to Setup</Link></Button>
       </div>
+
+      {/* Accounting level */}
+      <Card className="border-primary/20 bg-primary/[0.025]">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Accounting level</CardTitle>
+          <CardDescription>Choose how much accounting functionality your business needs. Changing this never deletes transactions or configuration.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {ACCOUNTING_LEVELS.map(level => {
+              const selected = level.id === accountingLevel;
+              return (
+                <button
+                  key={level.id}
+                  type="button"
+                  disabled={busy === "accounting"}
+                  onClick={() => changeAccountingLevel(level.id)}
+                  className={`text-left rounded-xl border p-4 transition-all ${selected ? "border-primary ring-1 ring-primary/30 bg-primary/5" : "hover:border-primary/40 bg-card"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold">{level.label}</span>
+                    {selected && <Badge>ACTIVE</Badge>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{level.description}</p>
+                  <p className="text-[11px] font-medium text-primary mt-3">Best for: {level.bestFor}</p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            Current configuration: <span className="font-semibold text-foreground">{accountingMeta.label}</span>. Advanced modules become visible automatically when the selected level permits them.
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Current industry */}
       <Card>
