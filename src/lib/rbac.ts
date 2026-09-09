@@ -209,6 +209,9 @@ export const STAFF_NAV: StaffNavGroup[] = [
   { label: "Reports", items: [
     { title: "Reports Hub", url: "/reports", iconName: "BarChart3", any: ["financial_reports.view"] },
   ] },
+  { label: "Management", items: [
+    { title: "Manager Workspace", url: "/manager", iconName: "LayoutDashboard", any: ["pos.sales.view_all", "users.manage"] },
+  ] },
   { label: "Administration", items: [
     { title: "Team & Roles", url: "/roles", iconName: "ShieldCheck", any: ["users.manage", "roles.manage"] },
     { title: "Settings", url: "/setup", iconName: "Settings", any: ["settings.manage"] },
