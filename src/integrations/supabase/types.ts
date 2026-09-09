@@ -10518,6 +10518,7 @@ export type Database = {
         Returns: string
       }
       pos_has_books: { Args: { _tenant: string }; Returns: boolean }
+      pos_integrity_report: { Args: never; Returns: Json }
       pos_matrix: { Args: { _feature: string; _role: string }; Returns: string }
       pos_tenant_for: { Args: { _worker: string }; Returns: string }
       post_allowance: { Args: { _id: string }; Returns: string }
