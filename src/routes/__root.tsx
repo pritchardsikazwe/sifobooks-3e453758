@@ -12,10 +12,12 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import sifoDesignCss from "../styles/sifo-design.css?url";
+import sifoMobileCss from "../styles/sifo-mobile.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
 import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
+import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { installOfflineAutoDrain } from "@/lib/offline-queue";
 import { registerServiceWorker } from "@/lib/pwa/register-sw";
 import { startMonitor } from "@/lib/network-status";
@@ -75,6 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: sifoDesignCss },
+      { rel: "stylesheet", href: sifoMobileCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
@@ -109,6 +112,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <Outlet />
+        <SifoMobileNav />
         <InstallAppPrompt />
         <PwaUpdatePrompt />
         <Toaster position="top-right" richColors closeButton />
