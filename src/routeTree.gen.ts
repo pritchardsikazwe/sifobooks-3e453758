@@ -135,6 +135,7 @@ import { Route as WorkerWPosRouteImport } from './routes/_worker/w.pos'
 import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
 import { Route as WorkerWLookupRouteImport } from './routes/_worker/w.lookup'
 import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
+import { Route as WorkerWCountRouteImport } from './routes/_worker/w.count'
 import { Route as WorkerWCashRouteImport } from './routes/_worker/w.cash'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
 import { Route as AuthenticatedSchoolTransportRouteImport } from './routes/_authenticated/school/transport'
@@ -920,6 +921,11 @@ const WorkerWLookupRoute = WorkerWLookupRouteImport.update({
 const WorkerWKitchenRoute = WorkerWKitchenRouteImport.update({
   id: '/w/kitchen',
   path: '/w/kitchen',
+  getParentRoute: () => WorkerRouteRoute,
+} as any)
+const WorkerWCountRoute = WorkerWCountRouteImport.update({
+  id: '/w/count',
+  path: '/w/count',
   getParentRoute: () => WorkerRouteRoute,
 } as any)
 const WorkerWCashRoute = WorkerWCashRouteImport.update({
@@ -1777,6 +1783,7 @@ export interface FileRoutesByFullPath {
   '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
+  '/w/count': typeof WorkerWCountRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/lookup': typeof WorkerWLookupRoute
   '/w/orders': typeof WorkerWOrdersRoute
@@ -2006,6 +2013,7 @@ export interface FileRoutesByTo {
   '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
+  '/w/count': typeof WorkerWCountRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
   '/w/lookup': typeof WorkerWLookupRoute
   '/w/orders': typeof WorkerWOrdersRoute
@@ -2244,6 +2252,7 @@ export interface FileRoutesById {
   '/_authenticated/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_worker/w/cash': typeof WorkerWCashRoute
+  '/_worker/w/count': typeof WorkerWCountRoute
   '/_worker/w/kitchen': typeof WorkerWKitchenRoute
   '/_worker/w/lookup': typeof WorkerWLookupRoute
   '/_worker/w/orders': typeof WorkerWOrdersRoute
@@ -2481,6 +2490,7 @@ export interface FileRouteTypes {
     | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
+    | '/w/count'
     | '/w/kitchen'
     | '/w/lookup'
     | '/w/orders'
@@ -2710,6 +2720,7 @@ export interface FileRouteTypes {
     | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
+    | '/w/count'
     | '/w/kitchen'
     | '/w/lookup'
     | '/w/orders'
@@ -2947,6 +2958,7 @@ export interface FileRouteTypes {
     | '/_authenticated/school/transport'
     | '/_authenticated/teaching-materials/new'
     | '/_worker/w/cash'
+    | '/_worker/w/count'
     | '/_worker/w/kitchen'
     | '/_worker/w/lookup'
     | '/_worker/w/orders'
@@ -3872,6 +3884,13 @@ declare module '@tanstack/react-router' {
       path: '/w/kitchen'
       fullPath: '/w/kitchen'
       preLoaderRoute: typeof WorkerWKitchenRouteImport
+      parentRoute: typeof WorkerRouteRoute
+    }
+    '/_worker/w/count': {
+      id: '/_worker/w/count'
+      path: '/w/count'
+      fullPath: '/w/count'
+      preLoaderRoute: typeof WorkerWCountRouteImport
       parentRoute: typeof WorkerRouteRoute
     }
     '/_worker/w/cash': {
@@ -5197,6 +5216,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface WorkerRouteRouteChildren {
   WorkerWCashRoute: typeof WorkerWCashRoute
+  WorkerWCountRoute: typeof WorkerWCountRoute
   WorkerWKitchenRoute: typeof WorkerWKitchenRoute
   WorkerWLookupRoute: typeof WorkerWLookupRoute
   WorkerWOrdersRoute: typeof WorkerWOrdersRoute
@@ -5212,6 +5232,7 @@ interface WorkerRouteRouteChildren {
 
 const WorkerRouteRouteChildren: WorkerRouteRouteChildren = {
   WorkerWCashRoute: WorkerWCashRoute,
+  WorkerWCountRoute: WorkerWCountRoute,
   WorkerWKitchenRoute: WorkerWKitchenRoute,
   WorkerWLookupRoute: WorkerWLookupRoute,
   WorkerWOrdersRoute: WorkerWOrdersRoute,
