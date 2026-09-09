@@ -50,3 +50,5 @@
 - [x] POS command centre wired to live stock, till settings, open shift and the secure server checkout (pos_checkout); totals/VAT/COGS now server-authoritative.
 
 - [x] Offline till sales re-priced server-side; one shared item-cost lookup; retail cash no longer double-counted in a restaurant drawer; integrity check script at scripts/pos-integrity-check.sql.
+
+- [x] Till checkout refuses items with no cost, needs manager authorisation to sell below stock (recorded), and a read-only health check lives at Reports > Till & Stock Health Check.
