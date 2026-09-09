@@ -67,7 +67,9 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   // The browser is never the accounting authority: the server re-prices every
   // line, recomputes VAT/totals, derives COGS from inventory valuation and
   // checks stock at the selling location before anything is posted.
-  const salePayload:any={sale_no,client_ref,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
+  // shift_id travels with the sale so a queued offline sale still posts to the
+  // shift it was rung on, even after that shift has been closed.
+  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
   const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
   const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const args={_sale:salePayload,_items:itemRows,_payments:payRows};
   const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
