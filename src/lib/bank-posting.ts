@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { capturePostingFailure } from "./posting-failure";
 
 async function ensureBankAccount(userId: string): Promise<string | null> {
   const { data } = await supabase.from("chart_of_accounts").select("id, account_code")
@@ -17,7 +18,11 @@ async function atomicPost(opts: { userId: string; entryNumber: string; entryDate
     _reference: opts.reference, _description: opts.description,
     _lines: opts.lines.map(l => ({ account_id: l.accountId, debit: Number(l.debit) || 0, credit: Number(l.credit) || 0, description: l.description })),
   });
-  if (error) return { ok: false as const, error: error.message };
+  if (error) {
+    await capturePostingFailure({ userId: opts.userId, sourceModule: "banking", sourceType: "journal", sourceReference: opts.reference, error: error.message,
+      payload: { entryNumber: opts.entryNumber, entryDate: opts.entryDate, lines: opts.lines } });
+    return { ok: false as const, error: error.message };
+  }
   return { ok: true as const, entryId: data as string };
 }
 
@@ -38,7 +43,11 @@ export async function postBankAllocation(opts: {
     _user_id: opts.userId, _bank_txn_id: opts.txn.id, _account_id: opts.accountId, _amount: amt,
     _memo: opts.memo ?? null, _target_type: opts.targetType ?? "account", _target_id: opts.targetId ?? null, _target_ref: opts.targetRef ?? null,
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    await capturePostingFailure({ userId: opts.userId, sourceModule: "banking", sourceType: "bank_allocation", sourceId: opts.txn.id,
+      sourceReference: opts.txn.reference ?? opts.txn.id, error: error.message, payload: { accountId: opts.accountId, amount: amt, memo: opts.memo } });
+    return { ok: false, error: error.message };
+  }
   return { ok: true, entryId: data?.entryId, allocationId: data?.allocationId, amount: Number(data?.amount ?? amt), remaining: Number(data?.remaining ?? Math.max(0, remaining - amt)) };
 }
 
@@ -67,7 +76,11 @@ export async function postSpendMoney(opts: {
     description: opts.memo || opts.supplierName || "Payment", amount: signed,
     reference: opts.reference, payee: opts.supplierName ?? null, source_file: "manual",
   } as any).select("id").single();
-  if (txErr || !txn) return { ok: false, error: txErr?.message ?? "Bank txn failed" };
+  if (txErr || !txn) {
+    await capturePostingFailure({ userId: opts.userId, sourceModule: "banking", sourceType: "bank_transaction", sourceReference: opts.reference, error: txErr?.message ?? "Bank transaction insert failed",
+      payload: { bankAccountId: opts.bankAccountId, txnDate: opts.txnDate, amount: signed } });
+    return { ok: false, error: txErr?.message ?? "Bank txn failed" };
+  }
 
   const bankLine = isSpend ? { accountId: bankId, debit: 0, credit: total, description: "Bank outflow" } : { accountId: bankId, debit: total, credit: 0, description: "Bank inflow" };
   const allocLines = opts.allocations.map(a => ({ accountId: a.accountId, debit: a.side === "DR" ? Math.abs(a.amount) : 0, credit: a.side === "CR" ? Math.abs(a.amount) : 0, description: a.description || opts.memo || "Allocation" }));
