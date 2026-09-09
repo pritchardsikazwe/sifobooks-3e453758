@@ -68,8 +68,9 @@ function CashierHome() {
   const actions: { label: string; icon: keyof typeof Icons; to?: string; onClick?: () => void; tone?: string }[] = [
     { label: "New sale", icon: "ShoppingCart", to: isRestaurant ? "/w/pos" : "/pos", tone: "bg-emerald-500 text-slate-950" },
     { label: "My sales", icon: "ReceiptText", to: "/w/sales" },
-    { label: "Stock lookup", icon: "Boxes", to: "/w/stock" },
-    { label: "Returns", icon: "Undo2", to: isRestaurant ? "/w/orders" : "/pos" },
+    { label: "Stock lookup", icon: "Boxes", to: "/w/lookup" },
+    { label: "Returns", icon: "Undo2", to: isRestaurant ? "/w/orders" : "/w/returns" },
+    { label: "Stock count", icon: "ClipboardList", to: "/w/count" },
     { label: "My shift", icon: "Clock", to: "/w/shift" },
     { label: "Cash drawer", icon: "Banknote", to: "/w/cash" },
     { label: "Log out", icon: "LogOut", onClick: signOut, tone: "bg-rose-500/15 text-rose-300" },
