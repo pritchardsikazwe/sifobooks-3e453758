@@ -19,19 +19,56 @@ export function CompanySwitcher() {
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    const { data: cs } = await supabase
-      .from("companies")
-      .select("id,name,base_currency,country")
-      .eq("user_id", u.user.id)
-      .order("created_at");
-    setCompanies(cs ?? []);
-    const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
-    let active = p?.active_company_id as string | null;
-    if (!active && cs && cs.length) {
-      active = cs[0].id;
-      await supabase.from("profiles").update({ active_company_id: active }).eq("id", u.user.id);
+
+    // A user can access a company either as its owner or as a member/staff user.
+    // Load both sets so the workspace switcher matches the tenant context used by the sidebar.
+    const [{ data: owned }, { data: memberships }] = await Promise.all([
+      supabase
+        .from("companies")
+        .select("id,name,base_currency,country")
+        .eq("user_id", u.user.id)
+        .order("created_at"),
+      supabase
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", u.user.id)
+        .order("created_at"),
+    ]);
+
+    const ownedCompanies = owned ?? [];
+    const memberCompanyIds = (memberships ?? []).map(m => m.company_id).filter(Boolean);
+    let memberCompanies: Company[] = [];
+
+    if (memberCompanyIds.length > 0) {
+      const { data } = await supabase
+        .from("companies")
+        .select("id,name,base_currency,country")
+        .in("id", memberCompanyIds);
+      memberCompanies = data ?? [];
     }
-    setActiveId(active ?? null);
+
+    const byId = new Map<string, Company>();
+    [...ownedCompanies, ...memberCompanies].forEach(company => byId.set(company.id, company));
+    const allCompanies = Array.from(byId.values());
+    setCompanies(allCompanies);
+
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("active_company_id")
+      .eq("id", u.user.id)
+      .maybeSingle();
+
+    let active = p?.active_company_id as string | null;
+
+    // Never retain a stale/unauthorized active company in the UI.
+    if (!active || !byId.has(active)) {
+      active = allCompanies[0]?.id ?? null;
+      if (active) {
+        await supabase.from("profiles").update({ active_company_id: active }).eq("id", u.user.id);
+      }
+    }
+
+    setActiveId(active);
   };
 
   useEffect(() => {
@@ -41,7 +78,18 @@ export function CompanySwitcher() {
   const switchTo = async (id: string) => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    await supabase.from("profiles").update({ active_company_id: id }).eq("id", u.user.id);
+    if (!companies.some(company => company.id === id)) {
+      toast.error("You do not have access to that company");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ active_company_id: id })
+      .eq("id", u.user.id);
+
+    if (error) return toast.error(error.message);
+
     setActiveId(id);
     setOpen(false);
     toast.success("Switched company");
@@ -53,14 +101,20 @@ export function CompanySwitcher() {
     if (!newName.trim()) return toast.error("Name required");
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
+    if (!u.user) {
+      setBusy(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("companies")
       .insert({ user_id: u.user.id, name: newName.trim(), base_currency: "ZMW", country: "Zambia" })
       .select()
       .single();
+
     setBusy(false);
     if (error) return toast.error(error.message);
+
     setNewName("");
     setCreating(false);
     await supabase.from("profiles").update({ active_company_id: data.id }).eq("id", u.user.id);
