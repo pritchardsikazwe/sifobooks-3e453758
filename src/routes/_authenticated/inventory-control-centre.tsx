@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
+import { InventoryTransactionExplorer } from "@/components/sifo/InventoryTransactionExplorer";
 import { fetchBalances, fetchLocations, fetchTransfers, type BalanceRow, type Location, type Transfer } from "@/lib/multi-location";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
@@ -57,7 +58,7 @@ function InventoryControlCentre() {
     to_name: locations.find(l => l.id === t.to_location_id)?.name ?? "—",
   }));
   const transferColumns: DTColumn<any>[] = [
-    { key: "transfer_number", header: "Transfer #", sticky: true, cell: r => <span className="font-medium">{r.transfer_number ?? "—"}</span> },
+    { key: "transfer_number", header: "Transfer #", sticky: true, cell: r => <button className="font-medium text-primary hover:underline" onClick={() => toast.info(`Transfer ${r.transfer_number ?? "record"} — open Transaction Trail below to inspect source lines`)}>{r.transfer_number ?? "—"}</button> },
     { key: "transfer_date", header: "Date", cell: r => r.transfer_date ? new Date(r.transfer_date).toLocaleDateString() : "—" },
     { key: "from_name", header: "From", cell: r => r.from_name },
     { key: "to_name", header: "To", cell: r => r.to_name },
@@ -71,7 +72,7 @@ function InventoryControlCentre() {
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl">
       <SifoModuleHeader
         title="Inventory Control Centre"
-        description="See exactly what is held at each warehouse, store and branch, then trace transfers and stock activity."
+        description="MKP Farms Limited 1 — see exactly what is held at each location and trace stock from origin to sale."
         icon={Boxes}
         actions={<Button variant="outline" size="sm" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>}
       />
@@ -81,6 +82,21 @@ function InventoryControlCentre() {
         <SummaryCard icon={Package} label="Tracked item positions" value={String(balances.length)} hint="Item + location balances" />
         <SummaryCard icon={Warehouse} label="Warehouse stock value" value={fmtMoney(warehouseStats.reduce((s, x) => s + x.value, 0))} hint="At recorded cost" />
         <SummaryCard icon={Store} label="Store stock value" value={fmtMoney(storeStats.reduce((s, x) => s + x.value, 0))} hint="At recorded cost" />
+      </div>
+
+      <div className="rounded-xl border bg-muted/20 p-4">
+        <div className="flex items-center gap-2 mb-3"><ArrowRightLeft className="h-5 w-5 text-primary" /><div><div className="font-semibold">Stock Flow</div><div className="text-xs text-muted-foreground">The operational chain used for MKP Farms Limited 1.</div></div></div>
+        <div className="grid gap-2 md:grid-cols-5 items-stretch">
+          <FlowCard step="01" title="Opening / Production" text="Starting batch enters the warehouse" />
+          <FlowArrow />
+          <FlowCard step="02" title="Warehouse" text="Admin checks actual item balances" />
+          <FlowArrow />
+          <FlowCard step="03" title="Transfer" text="Dispatch → in transit → received" />
+          <FlowArrow />
+          <FlowCard step="04" title="Chibombo Store" text="Store holds its own stock" />
+          <FlowArrow />
+          <FlowCard step="05" title="Cashier / Sale" text="Sale reduces store stock and is auditable" />
+        </div>
       </div>
 
       <LocationSection title="Warehouses & Production" icon={Warehouse} locations={warehouseStats} onOpen={openLocation} />
@@ -96,6 +112,8 @@ function InventoryControlCentre() {
           <DataTable tableId="inventory-control-transfers" columns={transferColumns} data={transferRows.filter(r => !query || JSON.stringify(r).toLowerCase().includes(query.toLowerCase()))} loading={loading} empty="No inventory transfers recorded." />
         </CardContent>
       </Card>
+
+      <InventoryTransactionExplorer />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ActionCard icon={ClipboardCheck} title="Stock Takes" description="Count, review, approve and post location variances." to="/stock-counts" />
@@ -116,9 +134,9 @@ function InventoryControlCentre() {
   );
 }
 
-function SummaryCard({ icon: Icon, label, value, hint }: { icon: any; label: string; value: string; hint: string }) {
-  return <Card><CardContent className="p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" /> {label}</div><div className="mt-2 text-xl font-semibold">{value}</div><div className="text-[11px] text-muted-foreground mt-1">{hint}</div></CardContent></Card>;
-}
+function FlowCard({ step, title, text }: { step: string; title: string; text: string }) { return <Card className="border-dashed"><CardContent className="p-3"><div className="text-[10px] font-bold text-primary">{step}</div><div className="font-semibold text-sm mt-1">{title}</div><div className="text-[11px] text-muted-foreground mt-1">{text}</div></CardContent></Card>; }
+function FlowArrow() { return <div className="hidden md:flex items-center justify-center text-muted-foreground">→</div>; }
+function SummaryCard({ icon: Icon, label, value, hint }: { icon: any; label: string; value: string; hint: string }) { return <Card><CardContent className="p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" /> {label}</div><div className="mt-2 text-xl font-semibold">{value}</div><div className="text-[11px] text-muted-foreground mt-1">{hint}</div></CardContent></Card>; }
 
 function LocationSection({ title, icon: Icon, locations, onOpen }: { title: string; icon: any; locations: { location: Location; rows: BalanceRow[]; quantity: number; value: number; low: number }[]; onOpen: (l: Location) => void }) {
   return <section className="space-y-3"><div className="flex items-center gap-2"><Icon className="h-5 w-5 text-primary" /><h2 className="text-base font-semibold">{title}</h2><Badge variant="outline">{locations.length}</Badge></div>{locations.length === 0 ? <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">No locations in this group.</CardContent></Card> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{locations.map(x => <Card key={x.location.id} className="hover:shadow-sm transition-shadow"><CardContent className="p-4"><div className="flex items-start justify-between gap-3"><div><div className="font-semibold">{x.location.name}</div><div className="text-xs text-muted-foreground">{x.location.code || x.location.location_type}</div></div><SifoStatusBadge status={x.location.is_active ? "active" : "inactive"} /></div><div className="grid grid-cols-3 gap-2 mt-4"><Metric label="Items" value={String(x.rows.length)} /><Metric label="Units" value={String(x.quantity)} /><Metric label="Value" value={fmtMoney(x.value)} /></div>{x.low > 0 && <div className="mt-3 text-xs text-amber-700">{x.low} item{x.low === 1 ? "" : "s"} at/below reorder level</div>}<Button className="mt-4 w-full" size="sm" onClick={() => onOpen(x.location)}><Eye className="h-4 w-4 mr-1" /> View stock in {x.location.name}</Button></CardContent></Card>)}</div>}</section>;
@@ -143,11 +161,5 @@ function LocationDetail({ location, rows, transfers, locations }: { location: Lo
   return <div className="space-y-4"><div className="rounded-lg border bg-muted/30 p-3 grid gap-3 sm:grid-cols-4"><Metric label="Location type" value={location.location_type} /><Metric label="Items" value={String(rows.length)} /><Metric label="Units" value={String(rows.reduce((s, r) => s + Number(r.quantity), 0))} /><Metric label="Stock value" value={fmtMoney(rows.reduce((s, r) => s + Number(r.quantity) * Number(r.cost_price), 0))} /></div><div className="flex flex-wrap gap-2"><Badge variant="outline">Inbound transfers: {inbound.length}</Badge><Badge variant="outline">Outbound transfers: {outbound.length}</Badge>{location.address && <span className="text-xs text-muted-foreground">{location.address}</span>}</div><Input value={q} onChange={e => setQ(e.target.value)} placeholder={`Search items in ${location.name}…`} /><DataTable tableId={`location-stock-${location.id}`} columns={columns} data={filtered} empty="No stock is currently recorded at this location." /><div className="grid gap-3 md:grid-cols-2"><TransferMini title="Recent inbound" transfers={inbound} locations={locations} /><TransferMini title="Recent outbound" transfers={outbound} locations={locations} /></div></div>;
 }
 
-function TransferMini({ title, transfers, locations }: { title: string; transfers: Transfer[]; locations: Location[] }) {
-  const recent = transfers.slice(0, 5);
-  return <Card><CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader><CardContent className="space-y-2">{recent.length === 0 ? <div className="text-xs text-muted-foreground">None recorded.</div> : recent.map(t => <div key={t.id} className="flex items-center justify-between gap-2 text-xs border-b last:border-0 pb-2 last:pb-0"><span className="font-medium">{t.transfer_number || t.id.slice(0, 8)}</span><span>{locations.find(l => l.id === t.from_location_id)?.name ?? "—"} → {locations.find(l => l.id === t.to_location_id)?.name ?? "—"}</span><SifoStatusBadge status={t.status} /></div>)}</CardContent></Card>;
-}
-
-function ActionCard({ icon: Icon, title, description, to }: { icon: any; title: string; description: string; to: string }) {
-  return <Link to={to as any}><Card className="h-full hover:shadow-sm hover:border-primary/40 transition-all"><CardContent className="p-4"><Icon className="h-5 w-5 text-primary" /><div className="mt-3 font-semibold">{title}</div><div className="text-xs text-muted-foreground mt-1">{description}</div><div className="text-xs text-primary mt-3">Open →</div></CardContent></Card></Link>;
-}
+function TransferMini({ title, transfers, locations }: { title: string; transfers: Transfer[]; locations: Location[] }) { const recent = transfers.slice(0, 5); return <Card><CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader><CardContent className="space-y-2">{recent.length === 0 ? <div className="text-xs text-muted-foreground">None recorded.</div> : recent.map(t => <div key={t.id} className="flex items-center justify-between gap-2 text-xs border-b last:border-0 pb-2 last:pb-0"><span className="font-medium">{t.transfer_number || t.id.slice(0, 8)}</span><span>{locations.find(l => l.id === t.from_location_id)?.name ?? "—"} → {locations.find(l => l.id === t.to_location_id)?.name ?? "—"}</span><SifoStatusBadge status={t.status} /></div>)}</CardContent></Card>; }
+function ActionCard({ icon: Icon, title, description, to }: { icon: any; title: string; description: string; to: string }) { return <Link to={to as any}><Card className="h-full hover:shadow-sm hover:border-primary/40 transition-all"><CardContent className="p-4"><Icon className="h-5 w-5 text-primary" /><div className="mt-3 font-semibold">{title}</div><div className="text-xs text-muted-foreground mt-1">{description}</div><div className="text-xs text-primary mt-3">Open →</div></CardContent></Card></Link>; }
