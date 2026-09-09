@@ -16,7 +16,8 @@ import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
 import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
-import { getAccountingLevel, routeAllowedForAccountingLevel } from "@/lib/accounting-config";
+import { getAccountingLevel, routeAllowedForAccountingLevel, moduleForRoute, moduleAllowedForAccountingLevel } from "@/lib/accounting-config";
+import { getModule } from "@/lib/modules";
 import { toast } from "sonner";
 
 /** Staff may only open routes their permissions allow — typed URLs included. */
@@ -34,7 +35,10 @@ async function enforceRoute(pathname: string) {
   // direct URL access to features hidden by the selected Starter/Standard/Full level.
   try {
     const { level } = await getAccountingLevel();
-    if (!routeAllowedForAccountingLevel(pathname, level)) {
+    const module = moduleForRoute(pathname);
+    const moduleAllowed = !module || moduleAllowedForAccountingLevel(module, level);
+    const routeAllowed = routeAllowedForAccountingLevel(pathname, level);
+    if (!moduleAllowed || !routeAllowed) {
       if (typeof window !== "undefined") {
         setTimeout(() => toast.error(`This feature requires ${level === "starter" ? "Standard or Full" : "Full"} Accounting`), 50);
       }
@@ -127,7 +131,7 @@ function Shell() {
             {canSwitchCompany ? <div className="flex min-w-0 items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div> : <div className="hidden sm:flex min-w-0 items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground truncate">{access?.role_name}{access?.branch_name ? ` · ${access.branch_name}` : ""}</div>}
             <button onClick={() => setCmdOpen(true)} className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 hover:bg-card hover:border-primary/30 transition text-left text-sm text-muted-foreground"><Search className="h-4 w-4 text-muted-foreground" /><span className="flex-1 truncate">Search anything… invoices, customers, transactions</span><kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-card text-[10px] font-mono text-muted-foreground"><Command className="h-3 w-3" />K</kbd></button>
             <div className="flex-1 md:hidden" />
-            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1"><ConnectionIndicator /><div className="hidden sm:flex items-center gap-1"><SifoAssistantButton /><ThemeToggle /><Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>{canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link>}</div>{canCreate && <QuickCreate />}<DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account"><User className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-56"><DropdownMenuLabel className="truncate">{userEmail || "Signed in"}</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuItem className="sm:hidden" onClick={() => router.history.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Back</DropdownMenuItem>{canSettings && <DropdownMenuItem asChild><Link to="/setup"><SettingsIcon className="h-4 w-4 mr-2" /> Settings</Link></DropdownMenuItem>}<DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive"><LogOut className="h-4 w-4 mr-2" /> Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1"><ConnectionIndicator /><div className="hidden sm:flex items-center gap-1"><SifoAssistantButton /><ThemeToggle /><Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>{canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>}</div>{canCreate && <QuickCreate />}<DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account"><User className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-56"><DropdownMenuLabel className="truncate">{userEmail || "Signed in"}</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuItem className="sm:hidden" onClick={() => router.history.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Back</DropdownMenuItem>{canSettings && <DropdownMenuItem asChild><Link to="/setup"><SettingsIcon className="h-4 w-4 mr-2" /> Settings</Link></DropdownMenuItem>}<DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive"><LogOut className="h-4 w-4 mr-2" /> Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
           </header>
           <OfflineBanner />
           <main className="flex-1 min-w-0 pb-24 md:pb-0"><div key={pageKey} className="page-enter"><Outlet /></div></main>
