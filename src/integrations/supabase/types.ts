@@ -10441,10 +10441,6 @@ export type Database = {
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
       confirm_pos_pin_reset: { Args: { _pin: string }; Returns: Json }
       current_tenant: { Args: never; Returns: string }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
       deny_pos_pin_reset: {
         Args: { _reason?: string; _reset_id: string }
         Returns: Json
@@ -10452,11 +10448,6 @@ export type Database = {
       dispatch_stock_transfer: {
         Args: { _allow_negative?: boolean; _transfer_id: string }
         Returns: Json
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
       }
       ensure_account: {
         Args: { _code: string; _name: string; _type: string; _uid: string }
@@ -10493,15 +10484,6 @@ export type Database = {
           _tenant: string
         }
         Returns: undefined
-      }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
       }
       my_access: { Args: never; Returns: Json }
       next_doc_number: {
@@ -10545,14 +10527,6 @@ export type Database = {
       post_school_grant: { Args: { _id: string }; Returns: string }
       post_stock_count: { Args: { _count_id: string }; Returns: Json }
       post_tuckshop: { Args: { _id: string }; Returns: string }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       rebuild_bank_status: { Args: never; Returns: Json }
       rebuild_ledgers: { Args: never; Returns: Json }
       rebuild_ledgers_for: { Args: { _uid: string }; Returns: Json }
