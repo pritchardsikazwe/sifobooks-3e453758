@@ -98,8 +98,8 @@ function ControlCenterPage() {
     { key: "chibombo_sales", header: "Posted Sales", align: "right" }, { key: "chibombo_returns", header: "Returns", align: "right" },
     { key: "chibombo_adjustments", header: "Adjustments", align: "right" }, { key: "chibombo_transferred_out", header: "Chibombo Transfer Out", align: "right" },
     { key: "chibombo_current", header: "Chibombo Remaining", align: "right", sortable: true },
-    { key: "chibombo_current", header: "Company Total", align: "right", cell: (r) => r.warehouse_current + r.chibombo_current },
-    { key: "cost_price", header: "Company Cost Value", align: "right", cell: (r) => fmtMoney((Number(r.warehouse_current) + Number(r.chibombo_current)) * Number(r.cost_price)) },
+    { key: "company_total", header: "Company Total", align: "right", cell: (r) => Number(r.warehouse_current) + Number(r.chibombo_current) },
+    { key: "company_cost_value", header: "Company Cost Value", align: "right", cell: (r) => fmtMoney((Number(r.warehouse_current) + Number(r.chibombo_current)) * Number(r.cost_price)) },
   ];
   const exceptionCols: DTColumn<ExceptionRow>[] = [
     { key: "item", header: "Product", sortable: true, sticky: true }, { key: "sku", header: "SKU" }, { key: "unit", header: "Unit" },
