@@ -2,13 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Menu, LayoutGrid, BarChart3, ShoppingBag, Archive, FileText, Settings, LifeBuoy,
-  ChevronDown, Box, Layers, Warehouse, LogOut, Landmark, ShieldCheck, Package, Receipt,
+  ChevronDown, Box, Layers, Warehouse, LogOut, Landmark, ShieldCheck, Receipt,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getActiveCompany, getModeMeta, getWorkspaceMode, type WorkspaceMode } from "@/lib/workspace";
 
 type Item = { label: string; to?: string; icon?: any; soon?: boolean };
 type Group = { label: string; icon: any; items: Item[] };
@@ -65,17 +66,41 @@ export function AppNav() {
 }
 
 function SidebarBody({ onNavigate }: { onNavigate: () => void }) {
+  const [companyName, setCompanyName] = useState("Loading company…");
+  const [workspace, setWorkspace] = useState<WorkspaceMode>("accounting");
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([getActiveCompany(), getWorkspaceMode()])
+      .then(([company, current]) => {
+        if (!mounted) return;
+        setCompanyName(company?.name ?? "No active company");
+        setWorkspace(current.mode);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCompanyName("Company");
+      });
+    return () => { mounted = false; };
+  }, []);
+
+  const mode = getModeMeta(workspace);
+
   return (
     <div className="flex h-full flex-col">
       <div className="px-5 pt-6 pb-3 border-b">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-orange-400" />
           <div className="text-lg font-bold tracking-tight">
-            <span className="text-primary">Edge</span><span className="text-orange-500">Core</span>
+            <span className="text-primary">Sifo</span><span className="text-orange-500">Books</span>
           </div>
         </div>
-        <div className="mt-4 rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
-          Sifonet Technologies LTD
+        <div className="mt-4 rounded-md border bg-muted/40 px-3 py-2">
+          <div className="text-sm font-semibold truncate">{companyName}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+            <span>{mode.emoji}</span>
+            <span className="truncate">{mode.label}</span>
+          </div>
         </div>
       </div>
 
