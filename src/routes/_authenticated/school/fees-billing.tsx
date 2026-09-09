@@ -11,7 +11,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { RequireModule } from "@/components/RequireModule";
 
-export const Route = createFileRoute("/_authenticated/school-fees")({
+export const Route = createFileRoute("/_authenticated/school/fees-billing")({
   head: () => ({
     meta: [
       { title: "School Fees — SifoBooks" },

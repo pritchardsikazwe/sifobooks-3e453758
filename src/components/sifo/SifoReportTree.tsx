@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, FileBarChart3, Search, Star } from "lucide-react";
+import { ChevronDown, ChevronRight, FileBarChart, Search, Star } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ export function SifoReportTree({ reports, title = "Report tree" }: { reports: Si
   return (
     <aside className="rounded-xl border bg-card shadow-sm overflow-hidden">
       <div className="border-b p-4">
-        <div className="flex items-center gap-2 font-semibold"><FileBarChart3 className="h-4 w-4 text-primary" /> {title}</div>
+        <div className="flex items-center gap-2 font-semibold"><FileBarChart className="h-4 w-4 text-primary" /> {title}</div>
         <div className="relative mt-3">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Find a report…" className="pl-9 h-9" />
@@ -47,7 +47,7 @@ export function SifoReportTree({ reports, title = "Report tree" }: { reports: Si
               {expanded && <div className="ml-2 border-l pl-2">
                 {group.items.map(report => (
                   <Link key={report.id} to={report.url} className="group flex items-start gap-2 rounded-lg px-2.5 py-2.5 hover:bg-muted/60">
-                    <FileBarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
+                    <FileBarChart className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
                     <span className="min-w-0 flex-1"><span className="flex items-center gap-1 text-sm font-medium">{report.name} {report.favorite && <Star className="h-3 w-3 fill-current" />}</span>{report.description && <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">{report.description}</span>}</span>
                   </Link>
                 ))}

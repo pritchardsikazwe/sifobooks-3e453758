@@ -27,3 +27,21 @@ export const MODULES: ModuleDef[] = [
   { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true, description: "Accounting basics, Dr/Cr rules and Zambian compliance guides.", routes: [{ title: "Learn Centre", url: "/learn", iconName: "GraduationCap" }, { title: "New Company Setup", url: "/learn/new-company", iconName: "ClipboardList" }, { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" }] },
   { key: "admin", label: "Administration", category: "Administration", defaultInstalled: true, description: "Company setup, users, roles, approvals and audit controls.", routes: [{ title: "Administration", url: "/admin", iconName: "Settings" }, { title: "Company Setup", url: "/setup", iconName: "Building2" }, { title: "Users & Roles", url: "/roles", iconName: "ShieldCheck" }, { title: "Audit Logs", url: "/audit-logs", iconName: "History" }] },
 ];
+export const CATEGORY_ORDER: ModuleCategory[] = [
+  "Core", "Sales", "Purchases", "Inventory", "POS", "Restaurant",
+  "Finance", "HR & Payroll", "CRM", "Projects & Service", "Reports",
+  "School ERP", "Hotel ERP", "NGO", "Mining", "Help & Learning", "Administration", "Platform",
+];
+
+export function getModule(key: string): ModuleDef | undefined {
+  return MODULES.find(m => m.key === key);
+}
+
+/** Installed = core, or explicitly enabled for the company, or installed by default. */
+export function isModuleInstalled(key: string, explicit: Set<string>): boolean {
+  const m = getModule(key);
+  if (!m) return false;
+  if (m.core) return true;
+  if (explicit.has(key)) return true;
+  return !!m.defaultInstalled;
+}

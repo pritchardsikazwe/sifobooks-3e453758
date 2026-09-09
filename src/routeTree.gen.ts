@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PublicJobsRouteImport } from './routes/public-jobs'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as LandingWhiteboardRouteImport } from './routes/landing-whiteboard'
+import { Route as InteractivePresentationRouteImport } from './routes/interactive-presentation'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as WorkerRouteRouteImport } from './routes/_worker/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -36,15 +39,19 @@ import { Route as AuthenticatedSifoposRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedServiceTicketsRouteImport } from './routes/_authenticated/service-tickets'
 import { Route as AuthenticatedSchoolGrantsRouteImport } from './routes/_authenticated/school-grants'
-import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school-fees'
+import { Route as AuthenticatedSchoolRouteImport } from './routes/_authenticated/school'
 import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
+import { Route as AuthenticatedRetailShiftControlRouteImport } from './routes/_authenticated/retail-shift-control'
+import { Route as AuthenticatedRetailControlCenterRouteImport } from './routes/_authenticated/retail-control-center'
 import { Route as AuthenticatedRestaurantRouteImport } from './routes/_authenticated/restaurant'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedReconciliationSessionsRouteImport } from './routes/_authenticated/reconciliation-sessions'
 import { Route as AuthenticatedReconciliationRouteImport } from './routes/_authenticated/reconciliation'
 import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
 import { Route as AuthenticatedQuotesRouteImport } from './routes/_authenticated/quotes'
+import { Route as AuthenticatedQuotationComparisonRouteImport } from './routes/_authenticated/quotation-comparison'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
+import { Route as AuthenticatedPublicServicesRouteImport } from './routes/_authenticated/public-services'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProjectTasksRouteImport } from './routes/_authenticated/project-tasks'
 import { Route as AuthenticatedPrintingSettingsRouteImport } from './routes/_authenticated/printing-settings'
@@ -71,11 +78,16 @@ import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedLaunchRouteImport } from './routes/_authenticated/launch'
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
+import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedInventorySheetsRouteImport } from './routes/_authenticated/inventory-sheets'
+import { Route as AuthenticatedInventoryFlowAuditRouteImport } from './routes/_authenticated/inventory-flow-audit'
+import { Route as AuthenticatedInventoryControlCentreRouteImport } from './routes/_authenticated/inventory-control-centre'
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
+import { Route as AuthenticatedHotelRouteImport } from './routes/_authenticated/hotel'
+import { Route as AuthenticatedGoodsReceiptsRouteImport } from './routes/_authenticated/goods-receipts'
 import { Route as AuthenticatedFxRatesRouteImport } from './routes/_authenticated/fx-rates'
 import { Route as AuthenticatedFixedAssetsRouteImport } from './routes/_authenticated/fixed-assets'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
@@ -123,6 +135,24 @@ import { Route as WorkerWOrdersRouteImport } from './routes/_worker/w.orders'
 import { Route as WorkerWKitchenRouteImport } from './routes/_worker/w.kitchen'
 import { Route as WorkerWCashRouteImport } from './routes/_worker/w.cash'
 import { Route as AuthenticatedTeachingMaterialsNewRouteImport } from './routes/_authenticated/teaching-materials.new'
+import { Route as AuthenticatedSchoolTransportRouteImport } from './routes/_authenticated/school/transport'
+import { Route as AuthenticatedSchoolTimetableRouteImport } from './routes/_authenticated/school/timetable'
+import { Route as AuthenticatedSchoolStudentsRouteImport } from './routes/_authenticated/school/students'
+import { Route as AuthenticatedSchoolStudentPortalRouteImport } from './routes/_authenticated/school/student-portal'
+import { Route as AuthenticatedSchoolStaffRouteImport } from './routes/_authenticated/school/staff'
+import { Route as AuthenticatedSchoolScholarshipsRouteImport } from './routes/_authenticated/school/scholarships'
+import { Route as AuthenticatedSchoolReportsRouteImport } from './routes/_authenticated/school/reports'
+import { Route as AuthenticatedSchoolReportCardsRouteImport } from './routes/_authenticated/school/report-cards'
+import { Route as AuthenticatedSchoolPaymentsRouteImport } from './routes/_authenticated/school/payments'
+import { Route as AuthenticatedSchoolParentsRouteImport } from './routes/_authenticated/school/parents'
+import { Route as AuthenticatedSchoolParentPortalRouteImport } from './routes/_authenticated/school/parent-portal'
+import { Route as AuthenticatedSchoolFeesBillingRouteImport } from './routes/_authenticated/school/fees-billing'
+import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school/fees'
+import { Route as AuthenticatedSchoolExamsRouteImport } from './routes/_authenticated/school/exams'
+import { Route as AuthenticatedSchoolBoardingRouteImport } from './routes/_authenticated/school/boarding'
+import { Route as AuthenticatedSchoolAttendanceRouteImport } from './routes/_authenticated/school/attendance'
+import { Route as AuthenticatedSchoolAdmissionsRouteImport } from './routes/_authenticated/school/admissions'
+import { Route as AuthenticatedSchoolAcademicsRouteImport } from './routes/_authenticated/school/academics'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
 import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
 import { Route as AuthenticatedRestaurantSettingsRouteImport } from './routes/_authenticated/restaurant.settings'
@@ -150,6 +180,7 @@ import { Route as AuthenticatedReportsPayrollSchedulesRouteImport } from './rout
 import { Route as AuthenticatedReportsMonthlyManagementRouteImport } from './routes/_authenticated/reports.monthly-management'
 import { Route as AuthenticatedReportsManagementPackRouteImport } from './routes/_authenticated/reports.management-pack'
 import { Route as AuthenticatedReportsInventoryValuationRouteImport } from './routes/_authenticated/reports.inventory-valuation'
+import { Route as AuthenticatedReportsInventoryFlowAuditRouteImport } from './routes/_authenticated/reports.inventory-flow-audit'
 import { Route as AuthenticatedReportsIncomeTaxRouteImport } from './routes/_authenticated/reports.income-tax'
 import { Route as AuthenticatedReportsGeneralLedgerRouteImport } from './routes/_authenticated/reports.general-ledger'
 import { Route as AuthenticatedReportsCustomerStatementRouteImport } from './routes/_authenticated/reports.customer-statement'
@@ -162,6 +193,8 @@ import { Route as AuthenticatedReportsAfsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsAccountantPackRouteImport } from './routes/_authenticated/reports.accountant-pack'
 import { Route as AuthenticatedReportsAccountTransactionsRouteImport } from './routes/_authenticated/reports.account-transactions'
 import { Route as AuthenticatedQuotesNewRouteImport } from './routes/_authenticated/quotes.new'
+import { Route as AuthenticatedQuotesIdRouteImport } from './routes/_authenticated/quotes.$id'
+import { Route as AuthenticatedPurchaseOrderDetailIdRouteImport } from './routes/_authenticated/purchase-order-detail.$id'
 import { Route as AuthenticatedPosRetailCommandCenterRouteImport } from './routes/_authenticated/pos.retail-command-center'
 import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
 import { Route as AuthenticatedManagerShiftsRouteImport } from './routes/_authenticated/manager.shifts'
@@ -175,14 +208,36 @@ import { Route as AuthenticatedLearnBankReconciliationRouteImport } from './rout
 import { Route as AuthenticatedLearnAccountingBasicsRouteImport } from './routes/_authenticated/learn.accounting-basics'
 import { Route as AuthenticatedJournalEntryIdRouteImport } from './routes/_authenticated/journal-entry.$id'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
+import { Route as AuthenticatedInvoiceDetailIdRouteImport } from './routes/_authenticated/invoice-detail.$id'
 import { Route as AuthenticatedInventoryTransfersRouteImport } from './routes/_authenticated/inventory.transfers'
 import { Route as AuthenticatedInventoryStockCardRouteImport } from './routes/_authenticated/inventory.stock-card'
 import { Route as AuthenticatedInventoryReconciliationRouteImport } from './routes/_authenticated/inventory.reconciliation'
 import { Route as AuthenticatedInventoryProductionRouteImport } from './routes/_authenticated/inventory.production'
 import { Route as AuthenticatedInventoryLocationsRouteImport } from './routes/_authenticated/inventory.locations'
+import { Route as AuthenticatedInventoryGlReconciliationRouteImport } from './routes/_authenticated/inventory.gl-reconciliation'
 import { Route as AuthenticatedInventoryControlCenterRouteImport } from './routes/_authenticated/inventory.control-center'
 import { Route as AuthenticatedInventoryCashierRecordsRouteImport } from './routes/_authenticated/inventory.cashier-records'
+import { Route as AuthenticatedHotelRoomsRouteImport } from './routes/_authenticated/hotel/rooms'
+import { Route as AuthenticatedHotelRoomRackRouteImport } from './routes/_authenticated/hotel/room-rack'
+import { Route as AuthenticatedHotelRestaurantRouteImport } from './routes/_authenticated/hotel/restaurant'
+import { Route as AuthenticatedHotelReservationsRouteImport } from './routes/_authenticated/hotel/reservations'
+import { Route as AuthenticatedHotelReportsRouteImport } from './routes/_authenticated/hotel/reports'
+import { Route as AuthenticatedHotelPosRouteImport } from './routes/_authenticated/hotel/pos'
+import { Route as AuthenticatedHotelPaymentsRouteImport } from './routes/_authenticated/hotel/payments'
+import { Route as AuthenticatedHotelNightAuditRouteImport } from './routes/_authenticated/hotel/night-audit'
+import { Route as AuthenticatedHotelMaintenanceRouteImport } from './routes/_authenticated/hotel/maintenance'
+import { Route as AuthenticatedHotelInventoryRouteImport } from './routes/_authenticated/hotel/inventory'
+import { Route as AuthenticatedHotelHousekeepingRouteImport } from './routes/_authenticated/hotel/housekeeping'
+import { Route as AuthenticatedHotelGuestsRouteImport } from './routes/_authenticated/hotel/guests'
+import { Route as AuthenticatedHotelGuestPortalRouteImport } from './routes/_authenticated/hotel/guest-portal'
+import { Route as AuthenticatedHotelFrontDeskRouteImport } from './routes/_authenticated/hotel/front-desk'
+import { Route as AuthenticatedHotelFoliosRouteImport } from './routes/_authenticated/hotel/folios'
+import { Route as AuthenticatedHotelEventsRouteImport } from './routes/_authenticated/hotel/events'
+import { Route as AuthenticatedHotelCheckInOutRouteImport } from './routes/_authenticated/hotel/check-in-out'
+import { Route as AuthenticatedHotelAccountingRouteImport } from './routes/_authenticated/hotel/accounting'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
+import { Route as AuthenticatedBillPaymentDetailIdRouteImport } from './routes/_authenticated/bill-payment-detail.$id'
+import { Route as AuthenticatedBillDetailIdRouteImport } from './routes/_authenticated/bill-detail.$id'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -199,9 +254,24 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicJobsRoute = PublicJobsRouteImport.update({
+  id: '/public-jobs',
+  path: '/public-jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandingWhiteboardRoute = LandingWhiteboardRouteImport.update({
+  id: '/landing-whiteboard',
+  path: '/landing-whiteboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InteractivePresentationRoute = InteractivePresentationRouteImport.update({
+  id: '/interactive-presentation',
+  path: '/interactive-presentation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -332,9 +402,9 @@ const AuthenticatedSchoolGrantsRoute =
     path: '/school-grants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSchoolFeesRoute = AuthenticatedSchoolFeesRouteImport.update({
-  id: '/school-fees',
-  path: '/school-fees',
+const AuthenticatedSchoolRoute = AuthenticatedSchoolRouteImport.update({
+  id: '/school',
+  path: '/school',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
@@ -342,6 +412,18 @@ const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRetailShiftControlRoute =
+  AuthenticatedRetailShiftControlRouteImport.update({
+    id: '/retail-shift-control',
+    path: '/retail-shift-control',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRetailControlCenterRoute =
+  AuthenticatedRetailControlCenterRouteImport.update({
+    id: '/retail-control-center',
+    path: '/retail-control-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRestaurantRoute = AuthenticatedRestaurantRouteImport.update({
   id: '/restaurant',
   path: '/restaurant',
@@ -374,10 +456,22 @@ const AuthenticatedQuotesRoute = AuthenticatedQuotesRouteImport.update({
   path: '/quotes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedQuotationComparisonRoute =
+  AuthenticatedQuotationComparisonRouteImport.update({
+    id: '/quotation-comparison',
+    path: '/quotation-comparison',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPurchaseOrdersRoute =
   AuthenticatedPurchaseOrdersRouteImport.update({
     id: '/purchase-orders',
     path: '/purchase-orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPublicServicesRoute =
+  AuthenticatedPublicServicesRouteImport.update({
+    id: '/public-services',
+    path: '/public-services',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
@@ -523,6 +617,11 @@ const AuthenticatedJournalEntriesRoute =
     path: '/journal-entries',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJobCardsRoute = AuthenticatedJobCardsRouteImport.update({
   id: '/job-cards',
   path: '/job-cards',
@@ -539,6 +638,18 @@ const AuthenticatedInventorySheetsRoute =
     path: '/inventory-sheets',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInventoryFlowAuditRoute =
+  AuthenticatedInventoryFlowAuditRouteImport.update({
+    id: '/inventory-flow-audit',
+    path: '/inventory-flow-audit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryControlCentreRoute =
+  AuthenticatedInventoryControlCentreRouteImport.update({
+    id: '/inventory-control-centre',
+    path: '/inventory-control-centre',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedIndustryRoute = AuthenticatedIndustryRouteImport.update({
   id: '/industry',
   path: '/industry',
@@ -549,6 +660,17 @@ const AuthenticatedImprestRoute = AuthenticatedImprestRouteImport.update({
   path: '/imprest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHotelRoute = AuthenticatedHotelRouteImport.update({
+  id: '/hotel',
+  path: '/hotel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGoodsReceiptsRoute =
+  AuthenticatedGoodsReceiptsRouteImport.update({
+    id: '/goods-receipts',
+    path: '/goods-receipts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFxRatesRoute = AuthenticatedFxRatesRouteImport.update({
   id: '/fx-rates',
   path: '/fx-rates',
@@ -800,6 +922,113 @@ const AuthenticatedTeachingMaterialsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedTeachingMaterialsRoute,
   } as any)
+const AuthenticatedSchoolTransportRoute =
+  AuthenticatedSchoolTransportRouteImport.update({
+    id: '/transport',
+    path: '/transport',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolTimetableRoute =
+  AuthenticatedSchoolTimetableRouteImport.update({
+    id: '/timetable',
+    path: '/timetable',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolStudentsRoute =
+  AuthenticatedSchoolStudentsRouteImport.update({
+    id: '/students',
+    path: '/students',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolStudentPortalRoute =
+  AuthenticatedSchoolStudentPortalRouteImport.update({
+    id: '/student-portal',
+    path: '/student-portal',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolStaffRoute =
+  AuthenticatedSchoolStaffRouteImport.update({
+    id: '/staff',
+    path: '/staff',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolScholarshipsRoute =
+  AuthenticatedSchoolScholarshipsRouteImport.update({
+    id: '/scholarships',
+    path: '/scholarships',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolReportsRoute =
+  AuthenticatedSchoolReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolReportCardsRoute =
+  AuthenticatedSchoolReportCardsRouteImport.update({
+    id: '/report-cards',
+    path: '/report-cards',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolPaymentsRoute =
+  AuthenticatedSchoolPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolParentsRoute =
+  AuthenticatedSchoolParentsRouteImport.update({
+    id: '/parents',
+    path: '/parents',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolParentPortalRoute =
+  AuthenticatedSchoolParentPortalRouteImport.update({
+    id: '/parent-portal',
+    path: '/parent-portal',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolFeesBillingRoute =
+  AuthenticatedSchoolFeesBillingRouteImport.update({
+    id: '/fees-billing',
+    path: '/fees-billing',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolFeesRoute = AuthenticatedSchoolFeesRouteImport.update({
+  id: '/fees',
+  path: '/fees',
+  getParentRoute: () => AuthenticatedSchoolRoute,
+} as any)
+const AuthenticatedSchoolExamsRoute =
+  AuthenticatedSchoolExamsRouteImport.update({
+    id: '/exams',
+    path: '/exams',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolBoardingRoute =
+  AuthenticatedSchoolBoardingRouteImport.update({
+    id: '/boarding',
+    path: '/boarding',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolAttendanceRoute =
+  AuthenticatedSchoolAttendanceRouteImport.update({
+    id: '/attendance',
+    path: '/attendance',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolAdmissionsRoute =
+  AuthenticatedSchoolAdmissionsRouteImport.update({
+    id: '/admissions',
+    path: '/admissions',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
+const AuthenticatedSchoolAcademicsRoute =
+  AuthenticatedSchoolAcademicsRouteImport.update({
+    id: '/academics',
+    path: '/academics',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
 const AuthenticatedRestaurantTablesRoute =
   AuthenticatedRestaurantTablesRouteImport.update({
     id: '/tables',
@@ -961,6 +1190,12 @@ const AuthenticatedReportsInventoryValuationRoute =
     path: '/inventory-valuation',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsInventoryFlowAuditRoute =
+  AuthenticatedReportsInventoryFlowAuditRouteImport.update({
+    id: '/inventory-flow-audit',
+    path: '/inventory-flow-audit',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsIncomeTaxRoute =
   AuthenticatedReportsIncomeTaxRouteImport.update({
     id: '/income-tax',
@@ -1031,6 +1266,17 @@ const AuthenticatedQuotesNewRoute = AuthenticatedQuotesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedQuotesRoute,
 } as any)
+const AuthenticatedQuotesIdRoute = AuthenticatedQuotesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedQuotesRoute,
+} as any)
+const AuthenticatedPurchaseOrderDetailIdRoute =
+  AuthenticatedPurchaseOrderDetailIdRouteImport.update({
+    id: '/purchase-order-detail/$id',
+    path: '/purchase-order-detail/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPosRetailCommandCenterRoute =
   AuthenticatedPosRetailCommandCenterRouteImport.update({
     id: '/retail-command-center',
@@ -1109,6 +1355,12 @@ const AuthenticatedInvoicesNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
+const AuthenticatedInvoiceDetailIdRoute =
+  AuthenticatedInvoiceDetailIdRouteImport.update({
+    id: '/invoice-detail/$id',
+    path: '/invoice-detail/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventoryTransfersRoute =
   AuthenticatedInventoryTransfersRouteImport.update({
     id: '/inventory/transfers',
@@ -1139,6 +1391,12 @@ const AuthenticatedInventoryLocationsRoute =
     path: '/inventory/locations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInventoryGlReconciliationRoute =
+  AuthenticatedInventoryGlReconciliationRouteImport.update({
+    id: '/inventory/gl-reconciliation',
+    path: '/inventory/gl-reconciliation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventoryControlCenterRoute =
   AuthenticatedInventoryControlCenterRouteImport.update({
     id: '/inventory/control-center',
@@ -1151,11 +1409,129 @@ const AuthenticatedInventoryCashierRecordsRoute =
     path: '/inventory/cashier-records',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHotelRoomsRoute = AuthenticatedHotelRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => AuthenticatedHotelRoute,
+} as any)
+const AuthenticatedHotelRoomRackRoute =
+  AuthenticatedHotelRoomRackRouteImport.update({
+    id: '/room-rack',
+    path: '/room-rack',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelRestaurantRoute =
+  AuthenticatedHotelRestaurantRouteImport.update({
+    id: '/restaurant',
+    path: '/restaurant',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelReservationsRoute =
+  AuthenticatedHotelReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelReportsRoute =
+  AuthenticatedHotelReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelPosRoute = AuthenticatedHotelPosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => AuthenticatedHotelRoute,
+} as any)
+const AuthenticatedHotelPaymentsRoute =
+  AuthenticatedHotelPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelNightAuditRoute =
+  AuthenticatedHotelNightAuditRouteImport.update({
+    id: '/night-audit',
+    path: '/night-audit',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelMaintenanceRoute =
+  AuthenticatedHotelMaintenanceRouteImport.update({
+    id: '/maintenance',
+    path: '/maintenance',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelInventoryRoute =
+  AuthenticatedHotelInventoryRouteImport.update({
+    id: '/inventory',
+    path: '/inventory',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelHousekeepingRoute =
+  AuthenticatedHotelHousekeepingRouteImport.update({
+    id: '/housekeeping',
+    path: '/housekeeping',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelGuestsRoute =
+  AuthenticatedHotelGuestsRouteImport.update({
+    id: '/guests',
+    path: '/guests',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelGuestPortalRoute =
+  AuthenticatedHotelGuestPortalRouteImport.update({
+    id: '/guest-portal',
+    path: '/guest-portal',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelFrontDeskRoute =
+  AuthenticatedHotelFrontDeskRouteImport.update({
+    id: '/front-desk',
+    path: '/front-desk',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelFoliosRoute =
+  AuthenticatedHotelFoliosRouteImport.update({
+    id: '/folios',
+    path: '/folios',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelEventsRoute =
+  AuthenticatedHotelEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelCheckInOutRoute =
+  AuthenticatedHotelCheckInOutRouteImport.update({
+    id: '/check-in-out',
+    path: '/check-in-out',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelAccountingRoute =
+  AuthenticatedHotelAccountingRouteImport.update({
+    id: '/accounting',
+    path: '/accounting',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
 const AuthenticatedCustomersIdRoute =
   AuthenticatedCustomersIdRouteImport.update({
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedCustomersRoute,
+  } as any)
+const AuthenticatedBillPaymentDetailIdRoute =
+  AuthenticatedBillPaymentDetailIdRouteImport.update({
+    id: '/bill-payment-detail/$id',
+    path: '/bill-payment-detail/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBillDetailIdRoute =
+  AuthenticatedBillDetailIdRouteImport.update({
+    id: '/bill-detail/$id',
+    path: '/bill-detail/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
@@ -1188,7 +1564,10 @@ const AuthenticatedTeachingMaterialsIdQuoteRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/interactive-presentation': typeof InteractivePresentationRoute
+  '/landing-whiteboard': typeof LandingWhiteboardRoute
   '/mcp': typeof McpRoute
+  '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1218,11 +1597,16 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
+  '/goods-receipts': typeof AuthenticatedGoodsReceiptsRoute
+  '/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
+  '/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/job-cards': typeof AuthenticatedJobCardsRoute
+  '/jobs': typeof AuthenticatedJobsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/launch': typeof AuthenticatedLaunchRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -1249,15 +1633,19 @@ export interface FileRoutesByFullPath {
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/public-services': typeof AuthenticatedPublicServicesRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/quotation-comparison': typeof AuthenticatedQuotationComparisonRoute
   '/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
+  '/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
+  '/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/roles': typeof AuthenticatedRolesRoute
-  '/school-fees': typeof AuthenticatedSchoolFeesRoute
+  '/school': typeof AuthenticatedSchoolRouteWithChildren
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -1279,14 +1667,36 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
+  '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/events': typeof AuthenticatedHotelEventsRoute
+  '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
+  '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
+  '/hotel/guest-portal': typeof AuthenticatedHotelGuestPortalRoute
+  '/hotel/guests': typeof AuthenticatedHotelGuestsRoute
+  '/hotel/housekeeping': typeof AuthenticatedHotelHousekeepingRoute
+  '/hotel/inventory': typeof AuthenticatedHotelInventoryRoute
+  '/hotel/maintenance': typeof AuthenticatedHotelMaintenanceRoute
+  '/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
+  '/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
+  '/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/hotel/reports': typeof AuthenticatedHotelReportsRoute
+  '/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
+  '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
+  '/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
+  '/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
   '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
+  '/inventory/gl-reconciliation': typeof AuthenticatedInventoryGlReconciliationRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
   '/inventory/production': typeof AuthenticatedInventoryProductionRoute
   '/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
+  '/invoice-detail/$id': typeof AuthenticatedInvoiceDetailIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1300,6 +1710,8 @@ export interface FileRoutesByFullPath {
   '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
+  '/purchase-order-detail/$id': typeof AuthenticatedPurchaseOrderDetailIdRoute
+  '/quotes/$id': typeof AuthenticatedQuotesIdRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1312,6 +1724,7 @@ export interface FileRoutesByFullPath {
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
+  '/reports/inventory-flow-audit': typeof AuthenticatedReportsInventoryFlowAuditRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
@@ -1339,6 +1752,24 @@ export interface FileRoutesByFullPath {
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
+  '/school/academics': typeof AuthenticatedSchoolAcademicsRoute
+  '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
+  '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
+  '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/exams': typeof AuthenticatedSchoolExamsRoute
+  '/school/fees': typeof AuthenticatedSchoolFeesRoute
+  '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
+  '/school/parent-portal': typeof AuthenticatedSchoolParentPortalRoute
+  '/school/parents': typeof AuthenticatedSchoolParentsRoute
+  '/school/payments': typeof AuthenticatedSchoolPaymentsRoute
+  '/school/report-cards': typeof AuthenticatedSchoolReportCardsRoute
+  '/school/reports': typeof AuthenticatedSchoolReportsRoute
+  '/school/scholarships': typeof AuthenticatedSchoolScholarshipsRoute
+  '/school/staff': typeof AuthenticatedSchoolStaffRoute
+  '/school/student-portal': typeof AuthenticatedSchoolStudentPortalRoute
+  '/school/students': typeof AuthenticatedSchoolStudentsRoute
+  '/school/timetable': typeof AuthenticatedSchoolTimetableRoute
+  '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
@@ -1367,7 +1798,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/interactive-presentation': typeof InteractivePresentationRoute
+  '/landing-whiteboard': typeof LandingWhiteboardRoute
   '/mcp': typeof McpRoute
+  '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1396,10 +1830,15 @@ export interface FileRoutesByTo {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/fx-rates': typeof AuthenticatedFxRatesRoute
+  '/goods-receipts': typeof AuthenticatedGoodsReceiptsRoute
+  '/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
+  '/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
+  '/jobs': typeof AuthenticatedJobsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/launch': typeof AuthenticatedLaunchRoute
   '/leads': typeof AuthenticatedLeadsRoute
@@ -1425,12 +1864,16 @@ export interface FileRoutesByTo {
   '/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/public-services': typeof AuthenticatedPublicServicesRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/quotation-comparison': typeof AuthenticatedQuotationComparisonRoute
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
+  '/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
+  '/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/roles': typeof AuthenticatedRolesRoute
-  '/school-fees': typeof AuthenticatedSchoolFeesRoute
+  '/school': typeof AuthenticatedSchoolRouteWithChildren
   '/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -1452,14 +1895,36 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
+  '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/events': typeof AuthenticatedHotelEventsRoute
+  '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
+  '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
+  '/hotel/guest-portal': typeof AuthenticatedHotelGuestPortalRoute
+  '/hotel/guests': typeof AuthenticatedHotelGuestsRoute
+  '/hotel/housekeeping': typeof AuthenticatedHotelHousekeepingRoute
+  '/hotel/inventory': typeof AuthenticatedHotelInventoryRoute
+  '/hotel/maintenance': typeof AuthenticatedHotelMaintenanceRoute
+  '/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
+  '/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
+  '/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/hotel/reports': typeof AuthenticatedHotelReportsRoute
+  '/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
+  '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
+  '/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
+  '/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
   '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
+  '/inventory/gl-reconciliation': typeof AuthenticatedInventoryGlReconciliationRoute
   '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
   '/inventory/production': typeof AuthenticatedInventoryProductionRoute
   '/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
+  '/invoice-detail/$id': typeof AuthenticatedInvoiceDetailIdRoute
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1473,6 +1938,8 @@ export interface FileRoutesByTo {
   '/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
+  '/purchase-order-detail/$id': typeof AuthenticatedPurchaseOrderDetailIdRoute
+  '/quotes/$id': typeof AuthenticatedQuotesIdRoute
   '/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1485,6 +1952,7 @@ export interface FileRoutesByTo {
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
+  '/reports/inventory-flow-audit': typeof AuthenticatedReportsInventoryFlowAuditRoute
   '/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
@@ -1512,6 +1980,24 @@ export interface FileRoutesByTo {
   '/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
   '/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
+  '/school/academics': typeof AuthenticatedSchoolAcademicsRoute
+  '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
+  '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
+  '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/exams': typeof AuthenticatedSchoolExamsRoute
+  '/school/fees': typeof AuthenticatedSchoolFeesRoute
+  '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
+  '/school/parent-portal': typeof AuthenticatedSchoolParentPortalRoute
+  '/school/parents': typeof AuthenticatedSchoolParentsRoute
+  '/school/payments': typeof AuthenticatedSchoolPaymentsRoute
+  '/school/report-cards': typeof AuthenticatedSchoolReportCardsRoute
+  '/school/reports': typeof AuthenticatedSchoolReportsRoute
+  '/school/scholarships': typeof AuthenticatedSchoolScholarshipsRoute
+  '/school/staff': typeof AuthenticatedSchoolStaffRoute
+  '/school/student-portal': typeof AuthenticatedSchoolStudentPortalRoute
+  '/school/students': typeof AuthenticatedSchoolStudentsRoute
+  '/school/timetable': typeof AuthenticatedSchoolTimetableRoute
+  '/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/w/cash': typeof WorkerWCashRoute
   '/w/kitchen': typeof WorkerWKitchenRoute
@@ -1543,7 +2029,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_worker': typeof WorkerRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/interactive-presentation': typeof InteractivePresentationRoute
+  '/landing-whiteboard': typeof LandingWhiteboardRoute
   '/mcp': typeof McpRoute
+  '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1573,11 +2062,16 @@ export interface FileRoutesById {
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/fixed-assets': typeof AuthenticatedFixedAssetsRoute
   '/_authenticated/fx-rates': typeof AuthenticatedFxRatesRoute
+  '/_authenticated/goods-receipts': typeof AuthenticatedGoodsReceiptsRoute
+  '/_authenticated/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
+  '/_authenticated/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
+  '/_authenticated/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/_authenticated/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
+  '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
   '/_authenticated/launch': typeof AuthenticatedLaunchRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
@@ -1604,15 +2098,19 @@ export interface FileRoutesById {
   '/_authenticated/printing-settings': typeof AuthenticatedPrintingSettingsRoute
   '/_authenticated/project-tasks': typeof AuthenticatedProjectTasksRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/public-services': typeof AuthenticatedPublicServicesRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/_authenticated/quotation-comparison': typeof AuthenticatedQuotationComparisonRoute
   '/_authenticated/quotes': typeof AuthenticatedQuotesRouteWithChildren
   '/_authenticated/receipts': typeof AuthenticatedReceiptsRoute
   '/_authenticated/reconciliation': typeof AuthenticatedReconciliationRoute
   '/_authenticated/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
+  '/_authenticated/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
+  '/_authenticated/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
-  '/_authenticated/school-fees': typeof AuthenticatedSchoolFeesRoute
+  '/_authenticated/school': typeof AuthenticatedSchoolRouteWithChildren
   '/_authenticated/school-grants': typeof AuthenticatedSchoolGrantsRoute
   '/_authenticated/service-tickets': typeof AuthenticatedServiceTicketsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -1634,14 +2132,36 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/_authenticated/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
+  '/_authenticated/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
+  '/_authenticated/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/_authenticated/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/_authenticated/hotel/events': typeof AuthenticatedHotelEventsRoute
+  '/_authenticated/hotel/folios': typeof AuthenticatedHotelFoliosRoute
+  '/_authenticated/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
+  '/_authenticated/hotel/guest-portal': typeof AuthenticatedHotelGuestPortalRoute
+  '/_authenticated/hotel/guests': typeof AuthenticatedHotelGuestsRoute
+  '/_authenticated/hotel/housekeeping': typeof AuthenticatedHotelHousekeepingRoute
+  '/_authenticated/hotel/inventory': typeof AuthenticatedHotelInventoryRoute
+  '/_authenticated/hotel/maintenance': typeof AuthenticatedHotelMaintenanceRoute
+  '/_authenticated/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
+  '/_authenticated/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
+  '/_authenticated/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/_authenticated/hotel/reports': typeof AuthenticatedHotelReportsRoute
+  '/_authenticated/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
+  '/_authenticated/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
+  '/_authenticated/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
+  '/_authenticated/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
   '/_authenticated/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/_authenticated/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
+  '/_authenticated/inventory/gl-reconciliation': typeof AuthenticatedInventoryGlReconciliationRoute
   '/_authenticated/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
   '/_authenticated/inventory/production': typeof AuthenticatedInventoryProductionRoute
   '/_authenticated/inventory/reconciliation': typeof AuthenticatedInventoryReconciliationRoute
   '/_authenticated/inventory/stock-card': typeof AuthenticatedInventoryStockCardRoute
   '/_authenticated/inventory/transfers': typeof AuthenticatedInventoryTransfersRoute
+  '/_authenticated/invoice-detail/$id': typeof AuthenticatedInvoiceDetailIdRoute
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/journal-entry/$id': typeof AuthenticatedJournalEntryIdRoute
   '/_authenticated/learn/accounting-basics': typeof AuthenticatedLearnAccountingBasicsRoute
@@ -1655,6 +2175,8 @@ export interface FileRoutesById {
   '/_authenticated/manager/shifts': typeof AuthenticatedManagerShiftsRoute
   '/_authenticated/pos/command-center': typeof AuthenticatedPosCommandCenterRoute
   '/_authenticated/pos/retail-command-center': typeof AuthenticatedPosRetailCommandCenterRoute
+  '/_authenticated/purchase-order-detail/$id': typeof AuthenticatedPurchaseOrderDetailIdRoute
+  '/_authenticated/quotes/$id': typeof AuthenticatedQuotesIdRoute
   '/_authenticated/quotes/new': typeof AuthenticatedQuotesNewRoute
   '/_authenticated/reports/account-transactions': typeof AuthenticatedReportsAccountTransactionsRoute
   '/_authenticated/reports/accountant-pack': typeof AuthenticatedReportsAccountantPackRoute
@@ -1667,6 +2189,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/_authenticated/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/_authenticated/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
+  '/_authenticated/reports/inventory-flow-audit': typeof AuthenticatedReportsInventoryFlowAuditRoute
   '/_authenticated/reports/inventory-valuation': typeof AuthenticatedReportsInventoryValuationRoute
   '/_authenticated/reports/management-pack': typeof AuthenticatedReportsManagementPackRoute
   '/_authenticated/reports/monthly-management': typeof AuthenticatedReportsMonthlyManagementRoute
@@ -1694,6 +2217,24 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/settings': typeof AuthenticatedRestaurantSettingsRoute
   '/_authenticated/restaurant/shifts': typeof AuthenticatedRestaurantShiftsRoute
   '/_authenticated/restaurant/tables': typeof AuthenticatedRestaurantTablesRoute
+  '/_authenticated/school/academics': typeof AuthenticatedSchoolAcademicsRoute
+  '/_authenticated/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
+  '/_authenticated/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
+  '/_authenticated/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/_authenticated/school/exams': typeof AuthenticatedSchoolExamsRoute
+  '/_authenticated/school/fees': typeof AuthenticatedSchoolFeesRoute
+  '/_authenticated/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
+  '/_authenticated/school/parent-portal': typeof AuthenticatedSchoolParentPortalRoute
+  '/_authenticated/school/parents': typeof AuthenticatedSchoolParentsRoute
+  '/_authenticated/school/payments': typeof AuthenticatedSchoolPaymentsRoute
+  '/_authenticated/school/report-cards': typeof AuthenticatedSchoolReportCardsRoute
+  '/_authenticated/school/reports': typeof AuthenticatedSchoolReportsRoute
+  '/_authenticated/school/scholarships': typeof AuthenticatedSchoolScholarshipsRoute
+  '/_authenticated/school/staff': typeof AuthenticatedSchoolStaffRoute
+  '/_authenticated/school/student-portal': typeof AuthenticatedSchoolStudentPortalRoute
+  '/_authenticated/school/students': typeof AuthenticatedSchoolStudentsRoute
+  '/_authenticated/school/timetable': typeof AuthenticatedSchoolTimetableRoute
+  '/_authenticated/school/transport': typeof AuthenticatedSchoolTransportRoute
   '/_authenticated/teaching-materials/new': typeof AuthenticatedTeachingMaterialsNewRoute
   '/_worker/w/cash': typeof WorkerWCashRoute
   '/_worker/w/kitchen': typeof WorkerWKitchenRoute
@@ -1724,7 +2265,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/interactive-presentation'
+    | '/landing-whiteboard'
     | '/mcp'
+    | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
     | '/.well-known/oauth-protected-resource'
@@ -1754,11 +2298,16 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/fixed-assets'
     | '/fx-rates'
+    | '/goods-receipts'
+    | '/hotel'
     | '/imprest'
     | '/industry'
+    | '/inventory-control-centre'
+    | '/inventory-flow-audit'
     | '/inventory-sheets'
     | '/invoices'
     | '/job-cards'
+    | '/jobs'
     | '/journal-entries'
     | '/launch'
     | '/leads'
@@ -1785,15 +2334,19 @@ export interface FileRouteTypes {
     | '/printing-settings'
     | '/project-tasks'
     | '/projects'
+    | '/public-services'
     | '/purchase-orders'
+    | '/quotation-comparison'
     | '/quotes'
     | '/receipts'
     | '/reconciliation'
     | '/reconciliation-sessions'
     | '/reports'
     | '/restaurant'
+    | '/retail-control-center'
+    | '/retail-shift-control'
     | '/roles'
-    | '/school-fees'
+    | '/school'
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
@@ -1815,14 +2368,36 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/.lovable/oauth/consent'
+    | '/bill-detail/$id'
+    | '/bill-payment-detail/$id'
     | '/customers/$id'
+    | '/hotel/accounting'
+    | '/hotel/check-in-out'
+    | '/hotel/events'
+    | '/hotel/folios'
+    | '/hotel/front-desk'
+    | '/hotel/guest-portal'
+    | '/hotel/guests'
+    | '/hotel/housekeeping'
+    | '/hotel/inventory'
+    | '/hotel/maintenance'
+    | '/hotel/night-audit'
+    | '/hotel/payments'
+    | '/hotel/pos'
+    | '/hotel/reports'
+    | '/hotel/reservations'
+    | '/hotel/restaurant'
+    | '/hotel/room-rack'
+    | '/hotel/rooms'
     | '/inventory/cashier-records'
     | '/inventory/control-center'
+    | '/inventory/gl-reconciliation'
     | '/inventory/locations'
     | '/inventory/production'
     | '/inventory/reconciliation'
     | '/inventory/stock-card'
     | '/inventory/transfers'
+    | '/invoice-detail/$id'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -1836,6 +2411,8 @@ export interface FileRouteTypes {
     | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
+    | '/purchase-order-detail/$id'
+    | '/quotes/$id'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -1848,6 +2425,7 @@ export interface FileRouteTypes {
     | '/reports/customer-statement'
     | '/reports/general-ledger'
     | '/reports/income-tax'
+    | '/reports/inventory-flow-audit'
     | '/reports/inventory-valuation'
     | '/reports/management-pack'
     | '/reports/monthly-management'
@@ -1875,6 +2453,24 @@ export interface FileRouteTypes {
     | '/restaurant/settings'
     | '/restaurant/shifts'
     | '/restaurant/tables'
+    | '/school/academics'
+    | '/school/admissions'
+    | '/school/attendance'
+    | '/school/boarding'
+    | '/school/exams'
+    | '/school/fees'
+    | '/school/fees-billing'
+    | '/school/parent-portal'
+    | '/school/parents'
+    | '/school/payments'
+    | '/school/report-cards'
+    | '/school/reports'
+    | '/school/scholarships'
+    | '/school/staff'
+    | '/school/student-portal'
+    | '/school/students'
+    | '/school/timetable'
+    | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
     | '/w/kitchen'
@@ -1903,7 +2499,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/interactive-presentation'
+    | '/landing-whiteboard'
     | '/mcp'
+    | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
     | '/.well-known/oauth-protected-resource'
@@ -1932,10 +2531,15 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/fixed-assets'
     | '/fx-rates'
+    | '/goods-receipts'
+    | '/hotel'
     | '/imprest'
     | '/industry'
+    | '/inventory-control-centre'
+    | '/inventory-flow-audit'
     | '/inventory-sheets'
     | '/job-cards'
+    | '/jobs'
     | '/journal-entries'
     | '/launch'
     | '/leads'
@@ -1961,12 +2565,16 @@ export interface FileRouteTypes {
     | '/printing-settings'
     | '/project-tasks'
     | '/projects'
+    | '/public-services'
     | '/purchase-orders'
+    | '/quotation-comparison'
     | '/receipts'
     | '/reconciliation'
     | '/reconciliation-sessions'
+    | '/retail-control-center'
+    | '/retail-shift-control'
     | '/roles'
-    | '/school-fees'
+    | '/school'
     | '/school-grants'
     | '/service-tickets'
     | '/setup'
@@ -1988,14 +2596,36 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/.lovable/oauth/consent'
+    | '/bill-detail/$id'
+    | '/bill-payment-detail/$id'
     | '/customers/$id'
+    | '/hotel/accounting'
+    | '/hotel/check-in-out'
+    | '/hotel/events'
+    | '/hotel/folios'
+    | '/hotel/front-desk'
+    | '/hotel/guest-portal'
+    | '/hotel/guests'
+    | '/hotel/housekeeping'
+    | '/hotel/inventory'
+    | '/hotel/maintenance'
+    | '/hotel/night-audit'
+    | '/hotel/payments'
+    | '/hotel/pos'
+    | '/hotel/reports'
+    | '/hotel/reservations'
+    | '/hotel/restaurant'
+    | '/hotel/room-rack'
+    | '/hotel/rooms'
     | '/inventory/cashier-records'
     | '/inventory/control-center'
+    | '/inventory/gl-reconciliation'
     | '/inventory/locations'
     | '/inventory/production'
     | '/inventory/reconciliation'
     | '/inventory/stock-card'
     | '/inventory/transfers'
+    | '/invoice-detail/$id'
     | '/invoices/new'
     | '/journal-entry/$id'
     | '/learn/accounting-basics'
@@ -2009,6 +2639,8 @@ export interface FileRouteTypes {
     | '/manager/shifts'
     | '/pos/command-center'
     | '/pos/retail-command-center'
+    | '/purchase-order-detail/$id'
+    | '/quotes/$id'
     | '/quotes/new'
     | '/reports/account-transactions'
     | '/reports/accountant-pack'
@@ -2021,6 +2653,7 @@ export interface FileRouteTypes {
     | '/reports/customer-statement'
     | '/reports/general-ledger'
     | '/reports/income-tax'
+    | '/reports/inventory-flow-audit'
     | '/reports/inventory-valuation'
     | '/reports/management-pack'
     | '/reports/monthly-management'
@@ -2048,6 +2681,24 @@ export interface FileRouteTypes {
     | '/restaurant/settings'
     | '/restaurant/shifts'
     | '/restaurant/tables'
+    | '/school/academics'
+    | '/school/admissions'
+    | '/school/attendance'
+    | '/school/boarding'
+    | '/school/exams'
+    | '/school/fees'
+    | '/school/fees-billing'
+    | '/school/parent-portal'
+    | '/school/parents'
+    | '/school/payments'
+    | '/school/report-cards'
+    | '/school/reports'
+    | '/school/scholarships'
+    | '/school/staff'
+    | '/school/student-portal'
+    | '/school/students'
+    | '/school/timetable'
+    | '/school/transport'
     | '/teaching-materials/new'
     | '/w/cash'
     | '/w/kitchen'
@@ -2078,7 +2729,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_worker'
     | '/auth'
+    | '/interactive-presentation'
+    | '/landing-whiteboard'
     | '/mcp'
+    | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
     | '/.well-known/oauth-protected-resource'
@@ -2108,11 +2762,16 @@ export interface FileRouteTypes {
     | '/_authenticated/expenses'
     | '/_authenticated/fixed-assets'
     | '/_authenticated/fx-rates'
+    | '/_authenticated/goods-receipts'
+    | '/_authenticated/hotel'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
+    | '/_authenticated/inventory-control-centre'
+    | '/_authenticated/inventory-flow-audit'
     | '/_authenticated/inventory-sheets'
     | '/_authenticated/invoices'
     | '/_authenticated/job-cards'
+    | '/_authenticated/jobs'
     | '/_authenticated/journal-entries'
     | '/_authenticated/launch'
     | '/_authenticated/leads'
@@ -2139,15 +2798,19 @@ export interface FileRouteTypes {
     | '/_authenticated/printing-settings'
     | '/_authenticated/project-tasks'
     | '/_authenticated/projects'
+    | '/_authenticated/public-services'
     | '/_authenticated/purchase-orders'
+    | '/_authenticated/quotation-comparison'
     | '/_authenticated/quotes'
     | '/_authenticated/receipts'
     | '/_authenticated/reconciliation'
     | '/_authenticated/reconciliation-sessions'
     | '/_authenticated/reports'
     | '/_authenticated/restaurant'
+    | '/_authenticated/retail-control-center'
+    | '/_authenticated/retail-shift-control'
     | '/_authenticated/roles'
-    | '/_authenticated/school-fees'
+    | '/_authenticated/school'
     | '/_authenticated/school-grants'
     | '/_authenticated/service-tickets'
     | '/_authenticated/setup'
@@ -2169,14 +2832,36 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
     | '/.lovable/oauth/consent'
+    | '/_authenticated/bill-detail/$id'
+    | '/_authenticated/bill-payment-detail/$id'
     | '/_authenticated/customers/$id'
+    | '/_authenticated/hotel/accounting'
+    | '/_authenticated/hotel/check-in-out'
+    | '/_authenticated/hotel/events'
+    | '/_authenticated/hotel/folios'
+    | '/_authenticated/hotel/front-desk'
+    | '/_authenticated/hotel/guest-portal'
+    | '/_authenticated/hotel/guests'
+    | '/_authenticated/hotel/housekeeping'
+    | '/_authenticated/hotel/inventory'
+    | '/_authenticated/hotel/maintenance'
+    | '/_authenticated/hotel/night-audit'
+    | '/_authenticated/hotel/payments'
+    | '/_authenticated/hotel/pos'
+    | '/_authenticated/hotel/reports'
+    | '/_authenticated/hotel/reservations'
+    | '/_authenticated/hotel/restaurant'
+    | '/_authenticated/hotel/room-rack'
+    | '/_authenticated/hotel/rooms'
     | '/_authenticated/inventory/cashier-records'
     | '/_authenticated/inventory/control-center'
+    | '/_authenticated/inventory/gl-reconciliation'
     | '/_authenticated/inventory/locations'
     | '/_authenticated/inventory/production'
     | '/_authenticated/inventory/reconciliation'
     | '/_authenticated/inventory/stock-card'
     | '/_authenticated/inventory/transfers'
+    | '/_authenticated/invoice-detail/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/journal-entry/$id'
     | '/_authenticated/learn/accounting-basics'
@@ -2190,6 +2875,8 @@ export interface FileRouteTypes {
     | '/_authenticated/manager/shifts'
     | '/_authenticated/pos/command-center'
     | '/_authenticated/pos/retail-command-center'
+    | '/_authenticated/purchase-order-detail/$id'
+    | '/_authenticated/quotes/$id'
     | '/_authenticated/quotes/new'
     | '/_authenticated/reports/account-transactions'
     | '/_authenticated/reports/accountant-pack'
@@ -2202,6 +2889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/customer-statement'
     | '/_authenticated/reports/general-ledger'
     | '/_authenticated/reports/income-tax'
+    | '/_authenticated/reports/inventory-flow-audit'
     | '/_authenticated/reports/inventory-valuation'
     | '/_authenticated/reports/management-pack'
     | '/_authenticated/reports/monthly-management'
@@ -2229,6 +2917,24 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/settings'
     | '/_authenticated/restaurant/shifts'
     | '/_authenticated/restaurant/tables'
+    | '/_authenticated/school/academics'
+    | '/_authenticated/school/admissions'
+    | '/_authenticated/school/attendance'
+    | '/_authenticated/school/boarding'
+    | '/_authenticated/school/exams'
+    | '/_authenticated/school/fees'
+    | '/_authenticated/school/fees-billing'
+    | '/_authenticated/school/parent-portal'
+    | '/_authenticated/school/parents'
+    | '/_authenticated/school/payments'
+    | '/_authenticated/school/report-cards'
+    | '/_authenticated/school/reports'
+    | '/_authenticated/school/scholarships'
+    | '/_authenticated/school/staff'
+    | '/_authenticated/school/student-portal'
+    | '/_authenticated/school/students'
+    | '/_authenticated/school/timetable'
+    | '/_authenticated/school/transport'
     | '/_authenticated/teaching-materials/new'
     | '/_worker/w/cash'
     | '/_worker/w/kitchen'
@@ -2260,7 +2966,10 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   WorkerRouteRoute: typeof WorkerRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InteractivePresentationRoute: typeof InteractivePresentationRoute
+  LandingWhiteboardRoute: typeof LandingWhiteboardRoute
   McpRoute: typeof McpRoute
+  PublicJobsRoute: typeof PublicJobsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -2287,11 +2996,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public-jobs': {
+      id: '/public-jobs'
+      path: '/public-jobs'
+      fullPath: '/public-jobs'
+      preLoaderRoute: typeof PublicJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landing-whiteboard': {
+      id: '/landing-whiteboard'
+      path: '/landing-whiteboard'
+      fullPath: '/landing-whiteboard'
+      preLoaderRoute: typeof LandingWhiteboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interactive-presentation': {
+      id: '/interactive-presentation'
+      path: '/interactive-presentation'
+      fullPath: '/interactive-presentation'
+      preLoaderRoute: typeof InteractivePresentationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -2462,11 +3192,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSchoolGrantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/school-fees': {
-      id: '/_authenticated/school-fees'
-      path: '/school-fees'
-      fullPath: '/school-fees'
-      preLoaderRoute: typeof AuthenticatedSchoolFeesRouteImport
+    '/_authenticated/school': {
+      id: '/_authenticated/school'
+      path: '/school'
+      fullPath: '/school'
+      preLoaderRoute: typeof AuthenticatedSchoolRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/roles': {
@@ -2474,6 +3204,20 @@ declare module '@tanstack/react-router' {
       path: '/roles'
       fullPath: '/roles'
       preLoaderRoute: typeof AuthenticatedRolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/retail-shift-control': {
+      id: '/_authenticated/retail-shift-control'
+      path: '/retail-shift-control'
+      fullPath: '/retail-shift-control'
+      preLoaderRoute: typeof AuthenticatedRetailShiftControlRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/retail-control-center': {
+      id: '/_authenticated/retail-control-center'
+      path: '/retail-control-center'
+      fullPath: '/retail-control-center'
+      preLoaderRoute: typeof AuthenticatedRetailControlCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/restaurant': {
@@ -2518,11 +3262,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuotesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/quotation-comparison': {
+      id: '/_authenticated/quotation-comparison'
+      path: '/quotation-comparison'
+      fullPath: '/quotation-comparison'
+      preLoaderRoute: typeof AuthenticatedQuotationComparisonRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/purchase-orders': {
       id: '/_authenticated/purchase-orders'
       path: '/purchase-orders'
       fullPath: '/purchase-orders'
       preLoaderRoute: typeof AuthenticatedPurchaseOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/public-services': {
+      id: '/_authenticated/public-services'
+      path: '/public-services'
+      fullPath: '/public-services'
+      preLoaderRoute: typeof AuthenticatedPublicServicesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/projects': {
@@ -2707,6 +3465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalEntriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/jobs': {
+      id: '/_authenticated/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthenticatedJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/job-cards': {
       id: '/_authenticated/job-cards'
       path: '/job-cards'
@@ -2728,6 +3493,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventorySheetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory-flow-audit': {
+      id: '/_authenticated/inventory-flow-audit'
+      path: '/inventory-flow-audit'
+      fullPath: '/inventory-flow-audit'
+      preLoaderRoute: typeof AuthenticatedInventoryFlowAuditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory-control-centre': {
+      id: '/_authenticated/inventory-control-centre'
+      path: '/inventory-control-centre'
+      fullPath: '/inventory-control-centre'
+      preLoaderRoute: typeof AuthenticatedInventoryControlCentreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/industry': {
       id: '/_authenticated/industry'
       path: '/industry'
@@ -2740,6 +3519,20 @@ declare module '@tanstack/react-router' {
       path: '/imprest'
       fullPath: '/imprest'
       preLoaderRoute: typeof AuthenticatedImprestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hotel': {
+      id: '/_authenticated/hotel'
+      path: '/hotel'
+      fullPath: '/hotel'
+      preLoaderRoute: typeof AuthenticatedHotelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/goods-receipts': {
+      id: '/_authenticated/goods-receipts'
+      path: '/goods-receipts'
+      fullPath: '/goods-receipts'
+      preLoaderRoute: typeof AuthenticatedGoodsReceiptsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fx-rates': {
@@ -3071,6 +3864,132 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeachingMaterialsNewRouteImport
       parentRoute: typeof AuthenticatedTeachingMaterialsRoute
     }
+    '/_authenticated/school/transport': {
+      id: '/_authenticated/school/transport'
+      path: '/transport'
+      fullPath: '/school/transport'
+      preLoaderRoute: typeof AuthenticatedSchoolTransportRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/timetable': {
+      id: '/_authenticated/school/timetable'
+      path: '/timetable'
+      fullPath: '/school/timetable'
+      preLoaderRoute: typeof AuthenticatedSchoolTimetableRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/students': {
+      id: '/_authenticated/school/students'
+      path: '/students'
+      fullPath: '/school/students'
+      preLoaderRoute: typeof AuthenticatedSchoolStudentsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/student-portal': {
+      id: '/_authenticated/school/student-portal'
+      path: '/student-portal'
+      fullPath: '/school/student-portal'
+      preLoaderRoute: typeof AuthenticatedSchoolStudentPortalRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/staff': {
+      id: '/_authenticated/school/staff'
+      path: '/staff'
+      fullPath: '/school/staff'
+      preLoaderRoute: typeof AuthenticatedSchoolStaffRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/scholarships': {
+      id: '/_authenticated/school/scholarships'
+      path: '/scholarships'
+      fullPath: '/school/scholarships'
+      preLoaderRoute: typeof AuthenticatedSchoolScholarshipsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/reports': {
+      id: '/_authenticated/school/reports'
+      path: '/reports'
+      fullPath: '/school/reports'
+      preLoaderRoute: typeof AuthenticatedSchoolReportsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/report-cards': {
+      id: '/_authenticated/school/report-cards'
+      path: '/report-cards'
+      fullPath: '/school/report-cards'
+      preLoaderRoute: typeof AuthenticatedSchoolReportCardsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/payments': {
+      id: '/_authenticated/school/payments'
+      path: '/payments'
+      fullPath: '/school/payments'
+      preLoaderRoute: typeof AuthenticatedSchoolPaymentsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/parents': {
+      id: '/_authenticated/school/parents'
+      path: '/parents'
+      fullPath: '/school/parents'
+      preLoaderRoute: typeof AuthenticatedSchoolParentsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/parent-portal': {
+      id: '/_authenticated/school/parent-portal'
+      path: '/parent-portal'
+      fullPath: '/school/parent-portal'
+      preLoaderRoute: typeof AuthenticatedSchoolParentPortalRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/fees-billing': {
+      id: '/_authenticated/school/fees-billing'
+      path: '/fees-billing'
+      fullPath: '/school/fees-billing'
+      preLoaderRoute: typeof AuthenticatedSchoolFeesBillingRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/fees': {
+      id: '/_authenticated/school/fees'
+      path: '/fees'
+      fullPath: '/school/fees'
+      preLoaderRoute: typeof AuthenticatedSchoolFeesRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/exams': {
+      id: '/_authenticated/school/exams'
+      path: '/exams'
+      fullPath: '/school/exams'
+      preLoaderRoute: typeof AuthenticatedSchoolExamsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/boarding': {
+      id: '/_authenticated/school/boarding'
+      path: '/boarding'
+      fullPath: '/school/boarding'
+      preLoaderRoute: typeof AuthenticatedSchoolBoardingRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/attendance': {
+      id: '/_authenticated/school/attendance'
+      path: '/attendance'
+      fullPath: '/school/attendance'
+      preLoaderRoute: typeof AuthenticatedSchoolAttendanceRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/admissions': {
+      id: '/_authenticated/school/admissions'
+      path: '/admissions'
+      fullPath: '/school/admissions'
+      preLoaderRoute: typeof AuthenticatedSchoolAdmissionsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
+    '/_authenticated/school/academics': {
+      id: '/_authenticated/school/academics'
+      path: '/academics'
+      fullPath: '/school/academics'
+      preLoaderRoute: typeof AuthenticatedSchoolAcademicsRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
     '/_authenticated/restaurant/tables': {
       id: '/_authenticated/restaurant/tables'
       path: '/tables'
@@ -3260,6 +4179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsInventoryValuationRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/inventory-flow-audit': {
+      id: '/_authenticated/reports/inventory-flow-audit'
+      path: '/inventory-flow-audit'
+      fullPath: '/reports/inventory-flow-audit'
+      preLoaderRoute: typeof AuthenticatedReportsInventoryFlowAuditRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/income-tax': {
       id: '/_authenticated/reports/income-tax'
       path: '/income-tax'
@@ -3343,6 +4269,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/quotes/new'
       preLoaderRoute: typeof AuthenticatedQuotesNewRouteImport
       parentRoute: typeof AuthenticatedQuotesRoute
+    }
+    '/_authenticated/quotes/$id': {
+      id: '/_authenticated/quotes/$id'
+      path: '/$id'
+      fullPath: '/quotes/$id'
+      preLoaderRoute: typeof AuthenticatedQuotesIdRouteImport
+      parentRoute: typeof AuthenticatedQuotesRoute
+    }
+    '/_authenticated/purchase-order-detail/$id': {
+      id: '/_authenticated/purchase-order-detail/$id'
+      path: '/purchase-order-detail/$id'
+      fullPath: '/purchase-order-detail/$id'
+      preLoaderRoute: typeof AuthenticatedPurchaseOrderDetailIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos/retail-command-center': {
       id: '/_authenticated/pos/retail-command-center'
@@ -3435,6 +4375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesNewRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
     }
+    '/_authenticated/invoice-detail/$id': {
+      id: '/_authenticated/invoice-detail/$id'
+      path: '/invoice-detail/$id'
+      fullPath: '/invoice-detail/$id'
+      preLoaderRoute: typeof AuthenticatedInvoiceDetailIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inventory/transfers': {
       id: '/_authenticated/inventory/transfers'
       path: '/inventory/transfers'
@@ -3470,6 +4417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryLocationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory/gl-reconciliation': {
+      id: '/_authenticated/inventory/gl-reconciliation'
+      path: '/inventory/gl-reconciliation'
+      fullPath: '/inventory/gl-reconciliation'
+      preLoaderRoute: typeof AuthenticatedInventoryGlReconciliationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inventory/control-center': {
       id: '/_authenticated/inventory/control-center'
       path: '/inventory/control-center'
@@ -3484,12 +4438,152 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryCashierRecordsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hotel/rooms': {
+      id: '/_authenticated/hotel/rooms'
+      path: '/rooms'
+      fullPath: '/hotel/rooms'
+      preLoaderRoute: typeof AuthenticatedHotelRoomsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/room-rack': {
+      id: '/_authenticated/hotel/room-rack'
+      path: '/room-rack'
+      fullPath: '/hotel/room-rack'
+      preLoaderRoute: typeof AuthenticatedHotelRoomRackRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/restaurant': {
+      id: '/_authenticated/hotel/restaurant'
+      path: '/restaurant'
+      fullPath: '/hotel/restaurant'
+      preLoaderRoute: typeof AuthenticatedHotelRestaurantRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/reservations': {
+      id: '/_authenticated/hotel/reservations'
+      path: '/reservations'
+      fullPath: '/hotel/reservations'
+      preLoaderRoute: typeof AuthenticatedHotelReservationsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/reports': {
+      id: '/_authenticated/hotel/reports'
+      path: '/reports'
+      fullPath: '/hotel/reports'
+      preLoaderRoute: typeof AuthenticatedHotelReportsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/pos': {
+      id: '/_authenticated/hotel/pos'
+      path: '/pos'
+      fullPath: '/hotel/pos'
+      preLoaderRoute: typeof AuthenticatedHotelPosRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/payments': {
+      id: '/_authenticated/hotel/payments'
+      path: '/payments'
+      fullPath: '/hotel/payments'
+      preLoaderRoute: typeof AuthenticatedHotelPaymentsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/night-audit': {
+      id: '/_authenticated/hotel/night-audit'
+      path: '/night-audit'
+      fullPath: '/hotel/night-audit'
+      preLoaderRoute: typeof AuthenticatedHotelNightAuditRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/maintenance': {
+      id: '/_authenticated/hotel/maintenance'
+      path: '/maintenance'
+      fullPath: '/hotel/maintenance'
+      preLoaderRoute: typeof AuthenticatedHotelMaintenanceRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/inventory': {
+      id: '/_authenticated/hotel/inventory'
+      path: '/inventory'
+      fullPath: '/hotel/inventory'
+      preLoaderRoute: typeof AuthenticatedHotelInventoryRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/housekeeping': {
+      id: '/_authenticated/hotel/housekeeping'
+      path: '/housekeeping'
+      fullPath: '/hotel/housekeeping'
+      preLoaderRoute: typeof AuthenticatedHotelHousekeepingRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/guests': {
+      id: '/_authenticated/hotel/guests'
+      path: '/guests'
+      fullPath: '/hotel/guests'
+      preLoaderRoute: typeof AuthenticatedHotelGuestsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/guest-portal': {
+      id: '/_authenticated/hotel/guest-portal'
+      path: '/guest-portal'
+      fullPath: '/hotel/guest-portal'
+      preLoaderRoute: typeof AuthenticatedHotelGuestPortalRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/front-desk': {
+      id: '/_authenticated/hotel/front-desk'
+      path: '/front-desk'
+      fullPath: '/hotel/front-desk'
+      preLoaderRoute: typeof AuthenticatedHotelFrontDeskRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/folios': {
+      id: '/_authenticated/hotel/folios'
+      path: '/folios'
+      fullPath: '/hotel/folios'
+      preLoaderRoute: typeof AuthenticatedHotelFoliosRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/events': {
+      id: '/_authenticated/hotel/events'
+      path: '/events'
+      fullPath: '/hotel/events'
+      preLoaderRoute: typeof AuthenticatedHotelEventsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/check-in-out': {
+      id: '/_authenticated/hotel/check-in-out'
+      path: '/check-in-out'
+      fullPath: '/hotel/check-in-out'
+      preLoaderRoute: typeof AuthenticatedHotelCheckInOutRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/accounting': {
+      id: '/_authenticated/hotel/accounting'
+      path: '/accounting'
+      fullPath: '/hotel/accounting'
+      preLoaderRoute: typeof AuthenticatedHotelAccountingRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/customers/$id': {
       id: '/_authenticated/customers/$id'
       path: '/$id'
       fullPath: '/customers/$id'
       preLoaderRoute: typeof AuthenticatedCustomersIdRouteImport
       parentRoute: typeof AuthenticatedCustomersRoute
+    }
+    '/_authenticated/bill-payment-detail/$id': {
+      id: '/_authenticated/bill-payment-detail/$id'
+      path: '/bill-payment-detail/$id'
+      fullPath: '/bill-payment-detail/$id'
+      preLoaderRoute: typeof AuthenticatedBillPaymentDetailIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bill-detail/$id': {
+      id: '/_authenticated/bill-detail/$id'
+      path: '/bill-detail/$id'
+      fullPath: '/bill-detail/$id'
+      preLoaderRoute: typeof AuthenticatedBillDetailIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
@@ -3545,6 +4639,51 @@ const AuthenticatedCustomersRouteWithChildren =
     AuthenticatedCustomersRouteChildren,
   )
 
+interface AuthenticatedHotelRouteChildren {
+  AuthenticatedHotelAccountingRoute: typeof AuthenticatedHotelAccountingRoute
+  AuthenticatedHotelCheckInOutRoute: typeof AuthenticatedHotelCheckInOutRoute
+  AuthenticatedHotelEventsRoute: typeof AuthenticatedHotelEventsRoute
+  AuthenticatedHotelFoliosRoute: typeof AuthenticatedHotelFoliosRoute
+  AuthenticatedHotelFrontDeskRoute: typeof AuthenticatedHotelFrontDeskRoute
+  AuthenticatedHotelGuestPortalRoute: typeof AuthenticatedHotelGuestPortalRoute
+  AuthenticatedHotelGuestsRoute: typeof AuthenticatedHotelGuestsRoute
+  AuthenticatedHotelHousekeepingRoute: typeof AuthenticatedHotelHousekeepingRoute
+  AuthenticatedHotelInventoryRoute: typeof AuthenticatedHotelInventoryRoute
+  AuthenticatedHotelMaintenanceRoute: typeof AuthenticatedHotelMaintenanceRoute
+  AuthenticatedHotelNightAuditRoute: typeof AuthenticatedHotelNightAuditRoute
+  AuthenticatedHotelPaymentsRoute: typeof AuthenticatedHotelPaymentsRoute
+  AuthenticatedHotelPosRoute: typeof AuthenticatedHotelPosRoute
+  AuthenticatedHotelReportsRoute: typeof AuthenticatedHotelReportsRoute
+  AuthenticatedHotelReservationsRoute: typeof AuthenticatedHotelReservationsRoute
+  AuthenticatedHotelRestaurantRoute: typeof AuthenticatedHotelRestaurantRoute
+  AuthenticatedHotelRoomRackRoute: typeof AuthenticatedHotelRoomRackRoute
+  AuthenticatedHotelRoomsRoute: typeof AuthenticatedHotelRoomsRoute
+}
+
+const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
+  AuthenticatedHotelAccountingRoute: AuthenticatedHotelAccountingRoute,
+  AuthenticatedHotelCheckInOutRoute: AuthenticatedHotelCheckInOutRoute,
+  AuthenticatedHotelEventsRoute: AuthenticatedHotelEventsRoute,
+  AuthenticatedHotelFoliosRoute: AuthenticatedHotelFoliosRoute,
+  AuthenticatedHotelFrontDeskRoute: AuthenticatedHotelFrontDeskRoute,
+  AuthenticatedHotelGuestPortalRoute: AuthenticatedHotelGuestPortalRoute,
+  AuthenticatedHotelGuestsRoute: AuthenticatedHotelGuestsRoute,
+  AuthenticatedHotelHousekeepingRoute: AuthenticatedHotelHousekeepingRoute,
+  AuthenticatedHotelInventoryRoute: AuthenticatedHotelInventoryRoute,
+  AuthenticatedHotelMaintenanceRoute: AuthenticatedHotelMaintenanceRoute,
+  AuthenticatedHotelNightAuditRoute: AuthenticatedHotelNightAuditRoute,
+  AuthenticatedHotelPaymentsRoute: AuthenticatedHotelPaymentsRoute,
+  AuthenticatedHotelPosRoute: AuthenticatedHotelPosRoute,
+  AuthenticatedHotelReportsRoute: AuthenticatedHotelReportsRoute,
+  AuthenticatedHotelReservationsRoute: AuthenticatedHotelReservationsRoute,
+  AuthenticatedHotelRestaurantRoute: AuthenticatedHotelRestaurantRoute,
+  AuthenticatedHotelRoomRackRoute: AuthenticatedHotelRoomRackRoute,
+  AuthenticatedHotelRoomsRoute: AuthenticatedHotelRoomsRoute,
+}
+
+const AuthenticatedHotelRouteWithChildren =
+  AuthenticatedHotelRoute._addFileChildren(AuthenticatedHotelRouteChildren)
+
 interface AuthenticatedInvoicesRouteChildren {
   AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
   AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
@@ -3590,11 +4729,13 @@ const AuthenticatedPosRouteWithChildren =
   AuthenticatedPosRoute._addFileChildren(AuthenticatedPosRouteChildren)
 
 interface AuthenticatedQuotesRouteChildren {
+  AuthenticatedQuotesIdRoute: typeof AuthenticatedQuotesIdRoute
   AuthenticatedQuotesNewRoute: typeof AuthenticatedQuotesNewRoute
   AuthenticatedQuotesIndexRoute: typeof AuthenticatedQuotesIndexRoute
 }
 
 const AuthenticatedQuotesRouteChildren: AuthenticatedQuotesRouteChildren = {
+  AuthenticatedQuotesIdRoute: AuthenticatedQuotesIdRoute,
   AuthenticatedQuotesNewRoute: AuthenticatedQuotesNewRoute,
   AuthenticatedQuotesIndexRoute: AuthenticatedQuotesIndexRoute,
 }
@@ -3614,6 +4755,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
   AuthenticatedReportsGeneralLedgerRoute: typeof AuthenticatedReportsGeneralLedgerRoute
   AuthenticatedReportsIncomeTaxRoute: typeof AuthenticatedReportsIncomeTaxRoute
+  AuthenticatedReportsInventoryFlowAuditRoute: typeof AuthenticatedReportsInventoryFlowAuditRoute
   AuthenticatedReportsInventoryValuationRoute: typeof AuthenticatedReportsInventoryValuationRoute
   AuthenticatedReportsManagementPackRoute: typeof AuthenticatedReportsManagementPackRoute
   AuthenticatedReportsMonthlyManagementRoute: typeof AuthenticatedReportsMonthlyManagementRoute
@@ -3647,6 +4789,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsGeneralLedgerRoute:
     AuthenticatedReportsGeneralLedgerRoute,
   AuthenticatedReportsIncomeTaxRoute: AuthenticatedReportsIncomeTaxRoute,
+  AuthenticatedReportsInventoryFlowAuditRoute:
+    AuthenticatedReportsInventoryFlowAuditRoute,
   AuthenticatedReportsInventoryValuationRoute:
     AuthenticatedReportsInventoryValuationRoute,
   AuthenticatedReportsManagementPackRoute:
@@ -3718,6 +4862,51 @@ const AuthenticatedRestaurantRouteWithChildren =
     AuthenticatedRestaurantRouteChildren,
   )
 
+interface AuthenticatedSchoolRouteChildren {
+  AuthenticatedSchoolAcademicsRoute: typeof AuthenticatedSchoolAcademicsRoute
+  AuthenticatedSchoolAdmissionsRoute: typeof AuthenticatedSchoolAdmissionsRoute
+  AuthenticatedSchoolAttendanceRoute: typeof AuthenticatedSchoolAttendanceRoute
+  AuthenticatedSchoolBoardingRoute: typeof AuthenticatedSchoolBoardingRoute
+  AuthenticatedSchoolExamsRoute: typeof AuthenticatedSchoolExamsRoute
+  AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
+  AuthenticatedSchoolFeesBillingRoute: typeof AuthenticatedSchoolFeesBillingRoute
+  AuthenticatedSchoolParentPortalRoute: typeof AuthenticatedSchoolParentPortalRoute
+  AuthenticatedSchoolParentsRoute: typeof AuthenticatedSchoolParentsRoute
+  AuthenticatedSchoolPaymentsRoute: typeof AuthenticatedSchoolPaymentsRoute
+  AuthenticatedSchoolReportCardsRoute: typeof AuthenticatedSchoolReportCardsRoute
+  AuthenticatedSchoolReportsRoute: typeof AuthenticatedSchoolReportsRoute
+  AuthenticatedSchoolScholarshipsRoute: typeof AuthenticatedSchoolScholarshipsRoute
+  AuthenticatedSchoolStaffRoute: typeof AuthenticatedSchoolStaffRoute
+  AuthenticatedSchoolStudentPortalRoute: typeof AuthenticatedSchoolStudentPortalRoute
+  AuthenticatedSchoolStudentsRoute: typeof AuthenticatedSchoolStudentsRoute
+  AuthenticatedSchoolTimetableRoute: typeof AuthenticatedSchoolTimetableRoute
+  AuthenticatedSchoolTransportRoute: typeof AuthenticatedSchoolTransportRoute
+}
+
+const AuthenticatedSchoolRouteChildren: AuthenticatedSchoolRouteChildren = {
+  AuthenticatedSchoolAcademicsRoute: AuthenticatedSchoolAcademicsRoute,
+  AuthenticatedSchoolAdmissionsRoute: AuthenticatedSchoolAdmissionsRoute,
+  AuthenticatedSchoolAttendanceRoute: AuthenticatedSchoolAttendanceRoute,
+  AuthenticatedSchoolBoardingRoute: AuthenticatedSchoolBoardingRoute,
+  AuthenticatedSchoolExamsRoute: AuthenticatedSchoolExamsRoute,
+  AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
+  AuthenticatedSchoolFeesBillingRoute: AuthenticatedSchoolFeesBillingRoute,
+  AuthenticatedSchoolParentPortalRoute: AuthenticatedSchoolParentPortalRoute,
+  AuthenticatedSchoolParentsRoute: AuthenticatedSchoolParentsRoute,
+  AuthenticatedSchoolPaymentsRoute: AuthenticatedSchoolPaymentsRoute,
+  AuthenticatedSchoolReportCardsRoute: AuthenticatedSchoolReportCardsRoute,
+  AuthenticatedSchoolReportsRoute: AuthenticatedSchoolReportsRoute,
+  AuthenticatedSchoolScholarshipsRoute: AuthenticatedSchoolScholarshipsRoute,
+  AuthenticatedSchoolStaffRoute: AuthenticatedSchoolStaffRoute,
+  AuthenticatedSchoolStudentPortalRoute: AuthenticatedSchoolStudentPortalRoute,
+  AuthenticatedSchoolStudentsRoute: AuthenticatedSchoolStudentsRoute,
+  AuthenticatedSchoolTimetableRoute: AuthenticatedSchoolTimetableRoute,
+  AuthenticatedSchoolTransportRoute: AuthenticatedSchoolTransportRoute,
+}
+
+const AuthenticatedSchoolRouteWithChildren =
+  AuthenticatedSchoolRoute._addFileChildren(AuthenticatedSchoolRouteChildren)
+
 interface AuthenticatedTeachingMaterialsRouteChildren {
   AuthenticatedTeachingMaterialsNewRoute: typeof AuthenticatedTeachingMaterialsNewRoute
   AuthenticatedTeachingMaterialsIdQuoteRoute: typeof AuthenticatedTeachingMaterialsIdQuoteRoute
@@ -3763,11 +4952,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFixedAssetsRoute: typeof AuthenticatedFixedAssetsRoute
   AuthenticatedFxRatesRoute: typeof AuthenticatedFxRatesRoute
+  AuthenticatedGoodsReceiptsRoute: typeof AuthenticatedGoodsReceiptsRoute
+  AuthenticatedHotelRoute: typeof AuthenticatedHotelRouteWithChildren
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
+  AuthenticatedInventoryControlCentreRoute: typeof AuthenticatedInventoryControlCentreRoute
+  AuthenticatedInventoryFlowAuditRoute: typeof AuthenticatedInventoryFlowAuditRoute
   AuthenticatedInventorySheetsRoute: typeof AuthenticatedInventorySheetsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
+  AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
   AuthenticatedLaunchRoute: typeof AuthenticatedLaunchRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
@@ -3794,15 +4988,19 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPrintingSettingsRoute: typeof AuthenticatedPrintingSettingsRoute
   AuthenticatedProjectTasksRoute: typeof AuthenticatedProjectTasksRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedPublicServicesRoute: typeof AuthenticatedPublicServicesRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
+  AuthenticatedQuotationComparisonRoute: typeof AuthenticatedQuotationComparisonRoute
   AuthenticatedQuotesRoute: typeof AuthenticatedQuotesRouteWithChildren
   AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRoute
   AuthenticatedReconciliationRoute: typeof AuthenticatedReconciliationRoute
   AuthenticatedReconciliationSessionsRoute: typeof AuthenticatedReconciliationSessionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRouteWithChildren
+  AuthenticatedRetailControlCenterRoute: typeof AuthenticatedRetailControlCenterRoute
+  AuthenticatedRetailShiftControlRoute: typeof AuthenticatedRetailShiftControlRoute
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
-  AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
+  AuthenticatedSchoolRoute: typeof AuthenticatedSchoolRouteWithChildren
   AuthenticatedSchoolGrantsRoute: typeof AuthenticatedSchoolGrantsRoute
   AuthenticatedServiceTicketsRoute: typeof AuthenticatedServiceTicketsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -3823,13 +5021,17 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedBillDetailIdRoute: typeof AuthenticatedBillDetailIdRoute
+  AuthenticatedBillPaymentDetailIdRoute: typeof AuthenticatedBillPaymentDetailIdRoute
   AuthenticatedInventoryCashierRecordsRoute: typeof AuthenticatedInventoryCashierRecordsRoute
   AuthenticatedInventoryControlCenterRoute: typeof AuthenticatedInventoryControlCenterRoute
+  AuthenticatedInventoryGlReconciliationRoute: typeof AuthenticatedInventoryGlReconciliationRoute
   AuthenticatedInventoryLocationsRoute: typeof AuthenticatedInventoryLocationsRoute
   AuthenticatedInventoryProductionRoute: typeof AuthenticatedInventoryProductionRoute
   AuthenticatedInventoryReconciliationRoute: typeof AuthenticatedInventoryReconciliationRoute
   AuthenticatedInventoryStockCardRoute: typeof AuthenticatedInventoryStockCardRoute
   AuthenticatedInventoryTransfersRoute: typeof AuthenticatedInventoryTransfersRoute
+  AuthenticatedInvoiceDetailIdRoute: typeof AuthenticatedInvoiceDetailIdRoute
   AuthenticatedJournalEntryIdRoute: typeof AuthenticatedJournalEntryIdRoute
   AuthenticatedLearnAccountingBasicsRoute: typeof AuthenticatedLearnAccountingBasicsRoute
   AuthenticatedLearnBankReconciliationRoute: typeof AuthenticatedLearnBankReconciliationRoute
@@ -3838,6 +5040,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLearnQuickStartRoute: typeof AuthenticatedLearnQuickStartRoute
   AuthenticatedLearnReportsRoute: typeof AuthenticatedLearnReportsRoute
   AuthenticatedLearnVatZraRoute: typeof AuthenticatedLearnVatZraRoute
+  AuthenticatedPurchaseOrderDetailIdRoute: typeof AuthenticatedPurchaseOrderDetailIdRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
 }
@@ -3869,11 +5072,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFixedAssetsRoute: AuthenticatedFixedAssetsRoute,
   AuthenticatedFxRatesRoute: AuthenticatedFxRatesRoute,
+  AuthenticatedGoodsReceiptsRoute: AuthenticatedGoodsReceiptsRoute,
+  AuthenticatedHotelRoute: AuthenticatedHotelRouteWithChildren,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
+  AuthenticatedInventoryControlCentreRoute:
+    AuthenticatedInventoryControlCentreRoute,
+  AuthenticatedInventoryFlowAuditRoute: AuthenticatedInventoryFlowAuditRoute,
   AuthenticatedInventorySheetsRoute: AuthenticatedInventorySheetsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
+  AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
   AuthenticatedLaunchRoute: AuthenticatedLaunchRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
@@ -3900,7 +5109,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPrintingSettingsRoute: AuthenticatedPrintingSettingsRoute,
   AuthenticatedProjectTasksRoute: AuthenticatedProjectTasksRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedPublicServicesRoute: AuthenticatedPublicServicesRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
+  AuthenticatedQuotationComparisonRoute: AuthenticatedQuotationComparisonRoute,
   AuthenticatedQuotesRoute: AuthenticatedQuotesRouteWithChildren,
   AuthenticatedReceiptsRoute: AuthenticatedReceiptsRoute,
   AuthenticatedReconciliationRoute: AuthenticatedReconciliationRoute,
@@ -3908,8 +5119,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReconciliationSessionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedRestaurantRoute: AuthenticatedRestaurantRouteWithChildren,
+  AuthenticatedRetailControlCenterRoute: AuthenticatedRetailControlCenterRoute,
+  AuthenticatedRetailShiftControlRoute: AuthenticatedRetailShiftControlRoute,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
-  AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
+  AuthenticatedSchoolRoute: AuthenticatedSchoolRouteWithChildren,
   AuthenticatedSchoolGrantsRoute: AuthenticatedSchoolGrantsRoute,
   AuthenticatedServiceTicketsRoute: AuthenticatedServiceTicketsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
@@ -3931,16 +5144,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedBillDetailIdRoute: AuthenticatedBillDetailIdRoute,
+  AuthenticatedBillPaymentDetailIdRoute: AuthenticatedBillPaymentDetailIdRoute,
   AuthenticatedInventoryCashierRecordsRoute:
     AuthenticatedInventoryCashierRecordsRoute,
   AuthenticatedInventoryControlCenterRoute:
     AuthenticatedInventoryControlCenterRoute,
+  AuthenticatedInventoryGlReconciliationRoute:
+    AuthenticatedInventoryGlReconciliationRoute,
   AuthenticatedInventoryLocationsRoute: AuthenticatedInventoryLocationsRoute,
   AuthenticatedInventoryProductionRoute: AuthenticatedInventoryProductionRoute,
   AuthenticatedInventoryReconciliationRoute:
     AuthenticatedInventoryReconciliationRoute,
   AuthenticatedInventoryStockCardRoute: AuthenticatedInventoryStockCardRoute,
   AuthenticatedInventoryTransfersRoute: AuthenticatedInventoryTransfersRoute,
+  AuthenticatedInvoiceDetailIdRoute: AuthenticatedInvoiceDetailIdRoute,
   AuthenticatedJournalEntryIdRoute: AuthenticatedJournalEntryIdRoute,
   AuthenticatedLearnAccountingBasicsRoute:
     AuthenticatedLearnAccountingBasicsRoute,
@@ -3951,6 +5169,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLearnQuickStartRoute: AuthenticatedLearnQuickStartRoute,
   AuthenticatedLearnReportsRoute: AuthenticatedLearnReportsRoute,
   AuthenticatedLearnVatZraRoute: AuthenticatedLearnVatZraRoute,
+  AuthenticatedPurchaseOrderDetailIdRoute:
+    AuthenticatedPurchaseOrderDetailIdRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
 }
@@ -3993,7 +5213,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   WorkerRouteRoute: WorkerRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InteractivePresentationRoute: InteractivePresentationRoute,
+  LandingWhiteboardRoute: LandingWhiteboardRoute,
   McpRoute: McpRoute,
+  PublicJobsRoute: PublicJobsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
