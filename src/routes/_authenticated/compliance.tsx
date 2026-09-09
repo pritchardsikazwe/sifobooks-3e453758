@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ShieldCheck, LogOut, Plus, Trash2, CheckCircle2, AlertCircle, Clock, Sparkles, ExternalLink, Calendar, Scale } from "lucide-react";
+import { ArrowLeft, ShieldCheck, LogOut, Plus, Trash2, CheckCircle2, AlertCircle, Clock, Sparkles, ExternalLink, Calendar, Scale, FileCheck2, ClipboardCheck, BellRing, ChevronRight, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,453 +8,95 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppNav } from "@/components/AppNav";
 import { STATUTORY_BODIES, bodyByCode } from "@/lib/compliance-bodies";
-import {
-  PAYE_BANDS_MONTHLY, NAPSA, NHIMA, SDL, WCF, VAT, TURNOVER_TAX, WHT,
-  INCOME_TAX, FILING_CALENDAR, PORTALS, ZAMBIA_TAX_YEAR,
-} from "@/lib/zambia-tax";
+import { PAYE_BANDS_MONTHLY, NAPSA, NHIMA, SDL, WCF, VAT, TURNOVER_TAX, WHT, INCOME_TAX, FILING_CALENDAR, PORTALS, ZAMBIA_TAX_YEAR } from "@/lib/zambia-tax";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 
-export const Route = createFileRoute("/_authenticated/compliance")({
-  head: () => ({
-    meta: [
-      { title: "Statutory Compliance — SifoBooks" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: CompliancePage,
-});
+export const Route = createFileRoute("/_authenticated/compliance")({ head: () => ({ meta: [{ title: "Compliance Centre — SifoBooks" }, { name: "robots", content: "noindex" }] }), component: CompliancePage });
 
-type Obligation = {
-  id: string; body: string; obligation_type: string; period: string;
-  due_date: string; status: "upcoming" | "filed" | "overdue";
-  amount: number | null; reference: string | null; notes: string | null;
-};
-
-const statusStyles: Record<Obligation["status"], string> = {
-  upcoming: "bg-blue-100 text-blue-800 border-blue-200",
-  filed:    "bg-emerald-100 text-emerald-800 border-emerald-200",
-  overdue:  "bg-red-100 text-red-800 border-red-200",
-};
-
+type Obligation = { id: string; body: string; obligation_type: string; period: string; due_date: string; status: "upcoming" | "filed" | "overdue"; amount: number | null; reference: string | null; notes: string | null };
+const statusStyles: Record<Obligation["status"], string> = { upcoming: "bg-blue-100 text-blue-800 border-blue-200", filed: "bg-emerald-100 text-emerald-800 border-emerald-200", overdue: "bg-red-100 text-red-800 border-red-200" };
 const statusIcon = { upcoming: <Clock className="h-3 w-3" />, filed: <CheckCircle2 className="h-3 w-3" />, overdue: <AlertCircle className="h-3 w-3" /> };
 
 function CompliancePage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Obligation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("ZMW");
   const [businessName, setBusinessName] = useState("");
   const [open, setOpen] = useState(false);
-
-  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-  const load = async () => {
-    const { data, error } = await supabase.from("compliance_obligations").select("*").order("due_date", { ascending: true });
-    if (error) return toast.error(error.message);
-    setItems((data as Obligation[]) ?? []);
-  };
-
-  useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data: prof } = await supabase.from("profiles").select("onboarded, currency, business_name").eq("id", u.user.id).maybeSingle();
-      if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
-      if (prof.currency) setCurrency(prof.currency);
-      if (prof.business_name) setBusinessName(prof.business_name);
-      await load();
-      setLoading(false);
-    })();
-  }, [navigate]);
-
-  // auto-mark overdue for display
   const today = new Date().toISOString().slice(0, 10);
+  const money = (n: number) => `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const load = async () => { const { data, error } = await supabase.from("compliance_obligations").select("*").order("due_date", { ascending: true }); if (error) return toast.error(error.message); setItems((data as Obligation[]) ?? []); };
+  useEffect(() => { (async () => { const { data: u } = await supabase.auth.getUser(); if (!u.user) return; const { data: prof } = await supabase.from("profiles").select("onboarded, currency, business_name").eq("id", u.user.id).maybeSingle(); if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; } if (prof.currency) setCurrency(prof.currency); if (prof.business_name) setBusinessName(prof.business_name); await load(); setLoading(false); })(); }, [navigate]);
   const withDerivedStatus = items.map(i => i.status !== "filed" && i.due_date < today ? { ...i, status: "overdue" as const } : i);
+  const counts = useMemo(() => { const c = { upcoming: 0, filed: 0, overdue: 0, amount: 0 }; withDerivedStatus.forEach(i => { c[i.status]++; c.amount += Number(i.amount ?? 0); }); return { ...c, total: withDerivedStatus.length }; }, [withDerivedStatus]);
+  const health = counts.total ? Math.round(((counts.filed + counts.upcoming) / counts.total) * 100) : 100;
+  const preflight = useMemo(() => { const checks = [
+    { label: "No overdue statutory obligations", ok: counts.overdue === 0 },
+    { label: "All generated obligations have a due date", ok: withDerivedStatus.every(i => !!i.due_date) },
+    { label: "Filed obligations have references where supplied", ok: withDerivedStatus.filter(i => i.status === "filed").every(i => !i.reference || i.reference.trim().length > 0) },
+    { label: "Compliance schedule is configured", ok: STATUTORY_BODIES.length > 0 },
+  ]; return checks; }, [counts.overdue, withDerivedStatus]);
+  const preflightReady = preflight.every(c => c.ok);
 
-  const counts = useMemo(() => {
-    const c = { upcoming: 0, filed: 0, overdue: 0, total: withDerivedStatus.length, amount: 0 };
-    withDerivedStatus.forEach(i => { c[i.status]++; c.amount += Number(i.amount ?? 0); });
-    return c;
-  }, [withDerivedStatus]);
-
-  const generateThisMonth = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const now = new Date();
-    const y = now.getFullYear(); const m = now.getMonth();
-    const period = `${y}-${String(m + 1).padStart(2, "0")}`;
-    const rows: {
-      user_id: string; body: string; obligation_type: string;
-      period: string; due_date: string; status: string;
-    }[] = [];
-    for (const b of STATUTORY_BODIES) {
-      if (b.frequency !== "monthly") continue;
-      const dd = new Date(y, m + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
-      for (const o of b.obligations) {
-        rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" });
-      }
-    }
-    const { error } = await supabase.from("compliance_obligations").insert(rows);
-    if (error) return toast.error(error.message);
-    toast.success(`Generated ${rows.length} obligations for ${period}`);
-    await load();
-  };
-
-  const generateWholeYear = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const y = new Date().getFullYear();
-    const rows: { user_id: string; body: string; obligation_type: string; period: string; due_date: string; status: string }[] = [];
-    for (let m = 0; m < 12; m++) {
-      const period = `${y}-${String(m + 1).padStart(2, "0")}`;
-      for (const b of STATUTORY_BODIES) {
-        if (b.frequency !== "monthly") continue;
-        const dd = new Date(y, m + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
-        for (const o of b.obligations) {
-          rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" });
-        }
-      }
-    }
-    // Quarterly + annual
-    for (const b of STATUTORY_BODIES) {
-      if (b.frequency === "quarterly") {
-        for (const q of [2, 5, 8, 11]) {
-          const period = `${y}-Q${Math.floor(q / 3) + 1}`;
-          const dd = new Date(y, q + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
-          for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" });
-        }
-      } else if (b.frequency === "annual") {
-        const dd = new Date(y, 11, Math.min(b.dueDay, 28)).toISOString().slice(0, 10);
-        for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period: String(y), due_date: dd, status: "upcoming" });
-      }
-    }
-    const { error } = await supabase.from("compliance_obligations").insert(rows);
-    if (error) return toast.error(error.message);
-    toast.success(`Generated ${rows.length} obligations for ${y}`);
-    await load();
-  };
-
-  const markFiled = async (id: string) => {
-    const { error } = await supabase.from("compliance_obligations").update({ status: "filed" }).eq("id", id);
-    if (error) return toast.error(error.message);
-    setItems(prev => prev.map(i => i.id === id ? { ...i, status: "filed" } : i));
-  };
-
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("compliance_obligations").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    setItems(prev => prev.filter(i => i.id !== id));
-  };
-
+  const generate = async (wholeYear: boolean) => { const { data: u } = await supabase.auth.getUser(); if (!u.user) return; const y = new Date().getFullYear(); const rows: { user_id: string; body: string; obligation_type: string; period: string; due_date: string; status: string }[] = []; const months = wholeYear ? Array.from({ length: 12 }, (_, i) => i) : [new Date().getMonth()]; for (const m of months) { const period = `${y}-${String(m + 1).padStart(2, "0")}`; for (const b of STATUTORY_BODIES) { if (b.frequency !== "monthly") continue; const dd = new Date(y, m + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10); for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" }); } } if (wholeYear) { for (const b of STATUTORY_BODIES) { if (b.frequency === "quarterly") for (const q of [2, 5, 8, 11]) { const period = `${y}-Q${Math.floor(q / 3) + 1}`; const dd = new Date(y, q + 1, Math.min(b.dueDay, 28)).toISOString().slice(0, 10); for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period, due_date: dd, status: "upcoming" }); } if (b.frequency === "annual") { const dd = new Date(y, 11, Math.min(b.dueDay, 28)).toISOString().slice(0, 10); for (const o of b.obligations) rows.push({ user_id: u.user.id, body: b.code, obligation_type: o, period: String(y), due_date: dd, status: "upcoming" }); } } } const { error } = await supabase.from("compliance_obligations").insert(rows); if (error) return toast.error(error.message); toast.success(`Generated ${rows.length} compliance obligations`); await load(); };
+  const markFiled = async (id: string) => { const { error } = await supabase.from("compliance_obligations").update({ status: "filed" }).eq("id", id); if (error) return toast.error(error.message); setItems(prev => prev.map(i => i.id === id ? { ...i, status: "filed" } : i)); toast.success("Marked as filed"); };
+  const remove = async (id: string) => { const { error } = await supabase.from("compliance_obligations").delete().eq("id", id); if (error) return toast.error(error.message); setItems(prev => prev.filter(i => i.id !== id)); };
   const signOut = async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); };
-
   const obligationColumns: DTColumn<Obligation>[] = [
     { key: "body", header: "Body", cell: i => { const b = bodyByCode(i.body); return <Badge variant="outline" className={b?.color ?? ""}>{b?.name ?? i.body}</Badge>; } },
     { key: "obligation_type", header: "Obligation", cell: i => <span className="font-medium">{i.obligation_type}</span> },
     { key: "period", header: "Period", cell: i => <span className="text-muted-foreground">{i.period}</span> },
-    { key: "due_date", header: "Due", cell: i => <span className="text-muted-foreground">{i.due_date}</span> },
-    { key: "status", header: "Status", cell: i => (
-        <Badge variant="outline" className={statusStyles[i.status]}>
-          <span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span>
-        </Badge>
-      ) },
+    { key: "due_date", header: "Due", cell: i => <span className={i.status === "overdue" ? "font-semibold text-red-600" : "text-muted-foreground"}>{i.due_date}</span> },
+    { key: "status", header: "Status", cell: i => <Badge variant="outline" className={statusStyles[i.status]}><span className="inline-flex items-center gap-1">{statusIcon[i.status]} {i.status}</span></Badge> },
     { key: "amount", header: "Amount", align: "right", cell: i => i.amount != null ? <span className="font-medium">{money(Number(i.amount))}</span> : "—" },
-    { key: "actions", header: "", sortable: false, cell: i => (
-        <div className="text-right">
-          {i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}
-          <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-        </div>
-      ) },
+    { key: "actions", header: "", sortable: false, cell: i => <div className="text-right">{i.status !== "filed" && <Button variant="ghost" size="sm" onClick={() => markFiled(i.id)}>Mark filed</Button>}<Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button></div> },
   ];
+  if (open) return <div className="p-4 sm:p-6"><NewObligationForm onCancel={() => setOpen(false)} onCreated={() => { setOpen(false); load(); }} /></div>;
+  return <div className="min-h-screen bg-muted/30">
+    <header className="border-b bg-background"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8"><div className="flex items-center gap-4"><Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link><div><h1 className="text-xl font-semibold tracking-tight">{businessName || "Compliance Centre"}</h1><p className="text-xs text-muted-foreground">Zambian statutory compliance, filing control and evidence</p></div></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button><AppNav /><Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button></div></div></header>
+    <main className="mx-auto max-w-7xl space-y-6 px-4 py-7 sm:px-6 lg:px-8">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <HealthCard label="Compliance health" value={`${health}%`} icon={<ShieldCheck className="h-5 w-5" />} detail={health >= 90 ? "Excellent control" : health >= 70 ? "Needs attention" : "Action required"} />
+        <HealthCard label="Upcoming" value={String(counts.upcoming)} icon={<Clock className="h-5 w-5" />} detail="Open obligations" />
+        <HealthCard label="Overdue" value={String(counts.overdue)} icon={<AlertCircle className="h-5 w-5" />} detail={counts.overdue ? "Immediate action" : "Nothing overdue"} danger={counts.overdue > 0} />
+        <HealthCard label="Filed" value={String(counts.filed)} icon={<FileCheck2 className="h-5 w-5" />} detail="Completed filings" />
+        <HealthCard label="Tracked liability" value={money(counts.amount)} icon={<Scale className="h-5 w-5" />} detail="Recorded obligations" />
+      </section>
 
-  if (open) {
-    return (
-      <div className="p-4 sm:p-6">
-        <NewObligationForm onCancel={() => setOpen(false)} onCreated={() => { setOpen(false); load(); }} />
-      </div>
-    );
-  }
+      <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <Card className="overflow-hidden"><CardHeader className="flex flex-row items-center justify-between border-b"><div><CardTitle className="text-base">Compliance command centre</CardTitle><p className="mt-1 text-xs text-muted-foreground">One place to prepare, review, file and evidence statutory work.</p></div><Badge variant="outline" className={preflightReady ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{preflightReady ? "READY" : "REVIEW"}</Badge></CardHeader><CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+          <ActionCard icon={<Calendar className="h-5 w-5" />} title="Compliance calendar" text="View filing deadlines and frequencies" href="#calendar" />
+          <ActionCard icon={<ClipboardCheck className="h-5 w-5" />} title="Pre-flight check" text={`${preflight.filter(c => c.ok).length}/${preflight.length} controls passed`} href="#preflight" />
+          <ActionCard icon={<FileCheck2 className="h-5 w-5" />} title="Filing tracker" text="Track draft, filed and overdue work" href="#obligations" />
+          <ActionCard icon={<BellRing className="h-5 w-5" />} title="Attention queue" text={`${counts.overdue} overdue · ${counts.upcoming} upcoming`} href="#obligations" />
+        </CardContent></Card>
+        <Card id="preflight"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><ClipboardCheck className="h-4 w-4" /> Compliance pre-flight</CardTitle><p className="text-xs text-muted-foreground">A lightweight control check before filing.</p></CardHeader><CardContent className="space-y-3">{preflight.map(c => <div key={c.label} className="flex items-start gap-3 text-sm"><span className={`mt-0.5 grid h-5 w-5 place-items-center rounded-full ${c.ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>{c.ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}</span><span className={c.ok ? "text-foreground" : "font-medium text-red-700"}>{c.label}</span></div>)}<div className={`rounded-lg border p-3 text-xs ${preflightReady ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{preflightReady ? "Ready for filing review. Final submission should still be checked against the relevant authority." : "Resolve the failed controls before treating this period as filing-ready."}</div></CardContent></Card>
+      </section>
 
-  return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{businessName || "Statutory Compliance"}</h1>
-              <p className="text-xs text-muted-foreground">Track filings across {STATUTORY_BODIES.length} statutory bodies</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AppNav />
-            <Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Upcoming" value={String(counts.upcoming)} tint="bg-blue-100 text-blue-700" icon={<Clock className="h-4 w-4" />} />
-          <Stat label="Filed" value={String(counts.filed)} tint="bg-emerald-100 text-emerald-700" icon={<CheckCircle2 className="h-4 w-4" />} />
-          <Stat label="Overdue" value={String(counts.overdue)} tint="bg-red-100 text-red-700" icon={<AlertCircle className="h-4 w-4" />} />
-          <Stat label="Est. liability" value={money(counts.amount)} tint="bg-primary/10 text-primary" icon={<ShieldCheck className="h-4 w-4" />} />
-        </div>
-
-        <Tabs defaultValue="obligations" className="mt-8">
-          <TabsList>
-            <TabsTrigger value="obligations">Obligations</TabsTrigger>
-            <TabsTrigger value="rates">Zambia Rates ({ZAMBIA_TAX_YEAR})</TabsTrigger>
-            <TabsTrigger value="calendar">Filing Calendar</TabsTrigger>
-            <TabsTrigger value="portals">Filing Portals</TabsTrigger>
-            <TabsTrigger value="bodies">Statutory Bodies</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="obligations">
-            <Card>
-              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" /> Obligations</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={generateThisMonth}><Sparkles className="h-4 w-4" /> This month</Button>
-                  <Button variant="outline" onClick={generateWholeYear}><Calendar className="h-4 w-4" /> Whole year</Button>
-                  <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Add obligation</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="px-0">
-                <DataTable
-                  tableId="compliance-obligations"
-                  columns={obligationColumns}
-                  data={withDerivedStatus}
-                  loading={loading}
-                  empty={'No obligations yet. Use "This month" or "Whole year" to seed filings.'}
-                  totals={rows => ({ amount: money(rows.reduce((s, r) => s + Number(r.amount ?? 0), 0)) })}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="rates" className="space-y-4">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Scale className="h-4 w-4 text-emerald-600" /> PAYE monthly bands</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Band</TableHead><TableHead className="text-right">Rate</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {PAYE_BANDS_MONTHLY.map(b => (
-                      <TableRow key={b.label}><TableCell>{b.label}</TableCell><TableCell className="text-right font-semibold">{(b.rate * 100).toFixed(0)}%</TableCell></TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <RateCard title="NAPSA (pension)" rows={[
-                ["Employee", `${(NAPSA.employeeRate * 100).toFixed(1)}%`],
-                ["Employer", `${(NAPSA.employerRate * 100).toFixed(1)}%`],
-                ["Monthly ceiling", `K ${NAPSA.monthlyCeiling.toLocaleString()}`],
-                ["Due", "10th of following month"],
-              ]} />
-              <RateCard title="NHIMA (health)" rows={[
-                ["Employee", `${(NHIMA.employeeRate * 100).toFixed(1)}%`],
-                ["Employer", `${(NHIMA.employerRate * 100).toFixed(1)}%`],
-                ["Base", "Basic pay"],
-                ["Due", "10th of following month"],
-              ]} />
-              <RateCard title="Skills Development Levy" rows={[
-                ["Rate", `${(SDL.rate * 100).toFixed(2)}%`],
-                ["Base", SDL.base],
-                ["Body", "TEVETA / ZRA"],
-                ["Due", "20th of following month"],
-              ]} />
-              <RateCard title="Workers' Compensation" rows={[
-                ["Default rate", `${(WCF.rateDefault * 100).toFixed(1)}%`],
-                ["Base", WCF.base],
-                ["Note", WCF.note],
-                ["Body", "WCFCB"],
-              ]} />
-              <RateCard title="VAT" rows={[
-                ["Standard", `${(VAT.standard * 100).toFixed(0)}%`],
-                ["Zero-rated", "0%"],
-                ["Exempt", "N/A"],
-                ["Return", "VAT 3 · monthly · 18th"],
-              ]} />
-              <RateCard title="Turnover Tax" rows={[
-                ["Rate", `${(TURNOVER_TAX.rate * 100).toFixed(0)}%`],
-                ["Annual threshold", `K ${TURNOVER_TAX.thresholdAnnual.toLocaleString()}`],
-                ["Eligibility", TURNOVER_TAX.note],
-                ["Due", "14th of following month"],
-              ]} />
-              <RateCard title="Withholding Tax" rows={[
-                ["Rent", `${(WHT.rent * 100).toFixed(0)}%`],
-                ["Dividends", `${(WHT.dividends * 100).toFixed(0)}%`],
-                ["Interest / Mgmt / Royalties", `${(WHT.interest * 100).toFixed(0)}%`],
-                ["Commissions / Public entertainers", `${(WHT.commissions * 100).toFixed(0)}%`],
-              ]} />
-              <RateCard title="Company Income Tax" rows={[
-                ["Standard", `${(INCOME_TAX.companyStandard * 100).toFixed(0)}%`],
-                ["Mining", `${(INCOME_TAX.mining * 100).toFixed(0)}%`],
-                ["Mobile operators", `${(INCOME_TAX.mobileOperators * 100).toFixed(0)}%`],
-                ["Farming / Non-trad. exports", `${(INCOME_TAX.farming * 100).toFixed(0)}% / ${(INCOME_TAX.exportOfNonTraditional * 100).toFixed(0)}%`],
-              ]} />
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Rates are indicative and configurable. Always verify against current ZRA, NAPSA, NHIMA, TEVETA and WCFCB guidance.
-            </p>
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Calendar className="h-4 w-4" /> Statutory filing calendar</CardTitle></CardHeader>
-              <CardContent className="px-0">
-                <Table>
-                  <TableHeader><TableRow><TableHead className="pl-6">Body</TableHead><TableHead>Obligation</TableHead><TableHead>Frequency</TableHead><TableHead className="text-right">Due day</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {FILING_CALENDAR.map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="pl-6"><Badge variant="outline">{r.body}</Badge></TableCell>
-                        <TableCell className="font-medium">{r.obligation}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.frequency}</TableCell>
-                        <TableCell className="text-right">{r.dueDay}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="portals">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {PORTALS.map(p => (
-                <Card key={p.name}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="text-sm font-semibold">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">{p.purpose}</div>
-                      </div>
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-emerald-700 hover:text-emerald-800" aria-label={`Open ${p.name}`}>
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </div>
-                    <div className="mt-2 truncate text-[11px] text-muted-foreground">{p.url}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="bodies">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Statutory bodies covered</CardTitle></CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {STATUTORY_BODIES.map(b => (
-                    <Badge key={b.code} variant="outline" className={b.color} title={b.full}>{b.name} — {b.full}</Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  );
+      <Tabs defaultValue="obligations" className="mt-2"><TabsList className="flex h-auto flex-wrap justify-start gap-1"><TabsTrigger value="obligations" id="obligations">Filing Tracker</TabsTrigger><TabsTrigger value="rates">Zambia Rates ({ZAMBIA_TAX_YEAR})</TabsTrigger><TabsTrigger value="calendar" id="calendar">Calendar</TabsTrigger><TabsTrigger value="portals">Portals</TabsTrigger><TabsTrigger value="bodies">Statutory Bodies</TabsTrigger></TabsList>
+        <TabsContent value="obligations"><Card><CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" /> Filing & obligation tracker</CardTitle><p className="mt-1 text-xs text-muted-foreground">Lifecycle: upcoming → filed, with overdue detection.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => generate(false)}><Sparkles className="h-4 w-4" /> This month</Button><Button variant="outline" onClick={() => generate(true)}><Calendar className="h-4 w-4" /> Whole year</Button><Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Add obligation</Button></div></CardHeader><CardContent className="px-0"><DataTable tableId="compliance-obligations" columns={obligationColumns} data={withDerivedStatus} loading={loading} empty={'No obligations yet. Generate a schedule or add one manually.'} totals={rows => ({ amount: money(rows.reduce((s, r) => s + Number(r.amount ?? 0), 0)) })} /></CardContent></Card></TabsContent>
+        <TabsContent value="rates" className="space-y-4"><Card><CardHeader><CardTitle className="text-base">PAYE monthly bands</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Band</TableHead><TableHead className="text-right">Rate</TableHead></TableRow></TableHeader><TableBody>{PAYE_BANDS_MONTHLY.map(b => <TableRow key={b.label}><TableCell>{b.label}</TableCell><TableCell className="text-right font-semibold">{(b.rate * 100).toFixed(0)}%</TableCell></TableRow>)}</TableBody></Table></CardContent></Card><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><RateCard title="NAPSA" rows={[["Employee", `${(NAPSA.employeeRate * 100).toFixed(1)}%`],["Employer", `${(NAPSA.employerRate * 100).toFixed(1)}%`],["Ceiling", `K ${NAPSA.monthlyCeiling.toLocaleString()}`],["Due", "10th of following month"]]} /><RateCard title="NHIMA" rows={[["Employee", `${(NHIMA.employeeRate * 100).toFixed(1)}%`],["Employer", `${(NHIMA.employerRate * 100).toFixed(1)}%`],["Base", "Basic pay"],["Due", "10th of following month"]]} /><RateCard title="Skills Development Levy" rows={[["Rate", `${(SDL.rate * 100).toFixed(2)}%`],["Base", SDL.base],["Body", "TEVETA / ZRA"],["Due", "20th of following month"]]} /><RateCard title="Workers' Compensation" rows={[["Default", `${(WCF.rateDefault * 100).toFixed(1)}%`],["Base", WCF.base],["Body", "WCFCB"],["Note", WCF.note]]} /><RateCard title="VAT" rows={[["Standard", `${(VAT.standard * 100).toFixed(0)}%`],["Zero-rated", "0%"],["Return", "VAT 3 · monthly"]]} /><RateCard title="Turnover Tax" rows={[["Rate", `${(TURNOVER_TAX.rate * 100).toFixed(0)}%`],["Annual threshold", `K ${TURNOVER_TAX.thresholdAnnual.toLocaleString()}`],["Due", "14th of following month"]]} /><RateCard title="Withholding Tax" rows={[["Rent", `${(WHT.rent * 100).toFixed(0)}%`],["Dividends", `${(WHT.dividends * 100).toFixed(0)}%`],["Interest", `${(WHT.interest * 100).toFixed(0)}%`]]} /><RateCard title="Company Income Tax" rows={[["Standard", `${(INCOME_TAX.companyStandard * 100).toFixed(0)}%`],["Mining", `${(INCOME_TAX.mining * 100).toFixed(0)}%`],["Farming", `${(INCOME_TAX.farming * 100).toFixed(0)}%`]]} /></div><p className="text-[11px] text-muted-foreground">Rates are configurable reference data. Verify current authority guidance before filing.</p></TabsContent>
+        <TabsContent value="calendar"><Card><CardHeader><CardTitle className="text-base">Statutory filing calendar</CardTitle></CardHeader><CardContent className="px-0"><Table><TableHeader><TableRow><TableHead className="pl-6">Body</TableHead><TableHead>Obligation</TableHead><TableHead>Frequency</TableHead><TableHead className="text-right">Due day</TableHead></TableRow></TableHeader><TableBody>{FILING_CALENDAR.map((r, i) => <TableRow key={i}><TableCell className="pl-6"><Badge variant="outline">{r.body}</Badge></TableCell><TableCell className="font-medium">{r.obligation}</TableCell><TableCell className="text-muted-foreground">{r.frequency}</TableCell><TableCell className="text-right">{r.dueDay}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card></TabsContent>
+        <TabsContent value="portals"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{PORTALS.map(p => <Card key={p.name}><CardContent className="p-4"><div className="flex items-start justify-between gap-2"><div><div className="text-sm font-semibold">{p.name}</div><div className="text-xs text-muted-foreground">{p.purpose}</div></div><a href={p.url} target="_blank" rel="noreferrer" className="text-primary" aria-label={`Open ${p.name}`}><ExternalLink className="h-4 w-4" /></a></div><div className="mt-2 truncate text-[11px] text-muted-foreground">{p.url}</div></CardContent></Card>)}</div></TabsContent>
+        <TabsContent value="bodies"><Card><CardHeader><CardTitle className="text-base">Statutory bodies covered</CardTitle></CardHeader><CardContent><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{STATUTORY_BODIES.map(b => <div key={b.code} className="rounded-lg border p-3"><div className="flex items-center justify-between gap-2"><Badge variant="outline" className={b.color}>{b.name}</Badge><span className="text-[10px] uppercase text-muted-foreground">{b.frequency}</span></div><p className="mt-2 text-xs text-muted-foreground">{b.full}</p><p className="mt-2 text-xs font-medium">{b.obligations.join(" · ")}</p></div>)}</div></CardContent></Card></TabsContent>
+      </Tabs>
+    </main>
+    <style>{`@media print { @page { size:A4; margin:14mm; } .print\\:hidden { display:none!important; } body { background:#fff!important; print-color-adjust:exact; -webkit-print-color-adjust:exact; } }`}</style>
+  </div>;
 }
 
-function RateCard({ title, rows }: { title: string; rows: [string, string][] }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
-      <CardContent className="pt-0">
-        <dl className="text-xs">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex items-baseline justify-between border-b py-1.5 last:border-0">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className="font-medium text-right">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: string; tint: string }) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{label}</span>
-          <span className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${tint}`}>{icon}</span>
-        </div>
-        <div className="mt-3 text-2xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
+function HealthCard({ label, value, detail, icon, danger }: { label: string; value: string; detail: string; icon: React.ReactNode; danger?: boolean }) { return <Card><CardContent className="p-4"><div className="flex items-start justify-between gap-3"><span className="text-xs font-medium text-muted-foreground">{label}</span><span className={`grid h-8 w-8 place-items-center rounded-lg ${danger ? "bg-red-100 text-red-700" : "bg-primary/10 text-primary"}`}>{icon}</span></div><div className="mt-2 text-xl font-semibold tracking-tight">{value}</div><div className={`mt-1 text-[11px] ${danger ? "font-medium text-red-600" : "text-muted-foreground"}`}>{detail}</div></CardContent></Card>; }
+function ActionCard({ icon, title, text, href }: { icon: React.ReactNode; title: string; text: string; href: string }) { return <a href={href} className="group rounded-lg border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"><div className="flex items-start justify-between gap-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</span><ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" /></div><div className="mt-3 text-sm font-semibold">{title}</div><div className="mt-1 text-xs text-muted-foreground">{text}</div></a>; }
+function RateCard({ title, rows }: { title: string; rows: [string, string][] }) { return <Card><CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader><CardContent className="pt-0"><dl className="text-xs">{rows.map(([k, v]) => <div key={k} className="flex items-baseline justify-between border-b py-1.5 last:border-0"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-medium">{v}</dd></div>)}</dl></CardContent></Card>; }
 
 function NewObligationForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const [body, setBody] = useState(STATUTORY_BODIES[0].code);
-  const [obligation, setObligation] = useState(STATUTORY_BODIES[0].obligations[0]);
-  const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
-  const [due, setDue] = useState(today);
-  const [amount, setAmount] = useState<string>("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const bodyObj = bodyByCode(body);
-
-  const submit = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    setSaving(true);
-    const { error } = await supabase.from("compliance_obligations").insert({
-      user_id: u.user.id, body, obligation_type: obligation, period, due_date: due, status: "upcoming",
-      amount: amount ? Number(amount) : null, notes: notes || null,
-    });
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success("Obligation added");
-    onCreated();
-  };
-
-  return (
-    <SifoFormPage
-      module="tax"
-      icon={ShieldCheck}
-      title="New statutory obligation"
-      subtitle="Track a filing across a statutory body"
-      onCancel={onCancel}
-      onSave={submit}
-      saving={saving}
-      saveLabel="Add"
-    >
-      <SifoFormSection title="Obligation details">
-        <SifoField label="Statutory body" wide>
-          <Select value={body} onValueChange={v => { setBody(v); const b = bodyByCode(v); if (b) setObligation(b.obligations[0]); }}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUTORY_BODIES.map(b => <SelectItem key={b.code} value={b.code}>{b.name} — {b.full}</SelectItem>)}</SelectContent>
-          </Select>
-        </SifoField>
-        <SifoField label="Obligation" wide>
-          <Select value={obligation} onValueChange={setObligation}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{bodyObj?.obligations.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-          </Select>
-        </SifoField>
-        <SifoField label="Period"><Input value={period} onChange={e => setPeriod(e.target.value)} placeholder="2026-07 or 2026-Q3" /></SifoField>
-        <SifoField label="Due date"><Input type="date" value={due} onChange={e => setDue(e.target.value)} /></SifoField>
-        <SifoField label="Amount (optional)"><Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" /></SifoField>
-        <SifoField label="Notes" wide><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Reference, filing portal, etc." /></SifoField>
-      </SifoFormSection>
-    </SifoFormPage>
-  );
+  const today = new Date().toISOString().slice(0, 10); const [body, setBody] = useState(STATUTORY_BODIES[0].code); const [obligation, setObligation] = useState(STATUTORY_BODIES[0].obligations[0]); const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7)); const [due, setDue] = useState(today); const [amount, setAmount] = useState(""); const [notes, setNotes] = useState(""); const [saving, setSaving] = useState(false); const bodyObj = bodyByCode(body);
+  const submit = async () => { const { data: u } = await supabase.auth.getUser(); if (!u.user) return; if (!period || !due) return toast.error("Period and due date are required"); setSaving(true); const { error } = await supabase.from("compliance_obligations").insert({ user_id: u.user.id, body, obligation_type: obligation, period, due_date: due, status: "upcoming", amount: amount ? Number(amount) : null, notes: notes || null }); setSaving(false); if (error) return toast.error(error.message); toast.success("Obligation added"); onCreated(); };
+  return <SifoFormPage module="tax" icon={ShieldCheck} title="New statutory obligation" subtitle="Track a filing across a statutory body" onCancel={onCancel} onSave={submit} saving={saving} saveLabel="Add"><SifoFormSection title="Obligation details"><SifoField label="Statutory body" wide><Select value={body} onValueChange={v => { setBody(v); const b = bodyByCode(v); if (b) setObligation(b.obligations[0]); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{STATUTORY_BODIES.map(b => <SelectItem key={b.code} value={b.code}>{b.name} — {b.full}</SelectItem>)}</SelectContent></Select></SifoField><SifoField label="Obligation" wide><Select value={obligation} onValueChange={setObligation}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{bodyObj?.obligations.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select></SifoField><SifoField label="Period"><Input value={period} onChange={e => setPeriod(e.target.value)} placeholder="2026-09 or 2026-Q3" /></SifoField><SifoField label="Due date"><Input type="date" value={due} onChange={e => setDue(e.target.value)} /></SifoField><SifoField label="Amount"><Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" /></SifoField><SifoField label="Notes" wide><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Reference, filing portal, payment details, etc." /></SifoField></SifoFormSection></SifoFormPage>;
 }
