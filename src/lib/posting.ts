@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { capturePostingFailure } from "@/lib/posting-failure";
 
 async function ensureAccounts(userId: string) {
   const defaults = [
@@ -27,6 +28,13 @@ async function ensureAccounts(userId: string) {
 async function atomicPost(opts: {
   userId: string; entryNumber: string; entryDate: string; reference: string; description: string;
   lines: Array<{ accountId: string; debit: number; credit: number; description: string }>;
+  failure?: {
+    sourceModule: string;
+    sourceType?: string;
+    sourceId?: string;
+    operation?: string;
+    payload?: Record<string, unknown> | null;
+  };
 }) {
   const { data, error } = await (supabase as any).rpc("post_journal_entry", {
     _user_id: opts.userId,
@@ -36,7 +44,21 @@ async function atomicPost(opts: {
     _description: opts.description,
     _lines: opts.lines.map(l => ({ account_id: l.accountId, debit: Number(l.debit) || 0, credit: Number(l.credit) || 0, description: l.description })),
   });
-  if (error) return { ok: false as const, error: error.message };
+  if (error) {
+    if (opts.failure) {
+      await capturePostingFailure({
+        userId: opts.userId,
+        sourceModule: opts.failure.sourceModule,
+        sourceType: opts.failure.sourceType,
+        sourceId: opts.failure.sourceId,
+        sourceReference: opts.reference,
+        operation: opts.failure.operation ?? "post",
+        error,
+        payload: opts.failure.payload ?? { entryNumber: opts.entryNumber, entryDate: opts.entryDate, lines: opts.lines },
+      });
+    }
+    return { ok: false as const, error: error.message };
+  }
   return { ok: true as const, entryId: data as string };
 }
 
@@ -50,8 +72,21 @@ export async function postInvoiceLedger(opts: {
     { accountId: accounts["4000"], debit: 0, credit: opts.subtotal, description: "Sales revenue" },
   ];
   if (opts.vat > 0) lines.push({ accountId: accounts["2200"], debit: 0, credit: opts.vat, description: "VAT output" });
-  return atomicPost({ userId: opts.userId, entryNumber: `JE-${opts.number}`, entryDate: opts.issueDate,
-    reference: `INV:${opts.number}`, description: `Sales invoice ${opts.number}${opts.customerName ? ` — ${opts.customerName}` : ""}`, lines });
+  return atomicPost({
+    userId: opts.userId,
+    entryNumber: `JE-${opts.number}`,
+    entryDate: opts.issueDate,
+    reference: `INV:${opts.number}`,
+    description: `Sales invoice ${opts.number}${opts.customerName ? ` — ${opts.customerName}` : ""}`,
+    lines,
+    failure: {
+      sourceModule: "sales",
+      sourceType: "invoice",
+      sourceId: opts.invoiceId,
+      operation: "post_invoice",
+      payload: { invoiceId: opts.invoiceId, number: opts.number, subtotal: opts.subtotal, vat: opts.vat, total: opts.total },
+    },
+  });
 }
 
 export async function voidInvoiceLedger(opts: { userId: string; invoiceId: string; number: string; reason?: string }) {
@@ -72,9 +107,21 @@ export async function voidInvoiceLedger(opts: { userId: string; invoiceId: strin
     { accountId: accounts["1100"], debit: 0, credit: total, description: "Reverse trade receivable" },
   ];
   if (vat > 0) lines.unshift({ accountId: accounts["2200"], debit: vat, credit: 0, description: "Reverse VAT output" });
-  const posted = await atomicPost({ userId: opts.userId, entryNumber: `JE-VOID-${opts.number}`,
-    entryDate: new Date().toISOString().slice(0, 10), reference: `INV:${opts.number}:VOID`,
-    description: `Void of invoice ${opts.number}${opts.reason ? ` — ${opts.reason}` : ""}`, lines });
+  const posted = await atomicPost({
+    userId: opts.userId,
+    entryNumber: `JE-VOID-${opts.number}`,
+    entryDate: new Date().toISOString().slice(0, 10),
+    reference: `INV:${opts.number}:VOID`,
+    description: `Void of invoice ${opts.number}${opts.reason ? ` — ${opts.reason}` : ""}`,
+    lines,
+    failure: {
+      sourceModule: "sales",
+      sourceType: "invoice",
+      sourceId: opts.invoiceId,
+      operation: "void_invoice",
+      payload: { invoiceId: opts.invoiceId, number: opts.number, reason: opts.reason ?? null },
+    },
+  });
   if (!posted.ok) return posted;
 
   const { error } = await supabase.from("invoices").update({ status: "voided", voided_at: new Date().toISOString(), void_reason: opts.reason ?? null }).eq("id", opts.invoiceId);
@@ -92,6 +139,19 @@ export async function postCreditNoteLedger(opts: {
     { accountId: accounts["1100"], debit: 0, credit: opts.total, description: "Reduce trade receivable" },
   ];
   if (opts.vat > 0) lines.push({ accountId: accounts["2200"], debit: opts.vat, credit: 0, description: "Reverse VAT output" });
-  return atomicPost({ userId: opts.userId, entryNumber: `JE-${opts.number}`, entryDate: opts.issueDate,
-    reference: `CN:${opts.number}`, description: `Credit note ${opts.number}${opts.customerName ? ` — ${opts.customerName}` : ""}`, lines });
+  return atomicPost({
+    userId: opts.userId,
+    entryNumber: `JE-${opts.number}`,
+    entryDate: opts.issueDate,
+    reference: `CN:${opts.number}`,
+    description: `Credit note ${opts.number}${opts.customerName ? ` — ${opts.customerName}` : ""}`,
+    lines,
+    failure: {
+      sourceModule: "sales",
+      sourceType: "credit_note",
+      sourceId: opts.creditNoteId,
+      operation: "post_credit_note",
+      payload: { creditNoteId: opts.creditNoteId, number: opts.number, subtotal: opts.subtotal, vat: opts.vat, total: opts.total },
+    },
+  });
 }
