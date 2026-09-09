@@ -10470,6 +10470,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      inventory_unit_cost: {
+        Args: { _item: string; _location?: string }
+        Returns: number
+      }
       is_company_admin: {
         Args: { _company: string; _user: string }
         Returns: boolean
