@@ -23,7 +23,7 @@ function Metric({ title, value, icon: Icon, description }: { title: string; valu
 }
 
 function RetailControlCenter() {
-  const { can } = usePermissions();
+  const { has } = usePermissions();
   const [summary, setSummary] = useState(empty);
   const [exceptions, setExceptions] = useState<ExceptionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ function RetailControlCenter() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  if (!can("reports.view")) return <div className="p-6"><Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8" /><h2 className="text-lg font-semibold">Manager access required</h2><p className="mt-1 text-sm text-muted-foreground">You need the reports.view permission to open the Retail Control Center.</p></CardContent></Card></div>;
+  if (!has("reports.view")) return <div className="p-6"><Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8" /><h2 className="text-lg font-semibold">Manager access required</h2><p className="mt-1 text-sm text-muted-foreground">You need the reports.view permission to open the Retail Control Center.</p></CardContent></Card></div>;
 
   return <div className="space-y-6 p-4 md:p-6">
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

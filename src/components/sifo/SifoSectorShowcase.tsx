@@ -1,8 +1,12 @@
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { BarChart3, BedDouble, BookOpen, Bus, CalendarCheck, CreditCard, GraduationCap, Hotel, House, ReceiptText, School, Sparkles, Users, UtensilsCrossed } from "lucide-react";
 
-const SECTORS = [
+type SectorFeature = [string, string, LucideIcon];
+type SectorDef = { key: string; label: string; icon: LucideIcon; eyebrow: string; title: string; description: string; features: SectorFeature[]; links: [string, string][] };
+
+const SECTORS: SectorDef[] = [
   {
     key: "hotel",
     label: "Hotel & Hospitality",
