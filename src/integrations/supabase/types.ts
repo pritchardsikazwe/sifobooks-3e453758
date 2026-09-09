@@ -10505,6 +10505,10 @@ export type Database = {
         Args: { _feature: string; _tenant?: string; _worker: string }
         Returns: boolean
       }
+      pos_checkout: {
+        Args: { _items?: Json; _payments?: Json; _sale: Json }
+        Returns: Json
+      }
       pos_default_location: {
         Args: { _uid: string; _worker: string }
         Returns: string

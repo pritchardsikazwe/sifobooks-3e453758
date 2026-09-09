@@ -36,3 +36,13 @@
 - Public/signed-in SECURITY DEFINER function exposure (baseline infra warnings)
 - Customer table staff permission-check inconsistency
 - POS worker self-read policy exposes PIN hash/lockout columns
+
+## POS + Inventory transaction engine hardening (2026-09-09)
+- [ ] Server-authoritative sale posting: recalc totals/VAT, derive COGS from item cost at the selling location
+- [ ] Enforce active register + shift + location before completing a sale (no silent shift creation)
+- [ ] Validate stock at the POS location from stock_balances; reject shortfall unless manager override (audited)
+- [ ] Persist unit_cost and total_cost on sale stock movements (fix AFTER-trigger design)
+- [ ] Resolve valid cost on new transfer dispatch/receipt (never touch historical rows)
+- [ ] Keep client_ref idempotency; shift payment totals posted once
+- [ ] POSCommandCenter: live products/prices from stock_items, real checkout via RPC, keep the current look
+- [ ] Tests: balanced journal, COGS source, single stock decrease, retry, shortfall, shift enforcement
