@@ -1,6 +1,11 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { InventoryFlowAudit } from "@/components/sifo/InventoryFlowAudit";
 
 export const Route = createFileRoute("/_authenticated/reports/inventory-flow-audit")({
-  head: () => ({ meta: [{ title: "Inventory Flow & Audit — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: () => <Navigate to="/inventory-flow-audit" replace />,
+  head: () => ({ meta: [{ title: "Inventory Reports & Reconciliation — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: InventoryReportsPage,
 });
+
+function InventoryReportsPage() {
+  return <InventoryFlowAudit />;
+}
