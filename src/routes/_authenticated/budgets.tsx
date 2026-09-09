@@ -22,13 +22,13 @@ export const Route = createFileRoute("/_authenticated/budgets")({
         { key: "actual_amount", header: "Actual", render: r => fmtMoney(r.actual_amount ?? 0) },
       ]}
       fields={[
-        { name: "name", label: "Budget Name", required: true },
-        { name: "fiscal_year", label: "Fiscal Year", type: "number", required: true, defaultValue: new Date().getFullYear() },
-        { name: "period", label: "Period", type: "select", defaultValue: "annual",
+        { name: "name", label: "Budget Name", required: true, group: "Budget Details" },
+        { name: "fiscal_year", label: "Fiscal Year", type: "number", required: true, defaultValue: new Date().getFullYear(), group: "Budget Details" },
+        { name: "period", label: "Period", type: "select", defaultValue: "annual", group: "Budget Details",
           options: [{value:"monthly",label:"Monthly"},{value:"quarterly",label:"Quarterly"},{value:"annual",label:"Annual"}] },
-        { name: "budgeted_amount", label: "Budgeted Amount", type: "number", required: true },
-        { name: "actual_amount", label: "Actual Amount", type: "number" },
-        { name: "notes", label: "Notes", type: "textarea" },
+        { name: "budgeted_amount", label: "Budgeted Amount", type: "number", required: true, group: "Budget & Actual" },
+        { name: "actual_amount", label: "Actual Amount", type: "number", group: "Budget & Actual" },
+        { name: "notes", label: "Notes", type: "textarea", group: "Supporting Information" },
       ]}
     />
   ),
