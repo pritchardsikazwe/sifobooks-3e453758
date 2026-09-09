@@ -46,3 +46,5 @@
 - [ ] Keep client_ref idempotency; shift payment totals posted once
 - [ ] POSCommandCenter: live products/prices from stock_items, real checkout via RPC, keep the current look
 - [ ] Tests: balanced journal, COGS source, single stock decrease, retry, shortfall, shift enforcement
+
+- [x] POS command centre wired to live stock, till settings, open shift and the secure server checkout (pos_checkout); totals/VAT/COGS now server-authoritative.
