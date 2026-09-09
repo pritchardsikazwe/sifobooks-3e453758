@@ -1,7 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { InventoryGLReconciliation } from "@/components/sifo/InventoryGLReconciliation";
@@ -23,7 +22,7 @@ function InventoryGLReconciliationPage() {
         module="inventory"
         title="Inventory → GL reconciliation"
         description="Reconcile inventory movement value against the general ledger, with period controls and audit coverage."
-        icon={undefined as any}
+        icon={Scale}
         actions={<Button asChild variant="outline" size="sm"><Link to="/inventory/reconciliation"><ArrowLeft className="mr-1.5 h-4 w-4" />Stock reconciliation</Link></Button>}
       />
       <div className="flex flex-wrap items-end gap-3 rounded-xl border p-4">
