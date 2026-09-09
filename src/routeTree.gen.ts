@@ -177,6 +177,7 @@ import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSupplierStatementRouteImport } from './routes/_authenticated/reports.supplier-statement'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
+import { Route as AuthenticatedReportsPosIntegrityRouteImport } from './routes/_authenticated/reports.pos-integrity'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
 import { Route as AuthenticatedReportsPayrollSchedulesRouteImport } from './routes/_authenticated/reports.payroll-schedules'
@@ -1172,6 +1173,12 @@ const AuthenticatedReportsSalesByCustomerRoute =
     path: '/sales-by-customer',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsPosIntegrityRoute =
+  AuthenticatedReportsPosIntegrityRouteImport.update({
+    id: '/pos-integrity',
+    path: '/pos-integrity',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsPnlRoute = AuthenticatedReportsPnlRouteImport.update({
   id: '/pnl',
   path: '/pnl',
@@ -1742,6 +1749,7 @@ export interface FileRoutesByFullPath {
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
@@ -1972,6 +1980,7 @@ export interface FileRoutesByTo {
   '/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
@@ -2211,6 +2220,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/payroll-schedules': typeof AuthenticatedReportsPayrollSchedulesRoute
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
+  '/_authenticated/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/_authenticated/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
@@ -2449,6 +2459,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
+    | '/reports/pos-integrity'
     | '/reports/sales-by-customer'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
@@ -2679,6 +2690,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-schedules'
     | '/reports/payroll-summary'
     | '/reports/pnl'
+    | '/reports/pos-integrity'
     | '/reports/sales-by-customer'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
@@ -2917,6 +2929,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/payroll-schedules'
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
+    | '/_authenticated/reports/pos-integrity'
     | '/_authenticated/reports/sales-by-customer'
     | '/_authenticated/reports/supplier-statement'
     | '/_authenticated/reports/tax-summary'
@@ -4180,6 +4193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsSalesByCustomerRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/pos-integrity': {
+      id: '/_authenticated/reports/pos-integrity'
+      path: '/pos-integrity'
+      fullPath: '/reports/pos-integrity'
+      preLoaderRoute: typeof AuthenticatedReportsPosIntegrityRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/pnl': {
       id: '/_authenticated/reports/pnl'
       path: '/pnl'
@@ -4798,6 +4818,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsPayrollSchedulesRoute: typeof AuthenticatedReportsPayrollSchedulesRoute
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
+  AuthenticatedReportsPosIntegrityRoute: typeof AuthenticatedReportsPosIntegrityRoute
   AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
   AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
@@ -4838,6 +4859,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsPayrollSummaryRoute:
     AuthenticatedReportsPayrollSummaryRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
+  AuthenticatedReportsPosIntegrityRoute: AuthenticatedReportsPosIntegrityRoute,
   AuthenticatedReportsSalesByCustomerRoute:
     AuthenticatedReportsSalesByCustomerRoute,
   AuthenticatedReportsSupplierStatementRoute:

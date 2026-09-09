@@ -89,6 +89,7 @@ export function posErrorMessage(raw:string):string{
   if(/NO_REGISTER/.test(m))return "Your shift is not linked to a till. Ask a manager to assign your register.";
   if(/NO_LOCATION/.test(m))return "No selling location is set for this till. Ask a manager to assign your store.";
   if(/INSUFFICIENT_STOCK:(.*)/.test(m))return `Not enough stock for ${m.split("INSUFFICIENT_STOCK:")[1]?.split(/["']/)[0]?.trim()||"an item"} at this store. A manager can authorise it.`;
+  if(/NO_COST:(.*)/.test(m))return `${m.split("NO_COST:")[1]?.split(/["']/)[0]?.trim()||"An item"} has no cost price set, so profit cannot be worked out. Ask a manager to set its cost.`;
   if(/PAYMENT_SHORT/.test(m))return "The payment is less than the amount due.";
   if(/EMPTY_SALE|BAD_QUANTITY/.test(m))return "Check the quantities on this sale.";
   if(/NO_PRICE|UNKNOWN_ITEM|ITEM_REQUIRED/.test(m))return "One of the items is not set up for selling. Ask a manager to check it.";
