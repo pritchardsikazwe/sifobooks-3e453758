@@ -45,14 +45,14 @@ export async function postBankAllocation(opts: {
   if (!bankId) return { ok: false, error: "Bank GL account missing" };
 
   const txnAmt = Math.abs(Number(opts.txn.amount));
-  if (!txnAmt) return { ok: false, error: "Zero amount" };
+  if (!Number.isFinite(txnAmt) || txnAmt <= 0) return { ok: false, error: "Amount must be greater than zero" };
 
   const { data: existing } = await supabase.from("bank_allocations")
     .select("amount").eq("bank_txn_id", opts.txn.id).eq("is_reversed", false);
   const already = (existing ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
   const remaining = Math.max(0, txnAmt - already);
   const amt = Number((opts.amount ?? remaining).toFixed(2));
-  if (amt <= 0) return { ok: false, error: "Nothing left to allocate" };
+  if (!Number.isFinite(amt) || amt <= 0) return { ok: false, error: "Nothing left to allocate" };
   if (amt > remaining + 0.005) return { ok: false, error: `Amount exceeds remaining ${remaining.toFixed(2)}` };
 
   const isInflow = Number(opts.txn.amount) > 0;
@@ -114,6 +114,10 @@ export async function reverseBankAllocation(allocationId: string, reason: string
 /**
  * Sage-style "Spend Money" or "Receive Money" transaction.
  * Uses the selected bank_accounts.gl_account_id for the bank side.
+ *
+ * Positive amounts are spends (bank credited), negative amounts are
+ * receipts (bank debited). Counter allocations must therefore be entirely
+ * DR for spends or entirely CR for receipts so the journal always balances.
  */
 export async function postSpendMoney(opts: {
   userId: string;
@@ -131,12 +135,28 @@ export async function postSpendMoney(opts: {
     description?: string;
   }>;
 }) {
+  if (!Number.isFinite(Number(opts.amount)) || Number(opts.amount) === 0)
+    return { ok: false, error: "Amount must be non-zero" };
+
   const isSpend = opts.amount > 0;
   const total = Math.abs(opts.amount);
-  const allocSum = opts.allocations.reduce((s, a) => s + Math.abs(a.amount), 0);
+  if (!opts.allocations.length) return { ok: false, error: "Add at least one allocation line" };
+
+  const invalidAllocation = opts.allocations.find(
+    (a) => !a.accountId || !Number.isFinite(Number(a.amount)) || Number(a.amount) <= 0 || a.side !== (isSpend ? "DR" : "CR"),
+  );
+  if (invalidAllocation) {
+    return {
+      ok: false,
+      error: isSpend
+        ? "Spend Money allocations must be positive DR lines with a GL account"
+        : "Receive Money allocations must be positive CR lines with a GL account",
+    };
+  }
+
+  const allocSum = opts.allocations.reduce((s, a) => s + Math.abs(Number(a.amount)), 0);
   if (Math.abs(allocSum - total) > 0.01)
     return { ok: false, error: `Allocations (${allocSum.toFixed(2)}) must equal amount (${total.toFixed(2)})` };
-  if (!opts.allocations.length) return { ok: false, error: "Add at least one allocation line" };
 
   const bankId = await getBankGlAccount(opts.userId, opts.bankAccountId);
   if (!bankId) return { ok: false, error: "Selected bank account has no GL mapping" };
@@ -172,8 +192,8 @@ export async function postSpendMoney(opts: {
 
   const allocLines = opts.allocations.map(a => ({
     account_id: a.accountId,
-    debit: a.side === "DR" ? Math.abs(a.amount) : 0,
-    credit: a.side === "CR" ? Math.abs(a.amount) : 0,
+    debit: a.side === "DR" ? Math.abs(Number(a.amount)) : 0,
+    credit: a.side === "CR" ? Math.abs(Number(a.amount)) : 0,
     description: a.description || opts.memo || "Allocation",
   }));
 
