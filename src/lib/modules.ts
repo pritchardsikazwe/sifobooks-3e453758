@@ -26,6 +26,7 @@ export const MODULES: ModuleDef[] = [
     { title: "Stock Transfers", url: "/inventory/transfers", iconName: "ArrowLeftRight" },
     { title: "Stock Card", url: "/inventory/stock-card", iconName: "ScrollText" },
     { title: "Reconciliation", url: "/inventory/reconciliation", iconName: "Scale" },
+    { title: "Inventory → GL Reconciliation", url: "/inventory/gl-reconciliation", iconName: "Scale" },
     { title: "Cashier Records", url: "/inventory/cashier-records", iconName: "NotebookPen" },
     { title: "Warehouses", url: "/warehouses", iconName: "Warehouse" },
     { title: "Stock Adjustments", url: "/stock-adjustments", iconName: "ClipboardEdit" },
