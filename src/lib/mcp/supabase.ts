@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { ToolContext } from "@lovable.dev/mcp-js";
+import type { ToolContext, ToolHandlerResult } from "@lovable.dev/mcp-js";
 
 type RuntimeGlobals = typeof globalThis & {
   Deno?: { env?: { get?: (name: string) => string | undefined } };
@@ -58,20 +58,21 @@ export function supabaseForUser(ctx: ToolContext) {
   });
 }
 
-export function notAuthenticated() {
+export function notAuthenticated(): ToolHandlerResult {
   return {
     content: [{ type: "text" as const, text: "Not authenticated. Reconnect this MCP server and sign in." }],
     isError: true,
   };
 }
 
-export function failed(message: string) {
+export function failed(message: string): ToolHandlerResult {
   return { content: [{ type: "text" as const, text: message }], isError: true };
 }
 
-export function rows(data: unknown) {
+export function rows(data: unknown): ToolHandlerResult {
+  const safe = JSON.parse(JSON.stringify(data ?? []));
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(data ?? [], null, 2) }],
-    structuredContent: { data },
+    content: [{ type: "text" as const, text: JSON.stringify(safe, null, 2) }],
+    structuredContent: { data: safe },
   };
 }

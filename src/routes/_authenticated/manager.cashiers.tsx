@@ -36,7 +36,7 @@ function ManagerCashiers() {
 
   const load = async () => {
     const [p, b, l, r] = await Promise.all([
-      supabase.from("employee_pos_permissions").select("*").order("full_name"),
+      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("full_name"),
       supabase.from("branches").select("id,name").eq("active", true).order("name"),
       supabase.from("inventory_locations").select("id,name").eq("is_active", true).order("name"),
       supabase.from("pos_registers").select("id,name").eq("is_active", true).order("name"),
@@ -120,7 +120,7 @@ function ManagerCashiers() {
                 </td>
                 <td className="p-2">
                   {r.pin_disabled ? <span className="text-destructive">Disabled</span>
-                    : r.pin_hash ? <span className="text-emerald-600">Set</span>
+                    : r.pin_set_at ? <span className="text-emerald-600">Set</span>
                     : <span className="text-muted-foreground">Not set</span>}
                   {r.pin_locked_until && new Date(r.pin_locked_until) > new Date() && <div className="text-xs text-amber-600">Locked out</div>}
                 </td>

@@ -31,7 +31,7 @@ function PosWorkers() {
 
   const load = async () => {
     const [{ data }, { data: rs }] = await Promise.all([
-      supabase.from("employee_pos_permissions").select("*").order("created_at", { ascending: false }),
+      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("created_at", { ascending: false }),
       supabase.from("pos_pin_resets").select("*").in("status", ["pending", "approved"]).order("created_at", { ascending: false }),
     ]);
     setRows(data ?? []);

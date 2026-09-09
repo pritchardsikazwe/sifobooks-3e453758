@@ -89,7 +89,7 @@ export async function loadPosContext(): Promise<PosContext | null> {
 
   const { data } = await supabase
     .from("employee_pos_permissions")
-    .select("*")
+    .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
     .eq("worker_user_id", user.id)
     .eq("is_active", true)
     .maybeSingle();
@@ -103,7 +103,7 @@ export async function loadPosContext(): Promise<PosContext | null> {
       displayName: (data.full_name as string) || user.email || "Worker",
       allow: ((data.allow as any) ?? []) as PosFeature[],
       deny: ((data.deny as any) ?? []) as PosFeature[],
-      pinSet: Boolean((data as any).pin_hash),
+      pinSet: Boolean((data as any).pin_set_at) && !(data as any).pin_disabled,
       pinLocked: Boolean((data as any).pin_locked),
       permissionId: data.id as string,
     };

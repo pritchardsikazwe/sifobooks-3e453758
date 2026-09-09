@@ -37,7 +37,7 @@ export async function loadAssignment(): Promise<CashierAssignment | null> {
 
   const { data: perm } = await supabase
     .from("employee_pos_permissions")
-    .select("*")
+    .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
     .eq("worker_user_id", user.id)
     .eq("is_active", true)
     .maybeSingle();

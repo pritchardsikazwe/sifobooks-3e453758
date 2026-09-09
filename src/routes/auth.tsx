@@ -13,6 +13,10 @@ import { CashierPinLogin } from "@/components/auth/CashierPinLogin";
 import { landingFor, loadAccess } from "@/lib/rbac";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+    const n = typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined;
+    return n ? { next: n } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign in — SifoBooks" },
@@ -49,6 +53,7 @@ type LoginMode = "cashier" | "manager" | "admin";
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<LoginMode | null>(null);
   const [tab, setTab] = useState<"signin" | "signup" | "reset">("signin");
   const [loading, setLoading] = useState(false);
@@ -58,13 +63,17 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/launch" });
+      if (data.session) {
+        if (next) { window.location.href = next; return; }
+        navigate({ to: "/launch" });
+      }
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   const routeAfterAuth = async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
+    if (next) { window.location.href = next; return; }
     const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", userData.user.id).maybeSingle();
     if (!profile?.onboarded) {
       navigate({ to: "/onboarding" });
@@ -230,6 +239,7 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
 }) {
   const [step, setStep] = useState(0);
   const [showPw, setShowPw] = useState(false);
+  const { next: signupNext } = Route.useSearch();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [f, setF] = useState({
@@ -256,7 +266,7 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
     const { data, error } = await supabase.auth.signUp({
       email: f.email.trim(), password: f.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: signupNext ? `${window.location.origin}${signupNext}` : `${window.location.origin}/dashboard`,
         data: { full_name: f.name.trim() },
       },
     });

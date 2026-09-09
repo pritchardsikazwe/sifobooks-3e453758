@@ -1018,6 +1018,7 @@ export type Database = {
       bill_payments: {
         Row: {
           amount: number
+          bank_account_id: string | null
           bill_id: string
           created_at: string
           currency: string
@@ -1033,6 +1034,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           bill_id: string
           created_at?: string
           currency?: string
@@ -1048,6 +1050,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           bill_id?: string
           created_at?: string
           currency?: string
@@ -1062,6 +1065,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bill_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_running_balance"
+            referencedColumns: ["bank_account_id"]
+          },
           {
             foreignKeyName: "bill_payments_bill_id_fkey"
             columns: ["bill_id"]
