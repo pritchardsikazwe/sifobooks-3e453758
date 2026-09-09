@@ -12,24 +12,9 @@ export type AccountingLevelMeta = {
 };
 
 export const ACCOUNTING_LEVELS: AccountingLevelMeta[] = [
-  {
-    id: "starter",
-    label: "Starter Accounting",
-    description: "Simple invoicing, expenses, customers, suppliers and basic reports.",
-    bestFor: "Small businesses getting started",
-  },
-  {
-    id: "standard",
-    label: "Standard Accounting",
-    description: "Core accounting plus inventory, banking, reconciliation and management reports.",
-    bestFor: "Growing businesses",
-  },
-  {
-    id: "full",
-    label: "Full Accounting",
-    description: "Complete SifoBooks accounting with ledgers, journals, controls, compliance and advanced reporting.",
-    bestFor: "Accountants and established businesses",
-  },
+  { id: "starter", label: "Starter Accounting", description: "Simple invoicing, expenses, customers, suppliers and basic reports.", bestFor: "Small businesses getting started" },
+  { id: "standard", label: "Standard Accounting", description: "Core accounting plus inventory, banking, reconciliation and management reports.", bestFor: "Growing businesses" },
+  { id: "full", label: "Full Accounting", description: "Complete SifoBooks accounting with ledgers, journals, controls, compliance and advanced reporting.", bestFor: "Accountants and established businesses" },
 ];
 
 export function getAccountingLevelMeta(level: string | null | undefined): AccountingLevelMeta {
@@ -39,37 +24,23 @@ export function getAccountingLevelMeta(level: string | null | undefined): Accoun
 export async function getAccountingLevel(): Promise<{ companyId: string | null; level: AccountingLevel }> {
   const companyId = await getActiveCompanyId();
   if (!companyId) return { companyId: null, level: "full" };
-
-  const { data } = await supabase
-    .from("companies")
-    .select("accounting_level")
-    .eq("id", companyId)
-    .maybeSingle();
-
+  const { data } = await supabase.from("companies").select("accounting_level").eq("id", companyId).maybeSingle();
   const level = data?.accounting_level as AccountingLevel | null | undefined;
-  return {
-    companyId,
-    level: level === "starter" || level === "standard" || level === "full" ? level : "full",
-  };
+  return { companyId, level: level === "starter" || level === "standard" || level === "full" ? level : "full" };
 }
 
 export async function setAccountingLevel(level: AccountingLevel, companyId?: string) {
   const id = companyId ?? (await getActiveCompanyId());
   if (!id) throw new Error("No active company");
-
-  const { error } = await supabase
-    .from("companies")
-    .update({ accounting_level: level })
-    .eq("id", id);
+  const { error } = await supabase.from("companies").update({ accounting_level: level }).eq("id", id);
   if (error) throw error;
   return id;
 }
 
-/** Minimum accounting level required for each optional module. */
+/** Whole-module gates. Industry/POS modules remain configuration-driven; these gates control accounting depth. */
 export const MODULE_MIN_ACCOUNTING_LEVEL: Record<string, AccountingLevel> = {
-  // Starter intentionally exposes the simple day-to-day business workflow.
   inventory: "standard",
-  finance: "standard",
+  finance: "starter",
   fixed_assets: "full",
   budgets: "standard",
   multi_currency: "full",
@@ -81,8 +52,28 @@ export const MODULE_MIN_ACCOUNTING_LEVEL: Record<string, AccountingLevel> = {
   donors: "full",
   school_erp: "full",
   restaurant: "standard",
-  // Retail POS is useful at every level when selected as the workspace.
   retail_pos: "starter",
+};
+
+/** Individual advanced routes. This keeps basic Finance/Reports available on Starter. */
+export const ROUTE_MIN_ACCOUNTING_LEVEL: Record<string, AccountingLevel> = {
+  "/bank-rules": "standard",
+  "/reconciliation-sessions": "standard",
+  "/journal-entries": "standard",
+  "/posting-wizard": "standard",
+  "/opening-balances": "full",
+  "/period-close": "full",
+  "/reports/afs": "standard",
+  "/reports/vat-return": "standard",
+  "/reports/income-tax": "standard",
+  "/reports/turnover-tax": "standard",
+  "/inventory/control-center": "standard",
+  "/inventory/smart-reconciliation": "standard",
+  "/inventory/production": "standard",
+  "/inventory/transfers": "standard",
+  "/inventory/reconciliation": "standard",
+  "/inventory/end-of-day": "standard",
+  "/inventory-sheets": "standard",
 };
 
 export function accountingLevelAllows(current: AccountingLevel, minimum: AccountingLevel): boolean {
@@ -92,5 +83,10 @@ export function accountingLevelAllows(current: AccountingLevel, minimum: Account
 
 export function moduleAllowedForAccountingLevel(module: ModuleDef, level: AccountingLevel): boolean {
   const minimum = MODULE_MIN_ACCOUNTING_LEVEL[module.key];
+  return !minimum || accountingLevelAllows(level, minimum);
+}
+
+export function routeAllowedForAccountingLevel(url: string, level: AccountingLevel): boolean {
+  const minimum = ROUTE_MIN_ACCOUNTING_LEVEL[url];
   return !minimum || accountingLevelAllows(level, minimum);
 }
