@@ -40,15 +40,28 @@ export const invitePosWorker = createServerFn({ method: "POST" })
       invited = true;
     }
 
-    const { error } = await supabaseAdmin.from("employee_pos_permissions").insert({
-      user_id: context.userId,
-      worker_user_id: workerId,
-      email: data.email,
-      full_name: data.full_name || data.email,
-      pos_role: data.pos_role,
-      pin: data.pin || null,
-    });
+    const { data: perm, error } = await supabaseAdmin
+      .from("employee_pos_permissions")
+      .insert({
+        user_id: context.userId,
+        worker_user_id: workerId,
+        email: data.email,
+        full_name: data.full_name || data.email,
+        pos_role: data.pos_role,
+      })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
+
+    // PIN is hashed server-side; the plaintext value is never persisted.
+    if (data.pin && perm?.id) {
+      const { data: pinRes, error: pinErr } = await supabaseAdmin.rpc("set_cashier_pin" as never, {
+        _permission_id: perm.id, _pin: data.pin,
+      } as never);
+      if (pinErr) throw new Error(pinErr.message);
+      const ok = (pinRes as unknown as { ok?: boolean })?.ok;
+      if (!ok) throw new Error("Could not set the worker PIN");
+    }
 
     return { ok: true, invited, email: data.email };
   });

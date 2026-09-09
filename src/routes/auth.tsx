@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, Building2, User, Eye, EyeOff } from "lucide-react";
 import { CashierPinLogin } from "@/components/auth/CashierPinLogin";
+import { landingFor, loadAccess } from "@/lib/rbac";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -65,7 +66,12 @@ function AuthPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
     const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", userData.user.id).maybeSingle();
-    navigate({ to: profile?.onboarded ? "/launch" : "/onboarding" });
+    if (!profile?.onboarded) {
+      navigate({ to: "/onboarding" });
+      return;
+    }
+    const access = await loadAccess(true);
+    navigate({ to: landingFor(access) });
   };
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
