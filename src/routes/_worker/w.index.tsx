@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  loadAssignment, currentShiftFor, shiftTotals, expectedCash, kw,
+  loadAssignment, currentShiftFor, shiftTotals, expectedCash, resolveStoreLocation, kw,
   type CashierAssignment, type ShiftTotals,
 } from "@/lib/cashier-workspace";
 import { usePosContext } from "@/components/pos/PosContextProvider";
@@ -30,6 +30,7 @@ function CashierHome() {
   const [shift, setShift] = useState<Record<string, any> | null>(null);
   const [totals, setTotals] = useState<ShiftTotals | null>(null);
   const [lowStock, setLowStock] = useState<number>(0);
+  const [storeName, setStoreName] = useState<string | null>(null);
   const [clock, setClock] = useState(new Date());
 
   useEffect(() => {
