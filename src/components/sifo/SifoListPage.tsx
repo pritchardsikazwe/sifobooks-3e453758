@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+export type SifoListStatusTone = "default" | "success" | "warning" | "danger";
+
 export type SifoListColumn<T> = {
   key: string;
   label: string;
@@ -24,14 +26,13 @@ export type SifoListPageProps<T> = {
   onNew?: () => void;
   onView?: (row: T) => void;
   onPrint?: (row: T) => void;
-  status?: (row: T) => { label: string; tone?: "default" | "success" | "warning" | "danger" } | null;
   filters?: ReactNode;
   actions?: ReactNode;
   empty?: ReactNode;
   loading?: boolean;
 };
 
-const toneClass: Record<NonNullable<ReturnType<NonNullable<SifoListPageProps<any>["status"]>>>["tone"] extends infer T ? Extract<T, string> : never, string> = {
+const toneClass: Record<SifoListStatusTone, string> = {
   default: "bg-muted text-muted-foreground",
   success: "bg-emerald-50 text-emerald-700 border-emerald-200",
   warning: "bg-amber-50 text-amber-700 border-amber-200",
@@ -49,7 +50,6 @@ export function SifoListPage<T>({
   onNew,
   onView,
   onPrint,
-  status,
   filters,
   actions,
   empty,
@@ -105,6 +105,6 @@ export function SifoListPage<T>({
   );
 }
 
-export function SifoStatus({ label, tone = "default" }: { label: string; tone?: keyof typeof toneClass }) {
+export function SifoStatus({ label, tone = "default" }: { label: string; tone?: SifoListStatusTone }) {
   return <Badge variant="outline" className={cn("rounded-full px-2 py-0.5 text-xs font-medium", toneClass[tone])}>{label}</Badge>;
 }
