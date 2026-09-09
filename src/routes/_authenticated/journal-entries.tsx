@@ -46,7 +46,6 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
           return <BalanceChip balanced={ok} diff={d - c} />;
         } },
         { key: "attachment_url", header: "Source Doc", render: r => <AttachmentCell table="journal_entries" row={r} /> },
-
       ]}
       rowActions={[
         {
@@ -59,7 +58,7 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
           label: "Void", icon: XCircle, variant: "outline",
           className: "border-red-300 text-red-700 hover:bg-red-50",
           show: r => r.status === "posted",
-          run: async (r, reload) => { if (confirm("Void this entry?") && await updateStatus("journal_entries", r.id, "void")) reload(); },
+          run: async (r, reload) => { if (confirm("Void this entry?")) { if (await updateStatus("journal_entries", r.id, "void")) reload(); } },
         },
         {
           label: "Reverse", icon: Undo2, variant: "outline",
@@ -74,14 +73,14 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
         },
       ]}
       fields={[
-        { name: "entry_number", label: "Entry Number", required: true },
-        { name: "entry_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0,10) },
-        { name: "reference", label: "Reference" },
-        { name: "status", label: "Status", type: "select", defaultValue: "draft",
+        { name: "entry_number", label: "Entry Number", required: true, group: "Journal Details" },
+        { name: "entry_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0,10), group: "Journal Details" },
+        { name: "reference", label: "Reference", group: "Journal Details" },
+        { name: "status", label: "Status", type: "select", defaultValue: "draft", group: "Workflow",
           options: [{value:"draft",label:"Draft"},{value:"posted",label:"Posted"},{value:"void",label:"Void"}] },
-        { name: "total_debit", label: "Total Debit", type: "number" },
-        { name: "total_credit", label: "Total Credit", type: "number" },
-        { name: "description", label: "Description", type: "textarea" },
+        { name: "total_debit", label: "Total Debit", type: "number", group: "Control Totals" },
+        { name: "total_credit", label: "Total Credit", type: "number", group: "Control Totals" },
+        { name: "description", label: "Description", type: "textarea", group: "Supporting Information" },
       ]}
     />
   ),
