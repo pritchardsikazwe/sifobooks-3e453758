@@ -1,59 +1,24 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, ArrowRight, BarChart3, BedDouble, BookOpen, CalendarCheck, CheckCircle2, CircleDollarSign, Clock3, CreditCard, GraduationCap, Hotel, Housekeeping, ReceiptText, School, Sparkles, Users, UtensilsCrossed, WalletCards } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, BedDouble, BookOpen, CalendarCheck, CheckCircle2, CircleDollarSign, CreditCard, GraduationCap, Hotel, House, ReceiptText, School, Sparkles, Users, UtensilsCrossed, WalletCards } from "lucide-react";
 
-const hotelCards = [
-  ["Occupancy", "78%", "↑ 6.4% vs last week", BedDouble],
-  ["Rooms available", "18", "6 arrivals today", Hotel],
-  ["In-house guests", "64", "12 departures today", Users],
-  ["Today's revenue", "K 86,420", "Rooms + F&B + events", CircleDollarSign],
-];
-const hotelQueues = [
-  ["Arrivals", "12", "Front desk", CalendarCheck],
-  ["Housekeeping", "7", "Rooms need attention", Sparkles],
-  ["Restaurant orders", "34", "Open checks", UtensilsCrossed],
-  ["Night audit", "Ready", "0 exceptions", CheckCircle2],
-];
-const schoolCards = [
-  ["Active learners", "1,248", "98.6% enrolled", GraduationCap],
-  ["Attendance today", "94.2%", "↑ 1.8% this week", CalendarCheck],
-  ["Fees collected", "K 428,600", "72% of monthly target", WalletCards],
-  ["Pending applications", "38", "14 require review", Users],
-];
-const schoolQueues = [
-  ["Admissions", "14", "Applications to review", Users],
-  ["Attendance alerts", "23", "Follow-up required", Activity],
-  ["Exams", "6", "Upcoming assessments", BookOpen],
-  ["Fee balances", "K 182,400", "Outstanding", CreditCard],
-];
+const hotelCards = [["Occupancy", "78%", "↑ 6.4% vs last week", BedDouble], ["Rooms available", "18", "6 arrivals today", Hotel], ["In-house guests", "64", "12 departures today", Users], ["Today's revenue", "K 86,420", "Rooms + F&B + events", CircleDollarSign]];
+const hotelQueues = [["Arrivals", "12", "Front desk", CalendarCheck], ["Housekeeping", "7", "Rooms need attention", Sparkles], ["Restaurant orders", "34", "Open checks", UtensilsCrossed], ["Night audit", "Ready", "0 exceptions", CheckCircle2]];
+const schoolCards = [["Active learners", "1,248", "98.6% enrolled", GraduationCap], ["Attendance today", "94.2%", "↑ 1.8% this week", CalendarCheck], ["Fees collected", "K 428,600", "72% of monthly target", WalletCards], ["Pending applications", "38", "14 require review", Users]];
+const schoolQueues = [["Admissions", "14", "Applications to review", Users], ["Attendance alerts", "23", "Follow-up required", Activity], ["Exams", "6", "Upcoming assessments", BookOpen], ["Fee balances", "K 182,400", "Outstanding", CreditCard]];
 
-function Metric({ item }: { item: any[] }) {
-  const Icon = item[3];
-  return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><div className="text-sm font-medium text-slate-500">{item[0]}</div><div className="mt-2 text-2xl font-bold text-slate-950">{item[1]}</div><div className="mt-1 text-xs text-slate-500">{item[2]}</div></div><div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700"><Icon className="h-5 w-5" /></div></div></div>;
-}
+function Metric({ item }: { item: any[] }) { const Icon = item[3]; return <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between"><div><div className="text-sm font-medium text-slate-500">{item[0]}</div><div className="mt-2 text-2xl font-bold text-slate-950">{item[1]}</div><div className="mt-1 text-xs text-slate-500">{item[2]}</div></div><div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700"><Icon className="h-5 w-5" /></div></div></div>; }
 
 export function SifoSectorDashboard({ kind }: { kind: "hotel" | "school" }) {
-  const [view, setView] = useState("overview");
-  const hotel = kind === "hotel";
-  const cards = hotel ? hotelCards : schoolCards;
-  const queues = hotel ? hotelQueues : schoolQueues;
-  const Icon = hotel ? Hotel : School;
-  const title = hotel ? "Hotel Operations" : "School Operations";
-  const subtitle = hotel ? "Front desk, rooms, housekeeping, food service and financial control." : "Admissions, academics, learners, attendance, fees and parent services.";
+  const [view, setView] = useState("overview"); const hotel = kind === "hotel"; const cards = hotel ? hotelCards : schoolCards; const queues = hotel ? hotelQueues : schoolQueues; const Icon = hotel ? Hotel : School;
+  const title = hotel ? "Hotel Operations" : "School Operations"; const subtitle = hotel ? "Front desk, rooms, housekeeping, food service and financial control." : "Admissions, academics, learners, attendance, fees and parent services.";
   const actions = hotel ? [["New reservation", "/hotel/reservations"], ["Open room rack", "/hotel/room-rack"], ["Front desk", "/hotel/front-desk"]] : [["New admission", "/school/admissions"], ["Student register", "/school/students"], ["Fee collections", "/school/payments"]];
   const tabs = hotel ? ["overview", "front desk", "rooms", "housekeeping", "restaurant", "finance"] : ["overview", "admissions", "academics", "attendance", "fees", "reports"];
-
-  return <div className="min-h-screen bg-slate-50 text-slate-950">
-    <header className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5"><div className="flex items-center gap-4"><div className="rounded-2xl bg-slate-950 p-3 text-white"><Icon className="h-6 w-6" /></div><div><div className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">SifoBooks Industry ERP</div><h1 className="text-2xl font-bold">{title}</h1><p className="text-sm text-slate-500">{subtitle}</p></div></div><Link to="/dashboard" className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 sm:inline-flex">Back to SifoBooks</Link></div></header>
-    <main className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-7 flex gap-2 overflow-x-auto pb-1">{tabs.map(tab => <button key={tab} type="button" onClick={() => setView(tab)} className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${view === tab ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}>{tab.replace(/\b\w/g, c => c.toUpperCase())}</button>)}</div>
-      <div className="mb-8 flex flex-wrap gap-3">{actions.map(([label, to]) => <Link key={to} to={to} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">{label}<ArrowRight className="h-4 w-4" /></Link>)}</div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards.map((item, i) => <Metric key={i} item={item} />)}</div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Today's operating board</h2><p className="text-sm text-slate-500">Live work queues designed for the team on duty.</p></div><BarChart3 className="h-5 w-5 text-slate-400" /></div><div className="mt-6 grid gap-4 sm:grid-cols-2">{queues.map((item, i) => { const QIcon = item[3]; return <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-white p-2 text-slate-700"><QIcon className="h-5 w-5" /></div><div><div className="text-sm font-semibold">{item[0]}</div><div className="text-xs text-slate-500">{item[2]}</div></div><div className="ml-auto text-lg font-bold">{item[1]}</div></div></div>; })}</div></section>
-        <section className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm"><div className="flex items-center gap-2 text-emerald-300"><CheckCircle2 className="h-5 w-5" /><span className="text-sm font-bold">Control centre</span></div><h2 className="mt-4 text-xl font-bold">Operational data stays connected to finance.</h2><p className="mt-3 text-sm leading-6 text-slate-300">The sector workspace is designed to feed the existing SifoBooks sales, purchasing, inventory, POS, payroll and reporting layers.</p><div className="mt-6 space-y-3 text-sm">{(hotel ? ["Guest folios → invoices", "Restaurant POS → revenue", "Purchasing → inventory", "Night audit → GL"] : ["Admissions → learner records", "Fees → invoices & receipts", "Payroll → staff costs", "School reports → management"]).map(x => <div key={x} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-300" />{x}</div>)}</div></section>
-      </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">{(hotel ? [["Room rack", "/hotel/room-rack", BedDouble], ["Housekeeping", "/hotel/housekeeping", Sparkles], ["Restaurant", "/hotel/restaurant", UtensilsCrossed]] : [["Students", "/school/students", GraduationCap], ["Academics", "/school/academics", BookOpen], ["Fees", "/school/fees", ReceiptText]]).map(([label, to, ItemIcon]) => { const I = ItemIcon as any; return <Link key={label as string} to={to as string} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><I className="h-5 w-5 text-emerald-700" /><div className="mt-4 flex items-center justify-between"><span className="font-semibold">{label as string}</span><ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></div></Link>; })}</div>
-    </main>
-  </div>;
+  return <div className="min-h-screen bg-slate-50 text-slate-950"><header className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5"><div className="flex items-center gap-4"><div className="rounded-2xl bg-slate-950 p-3 text-white"><Icon className="h-6 w-6" /></div><div><div className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">SifoBooks Industry ERP</div><h1 className="text-2xl font-bold">{title}</h1><p className="text-sm text-slate-500">{subtitle}</p></div></div><Link to="/dashboard" className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 sm:inline-flex">Back to SifoBooks</Link></div></header>
+  <main className="mx-auto max-w-7xl px-6 py-8"><div className="mb-7 flex gap-2 overflow-x-auto pb-1">{tabs.map(tab => <button key={tab} type="button" onClick={() => setView(tab)} className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${view === tab ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}>{tab.replace(/\b\w/g, c => c.toUpperCase())}</button>)}</div>
+  <div className="mb-8 flex flex-wrap gap-3">{actions.map(([label, to]) => <Link key={to} to={to} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">{label}<ArrowRight className="h-4 w-4" /></Link>)}</div>
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards.map((item, i) => <Metric key={i} item={item} />)}</div>
+  <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.8fr]"><section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Today's operating board</h2><p className="text-sm text-slate-500">Live work queues designed for the team on duty.</p></div><BarChart3 className="h-5 w-5 text-slate-400" /></div><div className="mt-6 grid gap-4 sm:grid-cols-2">{queues.map((item, i) => { const QIcon = item[3]; return <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-white p-2 text-slate-700"><QIcon className="h-5 w-5" /></div><div><div className="text-sm font-semibold">{item[0]}</div><div className="text-xs text-slate-500">{item[2]}</div></div><div className="ml-auto text-lg font-bold">{item[1]}</div></div></div>; })}</div></section>
+  <section className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm"><div className="flex items-center gap-2 text-emerald-300"><CheckCircle2 className="h-5 w-5" /><span className="text-sm font-bold">Control centre</span></div><h2 className="mt-4 text-xl font-bold">Operational data stays connected to finance.</h2><p className="mt-3 text-sm leading-6 text-slate-300">The sector workspace is designed to feed the existing SifoBooks sales, purchasing, inventory, POS, payroll and reporting layers.</p><div className="mt-6 space-y-3 text-sm">{(hotel ? ["Guest folios → invoices", "Restaurant POS → revenue", "Purchasing → inventory", "Night audit → GL"] : ["Admissions → learner records", "Fees → invoices & receipts", "Payroll → staff costs", "School reports → management"]).map(x => <div key={x} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-300" />{x}</div>)}</div></section></div>
+  <div className="mt-8 grid gap-4 sm:grid-cols-3">{(hotel ? [["Room rack", "/hotel/room-rack", BedDouble], ["Housekeeping", "/hotel/housekeeping", Sparkles], ["Restaurant", "/hotel/restaurant", UtensilsCrossed]] : [["Students", "/school/students", GraduationCap], ["Academics", "/school/academics", BookOpen], ["Fees", "/school/fees", ReceiptText]]).map(([label, to, ItemIcon]) => { const I = ItemIcon as any; return <Link key={label as string} to={to as string} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><I className="h-5 w-5 text-emerald-700" /><div className="mt-4 flex items-center justify-between"><span className="font-semibold">{label as string}</span><ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></div></Link>; })}</div></main></div>;
 }
