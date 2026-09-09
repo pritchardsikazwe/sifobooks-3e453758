@@ -48,3 +48,5 @@
 - [ ] Tests: balanced journal, COGS source, single stock decrease, retry, shortfall, shift enforcement
 
 - [x] POS command centre wired to live stock, till settings, open shift and the secure server checkout (pos_checkout); totals/VAT/COGS now server-authoritative.
+
+- [x] Offline till sales re-priced server-side; one shared item-cost lookup; retail cash no longer double-counted in a restaurant drawer; integrity check script at scripts/pos-integrity-check.sql.
