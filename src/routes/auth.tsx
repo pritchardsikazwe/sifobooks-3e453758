@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, Building2, User, Eye, EyeOff } from "lucide-react";
 import { CashierPinLogin } from "@/components/auth/CashierPinLogin";
+import { landingFor, loadAccess } from "@/lib/rbac";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
