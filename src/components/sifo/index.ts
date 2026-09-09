@@ -9,3 +9,5 @@ export { SifoFormPage, SifoFormSection, SifoField } from "./SifoFormPage";
 export { SifoWorkspaceShell } from "./SifoWorkspaceShell";
 export { SifoNextActionPanel, SifoCompletionPanel } from "./SifoNextActionPanel";
 export { SifoWorkQueue } from "./SifoWorkQueue";
+export { SifoHubTabs } from "./SifoHubTabs";
+export { SifoWorkflowGuide } from "./SifoWorkflowGuide";

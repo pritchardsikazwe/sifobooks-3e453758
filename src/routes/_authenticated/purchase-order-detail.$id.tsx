@@ -7,6 +7,8 @@ import { SifoDocumentLayout, BackToDocumentList, type SifoDocumentLine } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { SifoCompletionPanel } from "@/components/sifo/SifoNextActionPanel";
+import { DOCUMENT_GUIDANCE } from "@/lib/document-guidance";
 
 const STATUS: Record<string, { label: string; icon: typeof Clock3 }> = {
   draft: { label: "Draft", icon: Clock3 },
@@ -67,7 +69,14 @@ function PurchaseOrderDetailPage() {
     lines={[line]}
     lineHeaders={["Transaction", "Subtotal", "Tax", "Total"]}
     totals={<div className="space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{fmtMoney(order.subtotal ?? 0, order.currency)}</span></div><div className="flex justify-between"><span>Tax</span><span>{fmtMoney(order.tax_amount ?? 0, order.currency)}</span></div><div className="border-t pt-3 flex justify-between text-base font-bold"><span>Order total</span><span>{fmtMoney(order.total ?? 0, order.currency)}</span></div></div>}
-    impact={<div className="space-y-3"><div className="rounded-md border p-3"><div className="font-semibold flex items-center gap-2"><FileText className="h-4 w-4" />Accounting & inventory control</div><p className="mt-1 text-sm text-muted-foreground">A purchase order is a commitment. It does not by itself post supplier liability, create inventory, or create a GL transaction.</p></div><div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold flex items-center gap-2"><ShieldAlert className="h-4 w-4" />Receiving safeguard</div><p className="mt-1">The current repository does not expose a verified goods-receipt transaction schema. Do not use the PO status button as a substitute for an actual stock receipt.</p></div></div>}
+    impact={<div className="space-y-3"><SifoCompletionPanel
+      title={`Purchase order ${order.po_number ?? ""}`.trim()}
+      statusLabel={statusMeta.label}
+      lifecycle={DOCUMENT_GUIDANCE.purchase_order.lifecycle}
+      currentStage={status === "approved" ? 2 : status === "received" ? 3 : status === "submitted" ? 1 : 0}
+      impact={DOCUMENT_GUIDANCE.purchase_order.impact({ amount: fmtMoney(order.total ?? 0, order.currency) })}
+      steps={DOCUMENT_GUIDANCE.purchase_order.steps({ id: order.id, reference: order.po_number })}
+    /><div className="rounded-md border p-3"><div className="font-semibold flex items-center gap-2"><FileText className="h-4 w-4" />Accounting & inventory control</div><p className="mt-1 text-sm text-muted-foreground">A purchase order is a commitment. It does not by itself post supplier liability, create inventory, or create a GL transaction.</p></div><div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold flex items-center gap-2"><ShieldAlert className="h-4 w-4" />Receiving safeguard</div><p className="mt-1">The current repository does not expose a verified goods-receipt transaction schema. Do not use the PO status button as a substitute for an actual stock receipt.</p></div></div>}
     footer={<div className="space-y-4"><div><div className="text-sm font-semibold mb-1">Supplier instructions / notes</div><div className="rounded-md border bg-muted/20 p-3 text-sm whitespace-pre-wrap">{order.notes ?? "No notes recorded."}</div></div><div className="grid gap-2 sm:grid-cols-3 text-sm"><div><span className="text-muted-foreground">Created:</span> {order.created_at ? new Date(order.created_at).toLocaleString() : "—"}</div><div><span className="text-muted-foreground">Updated:</span> {order.updated_at ? new Date(order.updated_at).toLocaleString() : "—"}</div><div><span className="text-muted-foreground">PO ID:</span> <span className="font-mono text-xs">{order.id}</span></div></div></div>}
   />;
 }

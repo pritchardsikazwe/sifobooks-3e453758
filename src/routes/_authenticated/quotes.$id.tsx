@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { SifoDocumentLayout, type SifoDocumentLine } from "@/components/sifo/SifoDocumentLayout";
 import { toast } from "sonner";
+import { SifoCompletionPanel } from "@/components/sifo/SifoNextActionPanel";
+import { DOCUMENT_GUIDANCE } from "@/lib/document-guidance";
 
 export const Route = createFileRoute("/_authenticated/quotes/$id")({
   head: () => ({ meta: [{ title: "Quotation Detail — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -64,7 +66,14 @@ function QuoteDetailPage() {
       metadata={<div className="space-y-1 text-sm"><div><span className="text-muted-foreground">Issued:</span> {quote.issue_date}</div><div><span className="text-muted-foreground">Valid until:</span> {quote.valid_until ?? "—"}</div><div><span className="text-muted-foreground">Currency:</span> {quote.currency}</div></div>}
       lineHeaders={["#", "Description", "Qty", "Unit price", "VAT", "Line total"]}
       lines={lines}
-      impact={<div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Accounting</div><div className="mt-1 font-medium">No GL posting from quotation</div><div className="text-xs text-muted-foreground mt-1">Posting occurs when the downstream invoice is posted.</div></CardContent></Card><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Inventory</div><div className="mt-1 font-medium">No stock movement</div><div className="text-xs text-muted-foreground mt-1">A quotation reserves no stock by itself.</div></CardContent></Card><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Lifecycle</div><div className="mt-1"><Badge variant="secondary" className="capitalize">{quote.status}</Badge></div></CardContent></Card></div>}
+      impact={<div className="space-y-3"><SifoCompletionPanel
+        title={`Quote ${quote.number ?? ""}`.trim()}
+        statusLabel={String(quote.status ?? "draft")}
+        lifecycle={DOCUMENT_GUIDANCE.quote.lifecycle}
+        currentStage={quote.status === "converted" ? 3 : quote.status === "accepted" ? 2 : quote.status === "sent" ? 1 : 0}
+        impact={DOCUMENT_GUIDANCE.quote.impact({ amount: fmtMoney(total, quote.currency), party: quote.customers?.name })}
+        steps={DOCUMENT_GUIDANCE.quote.steps({ id, reference: quote.number })}
+      /><div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Accounting</div><div className="mt-1 font-medium">No GL posting from quotation</div><div className="text-xs text-muted-foreground mt-1">Posting occurs when the downstream invoice is posted.</div></CardContent></Card><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Inventory</div><div className="mt-1 font-medium">No stock movement</div><div className="text-xs text-muted-foreground mt-1">A quotation reserves no stock by itself.</div></CardContent></Card><Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Lifecycle</div><div className="mt-1"><Badge variant="secondary" className="capitalize">{quote.status}</Badge></div></CardContent></Card></div></div>}
       footer={<div className="space-y-4"><div><div className="text-sm font-semibold">Notes</div><p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{quote.notes || "No notes recorded."}</p></div><Separator /><div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/quotes"><ArrowLeft className="mr-1.5 h-4 w-4" />Back to Quote Manager</Link></Button>{quote.status === "converted" ? <Button asChild><Link to="/invoices">Open Sales Invoices</Link></Button> : <Button asChild><Link to="/quotes/new"><FileText className="mr-1.5 h-4 w-4" />Create New Quote</Link></Button>}</div></div>}
       totals={<div className="space-y-3 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmtMoney(subtotal, quote.currency)}</span></div><div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>{fmtMoney(vat, quote.currency)}</span></div><Separator /><div className="flex justify-between text-base font-semibold"><span>Total</span><span>{fmtMoney(total, quote.currency)}</span></div><div className="pt-2"><Button asChild className="w-full" variant="outline"><Link to="/invoices"><ReceiptText className="mr-1.5 h-4 w-4" />Sales Invoices</Link></Button></div></div>}
     />

@@ -18,6 +18,7 @@ import {
   STATUS_LABEL, type InvItem, type StockStatus,
 } from "@/lib/inventory";
 import { toast } from "sonner";
+import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 
 type SearchParams = { q?: string; warehouse?: string; category?: string; status?: string };
 
@@ -117,7 +118,8 @@ function InventoryDashboard() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
+    <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 space-y-5">
+      <SifoHubTabs hub="inventory" active="/inventory" />
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
