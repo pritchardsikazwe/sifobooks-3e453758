@@ -86,7 +86,7 @@ function CashierHome() {
           <div>
             <h1 className="text-xl font-bold">{a?.displayName ?? ctx?.displayName ?? "Cashier"}</h1>
             <p className="text-sm text-slate-400">
-              {a?.branchName ?? a?.locationName ?? "Your store"}
+              {storeName ?? a?.branchName ?? a?.locationName ?? "Your store"}
               {a?.stationName ? ` · ${a.stationName}` : ""}
               {a?.drawerName ? ` · ${a.drawerName}` : ""}
             </p>
