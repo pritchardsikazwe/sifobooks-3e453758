@@ -20,9 +20,15 @@ function AccountingControlCentre() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.rpc("accounting_control_centre" as any);
+    const [{ data, error }, { data: payrollData, error: payrollError }] = await Promise.all([
+      supabase.rpc("accounting_control_centre" as any),
+      supabase.rpc("accounting_payroll_reconciliation" as any),
+    ]);
     if (error) toast.error(error.message);
-    setChecks((data ?? []) as Check[]);
+    if (payrollError) toast.error(payrollError.message);
+    const baseChecks = (data ?? []) as Check[];
+    const payrollChecks = (payrollData ?? []) as Check[];
+    setChecks([...baseChecks, ...payrollChecks]);
     setLoading(false);
   }
 
@@ -36,7 +42,7 @@ function AccountingControlCentre() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold"><ShieldCheck className="h-6 w-6 text-primary" /> Accounting Control Centre</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Continuous health checks for journals, banking and ledger integrity.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Continuous health checks for journals, banking, subledgers and payroll-to-GL integrity.</p>
         </div>
         <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
       </header>
