@@ -3,7 +3,6 @@ import { ShoppingCart, Send, CheckCircle2, Package } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { purchaseOrderLines } from "@/lib/posting-lines";
 
 const COLOR: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700",
