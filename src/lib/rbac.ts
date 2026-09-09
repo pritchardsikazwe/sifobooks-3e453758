@@ -152,6 +152,7 @@ export function canAccessPath(a: Access | null, path: string): boolean {
 /** Where a staff member lands after sign-in or when bounced from a forbidden page. */
 export function landingFor(a: Access | null): string {
   if (!a || a.is_owner || a.is_super_admin) return "/dashboard";
+  if (hasPerm(a, "pos.sales.view_all") || hasPerm(a, "users.manage")) return "/manager";
   if (hasPerm(a, "pos.retail.access")) return "/pos";
   if (hasPerm(a, "pos.restaurant.access")) return "/restaurant/pos";
   if (hasPerm(a, "accounting.view")) return "/dashboard";
