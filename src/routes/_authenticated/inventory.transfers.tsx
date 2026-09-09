@@ -257,7 +257,7 @@ function TransfersPage() {
 
     return (
       <div className="space-y-4">
-      <SifoWorkflowGuide doc="transfer" />
+        <SifoWorkflowGuide doc="transfer" defaultOpen />
         <SifoModuleHeader
           module="inventory"
           title={`Transfer ${active.transfer_number ?? active.reference ?? ""}`}
@@ -341,6 +341,7 @@ function TransfersPage() {
   /* ---------------- list ---------------- */
   return (
     <div className="space-y-4">
+      <SifoWorkflowGuide doc="transfer" />
       <SifoModuleHeader
         module="inventory"
         title="Stock transfers"

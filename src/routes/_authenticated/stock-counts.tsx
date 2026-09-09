@@ -242,7 +242,7 @@ function StockCountsPage() {
     ];
     return (
       <div className="space-y-4">
-      <SifoWorkflowGuide doc="stock_count" />
+        <SifoWorkflowGuide doc="stock_count" defaultOpen />
         <SifoModuleHeader
           module="inventory"
           title={`Stock take ${active.count_number ?? ""}`}
@@ -285,6 +285,7 @@ function StockCountsPage() {
 
   return (
     <div className="space-y-4">
+      <SifoWorkflowGuide doc="stock_count" />
       <SifoModuleHeader
         module="inventory"
         title="Stock takes"
