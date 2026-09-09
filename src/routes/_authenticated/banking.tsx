@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SifoWorkflowGuide } from "@/components/sifo/SifoWorkflowGuide";
 import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Upload, Landmark, TrendingUp, TrendingDown, Wallet, Trash2, LogOut, FileUp, Search, BookOpen, Loader2, Scale, CheckCircle2, RotateCcw, ChevronDown, ChevronRight } from "lucide-react";
@@ -406,6 +407,7 @@ function BankingPage() {
 
       <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
         <SifoHubTabs hub="finance" active="/banking" />
+        <SifoWorkflowGuide doc="banking" className="mt-3" />
       </div>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

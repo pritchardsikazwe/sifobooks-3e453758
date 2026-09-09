@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SifoWorkflowGuide } from "@/components/sifo/SifoWorkflowGuide";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Plus, RefreshCw, Send, PackageCheck, Check, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -256,6 +257,7 @@ function TransfersPage() {
 
     return (
       <div className="space-y-4">
+      <SifoWorkflowGuide doc="transfer" />
         <SifoModuleHeader
           module="inventory"
           title={`Transfer ${active.transfer_number ?? active.reference ?? ""}`}

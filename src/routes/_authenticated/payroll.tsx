@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SifoWorkflowGuide } from "@/components/sifo/SifoWorkflowGuide";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -658,6 +659,7 @@ function GenerateRun({ userId, onDone }: { userId: string; onDone: () => void })
 
   return (
     <div className="space-y-4">
+      <SifoWorkflowGuide doc="payroll" />
       <Card>
         <CardHeader className="pb-2"><CardTitle>New Payroll Run</CardTitle><CardDescription>Pick the period, review each employee, then save.</CardDescription></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-4">

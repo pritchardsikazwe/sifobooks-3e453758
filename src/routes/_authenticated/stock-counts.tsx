@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SifoWorkflowGuide } from "@/components/sifo/SifoWorkflowGuide";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClipboardList, Plus, Check, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -241,6 +242,7 @@ function StockCountsPage() {
     ];
     return (
       <div className="space-y-4">
+      <SifoWorkflowGuide doc="stock_count" />
         <SifoModuleHeader
           module="inventory"
           title={`Stock take ${active.count_number ?? ""}`}
