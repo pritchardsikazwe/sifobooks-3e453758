@@ -4,6 +4,9 @@ import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { supplierBillLines } from "@/lib/posting-lines";
+import { postSupplierBillLedger } from "@/lib/purchase-posting";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const COLOR: Record<string, string> = {
   unpaid: "bg-amber-100 text-amber-700",
@@ -34,13 +37,31 @@ export const Route = createFileRoute("/_authenticated/bills")({
         { key: "total", header: "Total", render: r => fmtMoney(r.total ?? 0) },
         { key: "balance_due", header: "Balance", render: r => fmtMoney(r.balance_due ?? 0) },
       ]}
-      posting={{
-        kind: "bill",
-        reference: r => (r.bill_number ? `BILL:${r.bill_number}` : null),
-        label: r => `Bill ${r.bill_number ?? ""} — accounting impact`,
-      }}
+      posting={{ kind: "bill", reference: r => (r.bill_number ? `BILL:${r.bill_number}` : null), label: r => `Bill ${r.bill_number ?? ""} — accounting impact` }}
       rowActions={[
-
+        {
+          label: "Post Bill", icon: CheckCircle2, variant: "outline",
+          className: "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
+          show: r => !r.posted_at && r.status !== "paid",
+          run: async (r, reload) => {
+            const { data: u } = await supabase.auth.getUser();
+            if (!u.user) return toast.error("Not signed in");
+            const result = await postSupplierBillLedger({
+              userId: u.user.id,
+              billId: r.id,
+              billNumber: r.bill_number,
+              billDate: r.bill_date,
+              subtotal: Number(r.subtotal) || 0,
+              vat: Number(r.tax_amount) || 0,
+              total: Number(r.total) || 0,
+            });
+            if (!result.ok) return toast.error(`Bill saved but posting failed: ${result.error}`);
+            const { error } = await supabase.from("bills").update({ posted_at: new Date().toISOString(), journal_entry_id: result.entryId }).eq("id", r.id);
+            if (error) return toast.error(error.message);
+            toast.success(`Bill ${r.bill_number} posted to the general ledger`);
+            await reload();
+          },
+        },
         {
           label: "Mark Paid", icon: CheckCircle2, variant: "outline",
           className: "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
@@ -53,8 +74,7 @@ export const Route = createFileRoute("/_authenticated/bills")({
         { name: "supplier_invoice_number", label: "Supplier Invoice #" },
         { name: "bill_date", label: "Bill Date", type: "date", defaultValue: new Date().toISOString().slice(0,10) },
         { name: "due_date", label: "Due Date", type: "date" },
-        { name: "status", label: "Status", type: "select", defaultValue: "unpaid",
-          options: [{value:"unpaid",label:"Unpaid"},{value:"partial",label:"Partial"},{value:"paid",label:"Paid"},{value:"overdue",label:"Overdue"}] },
+        { name: "status", label: "Status", type: "select", defaultValue: "unpaid", options: [{value:"unpaid",label:"Unpaid"},{value:"partial",label:"Partial"},{value:"paid",label:"Paid"},{value:"overdue",label:"Overdue"}] },
         { name: "subtotal", label: "Subtotal", type: "number" },
         { name: "tax_amount", label: "Tax", type: "number" },
         { name: "total", label: "Total", type: "number" },
@@ -68,14 +88,7 @@ export const Route = createFileRoute("/_authenticated/bills")({
         { key: "vatInput", label: "Debit — VAT input", defaultCode: "2201", help: "Recoverable VAT on this bill." },
         { key: "payable", label: "Credit — supplier payable", defaultCode: "2100", help: "What you now owe the supplier." },
       ]}
-      previewLines={(form, account) => supplierBillLines({
-        subtotal: Number(form.subtotal) || 0,
-        vat: Number(form.tax_amount) || 0,
-        total: Number(form.total) || 0,
-        expense: account("expense"),
-        vatInput: account("vatInput"),
-        payable: account("payable"),
-      })}
+      previewLines={(form, account) => supplierBillLines({ subtotal: Number(form.subtotal) || 0, vat: Number(form.tax_amount) || 0, total: Number(form.total) || 0, expense: account("expense"), vatInput: account("vatInput"), payable: account("payable") })}
       requireBalanced
     />
   ),
