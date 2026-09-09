@@ -1,0 +1,63 @@
+/* SifoBooks mobile-first workspace layer.
+ * Keeps desktop ERP navigation intact while making operational screens touch-first.
+ */
+
+.sifo-mobile-nav-spacer { display: none; }
+
+@media (max-width: 767px) {
+  html, body { width: 100%; min-width: 0; overflow-x: hidden; }
+
+  /* Give authenticated workspaces the full phone width. */
+  [data-sidebar="content"] { overscroll-behavior: contain; }
+  main { min-width: 0; }
+
+  /* Prevent fixed/desktop-width children from creating the tiny-page effect. */
+  .sifo-list-page,
+  .sifo-report-page,
+  .sifo-list-page > *,
+  .sifo-report-page > * { max-width: 100%; min-width: 0; }
+
+  .sifo-page-header { gap: .65rem; margin-bottom: .7rem; }
+  .sifo-page-header h1 { font-size: 1.25rem; line-height: 1.25; }
+  .sifo-page-header p { font-size: .78rem; line-height: 1.45; }
+  .sifo-breadcrumb { font-size: .62rem; }
+
+  .sifo-page-actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+  .sifo-page-actions > * { width: 100%; min-width: 0; }
+
+  .sifo-list-toolbar,
+  .sifo-report-filters { padding: .55rem; gap: .5rem; border-radius: .65rem; }
+  .sifo-list-toolbar input,
+  .sifo-report-filters input { min-height: 42px; }
+
+  .sifo-report-paper { border-radius: .65rem; }
+  .sifo-report-heading h2 { font-size: 1.05rem; }
+  .sifo-report-table { font-size: .76rem; }
+
+  /* Mobile-friendly report rows: preserve the full report horizontally, but make the
+     paper itself readable rather than shrinking the entire application. */
+  .sifo-report-table { min-width: 620px; }
+
+  /* Generic ERP tables remain horizontally scrollable and never force the page width. */
+  main .overflow-x-auto { max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+
+  /* KPI/stat grids become compact, thumb-friendly cards. */
+  .sifo-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .5rem !important; }
+  .sifo-kpi-card { min-height: 74px; padding: .65rem !important; }
+
+  /* Workspace tabs behave like a native horizontal tab strip. */
+  .sifo-workspace-tabs { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .sifo-workspace-tabs::-webkit-scrollbar { display: none; }
+
+  .sifo-mobile-nav-spacer { display: block; height: calc(68px + env(safe-area-inset-bottom)); }
+
+  /* Give fixed bottom navigation breathing room without changing desktop layouts. */
+  body:has(.sifo-mobile-nav) main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+  /* Make common empty states useful on a phone. */
+  .sifo-table-state { min-height: 150px; padding: 2rem .75rem !important; }
+}
+
+@media (min-width: 768px) {
+  .sifo-mobile-nav { display: none !important; }
+}
