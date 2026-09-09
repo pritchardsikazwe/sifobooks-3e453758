@@ -118,8 +118,28 @@ const n = (v: any) => Number(v ?? 0);
 
 /* --------------------------------- catalogue ------------------------------- */
 
-export async function loadProducts(): Promise<PosProduct[]> {
+export async function loadProducts(locationId?: string | null): Promise<PosProduct[]> {
   try {
+    if (locationId) {
+      const { data, error } = await supabase.rpc("pos_location_stock" as any, { _location: locationId });
+      if (error) throw error;
+      const rows = (data ?? []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        sku: r.sku ?? null,
+        barcode: r.barcode ?? null,
+        category: r.category ?? null,
+        unit: r.unit ?? null,
+        price: n(r.sell_price),
+        cost: n(r.cost_price),
+        stock: n(r.quantity_on_hand),
+        reorder_level: n(r.reorder_level),
+        is_active: r.is_active !== false,
+      })) as PosProduct[];
+      void cacheRows("products", rows);
+      return rows;
+    }
+
     const { data, error } = await supabase
       .from("stock_items")
       .select("id,name,sku,barcode,category,unit,sell_price,cost_price,quantity_on_hand,reorder_level,is_active")
@@ -192,39 +212,59 @@ export async function saveSettings(patch: Partial<PosSettings>) {
 
 /* ------------------------------ registers/shifts --------------------------- */
 
-export async function ensureRegister(): Promise<{ id: string; name: string; branch: string | null } | null> {
-  const { data } = await supabase.from("pos_registers").select("id,name,branch").eq("is_active", true).limit(1);
-  if (data && data.length) return data[0] as any;
+export type PosRegister = { id: string; name: string; branch: string | null; location_id: string | null };
+
+export async function ensureRegister(): Promise<PosRegister | null> {
+  const { data } = await supabase
+    .from("pos_registers")
+    .select("id,name,branch,location_id")
+    .eq("is_active", true)
+    .order("name")
+    .limit(1);
+  if (data && data.length) return data[0] as PosRegister;
+
+  const { data: location } = await supabase
+    .from("inventory_locations")
+    .select("id,name,code")
+    .eq("is_active", true)
+    .or("code.eq.CHIBOMBO,name.eq.Chibombo Store")
+    .limit(1)
+    .maybeSingle();
+
   const { data: created } = await supabase
     .from("pos_registers")
-    .insert({ name: "Register 01", branch: "Main" } as any)
-    .select("id,name,branch")
+    .insert({ name: "Register 01", branch: location?.name ?? "Main", location_id: location?.id ?? null } as any)
+    .select("id,name,branch,location_id")
     .maybeSingle();
-  return (created as any) ?? null;
+  return (created as PosRegister | null) ?? null;
 }
 
 export async function currentShift(registerId?: string | null) {
-  const { data } = await supabase
+  let query = supabase
     .from("pos_shifts").select("*").eq("status", "open")
     .order("opened_at", { ascending: false }).limit(1);
-  const row = (data ?? [])[0] as any;
-  if (row) return row;
-  if (!registerId) return null;
-  return null;
+  if (registerId) query = query.eq("register_id", registerId);
+  const { data } = await query;
+  return ((data ?? [])[0] as any) ?? null;
 }
 
 export async function openShift(registerId: string | null, cashier: string, float_: number) {
-  const { data } = await supabase
+  if (!registerId) throw new Error("A POS register is required before opening a shift");
+  const { data, error } = await supabase
     .from("pos_shifts")
     .insert({ register_id: registerId, cashier_name: cashier, opening_float: float_ } as any)
     .select("*").maybeSingle();
+  if (error) throw new Error(error.message);
   return data as any;
 }
 
 export async function shiftSummary(shiftId: string) {
   const { data: sales } = await supabase
     .from("pos_sales").select("id,total,status").eq("shift_id", shiftId);
-  const ids = (sales ?? []).map((s: any) => s.id);
+  const completed = (sales ?? []).filter((s: any) => s.status === "completed");
+  const voided = (sales ?? []).filter((s: any) => s.status === "voided");
+  const refunds = (sales ?? []).filter((s: any) => s.status === "refunded");
+  const ids = completed.map((s: any) => s.id);
   let byMethod: Record<string, number> = {};
   if (ids.length) {
     const { data: pays } = await supabase.from("pos_payments").select("method,amount").in("sale_id", ids);
@@ -232,9 +272,6 @@ export async function shiftSummary(shiftId: string) {
       byMethod[p.method] = (byMethod[p.method] ?? 0) + n(p.amount);
     });
   }
-  const completed = (sales ?? []).filter((s: any) => s.status === "completed");
-  const voided = (sales ?? []).filter((s: any) => s.status === "voided");
-  const refunds = (sales ?? []).filter((s: any) => s.status === "refunded");
   return {
     transactions: completed.length,
     salesTotal: completed.reduce((a: number, s: any) => a + n(s.total), 0),
@@ -245,10 +282,11 @@ export async function shiftSummary(shiftId: string) {
 }
 
 export async function closeShift(shiftId: string, actualCash: number, expectedCash: number) {
-  await supabase.from("pos_shifts").update({
+  const { error } = await supabase.from("pos_shifts").update({
     status: "closed", closed_at: new Date().toISOString(),
     actual_cash: actualCash, expected_cash: expectedCash, variance: actualCash - expectedCash,
   } as any).eq("id", shiftId);
+  if (error) throw new Error(error.message);
 }
 
 /* --------------------------------- cart math ------------------------------- */
@@ -309,42 +347,32 @@ function isOnline() {
   return typeof navigator === "undefined" ? true : navigator.onLine;
 }
 
-/**
- * Persist a completed sale (header + lines + payments + stock/ledger posting) through
- * one idempotent server routine keyed by `client_ref`. When offline, or when the
- * server is unreachable, the whole bundle is queued and replayed once — never twice.
- */
 export async function completeSale(draft: SaleDraft, payments: SalePayment[], changeDue: number) {
+  if (!draft.registerId) throw new Error("Select or open a POS register before completing the sale");
+  if (!draft.shiftId) throw new Error("Open a cashier shift before completing the sale");
+  if (!draft.lines.length) throw new Error("Add at least one item to the sale");
+
   const sale_no = saleNumber();
   const client_ref = newClientId("possale");
   const paid = payments.reduce((a, p) => a + n(p.amount), 0);
 
   const salePayload: any = {
-    sale_no,
-    client_ref,
-    shift_id: draft.shiftId ?? null,
-    register_id: draft.registerId ?? null,
+    sale_no, client_ref,
+    shift_id: draft.shiftId,
+    register_id: draft.registerId,
     customer_id: draft.customer?.id ?? null,
     customer_name: draft.customerName || "Walk-in Customer",
-    price_level: draft.priceLevel,
-    status: "completed",
+    price_level: draft.priceLevel, status: "completed",
     subtotal: draft.totals.subtotal,
     discount: round2(draft.totals.lineDiscount + draft.totals.saleDiscount),
-    tax: draft.totals.tax,
-    total: draft.totals.total,
-    paid: round2(paid),
-    change_due: round2(changeDue),
-    cost_total: draft.totals.cost,
-    note: draft.note ?? null,
+    tax: draft.totals.tax, total: draft.totals.total,
+    paid: round2(paid), change_due: round2(changeDue),
+    cost_total: draft.totals.cost, note: draft.note ?? null,
     sold_at: new Date().toISOString(),
   };
   const itemRows = draft.lines.map((l) => ({
-    item_id: l.item_id,
-    name: l.name,
-    sku: l.sku,
-    qty: l.qty,
-    price: l.price,
-    unit_cost: l.unit_cost,
+    item_id: l.item_id, name: l.name, sku: l.sku, qty: l.qty,
+    price: l.price, unit_cost: l.unit_cost,
     discount: round2((l.qty * l.price * (l.discount_pct || 0)) / 100),
     tax_rate: 0,
     line_total: round2(l.qty * l.price * (1 - (l.discount_pct || 0) / 100)),
@@ -359,13 +387,11 @@ export async function completeSale(draft: SaleDraft, payments: SalePayment[], ch
       id: client_ref, sale_no, client_ref, customer_name: salePayload.customer_name,
       total: salePayload.total, status: "completed", sold_at: salePayload.sold_at, __offline: true,
     });
-    // Keep the local stock figures honest until the next refresh.
     void adjustCachedStock(draft.lines);
     return { ok: true as const, offline: true, sale_no, id: null };
   };
 
   if (!isOnline()) return stash();
-
   try {
     const { data, error } = await supabase.rpc("sync_pos_sale" as any, args as any);
     if (error) {
@@ -395,13 +421,11 @@ async function adjustCachedStock(lines: CartLine[]) {
   } catch { /* cache only */ }
 }
 
-/** Sales completed on this device that are still waiting to upload. */
 export async function listOfflineSales() {
   const rows = await readCached<any>("pos_transactions");
   return rows.filter((r) => r.__offline);
 }
 
-/** Remove locally-cached offline sales once they have been uploaded. */
 export async function pruneSyncedOfflineSales() {
   try {
     const q = await listQueue();
@@ -417,21 +441,14 @@ export async function pruneSyncedOfflineSales() {
 
 export async function holdSale(draft: SaleDraft) {
   const sale_no = saleNumber();
-  const { data: sale } = await supabase.from("pos_sales").insert({
-    sale_no,
-    client_ref: newClientId("poshold"),
-    status: "held",
-    customer_id: draft.customer?.id ?? null,
-    customer_name: draft.customerName,
-    price_level: draft.priceLevel,
-    subtotal: draft.totals.subtotal,
-    discount: round2(draft.totals.lineDiscount + draft.totals.saleDiscount),
-    tax: draft.totals.tax,
-    total: draft.totals.total,
-    shift_id: draft.shiftId ?? null,
-    register_id: draft.registerId ?? null,
+  const { data: sale, error } = await supabase.from("pos_sales").insert({
+    sale_no, client_ref: newClientId("poshold"), status: "held",
+    customer_id: draft.customer?.id ?? null, customer_name: draft.customerName,
+    price_level: draft.priceLevel, subtotal: draft.totals.subtotal,
+    discount: round2(draft.totals.lineDiscount + draft.totals.saleDiscount), tax: draft.totals.tax,
+    total: draft.totals.total, shift_id: draft.shiftId ?? null, register_id: draft.registerId ?? null,
   } as any).select("id").maybeSingle();
-  if (!sale) throw new Error("Could not hold this sale");
+  if (error || !sale) throw new Error(error?.message ?? "Could not hold this sale");
   if (draft.lines.length) {
     await supabase.from("pos_sale_items").insert(draft.lines.map((l) => ({
       sale_id: (sale as any).id, item_id: l.item_id, name: l.name, sku: l.sku,
@@ -474,9 +491,7 @@ export async function listRecentSales(limit = 30) {
       void cacheRows("pos_transactions", online.map((r) => ({ ...r, __offline: false })));
     } catch { /* fall through to cache */ }
   }
-  if (!online.length) {
-    online = (await readCached<any>("pos_transactions")).filter((r) => !r.__offline);
-  }
+  if (!online.length) online = (await readCached<any>("pos_transactions")).filter((r) => !r.__offline);
   return [...offline, ...online]
     .sort((a, b) => new Date(b.sold_at).getTime() - new Date(a.sold_at).getTime())
     .slice(0, limit);
@@ -487,37 +502,33 @@ export async function voidSale(saleId: string, reason: string) {
   if (error) throw new Error(error.message);
 }
 
-/** Full refund: reverses stock and posts a mirrored negative sale. */
 export async function refundSale(saleId: string) {
   const { data: orig } = await supabase.from("pos_sales").select("*").eq("id", saleId).maybeSingle();
   if (!orig) throw new Error("Sale not found");
+  if ((orig as any).status !== "completed") throw new Error("Only a completed sale can be refunded");
   const { data: items } = await supabase.from("pos_sale_items").select("*").eq("sale_id", saleId);
 
-  const { data: credit } = await supabase.from("pos_sales").insert({
+  const { data: credit, error: creditError } = await supabase.from("pos_sales").insert({
     sale_no: `RF-${(orig as any).sale_no ?? ""}`,
-    client_ref: newClientId("posrefund"),
-    status: "draft",
-    refund_of: saleId,
-    customer_id: (orig as any).customer_id,
-    customer_name: (orig as any).customer_name,
-    subtotal: -n((orig as any).subtotal),
-    discount: -n((orig as any).discount),
-    tax: -n((orig as any).tax),
-    total: -n((orig as any).total),
+    client_ref: newClientId("posrefund"), status: "draft", refund_of: saleId,
+    customer_id: (orig as any).customer_id, customer_name: (orig as any).customer_name,
+    subtotal: -n((orig as any).subtotal), discount: -n((orig as any).discount),
+    tax: -n((orig as any).tax), total: -n((orig as any).total),
+    shift_id: (orig as any).shift_id ?? null, register_id: (orig as any).register_id ?? null,
   } as any).select("id").maybeSingle();
-  if (!credit) throw new Error("Refund failed");
+  if (creditError || !credit) throw new Error(creditError?.message ?? "Refund failed");
 
   if (items?.length) {
     await supabase.from("pos_sale_items").insert(items.map((r: any) => ({
       sale_id: (credit as any).id, item_id: r.item_id, name: r.name, sku: r.sku,
-      qty: -n(r.qty), price: n(r.price), unit_cost: n(r.unit_cost),
-      line_total: -n(r.line_total),
+      qty: -n(r.qty), price: n(r.price), unit_cost: n(r.unit_cost), line_total: -n(r.line_total),
     })) as any);
   }
   await supabase.from("pos_payments").insert({
     sale_id: (credit as any).id, method: "cash", amount: -n((orig as any).total), reference: "Refund",
   } as any);
-  await supabase.rpc("complete_pos_sale", { _sale_id: (credit as any).id } as any);
+  const { error: postError } = await supabase.rpc("complete_pos_sale", { _sale_id: (credit as any).id } as any);
+  if (postError) throw new Error(postError.message);
   await supabase.from("pos_sales").update({ status: "refunded" } as any).eq("id", saleId);
   return (credit as any).id as string;
 }
@@ -529,9 +540,5 @@ export async function todayMetrics() {
     .eq("status", "completed").gte("sold_at", start.toISOString());
   const rows = data ?? [];
   const sales = rows.reduce((a: number, r: any) => a + n(r.total), 0);
-  return {
-    sales,
-    transactions: rows.length,
-    average: rows.length ? sales / rows.length : 0,
-  };
+  return { sales, transactions: rows.length, average: rows.length ? sales / rows.length : 0 };
 }
