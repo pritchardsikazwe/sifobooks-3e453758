@@ -223,7 +223,10 @@ function SmartReconciliationPage() {
     scanStream.current = null;
   };
 
-  useEffect(() => () => stopCamera(), []);
+  useEffect(() => () => {
+    scanStream.current?.getTracks().forEach((track) => track.stop());
+    scanStream.current = null;
+  }, []);
 
   const submit = async () => {
     if (!selectedId) return;
