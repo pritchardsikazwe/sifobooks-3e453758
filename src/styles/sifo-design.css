@@ -1,0 +1,225 @@
+/* SifoBooks Visual Design System
+ * Inspired by the clarity and workflow discipline of modern cloud accounting UX.
+ * This file adds the shared visual language without replacing the existing theme.
+ */
+
+.sifo-list-page,
+.sifo-report-page {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 1rem 1.25rem 2rem;
+}
+
+.sifo-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sifo-page-header h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.sifo-page-header p {
+  margin: .35rem 0 0;
+  color: var(--muted-foreground);
+  font-size: .875rem;
+}
+
+.sifo-breadcrumb {
+  margin-bottom: .35rem;
+  color: var(--muted-foreground);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.sifo-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+.sifo-list-toolbar,
+.sifo-report-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .75rem;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--card);
+}
+
+.sifo-record-count {
+  color: var(--muted-foreground);
+  font-size: .75rem;
+  white-space: nowrap;
+}
+
+.sifo-table-shell,
+.sifo-report-paper {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--card);
+  box-shadow: 0 2px 12px rgba(20, 50, 40, .045);
+}
+
+.sifo-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: .82rem;
+}
+
+.sifo-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: .72rem .85rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, white);
+  color: var(--muted-foreground);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sifo-table tbody td {
+  padding: .78rem .85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--foreground);
+  vertical-align: middle;
+}
+
+.sifo-table tbody tr:last-child td { border-bottom: 0; }
+.sifo-table-row { cursor: pointer; }
+.sifo-table-row:hover td { background: color-mix(in srgb, var(--primary) 4%, var(--card)); }
+.sifo-table-state { padding: 3rem 1rem !important; text-align: center; color: var(--muted-foreground); }
+
+.sifo-report-paper {
+  padding: 1.5rem;
+}
+
+.sifo-report-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--foreground);
+}
+
+.sifo-report-heading h2 {
+  margin: .25rem 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.sifo-report-heading p,
+.sifo-report-period {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: .8rem;
+}
+
+.sifo-report-period {
+  padding: .35rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  background: var(--surface);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.sifo-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+
+.sifo-report-table th {
+  padding: .55rem .65rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.sifo-report-table td {
+  padding: .52rem .65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  vertical-align: top;
+}
+
+.sifo-report-totals {
+  width: min(100%, 420px);
+  margin: 1.25rem 0 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.sifo-report-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-size: .85rem;
+}
+
+.sifo-report-total.emphasis {
+  border-top: 2px solid var(--foreground);
+  font-size: .95rem;
+}
+
+.sifo-report-total strong { font-variant-numeric: tabular-nums; }
+
+.sifo-report-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: .72rem;
+}
+
+@media (max-width: 720px) {
+  .sifo-list-page,
+  .sifo-report-page { padding-inline: .75rem; }
+  .sifo-page-header,
+  .sifo-list-toolbar,
+  .sifo-report-filters,
+  .sifo-report-heading,
+  .sifo-report-footer { align-items: stretch; flex-direction: column; }
+  .sifo-page-actions { justify-content: flex-start; }
+  .sifo-record-count { align-self: flex-start; }
+  .sifo-report-paper { padding: .85rem; }
+}
+
+@media print {
+  .sifo-report-page { max-width: none; padding: 0; }
+  .sifo-report-paper { border: 0; box-shadow: none; padding: 0; }
+  .sifo-report-heading { border-bottom: 2px solid #111; }
+  .sifo-report-footer { display: none; }
+}
