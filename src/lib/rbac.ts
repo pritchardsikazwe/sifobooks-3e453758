@@ -121,6 +121,7 @@ export const ROUTE_RULES: Rule[] = [
   // Administration
   { prefix: "/roles", any: ["roles.manage", "users.manage"] },
   { prefix: "/admin", any: ["users.manage"] },
+  { prefix: "/manager", any: ["pos.sales.view_all", "users.manage", "roles.manage"] },
   { prefix: "/setup", any: ["settings.manage"] },
   { prefix: "/modules", any: ["settings.manage"] },
   { prefix: "/industry", any: ["settings.manage"] },
