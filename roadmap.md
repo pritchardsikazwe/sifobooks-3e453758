@@ -7,8 +7,9 @@
 - [x] Manager workspace (/manager, /manager/shifts, /manager/cashiers)
 - [x] Cashier workspace entries in worker nav
 - [x] Terminal unlock uses server-side PIN verification
+- [x] Secure POS worker invitation (no plaintext PIN storage)
+- [x] Role-permission grants restricted to owners/super admins
 - [ ] Wire manager/admin redirect after login
-- [ ] Replace plaintext `invitePosWorker` PIN insertion with secure setup
 - [ ] Sidebar / command palette / mobile nav / header trimmed for staff
 - [ ] Cashier dashboard
 - [ ] Team & Roles admin page (/roles): roles, permissions, users, branches
@@ -31,5 +32,7 @@
 - [ ] Batch/expiry, reorder, barcode, dashboards, reports
 - [ ] Inventory permissions (inventory.transfer.* etc.) + location-based access
 
-## Active security finding
-- [ ] Fix `rbac_role_permissions` insert policy privilege-escalation risk
+## Active security warnings (surfaced, not error-level)
+- Public/signed-in SECURITY DEFINER function exposure (baseline infra warnings)
+- Customer table staff permission-check inconsistency
+- POS worker self-read policy exposes PIN hash/lockout columns
