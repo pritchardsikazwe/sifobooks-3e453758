@@ -6,3 +6,6 @@ export { SifoQuickAction } from "./SifoQuickAction";
 export { SifoStatusBadge } from "./SifoStatusBadge";
 export { SifoPanel } from "./SifoPanel";
 export { SifoFormPage, SifoFormSection, SifoField } from "./SifoFormPage";
+export { SifoWorkspaceShell } from "./SifoWorkspaceShell";
+export { SifoNextActionPanel, SifoCompletionPanel } from "./SifoNextActionPanel";
+export { SifoWorkQueue } from "./SifoWorkQueue";

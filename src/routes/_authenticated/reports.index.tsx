@@ -43,6 +43,18 @@ const CATS: { key: string; label: string; accent: string }[] = [
   { key: "management", label: "Management", accent: "text-slate-700 bg-slate-50 border-slate-200" },
 ];
 
+/** Task-oriented entry points: a plain question, mapped to the existing report route. */
+const QUESTIONS: { q: string; hint: string; to: string }[] = [
+  { q: "How profitable are we?", hint: "Profit & Loss for the period", to: "/reports/pnl" },
+  { q: "What do customers owe us?", hint: "Aged receivables by customer", to: "/reports/aged-receivables" },
+  { q: "What do we owe suppliers?", hint: "Aged payables by supplier", to: "/reports/aged-payables" },
+  { q: "Where is our cash?", hint: "Cash flow and bank position", to: "/reports/cash-flow" },
+  { q: "What stock do we have?", hint: "Stock valuation by location", to: "/reports/inventory-flow-audit" },
+  { q: "What changed this month?", hint: "Trial balance movement", to: "/reports/trial-balance" },
+  { q: "Are we VAT compliant?", hint: "VAT 3 return workings", to: "/reports/vat-return" },
+  { q: "What is the full year picture?", hint: "Annual financial statements", to: "/reports/afs" },
+];
+
 const REPORTS: Report[] = [
   // Financial
   { id: "pnl", name: "Profit & Loss", description: "Revenue, expenses and net profit with monthly comparisons.", to: "/reports/pnl", icon: TrendingUp, category: "financial" },
@@ -173,6 +185,23 @@ function ReportsCentre() {
           </div>
         </header>
 
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">What do you want to know?</h2>
+          <p className="text-xs text-muted-foreground">Pick a question and we will open the right report.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {QUESTIONS.map(qq => (
+              <Link
+                key={qq.q}
+                to={qq.to}
+                className="rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.04]"
+              >
+                <div className="text-sm font-semibold">{qq.q}</div>
+                <div className="mt-0.5 text-[11px] text-muted-foreground">{qq.hint}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <div className="relative max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -181,6 +210,7 @@ function ReportsCentre() {
             className="pl-10 h-11 bg-card border-border"
           />
         </div>
+
 
         <Tabs defaultValue="all" className="space-y-5">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">

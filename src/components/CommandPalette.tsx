@@ -29,6 +29,19 @@ function pushRecent(r: Recent) {
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* noop */ }
 }
 
+/** Ask Sifo: plain questions mapped to the screen that actually answers them. */
+const ASK_SIFO: { q: string; url: string; answer: string }[] = [
+  { q: "What should I do next?", url: "/dashboard", answer: "Your live work queue" },
+  { q: "Show me unpaid invoices", url: "/invoices", answer: "Invoices awaiting payment" },
+  { q: "Which customers owe us money?", url: "/reports/aged-receivables", answer: "Aged receivables" },
+  { q: "Who do we owe?", url: "/reports/aged-payables", answer: "Aged payables" },
+  { q: "Why is profit down?", url: "/reports/pnl", answer: "Profit & Loss detail" },
+  { q: "Which stock is low?", url: "/inventory/control-center", answer: "Inventory control centre" },
+  { q: "Show transactions waiting for approval", url: "/approvals", answer: "Approval queue" },
+  { q: "Take me to bank reconciliation", url: "/reconciliation", answer: "Bank reconciliation" },
+  { q: "Where is our cash?", url: "/reports/cash-flow", answer: "Cash flow statement" },
+];
+
 const QUICK_ACTIONS: { label: string; url: string; icon: any; hint: string }[] = [
   { label: "New Invoice", url: "/invoices/new", icon: FileText, hint: "Sales" },
   { label: "New Quote", url: "/quotes/new", icon: ClipboardList, hint: "Sales" },
@@ -164,6 +177,17 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             <CommandSeparator />
           </>
         )}
+
+        <CommandGroup heading="Ask Sifo">
+          {ASK_SIFO.map(a => (
+            <CommandItem key={"ask:" + a.q} value={`ask ${a.q} ${a.answer}`} onSelect={() => go(a.answer, a.url, "Ask Sifo")}>
+              <Sparkles className="h-4 w-4 mr-2 text-primary" />
+              <span className="font-medium">{a.q}</span>
+              <span className="ml-auto text-[11px] text-muted-foreground">{a.answer}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+        <CommandSeparator />
 
         <CommandGroup heading="Quick actions">
           {QUICK_ACTIONS.map(a => {

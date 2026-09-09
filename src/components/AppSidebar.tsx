@@ -10,7 +10,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/sifobooks-logo.png";
-import { MODULES, CATEGORY_ORDER } from "@/lib/modules";
+import { HUBS, visibleHubGroups } from "@/lib/nav-hubs";
+
+
 import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import { staffNav } from "@/lib/rbac";
@@ -38,7 +40,13 @@ const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> 
   "Restaurant":         { dot: "bg-mod-inventory",     text: "text-mod-inventory",     soft: "bg-mod-inventory/10" },
   "Administration":     { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
   "Platform":           { dot: "bg-destructive",       text: "text-destructive",       soft: "bg-destructive/10" },
+  // Workflow hub labels
+  "Home":               { dot: "bg-primary",           text: "text-primary",           soft: "bg-primary/10" },
+  "People":             { dot: "bg-mod-payroll",       text: "text-mod-payroll",       soft: "bg-mod-payroll/10" },
+  "Point of Sale":      { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
+  "More":               { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
 };
+
 const hueFor = (c: string) => CATEGORY_HUE[c] ?? CATEGORY_HUE["Core"];
 
 function iconFor(name?: string): any {
@@ -116,21 +124,24 @@ export function AppSidebar() {
       }
       return groups;
     }
-    for (const cat of CATEGORY_ORDER) {
-      const items: { title: string; url: string; icon: any }[] = [];
-      for (const m of MODULES) {
-        if (m.category !== cat) continue;
-        if (!installed.has(m.key)) continue;
-        if (!canView(m.key)) continue;
-        for (const r of m.routes) {
-          if (r.superAdminOnly && !isSuperAdmin) continue;
-          items.push({ title: r.title, url: r.url, icon: iconFor(r.iconName) });
-        }
+    // Owners/admins: compact workflow hubs. Every other route stays reachable
+    // inside the hub workspace, the command palette and its own deep link.
+    for (const hub of HUBS) {
+      const visible = visibleHubGroups(hub, installed, canView);
+      const all = visible.flatMap(g => g.items).filter(i => !(i as any).superAdminOnly || isSuperAdmin);
+      if (all.length === 0) continue;
+      const primary = all.filter(i => i.primary);
+      const items = (primary.length ? primary : all.slice(0, 4)).map(i => ({
+        title: i.title, url: i.url, icon: iconFor(i.iconName),
+      }));
+      if (all.length > items.length) {
+        items.push({ title: `More ${hub.label.toLowerCase()} tools…`, url: `/hub/${hub.key}`, icon: Icons.MoreHorizontal });
       }
-      if (items.length > 0) groups.push({ label: cat, items });
+      groups.push({ label: hub.label, items });
     }
     return groups;
   }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading]);
+
 
   const isOpen = (label: string) => {
     // Default: open if it contains the active route, otherwise open unless user closed it

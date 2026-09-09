@@ -18,6 +18,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
+import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
+
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
@@ -434,8 +436,12 @@ function DashboardPage() {
         </motion.div>
 
 
+        {/* Live work queue — only real outstanding actions appear here */}
+        <SifoWorkQueue currency={currency} />
+
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
+
 
 
 
