@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Menu, LayoutGrid, BarChart3, ShoppingBag, Archive, FileText, Settings, LifeBuoy,
-  ChevronDown, Box, Layers, Warehouse, LogOut, Landmark, ShieldCheck, Receipt,
+  ChevronDown, Box, Layers, Warehouse, LogOut, Landmark, ShieldCheck, Receipt, SearchCheck,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -44,6 +44,7 @@ const groups: (Group | Item)[] = [
   { label: "Reports", to: "/dashboard", icon: FileText, soon: true },
   { label: "Admin", to: "/compliance", icon: Settings },
   { label: "Help & Support", icon: LifeBuoy, soon: true },
+  { label: "Transaction Audit", to: "/transaction-audit", icon: SearchCheck },
 ];
 
 export function AppNav() {
