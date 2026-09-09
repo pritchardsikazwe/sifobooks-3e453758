@@ -14,6 +14,9 @@ export type PosIntegrityPayment = {
 
 export type PosIntegrityInput = {
   lines: PosIntegrityLine[];
+  saleDiscountPct?: number;
+  taxRate?: number;
+  taxInclusive?: boolean;
   subtotal: number;
   tax: number;
   total: number;
@@ -41,6 +44,9 @@ const EPSILON = 0.01;
  */
 export function validatePosTransaction(input: PosIntegrityInput): PosIntegrityResult {
   const errors: string[] = [];
+  const saleDiscountPct = Number(input.saleDiscountPct ?? 0);
+  const taxRate = Number(input.taxRate ?? 0);
+  const taxInclusive = input.taxInclusive !== false;
 
   if (!input.lines.length) errors.push("A sale must contain at least one line");
   if (!Number.isFinite(input.subtotal) || input.subtotal < 0) errors.push("Subtotal must be a non-negative number");
@@ -48,8 +54,10 @@ export function validatePosTransaction(input: PosIntegrityInput): PosIntegrityRe
   if (!Number.isFinite(input.total) || input.total < 0) errors.push("Total must be a non-negative number");
   if (!Number.isFinite(input.costTotal) || input.costTotal < 0) errors.push("Cost total must be a non-negative number");
   if (!Number.isFinite(input.changeDue) || input.changeDue < 0) errors.push("Change due must be a non-negative number");
+  if (!Number.isFinite(saleDiscountPct) || saleDiscountPct < 0 || saleDiscountPct > 100) errors.push("Sale discount must be between 0% and 100%");
+  if (!Number.isFinite(taxRate) || taxRate < 0) errors.push("Tax rate must be a non-negative number");
 
-  let calculatedNet = 0;
+  let grossAfterLineDiscount = 0;
   let calculatedCost = 0;
 
   for (const [index, line] of input.lines.entries()) {
@@ -69,13 +77,27 @@ export function validatePosTransaction(input: PosIntegrityInput): PosIntegrityRe
     }
 
     if (Number.isFinite(qty) && Number.isFinite(price) && Number.isFinite(discountPct)) {
-      calculatedNet += qty * price * (1 - discountPct / 100);
+      grossAfterLineDiscount += qty * price * (1 - discountPct / 100);
     }
     if (Number.isFinite(qty) && Number.isFinite(unitCost)) calculatedCost += qty * unitCost;
   }
 
-  if (Math.abs(money(calculatedNet) - money(input.subtotal + input.tax)) > EPSILON) {
-    errors.push("Sale lines do not reconcile to subtotal plus tax");
+  const saleDiscount = grossAfterLineDiscount * (saleDiscountPct / 100);
+  const net = Math.max(grossAfterLineDiscount - saleDiscount, 0);
+  const expectedTax = taxInclusive
+    ? net - net / (1 + taxRate / 100)
+    : net * (taxRate / 100);
+  const expectedSubtotal = taxInclusive ? net - expectedTax : net;
+  const expectedTotal = taxInclusive ? net : net + expectedTax;
+
+  if (Math.abs(money(expectedSubtotal) - money(input.subtotal)) > EPSILON) {
+    errors.push("Sale lines and discounts do not reconcile to subtotal");
+  }
+  if (Math.abs(money(expectedTax) - money(input.tax)) > EPSILON) {
+    errors.push("Sale tax does not reconcile to the configured tax rate");
+  }
+  if (Math.abs(money(expectedTotal) - money(input.total)) > EPSILON) {
+    errors.push("Sale lines, discounts and tax do not reconcile to total");
   }
   if (Math.abs(money(calculatedCost) - money(input.costTotal)) > EPSILON) {
     errors.push("Sale lines do not reconcile to cost total");
