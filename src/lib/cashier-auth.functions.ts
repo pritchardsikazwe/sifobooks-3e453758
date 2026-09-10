@@ -21,24 +21,34 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: perm } = await supabaseAdmin
+    // A worker can be attached to more than one business, so there may be
+    // several till profiles for the same email. Try the most recently set PIN
+    // first and fall through the rest before rejecting the sign-in.
+    const { data: perms } = await supabaseAdmin
       .from("employee_pos_permissions")
-      .select("id, full_name, pos_role, email")
+      .select("id, full_name, pos_role, email, pin_set_at, pin_disabled")
       .eq("email", data.email)
       .eq("is_active", true)
-      .maybeSingle();
+      .order("pin_set_at", { ascending: false, nullsFirst: false });
+
+    const candidates = (perms ?? []).filter((p: any) => p.pin_set_at && !p.pin_disabled);
 
     // Same message either way — no account enumeration from the terminal.
-    if (!perm) return { ok: false as const, error: "Incorrect email or PIN" };
+    if (candidates.length === 0) return { ok: false as const, error: "Incorrect email or PIN" };
 
-    const { data: res, error } = await supabaseAdmin.rpc("verify_cashier_pin" as never, {
-      _permission_id: perm.id,
-      _pin: data.pin,
-    } as never);
-    if (error) return { ok: false as const, error: "Sign-in is unavailable right now. Try again." };
-
-    const out = res as unknown as { ok: boolean; error?: string; pos_role?: string };
-    if (!out?.ok) return { ok: false as const, error: out?.error ?? "Incorrect email or PIN" };
+    let perm: any = null;
+    let lastError: string | null = null;
+    for (const candidate of candidates) {
+      const { data: res, error } = await supabaseAdmin.rpc("verify_cashier_pin" as never, {
+        _permission_id: candidate.id,
+        _pin: data.pin,
+      } as never);
+      if (error) return { ok: false as const, error: "Sign-in is unavailable right now. Try again." };
+      const out = res as unknown as { ok: boolean; error?: string };
+      if (out?.ok) { perm = candidate; break; }
+      lastError = out?.error ?? null;
+    }
+    if (!perm) return { ok: false as const, error: lastError ?? "Incorrect email or PIN" };
 
     const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
       type: "magiclink",
