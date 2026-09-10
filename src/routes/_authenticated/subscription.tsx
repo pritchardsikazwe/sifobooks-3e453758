@@ -59,6 +59,29 @@ function SubscriptionPage() {
   };
 
   const payrollOnly = isPayrollOnly((company as any)?.workspace_mode);
+  const hotelOnly = isHotelOnly((company as any)?.workspace_mode);
+
+  const switchHotelOnly = async () => {
+    if (!company) return toast.error("Set up your company first");
+    setBusy("hotel_only");
+    try {
+      await activateHotelOnly({ companyId: company.id, userId });
+      toast.success("Hotel-only workspace activated");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch to Hotel only"); }
+    setBusy(null);
+  };
+
+  const switchFullSuiteFromHotel = async () => {
+    if (!company) return;
+    setBusy("full_suite_hotel");
+    try {
+      await upgradeFromHotelOnly({ companyId: company.id });
+      toast.success("Full SifoBooks switched on");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch on the full suite"); }
+    setBusy(null);
+  };
 
   const switchPayrollOnly = async () => {
     if (!company) return toast.error("Set up your company first");
