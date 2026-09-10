@@ -3,8 +3,10 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import {
-  Board, IndustryShell, NotConnected, RecordTable, SearchBox, StatGrid, StatusPill, type NavItem,
+  Avatar, Bars, Board, Donut, EmptyState, IndustryShell, KanbanBoard, MetricTile, NotConnected,
+  RecordTable, SearchBox, StatusPill, Tile, TileGrid, Timeline, type NavItem,
 } from "@/components/industry/IndustryKit";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BedDouble, CalendarCheck, ClipboardCheck, CreditCard, House, LayoutDashboard, Boxes,
