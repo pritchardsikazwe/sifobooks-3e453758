@@ -7,6 +7,7 @@
  * may see.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { loadAccess } from "@/lib/rbac";
 
 const n = (v: unknown) => Number(v ?? 0) || 0;
 
