@@ -80,6 +80,18 @@
   --color-till-tendered: #1D4ED8;
   --color-till-change: #15803D;
 
+  /* SifoBooks brand surface palette — public marketing surfaces */
+  --color-sifo-ink: #05100C;
+  --color-sifo-ink-2: #0A1913;
+  --color-sifo-ink-3: #0F241C;
+  --color-sifo-line: #1B3A2E;
+  --color-sifo-green: #0E8F4A;
+  --color-sifo-green-deep: #0A6B37;
+  --color-sifo-mint: #7DD3A5;
+  --color-sifo-copper: #C87A3C;
+  --color-sifo-sand: #E7DCC6;
+  --color-sifo-haze: #93A9A0;
+
 
 
   /* Global spacing scale */
@@ -383,4 +395,104 @@
 /* Touch-density rows for POS and tablet operational tables */
 @utility row-touch {
   min-height: 3.5rem;
+}
+
+
+/* ── SifoBooks public brand surfaces ─────────────────────────────── */
+
+/* Blueprint grid: fine ledger ruling over a deep ink field */
+@utility sifo-blueprint {
+  background-image:
+    linear-gradient(to right, rgba(125, 211, 165, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(125, 211, 165, 0.055) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Accounting paper: horizontal rules with a single margin column */
+@utility sifo-ledger {
+  background-image:
+    linear-gradient(to bottom, rgba(231, 220, 198, 0.06) 1px, transparent 1px),
+    linear-gradient(to right, transparent 0, transparent 3.25rem, rgba(200, 122, 60, 0.18) 3.25rem, rgba(200, 122, 60, 0.18) calc(3.25rem + 1px), transparent calc(3.25rem + 1px));
+  background-size: 2rem 2rem, 100% 100%;
+}
+
+/* Fine film grain so large ink fields never look flat */
+@utility sifo-grain {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+  }
+}
+
+/* Hairline top edge used to separate stacked dark sections */
+@utility sifo-edge {
+  box-shadow: inset 0 1px 0 rgba(231, 220, 198, 0.08);
+}
+
+@utility sifo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.8rem 1.35rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform 140ms cubic-bezier(0.4, 0, 0.2, 1), background-color 140ms, border-color 140ms, box-shadow 140ms, color 140ms;
+  &:focus-visible {
+    outline: 2px solid var(--color-sifo-mint);
+    outline-offset: 3px;
+  }
+  &:active { transform: translateY(1px) scale(0.995); }
+  &:disabled, &[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+}
+
+@utility sifo-btn-primary {
+  color: #fff;
+  background-image: linear-gradient(180deg, #12A557 0%, #0B7A3E 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 12px 28px -14px rgba(14, 143, 74, 0.9);
+  &:hover { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 18px 34px -14px rgba(14, 143, 74, 1); transform: translateY(-1px); }
+}
+
+@utility sifo-btn-ghost {
+  color: #ECF6F0;
+  border: 1px solid rgba(231, 220, 198, 0.18);
+  background-color: rgba(231, 220, 198, 0.04);
+  &:hover { background-color: rgba(231, 220, 198, 0.1); border-color: rgba(231, 220, 198, 0.32); transform: translateY(-1px); }
+}
+
+@utility sifo-btn-copper {
+  color: #1B0E05;
+  background-image: linear-gradient(180deg, #E0A063 0%, #C87A3C 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 12px 28px -14px rgba(200, 122, 60, 0.9);
+  &:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.36) inset, 0 18px 34px -14px rgba(200, 122, 60, 1); }
+}
+
+@utility sifo-btn-quiet {
+  color: #B9CDC3;
+  &:hover { color: #fff; background-color: rgba(231, 220, 198, 0.08); }
+}
+
+/* Entrance reveal — opt out under reduced motion */
+@utility sifo-reveal {
+  animation: sifo-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes sifo-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sifo-reveal { animation: none !important; }
+  .sifo-btn:hover, .sifo-btn:active { transform: none !important; }
 }
