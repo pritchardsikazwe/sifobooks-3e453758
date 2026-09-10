@@ -20,6 +20,27 @@ export const Route = createFileRoute("/_authenticated/payroll-transactions")({
   component: PayrollTransactionsPage,
 });
 
+/**
+ * Payroll always links to EXISTING tenant records: employees and the payroll
+ * income/deduction types already configured in Payroll Setup. Creating is secondary.
+ */
+const EMPLOYEE_LOOKUP = {
+  table: "employees", labelColumn: "first_name", labelColumns: ["last_name"],
+  codeColumn: "employee_code", metaColumns: ["status", "phone", "email"],
+  createTo: "/employees", createLabel: "New employee",
+  emptyTitle: "No employees found for this company.",
+};
+const INCOME_LOOKUP = {
+  table: "payroll_income_types", labelColumn: "name", codeColumn: "code", orderBy: "sort_order",
+  createTo: "/payroll-setup", createLabel: "Configure income types",
+  emptyTitle: "No income types configured yet.",
+};
+const DEDUCTION_LOOKUP = {
+  table: "payroll_deduction_types", labelColumn: "name", codeColumn: "code", orderBy: "sort_order",
+  createTo: "/payroll-setup", createLabel: "Configure deduction types",
+  emptyTitle: "No deduction types configured yet.",
+};
+
 function useLookups() {
   const [employees, setEmployees] = useState<{ value: string; label: string }[]>([]);
   const [incomes, setIncomes] = useState<{ value: string; label: string }[]>([]);
@@ -81,8 +102,8 @@ function PayrollTransactionsPage() {
               { key: "status", header: "Status" },
             ]}
             fields={[
-              { name: "income_type_id", label: "Income", type: "select", required: true, options: incomes },
-              { name: "employee_id", label: "Employee", type: "select", required: true, options: employees },
+              { name: "income_type_id", label: "Income", type: "lookup", required: true, lookup: INCOME_LOOKUP },
+              { name: "employee_id", label: "Employee", type: "lookup", required: true, lookup: EMPLOYEE_LOOKUP },
               { name: "amount", label: "Amount", type: "number" },
               { name: "currency", label: "Currency", type: "select", defaultValue: "ZMW", options: CURRENCY_OPTIONS },
               { name: "hours_days_worked", label: "Hours / Days Worked", type: "number" },
@@ -113,8 +134,8 @@ function PayrollTransactionsPage() {
               { key: "status", header: "Status" },
             ]}
             fields={[
-              { name: "employee_id", label: "Employee", type: "select", required: true, options: employees },
-              { name: "deduction_type_id", label: "Deduction", type: "select", required: true, options: deductions },
+              { name: "employee_id", label: "Employee", type: "lookup", required: true, lookup: EMPLOYEE_LOOKUP },
+              { name: "deduction_type_id", label: "Deduction", type: "lookup", required: true, lookup: DEDUCTION_LOOKUP },
               { name: "this_month", label: "This Month", type: "select", defaultValue: "Show & Deduct", options: THIS_MONTH_OPTIONS },
               { name: "date_taken", label: "Date Taken", type: "date" },
               { name: "start_date", label: "Start Date", type: "date" },
@@ -156,7 +177,7 @@ function PayrollTransactionsPage() {
               { key: "status", header: "Status" },
             ]}
             fields={[
-              { name: "employee_id", label: "Employee", type: "select", options: employees },
+              { name: "employee_id", label: "Employee", type: "lookup", lookup: EMPLOYEE_LOOKUP },
               { name: "employer_acc_no", label: "Employer Acc No" },
               { name: "social_security_no", label: "Social Security No" },
               { name: "id_no", label: "ID No" },
@@ -192,7 +213,7 @@ function PayrollTransactionsPage() {
               { key: "status", header: "Status" },
             ]}
             fields={[
-              { name: "employee_id", label: "Employee", type: "select", required: true, options: employees },
+              { name: "employee_id", label: "Employee", type: "lookup", required: true, lookup: EMPLOYEE_LOOKUP },
               { name: "year", label: "Year", type: "number", required: true, defaultValue: new Date().getFullYear() },
               { name: "month", label: "Month", type: "select", required: true, defaultValue: String(new Date().getMonth() + 1), options: MONTH_OPTIONS },
               { name: "opening_balance", label: "Balance Brought Forward", type: "number" },
