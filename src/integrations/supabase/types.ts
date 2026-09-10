@@ -5885,14 +5885,24 @@ export type Database = {
       }
       payroll_runs: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           currency: string
           employees_paid: number | null
           id: string
           notes: string | null
+          paid_at: string | null
+          paid_by: string | null
           pay_date: string | null
           period_month: number
           period_year: number
+          posted_at: string | null
+          posted_by: string | null
+          prepared_at: string | null
+          prepared_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           run_number: string
           status: string
           total_allowances: number | null
@@ -5910,14 +5920,24 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           currency?: string
           employees_paid?: number | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           pay_date?: string | null
           period_month: number
           period_year: number
+          posted_at?: string | null
+          posted_by?: string | null
+          prepared_at?: string | null
+          prepared_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           run_number: string
           status?: string
           total_allowances?: number | null
@@ -5935,14 +5955,24 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           currency?: string
           employees_paid?: number | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           pay_date?: string | null
           period_month?: number
           period_year?: number
+          posted_at?: string | null
+          posted_by?: string | null
+          prepared_at?: string | null
+          prepared_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           run_number?: string
           status?: string
           total_allowances?: number | null
@@ -5960,6 +5990,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payroll_statutory_filings: {
+        Row: {
+          acted_by: string | null
+          company_id: string | null
+          created_at: string
+          difference: number
+          employee_amount: number
+          employees_count: number
+          employer_amount: number
+          file_name: string | null
+          filing_type: string
+          id: string
+          notes: string | null
+          payroll_amount: number
+          payroll_run_id: string | null
+          period_month: number
+          period_year: number
+          status: string
+          submission_reference: string | null
+          submitted_at: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acted_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          difference?: number
+          employee_amount?: number
+          employees_count?: number
+          employer_amount?: number
+          file_name?: string | null
+          filing_type: string
+          id?: string
+          notes?: string | null
+          payroll_amount?: number
+          payroll_run_id?: string | null
+          period_month: number
+          period_year: number
+          status?: string
+          submission_reference?: string | null
+          submitted_at?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          acted_by?: string | null
+          company_id?: string | null
+          created_at?: string
+          difference?: number
+          employee_amount?: number
+          employees_count?: number
+          employer_amount?: number
+          file_name?: string | null
+          filing_type?: string
+          id?: string
+          notes?: string | null
+          payroll_amount?: number
+          payroll_run_id?: string | null
+          period_month?: number
+          period_year?: number
+          status?: string
+          submission_reference?: string | null
+          submitted_at?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_statutory_filings_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payslips: {
         Row: {

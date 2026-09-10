@@ -44,6 +44,7 @@ type Run = {
   period_month: number; period_year: number; pay_date: string | null; status: string;
   total_gross: number | null; total_paye: number | null; total_napsa: number | null;
   total_nhima: number | null; total_net: number | null; notes: string | null;
+  prepared_by?: string | null; approved_by?: string | null; approved_at?: string | null;
 };
 type Employee = {
   id: string; first_name: string; last_name: string; employee_code: string | null;
@@ -222,10 +223,23 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
   };
   useEffect(() => { load(); }, [run.id]);
 
+  // Whoever prepared a run cannot approve it themselves — the database enforces
+  // this too, this only keeps the button honest.
+  const preparedByMe = !!run.prepared_by && run.prepared_by === userId;
+
   const setStatus = async (status: string) => {
-    const { error } = await supabase.from("payroll_runs").update({ status }).eq("id", run.id);
-    if (error) toast.error(error.message);
-    else { toast.success(`Run ${status}`); onChanged(); }
+    const patch: Record<string, unknown> =
+      status === "approved"
+        ? { status, approved_by: userId, approved_at: new Date().toISOString() }
+        : { status };
+    const { error } = await supabase.from("payroll_runs").update(patch as never).eq("id", run.id);
+    if (error) {
+      toast.error(
+        /approve/i.test(error.message) && /prepar/i.test(error.message)
+          ? "The person who prepared this run cannot approve it. Ask another authorised user to approve."
+          : error.message,
+      );
+    } else { toast.success(`Run ${status}`); onChanged(); }
   };
 
   const ledgerLines = (): PayrollJournalLine[] => {
@@ -425,8 +439,11 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
           </div>
           <div className="flex gap-2">
             {run.status === "draft" && (
-              <Button size="sm" variant="outline" disabled={!journalBalanced}
-                title={journalBalanced ? undefined : "The payroll journal must balance before approval"}
+              <Button size="sm" variant="outline" disabled={!journalBalanced || preparedByMe}
+                title={
+                  preparedByMe ? "You prepared this run, so someone else must approve it"
+                  : journalBalanced ? undefined : "The payroll journal must balance before approval"
+                }
                 onClick={() => setStatus("approved")}>Approve</Button>
             )}
             {run.status === "approved" && (

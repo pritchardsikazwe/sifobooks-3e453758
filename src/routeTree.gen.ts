@@ -65,6 +65,7 @@ import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_authenticated/payroll-transactions'
 import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
+import { Route as AuthenticatedPayrollStatutoryRouteImport } from './routes/_authenticated/payroll-statutory'
 import { Route as AuthenticatedPayrollSetupRouteImport } from './routes/_authenticated/payroll-setup'
 import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
@@ -563,6 +564,12 @@ const AuthenticatedPayrollToolsRoute =
   AuthenticatedPayrollToolsRouteImport.update({
     id: '/payroll-tools',
     path: '/payroll-tools',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollStatutoryRoute =
+  AuthenticatedPayrollStatutoryRouteImport.update({
+    id: '/payroll-statutory',
+    path: '/payroll-statutory',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollSetupRoute =
@@ -1746,6 +1753,7 @@ export interface FileRoutesByFullPath {
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
+  '/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -1996,6 +2004,7 @@ export interface FileRoutesByTo {
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
+  '/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -2249,6 +2258,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
   '/_authenticated/payroll-setup': typeof AuthenticatedPayrollSetupRoute
+  '/_authenticated/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
   '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
@@ -2504,6 +2514,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/payroll-dashboard'
     | '/payroll-setup'
+    | '/payroll-statutory'
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
@@ -2754,6 +2765,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/payroll-dashboard'
     | '/payroll-setup'
+    | '/payroll-statutory'
     | '/payroll-tools'
     | '/payroll-transactions'
     | '/period-close'
@@ -3006,6 +3018,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll'
     | '/_authenticated/payroll-dashboard'
     | '/_authenticated/payroll-setup'
+    | '/_authenticated/payroll-statutory'
     | '/_authenticated/payroll-tools'
     | '/_authenticated/payroll-transactions'
     | '/_authenticated/period-close'
@@ -3613,6 +3626,13 @@ declare module '@tanstack/react-router' {
       path: '/payroll-tools'
       fullPath: '/payroll-tools'
       preLoaderRoute: typeof AuthenticatedPayrollToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-statutory': {
+      id: '/_authenticated/payroll-statutory'
+      path: '/payroll-statutory'
+      fullPath: '/payroll-statutory'
+      preLoaderRoute: typeof AuthenticatedPayrollStatutoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll-setup': {
@@ -5376,6 +5396,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
   AuthenticatedPayrollSetupRoute: typeof AuthenticatedPayrollSetupRoute
+  AuthenticatedPayrollStatutoryRoute: typeof AuthenticatedPayrollStatutoryRoute
   AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
   AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
@@ -5500,6 +5521,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
   AuthenticatedPayrollSetupRoute: AuthenticatedPayrollSetupRoute,
+  AuthenticatedPayrollStatutoryRoute: AuthenticatedPayrollStatutoryRoute,
   AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
   AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,

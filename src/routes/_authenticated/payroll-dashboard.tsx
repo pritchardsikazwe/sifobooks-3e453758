@@ -37,6 +37,8 @@ type Emp = {
   id: string; first_name: string; last_name: string;
   basic_salary: number | null; status: string | null;
   department_id: string | null; employment_type: string | null;
+  tpin?: string | null; national_id?: string | null;
+  napsa_number?: string | null; nhima_number?: string | null;
 };
 
 const DEPT_COLORS = ["#10b981","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#84cc16"];
@@ -58,7 +60,7 @@ function PayrollDashboard() {
         supabase.from("payroll_runs")
           .select("id,run_number,period_year,period_month,pay_date,status,total_gross,total_paye,total_napsa,total_nhima,total_wcf,total_sdl,total_net,total_overtime,total_bonus,total_allowances,total_employer_cost,employees_paid")
           .order("period_year", { ascending: false }).order("period_month", { ascending: false }).limit(24),
-        supabase.from("employees").select("id,first_name,last_name,basic_salary,status,department_id,employment_type"),
+        supabase.from("employees").select("id,first_name,last_name,basic_salary,status,department_id,employment_type,tpin,national_id,napsa_number,nhima_number"),
         supabase.from("departments").select("id,name"),
         supabase.from("approval_requests")
           .select("id,module,reference_number,amount,status,current_level,max_level,description,created_at")
@@ -147,6 +149,38 @@ function PayrollDashboard() {
     return items;
   }, [runs]);
 
+  // What needs attention right now — built only from live runs and employee records.
+  const attention = useMemo(() => {
+    const items: { text: string; to: string; tone: "amber" | "rose" | "slate" }[] = [];
+    const drafts = runs.filter(r => r.status === "draft");
+    const approved = runs.filter(r => r.status === "approved");
+    const posted = runs.filter(r => r.status === "posted");
+    if (drafts.length) items.push({ text: `${drafts.length} payroll run(s) still in draft — calculate and send for approval.`, to: "/payroll", tone: "amber" });
+    if (approved.length) items.push({ text: `${approved.length} approved run(s) not yet paid or posted to the ledger.`, to: "/payroll", tone: "amber" });
+    if (posted.length) items.push({ text: `${posted.length} posted run(s) awaiting statutory filing and reconciliation.`, to: "/payroll-statutory", tone: "slate" });
+    const active = employees.filter(e => (e.status ?? "active") === "active");
+    const missing = active.filter(e => !e.tpin?.trim() || !e.napsa_number?.trim() || !e.nhima_number?.trim() || !e.national_id?.trim());
+    if (missing.length) items.push({ text: `${missing.length} active employee(s) are missing a TPIN, NRC, NAPSA or NHIMA number — statutory files will reject them.`, to: "/employees", tone: "rose" });
+    const next = calendar.find(c => c.status === "pending" || c.status === "upcoming");
+    if (next) items.push({ text: `Next pay date ${next.date} (${next.label}).`, to: "/payroll", tone: "slate" });
+    return items;
+  }, [runs, employees, calendar]);
+
+  // Month-on-month movement on the two most recent runs.
+  const movement = useMemo(() => {
+    const [cur, prev] = runs;
+    if (!cur || !prev) return null;
+    const d = (a: number, b: number) => ({ diff: a - b, pct: b === 0 ? null : ((a - b) / Math.abs(b)) * 100 });
+    return {
+      label: `${MONTHS[cur.period_month - 1]} ${cur.period_year} vs ${MONTHS[prev.period_month - 1]} ${prev.period_year}`,
+      gross: d(num(cur.total_gross), num(prev.total_gross)),
+      net: d(num(cur.total_net), num(prev.total_net)),
+      paye: d(num(cur.total_paye), num(prev.total_paye)),
+      heads: d(num(cur.employees_paid), num(prev.employees_paid)),
+    };
+  }, [runs]);
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 p-6 space-y-6">
       {/* Header */}
@@ -165,11 +199,51 @@ function PayrollDashboard() {
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/employees">Employees</Link></Button>
-            <Button asChild variant="outline"><Link to="/attendance">Attendance</Link></Button>
+            <Button asChild variant="outline"><Link to="/payroll-statutory">Statutory</Link></Button>
             <Button variant="save" asChild ><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
           </div>
         </div>
       </motion.div>
+
+      {/* What needs attention */}
+      {(attention.length > 0 || movement) && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <ClipboardCheck className="h-4 w-4 text-amber-600" /> What needs attention
+            </div>
+            {attention.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">Nothing outstanding on payroll right now.</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {attention.map((a, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 text-sm">
+                    <span className={a.tone === "rose" ? "text-rose-700" : a.tone === "amber" ? "text-amber-700" : "text-slate-700"}>{a.text}</span>
+                    <Button asChild size="sm" variant="ghost"><Link to={a.to}>Open</Link></Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <TrendingUp className="h-4 w-4 text-emerald-600" /> Movement
+            </div>
+            {!movement ? (
+              <p className="mt-2 text-sm text-slate-500">Two completed runs are needed to compare periods.</p>
+            ) : (
+              <div className="mt-2 space-y-1 text-sm">
+                <p className="text-xs text-slate-500">{movement.label}</p>
+                <Move label="Gross" v={movement.gross} money />
+                <Move label="Net pay" v={movement.net} money />
+                <Move label="PAYE" v={movement.paye} money />
+                <Move label="Employees" v={movement.heads} />
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -385,5 +459,19 @@ function StatusPill({ status }: { status: string }) {
     <span className={`inline-flex items-center px-2 py-0.5 text-[11px] rounded-full border capitalize ${map[s] ?? "bg-slate-50 text-slate-600 border-slate-200"}`}>
       {status || "—"}
     </span>
+  );
+}
+
+function Move({ label, v, money }: { label: string; v: { diff: number; pct: number | null }; money?: boolean }) {
+  const up = v.diff > 0;
+  const flat = Math.abs(v.diff) < 0.005;
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-slate-600">{label}</span>
+      <span className={`tabular-nums font-medium ${flat ? "text-slate-500" : up ? "text-emerald-700" : "text-rose-700"}`}>
+        {flat ? "no change" : `${up ? "+" : ""}${money ? fmtMoney(v.diff) : v.diff}`}
+        {v.pct !== null && !flat ? ` (${v.pct > 0 ? "+" : ""}${v.pct.toFixed(1)}%)` : ""}
+      </span>
+    </div>
   );
 }
