@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { postBankAllocation } from "@/lib/bank-posting";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { DataTable, type DTColumn } from "@/components/data-table";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 
 export const Route = createFileRoute("/_authenticated/reconciliation")({
@@ -480,18 +481,15 @@ function Reconciliation() {
   return (
     <div className="p-6 space-y-6">
       <SifoHubTabs hub="finance" active="/reconciliation" />
-      <div className="flex items-center gap-3 justify-between">
-        <div className="flex items-center gap-3">
-          <Scale className="h-6 w-6" />
-          <div>
-            <h1 className="text-2xl font-bold">Bank &amp; Cash Reconciliation</h1>
-            <p className="text-sm text-muted-foreground">Match bank/cash transactions to receipts, bills, and journal entries.</p>
-          </div>
-        </div>
-        <Button variant="outline" onClick={openImport}>
-          <Upload className="h-4 w-4 mr-2" />Import CSV
-        </Button>
-      </div>
+      <SifoModuleHeader
+        module="accounting"
+        icon={Scale}
+        title="Bank & Cash Reconciliation"
+        description="Match bank/cash transactions to receipts, bills, and journal entries."
+        breadcrumbs={[{ label: "Finance", to: "/banking" }, { label: "Reconciliation" }]}
+        showTabs={false}
+        actions={<Button variant="outline" size="sm" className="h-9" onClick={openImport}><Upload className="h-4 w-4 mr-2" />Import CSV</Button>}
+      />
 
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Filters &amp; matching tolerance</CardTitle></CardHeader>

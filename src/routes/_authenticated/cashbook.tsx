@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { printCurrentView } from "@/services/printDocument";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/cashbook")({
   head: () => ({ meta: [{ title: "Cashbook — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -249,19 +250,17 @@ function CashbookPage() {
   return (
     <div className="p-6 space-y-4">
       <SifoHubTabs hub="finance" active="/cashbook" />
-      <div className="flex items-center justify-between flex-wrap gap-2 print:hidden">
-        <div className="flex items-center gap-3">
-          <BookText className="h-6 w-6 text-emerald-600" />
-          <div>
-            <h1 className="text-2xl font-bold">Cashbook</h1>
-            <p className="text-sm text-muted-foreground">
-              {source === "ledger"
-                ? "Live GL cashbook — auto-fed by receipts, expenses, bills, payroll, transfers and imports."
-                : "Bank imports only — raw statement view for reconciliation."}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2 items-center">
+      <div className="print:hidden">
+        <SifoModuleHeader
+          module="accounting"
+          icon={BookText}
+          title="Cashbook"
+          description={source === "ledger"
+            ? "Live GL cashbook — auto-fed by receipts, expenses, bills, payroll, transfers and imports."
+            : "Bank imports only — raw statement view for reconciliation."}
+          breadcrumbs={[{ label: "Finance", to: "/banking" }, { label: "Cashbook" }]}
+          showTabs={false}
+          actions={<div className="flex gap-2 items-center flex-wrap">
           <div className="flex rounded-md border p-0.5 text-xs">
             {(["ledger","bank"] as const).map(s => (
               <button key={s} onClick={() => setSource(s)}
@@ -272,7 +271,8 @@ function CashbookPage() {
           </div>
           <Button variant="outline" onClick={() => void printCurrentView("Cashbook Report", undefined, exportRows)}><Printer className="h-4 w-4 mr-2" />Print</Button>
           <ExportMenu rows={exportRows} filename="cashbook" title="Cashbook Report" />
-        </div>
+        </div>}
+        />
       </div>
 
       <Card className="print:hidden">

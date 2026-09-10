@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { ExportMenu } from "@/lib/exports";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/reconciliation-sessions")({
   head: () => ({
@@ -167,17 +168,19 @@ function ReconciliationSessions() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Scale className="h-6 w-6 text-emerald-700" /> Reconciliation Sessions</h1>
-          <p className="text-sm text-muted-foreground">Formal statement-vs-book reconciliation with audit locking.</p>
-        </div>
-        <div className="flex gap-2">
+      <SifoModuleHeader
+        module="accounting"
+        icon={Scale}
+        title="Reconciliation Sessions"
+        description="Formal statement-vs-book reconciliation with audit locking."
+        breadcrumbs={[{ label: "Finance", to: "/banking" }, { label: "Reconciliation", to: "/reconciliation" }, { label: "Sessions" }]}
+        showTabs={false}
+        actions={<>
           <ExportMenu rows={exportRows} filename="reconciliation-sessions" title="Reconciliation Sessions" />
-          <Button variant="outline" asChild><Link to="/reconciliation">Quick Match</Link></Button>
-          <Button onClick={() => setOpenNew(true)} className="bg-emerald-700 hover:bg-emerald-800"><Plus className="h-4 w-4 mr-1" /> New Session</Button>
-        </div>
-      </div>
+          <Button variant="outline" size="sm" className="h-9" asChild><Link to="/reconciliation">Quick Match</Link></Button>
+          <Button onClick={() => setOpenNew(true)} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1" /> New Session</Button>
+        </>}
+      />
 
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
