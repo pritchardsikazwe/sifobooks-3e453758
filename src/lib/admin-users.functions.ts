@@ -33,9 +33,9 @@ async function logAction(context: Ctx, action: string, entityId: string | null, 
   await db.from("audit_logs").insert({
     user_id: context.userId,
     action,
-    entity: "auth_user",
+    entity_type: "auth_user",
     entity_id: entityId,
-    metadata,
+    details: metadata as never,
   });
 }
 
