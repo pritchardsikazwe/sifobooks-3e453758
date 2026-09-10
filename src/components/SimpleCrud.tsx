@@ -49,6 +49,8 @@ export type LookupSpec = {
   table: string;
   /** Column shown as the option label. */
   labelColumn: string;
+  /** Additional columns joined into the label, e.g. first + last name. */
+  labelColumns?: string[];
   /** Optional short code shown before the label (e.g. SKU, account code). */
   codeColumn?: string;
   /** Extra columns joined into the searchable secondary line. */
