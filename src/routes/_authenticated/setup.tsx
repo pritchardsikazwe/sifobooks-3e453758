@@ -348,18 +348,26 @@ function RolesTab({ userId, companyId }: { userId: string; companyId: string }) 
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("company_members")
-      .select("*, profiles:user_id(email, full_name)")
-      .eq("company_id", companyId).order("created_at");
-    let rows = data ?? [];
+    // company_members.user_id points at auth.users, not public.profiles, so an
+    // embedded profiles:user_id(...) select cannot be resolved — the names and
+    // emails are fetched separately and joined here.
+    const fetchMembers = async () => {
+      const { data } = await supabase.from("company_members")
+        .select("*").eq("company_id", companyId).order("created_at");
+      return data ?? [];
+    };
+    let rows = await fetchMembers();
     if (userId && !rows.some((r: any) => r.user_id === userId)) {
       await supabase.from("company_members").insert({ company_id: companyId, user_id: userId, role: "owner", created_by: userId });
-      const { data: d2 } = await supabase.from("company_members")
-        .select("*, profiles:user_id(email, full_name)")
-        .eq("company_id", companyId).order("created_at");
-      rows = d2 ?? rows;
+      rows = await fetchMembers();
     }
-    setMembers(rows);
+    const ids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
+    let byId = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, email, full_name").in("id", ids as string[]);
+      byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    }
+    setMembers(rows.map((r: any) => ({ ...r, profiles: byId.get(r.user_id) ?? null })));
     setLoading(false);
   };
   useEffect(() => { if (companyId) load(); /* eslint-disable-next-line */ }, [companyId, userId]);
