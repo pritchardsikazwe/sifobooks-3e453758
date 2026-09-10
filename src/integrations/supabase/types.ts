@@ -11226,6 +11226,26 @@ export type Database = {
         Returns: Json
       }
       request_pos_pin_reset: { Args: { _reason?: string }; Returns: string }
+      restaurant_line_cost: {
+        Args: { _menu_item_id: string; _user: string }
+        Returns: number
+      }
+      restaurant_merge_checks: {
+        Args: { _source_id: string; _target_id: string }
+        Returns: string
+      }
+      restaurant_recalc_order: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
+      restaurant_split_check: {
+        Args: { _guests?: number; _item_ids: string[]; _order_id: string }
+        Returns: string
+      }
+      restaurant_transfer_check: {
+        Args: { _order_id: string; _server_name?: string; _table_id?: string }
+        Returns: string
+      }
       reverse_bank_allocation: {
         Args: { _alloc_id: string; _reason?: string }
         Returns: Json

@@ -23,6 +23,9 @@ export const Route = createFileRoute("/_worker/w/pos")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    table: typeof search['table'] === "string" ? (search['table'] as string) : undefined,
+  }),
   component: WorkerPos,
 });
 
@@ -42,8 +45,10 @@ function WorkerPos() {
   const net = useNetworkStatus();
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [tables, setTables] = useState<any[]>([]);
-  const [orderType, setOrderType] = useState<string>("counter");
-  const [tableId, setTableId] = useState<string | null>(null);
+  /* A waiter arriving from the floor plan already picked a table — carry it through. */
+  const { table: tableFromFloor } = Route.useSearch();
+  const [orderType, setOrderType] = useState<string>(tableFromFloor ? "dine-in" : "counter");
+  const [tableId, setTableId] = useState<string | null>(tableFromFloor ?? null);
   const [guests, setGuests] = useState(1);
   const [cat, setCat] = useState<string>("All");
   const [lines, setLines] = useState<CartLine[]>([]);
@@ -65,6 +70,7 @@ function WorkerPos() {
   }, [ctx?.tenantId]);
 
   useEffect(() => { if (types.length && !types.some(t => t.key === orderType)) setOrderType(types[0].key); }, [types.length]);
+  useEffect(() => { if (tableFromFloor) { setTableId(tableFromFloor); setOrderType("dine-in"); } }, [tableFromFloor]);
 
   const cats = useMemo(() => ["All", ...Array.from(new Set(menu.map((m) => m.category || "Other")))], [menu]);
   const shown = cat === "All" ? menu : menu.filter((m) => (m.category || "Other") === cat);

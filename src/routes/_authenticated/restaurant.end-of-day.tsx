@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { summarise, today, uid } from "@/lib/restaurant";
+import { checkCost } from "@/lib/restaurant-checks";
 import { CalendarCheck, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/end-of-day")({
@@ -33,6 +34,7 @@ function EndOfDay() {
   const [closed, setClosed] = useState<any | null>(null);
   const [manager, setManager] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lines, setLines] = useState<any[]>([]);
 
   const load = async () => {
     const u = await uid();
@@ -42,7 +44,13 @@ function EndOfDay() {
       db.from("restaurant_cash_drawers").select("*").eq("user_id", u).eq("business_date", date),
       db.from("restaurant_end_of_day").select("*").eq("user_id", u).eq("business_date", date).maybeSingle(),
     ]);
-    setOrders(o.data ?? []); setDrawers(d.data ?? []); setClosed(e.data ?? null);
+    const os = o.data ?? [];
+    setOrders(os); setDrawers(d.data ?? []); setClosed(e.data ?? null);
+    const paid = os.filter((x: any) => x.status === "paid").map((x: any) => x.id);
+    if (paid.length) {
+      const { data: li } = await db.from("restaurant_order_items").select("order_id,qty,unit_cost").in("order_id", paid);
+      setLines(li ?? []);
+    } else setLines([]);
   };
   useEffect(() => { load(); }, [date]);
 
@@ -51,6 +59,8 @@ function EndOfDay() {
   const voids = orders.filter((o) => o.status === "void");
   const variance = drawers.reduce((s, d) => s + Number(d.variance || 0), 0);
   const openDrawers = drawers.filter((d) => d.status === "open");
+  /* Cost of sales for the day, from the server-calculated recipe cost on each line. */
+  const cogs = useMemo(() => checkCost(lines), [lines]);
 
   const byServer = useMemo(() => {
     const m: Record<string, number> = {};
@@ -96,6 +106,8 @@ function EndOfDay() {
           { Metric: "Gratuity", Value: t.gratuity },
           { Metric: "Delivery fees", Value: t.delivery },
           { Metric: "Net takings", Value: t.net },
+          { Metric: "Cost of sales", Value: cogs },
+          { Metric: "Gross margin", Value: t.net - t.tax - cogs },
           { Metric: "Cash variance", Value: variance },
           ...Object.entries(t.byMethod).map(([k, v]) => ({ Metric: `Payment — ${k}`, Value: v })),
           ...Object.entries(t.byType).map(([k, v]) => ({ Metric: `Order type — ${k}`, Value: v })),
@@ -108,6 +120,8 @@ function EndOfDay() {
         <Kpi label="Net takings" value={fmtMoney(t.net)} />
         <Kpi label="Open checks" value={String(openChecks.length)} />
         <Kpi label="Cash variance" value={fmtMoney(variance)} />
+        <Kpi label="Cost of sales" value={fmtMoney(cogs)} />
+        <Kpi label="Gross margin" value={fmtMoney(t.net - t.tax - cogs)} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
