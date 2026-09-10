@@ -461,3 +461,17 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
+
+function Move({ label, v, money }: { label: string; v: { diff: number; pct: number | null }; money?: boolean }) {
+  const up = v.diff > 0;
+  const flat = Math.abs(v.diff) < 0.005;
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-slate-600">{label}</span>
+      <span className={`tabular-nums font-medium ${flat ? "text-slate-500" : up ? "text-emerald-700" : "text-rose-700"}`}>
+        {flat ? "no change" : `${up ? "+" : ""}${money ? fmtMoney(v.diff) : v.diff}`}
+        {v.pct !== null && !flat ? ` (${v.pct > 0 ? "+" : ""}${v.pct.toFixed(1)}%)` : ""}
+      </span>
+    </div>
+  );
+}
