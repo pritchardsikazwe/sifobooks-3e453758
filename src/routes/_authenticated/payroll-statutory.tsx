@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/payroll-statutory")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: StatutoryCentre;
+  component: StatutoryCentre,
 });
 
 const db = supabase as any;
