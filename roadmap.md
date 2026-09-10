@@ -14,3 +14,11 @@
 - [ ] Finance/Cashbook workflow clarity: regroup Finance hub (Cash & Bank, Receivables, Payables, Expenses, General Accounting), Finance action bar (Receive Customer Money / Pay Supplier / Record Expense / Bank Deposit / Transfer / New Journal), "which one do I use?" guidance, cashbook as running control ledger.
 
 - [x] Visual production upgrade: metric tiles, gauges, mix bars, tile boards, kanban, timelines and avatar cards across real Hotel, School and Restaurant screens.
+
+## Zambian hospitality upgrade (this pass)
+- [x] Hotel operating backbone: room types, rooms, reservations, folios + charges, housekeeping tasks, night audits.
+- [x] Zambian tax engine: VAT / tourism levy / service charge modelled separately with correct tax base.
+- [x] Compliance register (ZTA, council, fire, health, ZEMA, PACRA, TPIN) with expiry alerts, on hotel, restaurant and school.
+- [x] ZRA Smart Invoice settings + submission queue (storage and queueing only).
+- [ ] ZRA VSDC live transmission — blocked on the tenant's own certified VSDC credentials/endpoint from ZRA.
+- [ ] Post folio settlements into the double-entry ledger (folio charges are currently operational records only).

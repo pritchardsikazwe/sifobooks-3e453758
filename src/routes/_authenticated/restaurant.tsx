@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, UtensilsCrossed, LayoutGrid, CalendarClock, ListOrdered, ChefHat,
   BookOpen, PhoneCall, Banknote, MoonStar, BarChart3, Settings, Wallet,
-  Star, Clock, Layers, Bike,
+  Star, Clock, Layers, Bike, ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant")({
@@ -31,6 +31,7 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant/cash", label: "Cash", icon: Banknote },
   { to: "/restaurant/end-of-day", label: "End of day", icon: MoonStar },
   { to: "/restaurant/reports", label: "Reports", icon: BarChart3 },
+  { to: "/restaurant/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/restaurant/settings", label: "Settings", icon: Settings },
 ];
 

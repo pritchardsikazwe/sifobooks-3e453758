@@ -155,6 +155,7 @@ import { Route as AuthenticatedSchoolParentPortalRouteImport } from './routes/_a
 import { Route as AuthenticatedSchoolFeesBillingRouteImport } from './routes/_authenticated/school/fees-billing'
 import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school/fees'
 import { Route as AuthenticatedSchoolExamsRouteImport } from './routes/_authenticated/school/exams'
+import { Route as AuthenticatedSchoolComplianceRouteImport } from './routes/_authenticated/school/compliance'
 import { Route as AuthenticatedSchoolBoardingRouteImport } from './routes/_authenticated/school/boarding'
 import { Route as AuthenticatedSchoolAttendanceRouteImport } from './routes/_authenticated/school/attendance'
 import { Route as AuthenticatedSchoolAdmissionsRouteImport } from './routes/_authenticated/school/admissions'
@@ -171,6 +172,7 @@ import { Route as AuthenticatedRestaurantLoyaltyRouteImport } from './routes/_au
 import { Route as AuthenticatedRestaurantKitchenRouteImport } from './routes/_authenticated/restaurant.kitchen'
 import { Route as AuthenticatedRestaurantEndOfDayRouteImport } from './routes/_authenticated/restaurant.end-of-day'
 import { Route as AuthenticatedRestaurantDispatchRouteImport } from './routes/_authenticated/restaurant.dispatch'
+import { Route as AuthenticatedRestaurantComplianceRouteImport } from './routes/_authenticated/restaurant.compliance'
 import { Route as AuthenticatedRestaurantCombosRouteImport } from './routes/_authenticated/restaurant.combos'
 import { Route as AuthenticatedRestaurantCashRouteImport } from './routes/_authenticated/restaurant.cash'
 import { Route as AuthenticatedRestaurantCallCenterRouteImport } from './routes/_authenticated/restaurant.call-center'
@@ -248,6 +250,7 @@ import { Route as AuthenticatedHotelGuestPortalRouteImport } from './routes/_aut
 import { Route as AuthenticatedHotelFrontDeskRouteImport } from './routes/_authenticated/hotel/front-desk'
 import { Route as AuthenticatedHotelFoliosRouteImport } from './routes/_authenticated/hotel/folios'
 import { Route as AuthenticatedHotelEventsRouteImport } from './routes/_authenticated/hotel/events'
+import { Route as AuthenticatedHotelComplianceRouteImport } from './routes/_authenticated/hotel/compliance'
 import { Route as AuthenticatedHotelCheckInOutRouteImport } from './routes/_authenticated/hotel/check-in-out'
 import { Route as AuthenticatedHotelAccountingRouteImport } from './routes/_authenticated/hotel/accounting'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -1050,6 +1053,12 @@ const AuthenticatedSchoolExamsRoute =
     path: '/exams',
     getParentRoute: () => AuthenticatedSchoolRoute,
   } as any)
+const AuthenticatedSchoolComplianceRoute =
+  AuthenticatedSchoolComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
 const AuthenticatedSchoolBoardingRoute =
   AuthenticatedSchoolBoardingRouteImport.update({
     id: '/boarding',
@@ -1144,6 +1153,12 @@ const AuthenticatedRestaurantDispatchRoute =
   AuthenticatedRestaurantDispatchRouteImport.update({
     id: '/dispatch',
     path: '/dispatch',
+    getParentRoute: () => AuthenticatedRestaurantRoute,
+  } as any)
+const AuthenticatedRestaurantComplianceRoute =
+  AuthenticatedRestaurantComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
 const AuthenticatedRestaurantCombosRoute =
@@ -1600,6 +1615,12 @@ const AuthenticatedHotelEventsRoute =
     path: '/events',
     getParentRoute: () => AuthenticatedHotelRoute,
   } as any)
+const AuthenticatedHotelComplianceRoute =
+  AuthenticatedHotelComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
 const AuthenticatedHotelCheckInOutRoute =
   AuthenticatedHotelCheckInOutRouteImport.update({
     id: '/check-in-out',
@@ -1770,6 +1791,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -1847,6 +1869,7 @@ export interface FileRoutesByFullPath {
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
   '/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/restaurant/compliance': typeof AuthenticatedRestaurantComplianceRoute
   '/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
@@ -1863,6 +1886,7 @@ export interface FileRoutesByFullPath {
   '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2013,6 +2037,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -2090,6 +2115,7 @@ export interface FileRoutesByTo {
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
   '/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/restaurant/compliance': typeof AuthenticatedRestaurantComplianceRoute
   '/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
@@ -2106,6 +2132,7 @@ export interface FileRoutesByTo {
   '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2265,6 +2292,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/_authenticated/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/_authenticated/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/_authenticated/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/_authenticated/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/_authenticated/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -2342,6 +2370,7 @@ export interface FileRoutesById {
   '/_authenticated/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/_authenticated/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
   '/_authenticated/restaurant/combos': typeof AuthenticatedRestaurantCombosRoute
+  '/_authenticated/restaurant/compliance': typeof AuthenticatedRestaurantComplianceRoute
   '/_authenticated/restaurant/dispatch': typeof AuthenticatedRestaurantDispatchRoute
   '/_authenticated/restaurant/end-of-day': typeof AuthenticatedRestaurantEndOfDayRoute
   '/_authenticated/restaurant/kitchen': typeof AuthenticatedRestaurantKitchenRoute
@@ -2358,6 +2387,7 @@ export interface FileRoutesById {
   '/_authenticated/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/_authenticated/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/_authenticated/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/_authenticated/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/_authenticated/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/_authenticated/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/_authenticated/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2516,6 +2546,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/hotel/accounting'
     | '/hotel/check-in-out'
+    | '/hotel/compliance'
     | '/hotel/events'
     | '/hotel/folios'
     | '/hotel/front-desk'
@@ -2593,6 +2624,7 @@ export interface FileRouteTypes {
     | '/restaurant/call-center'
     | '/restaurant/cash'
     | '/restaurant/combos'
+    | '/restaurant/compliance'
     | '/restaurant/dispatch'
     | '/restaurant/end-of-day'
     | '/restaurant/kitchen'
@@ -2609,6 +2641,7 @@ export interface FileRouteTypes {
     | '/school/admissions'
     | '/school/attendance'
     | '/school/boarding'
+    | '/school/compliance'
     | '/school/exams'
     | '/school/fees'
     | '/school/fees-billing'
@@ -2759,6 +2792,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/hotel/accounting'
     | '/hotel/check-in-out'
+    | '/hotel/compliance'
     | '/hotel/events'
     | '/hotel/folios'
     | '/hotel/front-desk'
@@ -2836,6 +2870,7 @@ export interface FileRouteTypes {
     | '/restaurant/call-center'
     | '/restaurant/cash'
     | '/restaurant/combos'
+    | '/restaurant/compliance'
     | '/restaurant/dispatch'
     | '/restaurant/end-of-day'
     | '/restaurant/kitchen'
@@ -2852,6 +2887,7 @@ export interface FileRouteTypes {
     | '/school/admissions'
     | '/school/attendance'
     | '/school/boarding'
+    | '/school/compliance'
     | '/school/exams'
     | '/school/fees'
     | '/school/fees-billing'
@@ -3010,6 +3046,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/hotel/accounting'
     | '/_authenticated/hotel/check-in-out'
+    | '/_authenticated/hotel/compliance'
     | '/_authenticated/hotel/events'
     | '/_authenticated/hotel/folios'
     | '/_authenticated/hotel/front-desk'
@@ -3087,6 +3124,7 @@ export interface FileRouteTypes {
     | '/_authenticated/restaurant/call-center'
     | '/_authenticated/restaurant/cash'
     | '/_authenticated/restaurant/combos'
+    | '/_authenticated/restaurant/compliance'
     | '/_authenticated/restaurant/dispatch'
     | '/_authenticated/restaurant/end-of-day'
     | '/_authenticated/restaurant/kitchen'
@@ -3103,6 +3141,7 @@ export interface FileRouteTypes {
     | '/_authenticated/school/admissions'
     | '/_authenticated/school/attendance'
     | '/_authenticated/school/boarding'
+    | '/_authenticated/school/compliance'
     | '/_authenticated/school/exams'
     | '/_authenticated/school/fees'
     | '/_authenticated/school/fees-billing'
@@ -4193,6 +4232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSchoolExamsRouteImport
       parentRoute: typeof AuthenticatedSchoolRoute
     }
+    '/_authenticated/school/compliance': {
+      id: '/_authenticated/school/compliance'
+      path: '/compliance'
+      fullPath: '/school/compliance'
+      preLoaderRoute: typeof AuthenticatedSchoolComplianceRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
     '/_authenticated/school/boarding': {
       id: '/_authenticated/school/boarding'
       path: '/boarding'
@@ -4303,6 +4349,13 @@ declare module '@tanstack/react-router' {
       path: '/dispatch'
       fullPath: '/restaurant/dispatch'
       preLoaderRoute: typeof AuthenticatedRestaurantDispatchRouteImport
+      parentRoute: typeof AuthenticatedRestaurantRoute
+    }
+    '/_authenticated/restaurant/compliance': {
+      id: '/_authenticated/restaurant/compliance'
+      path: '/compliance'
+      fullPath: '/restaurant/compliance'
+      preLoaderRoute: typeof AuthenticatedRestaurantComplianceRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
     '/_authenticated/restaurant/combos': {
@@ -4844,6 +4897,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHotelEventsRouteImport
       parentRoute: typeof AuthenticatedHotelRoute
     }
+    '/_authenticated/hotel/compliance': {
+      id: '/_authenticated/hotel/compliance'
+      path: '/compliance'
+      fullPath: '/hotel/compliance'
+      preLoaderRoute: typeof AuthenticatedHotelComplianceRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/hotel/check-in-out': {
       id: '/_authenticated/hotel/check-in-out'
       path: '/check-in-out'
@@ -4936,6 +4996,7 @@ const AuthenticatedCustomersRouteWithChildren =
 interface AuthenticatedHotelRouteChildren {
   AuthenticatedHotelAccountingRoute: typeof AuthenticatedHotelAccountingRoute
   AuthenticatedHotelCheckInOutRoute: typeof AuthenticatedHotelCheckInOutRoute
+  AuthenticatedHotelComplianceRoute: typeof AuthenticatedHotelComplianceRoute
   AuthenticatedHotelEventsRoute: typeof AuthenticatedHotelEventsRoute
   AuthenticatedHotelFoliosRoute: typeof AuthenticatedHotelFoliosRoute
   AuthenticatedHotelFrontDeskRoute: typeof AuthenticatedHotelFrontDeskRoute
@@ -4957,6 +5018,7 @@ interface AuthenticatedHotelRouteChildren {
 const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
   AuthenticatedHotelAccountingRoute: AuthenticatedHotelAccountingRoute,
   AuthenticatedHotelCheckInOutRoute: AuthenticatedHotelCheckInOutRoute,
+  AuthenticatedHotelComplianceRoute: AuthenticatedHotelComplianceRoute,
   AuthenticatedHotelEventsRoute: AuthenticatedHotelEventsRoute,
   AuthenticatedHotelFoliosRoute: AuthenticatedHotelFoliosRoute,
   AuthenticatedHotelFrontDeskRoute: AuthenticatedHotelFrontDeskRoute,
@@ -5131,6 +5193,7 @@ interface AuthenticatedRestaurantRouteChildren {
   AuthenticatedRestaurantCallCenterRoute: typeof AuthenticatedRestaurantCallCenterRoute
   AuthenticatedRestaurantCashRoute: typeof AuthenticatedRestaurantCashRoute
   AuthenticatedRestaurantCombosRoute: typeof AuthenticatedRestaurantCombosRoute
+  AuthenticatedRestaurantComplianceRoute: typeof AuthenticatedRestaurantComplianceRoute
   AuthenticatedRestaurantDispatchRoute: typeof AuthenticatedRestaurantDispatchRoute
   AuthenticatedRestaurantEndOfDayRoute: typeof AuthenticatedRestaurantEndOfDayRoute
   AuthenticatedRestaurantKitchenRoute: typeof AuthenticatedRestaurantKitchenRoute
@@ -5152,6 +5215,8 @@ const AuthenticatedRestaurantRouteChildren: AuthenticatedRestaurantRouteChildren
       AuthenticatedRestaurantCallCenterRoute,
     AuthenticatedRestaurantCashRoute: AuthenticatedRestaurantCashRoute,
     AuthenticatedRestaurantCombosRoute: AuthenticatedRestaurantCombosRoute,
+    AuthenticatedRestaurantComplianceRoute:
+      AuthenticatedRestaurantComplianceRoute,
     AuthenticatedRestaurantDispatchRoute: AuthenticatedRestaurantDispatchRoute,
     AuthenticatedRestaurantEndOfDayRoute: AuthenticatedRestaurantEndOfDayRoute,
     AuthenticatedRestaurantKitchenRoute: AuthenticatedRestaurantKitchenRoute,
@@ -5178,6 +5243,7 @@ interface AuthenticatedSchoolRouteChildren {
   AuthenticatedSchoolAdmissionsRoute: typeof AuthenticatedSchoolAdmissionsRoute
   AuthenticatedSchoolAttendanceRoute: typeof AuthenticatedSchoolAttendanceRoute
   AuthenticatedSchoolBoardingRoute: typeof AuthenticatedSchoolBoardingRoute
+  AuthenticatedSchoolComplianceRoute: typeof AuthenticatedSchoolComplianceRoute
   AuthenticatedSchoolExamsRoute: typeof AuthenticatedSchoolExamsRoute
   AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
   AuthenticatedSchoolFeesBillingRoute: typeof AuthenticatedSchoolFeesBillingRoute
@@ -5199,6 +5265,7 @@ const AuthenticatedSchoolRouteChildren: AuthenticatedSchoolRouteChildren = {
   AuthenticatedSchoolAdmissionsRoute: AuthenticatedSchoolAdmissionsRoute,
   AuthenticatedSchoolAttendanceRoute: AuthenticatedSchoolAttendanceRoute,
   AuthenticatedSchoolBoardingRoute: AuthenticatedSchoolBoardingRoute,
+  AuthenticatedSchoolComplianceRoute: AuthenticatedSchoolComplianceRoute,
   AuthenticatedSchoolExamsRoute: AuthenticatedSchoolExamsRoute,
   AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
   AuthenticatedSchoolFeesBillingRoute: AuthenticatedSchoolFeesBillingRoute,
