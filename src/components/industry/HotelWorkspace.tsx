@@ -18,6 +18,9 @@ import { HotelCommandCentre } from "@/components/industry/HotelDashboard";
 import { BookingEngine, ChannelManager, RatesWorkspace } from "@/components/industry/HotelDistribution";
 import { EventsBoard, PreArrivalDesk } from "@/components/industry/HotelGuestServices";
 import { HospitalityCompliance } from "@/components/compliance/HospitalityCompliance";
+import { filterHotelNav, hotelRoleFor, isHotelOnly } from "@/lib/hotel-product";
+import { usePermissions } from "@/hooks/usePermissions";
+import { getWorkspaceMode } from "@/lib/workspace";
 
 const db: any = supabase;
 
@@ -84,6 +87,19 @@ export function HotelWorkspace({ screen }: { screen: string }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
+  const [hotelOnly, setHotelOnly] = useState(false);
+  const { roles, access } = usePermissions();
+  const hotelRole = useMemo(
+    () => hotelRoleFor([...(roles ?? []), (access as any)?.role_key ?? "", (access as any)?.is_owner ? "owner" : ""].filter(Boolean)),
+    [roles, access],
+  );
+
+  useEffect(() => {
+    let off = false;
+    getWorkspaceMode().then(({ mode }) => { if (!off) setHotelOnly(isHotelOnly(mode)); }).catch(() => {});
+    return () => { off = true; };
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -474,9 +490,25 @@ export function HotelWorkspace({ screen }: { screen: string }) {
     }
   };
 
+  const nav = useMemo(() => {
+    const filtered = filterHotelNav(HOTEL_NAV, hotelRole);
+    // never strand a user on a screen their role list would hide
+    return filtered.some((n) => n.to === screen) || filtered.length === 0 ? filtered : HOTEL_NAV;
+  }, [hotelRole, screen]);
+
   return (
-    <IndustryShell accent="hotel" product="SifoBooks Hotel" title={title} subtitle={subtitle} nav={HOTEL_NAV} active={screen}>
-      {body()}
+    <IndustryShell accent="hotel" product="SifoBooks Hotel" title={title} subtitle={subtitle} nav={nav} active={screen}>
+      <div className="space-y-4">
+        {hotelOnly ? (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+            <span className="font-semibold">Hotel-only workspace.</span>{" "}
+            Folios, payments and reports run on your property records. Hotel activity is not posted to a general ledger
+            until Accounting is switched on — nothing is posted silently.{" "}
+            <Link to="/modules" className="underline underline-offset-2">Switch on Accounting</Link>
+          </div>
+        ) : null}
+        {body()}
+      </div>
     </IndustryShell>
   );
 }

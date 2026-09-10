@@ -6,7 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only";
+export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only";
 
 export const WORKSPACE_MODES: {
   id: WorkspaceMode;
@@ -28,6 +28,13 @@ export const WORKSPACE_MODES: {
     description: "Restaurant POS, tables, kitchen, menu, reservations, delivery.",
     landing: "/restaurant",
     emoji: "🍽️",
+  },
+  {
+    id: "hotel_only",
+    label: "Hotel only",
+    description: "SifoHotel on its own — reservations, front desk, housekeeping and folios.",
+    landing: "/hotel",
+    emoji: "🏨",
   },
   {
     id: "payroll_only",

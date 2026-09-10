@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { activatePayrollOnly, upgradeFromPayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
+import { activateHotelOnly, upgradeFromHotelOnly, isHotelOnly } from "@/lib/hotel-product";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   head: () => ({ meta: [{ title: "Subscription — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -58,6 +59,29 @@ function SubscriptionPage() {
   };
 
   const payrollOnly = isPayrollOnly((company as any)?.workspace_mode);
+  const hotelOnly = isHotelOnly((company as any)?.workspace_mode);
+
+  const switchHotelOnly = async () => {
+    if (!company) return toast.error("Set up your company first");
+    setBusy("hotel_only");
+    try {
+      await activateHotelOnly({ companyId: company.id, userId });
+      toast.success("Hotel-only workspace activated");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch to Hotel only"); }
+    setBusy(null);
+  };
+
+  const switchFullSuiteFromHotel = async () => {
+    if (!company) return;
+    setBusy("full_suite_hotel");
+    try {
+      await upgradeFromHotelOnly({ companyId: company.id });
+      toast.success("Full SifoBooks switched on");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch on the full suite"); }
+    setBusy(null);
+  };
 
   const switchPayrollOnly = async () => {
     if (!company) return toast.error("Set up your company first");
@@ -160,6 +184,36 @@ function SubscriptionPage() {
               ) : (
                 <Button variant="outline" onClick={switchPayrollOnly} disabled={busy === "payroll_only"}>
                   {busy === "payroll_only" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Switching…</> : "Use Payroll only"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-2xl">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Product</div>
+              <div className="text-lg font-semibold">SifoHotel — Hotel only</div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Reservations, front desk, room rack, rates and packages, housekeeping, maintenance, folios, payments,
+                outlet sales, events and night audit — for hotels, lodges, guest houses, B&Bs, hostels and serviced
+                apartments. No POS, inventory or accounting setup needed first. Hotel activity only posts to the general
+                ledger once Accounting is switched on; nothing is posted silently. Your property history is kept either way.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">Pricing for Hotel only is quoted per property and room count — talk to us for a quote.</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {hotelOnly ? (
+                <>
+                  <span className="text-xs font-semibold text-emerald-700">Currently on Hotel only</span>
+                  <Button variant="outline" onClick={switchFullSuiteFromHotel} disabled={busy === "full_suite_hotel"}>
+                    {busy === "full_suite_hotel" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Switching…</> : "Upgrade to full SifoBooks"}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={switchHotelOnly} disabled={busy === "hotel_only"}>
+                  {busy === "hotel_only" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Switching…</> : "Use Hotel only"}
                 </Button>
               )}
             </div>
