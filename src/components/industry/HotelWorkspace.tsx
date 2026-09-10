@@ -18,6 +18,9 @@ import { HotelCommandCentre } from "@/components/industry/HotelDashboard";
 import { BookingEngine, ChannelManager, RatesWorkspace } from "@/components/industry/HotelDistribution";
 import { EventsBoard, PreArrivalDesk } from "@/components/industry/HotelGuestServices";
 import { HospitalityCompliance } from "@/components/compliance/HospitalityCompliance";
+import { filterHotelNav, hotelRoleFor, isHotelOnly } from "@/lib/hotel-product";
+import { usePermissions } from "@/hooks/usePermissions";
+import { getWorkspaceMode } from "@/lib/workspace";
 
 const db: any = supabase;
 
