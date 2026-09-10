@@ -20,6 +20,7 @@ import { Route as WorkerRouteRouteImport } from './routes/_worker/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoIndexRouteImport } from './routes/demo.index'
+import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as AuthenticatedWorkshopsRouteImport } from './routes/_authenticated/workshops'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTuckshopRouteImport } from './routes/_authenticated/tuckshop'
@@ -324,6 +325,11 @@ const DemoIndexRoute = DemoIndexRouteImport.update({
   id: '/demo/',
   path: '/demo/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedWorkshopsRoute = AuthenticatedWorkshopsRouteImport.update({
   id: '/workshops',
@@ -1858,6 +1864,7 @@ export interface FileRoutesByFullPath {
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
+  '/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo/': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
@@ -2114,6 +2121,7 @@ export interface FileRoutesByTo {
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
+  '/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
@@ -2379,6 +2387,7 @@ export interface FileRoutesById {
   '/_authenticated/tuckshop': typeof AuthenticatedTuckshopRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
+  '/_authenticated/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo/': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
@@ -2643,6 +2652,7 @@ export interface FileRouteTypes {
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
+    | '/workspace'
     | '/demo/'
     | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
@@ -2899,6 +2909,7 @@ export interface FileRouteTypes {
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
+    | '/workspace'
     | '/demo'
     | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
@@ -3163,6 +3174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tuckshop'
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
+    | '/_authenticated/workspace'
     | '/demo/'
     | '/.lovable/oauth/consent'
     | '/_authenticated/bill-detail/$id'
@@ -3415,6 +3427,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/demo/'
       preLoaderRoute: typeof DemoIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/workspace': {
+      id: '/_authenticated/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof AuthenticatedWorkspaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/workshops': {
       id: '/_authenticated/workshops'
@@ -5613,6 +5632,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTuckshopRoute: typeof AuthenticatedTuckshopRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
+  AuthenticatedWorkspaceRoute: typeof AuthenticatedWorkspaceRoute
   AuthenticatedBillDetailIdRoute: typeof AuthenticatedBillDetailIdRoute
   AuthenticatedBillPaymentDetailIdRoute: typeof AuthenticatedBillPaymentDetailIdRoute
   AuthenticatedHubHubRoute: typeof AuthenticatedHubHubRoute
@@ -5744,6 +5764,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTuckshopRoute: AuthenticatedTuckshopRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
+  AuthenticatedWorkspaceRoute: AuthenticatedWorkspaceRoute,
   AuthenticatedBillDetailIdRoute: AuthenticatedBillDetailIdRoute,
   AuthenticatedBillPaymentDetailIdRoute: AuthenticatedBillPaymentDetailIdRoute,
   AuthenticatedHubHubRoute: AuthenticatedHubHubRoute,

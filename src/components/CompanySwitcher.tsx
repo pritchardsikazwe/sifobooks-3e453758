@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { selectCompany } from "@/lib/workspace-context";
 
 type Company = { id: string; name: string; base_currency: string | null; country: string | null };
 
@@ -76,25 +77,23 @@ export function CompanySwitcher() {
   }, []);
 
   const switchTo = async (id: string) => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
     if (!companies.some(company => company.id === id)) {
       toast.error("You do not have access to that company");
       return;
     }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ active_company_id: id })
-      .eq("id", u.user.id);
-
-    if (error) return toast.error(error.message);
+    try {
+      // Re-checks membership server-side and drops any workspace preference
+      // held for the previous company.
+      await selectCompany(id);
+    } catch (e: any) {
+      return toast.error(e?.message ?? "Could not switch company");
+    }
 
     setActiveId(id);
     setOpen(false);
     toast.success("Switched company");
-    // Refresh app so pages re-read active company.
-    setTimeout(() => window.location.reload(), 250);
+    // Land through the resolver so company + workspace + role stay in step.
+    setTimeout(() => window.location.assign("/launch"), 250);
   };
 
   const create = async () => {

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { WORKER_NAV, can, loadPosContext, type PosContext } from "@/lib/pos-permissions";
+import { workerNavFor, loadPosContext, type PosContext } from "@/lib/pos-permissions";
 import { PosContextProvider } from "@/components/pos/PosContextProvider";
 import { verifyOwnPin } from "@/lib/cashier-auth.functions";
 
@@ -153,7 +153,8 @@ function WorkerShell() {
   }
 
 
-  const nav = WORKER_NAV.filter((n) => !n.feature || can(ctx, n.feature));
+  // Channel-aware: a retail till never shows Tables/Orders/Kitchen.
+  const nav = workerNavFor(ctx);
 
   return (
     <PosContextProvider value={ctx}>
