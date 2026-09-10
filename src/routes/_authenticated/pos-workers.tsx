@@ -123,6 +123,14 @@ function PosWorkers() {
     toast.success(`${who} removed`); load();
   };
 
+  const q = query.trim().toLowerCase();
+  const visible = rows.filter((r: any) => {
+    if (filter === "active" && !r.is_active) return false;
+    if (filter === "inactive" && r.is_active) return false;
+    if (!q) return true;
+    return `${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q);
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div>
