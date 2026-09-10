@@ -116,67 +116,133 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
 
     if (loading) return <div className="grid gap-3 md:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>;
 
+    const feeTone = (f: any) => (Number(f.balance) <= 0 ? "good" : Number(f.amount_paid) > 0 ? "warn" : "bad");
+
     switch (screen) {
       case "/school": {
         const withArrears = fees.filter((f: any) => Number(f.balance) > 0);
+        const collectionRate = billed ? (collected / billed) * 100 : 0;
+        const byClass = classes
+          .map((c: any) => ({ label: c.name, value: students.filter((s: any) => s.class_id === c.id).length }))
+          .sort((a: any, b: any) => b.value - a.value)
+          .slice(0, 8);
         return (
           <div className="space-y-4">
-            <StatGrid items={[
-              { label: "Learners", value: String(students.length), hint: `${students.filter((s: any) => (s.status ?? "").toLowerCase() === "active").length} active` },
-              { label: "Classes", value: String(classes.length) },
-              { label: "Fees collected", value: fmtMoney(collected), hint: `of ${fmtMoney(billed)} billed` },
-              { label: "Arrears", value: fmtMoney(arrears), hint: `${withArrears.length} fee accounts` },
-            ]} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Board title="Largest fee balances" hint="Follow up the learners who owe the most.">
-                <RecordTable
-                  columns={["Learner", "Term", "Billed", "Paid", "Balance"]}
-                  empty="No outstanding fee balances."
-                  rows={[...withArrears].sort((a, b) => Number(b.balance) - Number(a.balance)).slice(0, 10).map((f: any) => ({
-                    key: f.id,
-                    cells: [studentName.get(f.student_id) ?? "—", `${f.term} ${f.academic_year}`, fmtMoney(Number(f.amount_due)), fmtMoney(Number(f.amount_paid)), <span className="font-semibold tabular-nums">{fmtMoney(Number(f.balance))}</span>],
-                  }))}
-                />
-              </Board>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricTile label="Learners" value={String(students.length)} icon={GraduationCap} hint={`${students.filter((s: any) => (s.status ?? "").toLowerCase() === "active").length} active`} />
+              <MetricTile label="Classes" value={String(classes.length)} icon={BookOpen} />
+              <MetricTile label="Fees collected" value={fmtMoney(collected)} icon={Wallet} hint={`of ${fmtMoney(billed)} billed`} progress={collectionRate} tone="good" />
+              <MetricTile label="Arrears" value={fmtMoney(arrears)} icon={WalletCards} hint={`${withArrears.length} fee accounts`} tone={arrears > 0 ? "warn" : "good"} />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Donut value={collectionRate} label="Fee collection rate" caption="Share of everything billed to learners that has been received." accent="school" />
+              <Board title="Enrolment by class" hint="Learner numbers from your live register."><Bars items={byClass} /></Board>
               <Board title="Recent fee payments" hint="Latest receipts from learners.">
-                <RecordTable
-                  columns={["Receipt", "Learner", "Date", "Amount"]}
+                <Timeline
                   empty="No fee payments recorded."
-                  rows={payments.slice(0, 10).map((p: any) => ({
-                    key: p.id,
-                    cells: [p.receipt_no ?? "—", studentName.get(p.student_id) ?? "—", p.payment_date, fmtMoney(Number(p.amount))],
+                  items={payments.slice(0, 6).map((p: any) => ({
+                    key: p.id, when: p.payment_date,
+                    title: studentName.get(p.student_id) ?? "Learner",
+                    detail: `${p.method ?? "—"} · ${p.receipt_no ?? "no receipt no."}`,
+                    amount: fmtMoney(Number(p.amount)),
                   }))}
                 />
               </Board>
             </div>
+
+            <Board title="Largest fee balances" hint="Follow up the learners who owe the most — click through to their fee account.">
+              {withArrears.length === 0 ? (
+                <EmptyState title="No outstanding fees" message="Every fee account in your register is fully settled." action={{ label: "Bill fees", to: "/school/fees-billing" }} />
+              ) : (
+                <TileGrid>
+                  {[...withArrears].sort((a, b) => Number(b.balance) - Number(a.balance)).slice(0, 8).map((f: any) => (
+                    <Tile
+                      key={f.id}
+                      status={feeTone(f) as any}
+                      title={studentName.get(f.student_id) ?? "Learner"}
+                      subtitle={`${f.term} ${f.academic_year}`}
+                      meta={<>Owes {fmtMoney(Number(f.balance))} of {fmtMoney(Number(f.amount_due))}</>}
+                      badge={<StatusPill status={f.status} />}
+                    />
+                  ))}
+                </TileGrid>
+              )}
+            </Board>
           </div>
         );
       }
       case "/school/students": {
-        const rows = students.filter((s: any) => match(`${s.first_name} ${s.last_name} ${s.student_no} ${s.guardian_name ?? ""}`)).slice(0, 200);
+        const rows = students.filter((s: any) => match(`${s.first_name} ${s.last_name} ${s.student_no} ${s.guardian_name ?? ""}`)).slice(0, 60);
+        const balanceOf = (id: string) => fees.filter((f: any) => f.student_id === id).reduce((s: number, f: any) => s + Number(f.balance || 0), 0);
         return (
-          <Board title="Learner register" hint="Existing learners first — creation happens in Students." right={<div className="flex gap-2"><SearchBox value={q} onChange={setQ} /><Link to="/students" className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted">Manage learners</Link></div>}>
-            <RecordTable
-              columns={["Learner", "Student no.", "Class", "Guardian", "Boarding", "Status"]}
-              rows={rows.map((s: any) => ({
-                key: s.id,
-                cells: [`${s.first_name} ${s.last_name}`, s.student_no, className.get(s.class_id) ?? "—", s.guardian_name ?? "—", s.boarding ?? "—", <StatusPill status={s.status} />],
-              }))}
-            />
+          <Board title="Learner directory" hint="Existing learners first — click a learner card to open their record." right={<div className="flex gap-2"><SearchBox value={q} onChange={setQ} /><Link to="/students" className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted">+ New learner</Link></div>}>
+            {rows.length === 0 ? (
+              <EmptyState title="No learners match" message="Your learner register has no records matching this search yet." action={{ label: "Open students", to: "/students" }} />
+            ) : (
+              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {rows.map((s: any) => {
+                  const bal = balanceOf(s.id);
+                  return (
+                    <div key={s.id} className="flex items-center gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+                      <Avatar name={`${s.first_name} ${s.last_name}`} accent="school" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold">{s.first_name} {s.last_name}</div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {s.student_no} · {className.get(s.class_id) ?? "no class"}{s.boarding ? ` · ${s.boarding}` : ""}
+                        </div>
+                        <div className="mt-1"><StatusPill status={s.status} /></div>
+                      </div>
+                      <div className="text-right">
+                        <div className={cn("text-sm font-semibold tabular-nums", bal > 0 ? "text-amber-600" : "text-emerald-600")}>{fmtMoney(bal)}</div>
+                        <div className="text-[10px] uppercase text-muted-foreground">{bal > 0 ? "owing" : "clear"}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </Board>
         );
       }
       case "/school/academics": {
         const rows = classes.filter((c: any) => match(`${c.name} ${c.grade_level ?? ""} ${c.class_teacher ?? ""}`));
         return (
-          <Board title="Classes" hint="Learner counts come from your live learner register." right={<SearchBox value={q} onChange={setQ} />}>
-            <RecordTable
-              columns={["Class", "Grade", "Stream", "Class teacher", "Learners", "Capacity", "Status"]}
-              rows={rows.map((c: any) => ({
-                key: c.id,
-                cells: [c.name, c.grade_level ?? "—", c.stream ?? "—", c.class_teacher ?? "—", students.filter((s: any) => s.class_id === c.id).length, c.capacity ?? "—", <StatusPill status={c.status} />],
-              }))}
-            />
+          <Board title="Classes" hint="Learner counts and capacity come from your live register." right={<SearchBox value={q} onChange={setQ} />}>
+            {rows.length === 0 ? (
+              <EmptyState title="No classes yet" message="Classes you set up appear here with their teacher, learner count and capacity." action={{ label: "Open students", to: "/students" }} />
+            ) : (
+              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {rows.map((c: any) => {
+                  const count = students.filter((s: any) => s.class_id === c.id).length;
+                  const cap = Number(c.capacity ?? 0);
+                  const fill = cap ? Math.min(100, (count / cap) * 100) : 0;
+                  return (
+                    <div key={c.id} className="rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-base font-semibold">{c.name}</div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {c.grade_level ?? "—"}{c.stream ? ` · ${c.stream}` : ""} · {c.academic_year ?? "—"}
+                          </div>
+                        </div>
+                        <StatusPill status={c.status} />
+                      </div>
+                      <div className="mt-3 flex items-baseline justify-between text-sm">
+                        <span className="font-semibold tabular-nums">{count} learners</span>
+                        <span className="text-muted-foreground">{cap ? `of ${cap} places` : "no capacity set"}</span>
+                      </div>
+                      {cap ? (
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div className={cn("h-full rounded-full", fill > 95 ? "bg-rose-500" : fill > 80 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${fill}%` }} />
+                        </div>
+                      ) : null}
+                      <div className="mt-3 text-xs text-muted-foreground">Class teacher: {c.class_teacher ?? "—"}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </Board>
         );
       }
@@ -192,64 +258,130 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
         const rows = Array.from(guardians.entries()).filter(([, g]) => match(`${g.name} ${g.phone}`));
         return (
           <Board title="Guardians" hint="Built from the guardian details on your learner records." right={<SearchBox value={q} onChange={setQ} />}>
-            <RecordTable
-              columns={["Guardian", "Phone", "Email", "Learners"]}
-              empty="No guardian details captured on learner records yet."
-              rows={rows.map(([key, g]) => ({ key, cells: [g.name, g.phone, g.email, g.learners.join(", ")] }))}
-            />
+            {rows.length === 0 ? (
+              <EmptyState title="No guardian details yet" message="Guardian name, phone and email captured on learner records appear here." action={{ label: "Open students", to: "/students" }} />
+            ) : (
+              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {rows.map(([key, g]) => (
+                  <div key={key} className="flex items-start gap-3 rounded-2xl border p-4">
+                    <Avatar name={g.name} accent="school" />
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold">{g.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{g.phone} · {g.email}</div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {g.learners.map((l) => (
+                          <span key={l} className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">{l}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Board>
         );
       }
       case "/school/fees": {
-        const rows = fees.filter((f: any) => match(`${studentName.get(f.student_id) ?? ""} ${f.term} ${f.description ?? ""}`)).slice(0, 200);
+        const filtered = fees.filter((f: any) => match(`${studentName.get(f.student_id) ?? ""} ${f.term} ${f.description ?? ""}`));
+        const rows = filtered.slice(0, 200);
+        const overdue = fees.filter((f: any) => Number(f.balance) > 0 && f.due_date && new Date(f.due_date) < new Date());
         return (
           <div className="space-y-4">
-            <StatGrid items={[
-              { label: "Billed", value: fmtMoney(billed) },
-              { label: "Collected", value: fmtMoney(collected) },
-              { label: "Arrears", value: fmtMoney(arrears) },
-              { label: "Fee structures", value: String(structures.length) },
-            ]} />
-            <Board title="Learner fee accounts" hint="Each row is a real fee account. Fee receipts are separate from other cash receipts." right={<div className="flex gap-2"><SearchBox value={q} onChange={setQ} /><Link to="/school/fees-billing" className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Bill fees</Link></div>}>
-              <RecordTable
-                columns={["Learner", "Term", "Description", "Billed", "Paid", "Balance", "Status"]}
-                rows={rows.map((f: any) => ({
-                  key: f.id,
-                  cells: [studentName.get(f.student_id) ?? "—", `${f.term} ${f.academic_year}`, f.description ?? "—", fmtMoney(Number(f.amount_due)), fmtMoney(Number(f.amount_paid)), fmtMoney(Number(f.balance)), <StatusPill status={f.status} />],
-                }))}
-              />
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricTile label="Billed" value={fmtMoney(billed)} icon={ReceiptText} />
+              <MetricTile label="Collected" value={fmtMoney(collected)} icon={Wallet} tone="good" progress={billed ? (collected / billed) * 100 : 0} />
+              <MetricTile label="Arrears" value={fmtMoney(arrears)} icon={WalletCards} tone={arrears > 0 ? "warn" : "good"} />
+              <MetricTile label="Past due" value={String(overdue.length)} icon={CalendarCheck} tone={overdue.length ? "bad" : "good"} hint="Fee accounts past their due date" />
+            </div>
+            <Board title="Fee accounts" hint="Colour shows how much of each account is still owing. Fee receipts stay separate from general cash." right={<div className="flex gap-2"><SearchBox value={q} onChange={setQ} /><Link to="/school/fees-billing" className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Bill fees</Link></div>}>
+              {rows.length === 0 ? (
+                <EmptyState title="No fee accounts" message="Fee accounts raised against learners appear here with billed, paid and outstanding amounts." action={{ label: "Bill fees", to: "/school/fees-billing" }} />
+              ) : (
+                <>
+                  <TileGrid>
+                    {rows.slice(0, 8).map((f: any) => (
+                      <Tile
+                        key={f.id}
+                        status={feeTone(f) as any}
+                        title={studentName.get(f.student_id) ?? "Learner"}
+                        subtitle={`${f.term} ${f.academic_year} · due ${f.due_date ?? "—"}`}
+                        meta={<>{fmtMoney(Number(f.amount_paid))} paid of {fmtMoney(Number(f.amount_due))}</>}
+                        badge={<StatusPill status={f.status} />}
+                      />
+                    ))}
+                  </TileGrid>
+                  <div className="border-t">
+                    <RecordTable
+                      columns={["Learner", "Term", "Description", "Billed", "Paid", "Balance", "Status"]}
+                      rows={rows.map((f: any) => ({
+                        key: f.id,
+                        cells: [studentName.get(f.student_id) ?? "—", `${f.term} ${f.academic_year}`, f.description ?? "—", fmtMoney(Number(f.amount_due)), fmtMoney(Number(f.amount_paid)), fmtMoney(Number(f.balance)), <StatusPill status={f.status} />],
+                      }))}
+                    />
+                  </div>
+                </>
+              )}
             </Board>
           </div>
         );
       }
       case "/school/payments": {
         const rows = payments.filter((p: any) => match(`${studentName.get(p.student_id) ?? ""} ${p.receipt_no ?? ""}`)).slice(0, 200);
+        const received = rows.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+        const methodMix = Object.entries(
+          payments.reduce((m: Record<string, number>, p: any) => { m[p.method ?? "other"] = (m[p.method ?? "other"] ?? 0) + Number(p.amount || 0); return m; }, {}),
+        ).map(([label, value]) => ({ label, value: value as number }));
         return (
-          <Board title="Fee payments" hint="Student fee receipts — recorded against the learner's fee account, not as general cash." right={<SearchBox value={q} onChange={setQ} />}>
-            <RecordTable
-              columns={["Receipt", "Learner", "Date", "Method", "Reference", "Amount"]}
-              rows={rows.map((p: any) => ({
-                key: p.id,
-                cells: [p.receipt_no ?? "—", studentName.get(p.student_id) ?? "—", p.payment_date, p.method ?? "—", p.reference ?? "—", fmtMoney(Number(p.amount))],
-              }))}
-            />
-          </Board>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricTile label="Payments" value={String(payments.length)} icon={Wallet} />
+              <MetricTile label="Value shown" value={fmtMoney(received)} icon={ReceiptText} tone="good" />
+              <MetricTile label="Still owing" value={fmtMoney(arrears)} icon={WalletCards} tone={arrears > 0 ? "warn" : "good"} />
+              <MetricTile label="Collection rate" value={`${Math.round(billed ? (collected / billed) * 100 : 0)}%`} icon={BarChart3} />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Board title="How families pay" hint="Fee payment methods."><Bars items={methodMix} format={fmtMoney} /></Board>
+              <div className="lg:col-span-2">
+                <Board title="Fee payment history" hint="Student fee receipts, recorded against the learner's fee account." right={<SearchBox value={q} onChange={setQ} />}>
+                  <Timeline
+                    empty="No fee payments recorded."
+                    items={rows.slice(0, 15).map((p: any) => ({
+                      key: p.id, when: p.payment_date,
+                      title: studentName.get(p.student_id) ?? "Learner",
+                      detail: `${p.method ?? "—"} · ${p.receipt_no ?? "—"}${p.reference ? ` · ${p.reference}` : ""}`,
+                      amount: fmtMoney(Number(p.amount)),
+                    }))}
+                  />
+                </Board>
+              </div>
+            </div>
+          </div>
         );
       }
       case "/school/staff": {
-        const rows = staff.filter((s: any) => match(`${s.first_name} ${s.last_name} ${s.employee_code ?? ""}`)).slice(0, 200);
+        const rows = staff.filter((s: any) => match(`${s.first_name} ${s.last_name} ${s.employee_code ?? ""}`)).slice(0, 60);
         return (
           <Board title="Staff" hint="Your payroll employee records." right={<div className="flex gap-2"><SearchBox value={q} onChange={setQ} /><Link to="/employees" className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted">Manage staff</Link></div>}>
-            <RecordTable
-              columns={["Staff member", "Code", "Email", "Phone", "Status"]}
-              rows={rows.map((s: any) => ({
-                key: s.id,
-                cells: [`${s.first_name} ${s.last_name}`, s.employee_code ?? "—", s.email ?? "—", s.phone ?? "—", <StatusPill status={s.status ?? "active"} />],
-              }))}
-            />
+            {rows.length === 0 ? (
+              <EmptyState title="No staff match" message="Teaching and support staff on your payroll appear here." action={{ label: "Open employees", to: "/employees" }} />
+            ) : (
+              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {rows.map((s: any) => (
+                  <div key={s.id} className="flex items-center gap-3 rounded-2xl border p-4">
+                    <Avatar name={`${s.first_name} ${s.last_name}`} accent="school" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold">{s.first_name} {s.last_name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{s.employee_code ?? "—"} · {s.email ?? s.phone ?? "—"}</div>
+                    </div>
+                    <StatusPill status={s.status ?? "active"} />
+                  </div>
+                ))}
+              </div>
+            )}
           </Board>
         );
       }
+
       default:
         return (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
