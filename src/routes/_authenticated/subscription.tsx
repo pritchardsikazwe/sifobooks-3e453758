@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { activatePayrollOnly, upgradeFromPayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
+import { activateHotelOnly, upgradeFromHotelOnly, isHotelOnly } from "@/lib/hotel-product";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   head: () => ({ meta: [{ title: "Subscription — SifoBooks" }, { name: "robots", content: "noindex" }] }),
