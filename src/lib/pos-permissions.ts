@@ -5,8 +5,11 @@
  * is enforced by RLS — this client copy only decides what to render.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { loadAccess } from "@/lib/rbac";
 
 export type PosRole = "cashier" | "waiter" | "supervisor" | "manager" | "kitchen";
+/** Which kind of till this worker is assigned to. Never inferred from a role. */
+export type PosChannel = "retail" | "restaurant";
 
 export const POS_ROLES: { key: PosRole; label: string }[] = [
   { key: "cashier", label: "Cashier" },
