@@ -203,7 +203,7 @@ export function SimpleCrud({
         next[f.name] = ((data ?? []) as any[]).map(r => ({
           id: String(r.id),
           code: spec.codeColumn ? (r[spec.codeColumn] ?? null) : null,
-          label: String(r[spec.labelColumn] ?? "—"),
+          label: labelCols.map(c => r[c]).filter(Boolean).join(" ").trim() || "—",
           meta: (spec.metaColumns ?? []).map(c => r[c]).filter(Boolean).join(" · ") || null,
         }));
       }
