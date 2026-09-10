@@ -223,10 +223,23 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
   };
   useEffect(() => { load(); }, [run.id]);
 
+  // Whoever prepared a run cannot approve it themselves — the database enforces
+  // this too, this only keeps the button honest.
+  const preparedByMe = !!run.prepared_by && run.prepared_by === userId;
+
   const setStatus = async (status: string) => {
-    const { error } = await supabase.from("payroll_runs").update({ status }).eq("id", run.id);
-    if (error) toast.error(error.message);
-    else { toast.success(`Run ${status}`); onChanged(); }
+    const patch: Record<string, unknown> =
+      status === "approved"
+        ? { status, approved_by: userId, approved_at: new Date().toISOString() }
+        : { status };
+    const { error } = await supabase.from("payroll_runs").update(patch as never).eq("id", run.id);
+    if (error) {
+      toast.error(
+        /approve/i.test(error.message) && /prepar/i.test(error.message)
+          ? "The person who prepared this run cannot approve it. Ask another authorised user to approve."
+          : error.message,
+      );
+    } else { toast.success(`Run ${status}`); onChanged(); }
   };
 
   const ledgerLines = (): PayrollJournalLine[] => {
