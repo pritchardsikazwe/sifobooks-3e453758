@@ -13,6 +13,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 export const Route = createFileRoute("/_authenticated/bank-accounts")({
   head: () => ({ meta: [{ title: "Bank Accounts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -169,15 +170,19 @@ function Page() {
 
   return (
     <div className="px-6 py-6 max-w-7xl">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Landmark className="h-6 w-6 text-emerald-700" /> Bank Accounts</h1>
-          <p className="text-sm text-muted-foreground">Manage multiple bank accounts, currencies, and opening balances.</p>
-        </div>
-        <div className="flex gap-2">
-          <ExportMenu rows={exportRows} filename="bank-accounts" title="Bank Accounts" />
-          <Button onClick={openNew} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New Account</Button>
-        </div>
+      <div className="mb-4">
+        <SifoModuleHeader
+          module="accounting"
+          icon={Landmark}
+          title="Bank Accounts"
+          description="Select an account to see its balance and recent transactions. Manage currencies and opening balances."
+          breadcrumbs={[{ label: "Finance", to: "/banking" }, { label: "Bank Accounts" }]}
+          showTabs={false}
+          actions={<>
+            <ExportMenu rows={exportRows} filename="bank-accounts" title="Bank Accounts" />
+            <Button onClick={openNew} variant="save" size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" /> New Account</Button>
+          </>}
+        />
       </div>
 
       {loading ? (

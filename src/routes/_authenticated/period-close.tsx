@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -89,15 +90,14 @@ function PeriodClose() {
     <div className="min-h-full bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
-          <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <CalendarClock className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">Period Close</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Control accounting periods and protect posted financial history.</p>
-            </div>
-          </div>
+          <SifoModuleHeader
+            module="accounting"
+            icon={CalendarClock}
+            title="Period Close"
+            description="Control accounting periods and protect posted financial history."
+            breadcrumbs={[{ label: "Finance", to: "/banking" }, { label: "Period Close" }]}
+            showTabs={false}
+          />
         </div>
 
         <Card>

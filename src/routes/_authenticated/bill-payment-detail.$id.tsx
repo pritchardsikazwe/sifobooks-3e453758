@@ -28,15 +28,15 @@ function BillPaymentDetailPage() {
       if (error) toast.error(error.message);
       setPayment(data);
       if (data) {
+        // Payments always store the settled bill, so link directly — no reference guessing.
         const row = data as Record<string, any>;
-        const candidates = ["bill_id", "invoice_id"].filter(k => row[k]);
-        if (candidates.length) {
-          const key = candidates[0];
-          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("id", row[key!]);
+        if (row.bill_id) {
+          const { data: linked } = await supabase.from("bills")
+            .select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status")
+            .eq("id", row.bill_id);
           setBills(linked ?? []);
         } else {
-          const { data: linked } = await supabase.from("bills").select("id,bill_number,supplier_invoice_number,bill_date,due_date,total,amount_paid,balance_due,status").eq("bill_number", row.reference ?? "");
-          setBills(linked ?? []);
+          setBills([]);
         }
       }
       setLoading(false);

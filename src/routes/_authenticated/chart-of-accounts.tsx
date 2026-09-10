@@ -16,6 +16,7 @@ import {
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 
 export const Route = createFileRoute("/_authenticated/chart-of-accounts")({
   head: () => ({ meta: [{ title: "Chart of Accounts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -61,6 +62,29 @@ function ChartOfAccountsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ account_code: "", account_name: "", account_type: "expense", description: "" });
   const [saving, setSaving] = useState(false);
+  const [drawer, setDrawer] = useState<Row | null>(null);
+  const [entries, setEntries] = useState<any[]>([]);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+
+  // Account drill-down: the posted journal lines that make up this balance.
+  useEffect(() => {
+    if (!drawer) { setEntries([]); return; }
+    let cancelled = false;
+    (async () => {
+      setEntriesLoading(true);
+      const { data, error } = await supabase.from("journal_lines")
+        .select("id, debit, credit, description, journal_entries!inner(id, entry_number, entry_date, reference, description, status)")
+        .eq("account_id", drawer.account_id)
+        .order("entry_date", { referencedTable: "journal_entries", ascending: false })
+        .limit(50);
+      if (cancelled) return;
+      if (error) toast.error(error.message);
+      setEntries(data ?? []);
+      setEntriesLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [drawer]);
+
 
   const load = async () => {
     setLoading(true);
@@ -160,8 +184,8 @@ function ChartOfAccountsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {TYPES.map(t => (
           <Card key={t.value} className="p-3">
-            <div className="text-xs text-slate-500">{t.label}</div>
-            <div className="text-lg font-semibold text-slate-900">{fmtMoney(totals[t.value] ?? 0)}</div>
+            <div className="text-xs text-muted-foreground">{t.label}</div>
+            <div className="text-lg font-semibold text-foreground">{fmtMoney(totals[t.value] ?? 0)}</div>
           </Card>
         ))}
       </div>
@@ -169,7 +193,7 @@ function ChartOfAccountsPage() {
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-slate-400" />
+            <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
             <Input className="pl-8" placeholder="Search code or name…" value={q} onChange={e => setQ(e.target.value)} />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -182,8 +206,8 @@ function ChartOfAccountsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-slate-500 uppercase border-b">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="text-xs text-muted-foreground uppercase border-b">
               <tr>
                 <th className="text-left py-2">Code</th>
                 <th className="text-left">Account</th>
@@ -196,33 +220,33 @@ function ChartOfAccountsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {loading && <tr><td colSpan={8} className="py-6 text-center text-slate-400"><Loader2 className="h-4 w-4 animate-spin inline mr-1" />Loading…</td></tr>}
-              {!loading && !filtered.length && <tr><td colSpan={8} className="py-6 text-center text-slate-400">No accounts.</td></tr>}
+              {loading && <tr><td colSpan={8} className="py-6 text-center text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin inline mr-1" />Loading…</td></tr>}
+              {!loading && !filtered.length && <tr><td colSpan={8} className="py-6 text-center text-muted-foreground">No accounts.</td></tr>}
               {filtered.map(r => (
-                <tr key={r.account_id} className="hover:bg-slate-50">
-                  <td className="py-1.5 text-slate-500">{r.account_code}</td>
-                  <td className="font-medium text-slate-900">
-                    <div className="flex items-center gap-1.5">
-                      <span>{r.account_name}</span>
+                <tr key={r.account_id} className="hover:bg-muted/40 cursor-pointer" onClick={() => setDrawer(r)}>
+                  <td className="py-1.5 text-muted-foreground">{r.account_code}</td>
+                  <td className="font-medium text-foreground">
+                    <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                      <span className="cursor-pointer" onClick={() => setDrawer(r)}>{r.account_name}</span>
                       {(r.purpose || r.normal_balance) && (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <button className="text-slate-400 hover:text-emerald-600" aria-label={`About ${r.account_name}`}>
+                            <button className="text-muted-foreground hover:text-primary" aria-label={`About ${r.account_name}`}>
                               <Info className="h-3.5 w-3.5" />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent side="right" className="w-80 text-xs">
-                            <div className="font-semibold text-slate-900 mb-1">{r.account_code} · {r.account_name}</div>
+                            <div className="font-semibold text-foreground mb-1">{r.account_code} · {r.account_name}</div>
                             {r.normal_balance && (
                               <div className="mb-2">
-                                <Badge variant="secondary" className={r.normal_balance === "Dr" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}>
+                                <Badge variant="secondary">
                                   Normal balance: {r.normal_balance === "Dr" ? "Debit (Dr)" : "Credit (Cr)"}
                                 </Badge>
                               </div>
                             )}
-                            {r.purpose && <p className="text-slate-600 leading-relaxed">{r.purpose}</p>}
+                            {r.purpose && <p className="text-muted-foreground leading-relaxed">{r.purpose}</p>}
                             <div className="mt-3 pt-2 border-t">
-                              <Link to="/learn/accounting-basics" className="text-emerald-700 hover:underline">Learn Dr/Cr rules →</Link>
+                              <Link to="/learn/accounting-basics" className="text-primary hover:underline">Learn Dr/Cr rules →</Link>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -231,16 +255,16 @@ function ChartOfAccountsPage() {
                   </td>
                   <td>
                     <Badge className={TYPE_COLOR[r.account_type] ?? ""} variant="secondary">{r.account_type}</Badge>
-                    {r.normal_balance && <span className="ml-1 text-[10px] text-slate-400">{r.normal_balance}</span>}
+                    {r.normal_balance && <span className="ml-1 text-[10px] text-muted-foreground">{r.normal_balance}</span>}
                   </td>
-                  <td className="text-right">{r.total_debit > 0 ? fmtMoney(r.total_debit) : ""}</td>
-                  <td className="text-right">{r.total_credit > 0 ? fmtMoney(r.total_credit) : ""}</td>
-                  <td className="text-right font-semibold">{fmtMoney(r.balance)}</td>
-                  <td className="text-right text-slate-500">{r.entry_count}</td>
+                  <td className="text-right tabular-nums">{r.total_debit > 0 ? fmtMoney(r.total_debit) : ""}</td>
+                  <td className="text-right tabular-nums">{r.total_credit > 0 ? fmtMoney(r.total_credit) : ""}</td>
+                  <td className="text-right font-semibold tabular-nums">{fmtMoney(r.balance)}</td>
+                  <td className="text-right text-muted-foreground">{r.entry_count}</td>
                   <td className="text-right">
-                    <Link to="/reports/account-transactions" search={{ account: r.account_id } as any} className="inline-flex items-center gap-1 text-emerald-600 hover:underline text-xs">
-                      <FileText className="h-3.5 w-3.5" />View
-                    </Link>
+                    <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={e => { e.stopPropagation(); setDrawer(r); }}>
+                      <FileText className="h-3.5 w-3.5 mr-1" />View
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -248,6 +272,59 @@ function ChartOfAccountsPage() {
           </table>
         </div>
       </Card>
+
+      <DetailDrawer
+        open={!!drawer}
+        onOpenChange={v => !v && setDrawer(null)}
+        title={drawer ? `${drawer.account_code} · ${drawer.account_name}` : ""}
+        subtitle={drawer ? `${drawer.account_type}${drawer.normal_balance ? ` · normal balance ${drawer.normal_balance}` : ""}` : ""}
+        meta={drawer && <Badge variant="secondary" className={TYPE_COLOR[drawer.account_type] ?? ""}>{drawer.account_type}</Badge>}
+        footer={drawer && (
+          <Link to="/reports/account-transactions" search={{ account: drawer.account_id } as any}>
+            <Button size="sm" variant="outline"><FileText className="h-3.5 w-3.5 mr-1.5" />Full account report</Button>
+          </Link>
+        )}
+      >
+        {drawer && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="p-3"><div className="text-xs text-muted-foreground">Debits</div><div className="font-semibold tabular-nums">{fmtMoney(drawer.total_debit)}</div></Card>
+              <Card className="p-3"><div className="text-xs text-muted-foreground">Credits</div><div className="font-semibold tabular-nums">{fmtMoney(drawer.total_credit)}</div></Card>
+              <Card className="p-3"><div className="text-xs text-muted-foreground">Balance</div><div className="font-semibold tabular-nums">{fmtMoney(drawer.balance)}</div></Card>
+            </div>
+            {drawer.purpose && (
+              <DrawerSection title="What this account is for">
+                <DrawerField label="Purpose">{drawer.purpose}</DrawerField>
+              </DrawerSection>
+            )}
+            <DrawerSection title="Recent journal entries">
+              {entriesLoading ? (
+                <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+              ) : entries.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No posted entries on this account yet.</div>
+              ) : (
+                <div className="space-y-1">
+                  {entries.map(l => {
+                    const je = l.journal_entries;
+                    return (
+                      <Link key={l.id} to="/journal-entry/$id" params={{ id: je.id }} onClick={() => setDrawer(null)}
+                        className="flex items-center justify-between gap-3 border-b border-border/60 py-1.5 text-xs last:border-0 hover:bg-muted/40">
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{l.description ?? je.description ?? "—"}</span>
+                          <span className="text-muted-foreground">{je.entry_date} · {je.entry_number}{je.reference ? ` · ${je.reference}` : ""} · {je.status}</span>
+                        </span>
+                        <span className="shrink-0 tabular-nums">
+                          {Number(l.debit || 0) > 0 ? `Dr ${fmtMoney(l.debit)}` : `Cr ${fmtMoney(l.credit)}`}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </DrawerSection>
+          </div>
+        )}
+      </DetailDrawer>
     </div>
   );
 }
