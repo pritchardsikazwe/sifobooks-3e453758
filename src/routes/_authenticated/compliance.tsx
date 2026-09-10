@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AppNav } from "@/components/AppNav";
 import { STATUTORY_BODIES, bodyByCode } from "@/lib/compliance-bodies";
 import { PAYE_BANDS_MONTHLY, NAPSA, NHIMA, SDL, WCF, VAT, TURNOVER_TAX, WHT, INCOME_TAX, FILING_CALENDAR, PORTALS, ZAMBIA_TAX_YEAR } from "@/lib/zambia-tax";
 import { toast } from "sonner";
@@ -59,7 +58,7 @@ function CompliancePage() {
   ];
   if (open) return <div className="p-4 sm:p-6"><NewObligationForm onCancel={() => setOpen(false)} onCreated={() => { setOpen(false); load(); }} /></div>;
   return <div className="min-h-screen bg-muted/30">
-    <header className="border-b bg-background"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8"><div className="flex items-center gap-4"><Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link><div><h1 className="text-xl font-semibold tracking-tight">{businessName || "Compliance Centre"}</h1><p className="text-xs text-muted-foreground">Zambian statutory compliance, filing control and evidence</p></div></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button><AppNav /><Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button></div></div></header>
+    <header className="border-b bg-background"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8"><div className="flex items-center gap-4"><Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link><div><h1 className="text-xl font-semibold tracking-tight">{businessName || "Compliance Centre"}</h1><p className="text-xs text-muted-foreground">Zambian statutory compliance, filing control and evidence</p></div></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button><Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button></div></div></header>
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-7 sm:px-6 lg:px-8">
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <HealthCard label="Compliance health" value={`${health}%`} icon={<ShieldCheck className="h-5 w-5" />} detail={health >= 90 ? "Excellent control" : health >= 70 ? "Needs attention" : "Action required"} />

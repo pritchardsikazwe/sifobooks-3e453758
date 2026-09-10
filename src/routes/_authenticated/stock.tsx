@@ -11,7 +11,6 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AppNav } from "@/components/AppNav";
 import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
@@ -111,7 +110,6 @@ function StockPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <AppNav />
             <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
             <Button size="sm" className="h-9" variant="save" onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> New item</Button>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
