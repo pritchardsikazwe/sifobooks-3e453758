@@ -15,6 +15,7 @@ import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { offlineInsert } from "@/lib/offline-queue";
 import { AccountSelector, type CoaAccount } from "@/components/selectors/AccountSelector";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
