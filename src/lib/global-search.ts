@@ -36,8 +36,8 @@ export async function searchRecords(term: string, limitPer = 5): Promise<SearchH
   const p = like(q);
   const L = limitPer;
 
-  const safe = async <T,>(fn: () => Promise<{ data: T[] | null }>): Promise<T[]> => {
-    try { return (await fn()).data ?? []; } catch { return []; }
+  const safe = async <T,>(fn: () => PromiseLike<{ data: unknown }>): Promise<T[]> => {
+    try { return (((await fn()).data ?? []) as T[]); } catch { return []; }
   };
 
   const [
