@@ -137,5 +137,10 @@ function LeavePage() {
         ]}
       />
     </div>
-  ),
+  );
+}
+
+export const Route = createFileRoute("/_authenticated/leave")({
+  head: () => ({ meta: [{ title: "Leave Management — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: LeavePage,
 });
