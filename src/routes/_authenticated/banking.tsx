@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AppNav } from "@/components/AppNav";
 import { parseStatement, type ParsedTxn } from "@/lib/statement-parser";
 import { postBankAllocation, reverseBankAllocation } from "@/lib/bank-posting";
 import { formatMoney } from "@/lib/currency";
@@ -399,7 +398,6 @@ function BankingPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <AppNav />
             <Button variant="ghost" size="icon" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
