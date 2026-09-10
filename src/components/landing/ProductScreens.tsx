@@ -98,7 +98,7 @@ function Kpi({ label, value, delta, tone = "mint" }: { label: string; value: str
   return (
     <div className="rounded-lg border border-sifo-line/70 bg-sifo-ink/70 p-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sifo-haze/70">{label}</p>
-      <p className="mt-1 whitespace-nowrap font-display text-[0.95rem] font-bold tracking-tight text-white sm:text-lg">{value}</p>
+      <p className="mt-1 whitespace-nowrap font-display text-[0.9rem] font-bold tracking-tight text-white sm:text-base lg:text-lg">{value}</p>
       {delta ? <p className="mt-0.5 text-[9.5px] font-semibold" style={{ color: c }}>{delta}</p> : null}
       <div className="mt-2 h-0.5 w-full rounded bg-white/5"><div className="h-0.5 rounded" style={{ width: "62%", background: c }} /></div>
     </div>
