@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { toast } from "sonner";
 import { Calculator, Download, Landmark, Smartphone, FileSpreadsheet } from "lucide-react";
 import { solveBasicFromNet, computePayslip, NAPSA_CAP } from "@/lib/payroll";
@@ -80,6 +81,12 @@ function StatutoryExports() {
       .then(({ data }) => { setRuns(data ?? []); if (!runId && data?.[0]) setRunId(data[0].id); });
   }, []);
 
+  const runOptions = useMemo<EntityOption[]>(() => runs.map(r => ({
+    id: r.id, code: r.run_number,
+    label: `${String(r.period_month).padStart(2, "0")}/${r.period_year}`,
+    meta: "Existing payroll run",
+  })), [runs]);
+
   const period = useMemo(() => {
     const r = runs.find(x => x.id === runId);
     return r ? `${String(r.period_month).padStart(2,"0")}/${r.period_year}` : "";
@@ -116,9 +123,19 @@ function StatutoryExports() {
       <Card className="p-4 flex flex-wrap items-end gap-3">
         <div>
           <Label className="text-xs">Payroll Run</Label>
-          <select className="mt-1 h-9 rounded-md border bg-background px-2 text-sm" value={runId} onChange={e => setRunId(e.target.value)}>
-            {runs.map(r => <option key={r.id} value={r.id}>{r.run_number} — {String(r.period_month).padStart(2,"0")}/{r.period_year}</option>)}
-          </select>
+          <div className="mt-1 min-w-[240px]">
+            <EntitySelector
+              label=""
+              options={runOptions}
+              value={runId || null}
+              onChange={v => setRunId(v ?? "")}
+              placeholder="Search payroll runs…"
+              recentKey="payroll-tools-run"
+              emptyTitle="No payroll runs found yet."
+              emptyActionLabel="Go to payroll"
+              emptyActionTo="/payroll"
+            />
+          </div>
         </div>
         <Button onClick={load} variant="outline">Load payslips</Button>
         {loaded && <span className="text-xs text-muted-foreground">{rows.length} payslips loaded for {period}</span>}

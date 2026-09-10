@@ -16,6 +16,7 @@ import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { PostingPreview } from "@/components/PostingPreview";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 
 export const Route = createFileRoute("/_authenticated/bill-payments")({
   head: () => ({ meta: [{ title: "Supplier Payments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -68,7 +69,7 @@ function BillPaymentsPage() {
     setLoading(true);
     const [{ data: ps, error }, { data: sup }, { data: bk }, { data: bl }] = await Promise.all([
       supabase.from("bill_payments").select("*, suppliers(name), bills(bill_number, supplier_invoice_number)").order("payment_date", { ascending: false }),
-      supabase.from("suppliers").select("id, name").order("name"),
+      supabase.from("suppliers").select("id, name, phone, email, tpin").order("name"),
       supabase.from("bank_accounts").select("id, name, account_number, cashbook_type").eq("is_active", true).order("name"),
       supabase.from("bills").select("id, bill_number, supplier_invoice_number, bill_date, due_date, total, amount_paid, balance_due, status, supplier_id")
         .gt("balance_due", 0).order("due_date", { ascending: true }),
@@ -79,6 +80,14 @@ function BillPaymentsPage() {
     setLoading(false);
   };
   useEffect(() => { void load(); }, []);
+
+  const supplierOptions = useMemo<EntityOption[]>(() => suppliers.map((sp: any) => ({
+    id: sp.id, label: sp.name,
+    meta: [sp.phone, sp.email, sp.tpin ? `TPIN ${sp.tpin}` : null].filter(Boolean).join(" · ") || null,
+  })), [suppliers]);
+  const bankOptions = useMemo<EntityOption[]>(() => banks.map((b: any) => ({
+    id: b.id, code: b.account_number ?? null, label: b.name, meta: b.cashbook_type ?? null,
+  })), [banks]);
 
   const billsForSupplier = useMemo(
     () => (supplierId ? openBills.filter(b => b.supplier_id === supplierId) : []),
@@ -211,16 +220,17 @@ function BillPaymentsPage() {
         >
           <SifoFormSection title="Payment details">
             <SifoField label="Supplier" required wide>
-              {suppliers.length === 0 ? (
-                <div className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
-                  No suppliers yet. Add one on the Suppliers page first.
-                </div>
-              ) : (
-                <Select value={supplierId} onValueChange={v => { setSupplierId(v); setAlloc({}); }}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Choose supplier" /></SelectTrigger>
-                  <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
-              )}
+              <EntitySelector
+                label=""
+                options={supplierOptions}
+                value={supplierId || null}
+                onChange={v => { setSupplierId(v ?? ""); setAlloc({}); }}
+                placeholder="Search suppliers by name, phone or TPIN…"
+                recentKey="bill-payment-supplier"
+                emptyTitle="No suppliers found for this company yet."
+                emptyActionLabel="Go to suppliers"
+                emptyActionTo="/suppliers"
+              />
             </SifoField>
             <SifoField label="Payment date" required>
               <Input type="date" className="h-11" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
@@ -233,10 +243,17 @@ function BillPaymentsPage() {
             </SifoField>
             {method === "bank" && (
               <SifoField label="Bank account" required wide>
-                <Select value={bankAccountId} onValueChange={setBankAccountId}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Choose the account the money leaves" /></SelectTrigger>
-                  <SelectContent>{banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.account_number ? ` — ${b.account_number}` : ""}</SelectItem>)}</SelectContent>
-                </Select>
+                <EntitySelector
+                  label=""
+                  options={bankOptions}
+                  value={bankAccountId || null}
+                  onChange={v => setBankAccountId(v ?? "")}
+                  placeholder="Search the account the money leaves…"
+                  recentKey="bill-payment-bank"
+                  emptyTitle="No active bank accounts found."
+                  emptyActionLabel="Set up bank accounts"
+                  emptyActionTo="/bank-accounts"
+                />
               </SifoField>
             )}
             <SifoField label="Reference">

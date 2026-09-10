@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { printHtmlDocument } from "@/services/printDocument";
 import { fmtMoney } from "@/lib/format";
 import { ShareDoc } from "@/components/ShareDoc";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
 import { ExportMenu } from "@/lib/exports";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
@@ -94,7 +95,7 @@ function ReceiptsPage() {
     setLoading(true);
     const [{ data: rs }, { data: cs }, { data: bs }, { data: invs }] = await Promise.all([
       supabase.from("receipts").select("*, customers(name), invoices(number)").order("receipt_date", { ascending: false }),
-      supabase.from("customers").select("id, name").eq("active", true).order("name"),
+      supabase.from("customers").select("id, name, phone, email, tpin").eq("active", true).order("name"),
       supabase.from("bank_accounts").select("id, name, account_number, currency, cashbook_type").eq("is_active", true).order("name"),
       supabase.from("invoices").select("id, number, customer_id, total, balance_due, due_date, status, currency").gt("balance_due", 0).order("issue_date", { ascending: false }),
     ]);
@@ -120,6 +121,20 @@ function ReceiptsPage() {
   }, [receipts, range, q, tab]);
 
   const invoicesForCustomer = useMemo(() => customerId ? openInvoices.filter(i => i.customer_id === customerId) : [], [customerId, openInvoices]);
+
+  const [quickAddCustomer, setQuickAddCustomer] = useState(false);
+  const customerOptions = useMemo<EntityOption[]>(() => customers.map((c: any) => ({
+    id: c.id, label: c.name,
+    meta: [c.phone, c.email, c.tpin ? `TPIN ${c.tpin}` : null].filter(Boolean).join(" · ") || null,
+  })), [customers]);
+  const invoiceOptions = useMemo<EntityOption[]>(() => invoicesForCustomer.map((i: any) => ({
+    id: i.id, code: i.number, label: i.number,
+    meta: "Outstanding invoice", trailing: fmtMoney(i.balance_due, i.currency),
+  })), [invoicesForCustomer]);
+  const bankOptions = useMemo<EntityOption[]>(() => banks.map((b: any) => ({
+    id: b.id, code: b.account_number ?? null, label: b.name,
+    meta: [b.cashbook_type, b.currency].filter(Boolean).join(" · ") || null,
+  })), [banks]);
   const overdue = openInvoices.filter(i => i.due_date && i.due_date < today);
   const overdueTotal = overdue.reduce((s, i) => s + Number(i.balance_due || 0), 0);
 
@@ -297,28 +312,33 @@ function ReceiptsPage() {
             {receiptType === "customer" ? (
               <>
                 <SifoField label="Customer" required wide>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <QuickAddCustomer onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); }} />
-                  </div>
-                  {customers.length === 0 ? (
-                    <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground text-center">
-                      No customers yet. Click <span className="font-semibold text-foreground">New customer</span> above.
-                    </div>
-                  ) : (
-                    <Select value={customerId} onValueChange={v => { setCustomerId(v); setInvoiceId(""); }}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="Choose customer" /></SelectTrigger>
-                      <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  )}
+                  <EntitySelector
+                    label=""
+                    options={customerOptions}
+                    value={customerId || null}
+                    onChange={v => { setCustomerId(v ?? ""); setInvoiceId(""); }}
+                    placeholder="Search customers by name, phone or TPIN…"
+                    recentKey="receipt-customer"
+                    emptyTitle="No customers found for this company yet."
+                    createLabel="New customer"
+                    onCreate={() => setQuickAddCustomer(true)}
+                  />
+                  <QuickAddCustomer
+                    open={quickAddCustomer}
+                    onOpenChange={setQuickAddCustomer}
+                    onCreated={(c) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); setQuickAddCustomer(false); }}
+                  />
                 </SifoField>
                 <SifoField label="Apply to invoice (optional)" wide>
-                  <Select value={invoiceId || "none"} onValueChange={v => setInvoiceId(v === "none" ? "" : v)}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Unallocated" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Unallocated / on account</SelectItem>
-                      {invoicesForCustomer.map(i => <SelectItem key={i.id} value={i.id}>{i.number} — bal {fmtMoney(i.balance_due, i.currency)}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <EntitySelector
+                    label=""
+                    options={invoiceOptions}
+                    value={invoiceId || null}
+                    onChange={v => setInvoiceId(v ?? "")}
+                    placeholder={customerId ? "Search outstanding invoices…" : "Select a customer first"}
+                    recentKey="receipt-invoice"
+                    emptyTitle={customerId ? "No outstanding invoices for this customer." : "Select a customer to list their invoices."}
+                  />
                 </SifoField>
               </>
             ) : (
@@ -340,13 +360,17 @@ function ReceiptsPage() {
               </Select>
             </SifoField>
             <SifoField label="Bank / cashbook">
-              <Select value={bankAccountId || "none"} onValueChange={v => setBankAccountId(v === "none" ? "" : v)}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="Default cash" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Default cash (1000)</SelectItem>
-                  {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.account_number ? ` — ${b.account_number}` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <EntitySelector
+                label=""
+                options={bankOptions}
+                value={bankAccountId || null}
+                onChange={v => setBankAccountId(v ?? "")}
+                placeholder="Search bank or cash accounts…"
+                recentKey="receipt-bank"
+                emptyTitle="No active bank or cash accounts found."
+                emptyActionLabel="Set up bank accounts"
+                emptyActionTo="/bank-accounts"
+              />
             </SifoField>
             <SifoField label="Voucher #">
               <Input className="h-11" value={voucherNo} onChange={e => setVoucherNo(e.target.value)} placeholder="Optional" />

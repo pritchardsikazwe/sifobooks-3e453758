@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { postCreditNoteLedger } from "@/lib/posting";
 import { ShareDoc } from "@/components/ShareDoc";
 import { ExportMenu } from "@/lib/exports";
@@ -56,13 +57,24 @@ function CreditNotesPage() {
     setLoading(true);
     const [{ data: cn }, { data: inv }, { data: cs }] = await Promise.all([
       supabase.from("credit_notes").select("*, customers(name), invoices(number)").order("issue_date", { ascending: false }),
-      supabase.from("invoices").select("id, number, customer_id, total, currency").order("issue_date", { ascending: false }),
-      supabase.from("customers").select("id, name").eq("active", true).order("name"),
+      supabase.from("invoices").select("id, number, customer_id, total, currency, issue_date, status").order("issue_date", { ascending: false }),
+      supabase.from("customers").select("id, name, phone, email, tpin").eq("active", true).order("name"),
     ]);
     setRows(cn ?? []); setInvoices(inv ?? []); setCustomers(cs ?? []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const [quickAddCustomer, setQuickAddCustomer] = useState(false);
+  const invoiceOptions = useMemo<EntityOption[]>(() => invoices.map((i: any) => ({
+    id: i.id, code: i.number, label: i.number,
+    meta: [i.issue_date, i.status].filter(Boolean).join(" · ") || null,
+    trailing: fmtMoney(i.total, i.currency),
+  })), [invoices]);
+  const customerOptions = useMemo<EntityOption[]>(() => customers.map((c: any) => ({
+    id: c.id, label: c.name,
+    meta: [c.phone, c.email, c.tpin ? `TPIN ${c.tpin}` : null].filter(Boolean).join(" · ") || null,
+  })), [customers]);
 
   const stats = useMemo(() => ({
     total: rows.length,
@@ -147,16 +159,36 @@ function CreditNotesPage() {
         >
           <SifoFormSection title="Details">
             <SifoField label="Against Invoice (optional)">
-              <Select value={invoiceId} onValueChange={setInvoiceId}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="— Pick invoice —" /></SelectTrigger>
-                <SelectContent>{invoices.map(i => <SelectItem key={i.id} value={i.id}>{i.number} · {fmtMoney(i.total, i.currency)}</SelectItem>)}</SelectContent>
-              </Select>
+              <EntitySelector
+                label=""
+                options={invoiceOptions}
+                value={invoiceId || null}
+                onChange={v => setInvoiceId(v ?? "")}
+                placeholder="Search existing invoices…"
+                recentKey="credit-note-invoice"
+                emptyTitle="No invoices found for this company yet."
+                emptyActionLabel="Go to invoices"
+                emptyActionTo="/invoices"
+              />
             </SifoField>
             <SifoField label="Customer">
-              <Select value={customerId} onValueChange={setCustomerId} disabled={!!invoiceId}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="— Select customer —" /></SelectTrigger>
-                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <EntitySelector
+                label=""
+                options={customerOptions}
+                value={customerId || null}
+                onChange={v => setCustomerId(v ?? "")}
+                disabled={!!invoiceId}
+                placeholder={invoiceId ? "Taken from the linked invoice" : "Search customers…"}
+                recentKey="credit-note-customer"
+                emptyTitle="No customers found for this company yet."
+                createLabel="New customer"
+                onCreate={() => setQuickAddCustomer(true)}
+              />
+              <QuickAddCustomer
+                open={quickAddCustomer}
+                onOpenChange={setQuickAddCustomer}
+                onCreated={(c: any) => { setCustomers(prev => [...prev, c]); setCustomerId(c.id); setQuickAddCustomer(false); }}
+              />
             </SifoField>
             <SifoField label="Issue Date" required>
               <Input type="date" className="h-11" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
