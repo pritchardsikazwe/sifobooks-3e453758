@@ -90,19 +90,35 @@ function PosWorkers() {
     load();
   };
 
-  const setPin = async (id: string, current: string | null) => {
-    const pin = window.prompt("Terminal PIN (4-8 digits, blank to remove)", current ?? "");
-    if (pin === null) return;
-    if (pin && !/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
-    const { error } = await supabase.from("employee_pos_permissions")
-      .update({ pin: pin || null, pin_locked: false, pin_set_at: pin ? new Date().toISOString() : null }).eq("id", id);
+  const setPin = async (id: string) => {
+    const pin = window.prompt("Terminal PIN (4-8 digits)") ?? "";
+    if (!pin) return;
+    if (!/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
+    const { data, error } = await supabase.rpc("set_cashier_pin", { _permission_id: id, _pin: pin });
     if (error) return toast.error(error.message);
-    toast.success(pin ? "PIN updated" : "PIN removed"); load();
+    if (!(data as any)?.ok) return toast.error("Could not update that PIN");
+    toast.success("PIN updated"); load();
+  };
+
+  const unlockPin = async (id: string) => {
+    const { error } = await supabase.rpc("set_cashier_pin_state", { _permission_id: id, _disabled: false, _unlock: true });
+    if (error) return toast.error(error.message);
+    toast.success("Terminal unlocked"); load();
   };
 
   const toggle = async (id: string, is_active: boolean) => {
-    await supabase.from("employee_pos_permissions").update({ is_active }).eq("id", id);
+    const { error } = await supabase.from("employee_pos_permissions").update({ is_active }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(is_active ? "Worker enabled" : "Worker disabled");
     load();
+  };
+
+  const removeWorker = async (row: any) => {
+    const who = row.full_name || row.email || "this worker";
+    if (!window.confirm(`Remove ${who} from the till? Their sales history stays intact, but they can no longer sign in.`)) return;
+    const { error } = await supabase.from("employee_pos_permissions").delete().eq("id", row.id);
+    if (error) return toast.error(error.message);
+    toast.success(`${who} removed`); load();
   };
 
   return (
