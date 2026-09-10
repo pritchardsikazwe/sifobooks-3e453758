@@ -20,6 +20,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ManagerAuthDialog, type OverrideAction } from "@/components/pos/ManagerAuthDialog";
 import {
   DEFAULT_SETTINGS, PRICE_LEVELS, closeShift, completeSale, computeTotals, currentShift,
+  posErrorMessage,
   ensureRegister, holdSale, listHeldSales, listRecentSales, loadCustomers, loadFavorites,
   loadProducts, loadSettings, openShift, priceFactor, recallSale, refundSale, round2,
   saveSettings, shiftSummary, toggleFavorite, todayMetrics, voidSale,
@@ -519,7 +520,7 @@ function RetailPos() {
             });
           }} />
         <Act label="QTY" icon={LayoutGrid} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
-        {can("cash_shift.open") && <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />}
+        {can("cash_shift.open") && <Act label="SHIFT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />}
         <Act label="REMOVE" icon={Trash2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
         <Act label="VOID" icon={Ban} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
         <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
