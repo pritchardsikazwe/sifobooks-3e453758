@@ -68,7 +68,9 @@ const REPORTS: Report[] = [
   { id: "accountant-pack", name: "Accountant Pack", description: "Consolidated year-end pack for review.", to: "/reports/accountant-pack", icon: FileBarChart, category: "financial" },
 
   // Sales
-  { id: "sales-by-customer", name: "Sales by Customer", description: "Revenue grouped by customer with totals.", to: "/reports/sales-by-customer", icon: Users2, category: "sales" },
+  { id: "sales-by-customer", name: "Sales by Customer", description: "Completed POS sales grouped by customer.", to: "/reports/sales-by-customer", icon: Users2, category: "sales" },
+  { id: "sales-by-item", name: "Sales by Item", description: "Quantity, net sales, VAT, gross and COGS per item.", to: "/reports/sales-by-item", icon: Package, category: "sales" },
+  { id: "sales-by-branch", name: "Sales by Branch", description: "Completed POS sales by branch or selling location.", to: "/reports/sales-by-branch", icon: Building2, category: "sales" },
   { id: "customer-statement", name: "Customer Statements", description: "Invoices, receipts and running balances.", to: "/reports/customer-statement", icon: Receipt, category: "customers" },
   { id: "aged-receivables", name: "Aged Receivables", description: "Outstanding invoices bucketed by age.", to: "/reports/aged-receivables", icon: Wallet, category: "customers" },
   { id: "invoices", name: "Invoices Register", description: "All invoices with status and balance.", to: "/invoices", icon: Receipt, category: "sales" },
