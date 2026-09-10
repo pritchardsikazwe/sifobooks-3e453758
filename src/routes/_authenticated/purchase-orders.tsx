@@ -52,6 +52,15 @@ export const Route = createFileRoute("/_authenticated/purchase-orders")({
         { label: "Receive", icon: Package, variant: "outline", className: "border-teal-300 text-teal-700 hover:bg-teal-50", show: r => ["approved", "partially_received"].includes(r.status), run: async (r, reload) => { if (await updateStatus("purchase_orders", r.id, "received")) reload(); } },
       ]}
       fields={[
+        {
+          name: "supplier_id", label: "Supplier", type: "lookup", required: true, group: "Document Details",
+          lookup: {
+            table: "suppliers", labelColumn: "name", codeColumn: "code",
+            metaColumns: ["tpin", "phone", "email"],
+            createTo: "/suppliers", createLabel: "New supplier",
+            emptyTitle: "No suppliers found for this company.",
+          },
+        },
         { name: "po_number", label: "PO Number", required: true, group: "Document Details" },
         { name: "order_date", label: "Order Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10), group: "Document Details" },
         { name: "expected_date", label: "Expected Date", type: "date", group: "Document Details" },
