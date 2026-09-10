@@ -39,11 +39,33 @@ export type AccountField = {
 };
 
 
+/**
+ * Pick an EXISTING tenant record (customer, supplier, item, warehouse, branch…).
+ * Selecting an existing record is always the default path; creating is secondary.
+ */
+export type LookupSpec = {
+  /** Table to read the current tenant's records from (RLS scoped). */
+  table: string;
+  /** Column shown as the option label. */
+  labelColumn: string;
+  /** Optional short code shown before the label (e.g. SKU, account code). */
+  codeColumn?: string;
+  /** Extra columns joined into the searchable secondary line. */
+  metaColumns?: string[];
+  orderBy?: string;
+  /** Route for the secondary "create new" action. */
+  createTo?: string;
+  createLabel?: string;
+  emptyTitle?: string;
+};
+
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "number" | "date" | "textarea" | "select";
+  type?: "text" | "number" | "date" | "textarea" | "select" | "lookup";
   options?: { value: string; label: string }[];
+  /** Required when type === "lookup". */
+  lookup?: LookupSpec;
   required?: boolean;
   defaultValue?: any;
   colSpan?: 1 | 2;
