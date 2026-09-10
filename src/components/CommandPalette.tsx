@@ -13,6 +13,7 @@ import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import { staffNav } from "@/lib/rbac";
 import { supabase } from "@/integrations/supabase/client";
+import { groupHits, searchRecords, type SearchHit } from "@/lib/global-search";
 
 const RECENT_KEY = "sifobooks.cmdk.recent";
 const MAX_RECENT = 8;
@@ -105,8 +106,29 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const canSeeDocs = !isStaff || has("accounting.view");
   const [recents, setRecents] = useState<Recent[]>([]);
   const [docs, setDocs] = useState<RecentDoc[]>([]);
+  const [term, setTerm] = useState("");
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
 
-  useEffect(() => { if (open) setRecents(loadRecents()); }, [open]);
+  useEffect(() => { if (open) setRecents(loadRecents()); else { setTerm(""); setHits([]); } }, [open]);
+
+  /* Live tenant-wide record search — RLS scopes every query to this company. */
+  useEffect(() => {
+    if (!open || !canSeeDocs) { setHits([]); return; }
+    const q = term.trim();
+    if (q.length < 2) { setHits([]); setSearching(false); return; }
+    setSearching(true);
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await searchRecords(q);
+        if (!cancelled) setHits(r);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 220);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [term, open, canSeeDocs]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,7 +176,11 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search actions, reports, pages, or recent records…" />
+      <CommandInput
+        value={term}
+        onValueChange={setTerm}
+        placeholder="Search customers, invoices, bills, items, journals, actions or reports…"
+      />
       <CommandList className="max-h-[70vh]">
         <CommandEmpty>
           <div className="flex flex-col items-center gap-1 py-4 text-sm text-muted-foreground">
@@ -162,6 +188,53 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
             No results. Try "invoice", "P&L", or a customer name.
           </div>
         </CommandEmpty>
+
+        {term.trim().length >= 2 && (
+          <>
+            <CommandGroup heading={searching ? "Searching your records…" : hits.length ? `Records matching “${term.trim()}”` : "No matching records"}>
+              {groupHits(hits).map((g) =>
+                g.hits.map((h) => (
+                  <CommandItem
+                    key={`${h.kind}:${h.id}`}
+                    value={`${term} ${h.group} ${h.title} ${h.subtitle ?? ""}`}
+                    onSelect={() => go(h.title, h.url, h.group)}
+                    className="items-start"
+                  >
+                    <span className="mr-2 mt-0.5 w-24 shrink-0 truncate text-[10px] uppercase tracking-wider text-muted-foreground">{h.group}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{h.title}</span>
+                      {h.subtitle && <span className="block truncate text-[11px] text-muted-foreground">{h.subtitle}</span>}
+                      <span className="mt-0.5 flex flex-wrap gap-1">
+                        {h.actions.map((a) => (
+                          <button
+                            key={a.label}
+                            type="button"
+                            className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); go(a.label, a.url, h.group); }}
+                          >
+                            {a.label}
+                          </button>
+                        ))}
+                      </span>
+                    </span>
+                    {h.amount != null && (
+                      <span className="ml-2 shrink-0 text-[11px] num text-muted-foreground">
+                        K{Number(h.amount).toLocaleString("en-ZM", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </CommandItem>
+                )),
+              )}
+              {!searching && hits.length === 0 && (
+                <CommandItem value={`${term} noresults`} disabled>
+                  <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Nothing found in your company records.</span>
+                </CommandItem>
+              )}
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
 
         {recents.length > 0 && (
           <>
