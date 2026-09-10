@@ -81,18 +81,31 @@ export function levelOf(ctx: PosContext | null, feature: PosFeature): Level {
 export const can = (ctx: PosContext | null, feature: PosFeature) => levelOf(ctx, feature) !== "none";
 export const canFully = (ctx: PosContext | null, feature: PosFeature) => levelOf(ctx, feature) === "full";
 
-/** Resolve the terminal context for the signed-in user. */
+/**
+ * Resolve the terminal context for the signed-in user.
+ *
+ * A worker can legitimately exist in more than one company, so the till row is
+ * chosen against the tenant the user is actually signed in to work for — never
+ * with a bare `.maybeSingle()`, which would silently pick an arbitrary tenant.
+ */
 export async function loadPosContext(): Promise<PosContext | null> {
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
   if (!user) return null;
 
-  const { data } = await supabase
-    .from("employee_pos_permissions")
-    .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
-    .eq("worker_user_id", user.id)
-    .eq("is_active", true)
-    .maybeSingle();
+  const [{ data: rows }, access] = await Promise.all([
+    supabase
+      .from("employee_pos_permissions")
+      .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
+      .eq("worker_user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }),
+    loadAccess().catch(() => null),
+  ]);
+
+  const list = (rows ?? []) as any[];
+  const tenant = access && !access.is_owner ? access.tenant_id : null;
+  const data = (tenant ? list.find((r) => r.user_id === tenant) : null) ?? list[0] ?? null;
 
   if (data) {
     return {
@@ -106,6 +119,11 @@ export async function loadPosContext(): Promise<PosContext | null> {
       pinSet: Boolean((data as any).pin_set_at) && !(data as any).pin_disabled,
       pinLocked: Boolean((data as any).pin_locked),
       permissionId: data.id as string,
+      channel: (access?.pos_channel as PosChannel | null) ?? null,
+      branchId: (data.branch_id as string | null) ?? access?.branch_id ?? null,
+      locationId: (data.location_id as string | null) ?? null,
+      registerId: (data.register_id as string | null) ?? null,
+      ambiguous: list.length > 1,
     };
   }
 
@@ -118,21 +136,41 @@ export async function loadPosContext(): Promise<PosContext | null> {
     displayName: user.email ?? "Manager",
     allow: [],
     deny: [],
+    channel: null,
+    branchId: null,
+    locationId: null,
+    registerId: null,
   };
 }
 
-/** Nav for the POS worker environment — never the accounting sidebar. */
-export const WORKER_NAV: { to: string; label: string; icon: string; feature?: PosFeature }[] = [
+/**
+ * Nav for the POS worker environment — never the accounting sidebar.
+ * `channel` limits an entry to one kind of till: a retail cashier must not be
+ * offered Tables/Orders/Kitchen just because they are a "cashier".
+ */
+export const WORKER_NAV: { to: string; label: string; icon: string; feature?: PosFeature; channel?: PosChannel }[] = [
   { to: "/w/pos", label: "POS", icon: "ShoppingCart", feature: "pos_sales" },
-  { to: "/w/tables", label: "Tables", icon: "LayoutGrid", feature: "tables" },
-  { to: "/w/orders", label: "Orders", icon: "ReceiptText", feature: "pos_sales" },
-  { to: "/w/kitchen", label: "Kitchen", icon: "ChefHat", feature: "kitchen_display" },
+  { to: "/w/tables", label: "Tables", icon: "LayoutGrid", feature: "tables", channel: "restaurant" },
+  { to: "/w/orders", label: "Orders", icon: "ReceiptText", feature: "pos_sales", channel: "restaurant" },
+  { to: "/w/kitchen", label: "Kitchen", icon: "ChefHat", feature: "kitchen_display", channel: "restaurant" },
   { to: "/w/sales", label: "My sales", icon: "ReceiptText", feature: "pos_sales" },
   { to: "/w/shift", label: "My shift", icon: "Clock", feature: "pos_sales" },
   { to: "/w/cash", label: "Cash", icon: "Banknote", feature: "cash_drawer" },
-  { to: "/w/returns", label: "Returns", icon: "Undo2", feature: "pos_sales" },
+  { to: "/w/returns", label: "Returns", icon: "Undo2", feature: "pos_sales", channel: "retail" },
   { to: "/w/lookup", label: "Lookup", icon: "Search", feature: "pos_sales" },
   { to: "/w/count", label: "Count", icon: "ClipboardList", feature: "pos_sales" },
   { to: "/w/stock", label: "Stock", icon: "Boxes", feature: "stock_view" },
   { to: "/w/reports", label: "Reports", icon: "BarChart3", feature: "reports" },
 ];
+
+/** Nav entries this terminal may show, given its channel. */
+export function workerNavFor(ctx: PosContext | null) {
+  return WORKER_NAV.filter((n) => {
+    if (n.feature && !can(ctx, n.feature)) return false;
+    if (!n.channel) return true;
+    if (!ctx || ctx.isOwner) return true;
+    // No channel recorded → fall back to the till role, never to Restaurant.
+    const channel = ctx.channel ?? (["waiter", "kitchen"].includes(ctx.role) ? "restaurant" : "retail");
+    return channel === n.channel;
+  });
+}
