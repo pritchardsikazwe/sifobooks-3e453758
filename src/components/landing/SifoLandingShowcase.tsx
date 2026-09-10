@@ -91,7 +91,7 @@ function HeroStack() {
 /* ── Product tabs ─────────────────────────────────────────────── */
 
 export function SifoProductTabs() {
-  const [active, setActive] = useState<ScreenKey>("dashboard");
+  const [active, setActive] = useState<ScreenKey>("pos");
   const s = SCREENS[active];
 
   return (
