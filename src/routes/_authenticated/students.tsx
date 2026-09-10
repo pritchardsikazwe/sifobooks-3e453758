@@ -106,7 +106,7 @@ function StudentsPage() {
             ]}
             fields={[
               { name: "student_no", label: "Student #", required: true },
-              { name: "class_id", label: "Class", type: "select", options: classOpts },
+              { name: "class_id", label: "Class", type: "lookup", lookup: { table: "school_classes", labelColumn: "name", metaColumns: ["grade_level", "stream", "academic_year", "class_teacher"], orderBy: "name", emptyTitle: "No classes set up yet." } },
               { name: "first_name", label: "First name", required: true },
               { name: "last_name", label: "Surname", required: true },
               { name: "gender", label: "Gender", type: "select", options: [{ value: "Male", label: "Male" }, { value: "Female", label: "Female" }] },

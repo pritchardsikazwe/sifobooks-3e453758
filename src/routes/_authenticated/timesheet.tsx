@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { ChevronLeft, ChevronRight, Save, Clock } from "lucide-react";
 
-type Employee = { id: string; first_name: string; last_name: string };
+type Employee = { id: string; first_name: string; last_name: string; employee_code?: string | null; email?: string | null; phone?: string | null };
 type Entry = { id?: string; employee_id: string | null; work_date: string; hours: number; description?: string | null; billable?: boolean };
 
 function startOfWeek(d: Date) {
@@ -28,11 +29,18 @@ function Timesheet() {
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
+  const employeeOptions = useMemo<EntityOption[]>(() => employees.map(e => ({
+    id: e.id,
+    code: e.employee_code ?? null,
+    label: `${e.first_name ?? ""} ${e.last_name ?? ""}`.trim() || "—",
+    meta: [e.email, e.phone].filter(Boolean).join(" · ") || null,
+  })), [employees]);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setUid(user.id);
-      const { data } = await supabase.from("employees").select("id, first_name, last_name").eq("status","active").order("first_name");
+      const { data } = await supabase.from("employees").select("id, first_name, last_name, employee_code, email, phone").eq("status","active").order("first_name");
       setEmployees(data ?? []);
       if (!empId && data?.[0]) setEmpId(data[0].id);
     })();
@@ -85,9 +93,19 @@ function Timesheet() {
           <h1 className="text-xl font-semibold">Weekly Timesheet</h1>
         </div>
         <div className="flex items-center gap-2">
-          <select className="border rounded-md h-9 px-2 text-sm bg-background" value={empId} onChange={e => setEmpId(e.target.value)}>
-            {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-          </select>
+          <div className="min-w-[220px]">
+            <EntitySelector
+              label=""
+              options={employeeOptions}
+              value={empId || null}
+              onChange={v => setEmpId(v ?? "")}
+              placeholder="Search employees…"
+              recentKey="timesheet-employee"
+              emptyTitle="No active employees found."
+              emptyActionLabel="Go to employees"
+              emptyActionTo="/employees"
+            />
+          </div>
           <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, -7))}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="outline" size="sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>This week</Button>
           <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight className="h-4 w-4" /></Button>

@@ -290,8 +290,8 @@ function DepartmentsCrud() {
       fields={[
         { name: "code", label: "Code" },
         { name: "name", label: "Department Name", required: true },
-        { name: "division_id", label: "Division", type: "select", options: divisions },
-        { name: "cost_centre_id", label: "Cost Centre", type: "select", options: centres },
+        { name: "division_id", label: "Division", type: "lookup", lookup: { table: "divisions", labelColumn: "name", codeColumn: "code", metaColumns: ["manager_name", "status"], orderBy: "name", emptyTitle: "No divisions set up yet." } },
+        { name: "cost_centre_id", label: "Cost Centre", type: "lookup", lookup: { table: "cost_centres", labelColumn: "name", codeColumn: "code", metaColumns: ["description"], orderBy: "name", emptyTitle: "No cost centres set up yet." } },
         { name: "manager_name", label: "Manager" },
         { name: "description", label: "Description", type: "textarea", colSpan: 2 },
       ]}

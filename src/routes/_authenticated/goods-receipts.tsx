@@ -5,9 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { fmtMoney } from "@/lib/format";
 
 const STATUS: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-700",
-  posted: "bg-emerald-100 text-emerald-700",
-  cancelled: "bg-red-100 text-red-700",
+  draft: "bg-muted text-muted-foreground",
+  posted: "bg-success/15 text-success",
+  cancelled: "bg-destructive/15 text-destructive",
 };
 
 export const Route = createFileRoute("/_authenticated/goods-receipts")({
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/goods-receipts")({
         { name: "receipt_number", label: "Receipt Number", required: true, group: "Document Details" },
         { name: "po_number", label: "Purchase Order #", group: "Document Details" },
         { name: "receipt_date", label: "Receipt Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10), group: "Document Details" },
-        { name: "warehouse_id", label: "Warehouse / Location", group: "Inventory Control" },
+        { name: "warehouse_id", label: "Warehouse / Location", type: "lookup", group: "Inventory Control", lookup: { table: "warehouses", labelColumn: "name", codeColumn: "code", metaColumns: ["location", "manager"], orderBy: "name", createTo: "/warehouses", createLabel: "New warehouse", emptyTitle: "No warehouses found for this company." } },
         { name: "status", label: "Status", type: "select", defaultValue: "draft", options: [{ value: "draft", label: "Draft" }, { value: "posted", label: "Posted" }, { value: "cancelled", label: "Cancelled" }], group: "Workflow" },
         { name: "currency", label: "Currency", defaultValue: "ZMW", group: "Document Details" },
         { name: "total", label: "Receipt Value", type: "number", group: "Totals" },

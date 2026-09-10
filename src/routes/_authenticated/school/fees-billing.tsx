@@ -143,8 +143,8 @@ function FeesPage() {
               { key: "status", header: "Status", render: (r: any) => <Badge>{r.status}</Badge> },
             ]}
             fields={[
-              { name: "student_id", label: "Student", type: "select", options: studentOpts, required: true },
-              { name: "fee_structure_id", label: "Fee structure", type: "select", options: structures.map(s => ({ value: s.id, label: `${s.fee_name} — ${fmtMoney(Number(s.amount) || 0)}` })) },
+              { name: "student_id", label: "Student", type: "lookup", required: true, lookup: { table: "students", labelColumn: "first_name", labelColumns: ["last_name"], codeColumn: "student_no", orderBy: "last_name", createTo: "/students", createLabel: "New student", emptyTitle: "No students found for this school yet." } },
+              { name: "fee_structure_id", label: "Fee structure", type: "lookup", lookup: { table: "fee_structures", labelColumn: "fee_name", metaColumns: ["term", "fee_type", "amount"], orderBy: "fee_name", emptyTitle: "No fee structures configured yet." } },
               { name: "description", label: "Description", colSpan: 2 },
               { name: "academic_year", label: "Academic year", type: "number", defaultValue: YEAR },
               { name: "term", label: "Term", type: "select", options: TERMS, defaultValue: "Term 1" },
@@ -169,8 +169,8 @@ function FeesPage() {
               { key: "reference", header: "Reference" },
             ]}
             fields={[
-              { name: "student_id", label: "Student", type: "select", options: studentOpts, required: true },
-              { name: "student_fee_id", label: "Against fee bill", type: "select", options: bills.map(b => ({ value: b.id, label: `${studentName(b.student_id)} — ${b.term} ${fmtMoney(Number(b.amount_due) || 0)}` })) },
+              { name: "student_id", label: "Student", type: "lookup", required: true, lookup: { table: "students", labelColumn: "first_name", labelColumns: ["last_name"], codeColumn: "student_no", orderBy: "last_name", createTo: "/students", createLabel: "New student", emptyTitle: "No students found for this school yet." } },
+              { name: "student_fee_id", label: "Against fee bill", type: "lookup", lookup: { table: "student_fees", labelColumn: "term", metaColumns: ["amount_due", "status"], orderBy: "created_at", emptyTitle: "No fee bills raised yet." } },
               { name: "receipt_no", label: "Receipt #", defaultValue: `FEE-${Date.now().toString().slice(-6)}` },
               { name: "payment_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
               { name: "amount", label: "Amount (K)", type: "number", required: true },

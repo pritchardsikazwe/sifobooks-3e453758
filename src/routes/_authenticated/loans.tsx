@@ -226,7 +226,7 @@ function LoansPage() {
               { name: "loan_number", label: "Loan #", required: true, defaultValue: `LN-${Date.now().toString().slice(-6)}` },
               { name: "loan_type", label: "Loan type", type: "select", options: LOAN_TYPE_OPTIONS, defaultValue: "staff", required: true },
               { name: "counterparty", label: "Borrower / lender", colSpan: 2 },
-              { name: "employee_id", label: "Employee (staff loans)", type: "select", options: employees },
+              { name: "employee_id", label: "Employee (staff loans)", type: "lookup", lookup: { table: "employees", labelColumn: "first_name", labelColumns: ["last_name"], codeColumn: "employee_code", metaColumns: ["status", "phone", "email"], createTo: "/employees", createLabel: "New employee", emptyTitle: "No employees found for this company." } },
               { name: "principal", label: "Principal (K)", type: "number", required: true },
               { name: "interest_rate", label: "Annual interest rate %", type: "number" },
               { name: "interest_method", label: "Interest method", type: "select", options: INTEREST_METHOD_OPTIONS, defaultValue: "straight_line" },
@@ -287,7 +287,7 @@ function LoansPage() {
               { key: "reference", header: "Reference" },
             ]}
             fields={[
-              { name: "loan_id", label: "Loan", type: "select", required: true, options: loans.map(l => ({ value: l.id, label: `${l.loan_number} — ${l.counterparty ?? ""}` })) },
+              { name: "loan_id", label: "Loan", type: "lookup", required: true, lookup: { table: "loans", labelColumn: "counterparty", codeColumn: "loan_number", metaColumns: ["status", "outstanding_balance", "currency"], orderBy: "loan_number", emptyTitle: "No loans recorded yet." } },
               { name: "payment_date", label: "Payment date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
               { name: "amount", label: "Amount (K)", type: "number", required: true },
               { name: "principal_portion", label: "Principal portion", type: "number" },

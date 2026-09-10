@@ -179,7 +179,7 @@ function DonorsPage() {
               { key: "status", header: "Status", render: (r: any) => <Badge>{r.status}</Badge> },
             ]}
             fields={[
-              { name: "donor_id", label: "Donor", type: "select", options: donorOpts, required: true },
+              { name: "donor_id", label: "Donor", type: "lookup", required: true, lookup: { table: "donors", labelColumn: "name", codeColumn: "donor_code", metaColumns: ["donor_type", "contact_person", "phone", "email"], orderBy: "name", emptyTitle: "No donors found for this company." } },
               { name: "pledge_ref", label: "Pledge ref" },
               { name: "pledge_date", label: "Pledge date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
               { name: "expected_date", label: "Expected receipt", type: "date" },
@@ -207,8 +207,8 @@ function DonorsPage() {
               { key: "reference", header: "Reference" },
             ]}
             fields={[
-              { name: "donor_id", label: "Donor", type: "select", options: donorOpts, required: true },
-              { name: "pledge_id", label: "Against pledge", type: "select", options: pledges.map(p => ({ value: p.id, label: `${p.pledge_ref ?? "Pledge"} — ${fmtMoney(Number(p.amount) || 0)}` })) },
+              { name: "donor_id", label: "Donor", type: "lookup", required: true, lookup: { table: "donors", labelColumn: "name", codeColumn: "donor_code", metaColumns: ["donor_type", "contact_person", "phone", "email"], orderBy: "name", emptyTitle: "No donors found for this company." } },
+              { name: "pledge_id", label: "Against pledge", type: "lookup", lookup: { table: "donor_pledges", labelColumn: "purpose", codeColumn: "pledge_ref", metaColumns: ["amount", "received_amount", "status"], orderBy: "pledge_date", emptyTitle: "No pledges recorded yet." } },
               { name: "receipt_no", label: "Receipt #", defaultValue: `DON-${Date.now().toString().slice(-6)}` },
               { name: "receipt_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
               { name: "amount", label: "Amount (K)", type: "number", required: true },
@@ -240,8 +240,8 @@ function DonorsPage() {
             ]}
             fields={[
               { name: "title", label: "Milestone", required: true, colSpan: 2 },
-              { name: "donor_id", label: "Donor", type: "select", options: donorOpts },
-              { name: "grant_id", label: "Grant", type: "select", options: grants.map(g => ({ value: g.id, label: g.grant_name })) },
+              { name: "donor_id", label: "Donor", type: "lookup", lookup: { table: "donors", labelColumn: "name", codeColumn: "donor_code", metaColumns: ["donor_type", "contact_person", "phone", "email"], orderBy: "name", emptyTitle: "No donors found for this company." } },
+              { name: "grant_id", label: "Grant", type: "lookup", lookup: { table: "school_grants", labelColumn: "grant_name", codeColumn: "grant_ref", metaColumns: ["funding_institution", "status"], orderBy: "grant_name", emptyTitle: "No grants recorded yet." } },
               { name: "milestone_type", label: "Type", type: "select", options: MILESTONE_TYPES, defaultValue: "report" },
               { name: "due_date", label: "Due date", type: "date" },
               { name: "completed_date", label: "Completed on", type: "date" },
