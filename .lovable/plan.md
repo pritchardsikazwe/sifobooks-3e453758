@@ -1,73 +1,65 @@
-## Goal
-Under `elvissikazwe52@gmail.com`, create a new **Luansobe Secondary School** tenant, upgrade the School Grants and Budgets modules to match the Zambian Ministry-of-Education templates in the attached Excel files, and post every transaction from those workbooks into the new tenant.
+# Demo polish + Finance/Cashbook clarity
 
-## What the attached files show
+Two workstreams in the existing project. No real company data, balances or history is touched, and no demo data ever enters a real company.
 
-**MANO_SEC_BUDGET_2026** — 2026 Q1 budget for Luansobe Secondary using the Ministry programme structure:
-- Programme (e.g. `5503 Secondary Education`) → Sub-programme (e.g. `3003 Curriculum and Materials Development`) → line items
-- Allocation formula: Secondary Grant K10,912.61 + Free-Ed Grant K91,162.50 = K102,075.11, split 50/50 across two programme groups then apportioned by fixed percentages (0.05–0.6)
-- 8 programme groups with sub-programme codes 3001–3006, 9001–9006
+## A. Demo experience
 
-**Copy_of_EXPENDITURE_RETURN_1-2** — Q1+Q2 2025 income & expenditure statement with school metadata (name, code 5526, location Mufulira), 6 income charge codes (10001–10004), 24 expense charge codes (20001–20030), petty-cash / imprest / stores tabs
+The demo layer already exists as an isolated, read-only sample environment (Hotel, School, Restaurant) that never touches the live database. It works but looks flat: text tables, no charts, no dashboard feel.
 
-**Copy_of_CASH_BOOK_LUANSOBE_APRIL_2025** — 14 monthly cashbook sheets (Jan–Jul 2025) with cheque-based bank register: date, payee, description, cheque #, charge code, receipts, payments, running balance
+Improvements:
+- **Demo entry from the landing page** — three clear cards (Hotel Demo, School Demo, Restaurant Demo) with a coloured "Enter demo" button, plus a link in the top header. No passwords: the demo opens instantly, so there is nothing to leak or fake.
+- **Real dashboard feel** — each demo opens on an overview screen with headline figures, trend and mix charts (using the charting library the app already has), status badges and coloured action buttons that jump straight into the matching workflow screen.
+- **New visual pieces** for the demo screens: revenue/occupancy trend line, breakdown donut, progress bars, a timeline strip for order/booking flow, and a floor-plan grid.
+- **Consistent look** — same colours, spacing, cards and buttons as the rest of SifoBooks; mobile layouts checked.
+- Every demo screen keeps the amber "DEMO ENVIRONMENT — SAMPLE DATA ONLY" banner, plus a footer note on isolation.
 
-## Plan
+## B. Restaurant demo — full operations story
 
-### 1 · School Grants module upgrade (works for every tenant)
-Add Ministry-of-Education taxonomy to `school_grants`:
-- `programme_code` / `programme_name` (e.g. `5503 Secondary Education`)
-- `sub_programme_code` / `sub_programme_name` (e.g. `3003 Curriculum & Materials Development`)
-- `charge_code` (income codes 10001–10004)
-- `allocation_percentage`, `allocation_source` ("Secondary Grant" / "Free Ed Grant" / "OVC")
-- `quarter`, `fiscal_year` for quarterly reporting
+Extend the restaurant demo so the walkthrough runs end to end with "next step" buttons linking each screen to the next:
 
-New reference tables (shared across tenants, seeded once):
-- `moe_programmes` — programme + sub-programme catalogue with codes and default percentages
-- `moe_charge_codes` — income (100xx) and expenditure (200xx) charge codes with descriptions
+Dashboard → floor plan/tables → reservations & waitlist → waiter order → kitchen display → prep/serve → bill → split/merge → payment (cash/card/mobile) → cashier shift → cash-up/close → ingredients → recipes → wastage → purchasing → suppliers → expenses → accounting impact → reports.
 
-Redesign `/school-grants` route into 3 tabs:
-- **Grants Received** — with programme/sub-programme, charge code, quarter breakdown
-- **Allocation Formula** — enter total grant, auto-split by percentages
-- **Expenditure Return** — matches the Excel report shape (charge code, Q1, Q2, Q3, Q4, funding sources, total)
+Screens gain visual table maps, ticket boards with timers, modifier/course detail, service charge, discount and tax lines, split-payment panels and a day-close summary.
 
-### 2 · Budgets module upgrade (works for every tenant)
-Add Ministry taxonomy to `budgets`:
-- `programme_code`, `sub_programme_code`, `charge_code`
-- `quarter` (Q1–Q4)
-- `allocation_percentage`
-- `funding_source` (grant / fundraising / donation / fees / other)
+## C. Finance navigation and workflow clarity
 
-UI enhancements on `/budgets`:
-- Group rows by Programme → Sub-programme with subtotals
-- "Import from Allocation Formula" action that pulls percentages from `moe_programmes`
-- Variance column (Budget − Actual) with colour coding
+Restructure the Finance hub into five plain-language groups (no route removed, no route renamed):
 
-### 3 · Create Luansobe Secondary tenant for elvissikazwe52@gmail.com
-- Insert `companies` row: name "Luansobe Secondary School", code 5526, location Mufulira, type Secondary, base_currency ZMW
-- Link to existing user via `company_members` (owner) and set `profiles.active_company_id`
-- Enable modules: core, sales, purchases, finance, fixed_assets, budgets, multi_currency, inventory, hr_payroll, reports, compliance, school_erp, learning, admin
-- Bank account: **LUANSOBE SECONDARY SCHOOL** / 5786225300117
-- Seed COA (school template — cash, bank, grant income, expense accounts keyed to 200xx codes)
+- **Cash & Bank** — Cashbook, Bank Accounts, Bank Transactions, Deposits, Reconciliation
+- **Receivables** — Customer Invoices, Customer Receipts, Customer Allocations, AR Aging
+- **Payables** — Supplier Bills, Supplier Payments, Supplier Allocations, AP Aging
+- **Expenses** — Expenses/Claims, Cash Expenses, Bank Expenses
+- **General Accounting** — Journal Entries, Chart of Accounts, General Ledger, Trial Balance, Period Close
 
-### 4 · Post the Excel data into the new tenant
-- **Budget**: 2026 Q1 Luansobe budget (K102,075.11) with all 8 programmes and sub-programme allocations from the ALLOCATION sheet
-- **Grants received**: Secondary Grant K10,912.61 + Free-Ed Grant K91,162.50
-- **Cashbook**: every dated row from JAN–JUL 2025 sheets posted as journal entries against Bank + expense/income accounts using charge codes when present (cheque # → reference, payee → description)
-- **Expenditure Return**: Q1+Q2 2025 totals recorded as `school_grants` line items and matched to journal entries
-- Bank charges (K100/month) posted separately
+Each entry gets a one-line explanation of who pays whom and why.
 
-Everything posts through existing `journal_entries` + `journal_lines` so Trial Balance, Cashbook, P&L, and General Ledger update automatically.
+**Finance action bar** (reused on the Finance hub, Cashbook and Banking pages):
+`Receive Customer Money` · `Pay Supplier` · `Record Expense` · `Bank Deposit` · `Transfer Between Accounts` · `New Journal` — each opens the existing workflow, no new posting logic.
 
-### Technical details (for reference)
-- Migrations add nullable columns → no breaking changes to other tenants
-- Reference tables use `GRANT SELECT TO authenticated` (read-only, no user_id — Ministry catalogue is global)
-- Existing `school_grants` and `budgets` UIs continue to work with the new optional fields
-- Data posting uses one SQL migration with literal INSERTs so rows show on first load
-- No changes to auth, RLS on tenant-scoped tables, or the posting engine — we just feed it new rows
+**"Which one do I use?" card** with the worked examples: customer paid an invoice, we paid a supplier bill, we bought fuel with cash, till cash to bank, bank to bank, manual correction.
 
-## Out of scope (ask if you want them)
-- Petty-cash, employee-imprest, and stores-taking sub-registers from the expenditure return (I'll post totals only unless you want each line)
-- Historical reprint of the Ministry F1/F2 forms as PDF — the data will be in the system; PDF templates can come next
+Page-level wording and flow:
+- Receipts page → titled **Customer Receipt — Receive Money from Customer**: pick existing customer, see their outstanding invoices, allocate across them, pick the cash/bank account, see received / allocated / unallocated totals before posting.
+- Bill payments → **Supplier Payment — Pay Supplier**, same shape against outstanding bills.
+- Expenses → **Record Expense**, with existing GL account + existing cash/bank account, optional existing supplier/payee, evidence attachment where supported, and a note explaining how it differs from a supplier bill/payment.
+- Deposits → **Bank Deposit — Deposit Cash to Bank**: existing source cash account → existing destination bank account, amount/date/reference. Money moves between accounts; it is never treated as sales.
+- **Cashbook** becomes a chronological control ledger: Date, Reference, Description, Source, Receipt, Payment, Running Balance, Reconciled — each row clicks through to the source document.
+- **Banking** shows account balance with matched / unmatched / reconciled counts up front.
 
-Reply **go** and I'll ship it.
+## D. Existing-record rule
+
+Where any of the touched screens still lets a user type a free-text name instead of choosing an existing customer, supplier, item, account, invoice, bill, employee or bank/cash account, it is switched to the existing searchable selector, with "create new" kept as a secondary option.
+
+## E. Safety and validation
+
+- Demo content stays in the isolated sample layer; it cannot post, and cannot read any company's records.
+- No changes to posting rules, approvals, period locks, permissions or tenant isolation; no test transactions run.
+- Typecheck, the existing test suite and a build run before reporting; results reported honestly.
+
+## Technical notes
+
+- Demo data/types: `src/lib/demo/*`; demo UI: `src/components/demo/*`; demo routes: `src/routes/demo.*`. New chart/floor-plan/timeline block kinds added to the demo block renderer.
+- Finance grouping: `src/lib/nav-hubs.ts` (`finance` hub) — items regrouped and re-hinted only; URLs unchanged. Missing entries (Deposits, AR/AP aging, Trial Balance, General Ledger, allocations) point at existing routes.
+- New shared component `src/components/sifo/FinanceActionBar.tsx` used by the finance hub, `cashbook.tsx` and `banking.tsx`.
+- Cashbook row model reshaped in `src/routes/_authenticated/cashbook.tsx` (presentation only; same queries and RLS path).
+- Receipts / bill-payments / expenses / deposits routes: heading, guidance and selector changes only — posting calls untouched.
