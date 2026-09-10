@@ -12,3 +12,5 @@
 ## Open (from earlier request, not yet done)
 - [ ] Rooms/reservations/housekeeping and school admissions/attendance/exams have no backing tables — screens show an honest unavailable state until a schema exists.
 - [ ] Finance/Cashbook workflow clarity: regroup Finance hub (Cash & Bank, Receivables, Payables, Expenses, General Accounting), Finance action bar (Receive Customer Money / Pay Supplier / Record Expense / Bank Deposit / Transfer / New Journal), "which one do I use?" guidance, cashbook as running control ledger.
+
+- [x] Visual production upgrade: metric tiles, gauges, mix bars, tile boards, kanban, timelines and avatar cards across real Hotel, School and Restaurant screens.
