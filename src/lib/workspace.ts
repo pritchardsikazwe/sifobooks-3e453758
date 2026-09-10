@@ -6,7 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only";
+export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only";
 
 export const WORKSPACE_MODES: {
   id: WorkspaceMode;
