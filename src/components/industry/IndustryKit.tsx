@@ -164,10 +164,11 @@ export function MetricTile({
   hint?: string;
   icon?: React.ComponentType<{ className?: string }>;
   progress?: number;
-  tone?: "default" | "good" | "warn" | "bad";
+  tone?: "default" | "good" | "warn" | "bad" | "info";
 }) {
   const toneBar =
-    tone === "good" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : tone === "bad" ? "bg-rose-500" : "bg-primary";
+    tone === "good" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : tone === "bad" ? "bg-rose-500"
+    : tone === "info" ? "bg-sky-500" : "bg-primary";
   return (
     <Card className="rounded-2xl p-4 transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground">
