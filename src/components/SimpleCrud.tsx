@@ -58,6 +58,8 @@ export type Column = {
   render?: (row: any) => React.ReactNode;
   className?: string;
   align?: "left" | "right" | "center";
+  /** Hidden by default; users can re-enable it from the column picker. */
+  defaultHidden?: boolean;
 };
 
 export type RowAction = {
@@ -102,12 +104,17 @@ type Props = {
     entryId?: (row: any) => string | null;
     label?: (row: any) => string;
   };
+  /** Replace the built-in "New" dialog with a dedicated page (e.g. a full document editor). */
+  onNew?: () => void;
+  /** Replace the built-in row edit dialog with a dedicated detail page. */
+  onOpenRow?: (row: any) => void;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
   accountFields, previewLines, requireBalanced, module, description, posting,
+  onNew, onOpenRow,
 }: Props) {
   const [ledger, setLedger] = useState<LedgerTarget | null>(null);
 
@@ -183,8 +190,12 @@ export function SimpleCrud({
     return o;
   }), [filtered, columns]);
 
-  const openNew = () => { setEditing(null); setForm(initial); setErrors({}); setOpen(true); };
+  const openNew = () => {
+    if (onNew) return onNew();
+    setEditing(null); setForm(initial); setErrors({}); setOpen(true);
+  };
   const openEdit = (r: any) => {
+    if (onOpenRow) return onOpenRow(r);
     setEditing(r);
     setErrors({});
     setForm(Object.fromEntries(fields.map(f => {
@@ -258,6 +269,7 @@ export function SimpleCrud({
       header: c.header,
       align: c.align,
       className: c.className,
+      defaultHidden: c.defaultHidden,
       accessor: (r) => {
         const v = r[c.key];
         return typeof v === "object" && v !== null ? "" : v;
