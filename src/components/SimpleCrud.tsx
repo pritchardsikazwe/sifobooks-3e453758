@@ -393,7 +393,20 @@ export function SimpleCrud({
         error={err}
         wide={f.colSpan === 2 || f.type === "textarea"}
       >
-        {f.type === "textarea" ? (
+        {f.type === "lookup" && f.lookup ? (
+          <EntitySelector
+            label=""
+            options={lookupOptions[f.name] ?? []}
+            value={form[f.name] ? String(form[f.name]) : null}
+            onChange={v => setField(f.name, v)}
+            placeholder={`Search existing ${f.label.toLowerCase()}…`}
+            recentKey={`${table}-${f.name}`}
+            emptyTitle={f.lookup.emptyTitle}
+            emptyActionTo={f.lookup.createTo}
+            emptyActionLabel={f.lookup.createLabel}
+            createLabel={f.lookup.createLabel}
+          />
+        ) : f.type === "textarea" ? (
           <Textarea
             id={id}
             aria-invalid={invalid}
