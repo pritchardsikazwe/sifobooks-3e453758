@@ -19,6 +19,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as WorkerRouteRouteImport } from './routes/_worker/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DemoIndexRouteImport } from './routes/demo.index'
 import { Route as AuthenticatedWorkshopsRouteImport } from './routes/_authenticated/workshops'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTuckshopRouteImport } from './routes/_authenticated/tuckshop'
@@ -115,6 +116,7 @@ import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authentic
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as DemoIndustryIndexRouteImport } from './routes/demo.$industry.index'
 import { Route as WorkerWIndexRouteImport } from './routes/_worker/w.index'
 import { Route as AuthenticatedRestaurantIndexRouteImport } from './routes/_authenticated/restaurant.index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports.index'
@@ -124,6 +126,7 @@ import { Route as AuthenticatedLearnIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
+import { Route as DemoIndustrySectionRouteImport } from './routes/demo.$industry.$section'
 import { Route as ApiPrintingJobsRouteImport } from './routes/api/printing/jobs'
 import { Route as WorkerWTablesRouteImport } from './routes/_worker/w.tables'
 import { Route as WorkerWStockRouteImport } from './routes/_worker/w.stock'
@@ -302,6 +305,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoIndexRoute = DemoIndexRouteImport.update({
+  id: '/demo/',
+  path: '/demo/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWorkshopsRoute = AuthenticatedWorkshopsRouteImport.update({
@@ -826,6 +834,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DemoIndustryIndexRoute = DemoIndustryIndexRouteImport.update({
+  id: '/demo/$industry/',
+  path: '/demo/$industry/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkerWIndexRoute = WorkerWIndexRouteImport.update({
   id: '/w/',
   path: '/w/',
@@ -878,6 +891,11 @@ const AuthenticatedCustomersIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedCustomersRoute,
   } as any)
+const DemoIndustrySectionRoute = DemoIndustrySectionRouteImport.update({
+  id: '/demo/$industry/$section',
+  path: '/demo/$industry/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPrintingJobsRoute = ApiPrintingJobsRouteImport.update({
   id: '/api/printing/jobs',
   path: '/api/printing/jobs',
@@ -1745,6 +1763,7 @@ export interface FileRoutesByFullPath {
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
+  '/demo/': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -1872,6 +1891,7 @@ export interface FileRoutesByFullPath {
   '/w/stock': typeof WorkerWStockRoute
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
+  '/demo/$industry/$section': typeof DemoIndustrySectionRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -1881,6 +1901,7 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
   '/w/': typeof WorkerWIndexRoute
+  '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1985,6 +2006,7 @@ export interface FileRoutesByTo {
   '/tuckshop': typeof AuthenticatedTuckshopRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
+  '/demo': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -2112,6 +2134,7 @@ export interface FileRoutesByTo {
   '/w/stock': typeof WorkerWStockRoute
   '/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
+  '/demo/$industry/$section': typeof DemoIndustrySectionRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
@@ -2121,6 +2144,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/restaurant': typeof AuthenticatedRestaurantIndexRoute
   '/w': typeof WorkerWIndexRoute
+  '/demo/$industry': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -2234,6 +2258,7 @@ export interface FileRoutesById {
   '/_authenticated/tuckshop': typeof AuthenticatedTuckshopRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
+  '/demo/': typeof DemoIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/_authenticated/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -2361,6 +2386,7 @@ export interface FileRoutesById {
   '/_worker/w/stock': typeof WorkerWStockRoute
   '/_worker/w/tables': typeof WorkerWTablesRoute
   '/api/printing/jobs': typeof ApiPrintingJobsRoute
+  '/demo/$industry/$section': typeof DemoIndustrySectionRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -2370,6 +2396,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
   '/_worker/w/': typeof WorkerWIndexRoute
+  '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/_authenticated/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/_authenticated/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -2482,6 +2509,7 @@ export interface FileRouteTypes {
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
+    | '/demo/'
     | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
@@ -2609,6 +2637,7 @@ export interface FileRouteTypes {
     | '/w/stock'
     | '/w/tables'
     | '/api/printing/jobs'
+    | '/demo/$industry/$section'
     | '/customers/'
     | '/inventory/'
     | '/invoices/'
@@ -2618,6 +2647,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/restaurant/'
     | '/w/'
+    | '/demo/$industry/'
     | '/journal-entry/edit/$id'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
@@ -2722,6 +2752,7 @@ export interface FileRouteTypes {
     | '/tuckshop'
     | '/warehouses'
     | '/workshops'
+    | '/demo'
     | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
@@ -2849,6 +2880,7 @@ export interface FileRouteTypes {
     | '/w/stock'
     | '/w/tables'
     | '/api/printing/jobs'
+    | '/demo/$industry/$section'
     | '/customers'
     | '/inventory'
     | '/invoices'
@@ -2858,6 +2890,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/restaurant'
     | '/w'
+    | '/demo/$industry'
     | '/journal-entry/edit/$id'
     | '/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
@@ -2970,6 +3003,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tuckshop'
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
+    | '/demo/'
     | '/.lovable/oauth/consent'
     | '/_authenticated/bill-detail/$id'
     | '/_authenticated/bill-payment-detail/$id'
@@ -3097,6 +3131,7 @@ export interface FileRouteTypes {
     | '/_worker/w/stock'
     | '/_worker/w/tables'
     | '/api/printing/jobs'
+    | '/demo/$industry/$section'
     | '/_authenticated/customers/'
     | '/_authenticated/inventory/'
     | '/_authenticated/invoices/'
@@ -3106,6 +3141,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/'
     | '/_authenticated/restaurant/'
     | '/_worker/w/'
+    | '/demo/$industry/'
     | '/_authenticated/journal-entry/edit/$id'
     | '/_authenticated/teaching-materials/$id/quote'
     | '/lovable/email/auth/preview'
@@ -3124,8 +3160,11 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DemoIndexRoute: typeof DemoIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPrintingJobsRoute: typeof ApiPrintingJobsRoute
+  DemoIndustrySectionRoute: typeof DemoIndustrySectionRoute
+  DemoIndustryIndexRoute: typeof DemoIndustryIndexRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -3200,6 +3239,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/': {
+      id: '/demo/'
+      path: '/demo'
+      fullPath: '/demo/'
+      preLoaderRoute: typeof DemoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/workshops': {
@@ -3874,6 +3920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo/$industry/': {
+      id: '/demo/$industry/'
+      path: '/demo/$industry'
+      fullPath: '/demo/$industry/'
+      preLoaderRoute: typeof DemoIndustryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_worker/w/': {
       id: '/_worker/w/'
       path: '/w'
@@ -3936,6 +3989,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/customers/'
       preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedCustomersRoute
+    }
+    '/demo/$industry/$section': {
+      id: '/demo/$industry/$section'
+      path: '/demo/$industry/$section'
+      fullPath: '/demo/$industry/$section'
+      preLoaderRoute: typeof DemoIndustrySectionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/printing/jobs': {
       id: '/api/printing/jobs'
@@ -5484,8 +5544,11 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DemoIndexRoute: DemoIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPrintingJobsRoute: ApiPrintingJobsRoute,
+  DemoIndustrySectionRoute: DemoIndustrySectionRoute,
+  DemoIndustryIndexRoute: DemoIndustryIndexRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
