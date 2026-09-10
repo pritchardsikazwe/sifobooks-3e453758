@@ -11,6 +11,8 @@ import { RESERVATION_STATUSES, statusTone, toneClass, today, uid } from "@/lib/r
 import { cn } from "@/lib/utils";
 import { ExportMenu } from "@/lib/exports";
 import { CalendarClock, Plus, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MetricTile } from "@/components/industry/IndustryKit";
 
 export const Route = createFileRoute("/_authenticated/restaurant/reservations")({
   head: () => ({
