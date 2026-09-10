@@ -24,7 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ExportMenu } from "@/lib/exports";
-import { printCurrentView } from "@/services/printDocument";
+import { printBrandedDoc } from "@/services/printDocument";
+import { reportResultToSpec } from "@/lib/reports/doc";
 import { acctFmt, resultToExportRows, type ReportResult, type ReportRow } from "@/lib/reports/engine";
 import { SifoSmartReporter } from "@/components/reports/SifoSmartReporter";
 import type { ReportId } from "@/lib/reports/insights";
@@ -102,6 +103,10 @@ export function SifoReportViewer({
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const pageRows = sorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const exportRows = result ? resultToExportRows({ ...result, rows: sorted }) : [];
+  const docSpec = useMemo(
+    () => reportResultToSpec(result ? { ...result, rows: sorted } : null, { title, subtitle, filename }),
+    [result, sorted, title, subtitle, filename],
+  );
 
   const toggleSort = (key: string) => {
     if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -154,11 +159,19 @@ export function SifoReportViewer({
             size="sm"
             variant="outline"
             disabled={!exportRows.length}
-            onClick={() => void printCurrentView(title, subtitle, exportRows)}
+            onClick={() => void printBrandedDoc(docSpec)}
           >
             <Printer className="mr-1 h-4 w-4" /> Print
           </Button>
-          <ExportMenu rows={exportRows} filename={filename} title={title} />
+          <ExportMenu
+            rows={exportRows}
+            filename={filename}
+            title={title}
+            subtitle={subtitle}
+            docType="report"
+            kpis={docSpec.kpis}
+            sections={docSpec.sections.slice(0, Math.max(0, docSpec.sections.length - 1))}
+          />
         </div>
       </div>
 

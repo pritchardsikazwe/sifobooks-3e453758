@@ -6,11 +6,11 @@
  * PDF is saved for download and the job is queued for retry.
  */
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 import { printPdf } from "./universalPrintService";
 import { getPrinterForType } from "./printerConfiguration";
 import { savePrintQueueJob } from "./printQueue";
+import { buildBrandedPdf, type DocSpec } from "@/lib/doc-engine";
 
 export function pdfToBase64(pdf: jsPDF): string {
   const out = pdf.output("datauristring");
@@ -45,49 +45,26 @@ export interface PrintTableOptions {
   fileName?: string;
 }
 
-/** Build a branded table document and print it silently. */
+/** Print any branded document specification silently. */
+export async function printBrandedDoc(spec: DocSpec) {
+  const pdf = await buildBrandedPdf(spec);
+  return printPdfDocument(pdf, spec.filename.endsWith(".pdf") ? spec.filename : `${spec.filename}.pdf`);
+}
+
+/** Build a table document on the tenant letterhead and print it silently. */
 export async function printTableDocument(opts: PrintTableOptions) {
-  const pdf = new jsPDF({ orientation: opts.landscape ? "landscape" : "portrait", unit: "pt", format: "a4" });
-  const margin = 32;
-  let y = margin;
-
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(14);
-  pdf.text("SIFOBOOKS", margin, y);
-  y += 16;
-  pdf.setFontSize(12);
-  pdf.text(opts.title, margin, y);
-  y += 14;
-
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(90);
-  if (opts.subtitle) { pdf.text(opts.subtitle, margin, y); y += 11; }
-  for (const line of opts.meta ?? []) { pdf.text(line, margin, y); y += 10; }
-  pdf.setTextColor(0);
-
-  autoTable(pdf, {
-    startY: y + 6,
-    head: [opts.columns],
-    body: opts.rows.map((r) => r.map((c) => (c == null ? "" : String(c)))),
-    styles: { fontSize: 7.5, cellPadding: 3 },
-    headStyles: { fillColor: [16, 122, 87], textColor: 255 },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    margin: { left: margin, right: margin },
+  return printBrandedDoc({
+    docType: "report",
+    title: opts.title,
+    subtitle: opts.subtitle,
+    filters: opts.meta,
+    sections: [{ columns: opts.columns, rows: opts.rows }],
+    totals: Object.entries(opts.totals ?? {}).map(([label, value], i, arr) => ({
+      label, value: String(value), emphasis: i === arr.length - 1,
+    })),
+    orientation: opts.landscape ? "landscape" : "portrait",
+    filename: opts.fileName ?? `${opts.title.replace(/\s+/g, "-").toLowerCase()}.pdf`,
   });
-
-  if (opts.totals && Object.keys(opts.totals).length) {
-    const endY = (pdf as any).lastAutoTable?.finalY ?? y;
-    pdf.setFontSize(8.5);
-    pdf.setFont("helvetica", "bold");
-    pdf.text(
-      Object.entries(opts.totals).map(([k, v]) => `${k}: ${v}`).join("    •    "),
-      margin,
-      endY + 16,
-    );
-  }
-
-  return printPdfDocument(pdf, opts.fileName ?? `${opts.title.replace(/\s+/g, "-").toLowerCase()}.pdf`);
 }
 
 /** Print an arbitrary HTML fragment (vouchers, receipts) as a text-flow PDF. */

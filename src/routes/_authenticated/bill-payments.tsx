@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, Wallet } from "lucide-react";
+import { ExternalLink, Loader2, Plus, Printer, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
+import { printBrandedDoc } from "@/services/printDocument";
+import type { DocSection } from "@/lib/doc-engine";
 import { DateRangeFilter, EMPTY_RANGE, inRange, type DateRange } from "@/components/DateRangeFilter";
 import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
@@ -193,6 +195,73 @@ function BillPaymentsPage() {
     });
   }, [payments, range, q]);
 
+  /* Supplier Payments report — summarised from the same posted payment
+   * records shown in the table below. Nothing is recalculated or altered. */
+  const paymentReport = useMemo(() => {
+    const total = filtered.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+    const group = (keyOf: (p: any) => string) => {
+      const map = new Map<string, { count: number; amount: number }>();
+      for (const p of filtered) {
+        const k = keyOf(p) || "Unspecified";
+        const cur = map.get(k) ?? { count: 0, amount: 0 };
+        cur.count += 1;
+        cur.amount += Number(p.amount ?? 0);
+        map.set(k, cur);
+      }
+      return [...map.entries()].sort((a, b) => b[1].amount - a[1].amount);
+    };
+    const methods = group(p => String(p.payment_method ?? "").replace(/_/g, " "));
+    const suppliersAgg = group(p => p.suppliers?.name ?? "");
+    const pct = (v: number) => (total ? `${((v / total) * 100).toFixed(1)}%` : "—");
+    const sections: DocSection[] = [
+      {
+        title: "Payment methods",
+        columns: ["Method", { header: "Payments", align: "right" }, { header: "Amount", align: "right" }, { header: "Share", align: "right" }],
+        rows: methods.map(([k, v]) => [k, v.count, fmtMoney(v.amount), pct(v.amount)]),
+        totals: [["Total", filtered.length, fmtMoney(total), "100%"]],
+      },
+      {
+        title: "By supplier",
+        columns: ["Supplier", { header: "Payments", align: "right" }, { header: "Amount", align: "right" }, { header: "Share", align: "right" }],
+        rows: suppliersAgg.map(([k, v]) => [k, v.count, fmtMoney(v.amount), pct(v.amount)]),
+        totals: [["Total", filtered.length, fmtMoney(total), "100%"]],
+      },
+    ];
+    const kpis = [
+      { label: "Total payments", value: fmtMoney(total) },
+      { label: "Transactions", value: String(filtered.length) },
+      { label: "Suppliers paid", value: String(suppliersAgg.length) },
+      { label: "Methods used", value: String(methods.length) },
+    ];
+    const rows = filtered.map(p => ({
+      Number: p.payment_number, Date: p.payment_date, Supplier: p.suppliers?.name ?? "",
+      Bill: p.bills?.bill_number ?? "", Method: String(p.payment_method ?? "").replace(/_/g, " "),
+      Reference: p.reference ?? "", Amount: fmtMoney(p.amount ?? 0),
+    }));
+    return { total, sections, kpis, rows };
+  }, [filtered]);
+
+  const printPayments = () => void printBrandedDoc({
+    docType: "supplier_payment_report",
+    title: "Supplier Payments Report",
+    subtitle: "Posted supplier payments from the purchase ledger.",
+    period: `${range.from} → ${range.to}`,
+    filters: [q.trim() ? `Search: ${q.trim()}` : "All suppliers"],
+    kpis: paymentReport.kpis,
+    sections: [
+      ...paymentReport.sections,
+      {
+        title: "Detailed payments",
+        columns: ["Payment #", "Date", "Supplier", "Bill", "Method", "Reference", { header: "Amount", align: "right" }],
+        rows: paymentReport.rows.map(r => [r.Number, r.Date, r.Supplier, r.Bill, r.Method, r.Reference, r.Amount]),
+        totals: [["Total", "", "", "", "", "", fmtMoney(paymentReport.total)]],
+      },
+    ],
+    totals: [{ label: "Total payments", value: fmtMoney(paymentReport.total), emphasis: true }],
+    orientation: "landscape",
+    filename: `supplier-payments-${range.from}-to-${range.to}`,
+  });
+
   const columns: DTColumn<any>[] = [
     { key: "payment_number", header: "Payment #", cell: r => <Link to="/bill-payment-detail/$id" params={{ id: r.id }} className="font-mono text-xs text-primary hover:underline">{r.payment_number}</Link> },
     { key: "payment_date", header: "Date", cell: r => <span className="text-xs">{r.payment_date}</span> },
@@ -351,10 +420,19 @@ function BillPaymentsPage() {
         breadcrumbs={[{ label: "Purchases", to: "/bills" }, { label: "Supplier Payments" }]}
         actions={<>
           <DateRangeFilter value={range} onChange={setRange} compact />
-          <ExportMenu filename="supplier-payments" title="Supplier Payments" rows={filtered.map(p => ({
-            Number: p.payment_number, Date: p.payment_date, Supplier: p.suppliers?.name ?? "",
-            Bill: p.bills?.bill_number ?? "", Method: p.payment_method, Reference: p.reference ?? "", Amount: p.amount,
-          }))} />
+          <Button size="sm" variant="outline" className="h-9" onClick={printPayments} disabled={!filtered.length}>
+            <Printer className="mr-1.5 h-4 w-4" />Print report
+          </Button>
+          <ExportMenu
+            filename={`supplier-payments-${range.from}-to-${range.to}`}
+            title="Supplier Payments Report"
+            subtitle="Posted supplier payments from the purchase ledger."
+            period={`${range.from} → ${range.to}`}
+            docType="supplier_payment_report"
+            kpis={paymentReport.kpis}
+            sections={paymentReport.sections}
+            rows={paymentReport.rows}
+          />
           <Button size="sm" variant="save" className="h-9" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Pay supplier</Button>
         </>}
       />

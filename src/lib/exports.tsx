@@ -1,9 +1,9 @@
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Download, FileSpreadsheet, FileText, FileType } from "lucide-react";
+import { downloadBrandedDoc, type DocKpi, type DocSection, type DocSpec } from "@/lib/doc-engine";
 
 export function exportCSV(rows: Record<string, any>[], filename: string) {
   if (!rows.length) return;
@@ -23,19 +23,33 @@ export function exportExcel(rows: Record<string, any>[], filename: string, sheet
   XLSX.writeFile(wb, `${filename}.xlsx`);
 }
 
-export function exportPDF(rows: Record<string, any>[], filename: string, title?: string) {
+/**
+ * PDF export — always rendered on the tenant's own letterhead through the
+ * shared document engine, never as a bare table.
+ */
+export async function exportPDF(
+  rows: Record<string, any>[],
+  filename: string,
+  title?: string,
+  extra?: { subtitle?: string; period?: string; filters?: string[]; kpis?: DocKpi[]; sections?: DocSection[]; docType?: string },
+) {
   if (!rows.length) return;
-  const doc = new jsPDF({ orientation: "landscape" });
-  if (title) doc.setFontSize(14).text(title, 14, 14);
-  const headers = Object.keys(rows[0]);
-  autoTable(doc, {
-    head: [headers],
-    body: rows.map(r => headers.map(h => r[h] ?? "")),
-    startY: title ? 20 : 10,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [16, 185, 129] },
-  });
-  doc.save(`${filename}.pdf`);
+  const headers = Object.keys(rows[0]!);
+  const spec: DocSpec = {
+    docType: extra?.docType ?? "report",
+    title: title ?? filename.replace(/[-_]/g, " "),
+    subtitle: extra?.subtitle,
+    period: extra?.period,
+    filters: extra?.filters,
+    kpis: extra?.kpis,
+    sections: [
+      ...(extra?.sections ?? []),
+      { columns: headers, rows: rows.map((r) => headers.map((h) => r[h] ?? "")) },
+    ],
+    filename,
+    orientation: headers.length > 7 ? "landscape" : "portrait",
+  };
+  await downloadBrandedDoc(spec);
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -45,8 +59,27 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ExportMenu({ rows, filename, title }: { rows: Record<string, any>[]; filename: string; title?: string }) {
+export function ExportMenu({
+  rows, filename, title, subtitle, period, filters, kpis, sections, docType,
+}: {
+  rows: Record<string, any>[];
+  filename: string;
+  title?: string;
+  subtitle?: string;
+  period?: string;
+  filters?: string[];
+  kpis?: DocKpi[];
+  sections?: DocSection[];
+  docType?: string;
+}) {
   const disabled = !rows.length;
+  const pdf = async () => {
+    try {
+      await exportPDF(rows, filename, title, { subtitle, period, filters, kpis, sections, docType });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not build the PDF");
+    }
+  };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,8 +94,8 @@ export function ExportMenu({ rows, filename, title }: { rows: Record<string, any
         <DropdownMenuItem onClick={() => exportExcel(rows, filename)}>
           <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportPDF(rows, filename, title)}>
-          <FileType className="h-4 w-4 mr-2" /> PDF
+        <DropdownMenuItem onClick={() => void pdf()}>
+          <FileType className="h-4 w-4 mr-2" /> PDF (branded)
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
