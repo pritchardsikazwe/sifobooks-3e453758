@@ -68,10 +68,9 @@ function Reports() {
   const discounts = group(live.filter((o) => Number(o.discount || 0) > 0), (o) => `#${o.order_number}`, (o) => Number(o.discount));
   const voids = orders.filter((o) => o.status === "void").map((o) => [`#${o.order_number} ${o.server_name ?? ""}`, Number(o.total || 0)] as [string, number]);
 
-  const foodCost = lines.reduce((s, l) => {
-    const it = items.find((i) => i.id === l.menu_item_id);
-    return s + Number(it?.cost || 0) * Number(l.quantity || 0);
-  }, 0);
+  /* Cost comes from the line cost the server calculated from recipes — never a client figure. */
+  const foodCost = lines.reduce((s, l) => s + Number(l.unit_cost || 0) * Number(l.qty || 0), 0);
+  const uncosted = lines.filter((l) => !Number(l.unit_cost || 0)).length;
   const grossProfit = t.gross - foodCost;
 
   const reports: { key: string; label: string; rows: [string, number][]; unit?: string }[] = [
@@ -102,6 +101,12 @@ function Reports() {
         <Kpi label="Food cost" value={fmtMoney(foodCost)} />
         <Kpi label="Gross profit" value={fmtMoney(grossProfit)} />
       </div>
+      {uncosted > 0 && (
+        <p className="text-xs text-amber-600">
+          {uncosted} sold line(s) have no recipe or item cost, so food cost and margin are understated. Add recipes on the Menu screen.
+        </p>
+      )}
+
 
       <Tabs defaultValue="hour">
         <TabsList className="flex-wrap h-auto">

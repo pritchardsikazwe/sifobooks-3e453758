@@ -11,6 +11,8 @@ import { ExportMenu } from "@/lib/exports";
 import { PAYMENT_METHODS, recordPayments, statusTone, toneClass, today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
 import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
+import { CheckOperations } from "@/components/restaurant/CheckOperations";
+import { checkCost, linesMissingCost } from "@/lib/restaurant-checks";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
@@ -136,6 +138,29 @@ function Orders() {
                       {Number(o.gratuity) > 0 && <Row label="Gratuity" value={Number(o.gratuity)} />}
                       <Row label="VAT" value={Number(o.tax)} />
                       <Row label="Total" value={Number(o.total)} bold />
+                    </div>
+                    {(o.status === "open" || o.status === "held") && !o.journal_entry_id && (
+                      <CheckOperations
+                        order={o}
+                        lines={lines as any}
+                        openChecks={orders.filter((x) => (x.status === "open" || x.status === "held") && !x.journal_entry_id)}
+                        onDone={load}
+                      />
+                    )}
+                    <div className="rounded-xl border bg-muted/30 p-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Cost of sales (server-calculated)</span>
+                        <span className="tabular-nums">{fmtMoney(checkCost(lines as any))}</span>
+                      </div>
+                      <div className="flex justify-between font-medium">
+                        <span>Gross margin</span>
+                        <span className="tabular-nums">{fmtMoney(Number(o.subtotal || 0) - Number(o.discount || 0) - checkCost(lines as any))}</span>
+                      </div>
+                      {linesMissingCost(lines as any).length > 0 && (
+                        <p className="mt-1 text-xs text-amber-600">
+                          {linesMissingCost(lines as any).length} line(s) have no recipe or item cost yet — margin is understated until you add one.
+                        </p>
+                      )}
                     </div>
                     {o.status !== "paid" && o.status !== "void" && (
                       <div className="flex flex-wrap gap-2">

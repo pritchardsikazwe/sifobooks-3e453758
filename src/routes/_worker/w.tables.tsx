@@ -57,7 +57,7 @@ function WorkerTables() {
 
       <div className="mt-5 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         {tables.map((t) => (
-          <button key={t.id} onClick={() => nav({ to: "/w/pos" })}
+          <button key={t.id} onClick={() => nav({ to: "/w/pos", search: { table: t.id } })}
             className={`aspect-square rounded-2xl border-2 p-3 flex flex-col items-center justify-center gap-1 ${tone(t.status)} active:scale-95 transition`}>
             <div className="text-lg font-bold">{t.name}</div>
             <div className="text-[11px] opacity-80">{t.seats ?? 0} seats</div>
@@ -67,7 +67,7 @@ function WorkerTables() {
         {!tables.length && <div className="col-span-full text-slate-500 text-sm">No tables configured.</div>}
       </div>
 
-      <button onClick={() => nav({ to: "/w/pos" })}
+      <button onClick={() => nav({ to: "/w/pos", search: { table: undefined } })}
         className="mt-6 w-full rounded-2xl bg-emerald-500 py-4 font-bold text-slate-950">+ New order</button>
     </div>
   );
