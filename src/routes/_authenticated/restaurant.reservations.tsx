@@ -38,6 +38,7 @@ function Reservations() {
   const [date, setDate] = useState(today());
   const [form, setForm] = useState({ ...blank });
   const [wform, setWform] = useState({ guest_name: "", phone: "", guests: 2, quoted_minutes: 15 });
+  const [bookOpen, setBookOpen] = useState(false);
 
   const load = async () => {
     const u = await uid();
