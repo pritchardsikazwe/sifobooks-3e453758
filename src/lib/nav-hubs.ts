@@ -294,6 +294,7 @@ export const HUBS: HubDef[] = [
         label: "Administration",
         items: [
           { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
+          { title: "Documents & Branding", url: "/documents-branding", module: "admin", iconName: "Palette", primary: true, hint: "Logo, colours, templates and wording for every printed document." },
           { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
           { title: "Administration", url: "/admin", module: "admin", iconName: "Settings" },
           { title: "Audit Logs", url: "/audit-logs", module: "admin", iconName: "History" },
