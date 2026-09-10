@@ -3,8 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
-import { resolvePeriod } from "@/lib/reports/format";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 
 export const Route = createFileRoute("/_authenticated/reports/payroll-summary")({
   head: () => ({ meta: [{ title: "Payroll Summary — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -12,8 +13,8 @@ export const Route = createFileRoute("/_authenticated/reports/payroll-summary")(
 });
 
 function PayrollPage() {
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
-  const { from, to, label } = filters.range;
+  const [range, setRange] = useState<Range>(() => resolveRange("this-month"));
+  const { from, to, label } = range;
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<any[]>([]);
 
@@ -46,7 +47,9 @@ function PayrollPage() {
 
   return (
     <ReportShell title="Payroll Summary" subtitle={`${runs.length} runs · ${label}`} loading={loading} filename="payroll-summary" rows={csv}>
-      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <ReportPeriodBar range={range} onRange={setRange}>
+        <SaveViewButton defaultName={`Payroll Summary — ${label}`} />
+      </ReportPeriodBar>
       <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr>

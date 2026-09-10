@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { resolvePeriod } from "@/lib/reports/format";
 import { loadStockMovement } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/reports/stock-movement")({
 });
 
 function StockMovementPage() {
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const [range, setRange] = useState<Range>(() => resolveRange("this-month"));
   const [locationId, setLocationId] = useState("all");
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
 
@@ -26,9 +27,9 @@ function StockMovementPage() {
     })();
   }, []);
 
-  const { from, to } = filters.range;
+  const { from, to } = range;
   const loc = locationId === "all" ? undefined : locationId;
-  const { result, loading, error } = useReport(loadStockMovement, { from, to, locationId: loc }, [from, to, loc]);
+  const { result, loading, error, refresh } = useReport(loadStockMovement, { from, to, locationId: loc }, [from, to, loc]);
 
   return (
     <SifoReportViewer
@@ -40,10 +41,12 @@ function StockMovementPage() {
       error={error}
       result={result}
       filters={
-        <ReportFilterBar
-          initial={{ periodKey: "this-month" }}
-          onApply={setFilters}
-          extraFilters={
+        <ReportPeriodBar
+          range={range}
+          onRange={setRange}
+          onRefresh={refresh}
+          refreshing={loading}
+          customize={
             <div className="min-w-[14rem]">
               <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Location</Label>
               <Select value={locationId} onValueChange={setLocationId}>
@@ -55,7 +58,9 @@ function StockMovementPage() {
               </Select>
             </div>
           }
-        />
+        >
+          <SaveViewButton defaultName={`Stock Movement — ${range.label}`} />
+        </ReportPeriodBar>
       }
     />
   );
