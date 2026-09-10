@@ -5883,6 +5883,74 @@ export type Database = {
           },
         ]
       }
+      payroll_payment_batches: {
+        Row: {
+          bank_account_id: string | null
+          bank_transaction_id: string | null
+          created_at: string
+          created_by: string | null
+          employees_count: number
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          pay_date: string
+          payment_method: string
+          payroll_run_id: string
+          reference: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          bank_transaction_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          employees_count?: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          pay_date: string
+          payment_method?: string
+          payroll_run_id: string
+          reference?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          bank_transaction_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          employees_count?: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          pay_date?: string
+          payment_method?: string
+          payroll_run_id?: string
+          reference?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_payment_batches_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_runs: {
         Row: {
           approved_at: string | null
@@ -6070,6 +6138,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payroll_statutory_rules: {
+        Row: {
+          created_at: string
+          effective_from: string
+          housing_exempt_pct: number
+          id: string
+          is_active: boolean
+          napsa_cap: number
+          napsa_employer_rate: number
+          napsa_rate: number
+          nhima_employer_rate: number
+          nhima_rate: number
+          paye_bands: Json
+          sdl_rate: number
+          source_note: string | null
+          updated_at: string
+          user_id: string
+          verified_by: string | null
+          verified_on: string | null
+          wcf_rate: number
+        }
+        Insert: {
+          created_at?: string
+          effective_from: string
+          housing_exempt_pct?: number
+          id?: string
+          is_active?: boolean
+          napsa_cap?: number
+          napsa_employer_rate?: number
+          napsa_rate?: number
+          nhima_employer_rate?: number
+          nhima_rate?: number
+          paye_bands?: Json
+          sdl_rate?: number
+          source_note?: string | null
+          updated_at?: string
+          user_id: string
+          verified_by?: string | null
+          verified_on?: string | null
+          wcf_rate?: number
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          housing_exempt_pct?: number
+          id?: string
+          is_active?: boolean
+          napsa_cap?: number
+          napsa_employer_rate?: number
+          napsa_rate?: number
+          nhima_employer_rate?: number
+          nhima_rate?: number
+          paye_bands?: Json
+          sdl_rate?: number
+          source_note?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_by?: string | null
+          verified_on?: string | null
+          wcf_rate?: number
+        }
+        Relationships: []
       }
       payslips: {
         Row: {
