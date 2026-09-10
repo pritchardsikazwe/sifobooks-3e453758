@@ -60,7 +60,7 @@ function PayrollDashboard() {
         supabase.from("payroll_runs")
           .select("id,run_number,period_year,period_month,pay_date,status,total_gross,total_paye,total_napsa,total_nhima,total_wcf,total_sdl,total_net,total_overtime,total_bonus,total_allowances,total_employer_cost,employees_paid")
           .order("period_year", { ascending: false }).order("period_month", { ascending: false }).limit(24),
-        supabase.from("employees").select("id,first_name,last_name,basic_salary,status,department_id,employment_type"),
+        supabase.from("employees").select("id,first_name,last_name,basic_salary,status,department_id,employment_type,tpin,national_id,napsa_number,nhima_number"),
         supabase.from("departments").select("id,name"),
         supabase.from("approval_requests")
           .select("id,module,reference_number,amount,status,current_level,max_level,description,created_at")
