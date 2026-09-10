@@ -5,13 +5,13 @@ import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 
 const COLOR: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-700",
-  sent: "bg-blue-100 text-blue-700",
-  approved: "bg-emerald-100 text-emerald-700",
-  partially_received: "bg-amber-100 text-amber-700",
-  received: "bg-teal-100 text-teal-700",
-  closed: "bg-slate-100 text-slate-700",
-  cancelled: "bg-red-100 text-red-700",
+  draft: "bg-muted text-muted-foreground",
+  sent: "bg-primary/10 text-primary",
+  approved: "bg-success/10 text-success",
+  partially_received: "bg-warning/10 text-warning",
+  received: "bg-success/10 text-success",
+  closed: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 const STATUS = [
