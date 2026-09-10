@@ -3443,11 +3443,19 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          amount_paid: number
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           bank_account_id: string | null
+          bill_id: string | null
+          branch_id: string | null
           category: string | null
           charge_code: string | null
           created_at: string
+          created_by: string | null
           currency: string
+          employee_id: string | null
           exchange_rate: number
           expense_account_id: string | null
           expense_date: string
@@ -3457,22 +3465,34 @@ export type Database = {
           journal_entry_id: string | null
           notes: string | null
           payment_method: string
+          payment_status: string
+          posted_at: string | null
+          posted_by: string | null
           reference: string | null
           reversed_by: string | null
           status: string
           supplier_id: string | null
           total: number
+          transaction_type: string
           updated_at: string
           user_id: string
           vat_amount: number
         }
         Insert: {
           amount?: number
+          amount_paid?: number
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           bank_account_id?: string | null
+          bill_id?: string | null
+          branch_id?: string | null
           category?: string | null
           charge_code?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
+          employee_id?: string | null
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
@@ -3482,22 +3502,34 @@ export type Database = {
           journal_entry_id?: string | null
           notes?: string | null
           payment_method?: string
+          payment_status?: string
+          posted_at?: string | null
+          posted_by?: string | null
           reference?: string | null
           reversed_by?: string | null
           status?: string
           supplier_id?: string | null
           total?: number
+          transaction_type?: string
           updated_at?: string
           user_id: string
           vat_amount?: number
         }
         Update: {
           amount?: number
+          amount_paid?: number
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           bank_account_id?: string | null
+          bill_id?: string | null
+          branch_id?: string | null
           category?: string | null
           charge_code?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
+          employee_id?: string | null
           exchange_rate?: number
           expense_account_id?: string | null
           expense_date?: string
@@ -3507,16 +3539,42 @@ export type Database = {
           journal_entry_id?: string | null
           notes?: string | null
           payment_method?: string
+          payment_status?: string
+          posted_at?: string | null
+          posted_by?: string | null
           reference?: string | null
           reversed_by?: string | null
           status?: string
           supplier_id?: string | null
           total?: number
+          transaction_type?: string
           updated_at?: string
           user_id?: string
           vat_amount?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {

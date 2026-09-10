@@ -25,6 +25,7 @@ import { receiptLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { AccountingStatusBadge, TransactionTypeBadge } from "@/components/finance/StatusBadges";
 
 export const Route = createFileRoute("/_authenticated/receipts")({
   head: () => ({ meta: [{ title: "Receipts — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -252,12 +253,18 @@ function ReceiptsPage() {
   const receiptColumns: DTColumn<any>[] = [
     { key: "number", header: "#", cell: r => <span className="font-mono text-xs">{r.number}</span> },
     { key: "receipt_date", header: "Date", cell: r => <span className="text-xs">{r.receipt_date}</span> },
-    { key: "receipt_type", header: "Type", cell: r => <span className="text-xs capitalize">{(r.receipt_type ?? "customer").replace("_", " ")}</span> },
+    { key: "receipt_type", header: "Type", accessor: r => r.receipt_type ?? "customer", cell: r => (
+      (r.receipt_type ?? "customer") === "customer"
+        ? <TransactionTypeBadge type="customer_receipt" />
+        : <span className="text-xs capitalize">{String(r.receipt_type).replace(/_/g, " ")} receipt</span>
+    ) },
     { key: "payer", header: "Payer", accessor: r => r.customers?.name ?? r.payer_name ?? "", cell: r => r.customers?.name ?? r.payer_name ?? "—" },
-    { key: "invoice", header: "Invoice", accessor: r => r.invoices?.number ?? "", cell: r => <span className="font-mono text-xs">{r.invoices?.number ?? <span className="text-muted-foreground">—</span>}</span> },
+    { key: "invoice", header: "Invoice allocated", accessor: r => r.invoices?.number ?? "", cell: r => r.invoices?.number
+      ? <span className="font-mono text-xs">{r.invoices.number}</span>
+      : <span className="text-xs text-muted-foreground">Unallocated (on account)</span> },
     { key: "voucher_no", header: "Voucher", cell: r => <span className="font-mono text-xs">{r.voucher_no ?? ""}</span> },
     { key: "method", header: "Method", cell: r => <span className="text-xs capitalize">{(r.method ?? "").replace("_", " ")}</span> },
-    { key: "status", header: "Status", cell: r => badgeFor((r as any).status ?? "posted") },
+    { key: "status", header: "Accounting", cell: r => <AccountingStatusBadge status={(r as any).status ?? "posted"} /> },
     { key: "amount", header: "Amount", align: "right", cell: r => {
         const status = (r as any).status ?? "posted";
         return <span className={`font-medium ${status === "reversed" ? "line-through" : "text-emerald-700"}`}>{fmtMoney(r.amount, r.currency)}</span>;
