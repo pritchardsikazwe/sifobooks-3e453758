@@ -14,6 +14,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Ctx = { supabase: any; userId: string };
 
+/** Platform roles defined by the database `app_role` enum. */
+type AppRole = "admin" | "manager" | "accountant" | "sales" | "purchaser" | "hr" | "viewer" | "super_admin";
+
 async function assertSuperAdmin(context: Ctx) {
   const { data, error } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
@@ -147,7 +150,7 @@ export const adminCreateAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const id = created?.user?.id ?? null;
     if (id && data.role) {
-      const { error: roleError } = await db.from("user_roles").insert({ user_id: id, role: data.role });
+      const { error: roleError } = await db.from("user_roles").insert({ user_id: id, role: data.role as AppRole });
       if (roleError && !`${roleError.message}`.includes("duplicate")) throw new Error(roleError.message);
     }
     await logAction(context as Ctx, "admin.account_created", id, { email: data.email, role: data.role ?? null });
@@ -172,13 +175,13 @@ export const adminSetRoleByEmail = createServerFn({ method: "POST" })
     if (!userId) throw new Error(`No account found for ${email}`);
 
     if (data.grant) {
-      const { error } = await db.from("user_roles").insert({ user_id: userId, role: data.role });
+      const { error } = await db.from("user_roles").insert({ user_id: userId, role: data.role as AppRole });
       if (error && !`${error.message}`.includes("duplicate")) throw new Error(error.message);
     } else {
       if (data.role === "super_admin" && userId === (context as Ctx).userId) {
         throw new Error("You cannot remove your own super admin role");
       }
-      const { error } = await db.from("user_roles").delete().eq("user_id", userId).eq("role", data.role);
+      const { error } = await db.from("user_roles").delete().eq("user_id", userId).eq("role", data.role as AppRole);
       if (error) throw new Error(error.message);
     }
     await logAction(context as Ctx, data.grant ? "admin.role_granted" : "admin.role_revoked", userId, { email, role: data.role });
