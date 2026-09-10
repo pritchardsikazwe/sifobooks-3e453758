@@ -40,7 +40,7 @@ const TITLES: Record<string, [string, string]> = {
   "/hotel": ["Hotel operations", "Live guest billing, food & beverage revenue and property costs from your own records."],
   "/hotel/front-desk": ["Front desk", "Open guest accounts and today's settlements, from your live ledger."],
   "/hotel/guests": ["Guests", "Your existing guest accounts. Select a guest to open the real record."],
-  "/hotel/folios": ["Folios & billing", "Guest folios are your open invoices — charges, payments and balance."],
+  "/hotel/folios": ["Folios & billing", "Guest folios — room, restaurant and bar charges, taxes, deposits and payments."],
   "/hotel/payments": ["Payments", "Money received from guests, allocated to their folios."],
   "/hotel/pos": ["Hotel POS", "Restaurant and bar checks captured through your POS."],
   "/hotel/maintenance": ["Maintenance", "Property maintenance tickets by priority and status."],
@@ -56,7 +56,7 @@ const TITLES: Record<string, [string, string]> = {
   "/hotel/compliance": ["Licences & tax compliance", "Tourism licence, permits, VAT, tourism levy, service charge and ZRA Smart Invoice."],
 };
 
-const OPS = new Set(["/hotel/rooms", "/hotel/room-rack", "/hotel/reservations", "/hotel/check-in-out", "/hotel/housekeeping", "/hotel/night-audit", "/hotel/compliance"]);
+const OPS = new Set(["/hotel/folios", "/hotel/rooms", "/hotel/room-rack", "/hotel/reservations", "/hotel/check-in-out", "/hotel/housekeeping", "/hotel/night-audit", "/hotel/compliance"]);
 
 const UNAVAILABLE: Record<string, string> = {
   "/hotel/events": "Events & functions",
@@ -122,6 +122,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
         case "/hotel/check-in-out": return <CheckInOut />;
         case "/hotel/housekeeping": return <HousekeepingBoard />;
         case "/hotel/night-audit": return <NightAudit />;
+        case "/hotel/folios": return <FolioWorkspace />;
         default: return <HospitalityCompliance scope="hospitality" />;
       }
     }
