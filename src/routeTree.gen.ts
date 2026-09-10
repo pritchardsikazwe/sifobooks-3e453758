@@ -172,11 +172,16 @@ import { Route as AuthenticatedRestaurantCombosRouteImport } from './routes/_aut
 import { Route as AuthenticatedRestaurantCashRouteImport } from './routes/_authenticated/restaurant.cash'
 import { Route as AuthenticatedRestaurantCallCenterRouteImport } from './routes/_authenticated/restaurant.call-center'
 import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_authenticated/reports.vat-return'
+import { Route as AuthenticatedReportsVatRouteImport } from './routes/_authenticated/reports.vat'
 import { Route as AuthenticatedReportsTurnoverTaxRouteImport } from './routes/_authenticated/reports.turnover-tax'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSupplierStatementRouteImport } from './routes/_authenticated/reports.supplier-statement'
+import { Route as AuthenticatedReportsStockReconciliationRouteImport } from './routes/_authenticated/reports.stock-reconciliation'
+import { Route as AuthenticatedReportsStockMovementRouteImport } from './routes/_authenticated/reports.stock-movement'
+import { Route as AuthenticatedReportsSalesByItemRouteImport } from './routes/_authenticated/reports.sales-by-item'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
+import { Route as AuthenticatedReportsSalesByBranchRouteImport } from './routes/_authenticated/reports.sales-by-branch'
 import { Route as AuthenticatedReportsPosIntegrityRouteImport } from './routes/_authenticated/reports.pos-integrity'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
@@ -1147,6 +1152,11 @@ const AuthenticatedReportsVatReturnRoute =
     path: '/vat-return',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsVatRoute = AuthenticatedReportsVatRouteImport.update({
+  id: '/vat',
+  path: '/vat',
+  getParentRoute: () => AuthenticatedReportsRoute,
+} as any)
 const AuthenticatedReportsTurnoverTaxRoute =
   AuthenticatedReportsTurnoverTaxRouteImport.update({
     id: '/turnover-tax',
@@ -1171,10 +1181,34 @@ const AuthenticatedReportsSupplierStatementRoute =
     path: '/supplier-statement',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsStockReconciliationRoute =
+  AuthenticatedReportsStockReconciliationRouteImport.update({
+    id: '/stock-reconciliation',
+    path: '/stock-reconciliation',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsStockMovementRoute =
+  AuthenticatedReportsStockMovementRouteImport.update({
+    id: '/stock-movement',
+    path: '/stock-movement',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsSalesByItemRoute =
+  AuthenticatedReportsSalesByItemRouteImport.update({
+    id: '/sales-by-item',
+    path: '/sales-by-item',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsSalesByCustomerRoute =
   AuthenticatedReportsSalesByCustomerRouteImport.update({
     id: '/sales-by-customer',
     path: '/sales-by-customer',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsSalesByBranchRoute =
+  AuthenticatedReportsSalesByBranchRouteImport.update({
+    id: '/sales-by-branch',
+    path: '/sales-by-branch',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
 const AuthenticatedReportsPosIntegrityRoute =
@@ -1780,11 +1814,16 @@ export interface FileRoutesByFullPath {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
+  '/reports/stock-movement': typeof AuthenticatedReportsStockMovementRoute
+  '/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/reports/vat': typeof AuthenticatedReportsVatRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
@@ -2015,11 +2054,16 @@ export interface FileRoutesByTo {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
+  '/reports/stock-movement': typeof AuthenticatedReportsStockMovementRoute
+  '/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/reports/vat': typeof AuthenticatedReportsVatRoute
   '/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
@@ -2259,11 +2303,16 @@ export interface FileRoutesById {
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/_authenticated/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/_authenticated/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
+  '/_authenticated/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
+  '/_authenticated/reports/stock-movement': typeof AuthenticatedReportsStockMovementRoute
+  '/_authenticated/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/_authenticated/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/_authenticated/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
+  '/_authenticated/reports/vat': typeof AuthenticatedReportsVatRoute
   '/_authenticated/reports/vat-return': typeof AuthenticatedReportsVatReturnRoute
   '/_authenticated/restaurant/call-center': typeof AuthenticatedRestaurantCallCenterRoute
   '/_authenticated/restaurant/cash': typeof AuthenticatedRestaurantCashRoute
@@ -2502,11 +2551,16 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/pos-integrity'
+    | '/reports/sales-by-branch'
     | '/reports/sales-by-customer'
+    | '/reports/sales-by-item'
+    | '/reports/stock-movement'
+    | '/reports/stock-reconciliation'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
+    | '/reports/vat'
     | '/reports/vat-return'
     | '/restaurant/call-center'
     | '/restaurant/cash'
@@ -2737,11 +2791,16 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/pos-integrity'
+    | '/reports/sales-by-branch'
     | '/reports/sales-by-customer'
+    | '/reports/sales-by-item'
+    | '/reports/stock-movement'
+    | '/reports/stock-reconciliation'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
+    | '/reports/vat'
     | '/reports/vat-return'
     | '/restaurant/call-center'
     | '/restaurant/cash'
@@ -2980,11 +3039,16 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
     | '/_authenticated/reports/pos-integrity'
+    | '/_authenticated/reports/sales-by-branch'
     | '/_authenticated/reports/sales-by-customer'
+    | '/_authenticated/reports/sales-by-item'
+    | '/_authenticated/reports/stock-movement'
+    | '/_authenticated/reports/stock-reconciliation'
     | '/_authenticated/reports/supplier-statement'
     | '/_authenticated/reports/tax-summary'
     | '/_authenticated/reports/trial-balance'
     | '/_authenticated/reports/turnover-tax'
+    | '/_authenticated/reports/vat'
     | '/_authenticated/reports/vat-return'
     | '/_authenticated/restaurant/call-center'
     | '/_authenticated/restaurant/cash'
@@ -4209,6 +4273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsVatReturnRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/vat': {
+      id: '/_authenticated/reports/vat'
+      path: '/vat'
+      fullPath: '/reports/vat'
+      preLoaderRoute: typeof AuthenticatedReportsVatRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/turnover-tax': {
       id: '/_authenticated/reports/turnover-tax'
       path: '/turnover-tax'
@@ -4237,11 +4308,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsSupplierStatementRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/stock-reconciliation': {
+      id: '/_authenticated/reports/stock-reconciliation'
+      path: '/stock-reconciliation'
+      fullPath: '/reports/stock-reconciliation'
+      preLoaderRoute: typeof AuthenticatedReportsStockReconciliationRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/stock-movement': {
+      id: '/_authenticated/reports/stock-movement'
+      path: '/stock-movement'
+      fullPath: '/reports/stock-movement'
+      preLoaderRoute: typeof AuthenticatedReportsStockMovementRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/sales-by-item': {
+      id: '/_authenticated/reports/sales-by-item'
+      path: '/sales-by-item'
+      fullPath: '/reports/sales-by-item'
+      preLoaderRoute: typeof AuthenticatedReportsSalesByItemRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/sales-by-customer': {
       id: '/_authenticated/reports/sales-by-customer'
       path: '/sales-by-customer'
       fullPath: '/reports/sales-by-customer'
       preLoaderRoute: typeof AuthenticatedReportsSalesByCustomerRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/sales-by-branch': {
+      id: '/_authenticated/reports/sales-by-branch'
+      path: '/sales-by-branch'
+      fullPath: '/reports/sales-by-branch'
+      preLoaderRoute: typeof AuthenticatedReportsSalesByBranchRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
     '/_authenticated/reports/pos-integrity': {
@@ -4899,11 +4998,16 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
   AuthenticatedReportsPosIntegrityRoute: typeof AuthenticatedReportsPosIntegrityRoute
+  AuthenticatedReportsSalesByBranchRoute: typeof AuthenticatedReportsSalesByBranchRoute
   AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
+  AuthenticatedReportsSalesByItemRoute: typeof AuthenticatedReportsSalesByItemRoute
+  AuthenticatedReportsStockMovementRoute: typeof AuthenticatedReportsStockMovementRoute
+  AuthenticatedReportsStockReconciliationRoute: typeof AuthenticatedReportsStockReconciliationRoute
   AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
   AuthenticatedReportsTurnoverTaxRoute: typeof AuthenticatedReportsTurnoverTaxRoute
+  AuthenticatedReportsVatRoute: typeof AuthenticatedReportsVatRoute
   AuthenticatedReportsVatReturnRoute: typeof AuthenticatedReportsVatReturnRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
 }
@@ -4941,13 +5045,21 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsPayrollSummaryRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
   AuthenticatedReportsPosIntegrityRoute: AuthenticatedReportsPosIntegrityRoute,
+  AuthenticatedReportsSalesByBranchRoute:
+    AuthenticatedReportsSalesByBranchRoute,
   AuthenticatedReportsSalesByCustomerRoute:
     AuthenticatedReportsSalesByCustomerRoute,
+  AuthenticatedReportsSalesByItemRoute: AuthenticatedReportsSalesByItemRoute,
+  AuthenticatedReportsStockMovementRoute:
+    AuthenticatedReportsStockMovementRoute,
+  AuthenticatedReportsStockReconciliationRoute:
+    AuthenticatedReportsStockReconciliationRoute,
   AuthenticatedReportsSupplierStatementRoute:
     AuthenticatedReportsSupplierStatementRoute,
   AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
   AuthenticatedReportsTurnoverTaxRoute: AuthenticatedReportsTurnoverTaxRoute,
+  AuthenticatedReportsVatRoute: AuthenticatedReportsVatRoute,
   AuthenticatedReportsVatReturnRoute: AuthenticatedReportsVatReturnRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
 }
