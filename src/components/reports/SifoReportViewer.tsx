@@ -67,11 +67,6 @@ export function SifoReportViewer({
   const [page, setPage] = useState(0);
   const [hidden, setHidden] = useState<string[]>(() => []);
 
-  const columns = useMemo(
-    () => (result?.columns ?? []).filter((c) => !hidden.includes(c.key) && !(c.defaultHidden && !hidden.length && false)),
-    [result, hidden],
-  );
-
   const visibleColumns = useMemo(() => {
     const base = result?.columns ?? [];
     const autoHidden = base.filter((c) => c.defaultHidden).map((c) => c.key);
