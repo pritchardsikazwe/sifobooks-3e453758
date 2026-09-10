@@ -10,10 +10,16 @@ import { toast } from "sonner";
 type Props = {
   onCreated: (customer: { id: string; name: string; tpin: string | null; payment_terms_days: number }) => void;
   trigger?: React.ReactNode;
+  /** Controlled mode: lets a selector own the "create new" secondary action. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function QuickAddCustomer({ onCreated, trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function QuickAddCustomer({ onCreated, trigger, open: openProp, onOpenChange }: Props) {
+  const [openState, setOpenState] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (v: boolean) => { if (!controlled) setOpenState(v); onOpenChange?.(v); };
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({ name: "", email: "", phone: "", tpin: "", payment_terms_days: 30 });
 
@@ -36,11 +42,13 @@ export function QuickAddCustomer({ onCreated, trigger }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? <Button type="button" variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" />New customer</Button>}
-      </DialogTrigger>
+      {!controlled && (
+        <DialogTrigger asChild>
+          {trigger ?? <Button type="button" variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" />New customer</Button>}
+        </DialogTrigger>
+      )}
       <DialogContent>
-        <DialogHeader><DialogTitle>Quick add customer</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>New customer</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="space-y-1"><Label>Name *</Label><Input autoFocus value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
