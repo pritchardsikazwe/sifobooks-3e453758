@@ -5,6 +5,16 @@ import { SifoLandingPresentation } from "@/components/sifo/SifoLandingPresentati
 export function SifoLandingHome() {
   return (
     <main className="min-h-screen bg-[#06110c] text-white">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#06110c]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+          <Link to="/" className="text-lg font-black tracking-tight">Sifo<span className="text-[#7dd3a5]">Books</span></Link>
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link to="/demo" className="hidden rounded-xl px-4 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 sm:inline-flex">Demos</Link>
+            <Link to="/auth" search={{ tab: "signin" }} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10">Sign in</Link>
+            <Link to="/auth" search={{ tab: "signup" }} className="rounded-xl bg-[#0e8f4a] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[#0e8f4a]/20 transition hover:-translate-y-0.5">Sign up</Link>
+          </nav>
+        </div>
+      </header>
       <section className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_20%_10%,rgba(14,143,74,.28),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,.14),transparent_30%)] py-24 md:py-32">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
           <div>
