@@ -61,6 +61,7 @@ function Reservations() {
     if (error) return toast.error(error.message);
     toast.success("Reservation booked");
     setForm({ ...blank, reserved_date: date });
+    setBookOpen(false);
     load();
   };
 
