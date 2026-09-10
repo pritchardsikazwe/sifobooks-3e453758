@@ -87,8 +87,9 @@ const REPORTS: Report[] = [
   { id: "bank-accounts", name: "Bank Accounts", description: "All bank accounts, opening and current balances.", to: "/bank-accounts", icon: Landmark, category: "banking" },
 
   // Inventory
-  { id: "inventory-valuation", name: "Stock Valuation", description: "On-hand quantity × cost, per item.", to: "/reports/inventory-valuation", icon: Package, category: "inventory" },
-  { id: "stock", name: "Stock Movement", description: "Stock in/out movements over time.", to: "/stock", icon: Package, category: "inventory" },
+  { id: "inventory-valuation", name: "Stock Valuation", description: "On-hand quantity × recorded cost, per item and location.", to: "/reports/inventory-valuation", icon: Package, category: "inventory" },
+  { id: "stock-movement", name: "Stock Movement", description: "Opening, in, out, adjustments and closing by item and location.", to: "/reports/stock-movement", icon: Package, category: "inventory" },
+  { id: "stock-reconciliation", name: "Stock Reconciliation", description: "Expected stock from movement history vs actual balances, with variances.", to: "/reports/stock-reconciliation", icon: Package, category: "inventory" },
 
   // Expenses
   { id: "expenses", name: "Expense Register", description: "All expenses with category and supplier.", to: "/expenses", icon: Receipt, category: "expenses" },
