@@ -6,8 +6,9 @@ import { fmt, num } from "@/lib/reports";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
-import { resolvePeriod } from "@/lib/reports/format";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 
 export const Route = createFileRoute("/_authenticated/reports/account-transactions")({
   head: () => ({ meta: [{ title: "Account Transactions — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -24,10 +25,10 @@ function AccountTransactionsPage() {
   const [lines, setLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingBalance, setOpeningBalance] = useState(0);
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
+  const [range, setRange] = useState<Range>(() => resolveRange("this-month"));
 
   const acctId = search.account;
-  const { from, to, label } = filters.range;
+  const { from, to, label } = range;
 
   useEffect(() => {
     (async () => {
@@ -101,10 +102,10 @@ function AccountTransactionsPage() {
         </Link>
       </div>
 
-      <ReportFilterBar
-        initial={{ periodKey: "this-month" }}
-        onApply={setFilters}
-        extraFilters={
+      <ReportPeriodBar
+        range={range}
+        onRange={setRange}
+        customize={
           <div className="min-w-[220px]">
             <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Account</Label>
             <Select value={acctId} onValueChange={v => navigate({ search: { ...search, account: v } })}>
@@ -115,7 +116,9 @@ function AccountTransactionsPage() {
             </Select>
           </div>
         }
-      />
+      >
+        <SaveViewButton defaultName={`Account Transactions — ${label}`} />
+      </ReportPeriodBar>
 
       {acctId && (
         <>

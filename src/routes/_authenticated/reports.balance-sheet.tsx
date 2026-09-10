@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
-import { resolvePeriod } from "@/lib/reports/format";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 import { loadBalanceSheet } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
@@ -12,10 +13,10 @@ export const Route = createFileRoute("/_authenticated/reports/balance-sheet")({
 });
 
 function BalanceSheetPage() {
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("ytd"), periodKey: "ytd" });
-  const asAt = filters.range.to;
-  const fyStart = filters.range.from;
-  const { result, loading, error } = useReport(loadBalanceSheet, { to: asAt, fyStart }, [asAt, fyStart]);
+  const [range, setRange] = useState<Range>(() => resolveRange("ytd"));
+  const asAt = range.to;
+  const fyStart = range.from;
+  const { result, loading, error, refresh } = useReport(loadBalanceSheet, { to: asAt, fyStart }, [asAt, fyStart]);
 
   return (
     <SifoReportViewer
@@ -26,7 +27,11 @@ function BalanceSheetPage() {
       loading={loading}
       error={error}
       result={result}
-      filters={<ReportFilterBar initial={{ periodKey: "ytd" }} onApply={setFilters} />}
+      filters={
+        <ReportPeriodBar range={range} onRange={setRange} onRefresh={refresh} refreshing={loading}>
+          <SaveViewButton defaultName={`Balance Sheet — as at ${asAt}`} />
+        </ReportPeriodBar>
+      }
     />
   );
 }

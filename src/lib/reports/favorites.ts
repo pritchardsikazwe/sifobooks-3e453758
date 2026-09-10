@@ -35,3 +35,30 @@ export function markGenerated(id: string) {
   cur[id] = new Date().toISOString();
   write(LAST_GEN_KEY, cur);
 }
+
+/* ------------------------------------------------------------------ */
+/* Saved views: a report route plus its period and options, so a user  */
+/* can re-run the same report later for another period.                */
+/* ------------------------------------------------------------------ */
+
+const SAVED_KEY = "sifobooks.reports.saved.v1";
+
+export type SavedView = { id: string; name: string; path: string; at: string };
+
+export function getSavedViews(): SavedView[] { return read<SavedView[]>(SAVED_KEY, []); }
+
+export function saveView(v: { name: string; path: string }): SavedView {
+  const entry: SavedView = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+    name: v.name,
+    path: v.path,
+    at: new Date().toISOString(),
+  };
+  const cur = getSavedViews().filter(x => !(x.name === v.name && x.path === v.path));
+  write(SAVED_KEY, [entry, ...cur].slice(0, 50));
+  return entry;
+}
+
+export function removeSavedView(id: string) {
+  write(SAVED_KEY, getSavedViews().filter(v => v.id !== id));
+}

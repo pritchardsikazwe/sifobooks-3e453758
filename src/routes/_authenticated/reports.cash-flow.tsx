@@ -3,8 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num } from "@/lib/reports";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
-import { resolvePeriod } from "@/lib/reports/format";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 
 export const Route = createFileRoute("/_authenticated/reports/cash-flow")({
   head: () => ({ meta: [{ title: "Cash Flow — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -12,8 +13,8 @@ export const Route = createFileRoute("/_authenticated/reports/cash-flow")({
 });
 
 function CashFlowPage() {
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
-  const { from, to, label } = filters.range;
+  const [range, setRange] = useState<Range>(() => resolveRange("this-month"));
+  const { from, to, label } = range;
   const [loading, setLoading] = useState(true);
   const [txns, setTxns] = useState<any[]>([]);
 
@@ -47,7 +48,9 @@ function CashFlowPage() {
 
   return (
     <ReportShell title="Cash Flow (simple)" subtitle={`Monthly bank movement summary · ${label}`} loading={loading} filename="cash-flow" rows={csv}>
-      <ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />
+      <ReportPeriodBar range={range} onRange={setRange}>
+        <SaveViewButton defaultName={`Cash Flow — ${label}`} />
+      </ReportPeriodBar>
       <table className="w-full text-sm mt-4">
         <thead className="text-xs text-slate-500 uppercase border-b">
           <tr><th className="text-left py-2">Month</th><th className="text-right">Inflow</th><th className="text-right">Outflow</th><th className="text-right">Net</th></tr>
