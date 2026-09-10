@@ -139,6 +139,12 @@ export function HotelWorkspace({ screen }: { screen: string }) {
         case "/hotel/housekeeping": return <HousekeepingBoard />;
         case "/hotel/night-audit": return <NightAudit />;
         case "/hotel/folios": return <FolioWorkspace />;
+        case "/hotel/rates": return <RatesWorkspace />;
+        case "/hotel/booking": return <BookingEngine />;
+        case "/hotel/channels": return <ChannelManager />;
+        case "/hotel/events": return <EventsBoard />;
+        case "/hotel/pre-arrival":
+        case "/hotel/guest-portal": return <PreArrivalDesk />;
         default: return <HospitalityCompliance scope="hospitality" />;
       }
     }
