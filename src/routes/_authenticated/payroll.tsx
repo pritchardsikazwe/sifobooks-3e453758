@@ -439,8 +439,11 @@ function RunDetail({ run, company, userId, onClose, onChanged }: { run: Run; com
           </div>
           <div className="flex gap-2">
             {run.status === "draft" && (
-              <Button size="sm" variant="outline" disabled={!journalBalanced}
-                title={journalBalanced ? undefined : "The payroll journal must balance before approval"}
+              <Button size="sm" variant="outline" disabled={!journalBalanced || preparedByMe}
+                title={
+                  preparedByMe ? "You prepared this run, so someone else must approve it"
+                  : journalBalanced ? undefined : "The payroll journal must balance before approval"
+                }
                 onClick={() => setStatus("approved")}>Approve</Button>
             )}
             {run.status === "approved" && (
