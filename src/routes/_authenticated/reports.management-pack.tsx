@@ -46,7 +46,7 @@ function ManagementPackPage() {
       setAP(bucket(bills));
 
       // Cash & Bank
-      const { data: bal } = await supabase.from("bank_accounts").select("current_balance");
+      const { data: bal } = await supabase.from("bank_running_balance").select("current_balance");
       setCash((bal ?? []).reduce((s: number, b: any) => s + num(b.current_balance), 0));
       setLoading(false);
     })();

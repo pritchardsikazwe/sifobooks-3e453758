@@ -195,7 +195,7 @@ export default function POSCommandCenter() {
           taxInclusive: settings.tax_inclusive,
           allowNegativeStock: settings.allow_negative_stock,
         },
-        [{ method, amount: totals.total }],
+        [{ method, amount: tendered }],
         Math.max(0, tendered - totals.total),
       );
       toast.success(result.offline ? "Saved offline — it will post when you reconnect." : `Sale ${result.sale_no} completed`);

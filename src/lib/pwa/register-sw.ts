@@ -80,14 +80,9 @@ export function registerServiceWorker() {
     return;
   }
 
-  // A new build now activates immediately (skipWaiting). Reload once when it
-  // takes control so installed apps never keep serving a stale build.
-  let reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloading) return;
-    reloading = true;
-    window.location.reload();
-  });
+  // Never reload on controllerchange here: with clientsClaim that also fires
+  // on first install, which would discard an in-progress sale or form. The
+  // only reload happens in applySwUpdate(), after the user accepts an update.
 
   const register = async () => {
     try {

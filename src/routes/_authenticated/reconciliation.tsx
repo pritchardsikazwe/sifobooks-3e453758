@@ -101,7 +101,7 @@ function Reconciliation() {
   const [allocAccountId, setAllocAccountId] = useState<string>("");
   const [allocMemo, setAllocMemo] = useState<string>("");
   const [accounts, setAccounts] = useState<{ id: string; account_code: string; account_name: string; account_type: string }[]>([]);
-  const [rules, setRules] = useState<{ id: string; pattern: string; account_id: string }[]>([]);
+  const [rules, setRules] = useState<{ id: string; match_type: string | null; match_value: string | null; account_id: string }[]>([]);
 
   // CSV import state
   const [importOpen, setImportOpen] = useState(false);
@@ -146,7 +146,7 @@ function Reconciliation() {
     (async () => {
       const [{ data: acc }, { data: rl }] = await Promise.all([
         supabase.from("chart_of_accounts").select("id, account_code, account_name, account_type").eq("is_active", true).order("account_code"),
-        supabase.from("expense_category_rules").select("id, pattern, account_id"),
+        supabase.from("expense_category_rules").select("id, match_type, match_value, account_id").eq("is_active", true).order("priority"),
       ]);
       setAccounts(acc ?? []);
       setRules((rl as any) ?? []);
@@ -158,7 +158,16 @@ function Reconciliation() {
     setAllocMemo(t.description ?? "");
     // suggest via rules
     const desc = (t.description ?? "").toLowerCase();
-    const hit = rules.find(r => r.pattern && desc.includes(r.pattern.toLowerCase()));
+    const hit = rules.find(r => {
+      const needle = (r.match_value ?? "").toLowerCase().trim();
+      if (!needle) return false;
+      switch (r.match_type) {
+        case "equals": return desc === needle;
+        case "starts_with": return desc.startsWith(needle);
+        case "ends_with": return desc.endsWith(needle);
+        default: return desc.includes(needle);
+      }
+    });
     if (hit) { setAllocAccountId(hit.account_id); return; }
     // fallback: revenue for inflow, expense for outflow
     const wantType = Number(t.amount) > 0 ? "revenue" : "expense";

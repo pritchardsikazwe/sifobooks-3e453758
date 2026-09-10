@@ -36,7 +36,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         // Old installs were getting stuck on a stale build: take over immediately.
-        skipWaiting: true,
+        skipWaiting: false,
         runtimeCaching: [
           {
             // App navigations: always try the network first so deploys land.

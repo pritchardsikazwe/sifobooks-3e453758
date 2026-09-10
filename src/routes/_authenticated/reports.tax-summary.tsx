@@ -21,9 +21,9 @@ function TaxSummaryPage() {
       setLoading(true);
       const { from, to } = monthRange(month);
       const [{ data: inv }, { data: bl }] = await Promise.all([
-        supabase.from("invoices").select("invoice_number,issue_date,subtotal,vat_amount,total,status,customers(name)")
+        supabase.from("invoices").select("number,issue_date,subtotal,vat_amount,total,status,customers(name)")
           .gte("issue_date", from).lte("issue_date", to).neq("status", "draft"),
-        supabase.from("bills").select("bill_number,bill_date,subtotal,vat_amount,total,status,suppliers(name)")
+        supabase.from("bills").select("bill_number,bill_date,subtotal,tax_amount,total,status,suppliers(name)")
           .gte("bill_date", from).lte("bill_date", to).neq("status", "draft"),
       ]);
       setInvoices(inv ?? []); setBills(bl ?? []);
@@ -33,7 +33,7 @@ function TaxSummaryPage() {
 
   const { outputVat, inputVat, salesNet, purchasesNet } = useMemo(() => {
     const outputVat = invoices.reduce((s, r) => s + num(r.vat_amount), 0);
-    const inputVat = bills.reduce((s, r) => s + num(r.vat_amount), 0);
+    const inputVat = bills.reduce((s, r) => s + num(r.tax_amount), 0);
     const salesNet = invoices.reduce((s, r) => s + num(r.subtotal), 0);
     const purchasesNet = bills.reduce((s, r) => s + num(r.subtotal), 0);
     return { outputVat, inputVat, salesNet, purchasesNet };
@@ -44,13 +44,13 @@ function TaxSummaryPage() {
   const csvRows = [
     { Section: "Sales (Output VAT)", Reference: "Total", Party: "", Net: salesNet.toFixed(2), VAT: outputVat.toFixed(2) },
     ...invoices.map((i) => ({
-      Section: "Sales", Reference: i.invoice_number, Party: i.customers?.name ?? "",
+      Section: "Sales", Reference: i.number, Party: i.customers?.name ?? "",
       Net: num(i.subtotal).toFixed(2), VAT: num(i.vat_amount).toFixed(2),
     })),
     { Section: "Purchases (Input VAT)", Reference: "Total", Party: "", Net: purchasesNet.toFixed(2), VAT: inputVat.toFixed(2) },
     ...bills.map((b) => ({
       Section: "Purchases", Reference: b.bill_number, Party: b.suppliers?.name ?? "",
-      Net: num(b.subtotal).toFixed(2), VAT: num(b.vat_amount).toFixed(2),
+      Net: num(b.subtotal).toFixed(2), VAT: num(b.tax_amount).toFixed(2),
     })),
     { Section: "NET VAT PAYABLE", Reference: "", Party: "", Net: "", VAT: netPayable.toFixed(2) },
   ];
@@ -68,7 +68,7 @@ function TaxSummaryPage() {
         <StatCard label={netPayable >= 0 ? "Net VAT Payable" : "Net VAT Refund"} value={Math.abs(netPayable)} tone={netPayable >= 0 ? "rose" : "emerald"} />
       </div>
 
-      <Section title="Sales — Output VAT" rows={invoices} party="customers" refKey="invoice_number" dateKey="issue_date" total={outputVat} />
+      <Section title="Sales — Output VAT" rows={invoices} party="customers" refKey="number" dateKey="issue_date" total={outputVat} />
       <Section title="Purchases — Input VAT" rows={bills} party="suppliers" refKey="bill_number" dateKey="bill_date" total={inputVat} />
 
       <div className="mt-6 pt-4 border-t-2 flex justify-between text-lg font-bold text-slate-900">

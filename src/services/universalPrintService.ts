@@ -396,7 +396,7 @@ export async function printKitchenOrder(order: KitchenOrder, printer?: string) {
   return dispatch(
     "kitchen",
     { kitchenOrder: order },
-    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}` },
+    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}:${ticketRevision(order)}` },
   );
 }
 
@@ -404,7 +404,7 @@ export async function printBarOrder(order: KitchenOrder, printer?: string) {
   return dispatch(
     "bar",
     { kitchenOrder: order },
-    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}` },
+    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}:${ticketRevision(order)}` },
   );
 }
 
