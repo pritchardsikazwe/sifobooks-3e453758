@@ -180,6 +180,35 @@ export function SimpleCrud({
   const previewOk = !requireBalanced || isBalanced(preview);
 
 
+  // Existing tenant records for every "lookup" field, so users pick real records
+  // instead of being pushed into a creation form.
+  const lookupFields = useMemo(() => fields.filter(f => f.type === "lookup" && f.lookup), [fields]);
+  const [lookupOptions, setLookupOptions] = useState<Record<string, EntityOption[]>>({});
+  useEffect(() => {
+    if (lookupFields.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, EntityOption[]> = {};
+      for (const f of lookupFields) {
+        const spec = f.lookup!;
+        const cols = ["id", spec.labelColumn, spec.codeColumn, ...(spec.metaColumns ?? [])]
+          .filter(Boolean).join(",");
+        let q = supabase.from(spec.table as any).select(cols);
+        q = q.order(spec.orderBy ?? spec.labelColumn, { ascending: true });
+        const { data, error } = await q;
+        if (error) { toast.error(`${f.label}: ${error.message}`); continue; }
+        next[f.name] = ((data ?? []) as any[]).map(r => ({
+          id: String(r.id),
+          code: spec.codeColumn ? (r[spec.codeColumn] ?? null) : null,
+          label: String(r[spec.labelColumn] ?? "—"),
+          meta: (spec.metaColumns ?? []).map(c => r[c]).filter(Boolean).join(" · ") || null,
+        }));
+      }
+      if (!cancelled) setLookupOptions(next);
+    })();
+    return () => { cancelled = true; };
+  }, [lookupFields]);
+
   const statusOptions = useMemo(() => {
     if (!statusField) return null;
     const f = fields.find(x => x.name === statusField);
