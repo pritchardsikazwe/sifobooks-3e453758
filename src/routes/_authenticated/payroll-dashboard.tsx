@@ -149,6 +149,38 @@ function PayrollDashboard() {
     return items;
   }, [runs]);
 
+  // What needs attention right now — built only from live runs and employee records.
+  const attention = useMemo(() => {
+    const items: { text: string; to: string; tone: "amber" | "rose" | "slate" }[] = [];
+    const drafts = runs.filter(r => r.status === "draft");
+    const approved = runs.filter(r => r.status === "approved");
+    const posted = runs.filter(r => r.status === "posted");
+    if (drafts.length) items.push({ text: `${drafts.length} payroll run(s) still in draft — calculate and send for approval.`, to: "/payroll", tone: "amber" });
+    if (approved.length) items.push({ text: `${approved.length} approved run(s) not yet paid or posted to the ledger.`, to: "/payroll", tone: "amber" });
+    if (posted.length) items.push({ text: `${posted.length} posted run(s) awaiting statutory filing and reconciliation.`, to: "/payroll-statutory", tone: "slate" });
+    const active = employees.filter(e => (e.status ?? "active") === "active");
+    const missing = active.filter(e => !e.tpin?.trim() || !e.napsa_number?.trim() || !e.nhima_number?.trim() || !e.national_id?.trim());
+    if (missing.length) items.push({ text: `${missing.length} active employee(s) are missing a TPIN, NRC, NAPSA or NHIMA number — statutory files will reject them.`, to: "/employees", tone: "rose" });
+    const next = calendar.find(c => c.status === "pending" || c.status === "upcoming");
+    if (next) items.push({ text: `Next pay date ${next.date} (${next.label}).`, to: "/payroll", tone: "slate" });
+    return items;
+  }, [runs, employees, calendar]);
+
+  // Month-on-month movement on the two most recent runs.
+  const movement = useMemo(() => {
+    const [cur, prev] = runs;
+    if (!cur || !prev) return null;
+    const d = (a: number, b: number) => ({ diff: a - b, pct: b === 0 ? null : ((a - b) / Math.abs(b)) * 100 });
+    return {
+      label: `${MONTHS[cur.period_month - 1]} ${cur.period_year} vs ${MONTHS[prev.period_month - 1]} ${prev.period_year}`,
+      gross: d(num(cur.total_gross), num(prev.total_gross)),
+      net: d(num(cur.total_net), num(prev.total_net)),
+      paye: d(num(cur.total_paye), num(prev.total_paye)),
+      heads: d(num(cur.employees_paid), num(prev.employees_paid)),
+    };
+  }, [runs]);
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 p-6 space-y-6">
       {/* Header */}
