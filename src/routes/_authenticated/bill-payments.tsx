@@ -19,6 +19,8 @@ import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { PostingPreview } from "@/components/PostingPreview";
 import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
+import { AccountingStatusBadge, PaymentStatusBadge, TransactionTypeBadge } from "@/components/finance/StatusBadges";
+import { WhatWasPosted } from "@/components/finance/WhatWasPosted";
 
 export const Route = createFileRoute("/_authenticated/bill-payments")({
   head: () => ({ meta: [{ title: "Supplier Payments — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -265,8 +267,13 @@ function BillPaymentsPage() {
   const columns: DTColumn<any>[] = [
     { key: "payment_number", header: "Payment #", cell: r => <Link to="/bill-payment-detail/$id" params={{ id: r.id }} className="font-mono text-xs text-primary hover:underline">{r.payment_number}</Link> },
     { key: "payment_date", header: "Date", cell: r => <span className="text-xs">{r.payment_date}</span> },
+    { key: "type", header: "Type", sortable: false, cell: () => <TransactionTypeBadge type="supplier_payment" /> },
     { key: "supplier", header: "Supplier", accessor: r => r.suppliers?.name ?? "", cell: r => r.suppliers?.name ?? <span className="text-muted-foreground">—</span> },
-    { key: "bill", header: "Bill", accessor: r => r.bills?.bill_number ?? "", cell: r => <span className="font-mono text-xs">{r.bills?.bill_number ?? "—"}</span> },
+    { key: "bill", header: "Bill allocated", accessor: r => r.bills?.bill_number ?? "", cell: r => r.bills?.bill_number
+      ? <span className="font-mono text-xs">{r.bills.bill_number}</span>
+      : <Badge variant="outline" className="text-[11px]">Unallocated</Badge> },
+    { key: "accounting", header: "Accounting", sortable: false, cell: () => <AccountingStatusBadge status="posted" /> },
+    { key: "settlement", header: "Settlement", sortable: false, cell: () => <PaymentStatusBadge status="paid" /> },
     { key: "payment_method", header: "Method", cell: r => <span className="text-xs capitalize">{String(r.payment_method ?? "").replace(/_/g, " ")}</span> },
     { key: "reference", header: "Reference", cell: r => <span className="text-xs">{r.reference ?? "—"}</span> },
     { key: "amount", header: "Amount", align: "right", cell: r => <span className="font-semibold tabular-nums">{fmtMoney(r.amount ?? 0)}</span> },
@@ -397,6 +404,10 @@ function BillPaymentsPage() {
           </SifoFormSection>
 
           <SifoFormSection title="Posting" columns={1}>
+            <WhatWasPosted
+              type="supplier_payment"
+              sourceAccount={method === "bank" ? (banks.find(b => b.id === bankAccountId)?.name ?? "Bank") : "Cash"}
+            />
             <PostingPreview lines={previewLines} title="Journal that will be posted" />
             <p className="text-xs text-muted-foreground">
               One payment record is created per bill so each settlement stays traceable to its own supplier invoice.
