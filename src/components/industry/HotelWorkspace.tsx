@@ -366,7 +366,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <MetricTile label="Open work orders" value={String(bucket("open").length)} icon={Wrench} tone="warn" />
-              <MetricTile label="In progress" value={String(bucket("in progress").length)} icon={Wrench} tone="info" as never />
+              <MetricTile label="In progress" value={String(bucket("in progress").length)} icon={Wrench} />
               <MetricTile label="Resolved" value={String(bucket("resolved").length)} icon={ClipboardCheck} tone="good" />
               <MetricTile label="High priority" value={String(rows.filter((t: any) => (t.priority ?? "").toLowerCase() === "high").length)} icon={Wrench} tone="bad" />
             </div>
