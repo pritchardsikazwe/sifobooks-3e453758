@@ -41,7 +41,8 @@ export type ReportId =
   | "sales-by-item"
   | "sales-by-customer"
   | "sales-by-branch"
-  | "vat";
+  | "vat"
+  | "expenses";
 
 const n = (v: unknown) => (typeof v === "number" && isFinite(v) ? v : 0);
 
