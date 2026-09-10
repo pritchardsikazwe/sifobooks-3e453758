@@ -269,6 +269,7 @@ export function SimpleCrud({
       header: c.header,
       align: c.align,
       className: c.className,
+      defaultHidden: c.defaultHidden,
       accessor: (r) => {
         const v = r[c.key];
         return typeof v === "object" && v !== null ? "" : v;
