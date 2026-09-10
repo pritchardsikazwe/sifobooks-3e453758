@@ -13,9 +13,10 @@ import { CashierPinLogin } from "@/components/auth/CashierPinLogin";
 import { landingFor, loadAccess } from "@/lib/rbac";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+  validateSearch: (s: Record<string, unknown>): { next?: string; tab?: "signin" | "signup" } => {
     const n = typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined;
-    return n ? { next: n } : {};
+    const tab = s.tab === "signin" || s.tab === "signup" ? s.tab : undefined;
+    return { ...(n ? { next: n } : {}), ...(tab ? { tab } : {}) };
   },
   head: () => ({
     meta: [
@@ -53,9 +54,9 @@ type LoginMode = "cashier" | "manager" | "admin";
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { next } = Route.useSearch();
-  const [mode, setMode] = useState<LoginMode | null>(null);
-  const [tab, setTab] = useState<"signin" | "signup" | "reset">("signin");
+  const { next, tab: initialTab } = Route.useSearch();
+  const [mode, setMode] = useState<LoginMode | null>(initialTab ? "admin" : null);
+  const [tab, setTab] = useState<"signin" | "signup" | "reset">(initialTab ?? "signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
