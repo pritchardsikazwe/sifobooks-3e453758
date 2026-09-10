@@ -1935,6 +1935,60 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_documents: {
+        Row: {
+          branch_id: string | null
+          category: string
+          created_at: string
+          document_url: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          issuing_body: string | null
+          notes: string | null
+          reference: string | null
+          responsible_person: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          category?: string
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_body?: string | null
+          notes?: string | null
+          reference?: string | null
+          responsible_person?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          category?: string
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_body?: string | null
+          notes?: string | null
+          reference?: string | null
+          responsible_person?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_obligations: {
         Row: {
           amount: number | null
@@ -3726,6 +3780,520 @@ export type Database = {
             columns: ["grant_id"]
             isOneToOne: false
             referencedRelation: "school_grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitality_tax_profiles: {
+        Row: {
+          active: boolean
+          branch_id: string | null
+          created_at: string
+          id: string
+          levy_on_accommodation: boolean
+          levy_on_conference_package: boolean
+          levy_on_food_beverage: boolean
+          name: string
+          notes: string | null
+          prices_tax_inclusive: boolean
+          service_charge_rate: number
+          tourism_levy_rate: number
+          updated_at: string
+          user_id: string
+          vat_rate: number
+        }
+        Insert: {
+          active?: boolean
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          levy_on_accommodation?: boolean
+          levy_on_conference_package?: boolean
+          levy_on_food_beverage?: boolean
+          name?: string
+          notes?: string | null
+          prices_tax_inclusive?: boolean
+          service_charge_rate?: number
+          tourism_levy_rate?: number
+          updated_at?: string
+          user_id: string
+          vat_rate?: number
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          levy_on_accommodation?: boolean
+          levy_on_conference_package?: boolean
+          levy_on_food_beverage?: boolean
+          name?: string
+          notes?: string | null
+          prices_tax_inclusive?: boolean
+          service_charge_rate?: number
+          tourism_levy_rate?: number
+          updated_at?: string
+          user_id?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      hotel_folio_charges: {
+        Row: {
+          amount: number
+          category: string
+          charge_date: string
+          created_at: string
+          description: string
+          folio_id: string
+          id: string
+          levy_amount: number
+          payment_method: string | null
+          quantity: number
+          service_charge: number
+          source_ref: string | null
+          unit_price: number
+          updated_at: string
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          charge_date?: string
+          created_at?: string
+          description: string
+          folio_id: string
+          id?: string
+          levy_amount?: number
+          payment_method?: string | null
+          quantity?: number
+          service_charge?: number
+          source_ref?: string | null
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          amount?: number
+          category?: string
+          charge_date?: string
+          created_at?: string
+          description?: string
+          folio_id?: string
+          id?: string
+          levy_amount?: number
+          payment_method?: string | null
+          quantity?: number
+          service_charge?: number
+          source_ref?: string | null
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_folio_charges_folio_id_fkey"
+            columns: ["folio_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_folios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_folios: {
+        Row: {
+          billing_type: string
+          branch_id: string | null
+          closed_at: string | null
+          created_at: string
+          customer_id: string | null
+          folio_number: string
+          guest_name: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          opened_at: string
+          reservation_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_type?: string
+          branch_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          folio_number: string
+          guest_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          opened_at?: string
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_type?: string
+          branch_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          folio_number?: string
+          guest_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          opened_at?: string
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_folios_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_folios_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_folios_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_housekeeping_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          priority: string
+          room_id: string | null
+          status: string
+          task_date: string
+          task_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          status?: string
+          task_date?: string
+          task_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          room_id?: string | null
+          status?: string
+          task_date?: string
+          task_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_housekeeping_tasks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_night_audits: {
+        Row: {
+          audit_date: string
+          branch_id: string | null
+          created_at: string
+          exceptions: Json
+          fnb_revenue: number
+          id: string
+          levy_total: number
+          notes: string | null
+          other_revenue: number
+          payments: Json
+          room_revenue: number
+          rooms_available: number
+          rooms_occupied: number
+          run_by: string | null
+          service_charge_total: number
+          status: string
+          updated_at: string
+          user_id: string
+          vat_total: number
+        }
+        Insert: {
+          audit_date: string
+          branch_id?: string | null
+          created_at?: string
+          exceptions?: Json
+          fnb_revenue?: number
+          id?: string
+          levy_total?: number
+          notes?: string | null
+          other_revenue?: number
+          payments?: Json
+          room_revenue?: number
+          rooms_available?: number
+          rooms_occupied?: number
+          run_by?: string | null
+          service_charge_total?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          vat_total?: number
+        }
+        Update: {
+          audit_date?: string
+          branch_id?: string | null
+          created_at?: string
+          exceptions?: Json
+          fnb_revenue?: number
+          id?: string
+          levy_total?: number
+          notes?: string | null
+          other_revenue?: number
+          payments?: Json
+          room_revenue?: number
+          rooms_available?: number
+          rooms_occupied?: number
+          run_by?: string | null
+          service_charge_total?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vat_total?: number
+        }
+        Relationships: []
+      }
+      hotel_reservations: {
+        Row: {
+          actual_check_in: string | null
+          actual_check_out: string | null
+          adults: number
+          branch_id: string | null
+          check_in: string
+          check_out: string
+          children: number
+          company: string | null
+          created_at: string
+          customer_id: string | null
+          deposit: number
+          email: string | null
+          guest_name: string
+          id: string
+          nightly_rate: number
+          phone: string | null
+          reference: string | null
+          room_id: string | null
+          source: string | null
+          special_requests: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          walk_in: boolean
+        }
+        Insert: {
+          actual_check_in?: string | null
+          actual_check_out?: string | null
+          adults?: number
+          branch_id?: string | null
+          check_in: string
+          check_out: string
+          children?: number
+          company?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          email?: string | null
+          guest_name: string
+          id?: string
+          nightly_rate?: number
+          phone?: string | null
+          reference?: string | null
+          room_id?: string | null
+          source?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          walk_in?: boolean
+        }
+        Update: {
+          actual_check_in?: string | null
+          actual_check_out?: string | null
+          adults?: number
+          branch_id?: string | null
+          check_in?: string
+          check_out?: string
+          children?: number
+          company?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          email?: string | null
+          guest_name?: string
+          id?: string
+          nightly_rate?: number
+          phone?: string | null
+          reference?: string | null
+          room_id?: string | null
+          source?: string | null
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          walk_in?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_reservations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_reservations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_room_types: {
+        Row: {
+          active: boolean
+          amenities: string[]
+          base_rate: number
+          branch_id: string | null
+          capacity: number
+          code: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amenities?: string[]
+          base_rate?: number
+          branch_id?: string | null
+          capacity?: number
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amenities?: string[]
+          base_rate?: number
+          branch_id?: string | null
+          capacity?: number
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hotel_rooms: {
+        Row: {
+          active: boolean
+          branch_id: string | null
+          created_at: string
+          floor: string | null
+          housekeeping_status: string
+          id: string
+          notes: string | null
+          number: string
+          out_of_order: boolean
+          rate_override: number | null
+          room_type_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          branch_id?: string | null
+          created_at?: string
+          floor?: string | null
+          housekeeping_status?: string
+          id?: string
+          notes?: string | null
+          number: string
+          out_of_order?: boolean
+          rate_override?: number | null
+          room_type_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string | null
+          created_at?: string
+          floor?: string | null
+          housekeeping_status?: string
+          id?: string
+          notes?: string | null
+          number?: string
+          out_of_order?: boolean
+          rate_override?: number | null
+          room_type_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_rooms_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_room_types"
             referencedColumns: ["id"]
           },
         ]
@@ -10369,6 +10937,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      zra_invoice_queue: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_number: string | null
+          levy_amount: number
+          payload: Json | null
+          response_code: string | null
+          response_message: string | null
+          source_id: string | null
+          source_type: string
+          status: string
+          submitted_at: string | null
+          total: number
+          updated_at: string
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          levy_amount?: number
+          payload?: Json | null
+          response_code?: string | null
+          response_message?: string | null
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          submitted_at?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          levy_amount?: number
+          payload?: Json | null
+          response_code?: string | null
+          response_message?: string | null
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          submitted_at?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: []
+      }
+      zra_smart_invoice_config: {
+        Row: {
+          branch_code: string | null
+          branch_id: string | null
+          created_at: string
+          device_serial: string | null
+          enabled: boolean
+          id: string
+          last_verified_at: string | null
+          mode: string
+          notes: string | null
+          taxpayer_name: string | null
+          tpin: string | null
+          updated_at: string
+          user_id: string
+          vsdc_endpoint: string | null
+        }
+        Insert: {
+          branch_code?: string | null
+          branch_id?: string | null
+          created_at?: string
+          device_serial?: string | null
+          enabled?: boolean
+          id?: string
+          last_verified_at?: string | null
+          mode?: string
+          notes?: string | null
+          taxpayer_name?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id: string
+          vsdc_endpoint?: string | null
+        }
+        Update: {
+          branch_code?: string | null
+          branch_id?: string | null
+          created_at?: string
+          device_serial?: string | null
+          enabled?: boolean
+          id?: string
+          last_verified_at?: string | null
+          mode?: string
+          notes?: string | null
+          taxpayer_name?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id?: string
+          vsdc_endpoint?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
