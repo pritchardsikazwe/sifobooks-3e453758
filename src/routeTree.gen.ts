@@ -244,6 +244,8 @@ import { Route as AuthenticatedHotelRoomRackRouteImport } from './routes/_authen
 import { Route as AuthenticatedHotelRestaurantRouteImport } from './routes/_authenticated/hotel/restaurant'
 import { Route as AuthenticatedHotelReservationsRouteImport } from './routes/_authenticated/hotel/reservations'
 import { Route as AuthenticatedHotelReportsRouteImport } from './routes/_authenticated/hotel/reports'
+import { Route as AuthenticatedHotelRatesRouteImport } from './routes/_authenticated/hotel/rates'
+import { Route as AuthenticatedHotelPreArrivalRouteImport } from './routes/_authenticated/hotel/pre-arrival'
 import { Route as AuthenticatedHotelPosRouteImport } from './routes/_authenticated/hotel/pos'
 import { Route as AuthenticatedHotelPaymentsRouteImport } from './routes/_authenticated/hotel/payments'
 import { Route as AuthenticatedHotelNightAuditRouteImport } from './routes/_authenticated/hotel/night-audit'
@@ -257,6 +259,8 @@ import { Route as AuthenticatedHotelFoliosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHotelEventsRouteImport } from './routes/_authenticated/hotel/events'
 import { Route as AuthenticatedHotelComplianceRouteImport } from './routes/_authenticated/hotel/compliance'
 import { Route as AuthenticatedHotelCheckInOutRouteImport } from './routes/_authenticated/hotel/check-in-out'
+import { Route as AuthenticatedHotelChannelsRouteImport } from './routes/_authenticated/hotel/channels'
+import { Route as AuthenticatedHotelBookingRouteImport } from './routes/_authenticated/hotel/booking'
 import { Route as AuthenticatedHotelAccountingRouteImport } from './routes/_authenticated/hotel/accounting'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as AuthenticatedBillPaymentDetailIdRouteImport } from './routes/_authenticated/bill-payment-detail.$id'
@@ -1585,6 +1589,17 @@ const AuthenticatedHotelReportsRoute =
     path: '/reports',
     getParentRoute: () => AuthenticatedHotelRoute,
   } as any)
+const AuthenticatedHotelRatesRoute = AuthenticatedHotelRatesRouteImport.update({
+  id: '/rates',
+  path: '/rates',
+  getParentRoute: () => AuthenticatedHotelRoute,
+} as any)
+const AuthenticatedHotelPreArrivalRoute =
+  AuthenticatedHotelPreArrivalRouteImport.update({
+    id: '/pre-arrival',
+    path: '/pre-arrival',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
 const AuthenticatedHotelPosRoute = AuthenticatedHotelPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -1660,6 +1675,18 @@ const AuthenticatedHotelCheckInOutRoute =
   AuthenticatedHotelCheckInOutRouteImport.update({
     id: '/check-in-out',
     path: '/check-in-out',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelChannelsRoute =
+  AuthenticatedHotelChannelsRouteImport.update({
+    id: '/channels',
+    path: '/channels',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
+const AuthenticatedHotelBookingRoute =
+  AuthenticatedHotelBookingRouteImport.update({
+    id: '/booking',
+    path: '/booking',
     getParentRoute: () => AuthenticatedHotelRoute,
   } as any)
 const AuthenticatedHotelAccountingRoute =
@@ -1829,6 +1856,8 @@ export interface FileRoutesByFullPath {
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/hotel/booking': typeof AuthenticatedHotelBookingRoute
+  '/hotel/channels': typeof AuthenticatedHotelChannelsRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
   '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
@@ -1842,6 +1871,8 @@ export interface FileRoutesByFullPath {
   '/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
   '/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
   '/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/hotel/pre-arrival': typeof AuthenticatedHotelPreArrivalRoute
+  '/hotel/rates': typeof AuthenticatedHotelRatesRoute
   '/hotel/reports': typeof AuthenticatedHotelReportsRoute
   '/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
   '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
@@ -2080,6 +2111,8 @@ export interface FileRoutesByTo {
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/hotel/booking': typeof AuthenticatedHotelBookingRoute
+  '/hotel/channels': typeof AuthenticatedHotelChannelsRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
   '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
@@ -2093,6 +2126,8 @@ export interface FileRoutesByTo {
   '/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
   '/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
   '/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/hotel/pre-arrival': typeof AuthenticatedHotelPreArrivalRoute
+  '/hotel/rates': typeof AuthenticatedHotelRatesRoute
   '/hotel/reports': typeof AuthenticatedHotelReportsRoute
   '/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
   '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
@@ -2340,6 +2375,8 @@ export interface FileRoutesById {
   '/_authenticated/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
+  '/_authenticated/hotel/booking': typeof AuthenticatedHotelBookingRoute
+  '/_authenticated/hotel/channels': typeof AuthenticatedHotelChannelsRoute
   '/_authenticated/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
   '/_authenticated/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/_authenticated/hotel/events': typeof AuthenticatedHotelEventsRoute
@@ -2353,6 +2390,8 @@ export interface FileRoutesById {
   '/_authenticated/hotel/night-audit': typeof AuthenticatedHotelNightAuditRoute
   '/_authenticated/hotel/payments': typeof AuthenticatedHotelPaymentsRoute
   '/_authenticated/hotel/pos': typeof AuthenticatedHotelPosRoute
+  '/_authenticated/hotel/pre-arrival': typeof AuthenticatedHotelPreArrivalRoute
+  '/_authenticated/hotel/rates': typeof AuthenticatedHotelRatesRoute
   '/_authenticated/hotel/reports': typeof AuthenticatedHotelReportsRoute
   '/_authenticated/hotel/reservations': typeof AuthenticatedHotelReservationsRoute
   '/_authenticated/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
@@ -2599,6 +2638,8 @@ export interface FileRouteTypes {
     | '/bill-payment-detail/$id'
     | '/customers/$id'
     | '/hotel/accounting'
+    | '/hotel/booking'
+    | '/hotel/channels'
     | '/hotel/check-in-out'
     | '/hotel/compliance'
     | '/hotel/events'
@@ -2612,6 +2653,8 @@ export interface FileRouteTypes {
     | '/hotel/night-audit'
     | '/hotel/payments'
     | '/hotel/pos'
+    | '/hotel/pre-arrival'
+    | '/hotel/rates'
     | '/hotel/reports'
     | '/hotel/reservations'
     | '/hotel/restaurant'
@@ -2850,6 +2893,8 @@ export interface FileRouteTypes {
     | '/bill-payment-detail/$id'
     | '/customers/$id'
     | '/hotel/accounting'
+    | '/hotel/booking'
+    | '/hotel/channels'
     | '/hotel/check-in-out'
     | '/hotel/compliance'
     | '/hotel/events'
@@ -2863,6 +2908,8 @@ export interface FileRouteTypes {
     | '/hotel/night-audit'
     | '/hotel/payments'
     | '/hotel/pos'
+    | '/hotel/pre-arrival'
+    | '/hotel/rates'
     | '/hotel/reports'
     | '/hotel/reservations'
     | '/hotel/restaurant'
@@ -3109,6 +3156,8 @@ export interface FileRouteTypes {
     | '/_authenticated/bill-payment-detail/$id'
     | '/_authenticated/customers/$id'
     | '/_authenticated/hotel/accounting'
+    | '/_authenticated/hotel/booking'
+    | '/_authenticated/hotel/channels'
     | '/_authenticated/hotel/check-in-out'
     | '/_authenticated/hotel/compliance'
     | '/_authenticated/hotel/events'
@@ -3122,6 +3171,8 @@ export interface FileRouteTypes {
     | '/_authenticated/hotel/night-audit'
     | '/_authenticated/hotel/payments'
     | '/_authenticated/hotel/pos'
+    | '/_authenticated/hotel/pre-arrival'
+    | '/_authenticated/hotel/rates'
     | '/_authenticated/hotel/reports'
     | '/_authenticated/hotel/reservations'
     | '/_authenticated/hotel/restaurant'
@@ -4920,6 +4971,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHotelReportsRouteImport
       parentRoute: typeof AuthenticatedHotelRoute
     }
+    '/_authenticated/hotel/rates': {
+      id: '/_authenticated/hotel/rates'
+      path: '/rates'
+      fullPath: '/hotel/rates'
+      preLoaderRoute: typeof AuthenticatedHotelRatesRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/pre-arrival': {
+      id: '/_authenticated/hotel/pre-arrival'
+      path: '/pre-arrival'
+      fullPath: '/hotel/pre-arrival'
+      preLoaderRoute: typeof AuthenticatedHotelPreArrivalRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/hotel/pos': {
       id: '/_authenticated/hotel/pos'
       path: '/pos'
@@ -5011,6 +5076,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHotelCheckInOutRouteImport
       parentRoute: typeof AuthenticatedHotelRoute
     }
+    '/_authenticated/hotel/channels': {
+      id: '/_authenticated/hotel/channels'
+      path: '/channels'
+      fullPath: '/hotel/channels'
+      preLoaderRoute: typeof AuthenticatedHotelChannelsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
+    '/_authenticated/hotel/booking': {
+      id: '/_authenticated/hotel/booking'
+      path: '/booking'
+      fullPath: '/hotel/booking'
+      preLoaderRoute: typeof AuthenticatedHotelBookingRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/hotel/accounting': {
       id: '/_authenticated/hotel/accounting'
       path: '/accounting'
@@ -5095,6 +5174,8 @@ const AuthenticatedCustomersRouteWithChildren =
 
 interface AuthenticatedHotelRouteChildren {
   AuthenticatedHotelAccountingRoute: typeof AuthenticatedHotelAccountingRoute
+  AuthenticatedHotelBookingRoute: typeof AuthenticatedHotelBookingRoute
+  AuthenticatedHotelChannelsRoute: typeof AuthenticatedHotelChannelsRoute
   AuthenticatedHotelCheckInOutRoute: typeof AuthenticatedHotelCheckInOutRoute
   AuthenticatedHotelComplianceRoute: typeof AuthenticatedHotelComplianceRoute
   AuthenticatedHotelEventsRoute: typeof AuthenticatedHotelEventsRoute
@@ -5108,6 +5189,8 @@ interface AuthenticatedHotelRouteChildren {
   AuthenticatedHotelNightAuditRoute: typeof AuthenticatedHotelNightAuditRoute
   AuthenticatedHotelPaymentsRoute: typeof AuthenticatedHotelPaymentsRoute
   AuthenticatedHotelPosRoute: typeof AuthenticatedHotelPosRoute
+  AuthenticatedHotelPreArrivalRoute: typeof AuthenticatedHotelPreArrivalRoute
+  AuthenticatedHotelRatesRoute: typeof AuthenticatedHotelRatesRoute
   AuthenticatedHotelReportsRoute: typeof AuthenticatedHotelReportsRoute
   AuthenticatedHotelReservationsRoute: typeof AuthenticatedHotelReservationsRoute
   AuthenticatedHotelRestaurantRoute: typeof AuthenticatedHotelRestaurantRoute
@@ -5117,6 +5200,8 @@ interface AuthenticatedHotelRouteChildren {
 
 const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
   AuthenticatedHotelAccountingRoute: AuthenticatedHotelAccountingRoute,
+  AuthenticatedHotelBookingRoute: AuthenticatedHotelBookingRoute,
+  AuthenticatedHotelChannelsRoute: AuthenticatedHotelChannelsRoute,
   AuthenticatedHotelCheckInOutRoute: AuthenticatedHotelCheckInOutRoute,
   AuthenticatedHotelComplianceRoute: AuthenticatedHotelComplianceRoute,
   AuthenticatedHotelEventsRoute: AuthenticatedHotelEventsRoute,
@@ -5130,6 +5215,8 @@ const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
   AuthenticatedHotelNightAuditRoute: AuthenticatedHotelNightAuditRoute,
   AuthenticatedHotelPaymentsRoute: AuthenticatedHotelPaymentsRoute,
   AuthenticatedHotelPosRoute: AuthenticatedHotelPosRoute,
+  AuthenticatedHotelPreArrivalRoute: AuthenticatedHotelPreArrivalRoute,
+  AuthenticatedHotelRatesRoute: AuthenticatedHotelRatesRoute,
   AuthenticatedHotelReportsRoute: AuthenticatedHotelReportsRoute,
   AuthenticatedHotelReservationsRoute: AuthenticatedHotelReservationsRoute,
   AuthenticatedHotelRestaurantRoute: AuthenticatedHotelRestaurantRoute,

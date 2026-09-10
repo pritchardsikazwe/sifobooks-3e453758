@@ -3838,6 +3838,188 @@ export type Database = {
         }
         Relationships: []
       }
+      hotel_channel_sync_log: {
+        Row: {
+          channel_id: string
+          created_at: string
+          direction: string
+          id: string
+          message: string | null
+          outcome: string
+          records_in: number
+          records_out: number
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          message?: string | null
+          outcome: string
+          records_in?: number
+          records_out?: number
+          user_id?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          message?: string | null
+          outcome?: string
+          records_in?: number
+          records_out?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_channel_sync_log_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_channels: {
+        Row: {
+          active: boolean
+          channel_key: string
+          commission_rate: number
+          created_at: string
+          credentials_present: boolean
+          id: string
+          last_sync_at: string | null
+          last_sync_status: string | null
+          name: string
+          notes: string | null
+          status: string
+          sync_mode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          channel_key: string
+          commission_rate?: number
+          created_at?: string
+          credentials_present?: boolean
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          name: string
+          notes?: string | null
+          status?: string
+          sync_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          active?: boolean
+          channel_key?: string
+          commission_rate?: number
+          created_at?: string
+          credentials_present?: boolean
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          name?: string
+          notes?: string | null
+          status?: string
+          sync_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hotel_events: {
+        Row: {
+          branch_id: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          customer_id: string | null
+          deposit: number
+          ends_at: string
+          event_type: string
+          folio_id: string | null
+          guests: number
+          id: string
+          name: string
+          notes: string | null
+          package_basis: string
+          package_rate: number
+          reference: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          venue: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          ends_at: string
+          event_type?: string
+          folio_id?: string | null
+          guests?: number
+          id?: string
+          name: string
+          notes?: string | null
+          package_basis?: string
+          package_rate?: number
+          reference?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          venue?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          ends_at?: string
+          event_type?: string
+          folio_id?: string | null
+          guests?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          package_basis?: string
+          package_rate?: number
+          reference?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_events_folio_id_fkey"
+            columns: ["folio_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_folios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_folio_charges: {
         Row: {
           amount: number
@@ -4097,6 +4279,149 @@ export type Database = {
           vat_total?: number
         }
         Relationships: []
+      }
+      hotel_precheckin_links: {
+        Row: {
+          arrival_time: string | null
+          consent_given: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          reservation_id: string
+          status: string
+          submitted_at: string | null
+          submitted_details: Json | null
+          token: string
+          updated_at: string
+          upsells: Json | null
+          user_id: string
+        }
+        Insert: {
+          arrival_time?: string | null
+          consent_given?: boolean
+          created_at?: string
+          expires_at: string
+          id?: string
+          reservation_id: string
+          status?: string
+          submitted_at?: string | null
+          submitted_details?: Json | null
+          token: string
+          updated_at?: string
+          upsells?: Json | null
+          user_id?: string
+        }
+        Update: {
+          arrival_time?: string | null
+          consent_given?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reservation_id?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_details?: Json | null
+          token?: string
+          updated_at?: string
+          upsells?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_precheckin_links_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_rate_plans: {
+        Row: {
+          active: boolean
+          branch_id: string | null
+          code: string
+          created_at: string
+          customer_id: string | null
+          extra_adult_rate: number
+          extra_child_rate: number
+          id: string
+          includes: string | null
+          max_occupancy: number | null
+          min_stay: number
+          name: string
+          nightly_rate: number
+          priority: number
+          rate_type: string
+          room_type_id: string | null
+          season_end: string | null
+          season_start: string | null
+          updated_at: string
+          user_id: string
+          weekend_rate: number | null
+        }
+        Insert: {
+          active?: boolean
+          branch_id?: string | null
+          code: string
+          created_at?: string
+          customer_id?: string | null
+          extra_adult_rate?: number
+          extra_child_rate?: number
+          id?: string
+          includes?: string | null
+          max_occupancy?: number | null
+          min_stay?: number
+          name: string
+          nightly_rate?: number
+          priority?: number
+          rate_type?: string
+          room_type_id?: string | null
+          season_end?: string | null
+          season_start?: string | null
+          updated_at?: string
+          user_id?: string
+          weekend_rate?: number | null
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string | null
+          code?: string
+          created_at?: string
+          customer_id?: string | null
+          extra_adult_rate?: number
+          extra_child_rate?: number
+          id?: string
+          includes?: string | null
+          max_occupancy?: number | null
+          min_stay?: number
+          name?: string
+          nightly_rate?: number
+          priority?: number
+          rate_type?: string
+          room_type_id?: string | null
+          season_end?: string | null
+          season_start?: string | null
+          updated_at?: string
+          user_id?: string
+          weekend_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_rate_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_rate_plans_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_room_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hotel_reservations: {
         Row: {
