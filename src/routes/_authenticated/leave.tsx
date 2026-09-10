@@ -91,9 +91,19 @@ function LeaveBalances() {
   );
 }
 
-export const Route = createFileRoute("/_authenticated/leave")({
-  head: () => ({ meta: [{ title: "Leave Management — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: () => (
+function LeavePage() {
+  const [empNames, setEmpNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("employees")
+        .select("id, employee_code, first_name, last_name").order("first_name");
+      setEmpNames(Object.fromEntries((data ?? []).map(e => [
+        e.id,
+        `${e.employee_code ? e.employee_code + " · " : ""}${`${e.first_name ?? ""} ${e.last_name ?? ""}`.trim() || "Employee"}`,
+      ])));
+    })();
+  }, []);
+  return (
     <div className="space-y-6">
       <LeaveBalances />
       <SimpleCrud
