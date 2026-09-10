@@ -71,6 +71,13 @@ export type PosContext = {
   /** true while a PIN reset is in flight — the old PIN is void */
   pinLocked?: boolean;
   permissionId?: string | null;
+  /** retail vs restaurant till — from the staff assignment, not the role name */
+  channel?: PosChannel | null;
+  branchId?: string | null;
+  locationId?: string | null;
+  registerId?: string | null;
+  /** true when this worker has active till rows in more than one company */
+  ambiguous?: boolean;
 };
 
 export function levelOf(ctx: PosContext | null, feature: PosFeature): Level {
