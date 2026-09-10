@@ -449,7 +449,121 @@ export const PAYROLL_HUBS: HubDef[] = [
   },
 ];
 
+/**
+ * SifoHotel (hotel-only) navigation.
+ *
+ * Used only when the company's workspace_mode is "hotel_only". Nothing is
+ * removed from HUBS — a hotel-only tenant that upgrades gets the full set back
+ * immediately, and every deep link keeps working meanwhile.
+ */
+export const HOTEL_HUBS: HubDef[] = [
+  {
+    key: "hotel-front",
+    label: "Front office",
+    iconName: "Hotel",
+    purpose: "Today's arrivals, departures, rooms and guest accounts.",
+    groups: [
+      {
+        label: "Operations",
+        items: [
+          { title: "Dashboard", url: "/hotel", module: "hotel_erp", iconName: "LayoutDashboard", primary: true, hint: "Occupancy, arrivals, revenue and alerts." },
+          { title: "Front Desk", url: "/hotel/front-desk", module: "hotel_erp", iconName: "ConciergeBell", primary: true },
+          { title: "Reservations", url: "/hotel/reservations", module: "hotel_erp", iconName: "CalendarCheck", primary: true },
+          { title: "Room Rack", url: "/hotel/room-rack", module: "hotel_erp", iconName: "BedDouble", primary: true },
+          { title: "Check-in / Check-out", url: "/hotel/check-in-out", module: "hotel_erp", iconName: "LogIn", primary: true },
+          { title: "Guests", url: "/hotel/guests", module: "hotel_erp", iconName: "Users" },
+          { title: "Pre-arrival", url: "/hotel/pre-arrival", module: "hotel_erp", iconName: "Smartphone" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "hotel-revenue",
+    label: "Revenue",
+    iconName: "Tag",
+    purpose: "Rates, packages, distribution and the direct booking flow.",
+    groups: [
+      {
+        label: "Distribution",
+        items: [
+          { title: "Rates & Packages", url: "/hotel/rates", module: "hotel_erp", iconName: "Tag", primary: true },
+          { title: "Booking Engine", url: "/hotel/booking", module: "hotel_erp", iconName: "CalendarRange", primary: true },
+          { title: "Channel Manager", url: "/hotel/channels", module: "hotel_erp", iconName: "Globe2", primary: true },
+          { title: "Events & Banquets", url: "/hotel/events", module: "hotel_erp", iconName: "PartyPopper" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "hotel-billing",
+    label: "Billing",
+    iconName: "ReceiptText",
+    purpose: "Folios, payments, outlet sales and the night audit.",
+    groups: [
+      {
+        label: "Money",
+        items: [
+          { title: "Folios & Billing", url: "/hotel/folios", module: "hotel_erp", iconName: "ReceiptText", primary: true },
+          { title: "Payments", url: "/hotel/payments", module: "hotel_erp", iconName: "CreditCard", primary: true },
+          { title: "Hotel POS", url: "/hotel/pos", module: "hotel_erp", iconName: "ShoppingBag", primary: true },
+          { title: "Night Audit", url: "/hotel/night-audit", module: "hotel_erp", iconName: "MoonStar", primary: true },
+        ],
+      },
+    ],
+  },
+  {
+    key: "hotel-service",
+    label: "Service",
+    iconName: "Sparkles",
+    purpose: "Housekeeping, maintenance and property stock.",
+    groups: [
+      {
+        label: "Property",
+        items: [
+          { title: "Housekeeping", url: "/hotel/housekeeping", module: "hotel_erp", iconName: "Sparkles", primary: true },
+          { title: "Maintenance", url: "/hotel/maintenance", module: "hotel_erp", iconName: "Wrench", primary: true },
+          { title: "Inventory", url: "/hotel/inventory", module: "hotel_erp", iconName: "Boxes" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "hotel-reports",
+    label: "Reports",
+    iconName: "BarChart3",
+    purpose: "Occupancy, ADR, RevPAR, revenue and compliance reporting.",
+    groups: [
+      {
+        label: "Reporting",
+        items: [
+          { title: "Hotel Reports", url: "/hotel/reports", module: "hotel_erp", iconName: "BarChart3", primary: true },
+          { title: "Hotel Accounting", url: "/hotel/accounting", module: "hotel_erp", iconName: "Landmark" },
+          { title: "Compliance", url: "/hotel/compliance", module: "hotel_erp", iconName: "ShieldCheck" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "hotel-settings",
+    label: "Settings",
+    iconName: "Settings2",
+    purpose: "Property setup, staff access and your subscription.",
+    groups: [
+      {
+        label: "Setup",
+        items: [
+          { title: "Company Settings", url: "/settings", module: "core_home", iconName: "Settings", primary: true },
+          { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Switch on the rest of SifoBooks when you are ready." },
+          { title: "Subscription", url: "/subscription", module: "core_home", iconName: "Sparkles", primary: true },
+        ],
+      },
+    ],
+  },
+];
+
 /** Which hub set to present for a company's workspace mode. */
 export function hubsForMode(mode: string | null | undefined): HubDef[] {
-  return mode === "payroll_only" ? PAYROLL_HUBS : HUBS;
+  if (mode === "payroll_only") return PAYROLL_HUBS;
+  if (mode === "hotel_only") return HOTEL_HUBS;
+  return HUBS;
 }
