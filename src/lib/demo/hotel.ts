@@ -67,10 +67,10 @@ export const hotelDemo: DemoIndustry = {
           kind: "grid",
           title: "Room status right now",
           cells: [
-            { label: "Occupied 68", sub: "of 96 rooms", tone: "info" },
-            { label: "Available 14", sub: "clean & inspected", tone: "good" },
-            { label: "Dirty 9", sub: "awaiting housekeeping", tone: "warn" },
-            { label: "Out of order 5", sub: "maintenance", tone: "bad" },
+            { label: "Occupied 37", sub: "of 48 rooms", tone: "info" },
+            { label: "Available 6", sub: "clean & inspected", tone: "good" },
+            { label: "Dirty 4", sub: "awaiting housekeeping", tone: "warn" },
+            { label: "Out of order 1", sub: "maintenance", tone: "bad" },
           ],
         },
         {
@@ -120,10 +120,10 @@ export const hotelDemo: DemoIndustry = {
           kind: "flow",
           title: "Today at the desk",
           steps: [
-            { label: "Arrivals", detail: "18 expected · 7 checked in", state: "In progress", tone: "warn" },
-            { label: "Departures", detail: "14 due · 11 settled", state: "In progress", tone: "info" },
-            { label: "In house", detail: "68 rooms occupied", state: "Live", tone: "good" },
-            { label: "Folios open", detail: "K 214,600 outstanding", state: "Watch", tone: "warn" },
+            { label: "Arrivals", detail: "14 expected · 6 checked in", state: "In progress", tone: "warn" },
+            { label: "Departures", detail: "11 due · 8 settled", state: "In progress", tone: "info" },
+            { label: "In house", detail: "37 rooms occupied", state: "Live", tone: "good" },
+            { label: "Folios open", detail: "K 128,450 outstanding", state: "Watch", tone: "warn" },
             { label: "Night audit", detail: "Runs 23:30", state: "Scheduled" },
           ],
         },
@@ -492,9 +492,9 @@ export const hotelDemo: DemoIndustry = {
       group: "Operations",
       blurb: "Faults reported around the property, by priority and status.",
       kpis: [
-        { label: "Open tickets", value: "12", tone: "warn" },
+        { label: "Open tickets", value: "8", tone: "warn" },
         { label: "Urgent", value: "3", tone: "bad" },
-        { label: "Rooms out of order", value: "5", tone: "bad" },
+        { label: "Rooms out of order", value: "1", tone: "bad" },
         { label: "Closed this week", value: "21", tone: "good" },
       ],
       actions: [
@@ -940,7 +940,7 @@ export const hotelDemo: DemoIndustry = {
           kind: "panel",
           title: "Property configuration",
           items: [
-            { label: "Rooms", value: "96 across 3 floors" },
+            { label: "Rooms", value: "48 across 3 floors" },
             { label: "Room types", value: "Standard, Executive, Suite" },
             { label: "Check-in / check-out", value: "14:00 / 10:00" },
             { label: "Tourism levy", value: "1.5%" },

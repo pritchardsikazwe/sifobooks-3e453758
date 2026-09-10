@@ -469,7 +469,7 @@ export const restaurantDemo: DemoIndustry = {
         },
         {
           kind: "board",
-          title: "Kitchen display",
+          title: "Station load — by kitchen section",
           columns: [
             { label: "Grill", tone: "warn", cards: [{ title: "T7 · 3x Beef stir fry", meta: "8 min elapsed", badge: "Fired" }, { title: "T3 · 1x Beef stir fry", meta: "2 min elapsed" }] },
             { label: "Hot kitchen", tone: "info", cards: [{ title: "T7 · 2x Chicken curry", meta: "8 min elapsed" }, { title: "T12 · 1x Nshima", meta: "19 min elapsed", badge: "Late" }] },
