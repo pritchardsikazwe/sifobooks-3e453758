@@ -188,8 +188,12 @@ export function SimpleCrud({
     return o;
   }), [filtered, columns]);
 
-  const openNew = () => { setEditing(null); setForm(initial); setErrors({}); setOpen(true); };
+  const openNew = () => {
+    if (onNew) return onNew();
+    setEditing(null); setForm(initial); setErrors({}); setOpen(true);
+  };
   const openEdit = (r: any) => {
+    if (onOpenRow) return onOpenRow(r);
     setEditing(r);
     setErrors({});
     setForm(Object.fromEntries(fields.map(f => {
