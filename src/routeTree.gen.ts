@@ -248,6 +248,7 @@ import { Route as AuthenticatedHotelGuestPortalRouteImport } from './routes/_aut
 import { Route as AuthenticatedHotelFrontDeskRouteImport } from './routes/_authenticated/hotel/front-desk'
 import { Route as AuthenticatedHotelFoliosRouteImport } from './routes/_authenticated/hotel/folios'
 import { Route as AuthenticatedHotelEventsRouteImport } from './routes/_authenticated/hotel/events'
+import { Route as AuthenticatedHotelComplianceRouteImport } from './routes/_authenticated/hotel/compliance'
 import { Route as AuthenticatedHotelCheckInOutRouteImport } from './routes/_authenticated/hotel/check-in-out'
 import { Route as AuthenticatedHotelAccountingRouteImport } from './routes/_authenticated/hotel/accounting'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
@@ -1600,6 +1601,12 @@ const AuthenticatedHotelEventsRoute =
     path: '/events',
     getParentRoute: () => AuthenticatedHotelRoute,
   } as any)
+const AuthenticatedHotelComplianceRoute =
+  AuthenticatedHotelComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
 const AuthenticatedHotelCheckInOutRoute =
   AuthenticatedHotelCheckInOutRouteImport.update({
     id: '/check-in-out',
@@ -1770,6 +1777,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -2013,6 +2021,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -2265,6 +2274,7 @@ export interface FileRoutesById {
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
   '/_authenticated/hotel/accounting': typeof AuthenticatedHotelAccountingRoute
   '/_authenticated/hotel/check-in-out': typeof AuthenticatedHotelCheckInOutRoute
+  '/_authenticated/hotel/compliance': typeof AuthenticatedHotelComplianceRoute
   '/_authenticated/hotel/events': typeof AuthenticatedHotelEventsRoute
   '/_authenticated/hotel/folios': typeof AuthenticatedHotelFoliosRoute
   '/_authenticated/hotel/front-desk': typeof AuthenticatedHotelFrontDeskRoute
@@ -2516,6 +2526,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/hotel/accounting'
     | '/hotel/check-in-out'
+    | '/hotel/compliance'
     | '/hotel/events'
     | '/hotel/folios'
     | '/hotel/front-desk'
@@ -2759,6 +2770,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/hotel/accounting'
     | '/hotel/check-in-out'
+    | '/hotel/compliance'
     | '/hotel/events'
     | '/hotel/folios'
     | '/hotel/front-desk'
@@ -3010,6 +3022,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers/$id'
     | '/_authenticated/hotel/accounting'
     | '/_authenticated/hotel/check-in-out'
+    | '/_authenticated/hotel/compliance'
     | '/_authenticated/hotel/events'
     | '/_authenticated/hotel/folios'
     | '/_authenticated/hotel/front-desk'
@@ -4844,6 +4857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHotelEventsRouteImport
       parentRoute: typeof AuthenticatedHotelRoute
     }
+    '/_authenticated/hotel/compliance': {
+      id: '/_authenticated/hotel/compliance'
+      path: '/compliance'
+      fullPath: '/hotel/compliance'
+      preLoaderRoute: typeof AuthenticatedHotelComplianceRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/hotel/check-in-out': {
       id: '/_authenticated/hotel/check-in-out'
       path: '/check-in-out'
@@ -4936,6 +4956,7 @@ const AuthenticatedCustomersRouteWithChildren =
 interface AuthenticatedHotelRouteChildren {
   AuthenticatedHotelAccountingRoute: typeof AuthenticatedHotelAccountingRoute
   AuthenticatedHotelCheckInOutRoute: typeof AuthenticatedHotelCheckInOutRoute
+  AuthenticatedHotelComplianceRoute: typeof AuthenticatedHotelComplianceRoute
   AuthenticatedHotelEventsRoute: typeof AuthenticatedHotelEventsRoute
   AuthenticatedHotelFoliosRoute: typeof AuthenticatedHotelFoliosRoute
   AuthenticatedHotelFrontDeskRoute: typeof AuthenticatedHotelFrontDeskRoute
@@ -4957,6 +4978,7 @@ interface AuthenticatedHotelRouteChildren {
 const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
   AuthenticatedHotelAccountingRoute: AuthenticatedHotelAccountingRoute,
   AuthenticatedHotelCheckInOutRoute: AuthenticatedHotelCheckInOutRoute,
+  AuthenticatedHotelComplianceRoute: AuthenticatedHotelComplianceRoute,
   AuthenticatedHotelEventsRoute: AuthenticatedHotelEventsRoute,
   AuthenticatedHotelFoliosRoute: AuthenticatedHotelFoliosRoute,
   AuthenticatedHotelFrontDeskRoute: AuthenticatedHotelFrontDeskRoute,
