@@ -102,12 +102,17 @@ type Props = {
     entryId?: (row: any) => string | null;
     label?: (row: any) => string;
   };
+  /** Replace the built-in "New" dialog with a dedicated page (e.g. a full document editor). */
+  onNew?: () => void;
+  /** Replace the built-in row edit dialog with a dedicated detail page. */
+  onOpenRow?: (row: any) => void;
 };
 
 export function SimpleCrud({
   title, icon: Icon, table, columns, fields, searchKeys = ["name"], orderBy, headerExtra,
   rowActions, statusField, extraFilters = [], dateField, exportable = true,
   accountFields, previewLines, requireBalanced, module, description, posting,
+  onNew, onOpenRow,
 }: Props) {
   const [ledger, setLedger] = useState<LedgerTarget | null>(null);
 
