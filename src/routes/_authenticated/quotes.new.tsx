@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { QuickAddCustomer } from "@/components/QuickAddCustomer";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { postInvoiceLedger } from "@/lib/posting";
 import { previewPdf, downloadPdf, type PdfDoc } from "@/lib/pdf";
 import { Download } from "lucide-react";
@@ -63,9 +64,9 @@ function NewQuotePage() {
   useEffect(() => {
     (async () => {
       const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
-        supabase.from("customers").select("id, name, tpin, payment_terms_days").eq("active", true).order("name"),
-        supabase.from("stock_items").select("id, name, sku, vat_rate, sell_price"),
-        supabase.from("warehouses").select("id, name"),
+        supabase.from("customers").select("id, name, tpin, payment_terms_days, phone, email").eq("active", true).order("name"),
+        supabase.from("stock_items").select("id, name, sku, unit, vat_rate, sell_price, quantity_on_hand, reserved_qty, warehouse_id").order("name"),
+        supabase.from("warehouses").select("id, name, code, location, manager, is_active").order("name"),
         supabase.from("companies").select("*").maybeSingle(),
         supabase.from("quotes").select("*", { count: "exact", head: true }),
       ]);
@@ -79,6 +80,34 @@ function NewQuotePage() {
     const c = customers.find(x => x.id === customerId);
     if (c?.tpin) setBuyerTpin(c.tpin);
   }, [customerId, customers]);
+
+  const [quickAddCustomer, setQuickAddCustomer] = useState(false);
+
+  // Existing tenant records are always the primary path; "New" is a secondary action inside each selector.
+  const customerOptions = useMemo<EntityOption[]>(() => customers.map(c => ({
+    id: c.id,
+    label: c.name,
+    meta: [c.phone, c.email, c.tpin ? `TPIN ${c.tpin}` : null].filter(Boolean).join(" · ") || null,
+  })), [customers]);
+
+  const stockOptions = useMemo<EntityOption[]>(() => stock.map(s => {
+    const onHand = Number(s.quantity_on_hand ?? 0);
+    const available = onHand - Number(s.reserved_qty ?? 0);
+    return {
+      id: s.id,
+      code: s.sku ?? null,
+      label: s.name,
+      meta: `On hand ${onHand}${s.unit ? ` ${s.unit}` : ""} · Available ${available}`,
+      trailing: fmtMoney(Number(s.sell_price ?? 0), currency),
+    };
+  }), [stock, currency]);
+
+  const warehouseOptions = useMemo<EntityOption[]>(() => warehouses.map(w => ({
+    id: w.id,
+    code: w.code ?? null,
+    label: w.name,
+    meta: [w.location, w.manager].filter(Boolean).join(" · ") || null,
+  })), [warehouses]);
 
   const totals = useMemo(() => {
     let subtotal = 0, tax = 0;
@@ -220,15 +249,15 @@ function NewQuotePage() {
       <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
       <Button variant="outline" onClick={() => previewPdf(buildPdfDoc())}>Preview Quote</Button>
       <Button variant="outline" onClick={() => downloadPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
-      <Button onClick={() => submit("sent")} disabled={saving} className="bg-emerald-700 hover:bg-emerald-800 text-white">Post Quote</Button>
-      <Button onClick={() => submit("convert")} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white">Convert to Invoice</Button>
+      <Button onClick={() => submit("sent")} disabled={saving} variant="save">Post Quote</Button>
+      <Button onClick={() => submit("convert")} disabled={saving} >Convert to Invoice</Button>
     </div>
   );
 
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 sm:pb-0">
-      <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
+    <div className="min-h-screen bg-muted/30 pb-28 sm:pb-0">
+      <div className="bg-card border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
         <Button variant="outline" size="sm" onClick={() => router.history.back()} className="gap-1"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
         <div className="hidden sm:flex">{ActionButtons}</div>
         <div className="sm:hidden">
@@ -242,7 +271,7 @@ function NewQuotePage() {
         <div>
           <Label className="text-xs text-muted-foreground">Document Type</Label>
           <Select value={docType} onValueChange={setDocType}>
-            <SelectTrigger className="mt-1 max-w-xs bg-white"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="mt-1 max-w-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="quote">Quotation</SelectItem>
               <SelectItem value="proforma">Proforma</SelectItem>
@@ -251,9 +280,9 @@ function NewQuotePage() {
           </Select>
         </div>
 
-        <Section title="QUOTE INFORMATION" action={<button className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+        <Section title="QUOTE INFORMATION" action={<button className="text-xs text-primary font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
           <Field label="Quote Number">
-            <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-slate-50" />
+            <Input value={number} onChange={e => setNumber(e.target.value)} />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Issued Date">
@@ -281,47 +310,51 @@ function NewQuotePage() {
               </Select>
             </Field>
             <Field label="Currency">
-              <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-slate-50" />
-              <div className="text-right"><button className="text-xs text-emerald-700 font-medium underline mt-1">Set Exchange Rate</button></div>
+              <Input value={`Zambian Kwacha (${currency})`} readOnly />
+              <div className="text-right"><button className="text-xs text-primary font-medium underline mt-1">Set Exchange Rate</button></div>
             </Field>
           </div>
         </Section>
 
         <Section title="CUSTOMER INFORMATION">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Customer" action={
-              <QuickAddCustomer
-                trigger={<button type="button" className="text-xs text-emerald-700 font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> New</button>}
-                onCreated={c => { setCustomers(p => [...p, c]); setCustomerId(c.id); }}
+            <div>
+              <EntitySelector
+                label="Customer"
+                required
+                options={customerOptions}
+                value={customerId || null}
+                onChange={v => setCustomerId(v ?? "")}
+                placeholder="Search customers by name, phone or TPIN…"
+                recentKey="quote-customer"
+                emptyTitle="No customers found for this company yet."
+                createLabel="New customer"
+                onCreate={() => setQuickAddCustomer(true)}
               />
-            }>
-              {customers.length === 0 ? (
-                <div className="rounded border border-dashed p-3 text-xs text-muted-foreground">No customers. Click <b>New</b> to add one.</div>
-              ) : (
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger><SelectValue placeholder="Select Customer" /></SelectTrigger>
-                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
-              )}
-            </Field>
+              <QuickAddCustomer
+                open={quickAddCustomer}
+                onOpenChange={setQuickAddCustomer}
+                onCreated={c => { setCustomers(p => [...p, c]); setCustomerId(c.id); setQuickAddCustomer(false); }}
+              />
+            </div>
             <Field label="VAT Reference">
               <Input value={buyerTpin} onChange={e => setBuyerTpin(e.target.value)} placeholder="Enter VAT" />
             </Field>
           </div>
         </Section>
 
-        <div className="bg-white rounded-lg border">
+        <div className="bg-card rounded-lg border">
           <div className="flex items-center justify-between px-4 py-3 border-b flex-wrap gap-2">
             <span className="text-xs font-semibold text-muted-foreground tracking-wide">QUOTE ITEMS</span>
             <label className="flex items-center gap-2 text-xs">
-              <span className={taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
+              <span className={taxInclusive ? "text-primary font-medium" : "text-muted-foreground"}>TAX INCLUSIVE</span>
               <Switch checked={taxInclusive} onCheckedChange={setTaxInclusive} />
-              <span className={!taxInclusive ? "text-emerald-700 font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
+              <span className={!taxInclusive ? "text-primary font-medium" : "text-muted-foreground"}>TAX EXCLUSIVE</span>
             </label>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs text-muted-foreground">
+              <thead className="bg-muted/50 text-xs text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium p-2 min-w-[160px]">Item/Service</th>
                   <th className="text-left font-medium p-2 min-w-[160px]">Description</th>
@@ -337,20 +370,34 @@ function NewQuotePage() {
                 {items.map((it, idx) => (
                   <tr key={idx} className="border-b last:border-0">
                     <td className="p-2">
-                      <Select value={it.stockItemId ?? ""} onValueChange={v => pickStock(idx, v)}>
-                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select Item/S..." /></SelectTrigger>
-                        <SelectContent>{stock.map(s => <SelectItem key={s.id} value={s.id}>{s.name}{s.sku ? ` (${s.sku})` : ""}</SelectItem>)}</SelectContent>
-                      </Select>
+                      <EntitySelector
+                        label=""
+                        options={stockOptions}
+                        value={it.stockItemId ?? null}
+                        onChange={v => v && pickStock(idx, v)}
+                        placeholder="Select item / service"
+                        recentKey="quote-item"
+                        emptyTitle="No stock items found."
+                        emptyActionLabel="Create stock item"
+                        emptyActionTo="/stock"
+                      />
                     </td>
                     <td className="p-2"><Input value={it.description} onChange={e => updateRow(idx, { description: e.target.value })} className="h-9" /></td>
                     <td className="p-2">
-                      <Select value={it.warehouseId ?? ""} onValueChange={v => updateRow(idx, { warehouseId: v })}>
-                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select iter..." /></SelectTrigger>
-                        <SelectContent>{warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent>
-                      </Select>
+                      <EntitySelector
+                        label=""
+                        options={warehouseOptions}
+                        value={it.warehouseId ?? null}
+                        onChange={v => updateRow(idx, { warehouseId: v })}
+                        placeholder="Select warehouse"
+                        recentKey="quote-warehouse"
+                        emptyTitle="No warehouses found."
+                        emptyActionLabel="Create warehouse"
+                        emptyActionTo="/warehouses"
+                      />
                     </td>
                     <td className="p-2"><Input type="number" value={it.qty} onChange={e => updateRow(idx, { qty: Number(e.target.value) })} className="h-9" /></td>
-                    <td className="p-2"><Input type="number" step="0.01" value={it.price || ""} onChange={e => updateRow(idx, { price: Number(e.target.value) })} className={`h-9 ${!it.price ? "border-red-300" : ""}`} /></td>
+                    <td className="p-2"><Input type="number" step="0.01" value={it.price || ""} onChange={e => updateRow(idx, { price: Number(e.target.value) })} className={`h-9 ${!it.price ? "border-destructive" : ""}`} /></td>
                     <td className="p-2">
                       <div className="flex gap-1">
                         <Input type="number" value={it.discount} onChange={e => updateRow(idx, { discount: Number(e.target.value) })} className="h-9" />
@@ -381,13 +428,13 @@ function NewQuotePage() {
           </div>
           <div className="px-4 py-3 border-t">
             <button onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}
-              className="text-sm text-emerald-700 font-medium inline-flex items-center gap-1">
+              className="text-sm text-primary font-medium inline-flex items-center gap-1">
               <Plus className="h-4 w-4" /> Add Item
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-2">NOTES</div>
           <textarea
             value={notes}
@@ -397,7 +444,7 @@ function NewQuotePage() {
           />
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">SUMMARY</div>
           <SummaryRow label="Subtotal" value={fmtMoney(totals.subtotal, currency)} />
           <SummaryRow label="Tax" value={fmtMoney(totals.tax, currency)} />
@@ -405,14 +452,13 @@ function NewQuotePage() {
           <SummaryRow label="Conversion Rate" value={`${currency} 1 = ${currency} 1`} muted />
         </div>
 
-        <div className="hidden sm:flex justify-end pt-2">{ActionButtons}</div>
       </div>
 
       {/* Mobile sticky action bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg px-3 py-2 flex items-center gap-2">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-card border-t shadow-lg px-3 py-2 flex items-center gap-2">
         <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1 text-xs">Draft</Button>
-        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 text-xs bg-emerald-700 hover:bg-emerald-800 text-white">Post</Button>
-        <Button onClick={() => submit("convert")} disabled={saving} className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Convert</Button>
+        <Button onClick={() => submit("sent")} disabled={saving} variant="save" className="flex-1 text-xs">Post</Button>
+        <Button onClick={() => submit("convert")} disabled={saving} className="flex-1 text-xs">Convert</Button>
       </div>
     </div>
   );
@@ -420,7 +466,7 @@ function NewQuotePage() {
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-lg border p-4 space-y-4">
+    <div className="bg-card rounded-lg border p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-muted-foreground tracking-wide">{title}</div>
         {action}

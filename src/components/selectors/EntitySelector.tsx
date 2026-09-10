@@ -37,6 +37,12 @@ type Props = {
   emptyTitle?: string;
   emptyActionLabel?: string;
   emptyActionTo?: string;
+  /**
+   * Secondary "create new" action, always subordinate to picking an existing record.
+   * Rendered at the foot of the list, never as the default path.
+   */
+  createLabel?: string;
+  onCreate?: () => void;
   /** Persist recently-used picks under this key. */
   recentKey?: string;
   className?: string;
@@ -71,6 +77,7 @@ export function displayEntity(o: EntityOption | undefined | null) {
 export function EntitySelector({
   label, help, options, value, onChange, placeholder = "Search and select…", required,
   disabled, clearable = true, emptyTitle, emptyActionLabel, emptyActionTo, recentKey, className,
+  createLabel, onCreate,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [recent, setRecent] = useState<string[]>(() => readRecent(recentKey));
@@ -103,22 +110,29 @@ export function EntitySelector({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label className="flex items-center gap-1">
-        {label}
-        {required && <span className="text-destructive">*</span>}
-      </Label>
+      {label ? (
+        <Label className="flex items-center gap-1">
+          {label}
+          {required && <span className="text-destructive">*</span>}
+        </Label>
+      ) : null}
 
       {isEmpty ? (
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-sm">
           <div className="text-muted-foreground">{emptyTitle ?? `No ${label.toLowerCase()} found.`}</div>
-          {emptyActionTo && (
+          {emptyActionTo ? (
             <Button asChild size="sm" variant="outline" className="mt-2 h-8">
               <Link to={emptyActionTo}>
                 <Plus className="mr-1 h-3.5 w-3.5" />
                 {emptyActionLabel ?? `Create ${label.toLowerCase()}`}
               </Link>
             </Button>
-          )}
+          ) : onCreate ? (
+            <Button type="button" size="sm" variant="outline" className="mt-2 h-8" onClick={onCreate}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              {createLabel ?? emptyActionLabel ?? `Create ${label.toLowerCase()}`}
+            </Button>
+          ) : null}
         </div>
       ) : (
         <Popover open={open} onOpenChange={setOpen}>
@@ -180,6 +194,28 @@ export function EntitySelector({
                 ))}
               </CommandList>
             </Command>
+            {/* Creating is deliberately secondary: picking an existing record is the default path. */}
+            {(onCreate || emptyActionTo) && (
+              <div className="border-t p-1">
+                {emptyActionTo ? (
+                  <Button asChild variant="ghost" size="sm" className="h-8 w-full justify-start text-xs">
+                    <Link to={emptyActionTo}>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {createLabel ?? emptyActionLabel ?? `New ${label.toLowerCase()}`}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button" variant="ghost" size="sm"
+                    className="h-8 w-full justify-start text-xs"
+                    onClick={() => { setOpen(false); onCreate?.(); }}
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    {createLabel ?? `New ${label.toLowerCase()}`}
+                  </Button>
+                )}
+              </div>
+            )}
           </PopoverContent>
         </Popover>
       )}

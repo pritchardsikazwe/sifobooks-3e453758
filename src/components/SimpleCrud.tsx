@@ -15,6 +15,7 @@ import { ExportMenu } from "@/lib/exports";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { offlineInsert } from "@/lib/offline-queue";
 import { AccountSelector, type CoaAccount } from "@/components/selectors/AccountSelector";
+import { EntitySelector, type EntityOption } from "@/components/selectors/EntitySelector";
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
@@ -39,11 +40,33 @@ export type AccountField = {
 };
 
 
+/**
+ * Pick an EXISTING tenant record (customer, supplier, item, warehouse, branch…).
+ * Selecting an existing record is always the default path; creating is secondary.
+ */
+export type LookupSpec = {
+  /** Table to read the current tenant's records from (RLS scoped). */
+  table: string;
+  /** Column shown as the option label. */
+  labelColumn: string;
+  /** Optional short code shown before the label (e.g. SKU, account code). */
+  codeColumn?: string;
+  /** Extra columns joined into the searchable secondary line. */
+  metaColumns?: string[];
+  orderBy?: string;
+  /** Route for the secondary "create new" action. */
+  createTo?: string;
+  createLabel?: string;
+  emptyTitle?: string;
+};
+
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "number" | "date" | "textarea" | "select";
+  type?: "text" | "number" | "date" | "textarea" | "select" | "lookup";
   options?: { value: string; label: string }[];
+  /** Required when type === "lookup". */
+  lookup?: LookupSpec;
   required?: boolean;
   defaultValue?: any;
   colSpan?: 1 | 2;
@@ -156,6 +179,35 @@ export function SimpleCrud({
   );
   const previewOk = !requireBalanced || isBalanced(preview);
 
+
+  // Existing tenant records for every "lookup" field, so users pick real records
+  // instead of being pushed into a creation form.
+  const lookupFields = useMemo(() => fields.filter(f => f.type === "lookup" && f.lookup), [fields]);
+  const [lookupOptions, setLookupOptions] = useState<Record<string, EntityOption[]>>({});
+  useEffect(() => {
+    if (lookupFields.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, EntityOption[]> = {};
+      for (const f of lookupFields) {
+        const spec = f.lookup!;
+        const cols = ["id", spec.labelColumn, spec.codeColumn, ...(spec.metaColumns ?? [])]
+          .filter(Boolean).join(",");
+        let q = supabase.from(spec.table as any).select(cols);
+        q = q.order(spec.orderBy ?? spec.labelColumn, { ascending: true });
+        const { data, error } = await q;
+        if (error) { toast.error(`${f.label}: ${error.message}`); continue; }
+        next[f.name] = ((data ?? []) as any[]).map(r => ({
+          id: String(r.id),
+          code: spec.codeColumn ? (r[spec.codeColumn] ?? null) : null,
+          label: String(r[spec.labelColumn] ?? "—"),
+          meta: (spec.metaColumns ?? []).map(c => r[c]).filter(Boolean).join(" · ") || null,
+        }));
+      }
+      if (!cancelled) setLookupOptions(next);
+    })();
+    return () => { cancelled = true; };
+  }, [lookupFields]);
 
   const statusOptions = useMemo(() => {
     if (!statusField) return null;
@@ -341,7 +393,20 @@ export function SimpleCrud({
         error={err}
         wide={f.colSpan === 2 || f.type === "textarea"}
       >
-        {f.type === "textarea" ? (
+        {f.type === "lookup" && f.lookup ? (
+          <EntitySelector
+            label=""
+            options={lookupOptions[f.name] ?? []}
+            value={form[f.name] ? String(form[f.name]) : null}
+            onChange={v => setField(f.name, v)}
+            placeholder={`Search existing ${f.label.toLowerCase()}…`}
+            recentKey={`${table}-${f.name}`}
+            emptyTitle={f.lookup.emptyTitle}
+            emptyActionTo={f.lookup.createTo}
+            emptyActionLabel={f.lookup.createLabel}
+            createLabel={f.lookup.createLabel}
+          />
+        ) : f.type === "textarea" ? (
           <Textarea
             id={id}
             aria-invalid={invalid}
