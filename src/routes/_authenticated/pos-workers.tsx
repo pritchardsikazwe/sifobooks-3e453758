@@ -204,36 +204,75 @@ function PosWorkers() {
       )}
 
       <div className="rounded-2xl border overflow-hidden">
+        <div className="px-4 py-3 border-b flex flex-wrap items-center gap-2 justify-between">
+          <div className="font-semibold">
+            Till workers <span className="text-muted-foreground font-normal text-sm">({visible.length} of {rows.length})</span>
+          </div>
+          <div className="flex gap-2">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or email"
+              className="rounded-lg border bg-background px-3 py-1.5 text-sm w-52" />
+            <select value={filter} onChange={(e) => setFilter(e.target.value as any)}
+              className="rounded-lg border bg-background px-2 py-1.5 text-sm">
+              <option value="all">All</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Disabled only</option>
+            </select>
+          </div>
+        </div>
 
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>{["Name", "Email", "Role", "PIN", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-3 py-2">{r.full_name ?? r.worker_user_id}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
-                <td className="px-3 py-2">
-                  <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
-                    {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
-                  </select>
-                </td>
-                <td className="px-3 py-2">
-                  <button className="underline underline-offset-2" onClick={() => setPin(r.id, r.pin)}>
-                    {r.pin ? "••••" : "Set PIN"}
-                  </button>
-                </td>
-                <td className="px-3 py-2">{r.is_active ? "Yes" : "No"}</td>
-                <td className="px-3 py-2 text-right">
-                  <Button size="sm" variant="ghost" onClick={() => toggle(r.id, !r.is_active)}>{r.is_active ? "Disable" : "Enable"}</Button>
-                </td>
-              </tr>
-            ))}
-            {!rows.length && <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">No POS workers yet.</td></tr>}
-
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>{["Name", "Email", "Role", "PIN", "Status", "Last till sign-in", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => {
+                const duplicate = r.email && rows.filter((x) => (x.email ?? "").toLowerCase() === String(r.email).toLowerCase()).length > 1;
+                const locked = r.pin_locked || (r.pin_locked_until && new Date(r.pin_locked_until) > new Date());
+                return (
+                  <tr key={r.id} className="border-t align-middle">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{r.full_name ?? r.worker_user_id ?? "—"}</div>
+                      {duplicate && <div className="text-xs text-amber-600">Duplicate entry for this email</div>}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
+                        {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <button className="underline underline-offset-2" onClick={() => setPin(r.id)}>
+                        {r.pin_set_at ? "Change PIN" : "Set PIN"}
+                      </button>
+                      {r.pin_disabled && <span className="ml-2 text-xs text-amber-600">disabled</span>}
+                      {locked && (
+                        <button className="ml-2 text-xs text-destructive underline" onClick={() => unlockPin(r.id)}>locked — unlock</button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${r.is_active ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                        {r.is_active ? "Active" : "Disabled"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                      {r.last_pin_login_at ? new Date(r.last_pin_login_at).toLocaleString() : "Never"}
+                    </td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <Button size="sm" variant="ghost" onClick={() => toggle(r.id, !r.is_active)}>{r.is_active ? "Disable" : "Enable"}</Button>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeWorker(r)}>Remove</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!visible.length && (
+                <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
+                  {rows.length ? "No workers match that search." : "No POS workers yet."}
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-2xl border overflow-x-auto">
