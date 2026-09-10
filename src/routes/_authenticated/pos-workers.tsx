@@ -26,6 +26,8 @@ function PosWorkers() {
   const [resets, setResets] = useState<any[]>([]);
   const [mode, setMode] = useState<"email" | "id">("email");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
   const invite = useServerFn(invitePosWorker);
 
@@ -90,20 +92,44 @@ function PosWorkers() {
     load();
   };
 
-  const setPin = async (id: string, current: string | null) => {
-    const pin = window.prompt("Terminal PIN (4-8 digits, blank to remove)", current ?? "");
-    if (pin === null) return;
-    if (pin && !/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
-    const { error } = await supabase.from("employee_pos_permissions")
-      .update({ pin: pin || null, pin_locked: false, pin_set_at: pin ? new Date().toISOString() : null }).eq("id", id);
+  const setPin = async (id: string) => {
+    const pin = window.prompt("Terminal PIN (4-8 digits)") ?? "";
+    if (!pin) return;
+    if (!/^\d{4,8}$/.test(pin)) return toast.error("PIN must be 4-8 digits");
+    const { data, error } = await supabase.rpc("set_cashier_pin", { _permission_id: id, _pin: pin });
     if (error) return toast.error(error.message);
-    toast.success(pin ? "PIN updated" : "PIN removed"); load();
+    if (!(data as any)?.ok) return toast.error("Could not update that PIN");
+    toast.success("PIN updated"); load();
+  };
+
+  const unlockPin = async (id: string) => {
+    const { error } = await supabase.rpc("set_cashier_pin_state", { _permission_id: id, _disabled: false, _unlock: true });
+    if (error) return toast.error(error.message);
+    toast.success("Terminal unlocked"); load();
   };
 
   const toggle = async (id: string, is_active: boolean) => {
-    await supabase.from("employee_pos_permissions").update({ is_active }).eq("id", id);
+    const { error } = await supabase.from("employee_pos_permissions").update({ is_active }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(is_active ? "Worker enabled" : "Worker disabled");
     load();
   };
+
+  const removeWorker = async (row: any) => {
+    const who = row.full_name || row.email || "this worker";
+    if (!window.confirm(`Remove ${who} from the till? Their sales history stays intact, but they can no longer sign in.`)) return;
+    const { error } = await supabase.from("employee_pos_permissions").delete().eq("id", row.id);
+    if (error) return toast.error(error.message);
+    toast.success(`${who} removed`); load();
+  };
+
+  const q = query.trim().toLowerCase();
+  const visible = rows.filter((r: any) => {
+    if (filter === "active" && !r.is_active) return false;
+    if (filter === "inactive" && r.is_active) return false;
+    if (!q) return true;
+    return `${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q);
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -188,36 +214,75 @@ function PosWorkers() {
       )}
 
       <div className="rounded-2xl border overflow-hidden">
+        <div className="px-4 py-3 border-b flex flex-wrap items-center gap-2 justify-between">
+          <div className="font-semibold">
+            Till workers <span className="text-muted-foreground font-normal text-sm">({visible.length} of {rows.length})</span>
+          </div>
+          <div className="flex gap-2">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or email"
+              className="rounded-lg border bg-background px-3 py-1.5 text-sm w-52" />
+            <select value={filter} onChange={(e) => setFilter(e.target.value as any)}
+              className="rounded-lg border bg-background px-2 py-1.5 text-sm">
+              <option value="all">All</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Disabled only</option>
+            </select>
+          </div>
+        </div>
 
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>{["Name", "Email", "Role", "PIN", "Active", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}</tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-3 py-2">{r.full_name ?? r.worker_user_id}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
-                <td className="px-3 py-2">
-                  <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
-                    {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
-                  </select>
-                </td>
-                <td className="px-3 py-2">
-                  <button className="underline underline-offset-2" onClick={() => setPin(r.id, r.pin)}>
-                    {r.pin ? "••••" : "Set PIN"}
-                  </button>
-                </td>
-                <td className="px-3 py-2">{r.is_active ? "Yes" : "No"}</td>
-                <td className="px-3 py-2 text-right">
-                  <Button size="sm" variant="ghost" onClick={() => toggle(r.id, !r.is_active)}>{r.is_active ? "Disable" : "Enable"}</Button>
-                </td>
-              </tr>
-            ))}
-            {!rows.length && <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">No POS workers yet.</td></tr>}
-
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>{["Name", "Email", "Role", "PIN", "Status", "Last till sign-in", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => {
+                const duplicate = r.email && rows.filter((x) => (x.email ?? "").toLowerCase() === String(r.email).toLowerCase()).length > 1;
+                const locked = r.pin_locked || (r.pin_locked_until && new Date(r.pin_locked_until) > new Date());
+                return (
+                  <tr key={r.id} className="border-t align-middle">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{r.full_name ?? r.worker_user_id ?? "—"}</div>
+                      {duplicate && <div className="text-xs text-amber-600">Duplicate entry for this email</div>}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
+                        {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <button className="underline underline-offset-2" onClick={() => setPin(r.id)}>
+                        {r.pin_set_at ? "Change PIN" : "Set PIN"}
+                      </button>
+                      {r.pin_disabled && <span className="ml-2 text-xs text-amber-600">disabled</span>}
+                      {locked && (
+                        <button className="ml-2 text-xs text-destructive underline" onClick={() => unlockPin(r.id)}>locked — unlock</button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${r.is_active ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                        {r.is_active ? "Active" : "Disabled"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                      {r.last_pin_login_at ? new Date(r.last_pin_login_at).toLocaleString() : "Never"}
+                    </td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <Button size="sm" variant="ghost" onClick={() => toggle(r.id, !r.is_active)}>{r.is_active ? "Disable" : "Enable"}</Button>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeWorker(r)}>Remove</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!visible.length && (
+                <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
+                  {rows.length ? "No workers match that search." : "No POS workers yet."}
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-2xl border overflow-x-auto">
