@@ -188,6 +188,7 @@ import { Route as AuthenticatedReportsInventoryFlowAuditRouteImport } from './ro
 import { Route as AuthenticatedReportsIncomeTaxRouteImport } from './routes/_authenticated/reports.income-tax'
 import { Route as AuthenticatedReportsGeneralLedgerRouteImport } from './routes/_authenticated/reports.general-ledger'
 import { Route as AuthenticatedReportsCustomerStatementRouteImport } from './routes/_authenticated/reports.customer-statement'
+import { Route as AuthenticatedReportsCashbookRouteImport } from './routes/_authenticated/reports.cashbook'
 import { Route as AuthenticatedReportsCashFlowRouteImport } from './routes/_authenticated/reports.cash-flow'
 import { Route as AuthenticatedReportsBankReconciliationRouteImport } from './routes/_authenticated/reports.bank-reconciliation'
 import { Route as AuthenticatedReportsBalanceSheetRouteImport } from './routes/_authenticated/reports.balance-sheet'
@@ -1241,6 +1242,12 @@ const AuthenticatedReportsCustomerStatementRoute =
     path: '/customer-statement',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsCashbookRoute =
+  AuthenticatedReportsCashbookRouteImport.update({
+    id: '/cashbook',
+    path: '/cashbook',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsCashFlowRoute =
   AuthenticatedReportsCashFlowRouteImport.update({
     id: '/cash-flow',
@@ -1761,6 +1768,7 @@ export interface FileRoutesByFullPath {
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/reports/cashbook': typeof AuthenticatedReportsCashbookRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
@@ -1995,6 +2003,7 @@ export interface FileRoutesByTo {
   '/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/reports/cashbook': typeof AuthenticatedReportsCashbookRoute
   '/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
@@ -2238,6 +2247,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/balance-sheet': typeof AuthenticatedReportsBalanceSheetRoute
   '/_authenticated/reports/bank-reconciliation': typeof AuthenticatedReportsBankReconciliationRoute
   '/_authenticated/reports/cash-flow': typeof AuthenticatedReportsCashFlowRoute
+  '/_authenticated/reports/cashbook': typeof AuthenticatedReportsCashbookRoute
   '/_authenticated/reports/customer-statement': typeof AuthenticatedReportsCustomerStatementRoute
   '/_authenticated/reports/general-ledger': typeof AuthenticatedReportsGeneralLedgerRoute
   '/_authenticated/reports/income-tax': typeof AuthenticatedReportsIncomeTaxRoute
@@ -2480,6 +2490,7 @@ export interface FileRouteTypes {
     | '/reports/balance-sheet'
     | '/reports/bank-reconciliation'
     | '/reports/cash-flow'
+    | '/reports/cashbook'
     | '/reports/customer-statement'
     | '/reports/general-ledger'
     | '/reports/income-tax'
@@ -2714,6 +2725,7 @@ export interface FileRouteTypes {
     | '/reports/balance-sheet'
     | '/reports/bank-reconciliation'
     | '/reports/cash-flow'
+    | '/reports/cashbook'
     | '/reports/customer-statement'
     | '/reports/general-ledger'
     | '/reports/income-tax'
@@ -2956,6 +2968,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/balance-sheet'
     | '/_authenticated/reports/bank-reconciliation'
     | '/_authenticated/reports/cash-flow'
+    | '/_authenticated/reports/cashbook'
     | '/_authenticated/reports/customer-statement'
     | '/_authenticated/reports/general-ledger'
     | '/_authenticated/reports/income-tax'
@@ -4308,6 +4321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsCustomerStatementRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/cashbook': {
+      id: '/_authenticated/reports/cashbook'
+      path: '/cashbook'
+      fullPath: '/reports/cashbook'
+      preLoaderRoute: typeof AuthenticatedReportsCashbookRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/cash-flow': {
       id: '/_authenticated/reports/cash-flow'
       path: '/cash-flow'
@@ -4867,6 +4887,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsBalanceSheetRoute: typeof AuthenticatedReportsBalanceSheetRoute
   AuthenticatedReportsBankReconciliationRoute: typeof AuthenticatedReportsBankReconciliationRoute
   AuthenticatedReportsCashFlowRoute: typeof AuthenticatedReportsCashFlowRoute
+  AuthenticatedReportsCashbookRoute: typeof AuthenticatedReportsCashbookRoute
   AuthenticatedReportsCustomerStatementRoute: typeof AuthenticatedReportsCustomerStatementRoute
   AuthenticatedReportsGeneralLedgerRoute: typeof AuthenticatedReportsGeneralLedgerRoute
   AuthenticatedReportsIncomeTaxRoute: typeof AuthenticatedReportsIncomeTaxRoute
@@ -4900,6 +4921,7 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsBankReconciliationRoute:
     AuthenticatedReportsBankReconciliationRoute,
   AuthenticatedReportsCashFlowRoute: AuthenticatedReportsCashFlowRoute,
+  AuthenticatedReportsCashbookRoute: AuthenticatedReportsCashbookRoute,
   AuthenticatedReportsCustomerStatementRoute:
     AuthenticatedReportsCustomerStatementRoute,
   AuthenticatedReportsGeneralLedgerRoute:
