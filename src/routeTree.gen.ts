@@ -155,6 +155,7 @@ import { Route as AuthenticatedSchoolParentPortalRouteImport } from './routes/_a
 import { Route as AuthenticatedSchoolFeesBillingRouteImport } from './routes/_authenticated/school/fees-billing'
 import { Route as AuthenticatedSchoolFeesRouteImport } from './routes/_authenticated/school/fees'
 import { Route as AuthenticatedSchoolExamsRouteImport } from './routes/_authenticated/school/exams'
+import { Route as AuthenticatedSchoolComplianceRouteImport } from './routes/_authenticated/school/compliance'
 import { Route as AuthenticatedSchoolBoardingRouteImport } from './routes/_authenticated/school/boarding'
 import { Route as AuthenticatedSchoolAttendanceRouteImport } from './routes/_authenticated/school/attendance'
 import { Route as AuthenticatedSchoolAdmissionsRouteImport } from './routes/_authenticated/school/admissions'
@@ -1052,6 +1053,12 @@ const AuthenticatedSchoolExamsRoute =
     path: '/exams',
     getParentRoute: () => AuthenticatedSchoolRoute,
   } as any)
+const AuthenticatedSchoolComplianceRoute =
+  AuthenticatedSchoolComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedSchoolRoute,
+  } as any)
 const AuthenticatedSchoolBoardingRoute =
   AuthenticatedSchoolBoardingRouteImport.update({
     id: '/boarding',
@@ -1879,6 +1886,7 @@ export interface FileRoutesByFullPath {
   '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2124,6 +2132,7 @@ export interface FileRoutesByTo {
   '/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2378,6 +2387,7 @@ export interface FileRoutesById {
   '/_authenticated/school/admissions': typeof AuthenticatedSchoolAdmissionsRoute
   '/_authenticated/school/attendance': typeof AuthenticatedSchoolAttendanceRoute
   '/_authenticated/school/boarding': typeof AuthenticatedSchoolBoardingRoute
+  '/_authenticated/school/compliance': typeof AuthenticatedSchoolComplianceRoute
   '/_authenticated/school/exams': typeof AuthenticatedSchoolExamsRoute
   '/_authenticated/school/fees': typeof AuthenticatedSchoolFeesRoute
   '/_authenticated/school/fees-billing': typeof AuthenticatedSchoolFeesBillingRoute
@@ -2631,6 +2641,7 @@ export interface FileRouteTypes {
     | '/school/admissions'
     | '/school/attendance'
     | '/school/boarding'
+    | '/school/compliance'
     | '/school/exams'
     | '/school/fees'
     | '/school/fees-billing'
@@ -2876,6 +2887,7 @@ export interface FileRouteTypes {
     | '/school/admissions'
     | '/school/attendance'
     | '/school/boarding'
+    | '/school/compliance'
     | '/school/exams'
     | '/school/fees'
     | '/school/fees-billing'
@@ -3129,6 +3141,7 @@ export interface FileRouteTypes {
     | '/_authenticated/school/admissions'
     | '/_authenticated/school/attendance'
     | '/_authenticated/school/boarding'
+    | '/_authenticated/school/compliance'
     | '/_authenticated/school/exams'
     | '/_authenticated/school/fees'
     | '/_authenticated/school/fees-billing'
@@ -4219,6 +4232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSchoolExamsRouteImport
       parentRoute: typeof AuthenticatedSchoolRoute
     }
+    '/_authenticated/school/compliance': {
+      id: '/_authenticated/school/compliance'
+      path: '/compliance'
+      fullPath: '/school/compliance'
+      preLoaderRoute: typeof AuthenticatedSchoolComplianceRouteImport
+      parentRoute: typeof AuthenticatedSchoolRoute
+    }
     '/_authenticated/school/boarding': {
       id: '/_authenticated/school/boarding'
       path: '/boarding'
@@ -5223,6 +5243,7 @@ interface AuthenticatedSchoolRouteChildren {
   AuthenticatedSchoolAdmissionsRoute: typeof AuthenticatedSchoolAdmissionsRoute
   AuthenticatedSchoolAttendanceRoute: typeof AuthenticatedSchoolAttendanceRoute
   AuthenticatedSchoolBoardingRoute: typeof AuthenticatedSchoolBoardingRoute
+  AuthenticatedSchoolComplianceRoute: typeof AuthenticatedSchoolComplianceRoute
   AuthenticatedSchoolExamsRoute: typeof AuthenticatedSchoolExamsRoute
   AuthenticatedSchoolFeesRoute: typeof AuthenticatedSchoolFeesRoute
   AuthenticatedSchoolFeesBillingRoute: typeof AuthenticatedSchoolFeesBillingRoute
@@ -5244,6 +5265,7 @@ const AuthenticatedSchoolRouteChildren: AuthenticatedSchoolRouteChildren = {
   AuthenticatedSchoolAdmissionsRoute: AuthenticatedSchoolAdmissionsRoute,
   AuthenticatedSchoolAttendanceRoute: AuthenticatedSchoolAttendanceRoute,
   AuthenticatedSchoolBoardingRoute: AuthenticatedSchoolBoardingRoute,
+  AuthenticatedSchoolComplianceRoute: AuthenticatedSchoolComplianceRoute,
   AuthenticatedSchoolExamsRoute: AuthenticatedSchoolExamsRoute,
   AuthenticatedSchoolFeesRoute: AuthenticatedSchoolFeesRoute,
   AuthenticatedSchoolFeesBillingRoute: AuthenticatedSchoolFeesBillingRoute,
