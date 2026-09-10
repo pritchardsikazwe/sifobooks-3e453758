@@ -11,8 +11,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BedDouble, CalendarCheck, ClipboardCheck, CreditCard, House, LayoutDashboard, Boxes,
   ReceiptText, UtensilsCrossed, Wrench, BarChart3, Wallet, DoorOpen, Moon, ShieldCheck,
+  Tag, Globe2, PartyPopper, Link2, CalendarRange,
 } from "lucide-react";
 import { CheckInOut, FolioWorkspace, HousekeepingBoard, NightAudit, ReservationsBoard, RoomRack } from "@/components/industry/HotelOps";
+import { HotelCommandCentre } from "@/components/industry/HotelDashboard";
+import { BookingEngine, ChannelManager, RatesWorkspace } from "@/components/industry/HotelDistribution";
+import { EventsBoard, PreArrivalDesk } from "@/components/industry/HotelGuestServices";
 import { HospitalityCompliance } from "@/components/compliance/HospitalityCompliance";
 
 const db: any = supabase;
@@ -20,24 +24,29 @@ const db: any = supabase;
 export const HOTEL_NAV: NavItem[] = [
   { label: "Dashboard", to: "/hotel", icon: LayoutDashboard },
   { label: "Front desk", to: "/hotel/front-desk", icon: House },
+  { label: "Reservations", to: "/hotel/reservations", icon: CalendarCheck },
+  { label: "Booking engine", to: "/hotel/booking", icon: CalendarRange },
+  { label: "Rooms & rack", to: "/hotel/room-rack", icon: BedDouble },
+  { label: "Rates & availability", to: "/hotel/rates", icon: Tag },
+  { label: "Channels", to: "/hotel/channels", icon: Globe2 },
   { label: "Guests", to: "/hotel/guests", icon: CalendarCheck },
+  { label: "Pre-arrival", to: "/hotel/pre-arrival", icon: Link2 },
+  { label: "Check in / out", to: "/hotel/check-in-out", icon: DoorOpen },
+  { label: "Housekeeping", to: "/hotel/housekeeping", icon: ClipboardCheck },
   { label: "Folios & billing", to: "/hotel/folios", icon: ReceiptText },
   { label: "Payments", to: "/hotel/payments", icon: CreditCard },
   { label: "Hotel POS", to: "/hotel/pos", icon: UtensilsCrossed },
+  { label: "Events", to: "/hotel/events", icon: PartyPopper },
   { label: "Maintenance", to: "/hotel/maintenance", icon: Wrench },
   { label: "Inventory", to: "/hotel/inventory", icon: Boxes },
+  { label: "Night audit", to: "/hotel/night-audit", icon: Moon },
   { label: "Accounting", to: "/hotel/accounting", icon: Wallet },
   { label: "Reports", to: "/hotel/reports", icon: BarChart3 },
-  { label: "Room rack", to: "/hotel/room-rack", icon: BedDouble },
-  { label: "Reservations", to: "/hotel/reservations", icon: CalendarCheck },
-  { label: "Check in / out", to: "/hotel/check-in-out", icon: DoorOpen },
-  { label: "Housekeeping", to: "/hotel/housekeeping", icon: ClipboardCheck },
-  { label: "Night audit", to: "/hotel/night-audit", icon: Moon },
   { label: "Compliance", to: "/hotel/compliance", icon: ShieldCheck },
 ];
 
 const TITLES: Record<string, [string, string]> = {
-  "/hotel": ["Hotel operations", "Live guest billing, food & beverage revenue and property costs from your own records."],
+  "/hotel": ["Hotel operations", "Live occupancy, arrivals, revenue and alerts from your own property records."],
   "/hotel/front-desk": ["Front desk", "Open guest accounts and today's settlements, from your live ledger."],
   "/hotel/guests": ["Guests", "Your existing guest accounts. Select a guest to open the real record."],
   "/hotel/folios": ["Folios & billing", "Guest folios — room, restaurant and bar charges, taxes, deposits and payments."],
@@ -48,19 +57,26 @@ const TITLES: Record<string, [string, string]> = {
   "/hotel/accounting": ["Hotel accounting", "Where hotel activity lands in your books."],
   "/hotel/reports": ["Hotel reports", "Revenue, receivables and cost reporting on real data."],
   "/hotel/rooms": ["Rooms", "Your property's real rooms, room types and rates."],
-  "/hotel/room-rack": ["Room rack", "Live room board — occupancy, housekeeping and out-of-order state."],
+  "/hotel/room-rack": ["Rooms & room rack", "Live room board — occupancy, housekeeping and out-of-order state."],
   "/hotel/reservations": ["Reservations", "Availability, bookings, deposits and room assignment."],
+  "/hotel/booking": ["Booking engine", "Dates → available room → rate → guest → extras → deposit → confirmation."],
+  "/hotel/rates": ["Rates & availability", "Rate plans, seasons, contract rates and forward availability."],
+  "/hotel/channels": ["Channels", "Booking sources, channel adapters and synchronisation audit."],
+  "/hotel/pre-arrival": ["Pre-arrival & guest services", "Secure pre-check-in links and live in-house guest balances."],
+  "/hotel/events": ["Events & functions", "Conference, banquet and function diary with folio billing."],
   "/hotel/check-in-out": ["Check in / check out", "Reservation → room → folio → payment, in order."],
   "/hotel/housekeeping": ["Housekeeping", "Room states and the attendant task queue."],
   "/hotel/night-audit": ["Night audit", "Day close: occupancy, ADR, RevPAR, taxes, payments and exceptions."],
   "/hotel/compliance": ["Licences & tax compliance", "Tourism licence, permits, VAT, tourism levy, service charge and ZRA Smart Invoice."],
 };
 
-const OPS = new Set(["/hotel/folios", "/hotel/rooms", "/hotel/room-rack", "/hotel/reservations", "/hotel/check-in-out", "/hotel/housekeeping", "/hotel/night-audit", "/hotel/compliance"]);
+const OPS = new Set([
+  "/hotel/folios", "/hotel/rooms", "/hotel/room-rack", "/hotel/reservations", "/hotel/check-in-out",
+  "/hotel/housekeeping", "/hotel/night-audit", "/hotel/compliance", "/hotel/rates", "/hotel/booking",
+  "/hotel/channels", "/hotel/events", "/hotel/pre-arrival", "/hotel/guest-portal",
+]);
 
 const UNAVAILABLE: Record<string, string> = {
-  "/hotel/events": "Events & functions",
-  "/hotel/guest-portal": "Guest portal",
   "/hotel/restaurant": "Hotel restaurant module",
 };
 
