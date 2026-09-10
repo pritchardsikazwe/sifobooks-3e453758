@@ -264,16 +264,15 @@ export function JournalEntryEditor({ entryId }: Props) {
                   <tr key={l.key} className="border-t border-border/60 align-top">
                     <td className="px-3 py-2">
                       <AccountSelector
-                        label=""
+                        label="Account"
+                        className="[&_label]:sr-only"
                         accounts={accounts}
                         value={l.account_id}
                         onChange={id => setLine(l.key, { account_id: id })}
                         recentKey="journal-line-account"
                       />
                       {acct && (
-                        <p className="mt-1 truncate text-[11px] text-muted-foreground">
-                          <span className="font-mono">{acct.account_code}</span> · {acct.account_name}
-                        </p>
+                        <p className="mt-1 truncate text-[11px] text-muted-foreground">Type: {acct.account_type}</p>
                       )}
                     </td>
                     <td className="px-3 py-2">
