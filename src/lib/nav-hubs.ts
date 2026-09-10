@@ -206,6 +206,7 @@ export const HUBS: HubDef[] = [
         label: "Payroll tools",
         items: [
           { title: "Payroll Dashboard", url: "/payroll-dashboard", module: "hr_payroll", iconName: "LayoutDashboard" },
+          { title: "Statutory Centre", url: "/payroll-statutory", module: "hr_payroll", iconName: "ShieldCheck", hint: "PAYE, NAPSA and NHIMA totals, files and filing status." },
           { title: "Payroll Setup", url: "/payroll-setup", module: "hr_payroll", iconName: "Settings2" },
           { title: "Payroll Transactions", url: "/payroll-transactions", module: "hr_payroll", iconName: "Wallet2" },
           { title: "Payroll Tools", url: "/payroll-tools", module: "hr_payroll", iconName: "Calculator" },
