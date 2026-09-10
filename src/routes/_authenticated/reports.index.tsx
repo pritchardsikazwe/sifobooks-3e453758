@@ -267,7 +267,7 @@ function ReportsCentre() {
                   <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <Link to={v.path as any} className="block truncate font-semibold hover:text-emerald-700">{v.name}</Link>
+                        <a href={v.path} className="block truncate font-semibold hover:text-emerald-700">{v.name}</a>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">Saved {relTime(v.at)}</p>
                       </div>
                       <button
@@ -280,9 +280,9 @@ function ReportsCentre() {
                       </button>
                     </div>
                     <div className="mt-3 flex justify-end">
-                      <Link to={v.path as any}>
+                      <a href={v.path}>
                         <Button variant="save" size="sm" className="h-7 text-xs"><Sparkles className="mr-1 h-3 w-3" /> Run again</Button>
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 ))}
