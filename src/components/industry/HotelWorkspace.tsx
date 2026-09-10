@@ -191,6 +191,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
 
         return (
           <div className="space-y-4">
+            {screen === "/hotel" ? <HotelCommandCentre /> : null}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <MetricTile label="Open folios" value={String(openFolios.length)} hint="Guest accounts with a balance" icon={ReceiptText} tone={openFolios.length ? "warn" : "good"} />
               <MetricTile label="Outstanding" value={fmtMoney(outstanding)} hint="Owed by guests" icon={Wallet} tone={outstanding > 0 ? "warn" : "good"} />
