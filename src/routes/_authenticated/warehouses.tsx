@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExportMenu } from "@/components/ExportMenu";
+import { ExportMenu } from "@/lib/exports";
 import { fmtMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/warehouses")({
