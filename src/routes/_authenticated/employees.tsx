@@ -4,20 +4,20 @@ import { SimpleCrud } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 
 const STATUS_TONE: Record<string, string> = {
-  active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  active: "bg-success/10 text-emerald-700 border-emerald-200",
   on_leave: "bg-amber-50 text-amber-700 border-amber-200",
   terminated: "bg-rose-50 text-rose-700 border-rose-200",
 };
 const TYPE_TONE: Record<string, string> = {
-  permanent: "bg-blue-50 text-blue-700 border-blue-200",
+  permanent: "bg-primary/10 text-blue-700 border-blue-200",
   contract: "bg-violet-50 text-violet-700 border-violet-200",
-  casual: "bg-slate-50 text-slate-600 border-slate-200",
+  casual: "bg-slate-50 text-muted-foreground border-slate-200",
   intern: "bg-cyan-50 text-cyan-700 border-cyan-200",
 };
 
 const Pill = ({ value, tones }: { value: string | null; tones: Record<string, string> }) => {
   const v = (value ?? "").toLowerCase();
-  const cls = tones[v] ?? "bg-slate-50 text-slate-600 border-slate-200";
+  const cls = tones[v] ?? "bg-slate-50 text-muted-foreground border-slate-200";
   return (
     <span className={`inline-flex items-center px-2 py-0.5 text-[11px] rounded-full border capitalize ${cls}`}>
       {(value ?? "—").replace("_", " ")}
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/employees")({
         { key: "name", header: "Name", render: r => (
           <div>
             <div className="font-medium text-slate-800">{r.first_name} {r.last_name}</div>
-            {r.email && <div className="text-[11px] text-slate-500">{r.email}</div>}
+            {r.email && <div className="text-[11px] text-muted-foreground">{r.email}</div>}
           </div>
         ) },
         { key: "national_id", header: "NRC" },

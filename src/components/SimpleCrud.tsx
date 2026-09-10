@@ -49,6 +49,8 @@ export type LookupSpec = {
   table: string;
   /** Column shown as the option label. */
   labelColumn: string;
+  /** Additional columns joined into the label, e.g. first + last name. */
+  labelColumns?: string[];
   /** Optional short code shown before the label (e.g. SKU, account code). */
   codeColumn?: string;
   /** Extra columns joined into the searchable secondary line. */
@@ -191,7 +193,8 @@ export function SimpleCrud({
       const next: Record<string, EntityOption[]> = {};
       for (const f of lookupFields) {
         const spec = f.lookup!;
-        const cols = ["id", spec.labelColumn, spec.codeColumn, ...(spec.metaColumns ?? [])]
+        const labelCols = [spec.labelColumn, ...(spec.labelColumns ?? [])];
+        const cols = ["id", ...labelCols, spec.codeColumn, ...(spec.metaColumns ?? [])]
           .filter(Boolean).join(",");
         let q = supabase.from(spec.table as any).select(cols);
         q = q.order(spec.orderBy ?? spec.labelColumn, { ascending: true });
@@ -200,7 +203,7 @@ export function SimpleCrud({
         next[f.name] = ((data ?? []) as any[]).map(r => ({
           id: String(r.id),
           code: spec.codeColumn ? (r[spec.codeColumn] ?? null) : null,
-          label: String(r[spec.labelColumn] ?? "—"),
+          label: labelCols.map(c => r[c]).filter(Boolean).join(" ").trim() || "—",
           meta: (spec.metaColumns ?? []).map(c => r[c]).filter(Boolean).join(" · ") || null,
         }));
       }

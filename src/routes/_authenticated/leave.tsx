@@ -74,11 +74,11 @@ function LeaveBalances() {
                 <td className="p-3 font-medium">{r.name}</td>
                 <td className="p-3 text-right">{r.entitlement.toFixed(1)}</td>
                 <td className="p-3 text-right">{r.taken.toFixed(1)}</td>
-                <td className="p-3 text-right text-amber-600">{r.pending.toFixed(1)}</td>
-                <td className={`p-3 text-right font-semibold ${low ? "text-rose-600" : "text-emerald-600"}`}>{r.balance.toFixed(1)}</td>
+                <td className="p-3 text-right text-warning">{r.pending.toFixed(1)}</td>
+                <td className={`p-3 text-right font-semibold ${low ? "text-destructive" : "text-success"}`}>{r.balance.toFixed(1)}</td>
                 <td className="p-3">
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-success" style={{ width: `${pct}%` }} />
                   </div>
                 </td>
               </tr>
@@ -91,9 +91,19 @@ function LeaveBalances() {
   );
 }
 
-export const Route = createFileRoute("/_authenticated/leave")({
-  head: () => ({ meta: [{ title: "Leave Management — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: () => (
+function LeavePage() {
+  const [empNames, setEmpNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("employees")
+        .select("id, employee_code, first_name, last_name").order("first_name");
+      setEmpNames(Object.fromEntries((data ?? []).map(e => [
+        e.id,
+        `${e.employee_code ? e.employee_code + " · " : ""}${`${e.first_name ?? ""} ${e.last_name ?? ""}`.trim() || "Employee"}`,
+      ])));
+    })();
+  }, []);
+  return (
     <div className="space-y-6">
       <LeaveBalances />
       <SimpleCrud
@@ -105,6 +115,7 @@ export const Route = createFileRoute("/_authenticated/leave")({
         orderBy={{ column: "start_date", ascending: false }}
         searchKeys={["leave_type", "reason", "status"]}
         columns={[
+          { key: "employee_id", header: "Employee", render: (r: any) => empNames[r.employee_id] ?? "—" },
           { key: "leave_type", header: "Type" },
           { key: "start_date", header: "Start" },
           { key: "end_date", header: "End" },
@@ -113,6 +124,8 @@ export const Route = createFileRoute("/_authenticated/leave")({
           { key: "reason", header: "Reason" },
         ]}
         fields={[
+          { name: "employee_id", label: "Employee", type: "lookup", required: true,
+            lookup: { table: "employees", labelColumn: "first_name", labelColumns: ["last_name"], codeColumn: "employee_code", metaColumns: ["status", "phone", "email"], createTo: "/employees", createLabel: "New employee", emptyTitle: "No employees found for this company." } },
           { name: "leave_type", label: "Leave Type", type: "select", required: true, defaultValue: "annual",
             options: [{value:"annual",label:"Annual"},{value:"sick",label:"Sick"},{value:"maternity",label:"Maternity"},{value:"paternity",label:"Paternity"},{value:"unpaid",label:"Unpaid"},{value:"compassionate",label:"Compassionate"},{value:"study",label:"Study"},{value:"bereavement",label:"Bereavement"}] },
           { name: "start_date", label: "Start Date", type: "date", required: true },
@@ -124,5 +137,10 @@ export const Route = createFileRoute("/_authenticated/leave")({
         ]}
       />
     </div>
-  ),
+  );
+}
+
+export const Route = createFileRoute("/_authenticated/leave")({
+  head: () => ({ meta: [{ title: "Leave Management — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: LeavePage,
 });
