@@ -46,6 +46,7 @@ const CATS: { key: string; label: string; accent: string }[] = [
 /** Task-oriented entry points: a plain question, mapped to the existing report route. */
 const QUESTIONS: { q: string; hint: string; to: string }[] = [
   { q: "How profitable are we?", hint: "Profit & Loss for the period", to: "/reports/pnl" },
+  { q: "What are we spending on?", hint: "Expenses by category with totals", to: "/reports/expenses" },
   { q: "What do customers owe us?", hint: "Aged receivables by customer", to: "/reports/aged-receivables" },
   { q: "What do we owe suppliers?", hint: "Aged payables by supplier", to: "/reports/aged-payables" },
   { q: "Where is our cash?", hint: "Cash flow and bank position", to: "/reports/cash-flow" },
@@ -94,6 +95,10 @@ const REPORTS: Report[] = [
   { id: "stock-reconciliation", name: "Stock Reconciliation", description: "Expected stock from movement history vs actual balances, with variances.", to: "/reports/stock-reconciliation", icon: Package, category: "inventory" },
 
   // Expenses
+  { id: "expenses-summary", name: "Expenses Summary", description: "Total expenses for the period, by category, with % of total and transaction counts.", to: "/reports/expenses", icon: Receipt, category: "expenses" },
+  { id: "expenses-detail", name: "Expenses Detail", description: "Every posted expense transaction with date, reference, account and payee.", to: "/reports/expenses?view=detail", icon: FileBarChart, category: "expenses" },
+  { id: "expenses-month", name: "Expenses by Month", description: "Month columns Jan–Dec with monthly and grand totals per category.", to: "/reports/expenses?view=month", icon: BarChart3, category: "expenses" },
+  { id: "expenses-payee", name: "Expenses by Supplier", description: "What you spent with each supplier or payee.", to: "/reports/expenses?view=payee", icon: Building2, category: "expenses" },
   { id: "expenses", name: "Expense Register", description: "All expenses with category and supplier.", to: "/expenses", icon: Receipt, category: "expenses" },
 
   // Payroll

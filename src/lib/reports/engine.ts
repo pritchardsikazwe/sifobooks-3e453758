@@ -1450,3 +1450,289 @@ export function resultToExportRows(result: ReportResult): Record<string, any>[] 
     return out;
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* 15. Expenses (summary / detail / by month / by payee)               */
+/*                                                                     */
+/* Accounting rule: expenses are measured from POSTED journal lines on */
+/* expense-type accounts — exactly the same population the Profit &    */
+/* Loss uses. Payment-side entries hit bank / payables accounts, never */
+/* expense accounts, so nothing is double counted, and reversal        */
+/* journals net off automatically because they credit the same account.*/
+/* ------------------------------------------------------------------ */
+
+export type ExpenseView = "summary" | "detail" | "month" | "payee";
+
+export type ExpenseLine = {
+  date: string;
+  entryId: string;
+  entryNumber: string | null;
+  reference: string | null;
+  description: string;
+  accountId: string | null;
+  accountCode: string;
+  accountName: string;
+  cogs: boolean;
+  payee: string;
+  amountMinor: number;
+};
+
+const monthKey = (d: string) => d.slice(0, 7);
+const monthLabel = (k: string) => {
+  const [y, m] = k.split("-").map(Number);
+  return new Date(y, (m ?? 1) - 1, 1).toLocaleString("en-GB", { month: "short", year: "2-digit" });
+};
+
+/** Every month key between two ISO dates, inclusive (capped at 24 columns). */
+export function monthsBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  const start = new Date(`${from.slice(0, 7)}-01T00:00:00Z`);
+  const end = new Date(`${to.slice(0, 7)}-01T00:00:00Z`);
+  const cur = new Date(start);
+  while (cur <= end && out.length < 24) {
+    out.push(cur.toISOString().slice(0, 7));
+    cur.setUTCMonth(cur.getUTCMonth() + 1);
+  }
+  return out;
+}
+
+/**
+ * Pure aggregation for the Expenses report. Exported for regression tests so
+ * totals can be verified without touching the database.
+ */
+export function aggregateExpenses(
+  lines: ExpenseLine[],
+  p: { from: string; to: string; view: ExpenseView; accountId?: string },
+): ReportResult {
+  const scoped = p.accountId ? lines.filter((l) => l.accountId === p.accountId) : lines;
+  const totalMinor = scoped.reduce((s, l) => s + l.amountMinor, 0);
+  const total = toMajor(totalMinor);
+  const count = scoped.length;
+  const months = monthsBetween(p.from, p.to);
+  const monthTotals = new Map<string, number>();
+  for (const l of scoped) monthTotals.set(monthKey(l.date), (monthTotals.get(monthKey(l.date)) ?? 0) + l.amountMinor);
+  const busiest = [...monthTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  /* per-account roll-up, shared by summary + month views */
+  type Acc = { code: string; name: string; accountId: string | null; cogs: boolean; amount: number; n: number; byMonth: Map<string, number> };
+  const accs = new Map<string, Acc>();
+  for (const l of scoped) {
+    const key = l.accountId ?? `${l.accountCode}|${l.accountName}`;
+    const cur = accs.get(key) ?? { code: l.accountCode, name: l.accountName, accountId: l.accountId, cogs: l.cogs, amount: 0, n: 0, byMonth: new Map() };
+    cur.amount += l.amountMinor;
+    cur.n += 1;
+    cur.byMonth.set(monthKey(l.date), (cur.byMonth.get(monthKey(l.date)) ?? 0) + l.amountMinor);
+    accs.set(key, cur);
+  }
+  const ranked = [...accs.values()].sort((a, b) => b.amount - a.amount);
+  const top = ranked[0];
+
+  const summaryStats: SummaryStat[] = [
+    { label: "Total expenses", value: acctFmt(total), tone: total > 0 ? "warn" : "default" },
+    { label: "Categories", value: String(ranked.length) },
+    { label: "Transactions", value: String(count) },
+    {
+      label: "Largest category",
+      value: top ? top.name : "—",
+      hint: top && totalMinor ? `${acctFmt(toMajor(top.amount))} · ${((top.amount / totalMinor) * 100).toFixed(1)}% of total` : undefined,
+    },
+    {
+      label: "Monthly average",
+      value: acctFmt(months.length ? total / months.length : total),
+      hint: busiest ? `Highest: ${monthLabel(busiest[0])}` : undefined,
+    },
+  ];
+
+  const notes = [
+    "Posted journal entries only — the same expense accounts used by the Profit & Loss.",
+    "Supplier payments and bank transfers are excluded, so nothing is counted twice.",
+  ];
+  if (p.accountId && top) notes.push(`Filtered to ${top.name}.`);
+
+  const base = { summary: summaryStats, notes, sufficient: scoped.length > 0 };
+
+  if (p.view === "detail") {
+    const rows: ReportRow[] = scoped
+      .slice()
+      .sort((a, b) => (a.date === b.date ? a.accountCode.localeCompare(b.accountCode) : a.date.localeCompare(b.date)))
+      .map((l) => ({
+        date: l.date,
+        entry: l.entryNumber ?? "",
+        reference: l.reference ?? "",
+        description: l.description,
+        code: l.accountCode,
+        account: l.accountName,
+        payee: l.payee,
+        amount: toMajor(l.amountMinor),
+        _link: `/reports/general-ledger?account=${l.accountId ?? ""}&from=${p.from}&to=${p.to}`,
+      }));
+    rows.push({ date: "", entry: "", reference: "", description: "", code: "", account: "Total expenses", payee: "", amount: total, _emphasis: "total" });
+    return {
+      ...base,
+      columns: [
+        { key: "date", label: "Date", priority: 1 },
+        { key: "entry", label: "Entry", priority: 3 },
+        { key: "reference", label: "Reference", priority: 3 },
+        { key: "description", label: "Description", priority: 2 },
+        { key: "code", label: "Code", priority: 3 },
+        { key: "account", label: "Account", priority: 1 },
+        { key: "payee", label: "Payee", priority: 2 },
+        { key: "amount", label: "Amount", money: true, priority: 1 },
+      ],
+      rows,
+      facts: { total, transactions: count, from: p.from, to: p.to, view: "detail" },
+    };
+  }
+
+  if (p.view === "month") {
+    const columns: ReportColumn[] = [
+      { key: "account", label: "Account", priority: 1 },
+      ...months.map<ReportColumn>((m) => ({ key: m, label: monthLabel(m), money: true, priority: 2 })),
+      { key: "amount", label: "Total", money: true, priority: 1 },
+    ];
+    const rows: ReportRow[] = ranked.map((a) => {
+      const row: ReportRow = {
+        account: a.name,
+        amount: toMajor(a.amount),
+        _link: `/reports/expenses?view=detail&account=${a.accountId ?? ""}&from=${p.from}&to=${p.to}`,
+      };
+      for (const m of months) row[m] = toMajor(a.byMonth.get(m) ?? 0);
+      return row;
+    });
+    const totalRow: ReportRow = { account: "Total expenses", amount: total, _emphasis: "total" };
+    for (const m of months) totalRow[m] = toMajor(monthTotals.get(m) ?? 0);
+    rows.push(totalRow);
+    return { ...base, columns, rows, facts: { total, transactions: count, months: months.length, from: p.from, to: p.to, view: "month" } };
+  }
+
+  if (p.view === "payee") {
+    const byPayee = new Map<string, { amount: number; n: number }>();
+    for (const l of scoped) {
+      const cur = byPayee.get(l.payee) ?? { amount: 0, n: 0 };
+      cur.amount += l.amountMinor;
+      cur.n += 1;
+      byPayee.set(l.payee, cur);
+    }
+    const rows: ReportRow[] = [...byPayee.entries()]
+      .sort((a, b) => b[1].amount - a[1].amount)
+      .map(([payee, v]) => ({
+        payee,
+        transactions: v.n,
+        amount: toMajor(v.amount),
+        share: totalMinor ? Number(((v.amount / totalMinor) * 100).toFixed(1)) : 0,
+      }));
+    rows.push({ payee: "Total expenses", transactions: count, amount: total, share: totalMinor ? 100 : 0, _emphasis: "total" });
+    return {
+      ...base,
+      columns: [
+        { key: "payee", label: "Supplier / payee", priority: 1 },
+        { key: "transactions", label: "Transactions", numeric: true, priority: 2 },
+        { key: "share", label: "% of total", numeric: true, priority: 2 },
+        { key: "amount", label: "Amount", money: true, priority: 1 },
+      ],
+      rows,
+      notes: [...notes, "Payees are matched from expense records and supplier bills linked to each journal; unlinked journals show as “Journals & other”."],
+      facts: { total, transactions: count, payees: byPayee.size, from: p.from, to: p.to, view: "payee" },
+    };
+  }
+
+  /* summary */
+  const rows: ReportRow[] = [];
+  const groups: { label: string; cogs: boolean }[] = [
+    { label: "Cost of sales", cogs: true },
+    { label: "Operating expenses", cogs: false },
+  ];
+  for (const g of groups) {
+    const items = ranked.filter((a) => a.cogs === g.cogs);
+    if (!items.length) continue;
+    for (const a of items) {
+      rows.push({
+        section: g.label,
+        code: a.code,
+        account: a.name,
+        transactions: a.n,
+        share: totalMinor ? Number(((a.amount / totalMinor) * 100).toFixed(1)) : 0,
+        amount: toMajor(a.amount),
+        _link: `/reports/expenses?view=detail&account=${a.accountId ?? ""}&from=${p.from}&to=${p.to}`,
+      });
+    }
+    const sub = items.reduce((s, a) => s + a.amount, 0);
+    rows.push({
+      section: g.label,
+      code: "",
+      account: `Total ${g.label.toLowerCase()}`,
+      transactions: items.reduce((s, a) => s + a.n, 0),
+      share: totalMinor ? Number(((sub / totalMinor) * 100).toFixed(1)) : 0,
+      amount: toMajor(sub),
+      _emphasis: "subtotal",
+    });
+  }
+  rows.push({ section: "", code: "", account: "TOTAL EXPENSES", transactions: count, share: totalMinor ? 100 : 0, amount: total, _emphasis: "total" });
+
+  return {
+    ...base,
+    columns: [
+      { key: "section", label: "Section", priority: 2 },
+      { key: "code", label: "Code", priority: 3 },
+      { key: "account", label: "Category / account", priority: 1 },
+      { key: "transactions", label: "Txns", numeric: true, priority: 3 },
+      { key: "share", label: "% of total", numeric: true, priority: 2 },
+      { key: "amount", label: "Amount", money: true, priority: 1 },
+    ],
+    rows,
+    facts: {
+      total,
+      transactions: count,
+      categories: ranked.length,
+      topCategory: top?.name ?? "",
+      topCategoryAmount: top ? toMajor(top.amount) : 0,
+      from: p.from,
+      to: p.to,
+      view: "summary",
+    },
+  };
+}
+
+/** Payee lookup: journal entry id -> supplier / payee name, from real records. */
+async function loadPayeeMap(from: string, to: string): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const { data: exp } = await supabase
+    .from("expenses")
+    .select("journal_entry_id,reference,supplier_id,supplier:supplier_id(name)")
+    .gte("expense_date", from)
+    .lte("expense_date", to);
+  for (const e of (exp ?? []) as any[]) {
+    const name = e.supplier?.name ?? null;
+    if (e.journal_entry_id && name) map.set(e.journal_entry_id, name);
+  }
+  return map;
+}
+
+export async function loadExpenses(
+  p: PeriodParams & { view?: ExpenseView; accountId?: string },
+): Promise<ReportResult> {
+  const view = p.view ?? "summary";
+  const [posted, payees] = await Promise.all([
+    loadPostedLines({ from: p.from, to: p.to }),
+    loadPayeeMap(p.from, p.to).catch(() => new Map<string, string>()),
+  ]);
+
+  const lines: ExpenseLine[] = posted
+    .filter((l) => isExpense(l.accountType))
+    .map((l) => ({
+      date: l.entryDate,
+      entryId: l.entryId,
+      entryNumber: l.entryNumber,
+      reference: l.reference,
+      description: l.lineDescription || l.entryDescription || "",
+      accountId: l.accountId,
+      accountCode: l.accountCode ?? "—",
+      accountName: l.accountName ?? "(unmapped account)",
+      cogs: isCogs(l.accountCode, l.accountName, l.reportingClass),
+      payee: payees.get(l.entryId) ?? "Journals & other",
+      amountMinor: l.debitMinor - l.creditMinor,
+    }))
+    .filter((l) => l.amountMinor !== 0);
+
+  return aggregateExpenses(lines, { from: p.from, to: p.to, view, accountId: p.accountId });
+}

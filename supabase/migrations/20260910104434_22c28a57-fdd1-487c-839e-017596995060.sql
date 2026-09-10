@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.guard_role_permission_grant() FROM PUBLIC, anon, authenticated;
