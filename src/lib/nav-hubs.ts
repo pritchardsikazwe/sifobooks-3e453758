@@ -206,7 +206,10 @@ export const HUBS: HubDef[] = [
         label: "Payroll tools",
         items: [
           { title: "Payroll Dashboard", url: "/payroll-dashboard", module: "hr_payroll", iconName: "LayoutDashboard" },
+          { title: "Review & Approve", url: "/payroll-review", module: "hr_payroll", iconName: "ClipboardCheck", hint: "Check every payslip and the exceptions before approval." },
+          { title: "Payroll Payments", url: "/payroll-payments", module: "hr_payroll", iconName: "Wallet", hint: "Pay an approved run from an existing bank or cash account." },
           { title: "Statutory Centre", url: "/payroll-statutory", module: "hr_payroll", iconName: "ShieldCheck", hint: "PAYE, NAPSA and NHIMA totals, files and filing status." },
+          { title: "Statutory Rates", url: "/payroll-rules", module: "hr_payroll", iconName: "ScrollText", hint: "PAYE, NAPSA and NHIMA rates versioned by effective date." },
           { title: "Payroll Setup", url: "/payroll-setup", module: "hr_payroll", iconName: "Settings2" },
           { title: "Payroll Transactions", url: "/payroll-transactions", module: "hr_payroll", iconName: "Wallet2" },
           { title: "Payroll Tools", url: "/payroll-tools", module: "hr_payroll", iconName: "Calculator" },

@@ -67,6 +67,9 @@ import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_
 import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authenticated/payroll-tools'
 import { Route as AuthenticatedPayrollStatutoryRouteImport } from './routes/_authenticated/payroll-statutory'
 import { Route as AuthenticatedPayrollSetupRouteImport } from './routes/_authenticated/payroll-setup'
+import { Route as AuthenticatedPayrollRulesRouteImport } from './routes/_authenticated/payroll-rules'
+import { Route as AuthenticatedPayrollReviewRouteImport } from './routes/_authenticated/payroll-review'
+import { Route as AuthenticatedPayrollPaymentsRouteImport } from './routes/_authenticated/payroll-payments'
 import { Route as AuthenticatedPayrollDashboardRouteImport } from './routes/_authenticated/payroll-dashboard'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
@@ -576,6 +579,24 @@ const AuthenticatedPayrollSetupRoute =
   AuthenticatedPayrollSetupRouteImport.update({
     id: '/payroll-setup',
     path: '/payroll-setup',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollRulesRoute =
+  AuthenticatedPayrollRulesRouteImport.update({
+    id: '/payroll-rules',
+    path: '/payroll-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollReviewRoute =
+  AuthenticatedPayrollReviewRouteImport.update({
+    id: '/payroll-review',
+    path: '/payroll-review',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayrollPaymentsRoute =
+  AuthenticatedPayrollPaymentsRouteImport.update({
+    id: '/payroll-payments',
+    path: '/payroll-payments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPayrollDashboardRoute =
@@ -1752,6 +1773,9 @@ export interface FileRoutesByFullPath {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-payments': typeof AuthenticatedPayrollPaymentsRoute
+  '/payroll-review': typeof AuthenticatedPayrollReviewRoute
+  '/payroll-rules': typeof AuthenticatedPayrollRulesRoute
   '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
@@ -2003,6 +2027,9 @@ export interface FileRoutesByTo {
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/payroll-payments': typeof AuthenticatedPayrollPaymentsRoute
+  '/payroll-review': typeof AuthenticatedPayrollReviewRoute
+  '/payroll-rules': typeof AuthenticatedPayrollRulesRoute
   '/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/payroll-tools': typeof AuthenticatedPayrollToolsRoute
@@ -2257,6 +2284,9 @@ export interface FileRoutesById {
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/payroll-dashboard': typeof AuthenticatedPayrollDashboardRoute
+  '/_authenticated/payroll-payments': typeof AuthenticatedPayrollPaymentsRoute
+  '/_authenticated/payroll-review': typeof AuthenticatedPayrollReviewRoute
+  '/_authenticated/payroll-rules': typeof AuthenticatedPayrollRulesRoute
   '/_authenticated/payroll-setup': typeof AuthenticatedPayrollSetupRoute
   '/_authenticated/payroll-statutory': typeof AuthenticatedPayrollStatutoryRoute
   '/_authenticated/payroll-tools': typeof AuthenticatedPayrollToolsRoute
@@ -2513,6 +2543,9 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-payments'
+    | '/payroll-review'
+    | '/payroll-rules'
     | '/payroll-setup'
     | '/payroll-statutory'
     | '/payroll-tools'
@@ -2764,6 +2797,9 @@ export interface FileRouteTypes {
     | '/opportunities'
     | '/payroll'
     | '/payroll-dashboard'
+    | '/payroll-payments'
+    | '/payroll-review'
+    | '/payroll-rules'
     | '/payroll-setup'
     | '/payroll-statutory'
     | '/payroll-tools'
@@ -3017,6 +3053,9 @@ export interface FileRouteTypes {
     | '/_authenticated/opportunities'
     | '/_authenticated/payroll'
     | '/_authenticated/payroll-dashboard'
+    | '/_authenticated/payroll-payments'
+    | '/_authenticated/payroll-review'
+    | '/_authenticated/payroll-rules'
     | '/_authenticated/payroll-setup'
     | '/_authenticated/payroll-statutory'
     | '/_authenticated/payroll-tools'
@@ -3640,6 +3679,27 @@ declare module '@tanstack/react-router' {
       path: '/payroll-setup'
       fullPath: '/payroll-setup'
       preLoaderRoute: typeof AuthenticatedPayrollSetupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-rules': {
+      id: '/_authenticated/payroll-rules'
+      path: '/payroll-rules'
+      fullPath: '/payroll-rules'
+      preLoaderRoute: typeof AuthenticatedPayrollRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-review': {
+      id: '/_authenticated/payroll-review'
+      path: '/payroll-review'
+      fullPath: '/payroll-review'
+      preLoaderRoute: typeof AuthenticatedPayrollReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payroll-payments': {
+      id: '/_authenticated/payroll-payments'
+      path: '/payroll-payments'
+      fullPath: '/payroll-payments'
+      preLoaderRoute: typeof AuthenticatedPayrollPaymentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll-dashboard': {
@@ -5395,6 +5455,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPayrollDashboardRoute: typeof AuthenticatedPayrollDashboardRoute
+  AuthenticatedPayrollPaymentsRoute: typeof AuthenticatedPayrollPaymentsRoute
+  AuthenticatedPayrollReviewRoute: typeof AuthenticatedPayrollReviewRoute
+  AuthenticatedPayrollRulesRoute: typeof AuthenticatedPayrollRulesRoute
   AuthenticatedPayrollSetupRoute: typeof AuthenticatedPayrollSetupRoute
   AuthenticatedPayrollStatutoryRoute: typeof AuthenticatedPayrollStatutoryRoute
   AuthenticatedPayrollToolsRoute: typeof AuthenticatedPayrollToolsRoute
@@ -5520,6 +5583,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPayrollDashboardRoute: AuthenticatedPayrollDashboardRoute,
+  AuthenticatedPayrollPaymentsRoute: AuthenticatedPayrollPaymentsRoute,
+  AuthenticatedPayrollReviewRoute: AuthenticatedPayrollReviewRoute,
+  AuthenticatedPayrollRulesRoute: AuthenticatedPayrollRulesRoute,
   AuthenticatedPayrollSetupRoute: AuthenticatedPayrollSetupRoute,
   AuthenticatedPayrollStatutoryRoute: AuthenticatedPayrollStatutoryRoute,
   AuthenticatedPayrollToolsRoute: AuthenticatedPayrollToolsRoute,
