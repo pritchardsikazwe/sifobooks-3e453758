@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BedDouble, CalendarCheck, ClipboardCheck, CreditCard, House, LayoutDashboard, Boxes,
-  ReceiptText, UtensilsCrossed, Wrench, BarChart3, Wallet,
+  ReceiptText, UtensilsCrossed, Wrench, BarChart3, Wallet, DoorOpen, Moon, ShieldCheck,
 } from "lucide-react";
+import { CheckInOut, FolioWorkspace, HousekeepingBoard, NightAudit, ReservationsBoard, RoomRack } from "@/components/industry/HotelOps";
+import { HospitalityCompliance } from "@/components/compliance/HospitalityCompliance";
 
 const db: any = supabase;
 
@@ -26,9 +28,12 @@ export const HOTEL_NAV: NavItem[] = [
   { label: "Inventory", to: "/hotel/inventory", icon: Boxes },
   { label: "Accounting", to: "/hotel/accounting", icon: Wallet },
   { label: "Reports", to: "/hotel/reports", icon: BarChart3 },
-  { label: "Rooms", to: "/hotel/rooms", icon: BedDouble, supported: false },
-  { label: "Reservations", to: "/hotel/reservations", icon: CalendarCheck, supported: false },
-  { label: "Housekeeping", to: "/hotel/housekeeping", icon: ClipboardCheck, supported: false },
+  { label: "Room rack", to: "/hotel/room-rack", icon: BedDouble },
+  { label: "Reservations", to: "/hotel/reservations", icon: CalendarCheck },
+  { label: "Check in / out", to: "/hotel/check-in-out", icon: DoorOpen },
+  { label: "Housekeeping", to: "/hotel/housekeeping", icon: ClipboardCheck },
+  { label: "Night audit", to: "/hotel/night-audit", icon: Moon },
+  { label: "Compliance", to: "/hotel/compliance", icon: ShieldCheck },
 ];
 
 const TITLES: Record<string, [string, string]> = {
@@ -42,15 +47,18 @@ const TITLES: Record<string, [string, string]> = {
   "/hotel/inventory": ["Inventory", "Housekeeping, kitchen and bar stock currently on hand."],
   "/hotel/accounting": ["Hotel accounting", "Where hotel activity lands in your books."],
   "/hotel/reports": ["Hotel reports", "Revenue, receivables and cost reporting on real data."],
+  "/hotel/rooms": ["Rooms", "Your property's real rooms, room types and rates."],
+  "/hotel/room-rack": ["Room rack", "Live room board — occupancy, housekeeping and out-of-order state."],
+  "/hotel/reservations": ["Reservations", "Availability, bookings, deposits and room assignment."],
+  "/hotel/check-in-out": ["Check in / check out", "Reservation → room → folio → payment, in order."],
+  "/hotel/housekeeping": ["Housekeeping", "Room states and the attendant task queue."],
+  "/hotel/night-audit": ["Night audit", "Day close: occupancy, ADR, RevPAR, taxes, payments and exceptions."],
+  "/hotel/compliance": ["Licences & tax compliance", "Tourism licence, permits, VAT, tourism levy, service charge and ZRA Smart Invoice."],
 };
 
+const OPS = new Set(["/hotel/rooms", "/hotel/room-rack", "/hotel/reservations", "/hotel/check-in-out", "/hotel/housekeeping", "/hotel/night-audit", "/hotel/compliance"]);
+
 const UNAVAILABLE: Record<string, string> = {
-  "/hotel/rooms": "Room records",
-  "/hotel/room-rack": "Room rack",
-  "/hotel/reservations": "Room reservations",
-  "/hotel/housekeeping": "Housekeeping tasks",
-  "/hotel/check-in-out": "Check-in / check-out",
-  "/hotel/night-audit": "Night audit",
   "/hotel/events": "Events & functions",
   "/hotel/guest-portal": "Guest portal",
   "/hotel/restaurant": "Hotel restaurant module",
@@ -106,6 +114,17 @@ export function HotelWorkspace({ screen }: { screen: string }) {
   const [title, subtitle] = TITLES[screen] ?? ["Hotel", "Hotel operations workspace."];
 
   const body = () => {
+    if (OPS.has(screen)) {
+      switch (screen) {
+        case "/hotel/rooms":
+        case "/hotel/room-rack": return <RoomRack />;
+        case "/hotel/reservations": return <ReservationsBoard />;
+        case "/hotel/check-in-out": return <CheckInOut />;
+        case "/hotel/housekeeping": return <HousekeepingBoard />;
+        case "/hotel/night-audit": return <NightAudit />;
+        default: return <HospitalityCompliance scope="hospitality" />;
+      }
+    }
     if (UNAVAILABLE[screen]) {
       return (
         <NotConnected
