@@ -55,7 +55,7 @@ export const Route = createFileRoute("/_authenticated/purchase-orders")({
         {
           name: "supplier_id", label: "Supplier", type: "lookup", required: true, group: "Document Details",
           lookup: {
-            table: "suppliers", labelColumn: "name", codeColumn: "code",
+            table: "suppliers", labelColumn: "name",
             metaColumns: ["tpin", "phone", "email"],
             createTo: "/suppliers", createLabel: "New supplier",
             emptyTitle: "No suppliers found for this company.",
