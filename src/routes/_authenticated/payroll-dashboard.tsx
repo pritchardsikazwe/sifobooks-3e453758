@@ -37,6 +37,8 @@ type Emp = {
   id: string; first_name: string; last_name: string;
   basic_salary: number | null; status: string | null;
   department_id: string | null; employment_type: string | null;
+  tpin?: string | null; national_id?: string | null;
+  napsa_number?: string | null; nhima_number?: string | null;
 };
 
 const DEPT_COLORS = ["#10b981","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#84cc16"];
