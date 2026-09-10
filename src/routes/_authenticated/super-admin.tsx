@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/super-admin")({
 type Company = { id: string; email?: string | null; name: string; trading_name: string | null; base_currency: string | null; tpin: string | null; user_id: string; created_at: string; industry?: string | null };
 type Profile = { id: string; email: string | null; full_name: string | null; created_at: string; active_company_id?: string | null };
 type Plan = { id: string; code: string; name: string; price_monthly: number; currency: string; max_users: number | null; max_invoices: number | null; is_active: boolean; sort_order: number };
-type AuditRow = { id: string; user_id: string | null; action: string; entity: string | null; entity_id: string | null; created_at: string; metadata: any };
+type AuditRow = { id: string; user_id: string | null; action: string; entity_type: string | null; entity_id: string | null; created_at: string; details: any };
 type Sub = { id: string; company_id: string; plan_id: string; status: string; current_period_end: string | null };
 
 function SuperAdminPage() {
@@ -60,7 +60,7 @@ function SuperAdminPage() {
       supabase.from("profiles").select("id,email,full_name,created_at,active_company_id").order("created_at", { ascending: false }).limit(500),
       supabase.from("subscription_plans").select("*").order("sort_order"),
       supabase.from("company_subscriptions").select("id,company_id,plan_id,status,current_period_end"),
-      supabase.from("audit_logs").select("id,user_id,action,entity,entity_id,created_at,metadata").order("created_at", { ascending: false }).limit(100),
+      supabase.from("audit_logs").select("id,user_id,action,entity_type,entity_id,created_at,details").order("created_at", { ascending: false }).limit(100),
       supabase.from("user_roles").select("user_id,role"),
     ]);
     setFlags((f.data ?? []) as any);
@@ -467,8 +467,8 @@ function SuperAdminPage() {
                         <td className="py-2 text-slate-500 text-xs whitespace-nowrap">{new Date(a.created_at).toLocaleString()}</td>
                         <td className="text-slate-600 text-xs">{user?.email || a.user_id?.slice(0, 8) || "system"}</td>
                         <td><Badge variant="outline" className="text-[10px]">{a.action}</Badge></td>
-                        <td className="text-slate-500 text-xs">{a.entity || "—"} {a.entity_id ? `· ${a.entity_id.slice(0, 8)}` : ""}</td>
-                        <td className="text-slate-500 text-xs max-w-xs truncate">{a.metadata ? JSON.stringify(a.metadata) : "—"}</td>
+                        <td className="text-slate-500 text-xs">{a.entity_type || "—"} {a.entity_id ? `· ${a.entity_id.slice(0, 8)}` : ""}</td>
+                        <td className="text-slate-500 text-xs max-w-xs truncate">{a.details ? JSON.stringify(a.details) : "—"}</td>
                       </tr>
                     );
                   })}
