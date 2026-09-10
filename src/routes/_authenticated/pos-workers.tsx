@@ -26,6 +26,8 @@ function PosWorkers() {
   const [resets, setResets] = useState<any[]>([]);
   const [mode, setMode] = useState<"email" | "id">("email");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
   const invite = useServerFn(invitePosWorker);
 
