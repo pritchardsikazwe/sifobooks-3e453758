@@ -44,6 +44,7 @@ type Run = {
   period_month: number; period_year: number; pay_date: string | null; status: string;
   total_gross: number | null; total_paye: number | null; total_napsa: number | null;
   total_nhima: number | null; total_net: number | null; notes: string | null;
+  prepared_by?: string | null; approved_by?: string | null; approved_at?: string | null;
 };
 type Employee = {
   id: string; first_name: string; last_name: string; employee_code: string | null;
