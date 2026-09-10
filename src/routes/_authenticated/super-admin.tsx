@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { KeyRound } from "lucide-react";
+import { AccountsAdmin } from "@/components/admin/AccountsAdmin";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -240,6 +242,7 @@ function SuperAdminPage() {
         <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="tenants"><Building2 className="h-4 w-4 mr-1" /> Tenants</TabsTrigger>
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-1" /> Users & Roles</TabsTrigger>
+          <TabsTrigger value="accounts"><KeyRound className="h-4 w-4 mr-1" /> Accounts</TabsTrigger>
           <TabsTrigger value="features"><Settings2 className="h-4 w-4 mr-1" /> Features</TabsTrigger>
           <TabsTrigger value="plans"><DollarSign className="h-4 w-4 mr-1" /> Plans</TabsTrigger>
           <TabsTrigger value="broadcast"><Megaphone className="h-4 w-4 mr-1" /> Broadcast</TabsTrigger>
@@ -352,6 +355,10 @@ function SuperAdminPage() {
               </table>
             </div>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="accounts">
+          <AccountsAdmin roleMap={roleMap} onRolesChanged={() => { void load(); }} />
         </TabsContent>
 
         <TabsContent value="features">
