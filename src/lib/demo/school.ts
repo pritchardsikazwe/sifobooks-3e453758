@@ -9,6 +9,11 @@ export const schoolDemo: DemoIndustry = {
   description:
     "Follow a learner from admission to report card: classes and subjects, daily attendance, exam results, fee bills, receipts and the arrears that finance chases.",
   highlights: ["640 sample learners", "Fees, receipts & arrears", "Exams and report cards", "Parent portal view"],
+  accent: {
+    gradient: "from-emerald-500/15 via-teal-500/10 to-background",
+    text: "text-emerald-600 dark:text-emerald-400",
+    ring: "ring-emerald-500/30",
+  },
   sections: [
     {
       slug: "dashboard",

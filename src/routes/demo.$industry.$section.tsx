@@ -50,10 +50,36 @@ function SectionPage() {
 
   return (
     <DemoIndustryShell industry={industry} activeSection={section.slug}>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{section.group}</p>
-        <h2 className="text-2xl font-bold">{section.name}</h2>
-        <p className="mt-1 max-w-3xl text-muted-foreground">{section.blurb}</p>
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{section.group}</p>
+          <h2 className="text-2xl font-bold">{section.name}</h2>
+          <p className="mt-1 max-w-3xl text-muted-foreground">{section.blurb}</p>
+        </div>
+        {section.actions?.length ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {section.actions.map((action) => {
+              const cls =
+                action.variant === "primary"
+                  ? "bg-primary text-primary-foreground shadow-sm hover:opacity-90"
+                  : action.variant === "ghost"
+                    ? "text-muted-foreground hover:bg-muted"
+                    : "border border-border bg-background hover:bg-muted";
+              const inner = (
+                <span className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-bold ${cls}`}>
+                  {action.label}
+                </span>
+              );
+              return action.section ? (
+                <Link key={action.label} to="/demo/$industry/$section" params={{ industry: industry.slug, section: action.section }}>
+                  {inner}
+                </Link>
+              ) : (
+                <span key={action.label}>{inner}</span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       {section.kpis?.length ? <DemoKpis kpis={section.kpis} /> : null}

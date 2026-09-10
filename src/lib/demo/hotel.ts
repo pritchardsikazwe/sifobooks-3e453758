@@ -9,9 +9,15 @@ export const hotelDemo: DemoIndustry = {
   description:
     "Walk a full property day: reservations arrive, guests check in, charges land on the folio, housekeeping turns rooms over, and the night audit closes the day into accounting.",
   highlights: ["48-room sample property", "Folios & room charges", "Night audit to ledger", "Occupancy, ADR & RevPAR"],
+  accent: {
+    gradient: "from-indigo-500/15 via-sky-500/10 to-background",
+    text: "text-indigo-600 dark:text-indigo-400",
+    ring: "ring-indigo-500/30",
+  },
   sections: [
     {
       slug: "dashboard",
+      iconName: "LayoutDashboard",
       name: "Dashboard",
       group: "Overview",
       blurb: "Today's property position at a glance.",
@@ -23,7 +29,50 @@ export const hotelDemo: DemoIndustry = {
         { label: "Departures today", value: "11", hint: "3 pending settlement", tone: "warn" },
         { label: "Rooms revenue MTD", value: "K 842,600", tone: "good" },
       ],
+      actions: [
+        { label: "Check in arrival", variant: "primary", section: "front-desk" },
+        { label: "New reservation", section: "reservations" },
+        { label: "Room status", section: "rooms" },
+      ],
       blocks: [
+        {
+          kind: "chart",
+          variant: "line",
+          title: "Occupancy — last 7 nights",
+          note: "Sample figures. Weekend conference lifted mid-week occupancy.",
+          unit: "%",
+          series: [
+            { label: "Mon", value: 62 },
+            { label: "Tue", value: 68 },
+            { label: "Wed", value: 74 },
+            { label: "Thu", value: 81 },
+            { label: "Fri", value: 92 },
+            { label: "Sat", value: 96 },
+            { label: "Sun", value: 78 },
+          ],
+        },
+        {
+          kind: "chart",
+          variant: "donut",
+          title: "Revenue mix today",
+          unit: "K ",
+          series: [
+            { label: "Rooms", value: 148200 },
+            { label: "Restaurant", value: 42600 },
+            { label: "Bar", value: 18400 },
+            { label: "Conference", value: 26000 },
+          ],
+        },
+        {
+          kind: "grid",
+          title: "Room status right now",
+          cells: [
+            { label: "Occupied 37", sub: "of 48 rooms", tone: "info" },
+            { label: "Available 6", sub: "clean & inspected", tone: "good" },
+            { label: "Dirty 4", sub: "awaiting housekeeping", tone: "warn" },
+            { label: "Out of order 1", sub: "maintenance", tone: "bad" },
+          ],
+        },
         {
           kind: "panel",
           title: "Front desk position",
@@ -53,8 +102,50 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
+    {
+      slug: "front-desk",
+      iconName: "ConciergeBell",
+      name: "Front desk",
+      group: "Front office",
+      blurb: "The daily desk worklist: keys, messages, requests and escalations.",
+      actions: [
+        { label: "Check in", variant: "primary" },
+        { label: "Check out", section: "check-in-out" },
+        { label: "View folio", section: "folios" },
+        { label: "Move room", section: "rooms" },
+      ],
+      blocks: [
+        {
+          kind: "flow",
+          title: "Today at the desk",
+          steps: [
+            { label: "Arrivals", detail: "14 expected · 6 checked in", state: "In progress", tone: "warn" },
+            { label: "Departures", detail: "11 due · 8 settled", state: "In progress", tone: "info" },
+            { label: "In house", detail: "37 rooms occupied", state: "Live", tone: "good" },
+            { label: "Folios open", detail: "K 128,450 outstanding", state: "Watch", tone: "warn" },
+            { label: "Night audit", detail: "Runs 23:30", state: "Scheduled" },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Desk worklist",
+          columns: ["Time", "Task", "Room", "Assigned to", "Priority", "Status"],
+          statusColumn: 5,
+          rows: [
+            ["08:15", "Airport pickup confirmation", "305", "Front desk", "High", "Open"],
+            ["09:00", "Late checkout request", "312", "Duty manager", "Medium", "Approved"],
+            ["10:30", "Extra bed to be delivered", "220", "Housekeeping", "Medium", "In progress"],
+            ["12:00", "Corporate billing letter", "305", "Accounts", "High", "Open"],
+            ["15:45", "Lost property enquiry", "108", "Front desk", "Low", "Closed"],
+          ],
+        },
+      ],
+    },
+
     {
       slug: "reservations",
+      iconName: "CalendarDays",
       name: "Reservations",
       group: "Front office",
       blurb: "Booking pipeline with the seven-day arrival calendar.",
@@ -63,6 +154,12 @@ export const hotelDemo: DemoIndustry = {
         { label: "Provisional", value: "9", tone: "warn" },
         { label: "Cancellations (30d)", value: "4" },
         { label: "Forward revenue", value: "K 1,120,400", tone: "good" },
+      ],
+      actions: [
+        { label: "New reservation", variant: "primary" },
+        { label: "Confirm" },
+        { label: "Check in", section: "front-desk" },
+        { label: "Cancel", variant: "ghost" },
       ],
       blocks: [
         {
@@ -96,47 +193,43 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
     {
-      slug: "guests",
-      name: "Guests",
-      group: "Front office",
-      blurb: "Guest profiles, stay history and preferences.",
-      kpis: [
-        { label: "Guest profiles", value: "1,284" },
-        { label: "Repeat guests", value: "36%", tone: "good" },
-        { label: "Corporate accounts", value: "18" },
-        { label: "Loyalty members", value: "212" },
-      ],
+      slug: "availability",
+      iconName: "CalendarRange",
+      name: "Availability",
+      group: "Rooms",
+      blurb: "Sellable rooms by type across the week.",
       blocks: [
         {
           kind: "table",
-          title: "Guest directory",
-          columns: ["Guest", "Type", "Phone", "Stays", "Lifetime value", "Status"],
-          numericColumns: [3, 4],
-          statusColumn: 5,
+          title: "Availability by type",
+          columns: ["Type", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"],
+          numericColumns: [1, 2, 3, 4, 5, 6],
           rows: [
-            ["L. Phiri", "Individual", "+260 97 000 0001", 12, "K 84,200", "In house"],
-            ["Zambezi Mining Ltd", "Corporate", "+260 21 000 0002", 41, "K 612,900", "Confirmed"],
-            ["C. Mwale", "Individual", "+260 96 000 0003", 3, "K 9,400", "In house"],
-            ["Copperbelt Tours", "Agent", "+260 21 000 0004", 27, "K 288,100", "Provisional"],
-            ["N. Chanda", "Loyalty — Gold", "+260 95 000 0005", 8, "K 41,300", "Confirmed"],
+            ["Standard Twin", 4, 2, 1, 6, 9, 11],
+            ["Deluxe King", 3, 1, 0, 5, 8, 9],
+            ["Family Room", 2, 2, 1, 3, 4, 5],
+            ["Executive Suite", 1, 1, 1, 2, 3, 3],
+            ["Presidential Suite", 1, 0, 1, 2, 2, 2],
           ],
         },
         {
           kind: "notes",
-          title: "Preferences on file",
+          title: "Yield notes",
           lines: [
-            "L. Phiri — high floor, late checkout, no dairy at breakfast.",
-            "Zambezi Mining Ltd — direct billing to company account, monthly statement.",
-            "N. Chanda — quiet wing, twin beds, airport pickup usually required.",
+            "Sunday is close to sell-out on Deluxe King — consider closing the corporate rate.",
+            "Copperbelt Tours provisional block releases Saturday 18:00 if unconfirmed.",
           ],
         },
       ],
     },
+
     {
       slug: "rooms",
-      name: "Rooms & room types",
-      group: "Inventory",
+      iconName: "BedDouble",
+      name: "Rooms",
+      group: "Rooms",
       blurb: "Room inventory, rate plans and current condition.",
       kpis: [
         { label: "Rooms", value: "48" },
@@ -144,7 +237,58 @@ export const hotelDemo: DemoIndustry = {
         { label: "Out of order", value: "1", tone: "bad" },
         { label: "Average rate", value: "K 1,318" },
       ],
+      actions: [
+        { label: "Open room detail", variant: "primary" },
+        { label: "Change status" },
+        { label: "Block room" },
+      ],
       blocks: [
+        {
+          kind: "map",
+          title: "Room status board",
+          note: "Each tile is a real demo room — opening one shows its detail, never a create form.",
+          legend: [
+            { label: "Available", tone: "good" },
+            { label: "Occupied", tone: "info" },
+            { label: "Reserved / arriving", tone: "warn" },
+            { label: "Out of order", tone: "bad" },
+          ],
+          areas: [
+            {
+              label: "Floor 1 — Standard",
+              cells: [
+                { label: "101", state: "Occupied", tone: "info", meta: "Mr Banda · out 14 Mar", amount: "K 3,200" },
+                { label: "102", state: "Clean", tone: "good", meta: "Inspected 09:40" },
+                { label: "103", state: "Dirty", tone: "warn", meta: "Departed 08:15" },
+                { label: "104", state: "Occupied", tone: "info", meta: "Ms Zulu · out 13 Mar", amount: "K 1,150" },
+                { label: "105", state: "Arriving", tone: "warn", meta: "Phiri · ETA 15:00" },
+                { label: "106", state: "Out of order", tone: "bad", meta: "AC repair" },
+                { label: "107", state: "Clean", tone: "good", meta: "Ready" },
+                { label: "108", state: "Occupied", tone: "info", meta: "Mr Tembo · out 16 Mar", amount: "K 6,400" },
+                { label: "109", state: "Cleaning", tone: "warn", meta: "Grace · started 10:05" },
+                { label: "110", state: "Clean", tone: "good", meta: "Ready" },
+              ],
+            },
+            {
+              label: "Floor 2 — Executive",
+              cells: [
+                { label: "201", state: "Occupied", tone: "info", meta: "Conference block", amount: "K 4,800" },
+                { label: "202", state: "Occupied", tone: "info", meta: "Conference block", amount: "K 4,800" },
+                { label: "203", state: "Dirty", tone: "warn", meta: "Departed 07:50" },
+                { label: "204", state: "Clean", tone: "good", meta: "Ready" },
+                { label: "205", state: "Arriving", tone: "warn", meta: "Mwale · ETA 18:30" },
+              ],
+            },
+            {
+              label: "Floor 3 — Suites",
+              cells: [
+                { label: "301", state: "Occupied", tone: "info", meta: "Ms Chanda · out 15 Mar", amount: "K 11,400" },
+                { label: "302", state: "Clean", tone: "good", meta: "Ready" },
+                { label: "303", state: "Out of order", tone: "bad", meta: "Refurbishment" },
+              ],
+            },
+          ],
+        },
         {
           kind: "table",
           title: "Room types & rate plans",
@@ -175,37 +319,53 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
     {
-      slug: "availability",
-      name: "Room availability",
-      group: "Inventory",
-      blurb: "Sellable rooms by type across the week.",
+      slug: "guests",
+      iconName: "Users",
+      name: "Guests",
+      group: "Front office",
+      blurb: "Guest profiles, stay history and preferences.",
+      kpis: [
+        { label: "Guest profiles", value: "1,284" },
+        { label: "Repeat guests", value: "36%", tone: "good" },
+        { label: "Corporate accounts", value: "18" },
+        { label: "Loyalty members", value: "212" },
+      ],
+      actions: [
+        { label: "Select existing guest", variant: "primary" },
+        { label: "New guest" },
+      ],
       blocks: [
         {
           kind: "table",
-          title: "Availability by type",
-          columns: ["Type", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"],
-          numericColumns: [1, 2, 3, 4, 5, 6],
+          title: "Guest directory",
+          columns: ["Guest", "Type", "Phone", "Stays", "Lifetime value", "Status"],
+          numericColumns: [3, 4],
+          statusColumn: 5,
           rows: [
-            ["Standard Twin", 4, 2, 1, 6, 9, 11],
-            ["Deluxe King", 3, 1, 0, 5, 8, 9],
-            ["Family Room", 2, 2, 1, 3, 4, 5],
-            ["Executive Suite", 1, 1, 1, 2, 3, 3],
-            ["Presidential Suite", 1, 0, 1, 2, 2, 2],
+            ["L. Phiri", "Individual", "+260 97 000 0001", 12, "K 84,200", "In house"],
+            ["Zambezi Mining Ltd", "Corporate", "+260 21 000 0002", 41, "K 612,900", "Confirmed"],
+            ["C. Mwale", "Individual", "+260 96 000 0003", 3, "K 9,400", "In house"],
+            ["Copperbelt Tours", "Agent", "+260 21 000 0004", 27, "K 288,100", "Provisional"],
+            ["N. Chanda", "Loyalty — Gold", "+260 95 000 0005", 8, "K 41,300", "Confirmed"],
           ],
         },
         {
           kind: "notes",
-          title: "Yield notes",
+          title: "Preferences on file",
           lines: [
-            "Sunday is close to sell-out on Deluxe King — consider closing the corporate rate.",
-            "Copperbelt Tours provisional block releases Saturday 18:00 if unconfirmed.",
+            "L. Phiri — high floor, late checkout, no dairy at breakfast.",
+            "Zambezi Mining Ltd — direct billing to company account, monthly statement.",
+            "N. Chanda — quiet wing, twin beds, airport pickup usually required.",
           ],
         },
       ],
     },
+
     {
       slug: "check-in-out",
+      iconName: "LogIn",
       name: "Check-in / check-out",
       group: "Front office",
       blurb: "Arrivals, in-house guests and departures awaiting settlement.",
@@ -243,29 +403,10 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
-    {
-      slug: "front-desk",
-      name: "Front desk",
-      group: "Front office",
-      blurb: "The daily desk worklist: keys, messages, requests and escalations.",
-      blocks: [
-        {
-          kind: "table",
-          title: "Desk worklist",
-          columns: ["Time", "Task", "Room", "Assigned to", "Priority", "Status"],
-          statusColumn: 5,
-          rows: [
-            ["08:15", "Airport pickup confirmation", "305", "Front desk", "High", "Open"],
-            ["09:00", "Late checkout request", "312", "Duty manager", "Medium", "Approved"],
-            ["10:30", "Extra bed to be delivered", "220", "Housekeeping", "Medium", "In progress"],
-            ["12:00", "Corporate billing letter", "305", "Accounts", "High", "Open"],
-            ["15:45", "Lost property enquiry", "108", "Front desk", "Low", "Closed"],
-          ],
-        },
-      ],
-    },
+
     {
       slug: "housekeeping",
+      iconName: "Sparkles",
       name: "Housekeeping",
       group: "Operations",
       blurb: "Room status board and attendant assignments.",
@@ -275,7 +416,50 @@ export const hotelDemo: DemoIndustry = {
         { label: "Occupied clean", value: "29" },
         { label: "Out of order", value: "1", tone: "bad" },
       ],
+      actions: [
+        { label: "Assign rooms", variant: "primary" },
+        { label: "Start cleaning" },
+        { label: "Mark clean" },
+        { label: "Inspect" },
+      ],
       blocks: [
+        {
+          kind: "tickets",
+          title: "Housekeeping board",
+          note: "Assign, start, finish and inspect — the same states the room board reads from.",
+          lanes: [
+            {
+              label: "To assign",
+              tone: "bad",
+              tickets: [
+                { ref: "HK-311", table: "Room 103", priority: "Departure clean", items: ["Full strip", "Bathroom deep clean"], action: "Assign" },
+                { ref: "HK-312", table: "Room 203", priority: "Departure clean", items: ["Full strip", "Restock minibar"], action: "Assign" },
+              ],
+            },
+            {
+              label: "Cleaning",
+              tone: "warn",
+              tickets: [
+                { ref: "HK-308", table: "Room 109", timer: "22 min", priority: "Grace M.", items: ["Stayover refresh"], action: "Mark clean" },
+              ],
+            },
+            {
+              label: "To inspect",
+              tone: "info",
+              tickets: [
+                { ref: "HK-305", table: "Room 204", timer: "6 min", priority: "Supervisor", items: ["Ready for inspection"], action: "Inspect" },
+              ],
+            },
+            {
+              label: "Inspected",
+              tone: "good",
+              tickets: [
+                { ref: "HK-301", table: "Room 102", items: ["Passed 09:40"] },
+                { ref: "HK-302", table: "Room 107", items: ["Passed 10:12"] },
+              ],
+            },
+          ],
+        },
         {
           kind: "board",
           title: "Room status board",
@@ -300,16 +484,92 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
+    {
+      slug: "maintenance",
+      iconName: "Wrench",
+      name: "Maintenance",
+      group: "Operations",
+      blurb: "Faults reported around the property, by priority and status.",
+      kpis: [
+        { label: "Open tickets", value: "8", tone: "warn" },
+        { label: "Urgent", value: "3", tone: "bad" },
+        { label: "Rooms out of order", value: "1", tone: "bad" },
+        { label: "Closed this week", value: "21", tone: "good" },
+      ],
+      actions: [
+        { label: "Log fault", variant: "primary" },
+        { label: "Assign technician" },
+        { label: "Return room to service", section: "rooms" },
+      ],
+      blocks: [
+        {
+          kind: "tickets",
+          title: "Maintenance board",
+          lanes: [
+            {
+              label: "Urgent",
+              tone: "bad",
+              tickets: [
+                { ref: "MT-118", table: "Room 106", timer: "2 days", priority: "Guest impact", items: ["Air conditioning not cooling"], action: "Assign" },
+                { ref: "MT-121", table: "Kitchen", timer: "4 hrs", priority: "Operations", items: ["Cold room compressor noise"], action: "Assign" },
+              ],
+            },
+            {
+              label: "In progress",
+              tone: "warn",
+              tickets: [
+                { ref: "MT-115", table: "Room 303", timer: "6 days", priority: "Refurbishment", items: ["Bathroom retiling"], action: "Update" },
+              ],
+            },
+            {
+              label: "Awaiting parts",
+              tone: "info",
+              tickets: [
+                { ref: "MT-109", table: "Lift 2", timer: "9 days", priority: "Contractor", items: ["Door sensor on order"] },
+              ],
+            },
+            {
+              label: "Closed",
+              tone: "good",
+              tickets: [
+                { ref: "MT-104", table: "Room 210", items: ["Shower mixer replaced"] },
+              ],
+            },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Cost of maintenance this month",
+          columns: ["Category", "Tickets", "Labour", "Parts", "Total", "Status"],
+          numericColumns: [1, 2, 3, 4],
+          statusColumn: 5,
+          rows: [
+            ["Air conditioning", 6, "K 4,200", "K 9,800", "K 14,000", "Posted"],
+            ["Plumbing", 8, "K 3,100", "K 2,400", "K 5,500", "Posted"],
+            ["Electrical", 4, "K 2,600", "K 1,900", "K 4,500", "Posted"],
+            ["Lifts", 1, "K 0", "K 18,400", "K 18,400", "Pending"],
+          ],
+        },
+      ],
+    },
+
     {
       slug: "folios",
-      name: "Folios & guest charges",
-      group: "Revenue",
+      iconName: "FileText",
+      name: "Folios & billing",
+      group: "Billing",
       blurb: "Open guest folios with every posted charge line.",
       kpis: [
         { label: "Open folios", value: "37" },
         { label: "Folio balance", value: "K 128,450" },
         { label: "Charges posted today", value: "94" },
         { label: "Disputed lines", value: "1", tone: "warn" },
+      ],
+      actions: [
+        { label: "Open folio", variant: "primary" },
+        { label: "Post charge" },
+        { label: "Take payment", section: "payments" },
       ],
       blocks: [
         {
@@ -340,10 +600,12 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
     {
       slug: "pos",
-      name: "Hotel POS & room charges",
-      group: "Revenue",
+      iconName: "Utensils",
+      name: "Restaurant & hotel POS",
+      group: "Billing",
       blurb: "Restaurant, bar and spa sales routed to folios or settled at the outlet.",
       kpis: [
         { label: "Outlet sales today", value: "K 38,420", tone: "good" },
@@ -367,11 +629,18 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
     {
       slug: "payments",
+      iconName: "CreditCard",
       name: "Payments & deposits",
-      group: "Revenue",
+      group: "Billing",
       blurb: "Deposits held, settlements taken and the method mix.",
+      actions: [
+        { label: "Receive payment", variant: "primary" },
+        { label: "Record deposit" },
+        { label: "Refund", variant: "ghost" },
+      ],
       blocks: [
         {
           kind: "table",
@@ -399,8 +668,10 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
     {
       slug: "night-audit",
+      iconName: "Moon",
       name: "Night audit",
       group: "Controls",
       blurb: "The end-of-day close: post room charges, roll the date, hand off to accounting.",
@@ -430,8 +701,158 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
+
+    {
+      slug: "inventory",
+      iconName: "Boxes",
+      name: "Inventory",
+      group: "Costs",
+      blurb: "Linen, amenities, minibar and kitchen stock held across the property.",
+      kpis: [
+        { label: "Stock value", value: "K 386,400" },
+        { label: "Stores", value: "5" },
+        { label: "Below reorder", value: "9", tone: "warn" },
+        { label: "Minibar variance", value: "K 1,240", tone: "warn" },
+      ],
+      actions: [
+        { label: "Stock count", variant: "primary" },
+        { label: "Issue to floor" },
+        { label: "Reorder list" },
+      ],
+      blocks: [
+        {
+          kind: "table",
+          title: "Store balances",
+          columns: ["Item", "Store", "On hand", "Reorder at", "Unit cost", "Value", "Status"],
+          numericColumns: [2, 3, 4, 5],
+          statusColumn: 6,
+          rows: [
+            ["Bath towels", "Linen store", "412", "300", "K 78", "K 32,136", "Good"],
+            ["Bed sheets (queen)", "Linen store", "268", "300", "K 145", "K 38,860", "Low"],
+            ["Shower gel 40ml", "Amenities", "1,840", "1,200", "K 6", "K 11,040", "Good"],
+            ["Minibar water", "Minibar store", "96", "150", "K 8", "K 768", "Low"],
+            ["Coffee sachets", "Amenities", "2,410", "1,500", "K 3", "K 7,230", "Good"],
+          ],
+        },
+        {
+          kind: "chart",
+          variant: "bars",
+          title: "Stock value by store",
+          unit: "K ",
+          series: [
+            { label: "Linen store", value: 168400 },
+            { label: "Kitchen store", value: 121300 },
+            { label: "Amenities", value: 54200 },
+            { label: "Minibar store", value: 28900, tone: "warn" },
+            { label: "Engineering", value: 13600 },
+          ],
+        },
+      ],
+    },
+
+    {
+      slug: "expenses",
+      iconName: "Receipt",
+      name: "Expenses & purchasing",
+      group: "Costs",
+      blurb: "Supplier bills, purchase orders and operating cost control.",
+      kpis: [
+        { label: "Operating costs MTD", value: "K 612,400" },
+        { label: "Open purchase orders", value: "9" },
+        { label: "Bills awaiting approval", value: "4", tone: "warn" },
+        { label: "Cost ratio", value: "48%", tone: "info" },
+      ],
+      actions: [
+        { label: "Record expense", variant: "primary" },
+        { label: "New purchase order" },
+      ],
+      blocks: [
+        {
+          kind: "table",
+          title: "Recent supplier bills",
+          columns: ["Bill", "Supplier", "Category", "Date", "Amount", "Status"],
+          numericColumns: [4],
+          statusColumn: 5,
+          rows: [
+            ["BILL-2291", "Lusaka Fresh Produce", "Food & beverage", "09 Sep", "K 42,300", "Approved"],
+            ["BILL-2292", "ZESCO", "Utilities", "09 Sep", "K 88,400", "Paid"],
+            ["BILL-2293", "CleanPro Supplies", "Housekeeping", "10 Sep", "K 16,750", "Pending"],
+            ["BILL-2294", "AirTech Services", "Maintenance", "11 Sep", "K 9,200", "Pending"],
+            ["BILL-2295", "Copper Linen Co", "Laundry & linen", "11 Sep", "K 23,600", "Approved"],
+          ],
+        },
+      ],
+    },
+
+    {
+      slug: "staff",
+      iconName: "UserSquare",
+      name: "Staff & users",
+      group: "People",
+      blurb: "Departments, shifts and system access roles.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Team on duty",
+          columns: ["Name", "Department", "Role", "Shift", "System access", "Status"],
+          statusColumn: 5,
+          rows: [
+            ["D. Mulenga", "Front office", "Duty manager", "07:00 – 16:00", "Manager", "On shift"],
+            ["Grace M.", "Housekeeping", "Room attendant", "07:00 – 15:00", "Operations", "On shift"],
+            ["Joseph K.", "Housekeeping", "Room attendant", "07:00 – 15:00", "Operations", "On shift"],
+            ["S. Ngoma", "F&B", "Outlet cashier", "12:00 – 22:00", "Cashier", "On shift"],
+            ["B. Lungu", "Finance", "Night auditor", "22:00 – 06:00", "Accounting", "Off shift"],
+          ],
+        },
+        {
+          kind: "notes",
+          title: "Access control",
+          lines: [
+            "Rate overrides and folio corrections require duty-manager approval.",
+            "Night auditor is the only role permitted to roll the business date.",
+            "Cashiers cannot reopen a closed shift; they raise an approval request instead.",
+          ],
+        },
+      ],
+    },
+
+    {
+      slug: "accounting",
+      iconName: "Landmark",
+      name: "Accounting impact",
+      group: "Controls",
+      blurb: "A read-only preview of the journal the night audit would produce.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Sample night-audit journal (preview only)",
+          note: "Illustrative posting. Nothing in this demo can post to a real ledger.",
+          columns: ["Account", "Description", "Debit", "Credit"],
+          numericColumns: [2, 3],
+          rows: [
+            ["1200 Guest ledger", "Room & tax charges", "K 48,320", "—"],
+            ["4100 Room revenue", "Accommodation earned", "—", "K 41,655"],
+            ["2200 VAT payable", "Output VAT 16%", "—", "K 6,665"],
+            ["1000 Cash & bank", "Cashier settlements", "K 23,560", "—"],
+            ["1200 Guest ledger", "Settlements applied", "—", "K 23,560"],
+          ],
+        },
+        {
+          kind: "panel",
+          title: "Control checks",
+          items: [
+            { label: "Debits", value: "K 71,880" },
+            { label: "Credits", value: "K 71,880" },
+            { label: "Difference", value: "K 0.00 — balanced", tone: "good" },
+            { label: "Posting state", value: "Preview only (demo)", tone: "info" },
+          ],
+        },
+      ],
+    },
+
     {
       slug: "revenue",
+      iconName: "TrendingUp",
       name: "Revenue & performance",
       group: "Analysis",
       blurb: "Revenue split by room and service, with occupancy, ADR and RevPAR.",
@@ -469,102 +890,27 @@ export const hotelDemo: DemoIndustry = {
         },
       ],
     },
-    {
-      slug: "expenses",
-      name: "Expenses & purchasing",
-      group: "Costs",
-      blurb: "Supplier bills, purchase orders and operating cost control.",
-      kpis: [
-        { label: "Operating costs MTD", value: "K 612,400" },
-        { label: "Open purchase orders", value: "9" },
-        { label: "Bills awaiting approval", value: "4", tone: "warn" },
-        { label: "Cost ratio", value: "48%", tone: "info" },
-      ],
-      blocks: [
-        {
-          kind: "table",
-          title: "Recent supplier bills",
-          columns: ["Bill", "Supplier", "Category", "Date", "Amount", "Status"],
-          numericColumns: [4],
-          statusColumn: 5,
-          rows: [
-            ["BILL-2291", "Lusaka Fresh Produce", "Food & beverage", "09 Sep", "K 42,300", "Approved"],
-            ["BILL-2292", "ZESCO", "Utilities", "09 Sep", "K 88,400", "Paid"],
-            ["BILL-2293", "CleanPro Supplies", "Housekeeping", "10 Sep", "K 16,750", "Pending"],
-            ["BILL-2294", "AirTech Services", "Maintenance", "11 Sep", "K 9,200", "Pending"],
-            ["BILL-2295", "Copper Linen Co", "Laundry & linen", "11 Sep", "K 23,600", "Approved"],
-          ],
-        },
-      ],
-    },
-    {
-      slug: "staff",
-      name: "Staff & users",
-      group: "People",
-      blurb: "Departments, shifts and system access roles.",
-      blocks: [
-        {
-          kind: "table",
-          title: "Team on duty",
-          columns: ["Name", "Department", "Role", "Shift", "System access", "Status"],
-          statusColumn: 5,
-          rows: [
-            ["D. Mulenga", "Front office", "Duty manager", "07:00 – 16:00", "Manager", "On shift"],
-            ["Grace M.", "Housekeeping", "Room attendant", "07:00 – 15:00", "Operations", "On shift"],
-            ["Joseph K.", "Housekeeping", "Room attendant", "07:00 – 15:00", "Operations", "On shift"],
-            ["S. Ngoma", "F&B", "Outlet cashier", "12:00 – 22:00", "Cashier", "On shift"],
-            ["B. Lungu", "Finance", "Night auditor", "22:00 – 06:00", "Accounting", "Off shift"],
-          ],
-        },
-        {
-          kind: "notes",
-          title: "Access control",
-          lines: [
-            "Rate overrides and folio corrections require duty-manager approval.",
-            "Night auditor is the only role permitted to roll the business date.",
-            "Cashiers cannot reopen a closed shift; they raise an approval request instead.",
-          ],
-        },
-      ],
-    },
-    {
-      slug: "accounting",
-      name: "Accounting integration",
-      group: "Controls",
-      blurb: "A read-only preview of the journal the night audit would produce.",
-      blocks: [
-        {
-          kind: "table",
-          title: "Sample night-audit journal (preview only)",
-          note: "Illustrative posting. Nothing in this demo can post to a real ledger.",
-          columns: ["Account", "Description", "Debit", "Credit"],
-          numericColumns: [2, 3],
-          rows: [
-            ["1200 Guest ledger", "Room & tax charges", "K 48,320", "—"],
-            ["4100 Room revenue", "Accommodation earned", "—", "K 41,655"],
-            ["2200 VAT payable", "Output VAT 16%", "—", "K 6,665"],
-            ["1000 Cash & bank", "Cashier settlements", "K 23,560", "—"],
-            ["1200 Guest ledger", "Settlements applied", "—", "K 23,560"],
-          ],
-        },
-        {
-          kind: "panel",
-          title: "Control checks",
-          items: [
-            { label: "Debits", value: "K 71,880" },
-            { label: "Credits", value: "K 71,880" },
-            { label: "Difference", value: "K 0.00 — balanced", tone: "good" },
-            { label: "Posting state", value: "Preview only (demo)", tone: "info" },
-          ],
-        },
-      ],
-    },
+
     {
       slug: "reports",
+      iconName: "BarChart3",
       name: "Reports",
       group: "Analysis",
       blurb: "The report pack a property manager reviews each morning.",
       blocks: [
+        {
+          kind: "chart",
+          variant: "bars",
+          title: "Revenue by department — month to date",
+          unit: "K ",
+          series: [
+            { label: "Rooms", value: 2841000, tone: "good" },
+            { label: "Restaurant", value: 764000 },
+            { label: "Bar", value: 318000 },
+            { label: "Conference", value: 496000 },
+            { label: "Laundry", value: 62000, tone: "warn" },
+          ],
+        },
         {
           kind: "table",
           title: "Report pack",
@@ -577,6 +923,53 @@ export const hotelDemo: DemoIndustry = {
             ["Outlet sales", "Which outlets and items drive food & beverage?", "Daily", "Ready"],
             ["Departmental P&L", "Which departments actually make money?", "Monthly", "Ready"],
             ["Housekeeping productivity", "How long does a room turnover take?", "Weekly", "Ready"],
+          ],
+        },
+      ],
+    },
+
+    {
+      slug: "settings",
+      iconName: "Settings",
+      name: "Settings",
+      group: "Settings",
+      blurb: "Property configuration — room types, rates, taxes and user roles.",
+      actions: [{ label: "Edit settings", variant: "primary" }],
+      blocks: [
+        {
+          kind: "panel",
+          title: "Property configuration",
+          items: [
+            { label: "Rooms", value: "48 across 3 floors" },
+            { label: "Room types", value: "Standard, Executive, Suite" },
+            { label: "Check-in / check-out", value: "14:00 / 10:00" },
+            { label: "Tourism levy", value: "1.5%" },
+            { label: "VAT", value: "16%" },
+            { label: "Currency", value: "ZMW (K), USD rates supported" },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Rate plans",
+          columns: ["Plan", "Room type", "Rate", "Includes", "Cancellation", "Status"],
+          numericColumns: [2],
+          statusColumn: 5,
+          rows: [
+            ["Best available", "Standard", "K 1,150", "Breakfast", "24 hrs", "Active"],
+            ["Corporate", "Standard", "K 950", "Breakfast, Wi-Fi", "Same day", "Active"],
+            ["Weekend escape", "Executive", "K 1,650", "Breakfast, late checkout", "48 hrs", "Active"],
+            ["Suite package", "Suite", "K 3,800", "All meals, airport transfer", "72 hrs", "Active"],
+          ],
+        },
+        {
+          kind: "table",
+          title: "Roles & permissions",
+          columns: ["Role", "Reservations", "Check-in", "Post charges", "Take payment", "Reports"],
+          rows: [
+            ["Receptionist", "Yes", "Yes", "Yes", "Yes", "Own shift"],
+            ["Housekeeping", "No", "No", "No", "No", "Task list"],
+            ["Night auditor", "Yes", "Yes", "Yes", "Yes", "Daily"],
+            ["General manager", "Yes", "Yes", "Yes", "Yes", "All"],
           ],
         },
       ],

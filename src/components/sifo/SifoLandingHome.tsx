@@ -45,17 +45,58 @@ export function SifoLandingHome() {
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {[
-              { slug: "hotel", name: "SifoHotel", blurb: "Reservations, front desk, housekeeping, folios and the night audit that closes the day.", points: ["48-room sample property", "Guest folios & room charges", "Occupancy, ADR & RevPAR"] },
-              { slug: "school", name: "SifoSchool", blurb: "Admissions, classes, attendance, exams, fee billing, receipts and arrears follow-up.", points: ["640 sample learners", "Fees, receipts & aging", "Exams and report cards"] },
-              { slug: "restaurant", name: "SifoRestaurant", blurb: "Floor plan, kitchen display, split bills, recipe costing, wastage and shift cash-up.", points: ["Live table & course board", "Recipe cost and margin", "Cash-up with variance control"] },
+              {
+                slug: "hotel", name: "SifoHotel", cta: "Hotel demo",
+                blurb: "Reservations, front desk, housekeeping, folios and the night audit that closes the day.",
+                points: ["96-room status board", "Guest folios & room charges", "Occupancy, ADR & RevPAR"],
+                glow: "from-indigo-500/25 to-sky-500/10", chip: "bg-indigo-400/15 text-indigo-200 border-indigo-400/30",
+                stats: [["Occupancy", "78%"], ["Arrivals", "18"], ["Rooms clean", "14"]],
+                tiles: [["101", "bg-sky-400/70"], ["102", "bg-emerald-400/70"], ["103", "bg-amber-400/70"], ["104", "bg-sky-400/70"], ["105", "bg-amber-400/70"], ["106", "bg-rose-400/70"], ["107", "bg-emerald-400/70"], ["108", "bg-sky-400/70"]],
+              },
+              {
+                slug: "school", name: "SifoSchool", cta: "School demo",
+                blurb: "Admissions, classes, attendance, exams, fee billing, receipts and arrears follow-up.",
+                points: ["640 sample learners", "Fees, receipts & aging", "Exams and report cards"],
+                glow: "from-emerald-500/25 to-teal-500/10", chip: "bg-emerald-400/15 text-emerald-200 border-emerald-400/30",
+                stats: [["Learners", "640"], ["Fees collected", "82%"], ["Arrears", "K 96k"]],
+                tiles: [["7A", "bg-emerald-400/70"], ["7B", "bg-emerald-400/70"], ["8A", "bg-amber-400/70"], ["8B", "bg-emerald-400/70"], ["9A", "bg-emerald-400/70"], ["9B", "bg-rose-400/70"], ["10A", "bg-emerald-400/70"], ["10B", "bg-amber-400/70"]],
+              },
+              {
+                slug: "restaurant", name: "SifoRestaurant", cta: "Restaurant demo",
+                blurb: "Floor plan, kitchen display, split bills, recipe costing, wastage and shift cash-up.",
+                points: ["Live table & kitchen board", "Recipe cost and margin", "Cash-up with variance control"],
+                glow: "from-amber-500/25 to-orange-500/10", chip: "bg-amber-400/15 text-amber-200 border-amber-400/30",
+                stats: [["Sales today", "K 68k"], ["Open tables", "9"], ["Avg ticket", "K 320"]],
+                tiles: [["T1", "bg-sky-400/70"], ["T2", "bg-emerald-400/70"], ["T3", "bg-amber-400/70"], ["T4", "bg-sky-400/70"], ["T5", "bg-rose-400/70"], ["T6", "bg-emerald-400/70"], ["T7", "bg-sky-400/70"], ["T8", "bg-emerald-400/70"]],
+              },
             ].map((d) => (
-              <div key={d.slug} className="flex flex-col rounded-2xl border border-white/10 bg-white/[.04] p-6">
-                <h3 className="text-xl font-bold">{d.name}</h3>
-                <p className="mt-2 text-sm text-slate-400">{d.blurb}</p>
-                <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-500">{d.points.map((p) => <li key={p}>✓ {p}</li>)}</ul>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <Link to="/demo/$industry" params={{ industry: d.slug }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#0e8f4a] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5">View demo <ArrowRight className="h-4 w-4" /></Link>
-                  <Link to="/auth" className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Start your own</Link>
+              <div key={d.slug} className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[.04] transition hover:border-white/25">
+                <div className={`bg-gradient-to-br ${d.glow} p-5`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-xl font-bold">{d.name}</h3>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${d.chip}`}>Live demo</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {d.stats.map(([label, value]) => (
+                      <div key={label} className="rounded-lg bg-black/25 px-2 py-2 text-center">
+                        <p className="text-sm font-black">{value}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-1.5">
+                    {d.tiles.map(([label, colour]) => (
+                      <div key={label} className={`rounded-md ${colour} py-2 text-center text-[10px] font-black text-slate-900`}>{label}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <p className="text-sm text-slate-400">{d.blurb}</p>
+                  <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-500">{d.points.map((p) => <li key={p}>✓ {p}</li>)}</ul>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Link to="/demo/$industry" params={{ industry: d.slug }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#0e8f4a] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5">{d.cta} <ArrowRight className="h-4 w-4" /></Link>
+                    <Link to="/auth" className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Start your own</Link>
+                  </div>
                 </div>
               </div>
             ))}
