@@ -199,11 +199,51 @@ function PayrollDashboard() {
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/employees">Employees</Link></Button>
-            <Button asChild variant="outline"><Link to="/attendance">Attendance</Link></Button>
+            <Button asChild variant="outline"><Link to="/payroll-statutory">Statutory</Link></Button>
             <Button variant="save" asChild ><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
           </div>
         </div>
       </motion.div>
+
+      {/* What needs attention */}
+      {(attention.length > 0 || movement) && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <ClipboardCheck className="h-4 w-4 text-amber-600" /> What needs attention
+            </div>
+            {attention.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">Nothing outstanding on payroll right now.</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {attention.map((a, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 text-sm">
+                    <span className={a.tone === "rose" ? "text-rose-700" : a.tone === "amber" ? "text-amber-700" : "text-slate-700"}>{a.text}</span>
+                    <Button asChild size="sm" variant="ghost"><Link to={a.to}>Open</Link></Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <TrendingUp className="h-4 w-4 text-emerald-600" /> Movement
+            </div>
+            {!movement ? (
+              <p className="mt-2 text-sm text-slate-500">Two completed runs are needed to compare periods.</p>
+            ) : (
+              <div className="mt-2 space-y-1 text-sm">
+                <p className="text-xs text-slate-500">{movement.label}</p>
+                <Move label="Gross" v={movement.gross} money />
+                <Move label="Net pay" v={movement.net} money />
+                <Move label="PAYE" v={movement.paye} money />
+                <Move label="Employees" v={movement.heads} />
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
