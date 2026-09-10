@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3, RefreshCw, Link2, Star, Search, Clock, TrendingUp,
   Wallet, ShoppingCart, Landmark, Package, Users2, Receipt, FileBarChart,
-  Building2, Calculator, ClipboardList, LineChart, Layers, Sparkles,
+  Building2, Calculator, ClipboardList, LineChart, Layers, Sparkles, Bookmark, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getFavorites, toggleFavorite, getRecent, getLastGenerated } from "@/lib/reports/favorites";
+import { getFavorites, toggleFavorite, getRecent, getLastGenerated, getSavedViews, removeSavedView, type SavedView } from "@/lib/reports/favorites";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -124,6 +124,7 @@ function ReportsCentre() {
   const [favs, setFavs] = useState<string[]>([]);
   const [recent, setRecent] = useState<{ id: string; at: string }[]>([]);
   const [lastGen, setLastGen] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState<SavedView[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => { refresh(); }, []);
@@ -131,6 +132,7 @@ function ReportsCentre() {
     setFavs(getFavorites());
     setRecent(getRecent());
     setLastGen(getLastGenerated());
+    setSaved(getSavedViews());
   };
 
   const filtered = useMemo(() => {
@@ -226,6 +228,9 @@ function ReportsCentre() {
             <TabsTrigger value="favorites" className="data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
               <Star className="h-3.5 w-3.5 mr-1" /> Favorites {favReports.length > 0 && <Badge variant="secondary" className="ml-1.5">{favReports.length}</Badge>}
             </TabsTrigger>
+            <TabsTrigger value="saved" className="data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
+              <Bookmark className="h-3.5 w-3.5 mr-1" /> Saved views {saved.length > 0 && <Badge variant="secondary" className="ml-1.5">{saved.length}</Badge>}
+            </TabsTrigger>
             <TabsTrigger value="recent" className="data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
               <Clock className="h-3.5 w-3.5 mr-1" /> Recent
             </TabsTrigger>
@@ -251,6 +256,40 @@ function ReportsCentre() {
             ) : (
               <div className="text-sm text-muted-foreground py-16 text-center">
                 No favourites yet. Click the <Star className="inline h-3.5 w-3.5" /> on any report to add it.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="saved">
+            {saved.length ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {saved.map(v => (
+                  <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link to={v.path as any} className="block truncate font-semibold hover:text-emerald-700">{v.name}</Link>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">Saved {relTime(v.at)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Delete saved view"
+                        className="rounded p-1 text-muted-foreground hover:bg-muted"
+                        onClick={() => { removeSavedView(v.id); refresh(); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <Link to={v.path as any}>
+                        <Button variant="save" size="sm" className="h-7 text-xs"><Sparkles className="mr-1 h-3 w-3" /> Run again</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                No saved views yet. Open any report, set the period you want and click <span className="font-medium text-foreground">Save view</span>.
               </div>
             )}
           </TabsContent>
