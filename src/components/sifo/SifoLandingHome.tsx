@@ -7,10 +7,12 @@ import {
   SifoFeatureGrid, SifoHero, SifoProductTabs, SifoTrust,
 } from "@/components/landing/SifoLandingShowcase";
 import { SifoIndustryRegistration } from "@/components/landing/SifoIndustryRegistration";
+import { SifoPayrollProduct } from "@/components/landing/SifoPayrollProduct";
 
 const NAV = [
   { label: "Platform", href: "#platform" },
   { label: "Solutions", href: "#solutions" },
+  { label: "Payroll", href: "#payroll" },
   { label: "Industries", href: "#industries" },
   { label: "Features", href: "#features" },
   { label: "Compliance", href: "#compliance" },
@@ -26,6 +28,7 @@ export function SifoLandingHome() {
       <LogoBand />
       <SifoProductTabs />
       <div id="solutions"><SifoFeatureGrid /></div>
+      <SifoPayrollProduct />
       <SifoIndustryRegistration />
       <div id="compliance"><SifoTrust /></div>
       <Pricing />
@@ -116,6 +119,7 @@ function Pricing() {
   const tiers = [
     { name: "Starter", who: "Single shop or office finding its feet.", has: ["One company, one branch", "Accounting, sales, purchases", "Point of sale and stock", "Standard reports"], cta: "Start free", accent: false },
     { name: "Business", who: "Growing operations with staff and stores.", has: ["Multiple branches and warehouses", "Payroll, HR and approvals", "Bank reconciliation", "Full report pack and exports"], cta: "Start free", accent: true },
+    { name: "Payroll only", who: "Pay staff properly without buying the whole system.", has: ["Employees, grades and pay components", "Gross-to-net runs, review and approval", "Payslips and payment batches", "PAYE, NAPSA and NHIMA returns"], cta: "Start with Payroll", accent: false },
     { name: "Industry", who: "Hotels, restaurants, schools and mining.", has: ["Everything in Business", "Industry workspace of your choice", "Compliance and licence register", "Smart Invoice queue setup"], cta: "Talk to us", accent: false },
   ];
   return (
@@ -127,7 +131,7 @@ function Pricing() {
           title="Pay for the shape of your business"
           lede="Pricing scales with companies, users and the modules you switch on. Tell us your setup and we will quote it in kwacha — no per-feature surprises."
         />
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {tiers.map((t) => (
             <div key={t.name} className={`relative rounded-2xl border p-6 ${t.accent ? "border-sifo-mint/35 bg-sifo-mint/6" : "border-sifo-line/70 bg-sifo-ink-2"}`}>
               {t.accent ? <span className="absolute -top-2.5 left-6 rounded-full bg-sifo-green px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Most chosen</span> : null}
@@ -140,6 +144,11 @@ function Pricing() {
                   </li>
                 ))}
               </ul>
+              {t.name === "Payroll only" ? (
+                <div className="mt-4 rounded-lg border border-sifo-line/70 bg-sifo-ink px-3 py-2 text-[12px] leading-5 text-sifo-haze">
+                  Upgrade to full SifoBooks at any time — payroll history carries over.
+                </div>
+              ) : null}
               {t.cta === "Talk to us"
                 ? <a href="#contact" className="sifo-btn sifo-btn-ghost mt-6 w-full">{t.cta}</a>
                 : <Link to="/auth" search={{ tab: "signup" }} className={`sifo-btn mt-6 w-full ${t.accent ? "sifo-btn-primary" : "sifo-btn-ghost"}`}>{t.cta}</Link>}

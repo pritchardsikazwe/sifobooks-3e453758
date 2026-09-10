@@ -6,10 +6,10 @@ import { DemoBanner } from "@/components/demo/DemoShell";
 export const Route = createFileRoute("/demo/")({
   head: () => ({
     meta: [
-      { title: "SifoBooks Industry Demos — Hotel, School & Restaurant" },
-      { name: "description", content: "Explore fully navigable SifoBooks demos for hotels, schools and restaurants. Sample data only, no sign-up needed." },
-      { property: "og:title", content: "SifoBooks Industry Demos — Hotel, School & Restaurant" },
-      { property: "og:description", content: "Explore fully navigable SifoBooks demos for hotels, schools and restaurants. Sample data only, no sign-up needed." },
+      { title: "SifoBooks Demos — Hotel, School, Restaurant & Payroll" },
+      { name: "description", content: "Explore fully navigable SifoBooks demos for hotels, schools, restaurants and payroll. Sample data only, no sign-up needed." },
+      { property: "og:title", content: "SifoBooks Demos — Hotel, School, Restaurant & Payroll" },
+      { property: "og:description", content: "Explore fully navigable SifoBooks demos for hotels, schools, restaurants and payroll. Sample data only, no sign-up needed." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -25,7 +25,7 @@ function DemoIndex() {
         <Link to="/" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
           ← Back to SifoBooks
         </Link>
-        <h1 className="mt-4 text-4xl font-black tracking-tight">Explore SifoBooks by industry</h1>
+        <h1 className="mt-4 text-4xl font-black tracking-tight">Explore SifoBooks by product</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Three complete sample businesses you can click through right now. No sign-up, no card, and none of the figures
           belong to a real business.

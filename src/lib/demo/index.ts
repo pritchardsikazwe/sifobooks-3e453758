@@ -2,10 +2,11 @@ import type { DemoIndustry } from "./types";
 import { hotelDemo } from "./hotel";
 import { schoolDemo } from "./school";
 import { restaurantDemo } from "./restaurant";
+import { payrollDemo } from "./payroll";
 
 export * from "./types";
 
-export const demoIndustries: DemoIndustry[] = [hotelDemo, schoolDemo, restaurantDemo];
+export const demoIndustries: DemoIndustry[] = [hotelDemo, schoolDemo, restaurantDemo, payrollDemo];
 
 export function getDemoIndustry(slug: string): DemoIndustry | undefined {
   return demoIndustries.find((industry) => industry.slug === slug);
