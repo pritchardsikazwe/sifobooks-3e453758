@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BalanceChip } from "@/components/accounting/JournalImpact";
 
-import { BookText, CheckCircle2, XCircle, Undo2 } from "lucide-react";
+import { BookText, CheckCircle2, XCircle, Undo2, Eye } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";
 import { fmtMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { reverseJournalEntry } from "@/lib/reversal";
+import { journalSource, numberToMinor, minorToNumber } from "@/lib/journal";
 import { toast } from "sonner";
 import { AttachmentCell } from "@/components/AttachmentCell";
 
@@ -15,9 +16,16 @@ const STATUS_COLOR: Record<string, string> = {
   void: "bg-red-100 text-red-700",
 };
 
+const diffMinor = (r: any) => numberToMinor(r.total_debit ?? 0) - numberToMinor(r.total_credit ?? 0);
+
 export const Route = createFileRoute("/_authenticated/journal-entries")({
   head: () => ({ meta: [{ title: "Journal Entries — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: () => (
+  component: JournalEntriesList,
+});
+
+function JournalEntriesList() {
+  const navigate = useNavigate();
+  return (
     <SimpleCrud
       module="accounting"
       description="Manual double-entry journals"
@@ -28,6 +36,8 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
       searchKeys={["entry_number", "reference", "description"]}
       statusField="status"
       dateField="entry_date"
+      onNew={() => navigate({ to: "/journal-entry/new" })}
+      onOpenRow={r => navigate({ to: "/journal-entry/$id", params: { id: r.id } })}
       columns={[
         { key: "entry_number", header: "Entry #", render: r => (
           <Link to="/journal-entry/$id" params={{ id: r.id }} className="font-mono text-xs font-medium text-primary hover:underline">
@@ -37,21 +47,35 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
         { key: "entry_date", header: "Date" },
         { key: "reference", header: "Reference" },
         { key: "description", header: "Description" },
+        { key: "source", header: "Source", render: r => (
+          <span className="text-xs text-muted-foreground">{journalSource(r.reference)}</span>
+        ) },
         { key: "status", header: "Status", render: r => <Badge className={STATUS_COLOR[r.status] ?? ""} variant="secondary">{r.status}</Badge> },
-        { key: "total_debit", header: "Debit", render: r => <span className="tabular-nums">{fmtMoney(r.total_debit ?? 0)}</span> },
-        { key: "total_credit", header: "Credit", render: r => <span className="tabular-nums">{fmtMoney(r.total_credit ?? 0)}</span> },
-        { key: "balance_check", header: "Balance", render: r => {
-          const d = Number(r.total_debit ?? 0), c = Number(r.total_credit ?? 0);
-          const ok = Math.abs(d - c) < 0.005 && d > 0;
-          return <BalanceChip balanced={ok} diff={d - c} />;
+        { key: "total_debit", header: "Debit", align: "right", render: r => <span className="tabular-nums">{fmtMoney(r.total_debit ?? 0)}</span> },
+        { key: "total_credit", header: "Credit", align: "right", render: r => <span className="tabular-nums">{fmtMoney(r.total_credit ?? 0)}</span> },
+        { key: "difference", header: "Difference", align: "right", render: r => {
+          const d = diffMinor(r);
+          return (
+            <span className={d === 0 ? "tabular-nums text-muted-foreground" : "tabular-nums font-semibold text-destructive"}>
+              {fmtMoney(Math.abs(minorToNumber(d)))}
+            </span>
+          );
         } },
-        { key: "attachment_url", header: "Source Doc", render: r => <AttachmentCell table="journal_entries" row={r} /> },
+        { key: "balance_check", header: "Balance", defaultHidden: true, render: r => {
+          const d = diffMinor(r);
+          return <BalanceChip balanced={d === 0 && numberToMinor(r.total_debit ?? 0) > 0} diff={minorToNumber(d)} />;
+        } },
+        { key: "attachment_url", header: "Source Doc", defaultHidden: true, render: r => <AttachmentCell table="journal_entries" row={r} /> },
       ]}
       rowActions={[
         {
+          label: "Open", icon: Eye, variant: "ghost",
+          run: r => { navigate({ to: "/journal-entry/$id", params: { id: r.id } }); },
+        },
+        {
           label: "Post", icon: CheckCircle2, variant: "outline",
           className: "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
-          show: r => r.status === "draft",
+          show: r => r.status === "draft" && diffMinor(r) === 0 && numberToMinor(r.total_debit ?? 0) > 0,
           run: async (r, reload) => { if (await updateStatus("journal_entries", r.id, "posted")) reload(); },
         },
         {
@@ -83,5 +107,5 @@ export const Route = createFileRoute("/_authenticated/journal-entries")({
         { name: "description", label: "Description", type: "textarea", group: "Supporting Information" },
       ]}
     />
-  ),
-});
+  );
+}
