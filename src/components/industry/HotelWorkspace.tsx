@@ -87,6 +87,19 @@ export function HotelWorkspace({ screen }: { screen: string }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
+  const [hotelOnly, setHotelOnly] = useState(false);
+  const { roles, access } = usePermissions();
+  const hotelRole = useMemo(
+    () => hotelRoleFor([...(roles ?? []), (access as any)?.role_key ?? "", (access as any)?.is_owner ? "owner" : ""].filter(Boolean)),
+    [roles, access],
+  );
+
+  useEffect(() => {
+    let off = false;
+    getWorkspaceMode().then(({ mode }) => { if (!off) setHotelOnly(isHotelOnly(mode)); }).catch(() => {});
+    return () => { off = true; };
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false;
