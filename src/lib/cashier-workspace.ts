@@ -35,14 +35,21 @@ export async function loadAssignment(): Promise<CashierAssignment | null> {
   const user = auth.user;
   if (!user) return null;
 
-  const { data: perm } = await supabase
-    .from("employee_pos_permissions")
-    .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
-    .eq("worker_user_id", user.id)
-    .eq("is_active", true)
-    .maybeSingle();
+  // A worker may hold till rows in several companies; pick the one for the
+  // tenant they are signed in to work for instead of an arbitrary single row.
+  const [{ data: perms }, access] = await Promise.all([
+    supabase
+      .from("employee_pos_permissions")
+      .select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled")
+      .eq("worker_user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }),
+    loadAccess().catch(() => null),
+  ]);
 
-  const p = perm as Record<string, any> | null;
+  const rows = (perms ?? []) as Record<string, any>[];
+  const tenant = access && !access.is_owner ? access.tenant_id : null;
+  const p = (tenant ? rows.find((r) => r.user_id === tenant) : null) ?? rows[0] ?? null;
   const tenantId = (p?.user_id as string) ?? user.id;
 
   let branchName: string | null = null;
