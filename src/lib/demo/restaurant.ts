@@ -163,7 +163,7 @@ export const restaurantDemo: DemoIndustry = {
         },
         {
           kind: "grid",
-          title: "Main dining room",
+          title: "Main dining — table list",
           cells: [
             { label: "T1", sub: "2 seats · Free", tone: "good" },
             { label: "T2", sub: "4 seats · Occupied · K 1,240", tone: "info" },
@@ -177,7 +177,7 @@ export const restaurantDemo: DemoIndustry = {
         },
         {
           kind: "grid",
-          title: "Terrace & bar",
+          title: "Terrace & bar — table list",
           cells: [
             { label: "TR1", sub: "4 seats · Occupied", tone: "info" },
             { label: "TR2", sub: "4 seats · Free", tone: "good" },
