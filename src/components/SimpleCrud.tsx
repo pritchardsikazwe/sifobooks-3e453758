@@ -58,6 +58,8 @@ export type Column = {
   render?: (row: any) => React.ReactNode;
   className?: string;
   align?: "left" | "right" | "center";
+  /** Hidden by default; users can re-enable it from the column picker. */
+  defaultHidden?: boolean;
 };
 
 export type RowAction = {
