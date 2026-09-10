@@ -31,6 +31,22 @@ export async function postPayrollRunLedger(opts: {
   periodLabel: string;
   lines: PayrollJournalLine[];
 }) {
+  // Payroll-only companies have no general ledger switched on. Never fake a
+  // posting — tell the caller to enable Accounting first.
+  const { data: prof } = await supabase
+    .from("profiles").select("active_company_id").eq("id", opts.userId).maybeSingle();
+  const companyId = (prof?.active_company_id as string | null) ?? null;
+  if (companyId) {
+    const { data: comp } = await supabase
+      .from("companies").select("workspace_mode").eq("id", companyId).maybeSingle();
+    if ((comp as any)?.workspace_mode === "payroll_only") {
+      return {
+        ok: false as const,
+        error: "Accounting is not switched on for this company, so payroll cannot post to the general ledger. Enable Accounting in Modules first — payroll figures and payslips are unaffected.",
+      };
+    }
+  }
+
   const ref = payrollRunReference(opts.runNumber);
   const existing = await findPayrollJournal(opts.userId, opts.runNumber);
   if (existing) return { ok: true as const, alreadyPosted: true, entryId: existing };

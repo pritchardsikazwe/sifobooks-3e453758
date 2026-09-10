@@ -6,7 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting";
+export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only";
 
 export const WORKSPACE_MODES: {
   id: WorkspaceMode;
@@ -30,6 +30,13 @@ export const WORKSPACE_MODES: {
     emoji: "🍽️",
   },
   {
+    id: "payroll_only",
+    label: "Payroll only",
+    description: "SifoPayroll on its own — employees, payslips and statutory returns.",
+    landing: "/payroll-dashboard",
+    emoji: "🧾",
+  },
+  {
     id: "accounting",
     label: "Accounting",
     description: "Full accounting ERP with ledgers, reporting and compliance.",
@@ -46,7 +53,7 @@ export const WORKSPACE_MODES: {
 ];
 
 export function getModeMeta(mode: string | null | undefined) {
-  return WORKSPACE_MODES.find((m) => m.id === mode) ?? WORKSPACE_MODES[2];
+  return WORKSPACE_MODES.find((m) => m.id === mode) ?? WORKSPACE_MODES.find((m) => m.id === "accounting")!;
 }
 
 export function landingFor(mode: string | null | undefined) {

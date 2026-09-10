@@ -354,3 +354,102 @@ export function visibleHubGroups(
     .map((g) => ({ label: g.label, items: g.items.filter((i) => installed.has(i.module) && canView(i.module)) }))
     .filter((g) => g.items.length > 0);
 }
+
+/**
+ * SifoPayroll (payroll-only) navigation.
+ *
+ * Used only when the company's workspace_mode is "payroll_only". Nothing is
+ * removed from HUBS — a payroll-only tenant that upgrades gets the full set
+ * back immediately, and every deep link keeps working meanwhile.
+ */
+export const PAYROLL_HUBS: HubDef[] = [
+  {
+    key: "payroll-home",
+    label: "Payroll",
+    iconName: "Banknote",
+    purpose: "Run this month's payroll and see what needs attention.",
+    groups: [
+      {
+        label: "This month",
+        items: [
+          { title: "Dashboard", url: "/payroll-dashboard", module: "core_home", iconName: "LayoutDashboard", primary: true, hint: "Period status, pay totals and exceptions." },
+          { title: "Run Payroll", url: "/payroll", module: "hr_payroll", iconName: "Banknote", primary: true, hint: "Calculate the pay run for the open period." },
+          { title: "Review & Approve", url: "/payroll-review", module: "hr_payroll", iconName: "CheckCheck", primary: true, hint: "Check every payslip before approval." },
+          { title: "Payments", url: "/payroll-payments", module: "hr_payroll", iconName: "Wallet2", primary: true, hint: "Prepare the bank or mobile-money payment batch." },
+          { title: "Payroll Transactions", url: "/payroll-transactions", module: "hr_payroll", iconName: "ListChecks", hint: "Once-off earnings and deductions." },
+          { title: "Payroll Tools", url: "/payroll-tools", module: "hr_payroll", iconName: "Calculator" },
+          { title: "Approvals", url: "/approvals", module: "core_home", iconName: "CheckCheck" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "payroll-people",
+    label: "People",
+    iconName: "Users",
+    purpose: "Employees, attendance, leave and timesheets that feed payroll.",
+    groups: [
+      {
+        label: "Workforce",
+        items: [
+          { title: "Employees", url: "/employees", module: "hr_payroll", iconName: "UserSquare", primary: true, hint: "The employee register with pay, bank and statutory details." },
+          { title: "Attendance", url: "/attendance", module: "hr_payroll", iconName: "CalendarCheck", primary: true },
+          { title: "Leave", url: "/leave", module: "hr_payroll", iconName: "CalendarDays", primary: true },
+          { title: "Timesheet", url: "/timesheet", module: "hr_payroll", iconName: "Clock" },
+        ],
+      },
+    ],
+  },
+  {
+    key: "payroll-statutory",
+    label: "Statutory",
+    iconName: "ShieldCheck",
+    purpose: "PAYE, NAPSA and NHIMA returns prepared from the approved run.",
+    groups: [
+      {
+        label: "Returns",
+        items: [
+          { title: "Statutory Centre", url: "/payroll-statutory", module: "hr_payroll", iconName: "ShieldCheck", primary: true, hint: "Prepare, reconcile and track PAYE, NAPSA and NHIMA returns." },
+          { title: "Statutory Rules", url: "/payroll-rules", module: "hr_payroll", iconName: "Scale", primary: true, hint: "Rates and thresholds by effective date." },
+        ],
+      },
+    ],
+  },
+  {
+    key: "payroll-reports",
+    label: "Reports",
+    iconName: "BarChart3",
+    purpose: "Payroll register, statutory schedules and payment schedules.",
+    groups: [
+      {
+        label: "Payroll reporting",
+        items: [
+          { title: "Payroll Summary", url: "/reports/payroll-summary", module: "hr_payroll", iconName: "BarChart3", primary: true },
+          { title: "Payroll Schedules", url: "/reports/payroll-schedules", module: "hr_payroll", iconName: "Banknote", primary: true },
+        ],
+      },
+    ],
+  },
+  {
+    key: "payroll-settings",
+    label: "Settings",
+    iconName: "Settings2",
+    purpose: "Payroll setup, company details and your subscription.",
+    groups: [
+      {
+        label: "Setup",
+        items: [
+          { title: "Payroll Setup", url: "/payroll-setup", module: "hr_payroll", iconName: "Settings2", primary: true, hint: "Pay components, grades and payroll defaults." },
+          { title: "Company Settings", url: "/settings", module: "core_home", iconName: "Settings", primary: true },
+          { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Switch on the rest of SifoBooks when you are ready." },
+          { title: "Subscription", url: "/subscription", module: "core_home", iconName: "Sparkles", primary: true },
+        ],
+      },
+    ],
+  },
+];
+
+/** Which hub set to present for a company's workspace mode. */
+export function hubsForMode(mode: string | null | undefined): HubDef[] {
+  return mode === "payroll_only" ? PAYROLL_HUBS : HUBS;
+}

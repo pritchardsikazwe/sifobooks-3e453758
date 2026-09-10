@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
+import { activatePayrollOnly, upgradeFromPayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   head: () => ({ meta: [{ title: "Subscription — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -54,6 +55,30 @@ function SubscriptionPage() {
     if (error) return toast.error(error.message);
     toast.success("Subscription activated");
     load();
+  };
+
+  const payrollOnly = isPayrollOnly((company as any)?.workspace_mode);
+
+  const switchPayrollOnly = async () => {
+    if (!company) return toast.error("Set up your company first");
+    setBusy("payroll_only");
+    try {
+      await activatePayrollOnly({ companyId: company.id, userId });
+      toast.success("Payroll-only workspace activated");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch to Payroll only"); }
+    setBusy(null);
+  };
+
+  const switchFullSuite = async () => {
+    if (!company) return;
+    setBusy("full_suite");
+    try {
+      await upgradeFromPayrollOnly({ companyId: company.id });
+      toast.success("Full SifoBooks switched on");
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Could not switch on the full suite"); }
+    setBusy(null);
   };
 
   if (loading) return <div className="p-8 flex items-center gap-2 text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading plans…</div>;
@@ -110,6 +135,35 @@ function SubscriptionPage() {
               </div>
             );
           })}
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-2xl">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Product</div>
+              <div className="text-lg font-semibold">SifoPayroll — Payroll only</div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Employees, pay runs, payslips, payment batches and PAYE, NAPSA and NHIMA returns, without accounting,
+                POS or inventory. Payroll journals only post to the general ledger once Accounting is switched on —
+                nothing is posted in the meantime. Your payroll history is kept either way.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">Pricing for Payroll only is quoted per company and user — talk to us for a quote.</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {payrollOnly ? (
+                <>
+                  <span className="text-xs font-semibold text-emerald-700">Currently on Payroll only</span>
+                  <Button variant="outline" onClick={switchFullSuite} disabled={busy === "full_suite"}>
+                    {busy === "full_suite" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Switching…</> : "Upgrade to full SifoBooks"}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={switchPayrollOnly} disabled={busy === "payroll_only"}>
+                  {busy === "payroll_only" ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Switching…</> : "Use Payroll only"}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="text-xs text-muted-foreground text-center pt-2">

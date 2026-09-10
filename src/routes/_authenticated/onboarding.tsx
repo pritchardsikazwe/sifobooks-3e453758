@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { INDUSTRY_SOLUTIONS, getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
 import { WORKSPACE_MODES, landingFor, type WorkspaceMode } from "@/lib/workspace";
+import { activatePayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -70,9 +71,11 @@ function OnboardingPage() {
     (step === 1 && form.currency) ||
     step === 2;
 
+  const payrollOnly = isPayrollOnly(mode);
+
   const submit = async () => {
     setError(null);
-    const parsed = schema.safeParse(form);
+    const parsed = schema.safeParse(payrollOnly ? { ...form, industry: form.industry || "payroll" } : form);
     if (!parsed.success) return setError(parsed.error.issues[0].message);
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
@@ -95,8 +98,13 @@ function OnboardingPage() {
     try {
       const { data: c } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
       if (c?.[0]?.id) {
-        if (sol) await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
-        await supabase.from("companies").update({ workspace_mode: mode }).eq("id", c[0].id);
+        if (payrollOnly) {
+          // Payroll-only: never seed a chart of accounts or industry modules.
+          await activatePayrollOnly({ companyId: c[0].id, userId: u.user.id });
+        } else {
+          if (sol) await applyIndustrySolution({ userId: u.user.id, companyId: c[0].id, solutionId: sol.id });
+          await supabase.from("companies").update({ workspace_mode: mode }).eq("id", c[0].id);
+        }
       }
       landing = landingFor(mode);
     } catch { /* workspace defaults to the dashboard */ }
@@ -169,6 +177,13 @@ function OnboardingPage() {
                     <SelectContent>{TEAM_SIZES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                {payrollOnly ? (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-semibold text-foreground">SifoPayroll only.</span> We will set up employees, pay
+                    components, periods and statutory returns. Accounting, POS and inventory stay switched off — you can
+                    turn them on later from Modules without losing any payroll history.
+                  </div>
+                ) : (
                 <div className="space-y-2">
                   <Label>What type of business do you operate?</Label>
                   <p className="text-xs text-muted-foreground">SifoBooks configures your workspace from this — you never have to install modules one by one.</p>
@@ -197,6 +212,7 @@ function OnboardingPage() {
                     })}
                   </div>
                 </div>
+                )}
               </>
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -207,7 +223,7 @@ function OnboardingPage() {
               {step < steps.length - 1 ? (
                 <Button onClick={() => setStep(s => s + 1)} disabled={!canNext}>Next <ArrowRight className="h-4 w-4" /></Button>
               ) : (
-                <Button onClick={submit} disabled={loading || !form.team_size || !form.industry}>
+                <Button onClick={submit} disabled={loading || !form.team_size || (!payrollOnly && !form.industry)}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Finish setup
                 </Button>
               )}

@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/sifobooks-logo.png";
-import { HUBS, visibleHubGroups } from "@/lib/nav-hubs";
+import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
 
 
 import { useInstalledModules } from "@/hooks/useInstalledModules";
@@ -69,6 +69,7 @@ export function AppSidebar() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("Account");
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
+  const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
 
@@ -91,10 +92,12 @@ export function AppSidebar() {
         cid = (cm?.[0]?.company_id as string | undefined) ?? null;
       }
       if (cid) {
-        const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency").eq("id", cid).maybeSingle();
+        const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
         if (c) {
           setCompanyName(c.trading_name || c.name);
-          setSubtitle(`${c.base_currency || "ZMW"} · Accounting ERP`);
+          const mode = (c as any).workspace_mode as string | null;
+          setWorkspaceModeState(mode);
+          setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : "Accounting ERP"}`);
         }
       }
     })();
@@ -126,7 +129,7 @@ export function AppSidebar() {
     }
     // Owners/admins: compact workflow hubs. Every other route stays reachable
     // inside the hub workspace, the command palette and its own deep link.
-    for (const hub of HUBS) {
+    for (const hub of hubsForMode(workspaceMode)) {
       const visible = visibleHubGroups(hub, installed, canView);
       const all = visible.flatMap(g => g.items).filter(i => !(i as any).superAdminOnly || isSuperAdmin);
       if (all.length === 0) continue;
@@ -140,7 +143,7 @@ export function AppSidebar() {
       groups.push({ label: hub.label, items });
     }
     return groups;
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode]);
 
 
   const isOpen = (label: string) => {
