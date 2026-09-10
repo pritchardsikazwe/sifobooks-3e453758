@@ -2466,6 +2466,146 @@ export type Database = {
           },
         ]
       }
+      document_branding: {
+        Row: {
+          accent_color: string
+          address: string | null
+          bank_details: Json
+          city: string | null
+          company_id: string | null
+          country: string | null
+          created_at: string
+          currency: string
+          default_notes: string | null
+          document_prefixes: Json
+          email: string | null
+          font_family: string
+          footer_note: string | null
+          header_note: string | null
+          id: string
+          legal_name: string | null
+          locale: string
+          logo_url: string | null
+          payment_instructions: string | null
+          payment_methods: Json
+          phone: string | null
+          primary_color: string
+          registration_number: string | null
+          secondary_color: string
+          secondary_logo_url: string | null
+          show_provider_credit: boolean
+          signatory_name: string | null
+          signatory_title: string | null
+          signature_url: string | null
+          social_links: Json
+          stamp_url: string | null
+          tagline: string | null
+          templates: Json
+          terms_library: Json
+          theme: string
+          tpin: string | null
+          trading_name: string | null
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          accent_color?: string
+          address?: string | null
+          bank_details?: Json
+          city?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          default_notes?: string | null
+          document_prefixes?: Json
+          email?: string | null
+          font_family?: string
+          footer_note?: string | null
+          header_note?: string | null
+          id?: string
+          legal_name?: string | null
+          locale?: string
+          logo_url?: string | null
+          payment_instructions?: string | null
+          payment_methods?: Json
+          phone?: string | null
+          primary_color?: string
+          registration_number?: string | null
+          secondary_color?: string
+          secondary_logo_url?: string | null
+          show_provider_credit?: boolean
+          signatory_name?: string | null
+          signatory_title?: string | null
+          signature_url?: string | null
+          social_links?: Json
+          stamp_url?: string | null
+          tagline?: string | null
+          templates?: Json
+          terms_library?: Json
+          theme?: string
+          tpin?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          accent_color?: string
+          address?: string | null
+          bank_details?: Json
+          city?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          default_notes?: string | null
+          document_prefixes?: Json
+          email?: string | null
+          font_family?: string
+          footer_note?: string | null
+          header_note?: string | null
+          id?: string
+          legal_name?: string | null
+          locale?: string
+          logo_url?: string | null
+          payment_instructions?: string | null
+          payment_methods?: Json
+          phone?: string | null
+          primary_color?: string
+          registration_number?: string | null
+          secondary_color?: string
+          secondary_logo_url?: string | null
+          show_provider_credit?: boolean
+          signatory_name?: string | null
+          signatory_title?: string | null
+          signature_url?: string | null
+          social_links?: Json
+          stamp_url?: string | null
+          tagline?: string | null
+          templates?: Json
+          terms_library?: Json
+          theme?: string
+          tpin?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_branding_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donation_receipts: {
         Row: {
           amount: number

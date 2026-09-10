@@ -99,6 +99,7 @@ import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedExpenseRulesRouteImport } from './routes/_authenticated/expense-rules'
 import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authenticated/employees'
 import { Route as AuthenticatedDonorsRouteImport } from './routes/_authenticated/donors'
+import { Route as AuthenticatedDocumentsBrandingRouteImport } from './routes/_authenticated/documents-branding'
 import { Route as AuthenticatedDevicesTerminalsRouteImport } from './routes/_authenticated/devices-terminals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
@@ -759,6 +760,12 @@ const AuthenticatedDonorsRoute = AuthenticatedDonorsRouteImport.update({
   path: '/donors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDocumentsBrandingRoute =
+  AuthenticatedDocumentsBrandingRouteImport.update({
+    id: '/documents-branding',
+    path: '/documents-branding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDevicesTerminalsRoute =
   AuthenticatedDevicesTerminalsRouteImport.update({
     id: '/devices-terminals',
@@ -1771,6 +1778,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
+  '/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
@@ -2031,6 +2039,7 @@ export interface FileRoutesByTo {
   '/csat': typeof AuthenticatedCsatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
+  '/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/donors': typeof AuthenticatedDonorsRoute
   '/employees': typeof AuthenticatedEmployeesRoute
   '/expense-rules': typeof AuthenticatedExpenseRulesRoute
@@ -2290,6 +2299,7 @@ export interface FileRoutesById {
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
+  '/_authenticated/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/_authenticated/donors': typeof AuthenticatedDonorsRoute
   '/_authenticated/employees': typeof AuthenticatedEmployeesRoute
   '/_authenticated/expense-rules': typeof AuthenticatedExpenseRulesRoute
@@ -2553,6 +2563,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/dashboard'
     | '/devices-terminals'
+    | '/documents-branding'
     | '/donors'
     | '/employees'
     | '/expense-rules'
@@ -2813,6 +2824,7 @@ export interface FileRouteTypes {
     | '/csat'
     | '/dashboard'
     | '/devices-terminals'
+    | '/documents-branding'
     | '/donors'
     | '/employees'
     | '/expense-rules'
@@ -3071,6 +3083,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
     | '/_authenticated/devices-terminals'
+    | '/_authenticated/documents-branding'
     | '/_authenticated/donors'
     | '/_authenticated/employees'
     | '/_authenticated/expense-rules'
@@ -3954,6 +3967,13 @@ declare module '@tanstack/react-router' {
       path: '/donors'
       fullPath: '/donors'
       preLoaderRoute: typeof AuthenticatedDonorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents-branding': {
+      id: '/_authenticated/documents-branding'
+      path: '/documents-branding'
+      fullPath: '/documents-branding'
+      preLoaderRoute: typeof AuthenticatedDocumentsBrandingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/devices-terminals': {
@@ -5513,6 +5533,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDevicesTerminalsRoute: typeof AuthenticatedDevicesTerminalsRoute
+  AuthenticatedDocumentsBrandingRoute: typeof AuthenticatedDocumentsBrandingRoute
   AuthenticatedDonorsRoute: typeof AuthenticatedDonorsRoute
   AuthenticatedEmployeesRoute: typeof AuthenticatedEmployeesRoute
   AuthenticatedExpenseRulesRoute: typeof AuthenticatedExpenseRulesRoute
@@ -5640,6 +5661,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDevicesTerminalsRoute: AuthenticatedDevicesTerminalsRoute,
+  AuthenticatedDocumentsBrandingRoute: AuthenticatedDocumentsBrandingRoute,
   AuthenticatedDonorsRoute: AuthenticatedDonorsRoute,
   AuthenticatedEmployeesRoute: AuthenticatedEmployeesRoute,
   AuthenticatedExpenseRulesRoute: AuthenticatedExpenseRulesRoute,
