@@ -127,7 +127,10 @@ export const ROUTE_RULES: Rule[] = [
   { prefix: "/industry", any: ["settings.manage"] },
   { prefix: "/subscription", any: ["settings.manage"] },
   { prefix: "/onboarding", any: ["settings.manage"] },
-  { prefix: "/launch", any: ["settings.manage"] },
+  // Context resolution is open to every signed-in user — the resolver itself
+  // only ever offers companies/products the user is authorised for.
+  { prefix: "/launch", open: true },
+  { prefix: "/workspace", open: true },
   { prefix: "/system-health", any: ["settings.manage"] },
   { prefix: "/audit-logs", any: ["settings.manage", "accounting.view"] },
   { prefix: "/approvals", any: ["accounting.view", "pos.sales.view_all"] },

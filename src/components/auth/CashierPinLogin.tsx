@@ -59,7 +59,9 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
         return setError("Could not start your session. Ask your manager.");
       }
       rememberCashier({ email: email.trim().toLowerCase(), name: res.full_name || email });
-      navigate({ to: "/w" });
+      // Let the central resolver decide the workspace (company + product +
+      // role + assigned till) — a PIN sign-in is not a product choice.
+      navigate({ to: "/launch" });
     } catch (e) {
       setBusy(false);
       setPin("");

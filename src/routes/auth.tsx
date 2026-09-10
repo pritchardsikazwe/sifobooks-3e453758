@@ -75,13 +75,9 @@ function AuthPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
     if (next) { window.location.href = next; return; }
-    const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", userData.user.id).maybeSingle();
-    if (!profile?.onboarded) {
-      navigate({ to: "/onboarding" });
-      return;
-    }
-    const access = await loadAccess(true);
-    navigate({ to: landingFor(access) });
+    // One universal entry point: /launch resolves company + product + role +
+    // operational context before deciding where to go.
+    navigate({ to: "/launch" });
   };
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
