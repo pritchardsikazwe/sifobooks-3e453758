@@ -1,0 +1,451 @@
+import type { DemoIndustry } from "./types";
+
+/** SAMPLE DATA ONLY — see src/lib/demo/types.ts for the safety contract. */
+export const schoolDemo: DemoIndustry = {
+  slug: "school",
+  name: "School",
+  product: "SifoSchool",
+  tagline: "Admissions, academics, attendance, fees and school finance in one record.",
+  description:
+    "Follow a learner from admission to report card: classes and subjects, daily attendance, exam results, fee bills, receipts and the arrears that finance chases.",
+  highlights: ["640 sample learners", "Fees, receipts & arrears", "Exams and report cards", "Parent portal view"],
+  sections: [
+    {
+      slug: "dashboard",
+      name: "Dashboard",
+      group: "Overview",
+      blurb: "Enrolment, attendance and fee collection at a glance.",
+      kpis: [
+        { label: "Learners enrolled", value: "640" },
+        { label: "Attendance today", value: "94.2%", tone: "good" },
+        { label: "Fees billed (term)", value: "K 3,840,000" },
+        { label: "Collected", value: "K 2,914,600", tone: "good" },
+        { label: "Outstanding", value: "K 925,400", tone: "warn" },
+        { label: "Teaching staff", value: "38" },
+      ],
+      blocks: [
+        {
+          kind: "table",
+          title: "Enrolment by section",
+          columns: ["Section", "Classes", "Learners", "Capacity", "Utilisation", "Status"],
+          numericColumns: [1, 2, 3],
+          statusColumn: 5,
+          rows: [
+            ["Lower primary", 6, 186, 210, "89%", "Open"],
+            ["Upper primary", 6, 198, 210, "94%", "Open"],
+            ["Junior secondary", 6, 152, 180, "84%", "Open"],
+            ["Senior secondary", 4, 104, 120, "87%", "Open"],
+          ],
+        },
+        {
+          kind: "notes",
+          title: "This week",
+          lines: [
+            "Term 3 mid-term exams begin Monday — timetables published to teachers.",
+            "42 learners have fee balances older than 60 days; reminder letters drafted.",
+            "Two new admissions accepted into Grade 8 Blue.",
+          ],
+        },
+      ],
+    },
+    {
+      slug: "students",
+      name: "Students",
+      group: "People",
+      blurb: "The learner register with class, guardian and fee position.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Learner register",
+          columns: ["Student no", "Name", "Class", "Guardian", "Fee balance", "Status"],
+          numericColumns: [4],
+          statusColumn: 5,
+          rows: [
+            ["STU-0412", "Chanda Mwansa", "Grade 8 Blue", "Mrs A. Mwansa", "K 0", "Active"],
+            ["STU-0418", "Natasha Banda", "Grade 8 Blue", "Mr K. Banda", "K 1,800", "Active"],
+            ["STU-0501", "Joseph Phiri", "Grade 10 Gold", "Mrs L. Phiri", "K 4,200", "Arrears"],
+            ["STU-0523", "Mercy Sakala", "Grade 6 Green", "Mr T. Sakala", "K 0", "Active"],
+            ["STU-0540", "Brian Zulu", "Grade 4 Red", "Mrs D. Zulu", "K 950", "Active"],
+            ["STU-0566", "Grace Tembo", "Grade 12 Gold", "Mr R. Tembo", "K 0", "Scholarship"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "guardians",
+      name: "Guardians & parents",
+      group: "People",
+      blurb: "Contact records, linked learners and communication preferences.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Guardian directory",
+          columns: ["Guardian", "Relationship", "Phone", "Learners", "Balance", "Contact preference"],
+          numericColumns: [3, 4],
+          rows: [
+            ["Mrs A. Mwansa", "Mother", "+260 97 000 1001", 2, "K 0", "SMS"],
+            ["Mr K. Banda", "Father", "+260 96 000 1002", 1, "K 1,800", "WhatsApp"],
+            ["Mrs L. Phiri", "Mother", "+260 95 000 1003", 3, "K 4,200", "Email"],
+            ["Mr T. Sakala", "Father", "+260 97 000 1004", 1, "K 0", "SMS"],
+            ["Mrs D. Zulu", "Guardian", "+260 96 000 1005", 2, "K 950", "SMS"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "admissions",
+      name: "Admissions",
+      group: "People",
+      blurb: "Applications from enquiry to enrolled place.",
+      kpis: [
+        { label: "Applications (term)", value: "84" },
+        { label: "Offers made", value: "61" },
+        { label: "Accepted", value: "47", tone: "good" },
+        { label: "Waiting list", value: "13", tone: "warn" },
+      ],
+      blocks: [
+        {
+          kind: "board",
+          title: "Admissions pipeline",
+          columns: [
+            { label: "Enquiry", cards: [{ title: "9 enquiries", meta: "Grades 1, 5 and 8" }] },
+            { label: "Assessed", tone: "info", cards: [{ title: "14 assessed", meta: "Entry test completed" }] },
+            { label: "Offer made", tone: "warn", cards: [{ title: "8 offers", meta: "Awaiting acceptance by Friday" }] },
+            { label: "Enrolled", tone: "good", cards: [{ title: "47 enrolled", meta: "Placed and billed for Term 3" }] },
+          ],
+        },
+      ],
+    },
+    {
+      slug: "classes",
+      name: "Classes, grades & streams",
+      group: "Academics",
+      blurb: "Class structure with the teacher assigned to each stream.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Class list",
+          columns: ["Class", "Stream", "Class teacher", "Learners", "Room", "Status"],
+          numericColumns: [3],
+          statusColumn: 5,
+          rows: [
+            ["Grade 4", "Red", "Mrs C. Mumba", 32, "B12", "Active"],
+            ["Grade 6", "Green", "Mr S. Kabwe", 34, "B18", "Active"],
+            ["Grade 8", "Blue", "Mrs P. Ngoma", 31, "C04", "Active"],
+            ["Grade 10", "Gold", "Mr E. Chishimba", 28, "C11", "Active"],
+            ["Grade 12", "Gold", "Mrs F. Musonda", 24, "C15", "Exam class"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "subjects",
+      name: "Subjects",
+      group: "Academics",
+      blurb: "Subject catalogue with periods and teaching allocation.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Subject catalogue",
+          columns: ["Subject", "Level", "Periods/week", "Teachers", "Assessment", "Status"],
+          numericColumns: [2, 3],
+          statusColumn: 5,
+          rows: [
+            ["Mathematics", "All grades", 6, 5, "Exam + coursework", "Active"],
+            ["English Language", "All grades", 6, 5, "Exam + coursework", "Active"],
+            ["Integrated Science", "Grades 5–9", 5, 3, "Exam + practical", "Active"],
+            ["Biology", "Grades 10–12", 4, 2, "Exam + practical", "Active"],
+            ["Civic Education", "Grades 8–12", 3, 2, "Exam", "Active"],
+            ["Computer Studies", "Grades 6–12", 3, 2, "Project + exam", "Active"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "teachers",
+      name: "Teachers",
+      group: "People",
+      blurb: "Teaching staff, subject load and class responsibility.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Teaching staff",
+          columns: ["Teacher", "Subjects", "Classes", "Periods/week", "Class teacher of", "Status"],
+          numericColumns: [2, 3],
+          statusColumn: 5,
+          rows: [
+            ["Mrs C. Mumba", "Mathematics, Science", 4, 24, "Grade 4 Red", "Active"],
+            ["Mr S. Kabwe", "English, Civic Education", 5, 26, "Grade 6 Green", "Active"],
+            ["Mrs P. Ngoma", "Biology, Science", 4, 22, "Grade 8 Blue", "Active"],
+            ["Mr E. Chishimba", "Mathematics, Physics", 4, 25, "Grade 10 Gold", "Active"],
+            ["Mrs F. Musonda", "English, Literature", 3, 20, "Grade 12 Gold", "Active"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "terms",
+      name: "Academic terms",
+      group: "Academics",
+      blurb: "The academic calendar that drives billing and reporting periods.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Academic year 2026",
+          columns: ["Term", "Opens", "Closes", "Teaching weeks", "Fee due date", "Status"],
+          numericColumns: [3],
+          statusColumn: 5,
+          rows: [
+            ["Term 1", "13 Jan", "10 Apr", 13, "31 Jan", "Closed"],
+            ["Term 2", "05 May", "07 Aug", 14, "23 May", "Closed"],
+            ["Term 3", "08 Sep", "04 Dec", 13, "26 Sep", "Current"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "attendance",
+      name: "Attendance",
+      group: "Academics",
+      blurb: "Daily class registers and absence follow-up.",
+      kpis: [
+        { label: "Present today", value: "603" },
+        { label: "Absent", value: "31", tone: "warn" },
+        { label: "Late", value: "6" },
+        { label: "Attendance rate", value: "94.2%", tone: "good" },
+      ],
+      blocks: [
+        {
+          kind: "table",
+          title: "Register by class (today)",
+          columns: ["Class", "Roll", "Present", "Absent", "Late", "Status"],
+          numericColumns: [1, 2, 3, 4],
+          statusColumn: 5,
+          rows: [
+            ["Grade 4 Red", 32, 31, 1, 0, "Submitted"],
+            ["Grade 6 Green", 34, 32, 2, 0, "Submitted"],
+            ["Grade 8 Blue", 31, 28, 2, 1, "Submitted"],
+            ["Grade 10 Gold", 28, 26, 1, 1, "Submitted"],
+            ["Grade 12 Gold", 24, 22, 2, 0, "Pending"],
+          ],
+        },
+        {
+          kind: "notes",
+          title: "Absence follow-up",
+          lines: [
+            "Joseph Phiri (Grade 10 Gold) absent 4 days this month — guardian call logged.",
+            "Two Grade 12 learners on approved study leave.",
+          ],
+        },
+      ],
+    },
+    {
+      slug: "exams",
+      name: "Exams & results",
+      group: "Academics",
+      blurb: "Assessment schedule, marks capture and grade distribution.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Term 3 mid-term results — Grade 10 Gold",
+          columns: ["Subject", "Entered", "Average", "Highest", "Lowest", "Status"],
+          numericColumns: [1, 2, 3, 4],
+          statusColumn: 5,
+          rows: [
+            ["Mathematics", 28, 62, 94, 31, "Published"],
+            ["English Language", 28, 68, 91, 42, "Published"],
+            ["Biology", 28, 71, 96, 45, "Published"],
+            ["Physics", 26, 58, 88, 28, "Marks pending"],
+            ["Civic Education", 28, 74, 95, 51, "Published"],
+          ],
+        },
+        {
+          kind: "grid",
+          title: "Grade distribution — whole school",
+          cells: [
+            { label: "Distinction", sub: "84 learners", tone: "good" },
+            { label: "Merit", sub: "162 learners", tone: "good" },
+            { label: "Credit", sub: "228 learners", tone: "info" },
+            { label: "Pass", sub: "121 learners" },
+            { label: "Below pass", sub: "45 learners", tone: "warn" },
+          ],
+        },
+      ],
+    },
+    {
+      slug: "fees",
+      name: "Fees & invoicing",
+      group: "Finance",
+      blurb: "Fee structures per class and the bills raised against them.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Fee structure — Term 3",
+          columns: ["Fee item", "Applies to", "Amount", "Mandatory", "Billed", "Status"],
+          numericColumns: [2, 4],
+          statusColumn: 5,
+          rows: [
+            ["Tuition — Primary", "Grades 1–7", "K 4,800", "Yes", "384", "Active"],
+            ["Tuition — Secondary", "Grades 8–12", "K 7,200", "Yes", "256", "Active"],
+            ["Boarding", "Boarders", "K 6,500", "No", "112", "Active"],
+            ["Transport", "Opt-in", "K 1,400", "No", "168", "Active"],
+            ["Exam levy", "Grades 9 & 12", "K 900", "Yes", "96", "Active"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "receipts",
+      name: "Receipts & payments",
+      group: "Finance",
+      blurb: "Money received, allocated against the learner's fee bill.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Recent receipts",
+          columns: ["Receipt", "Date", "Learner", "Method", "Amount", "Status"],
+          numericColumns: [4],
+          statusColumn: 5,
+          rows: [
+            ["RCT-3391", "10 Sep", "Chanda Mwansa", "Bank transfer", "K 7,200", "Allocated"],
+            ["RCT-3392", "10 Sep", "Mercy Sakala", "Mobile money", "K 4,800", "Allocated"],
+            ["RCT-3393", "11 Sep", "Brian Zulu", "Cash", "K 3,850", "Part payment"],
+            ["RCT-3394", "11 Sep", "Natasha Banda", "Mobile money", "K 5,400", "Part payment"],
+            ["RCT-3395", "12 Sep", "Grace Tembo", "Scholarship credit", "K 8,100", "Allocated"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "arrears",
+      name: "Outstanding fees & aging",
+      group: "Finance",
+      blurb: "Who owes what, and for how long.",
+      kpis: [
+        { label: "Total outstanding", value: "K 925,400", tone: "warn" },
+        { label: "Current", value: "K 512,300" },
+        { label: "31–60 days", value: "K 248,600", tone: "warn" },
+        { label: "60+ days", value: "K 164,500", tone: "bad" },
+      ],
+      blocks: [
+        {
+          kind: "table",
+          title: "Aging by class",
+          columns: ["Class", "Learners in arrears", "Current", "31–60 days", "60+ days", "Total"],
+          numericColumns: [1, 2, 3, 4, 5],
+          rows: [
+            ["Grade 4 Red", 5, "K 18,400", "K 6,200", "K 2,800", "K 27,400"],
+            ["Grade 6 Green", 7, "K 24,900", "K 11,300", "K 5,600", "K 41,800"],
+            ["Grade 8 Blue", 9, "K 61,200", "K 32,800", "K 18,900", "K 112,900"],
+            ["Grade 10 Gold", 12, "K 88,400", "K 54,100", "K 41,200", "K 183,700"],
+            ["Grade 12 Gold", 9, "K 72,600", "K 38,700", "K 33,400", "K 144,700"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "expenses",
+      name: "Expenses & purchases",
+      group: "Finance",
+      blurb: "School running costs, suppliers and requisitions.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Supplier bills",
+          columns: ["Bill", "Supplier", "Category", "Date", "Amount", "Status"],
+          numericColumns: [4],
+          statusColumn: 5,
+          rows: [
+            ["BILL-778", "Lusaka Book Centre", "Teaching materials", "04 Sep", "K 62,400", "Paid"],
+            ["BILL-779", "Kitchen Fresh Ltd", "Catering", "06 Sep", "K 148,200", "Approved"],
+            ["BILL-780", "ZESCO", "Utilities", "08 Sep", "K 74,900", "Paid"],
+            ["BILL-781", "SafeRide Transport", "Bus maintenance", "10 Sep", "K 31,600", "Pending"],
+            ["BILL-782", "CleanCare", "Cleaning supplies", "11 Sep", "K 12,800", "Pending"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "payroll",
+      name: "Payroll",
+      group: "Finance",
+      blurb: "Staff pay run summary feeding the same payroll and accounting engine.",
+      blocks: [
+        {
+          kind: "table",
+          title: "September pay run (summary)",
+          columns: ["Group", "Staff", "Gross", "PAYE", "NAPSA", "Net"],
+          numericColumns: [1, 2, 3, 4, 5],
+          rows: [
+            ["Teaching staff", 38, "K 612,000", "K 118,400", "K 30,600", "K 463,000"],
+            ["Support staff", 22, "K 184,800", "K 21,300", "K 9,240", "K 154,260"],
+            ["Administration", 9, "K 142,500", "K 26,800", "K 7,125", "K 108,575"],
+          ],
+        },
+        {
+          kind: "panel",
+          title: "Run status",
+          items: [
+            { label: "Stage", value: "Approved — awaiting payment", tone: "warn" },
+            { label: "Approvals", value: "Head teacher + bursar" },
+            { label: "Accounting", value: "Journal previewed, not posted (demo)", tone: "info" },
+          ],
+        },
+      ],
+    },
+    {
+      slug: "reports",
+      name: "School reports",
+      group: "Analysis",
+      blurb: "Academic and financial reporting pack.",
+      blocks: [
+        {
+          kind: "table",
+          title: "Report pack",
+          columns: ["Report", "Question it answers", "Period", "Status"],
+          statusColumn: 3,
+          rows: [
+            ["Fee collection summary", "How much of the term's billing have we collected?", "Termly", "Ready"],
+            ["Arrears aging", "Which families need follow-up and how urgently?", "Monthly", "Ready"],
+            ["Attendance analysis", "Which classes and learners are slipping?", "Weekly", "Ready"],
+            ["Exam performance", "How is each subject and stream performing?", "Termly", "Ready"],
+            ["Income & expenditure", "Is the school operating within budget?", "Monthly", "Ready"],
+            ["Enrolment trend", "Are we growing, and where?", "Termly", "Ready"],
+          ],
+        },
+      ],
+    },
+    {
+      slug: "portal",
+      name: "Parent & student portal",
+      group: "Portals",
+      blurb: "What a guardian sees when they sign in.",
+      blocks: [
+        {
+          kind: "panel",
+          title: "Guardian view — Mrs L. Phiri",
+          items: [
+            { label: "Learners", value: "Joseph Phiri (Grade 10 Gold) + 2 others" },
+            { label: "Fee balance", value: "K 4,200 outstanding", tone: "warn" },
+            { label: "Next due date", value: "26 September" },
+            { label: "Attendance this term", value: "91% — 4 absences", tone: "warn" },
+            { label: "Latest results", value: "Mid-term published" },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Joseph's mid-term report card",
+          columns: ["Subject", "Mark", "Grade", "Class average", "Teacher comment"],
+          numericColumns: [1, 3],
+          rows: [
+            ["Mathematics", 58, "Credit", 62, "Needs practice with algebra."],
+            ["English Language", 74, "Merit", 68, "Strong written work."],
+            ["Biology", 81, "Distinction", 71, "Excellent practical results."],
+            ["Physics", 52, "Pass", 58, "Attend remedial sessions."],
+            ["Civic Education", 77, "Merit", 74, "Confident and well prepared."],
+          ],
+        },
+      ],
+    },
+  ],
+};
