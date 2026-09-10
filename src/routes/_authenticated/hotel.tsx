@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SifoSectorDashboard } from "@/components/sifo/SifoSectorDashboard";
+import { HotelWorkspace } from "@/components/industry/HotelWorkspace";
 
 export const Route = createFileRoute("/_authenticated/hotel")({
-  component: () => <SifoSectorDashboard kind="hotel" />,
+  component: () => <HotelWorkspace screen="/hotel" />,
 });

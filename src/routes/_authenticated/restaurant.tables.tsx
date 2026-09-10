@@ -1,15 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { TABLE_STATUSES, statusTone, toneClass, uid } from "@/lib/restaurant";
+import { StatGrid } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Search, Trash2, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/tables")({
   head: () => ({
@@ -27,12 +30,23 @@ export const Route = createFileRoute("/_authenticated/restaurant/tables")({
 
 const db: any = supabase;
 
+const LEGEND: { status: string; label: string }[] = [
+  { status: "available", label: "Available" },
+  { status: "occupied", label: "Occupied" },
+  { status: "reserved", label: "Reserved" },
+  { status: "payment pending", label: "Awaiting payment" },
+  { status: "dirty", label: "Needs clearing" },
+];
+
 function Tables() {
   const [tables, setTables] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", area: "Main", seats: 4, shape: "square" });
   const [area, setArea] = useState("All");
+  const [q, setQ] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [selected, setSelected] = useState<any | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -55,6 +69,7 @@ function Tables() {
     if (error) return toast.error(error.message);
     toast.success(`Table ${form.name} added`);
     setForm({ ...form, name: "" });
+    setAddOpen(false);
     load();
   };
 
@@ -65,6 +80,7 @@ function Tables() {
     const { error } = await db.from("restaurant_tables").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     setTables((l) => l.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    setSelected((s: any) => (s && s.id === id ? { ...s, ...patch } : s));
     toast.success(`Table marked ${status}`);
   };
 
@@ -72,40 +88,76 @@ function Tables() {
     const { error } = await db.from("restaurant_tables").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setTables((l) => l.filter((t) => t.id !== id));
+    setSelected(null);
     toast.success("Table removed");
   };
 
   const areas = ["All", ...Array.from(new Set(tables.map((t) => t.area)))];
-  const shown = tables.filter((t) => area === "All" || t.area === area);
+  const shown = tables.filter(
+    (t) => (area === "All" || t.area === area) && `${t.name} ${t.area}`.toLowerCase().includes(q.toLowerCase()),
+  );
   const orderFor = (t: any) => orders.find((o) => o.table_id === t.id);
+
+  const counts = useMemo(() => {
+    const by = (s: string) => tables.filter((t) => (t.status || "").toLowerCase() === s).length;
+    return { occupied: by("occupied"), reserved: by("reserved"), free: by("available") };
+  }, [tables]);
+  const openValue = orders.reduce((s, o) => s + Number(o.total || 0), 0);
+
+  const byArea = useMemo(() => {
+    const m = new Map<string, any[]>();
+    shown.forEach((t) => m.set(t.area ?? "Floor", [...(m.get(t.area ?? "Floor") ?? []), t]));
+    return Array.from(m.entries());
+  }, [shown]);
+
+  const selectedOrder = selected ? orderFor(selected) : null;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
-          <h1 className="text-2xl font-semibold tracking-tight">Floor plan</h1>
-          <p className="text-sm text-muted-foreground">{tables.length} tables · {tables.filter((t) => t.status === "occupied").length} occupied</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Floor &amp; tables</h1>
+          <p className="text-sm text-muted-foreground">Tap an existing table to open it — adding tables is a setup action.</p>
         </div>
-        <Button variant="outline" onClick={load}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
+        <div className="flex items-center gap-2 rounded-xl border px-3 py-1.5">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a table…" className="w-36 bg-transparent text-sm outline-none" />
+        </div>
+        <Button variant="outline" onClick={load}><RefreshCw className="mr-1 h-4 w-4" /> Refresh</Button>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button variant="secondary"><Plus className="mr-1 h-4 w-4" /> Add table</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Add a table to the floor plan</DialogTitle></DialogHeader>
+            <div className="grid gap-3">
+              <Input placeholder="Table name (e.g. T12)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input placeholder="Area" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+              <Input type="number" placeholder="Seats" value={form.seats} onChange={(e) => setForm({ ...form, seats: Number(e.target.value) })} />
+              <Select value={form.shape} onValueChange={(v) => setForm({ ...form, shape: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{["square", "round", "booth", "bar"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button onClick={add}>Add table</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Card className="p-4 rounded-2xl grid gap-2 md:grid-cols-5">
-        <Input placeholder="Table name (e.g. T12)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <Input placeholder="Area" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
-        <Input type="number" placeholder="Seats" value={form.seats} onChange={(e) => setForm({ ...form, seats: Number(e.target.value) })} />
-        <Select value={form.shape} onValueChange={(v) => setForm({ ...form, shape: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {["square", "round", "booth", "bar"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button onClick={add}><Plus className="h-4 w-4 mr-1" /> Add table</Button>
-      </Card>
+      <StatGrid items={[
+        { label: "Tables", value: String(tables.length) },
+        { label: "Occupied", value: String(counts.occupied) },
+        { label: "Reserved", value: String(counts.reserved) },
+        { label: "Open check value", value: fmtMoney(openValue), hint: `${orders.length} open checks` },
+      ]} />
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         {areas.map((a) => (
           <button key={a} onClick={() => setArea(a)}
-            className={cn("rounded-xl px-3 py-1.5 text-sm border", area === a ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+            className={cn("rounded-xl border px-3 py-1.5 text-sm", area === a ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
             {a}
           </button>
         ))}
@@ -113,43 +165,101 @@ function Tables() {
 
       {loading ? <p className="text-sm text-muted-foreground">Loading floor plan…</p> :
         shown.length === 0 ? (
-          <Card className="p-10 rounded-2xl text-center text-sm text-muted-foreground">
-            No tables yet — add your first table above.
+          <Card className="rounded-2xl p-10 text-center text-sm text-muted-foreground">
+            No tables match. Existing tables appear here once they are set up.
           </Card>
         ) : (
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-6">
-            {shown.map((t) => {
-              const o = orderFor(t);
-              const mins = t.occupied_since ? Math.round((Date.now() - new Date(t.occupied_since).getTime()) / 60000) : null;
-              return (
-                <Card key={t.id} className={cn(
-                  "p-3 rounded-2xl border-2 transition-all hover:shadow-md",
-                  toneClass[statusTone(t.status)],
-                  t.shape === "round" && "rounded-full aspect-square flex flex-col justify-center",
-                )}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">{t.name}</span>
-                    <span className="text-[11px] uppercase">{t.status}</span>
-                  </div>
-                  <div className="text-xs mt-1 opacity-80">{t.seats} seats · {t.area}</div>
-                  {o && <div className="text-xs mt-1 font-medium">{o.order_no} · {fmtMoney(Number(o.total))}</div>}
-                  {mins !== null && <div className="text-xs opacity-80">{mins} min</div>}
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <Select value={t.status} onValueChange={(v) => setStatus(t.id, v)}>
-                      <SelectTrigger className="h-7 text-xs bg-background/70"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {TABLE_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(t.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+          <div className="space-y-5">
+            {byArea.map(([areaName, list]) => (
+              <div key={areaName}>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{areaName}</div>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+                  {list.map((t: any) => {
+                    const o = orderFor(t);
+                    const mins = t.occupied_since ? Math.round((Date.now() - new Date(t.occupied_since).getTime()) / 60000) : null;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setSelected(t)}
+                        className={cn(
+                          "rounded-2xl border-2 p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+                          toneClass[statusTone(t.status)],
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold">{t.name}</span>
+                          <span className="text-[10px] font-semibold uppercase">{t.status}</span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-1 text-xs opacity-80">
+                          <Users className="h-3 w-3" /> {t.seats} seats
+                        </div>
+                        {o ? <div className="mt-2 text-sm font-semibold tabular-nums">{fmtMoney(Number(o.total))}</div> : null}
+                        {o ? <div className="text-[11px] opacity-80">{o.order_no}</div> : null}
+                        {mins !== null ? <div className="text-[11px] opacity-80">{mins} min</div> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
+      <div className="flex flex-wrap gap-2">
+        {LEGEND.map((l) => (
+          <span key={l.status} className={cn("rounded-full border px-3 py-1 text-xs font-medium", toneClass[statusTone(l.status)])}>{l.label}</span>
+        ))}
+      </div>
+
+      <Sheet open={!!selected} onOpenChange={(v) => !v && setSelected(null)}>
+        <SheetContent className="w-full sm:max-w-md">
+          {selected ? (
+            <>
+              <SheetHeader>
+                <SheetTitle>Table {selected.name}</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border p-3"><div className="text-xs text-muted-foreground">Area</div><div className="font-medium">{selected.area ?? "—"}</div></div>
+                  <div className="rounded-xl border p-3"><div className="text-xs text-muted-foreground">Seats</div><div className="font-medium">{selected.seats}</div></div>
+                  <div className="rounded-xl border p-3"><div className="text-xs text-muted-foreground">Shape</div><div className="font-medium">{selected.shape ?? "—"}</div></div>
+                  <div className="rounded-xl border p-3"><div className="text-xs text-muted-foreground">Server</div><div className="font-medium">{selected.server_name ?? "—"}</div></div>
+                </div>
+
+                {selectedOrder ? (
+                  <div className="rounded-xl border p-3">
+                    <div className="text-xs text-muted-foreground">Open check</div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="font-medium">{selectedOrder.order_no}</span>
+                      <span className="font-semibold tabular-nums">{fmtMoney(Number(selectedOrder.total))}</span>
+                    </div>
+                    <Link to="/restaurant/orders" className="mt-2 inline-flex text-sm text-primary hover:underline">Open the check</Link>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border p-3 text-muted-foreground">No open check on this table.</div>
+                )}
+
+                <div>
+                  <div className="mb-1 text-xs text-muted-foreground">Table status</div>
+                  <Select value={selected.status} onValueChange={(v) => setStatus(selected.id, v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{TABLE_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Link to="/restaurant/pos" className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Take an order</Link>
+                  <Link to="/restaurant/reservations" className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted">Reservations</Link>
+                  <Button variant="ghost" className="ml-auto text-destructive" onClick={() => remove(selected.id)}>
+                    <Trash2 className="mr-1 h-4 w-4" /> Remove table
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
