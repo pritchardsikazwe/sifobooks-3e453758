@@ -282,10 +282,32 @@ function RetailPos() {
   }, [register, settings]);
 
   const finishSale = async (payments: SalePayment[], change: number) => {
-    const res = await completeSale(
-      { lines, totals, customer, customerName: customer?.name ?? settings.default_customer, priceLevel, saleDiscountPct, shiftId: shift?.id ?? null, registerId: register?.id ?? null },
-      payments, change,
-    );
+    // A sale can only post against an open shift, so say so up front and take
+    // the cashier straight to the shift screen instead of failing at payment.
+    if (!shift) {
+      toast.error("No open shift. Open your shift before selling.");
+      setPayOpen(false);
+      setShiftOpen(true);
+      return;
+    }
+    let res: Awaited<ReturnType<typeof completeSale>>;
+    try {
+      res = await completeSale(
+        {
+          lines, totals, customer, customerName: customer?.name ?? settings.default_customer,
+          priceLevel, saleDiscountPct, shiftId: shift.id, registerId: register?.id ?? null,
+          // Use the company's own VAT configuration — assuming 16% inclusive
+          // rejects every sale for a till configured any other way.
+          taxRate: settings.tax_rate, taxInclusive: settings.tax_inclusive,
+          allowNegativeStock: settings.allow_negative_stock,
+        },
+        payments, change,
+      );
+    } catch (e: any) {
+      // Never fail silently: the payment dialog stays open so the cashier can retry.
+      toast.error(posErrorMessage(e?.message ?? ""));
+      return;
+    }
     const snapshot = { saleNo: res.sale_no, saleId: (res as any).id as string | undefined, lines, totals, payments, change };
     setPayOpen(false);
     setReceipt({ sale_no: res.sale_no, total: totals.total, offline: res.offline, snapshot });
