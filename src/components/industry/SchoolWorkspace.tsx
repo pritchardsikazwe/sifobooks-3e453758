@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, ReceiptText,
   Users, Wallet, WalletCards,
+  ShieldCheck,
 } from "lucide-react";
 
 const db: any = supabase;
@@ -25,6 +26,7 @@ export const SCHOOL_NAV: NavItem[] = [
   { label: "Payments", to: "/school/payments", icon: Wallet },
   { label: "Staff", to: "/school/staff", icon: Users },
   { label: "Reports", to: "/school/reports", icon: BarChart3 },
+  { label: "Compliance", to: "/school/compliance", icon: ShieldCheck },
   { label: "Attendance", to: "/school/attendance", icon: CalendarCheck, supported: false },
   { label: "Exams", to: "/school/exams", icon: BookOpen, supported: false },
 ];
