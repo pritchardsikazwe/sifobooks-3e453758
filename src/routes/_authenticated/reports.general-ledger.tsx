@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { resolvePeriod } from "@/lib/reports/format";
 import { loadGeneralLedger } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
@@ -23,11 +24,9 @@ export const Route = createFileRoute("/_authenticated/reports/general-ledger")({
 
 function GeneralLedgerPage() {
   const search = Route.useSearch();
-  const initialRange = resolvePeriod(search.from && search.to ? "custom" : "ytd", {
-    from: search.from ?? "",
-    to: search.to ?? "",
-  });
-  const [filters, setFilters] = useState<ReportFilters>({ range: initialRange, periodKey: "ytd" });
+  const [range, setRange] = useState<Range>(() =>
+    resolveRange(search.from && search.to ? "custom" : "ytd", { from: search.from ?? "", to: search.to ?? "" }),
+  );
   const [accountId, setAccountId] = useState<string>(search.account ?? "all");
   const [accounts, setAccounts] = useState<{ id: string; account_code: string; account_name: string }[]>([]);
 
@@ -41,9 +40,9 @@ function GeneralLedgerPage() {
     })();
   }, []);
 
-  const { from, to } = filters.range;
+  const { from, to } = range;
   const account = accountId === "all" ? undefined : accountId;
-  const { result, loading, error } = useReport(loadGeneralLedger, { from, to, accountId: account }, [from, to, account]);
+  const { result, loading, error, refresh } = useReport(loadGeneralLedger, { from, to, accountId: account }, [from, to, account]);
 
   const accountLabel = accounts.find((a) => a.id === account);
 
@@ -57,10 +56,12 @@ function GeneralLedgerPage() {
       error={error}
       result={result}
       filters={
-        <ReportFilterBar
-          initial={{ periodKey: "ytd", from, to }}
-          onApply={setFilters}
-          extraFilters={
+        <ReportPeriodBar
+          range={range}
+          onRange={setRange}
+          onRefresh={refresh}
+          refreshing={loading}
+          customize={
             <div className="min-w-[16rem]">
               <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Account</Label>
               <Select value={accountId} onValueChange={setAccountId}>
@@ -76,7 +77,9 @@ function GeneralLedgerPage() {
               </Select>
             </div>
           }
-        />
+        >
+          <SaveViewButton defaultName={`General Ledger — ${range.label}`} />
+        </ReportPeriodBar>
       }
     />
   );

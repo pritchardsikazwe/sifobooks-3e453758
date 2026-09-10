@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
-import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
-import { resolvePeriod } from "@/lib/reports/format";
+import { ReportPeriodBar } from "@/components/reports/ReportPeriodBar";
+import { SaveViewButton } from "@/components/reports/SaveViewButton";
+import { resolveRange, type Range } from "@/lib/reports/periods";
 import { loadSalesByCustomer } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
@@ -12,9 +13,9 @@ export const Route = createFileRoute("/_authenticated/reports/sales-by-customer"
 });
 
 function SalesByCustomerPage() {
-  const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
-  const { from, to } = filters.range;
-  const { result, loading, error } = useReport(loadSalesByCustomer, { from, to }, [from, to]);
+  const [range, setRange] = useState<Range>(() => resolveRange("this-month"));
+  const { from, to } = range;
+  const { result, loading, error, refresh } = useReport(loadSalesByCustomer, { from, to }, [from, to]);
 
   return (
     <SifoReportViewer
@@ -25,7 +26,11 @@ function SalesByCustomerPage() {
       loading={loading}
       error={error}
       result={result}
-      filters={<ReportFilterBar initial={{ periodKey: "this-month" }} onApply={setFilters} />}
+      filters={
+        <ReportPeriodBar range={range} onRange={setRange} onRefresh={refresh} refreshing={loading}>
+          <SaveViewButton defaultName={`Sales by Customer — ${range.label}`} />
+        </ReportPeriodBar>
+      }
     />
   );
 }
