@@ -3,25 +3,25 @@ import { useState } from "react";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
 import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
 import { resolvePeriod } from "@/lib/reports/format";
-import { loadApAging } from "@/lib/reports/engine";
+import { loadVatReport } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
-export const Route = createFileRoute("/_authenticated/reports/aged-payables")({
-  head: () => ({ meta: [{ title: "Aged Payables — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: AgedPayablesPage,
+export const Route = createFileRoute("/_authenticated/reports/vat")({
+  head: () => ({ meta: [{ title: "VAT / Tax Report — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: VatReportPage,
 });
 
-function AgedPayablesPage() {
+function VatReportPage() {
   const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
-  const asAt = filters.range.to;
-  const { result, loading, error } = useReport(loadApAging, { to: asAt }, [asAt]);
+  const { from, to } = filters.range;
+  const { result, loading, error } = useReport(loadVatReport, { from, to }, [from, to]);
 
   return (
     <SifoReportViewer
-      reportId="ap-aging"
-      title="AP Aging"
-      subtitle={`Outstanding supplier bills as at ${asAt}`}
-      filename={`ap-aging-${asAt}`}
+      reportId="vat"
+      title="VAT / Tax"
+      subtitle={`Output VAT, input VAT and net position, cross-checked to posted journals · ${from} → ${to}`}
+      filename={`vat-${from}-to-${to}`}
       loading={loading}
       error={error}
       result={result}

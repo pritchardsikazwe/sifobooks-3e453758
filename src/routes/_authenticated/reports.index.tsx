@@ -68,7 +68,9 @@ const REPORTS: Report[] = [
   { id: "accountant-pack", name: "Accountant Pack", description: "Consolidated year-end pack for review.", to: "/reports/accountant-pack", icon: FileBarChart, category: "financial" },
 
   // Sales
-  { id: "sales-by-customer", name: "Sales by Customer", description: "Revenue grouped by customer with totals.", to: "/reports/sales-by-customer", icon: Users2, category: "sales" },
+  { id: "sales-by-customer", name: "Sales by Customer", description: "Completed POS sales grouped by customer.", to: "/reports/sales-by-customer", icon: Users2, category: "sales" },
+  { id: "sales-by-item", name: "Sales by Item", description: "Quantity, net sales, VAT, gross and COGS per item.", to: "/reports/sales-by-item", icon: Package, category: "sales" },
+  { id: "sales-by-branch", name: "Sales by Branch", description: "Completed POS sales by branch or selling location.", to: "/reports/sales-by-branch", icon: Building2, category: "sales" },
   { id: "customer-statement", name: "Customer Statements", description: "Invoices, receipts and running balances.", to: "/reports/customer-statement", icon: Receipt, category: "customers" },
   { id: "aged-receivables", name: "Aged Receivables", description: "Outstanding invoices bucketed by age.", to: "/reports/aged-receivables", icon: Wallet, category: "customers" },
   { id: "invoices", name: "Invoices Register", description: "All invoices with status and balance.", to: "/invoices", icon: Receipt, category: "sales" },
@@ -87,8 +89,9 @@ const REPORTS: Report[] = [
   { id: "bank-accounts", name: "Bank Accounts", description: "All bank accounts, opening and current balances.", to: "/bank-accounts", icon: Landmark, category: "banking" },
 
   // Inventory
-  { id: "inventory-valuation", name: "Stock Valuation", description: "On-hand quantity × cost, per item.", to: "/reports/inventory-valuation", icon: Package, category: "inventory" },
-  { id: "stock", name: "Stock Movement", description: "Stock in/out movements over time.", to: "/stock", icon: Package, category: "inventory" },
+  { id: "inventory-valuation", name: "Stock Valuation", description: "On-hand quantity × recorded cost, per item and location.", to: "/reports/inventory-valuation", icon: Package, category: "inventory" },
+  { id: "stock-movement", name: "Stock Movement", description: "Opening, in, out, adjustments and closing by item and location.", to: "/reports/stock-movement", icon: Package, category: "inventory" },
+  { id: "stock-reconciliation", name: "Stock Reconciliation", description: "Expected stock from movement history vs actual balances, with variances.", to: "/reports/stock-reconciliation", icon: Package, category: "inventory" },
 
   // Expenses
   { id: "expenses", name: "Expense Register", description: "All expenses with category and supplier.", to: "/expenses", icon: Receipt, category: "expenses" },

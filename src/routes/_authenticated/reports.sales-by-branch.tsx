@@ -3,25 +3,25 @@ import { useState } from "react";
 import { SifoReportViewer } from "@/components/reports/SifoReportViewer";
 import { ReportFilterBar, type ReportFilters } from "@/components/reports/ReportFilterBar";
 import { resolvePeriod } from "@/lib/reports/format";
-import { loadApAging } from "@/lib/reports/engine";
+import { loadSalesByBranch } from "@/lib/reports/engine";
 import { useReport } from "@/lib/reports/use-report";
 
-export const Route = createFileRoute("/_authenticated/reports/aged-payables")({
-  head: () => ({ meta: [{ title: "Aged Payables — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: AgedPayablesPage,
+export const Route = createFileRoute("/_authenticated/reports/sales-by-branch")({
+  head: () => ({ meta: [{ title: "Sales by Branch — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: SalesByBranchPage,
 });
 
-function AgedPayablesPage() {
+function SalesByBranchPage() {
   const [filters, setFilters] = useState<ReportFilters>({ range: resolvePeriod("this-month"), periodKey: "this-month" });
-  const asAt = filters.range.to;
-  const { result, loading, error } = useReport(loadApAging, { to: asAt }, [asAt]);
+  const { from, to } = filters.range;
+  const { result, loading, error } = useReport(loadSalesByBranch, { from, to }, [from, to]);
 
   return (
     <SifoReportViewer
-      reportId="ap-aging"
-      title="AP Aging"
-      subtitle={`Outstanding supplier bills as at ${asAt}`}
-      filename={`ap-aging-${asAt}`}
+      reportId="sales-by-branch"
+      title="Sales by Branch"
+      subtitle={`Completed POS sales grouped by branch or selling location · ${from} → ${to}`}
+      filename={`sales-by-branch-${from}-to-${to}`}
       loading={loading}
       error={error}
       result={result}
