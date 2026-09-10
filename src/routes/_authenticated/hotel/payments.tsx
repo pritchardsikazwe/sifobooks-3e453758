@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SifoSectorWorkflow } from "@/components/sifo/SifoSectorWorkflow";
-export const Route = createFileRoute("/_authenticated/hotel/payments")({ component: RouteComponent });
-function RouteComponent(){ return <SifoSectorWorkflow kind="hotel" screen="/hotel/payments"/>; }
+import { HotelWorkspace } from "@/components/industry/HotelWorkspace";
+
+export const Route = createFileRoute("/_authenticated/hotel/payments")({
+  component: () => <HotelWorkspace screen="/hotel/payments" />,
+});

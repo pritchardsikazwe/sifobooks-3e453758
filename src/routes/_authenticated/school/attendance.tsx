@@ -1,3 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SifoSectorConnectedWorkspace } from "@/components/sifo/SifoSectorConnectedWorkspace";
-export const Route = createFileRoute("/_authenticated/school/attendance")({ component: () => <SifoSectorConnectedWorkspace kind="school" screen="/school/attendance" /> });
+import { SchoolWorkspace } from "@/components/industry/SchoolWorkspace";
+
+export const Route = createFileRoute("/_authenticated/school/attendance")({
+  component: () => <SchoolWorkspace screen="/school/attendance" />,
+});
