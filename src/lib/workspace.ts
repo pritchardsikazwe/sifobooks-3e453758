@@ -30,6 +30,13 @@ export const WORKSPACE_MODES: {
     emoji: "🍽️",
   },
   {
+    id: "hotel_only",
+    label: "Hotel only",
+    description: "SifoHotel on its own — reservations, front desk, housekeeping and folios.",
+    landing: "/hotel",
+    emoji: "🏨",
+  },
+  {
     id: "payroll_only",
     label: "Payroll only",
     description: "SifoPayroll on its own — employees, payslips and statutory returns.",
