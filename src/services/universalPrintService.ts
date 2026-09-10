@@ -78,6 +78,23 @@ export interface KitchenOrder {
   notes?: string;
 }
 
+/**
+ * Stable fingerprint of a kitchen/bar ticket's contents.
+ *
+ * Ticket job ids must stay deduplicated for a genuine duplicate fire (double
+ * tap, retry) but MUST change when a recalled check gains items — otherwise
+ * dispatch() short-circuits on the already-printed job and the kitchen never
+ * sees the additions.
+ */
+export function ticketRevision(order: KitchenOrder): string {
+  const body = order.items
+    .map((i) => `${i.quantity}x${i.name}|${(i.modifiers ?? []).join(",")}|${i.notes ?? ""}`)
+    .join(";") + `#${order.notes ?? ""}`;
+  let hash = 5381;
+  for (let i = 0; i < body.length; i += 1) hash = ((hash * 33) ^ body.charCodeAt(i)) >>> 0;
+  return hash.toString(36);
+}
+
 export interface PrintJob {
   id: string;
   type: PrintJobType;
@@ -396,7 +413,7 @@ export async function printKitchenOrder(order: KitchenOrder, printer?: string) {
   return dispatch(
     "kitchen",
     { kitchenOrder: order },
-    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}` },
+    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}:${ticketRevision(order)}` },
   );
 }
 
@@ -404,7 +421,7 @@ export async function printBarOrder(order: KitchenOrder, printer?: string) {
   return dispatch(
     "bar",
     { kitchenOrder: order },
-    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}` },
+    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}:${ticketRevision(order)}` },
   );
 }
 

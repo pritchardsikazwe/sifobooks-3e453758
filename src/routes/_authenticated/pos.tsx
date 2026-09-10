@@ -20,6 +20,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ManagerAuthDialog, type OverrideAction } from "@/components/pos/ManagerAuthDialog";
 import {
   DEFAULT_SETTINGS, PRICE_LEVELS, closeShift, completeSale, computeTotals, currentShift,
+  posErrorMessage,
   ensureRegister, holdSale, listHeldSales, listRecentSales, loadCustomers, loadFavorites,
   loadProducts, loadSettings, openShift, priceFactor, recallSale, refundSale, round2,
   saveSettings, shiftSummary, toggleFavorite, todayMetrics, voidSale,
@@ -282,10 +283,32 @@ function RetailPos() {
   }, [register, settings]);
 
   const finishSale = async (payments: SalePayment[], change: number) => {
-    const res = await completeSale(
-      { lines, totals, customer, customerName: customer?.name ?? settings.default_customer, priceLevel, saleDiscountPct, shiftId: shift?.id ?? null, registerId: register?.id ?? null },
-      payments, change,
-    );
+    // A sale can only post against an open shift, so say so up front and take
+    // the cashier straight to the shift screen instead of failing at payment.
+    if (!shift) {
+      toast.error("No open shift. Open your shift before selling.");
+      setPayOpen(false);
+      setShiftOpen(true);
+      return;
+    }
+    let res: Awaited<ReturnType<typeof completeSale>>;
+    try {
+      res = await completeSale(
+        {
+          lines, totals, customer, customerName: customer?.name ?? settings.default_customer,
+          priceLevel, saleDiscountPct, shiftId: shift.id, registerId: register?.id ?? null,
+          // Use the company's own VAT configuration — assuming 16% inclusive
+          // rejects every sale for a till configured any other way.
+          taxRate: settings.tax_rate, taxInclusive: settings.tax_inclusive,
+          allowNegativeStock: settings.allow_negative_stock,
+        },
+        payments, change,
+      );
+    } catch (e: any) {
+      // Never fail silently: the payment dialog stays open so the cashier can retry.
+      toast.error(posErrorMessage(e?.message ?? ""));
+      return;
+    }
     const snapshot = { saleNo: res.sale_no, saleId: (res as any).id as string | undefined, lines, totals, payments, change };
     setPayOpen(false);
     setReceipt({ sale_no: res.sale_no, total: totals.total, offline: res.offline, snapshot });
@@ -497,7 +520,7 @@ function RetailPos() {
             });
           }} />
         <Act label="QTY" icon={LayoutGrid} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? setQtyPad({ id: selectedLine.item_id ?? "", name: selectedLine.name, price: selectedLine.price, cost: selectedLine.unit_cost, stock: 999, sku: selectedLine.sku, barcode: null, category: null, unit: null, reorder_level: 0, is_active: true }) : toast.info("Select a cart line")} />
-        {can("cash_shift.open") && <Act label="PAYOUT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />}
+        {can("cash_shift.open") && <Act label="SHIFT" icon={Wallet} className="bg-till-discount text-till-key-foreground border-transparent hover:brightness-110" onClick={() => setShiftOpen(true)} />}
         <Act label="REMOVE" icon={Trash2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => selectedLine ? removeLine(selectedLine.key) : toast.info("Select a cart line")} />
         <Act label="VOID" icon={Ban} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => { setLines([]); setSelected(null); toast.info("Sale cleared"); }} />
         <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
