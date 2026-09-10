@@ -60,7 +60,11 @@ function CashierHome() {
     })();
   }, []);
 
-  const isRestaurant = ["waiter", "kitchen"].includes(a?.posRole ?? "");
+  // The till channel comes from the staff assignment. A generic "cashier" is
+  // never assumed to be a restaurant cashier.
+  const isRestaurant = ctx?.channel
+    ? ctx.channel === "restaurant"
+    : ["waiter", "kitchen"].includes(a?.posRole ?? "");
   const expected = expectedCash(shift, totals ?? { transactions: 0, salesTotal: 0, itemsSold: 0, refunds: 0, discounts: 0, byMethod: {} });
 
   const signOut = async () => {
