@@ -1,121 +1,240 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
-import { SifoLandingPresentation } from "@/components/sifo/SifoLandingPresentation";
+import { ArrowRight, Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SifoMark, SifoWordmark, Eyebrow, SectionHead } from "@/components/landing/SifoBrand";
+import {
+  SifoFeatureGrid, SifoHero, SifoProductTabs, SifoTrust,
+} from "@/components/landing/SifoLandingShowcase";
+import { SifoIndustryRegistration } from "@/components/landing/SifoIndustryRegistration";
+
+const NAV = [
+  { label: "Platform", href: "#platform" },
+  { label: "Solutions", href: "#solutions" },
+  { label: "Industries", href: "#industries" },
+  { label: "Features", href: "#features" },
+  { label: "Compliance", href: "#compliance" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Resources", href: "#resources" },
+];
 
 export function SifoLandingHome() {
   return (
-    <main className="min-h-screen bg-[#06110c] text-white">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#06110c]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
-          <Link to="/" className="text-lg font-black tracking-tight">Sifo<span className="text-[#7dd3a5]">Books</span></Link>
-          <nav className="flex items-center gap-2 sm:gap-3">
-            <Link to="/demo" className="hidden rounded-xl px-4 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 sm:inline-flex">Demos</Link>
-            <Link to="/auth" search={{ tab: "signin" }} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10">Sign in</Link>
-            <Link to="/auth" search={{ tab: "signup" }} className="rounded-xl bg-[#0e8f4a] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-[#0e8f4a]/20 transition hover:-translate-y-0.5">Sign up</Link>
-          </nav>
+    <main className="min-h-screen overflow-x-hidden bg-sifo-ink font-sans text-white">
+      <SiteHeader />
+      <SifoHero />
+      <LogoBand />
+      <SifoProductTabs />
+      <div id="solutions"><SifoFeatureGrid /></div>
+      <SifoIndustryRegistration />
+      <div id="compliance"><SifoTrust /></div>
+      <Pricing />
+      <FinalCta />
+      <SiteFooter />
+    </main>
+  );
+}
+
+/* ── header ───────────────────────────────────────────────────── */
+
+function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="sticky top-0 z-50 border-b border-sifo-line/70 bg-sifo-ink/85 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-3 sm:px-6">
+        <Link to="/" aria-label="SifoBooks home" className="shrink-0">
+          <SifoWordmark />
+        </Link>
+
+        <nav aria-label="Main" className="ml-4 hidden flex-1 items-center gap-0.5 xl:flex">
+          {NAV.map((n) => (
+            <a key={n.label} href={n.href} className="rounded-lg px-3 py-2 text-[13px] font-semibold text-sifo-haze transition-colors hover:bg-white/5 hover:text-white">
+              {n.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Link to="/demo" className="sifo-btn sifo-btn-quiet hidden !px-3 !py-2 lg:inline-flex">Demos</Link>
+          <Link to="/auth" search={{ tab: "signin" }} className="sifo-btn sifo-btn-ghost !px-4 !py-2">Sign in</Link>
+          <Link to="/auth" search={{ tab: "signup" }} className="sifo-btn sifo-btn-primary !px-4 !py-2">Start free</Link>
+
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button aria-label="Open menu" className="sifo-btn sifo-btn-ghost !px-2.5 !py-2 xl:hidden">
+                <Menu className="h-4 w-4" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[19rem] border-sifo-line bg-sifo-ink p-0 text-white">
+              <SheetTitle className="sr-only">SifoBooks navigation</SheetTitle>
+              <div className="flex items-center justify-between border-b border-sifo-line/70 px-5 py-4">
+                <SifoWordmark />
+                <button aria-label="Close menu" onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-sifo-haze hover:bg-white/5 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <nav className="flex flex-col p-3">
+                {NAV.map((n) => (
+                  <a key={n.label} href={n.href} onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-3 text-sm font-semibold text-sifo-haze transition-colors hover:bg-white/5 hover:text-white">
+                    {n.label}
+                  </a>
+                ))}
+              </nav>
+              <div className="space-y-2 border-t border-sifo-line/70 p-4">
+                <Link to="/demo" onClick={() => setOpen(false)} className="sifo-btn sifo-btn-ghost w-full">See a demo</Link>
+                <Link to="/auth" search={{ tab: "signin" }} onClick={() => setOpen(false)} className="sifo-btn sifo-btn-ghost w-full">Sign in</Link>
+                <Link to="/auth" search={{ tab: "signup" }} onClick={() => setOpen(false)} className="sifo-btn sifo-btn-primary w-full">Start free</Link>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-      </header>
-      <section className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_20%_10%,rgba(14,143,74,.28),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(37,99,235,.14),transparent_30%)] py-24 md:py-32">
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+      </div>
+    </header>
+  );
+}
+
+/* ── capability band ──────────────────────────────────────────── */
+
+function LogoBand() {
+  const items = ["Accounting", "Point of sale", "Inventory", "Payroll & HR", "Banking", "Purchasing", "Fixed assets", "Compliance"];
+  return (
+    <div className="border-y border-sifo-line/60 bg-sifo-ink-2/70">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-7 gap-y-2 px-5 py-4 sm:px-6">
+        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-sifo-copper">In the box</span>
+        {items.map((i) => (
+          <span key={i} className="text-[12px] font-semibold text-sifo-haze/80">{i}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── pricing ──────────────────────────────────────────────────── */
+
+function Pricing() {
+  const tiers = [
+    { name: "Starter", who: "Single shop or office finding its feet.", has: ["One company, one branch", "Accounting, sales, purchases", "Point of sale and stock", "Standard reports"], cta: "Start free", accent: false },
+    { name: "Business", who: "Growing operations with staff and stores.", has: ["Multiple branches and warehouses", "Payroll, HR and approvals", "Bank reconciliation", "Full report pack and exports"], cta: "Start free", accent: true },
+    { name: "Industry", who: "Hotels, restaurants, schools and mining.", has: ["Everything in Business", "Industry workspace of your choice", "Compliance and licence register", "Smart Invoice queue setup"], cta: "Talk to us", accent: false },
+  ];
+  return (
+    <section id="pricing" className="relative border-t border-sifo-line/60 bg-sifo-ink py-16 sifo-edge md:py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6">
+        <SectionHead
+          eyebrow="Pricing"
+          align="center"
+          title="Pay for the shape of your business"
+          lede="Pricing scales with companies, users and the modules you switch on. Tell us your setup and we will quote it in kwacha — no per-feature surprises."
+        />
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {tiers.map((t) => (
+            <div key={t.name} className={`relative rounded-2xl border p-6 ${t.accent ? "border-sifo-mint/35 bg-sifo-mint/6" : "border-sifo-line/70 bg-sifo-ink-2"}`}>
+              {t.accent ? <span className="absolute -top-2.5 left-6 rounded-full bg-sifo-green px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Most chosen</span> : null}
+              <h3 className="font-display text-lg font-bold tracking-tight text-white">{t.name}</h3>
+              <p className="mt-1.5 text-[13px] leading-6 text-sifo-haze">{t.who}</p>
+              <ul className="mt-4 space-y-2">
+                {t.has.map((h) => (
+                  <li key={h} className="flex gap-2 text-[13px] font-medium text-white/85">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sifo-mint" /> {h}
+                  </li>
+                ))}
+              </ul>
+              {t.cta === "Talk to us"
+                ? <a href="#contact" className="sifo-btn sifo-btn-ghost mt-6 w-full">{t.cta}</a>
+                : <Link to="/auth" search={{ tab: "signup" }} className={`sifo-btn mt-6 w-full ${t.accent ? "sifo-btn-primary" : "sifo-btn-ghost"}`}>{t.cta}</Link>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── final CTA ────────────────────────────────────────────────── */
+
+function FinalCta() {
+  return (
+    <section id="contact" className="relative overflow-hidden border-t border-sifo-line/60 bg-sifo-ink-2 py-16 sifo-grain md:py-24">
+      <div className="pointer-events-none absolute inset-0 sifo-ledger opacity-50" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(60rem 24rem at 50% 110%, rgba(18,165,87,.2), transparent 65%)" }}
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-6">
+        <Eyebrow tone="copper">Get started</Eyebrow>
+        <h2 className="mt-5 font-display text-3xl font-bold leading-[1.05] tracking-[-0.035em] text-white md:text-5xl">
+          Put the whole business on one set of books.
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-sifo-haze">
+          Create your company, invite your team and start posting. Explore the demos first if you would rather look
+          around before signing up.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link to="/auth" search={{ tab: "signup" }} className="sifo-btn sifo-btn-primary">Start free <ArrowRight className="h-4 w-4" /></Link>
+          <Link to="/demo" className="sifo-btn sifo-btn-ghost">See a demo</Link>
+          <Link to="/auth" search={{ tab: "signin" }} className="sifo-btn sifo-btn-quiet">Sign in</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── footer ───────────────────────────────────────────────────── */
+
+function SiteFooter() {
+  const groups: { title: string; links: { label: string; href?: string; to?: string }[] }[] = [
+    { title: "Product", links: [{ label: "Platform overview", href: "#platform" }, { label: "Point of sale", href: "#platform" }, { label: "Accounting", href: "#platform" }, { label: "Inventory", href: "#platform" }, { label: "Payroll & HR", href: "#solutions" }] },
+    { title: "Industries", links: [{ label: "SifoHotel", href: "#industries" }, { label: "SifoRestaurant", href: "#industries" }, { label: "SifoSchool", href: "#industries" }, { label: "SifoMining", href: "#industries" }] },
+    { title: "Company", links: [{ label: "Pricing", href: "#pricing" }, { label: "Contact", href: "#contact" }, { label: "Demos", to: "/demo" }] },
+    { title: "Support", links: [{ label: "Sign in", to: "/auth" }, { label: "Compliance notes", href: "#compliance" }, { label: "Get in touch", href: "#contact" }] },
+  ];
+  return (
+    <footer id="resources" className="border-t border-sifo-line/70 bg-sifo-ink">
+      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-6">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#7dd3a5]/25 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[.16em] text-[#7dd3a5]"><Sparkles className="h-4 w-4" /> Business management, visually connected</div>
-            <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight md:text-7xl">One platform for the way your business actually works.</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-400 md:text-xl">Accounting, sales, purchases, inventory, banking, payroll, compliance and business operations — connected from the first transaction to the final report.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-[#0e8f4a] px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-[#0e8f4a]/20 transition hover:-translate-y-0.5">Start with SifoBooks <ArrowRight className="h-4 w-4" /></Link>
-              <a href="#whiteboard" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"><Play className="h-4 w-4" /> Explore the whiteboard</a>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-slate-500"><span>✓ Multi-company</span><span>✓ Zambia-ready compliance</span><span>✓ Role-based access</span><span>✓ Audit trail</span></div>
+            <SifoWordmark sub="Business management platform" />
+            <p className="mt-4 max-w-sm text-[13px] leading-6 text-sifo-haze">
+              One connected workspace for accounting, operations and Zambian statutory compliance — from the first sale
+              to the signed-off financial statements.
+            </p>
           </div>
-          <div className="rounded-[2rem] border border-white/10 bg-white/[.04] p-5 shadow-2xl shadow-black/30">
-            <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1f16] p-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4"><span className="text-xs font-bold uppercase tracking-widest text-slate-500">Live business map</span><span className="rounded-full bg-[#0e8f4a]/15 px-3 py-1 text-[10px] font-bold text-[#7dd3a5]">CONNECTED</span></div>
-              <div className="grid grid-cols-2 gap-3 py-5 md:grid-cols-4">{["Sales","Purchases","Inventory","Banking","Payroll","Compliance","Reports","Accounting"].map((x) => <div key={x} className="rounded-xl border border-white/10 bg-white/[.03] p-3 text-center text-xs font-bold text-slate-300">{x}</div>)}</div>
-              <div className="rounded-xl border border-dashed border-[#0e8f4a]/40 bg-[#0e8f4a]/10 p-4 text-center text-sm font-bold text-[#b7f2cd]">Every workflow feeds one controlled business record.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section id="industry-demos" className="border-b border-white/10 py-20">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[.16em] text-amber-300">Demo · sample data only</div>
-            <h2 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">Explore SifoBooks by industry</h2>
-            <p className="mt-4 text-lg text-slate-400">Click through three complete sample businesses — a hotel, a school and a restaurant. Every figure is invented for the demo, and no real business data is involved.</p>
-          </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[
-              {
-                slug: "hotel", name: "SifoHotel", cta: "Hotel demo",
-                blurb: "Reservations, front desk, housekeeping, folios and the night audit that closes the day.",
-                points: ["96-room status board", "Guest folios & room charges", "Occupancy, ADR & RevPAR"],
-                glow: "from-indigo-500/25 to-sky-500/10", chip: "bg-indigo-400/15 text-indigo-200 border-indigo-400/30",
-                stats: [["Occupancy", "78%"], ["Arrivals", "18"], ["Rooms clean", "14"]],
-                tiles: [["101", "bg-sky-400/70"], ["102", "bg-emerald-400/70"], ["103", "bg-amber-400/70"], ["104", "bg-sky-400/70"], ["105", "bg-amber-400/70"], ["106", "bg-rose-400/70"], ["107", "bg-emerald-400/70"], ["108", "bg-sky-400/70"]],
-              },
-              {
-                slug: "school", name: "SifoSchool", cta: "School demo",
-                blurb: "Admissions, classes, attendance, exams, fee billing, receipts and arrears follow-up.",
-                points: ["640 sample learners", "Fees, receipts & aging", "Exams and report cards"],
-                glow: "from-emerald-500/25 to-teal-500/10", chip: "bg-emerald-400/15 text-emerald-200 border-emerald-400/30",
-                stats: [["Learners", "640"], ["Fees collected", "82%"], ["Arrears", "K 96k"]],
-                tiles: [["7A", "bg-emerald-400/70"], ["7B", "bg-emerald-400/70"], ["8A", "bg-amber-400/70"], ["8B", "bg-emerald-400/70"], ["9A", "bg-emerald-400/70"], ["9B", "bg-rose-400/70"], ["10A", "bg-emerald-400/70"], ["10B", "bg-amber-400/70"]],
-              },
-              {
-                slug: "restaurant", name: "SifoRestaurant", cta: "Restaurant demo",
-                blurb: "Floor plan, kitchen display, split bills, recipe costing, wastage and shift cash-up.",
-                points: ["Live table & kitchen board", "Recipe cost and margin", "Cash-up with variance control"],
-                glow: "from-amber-500/25 to-orange-500/10", chip: "bg-amber-400/15 text-amber-200 border-amber-400/30",
-                stats: [["Sales today", "K 68k"], ["Open tables", "9"], ["Avg ticket", "K 320"]],
-                tiles: [["T1", "bg-sky-400/70"], ["T2", "bg-emerald-400/70"], ["T3", "bg-amber-400/70"], ["T4", "bg-sky-400/70"], ["T5", "bg-rose-400/70"], ["T6", "bg-emerald-400/70"], ["T7", "bg-sky-400/70"], ["T8", "bg-emerald-400/70"]],
-              },
-            ].map((d) => (
-              <div key={d.slug} className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[.04] transition hover:border-white/25">
-                <div className={`bg-gradient-to-br ${d.glow} p-5`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xl font-bold">{d.name}</h3>
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${d.chip}`}>Live demo</span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {d.stats.map(([label, value]) => (
-                      <div key={label} className="rounded-lg bg-black/25 px-2 py-2 text-center">
-                        <p className="text-sm font-black">{value}</p>
-                        <p className="text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 grid grid-cols-4 gap-1.5">
-                    {d.tiles.map(([label, colour]) => (
-                      <div key={label} className={`rounded-md ${colour} py-2 text-center text-[10px] font-black text-slate-900`}>{label}</div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="text-sm text-slate-400">{d.blurb}</p>
-                  <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-500">{d.points.map((p) => <li key={p}>✓ {p}</li>)}</ul>
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    <Link to="/demo/$industry" params={{ industry: d.slug }} className="inline-flex items-center gap-1.5 rounded-xl bg-[#0e8f4a] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5">{d.cta} <ArrowRight className="h-4 w-4" /></Link>
-                    <Link to="/auth" className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Start your own</Link>
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            {groups.map((g) => (
+              <div key={g.title}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sifo-copper">{g.title}</p>
+                <ul className="mt-3 space-y-2">
+                  {g.links.map((l) => (
+                    <li key={l.label}>
+                      {l.to
+                        ? <Link to={l.to} className="text-[13px] font-medium text-sifo-haze transition-colors hover:text-white">{l.label}</Link>
+                        : <a href={l.href} className="text-[13px] font-medium text-sifo-haze transition-colors hover:text-white">{l.label}</a>}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
-          <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-5">
-            <div className="flex-1 min-w-[16rem]">
-              <p className="text-sm font-bold text-amber-200">Demo access — no login required</p>
-              <p className="mt-1 text-sm text-slate-400">The demos open straight away, so there are no shared demo passwords to hand out. Demo screens are read-only sample data and are completely separate from live company accounts.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/demo/$industry" params={{ industry: "hotel" }} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Hotel demo</Link>
-              <Link to="/demo/$industry" params={{ industry: "school" }} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">School demo</Link>
-              <Link to="/demo/$industry" params={{ industry: "restaurant" }} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Restaurant demo</Link>
-              <Link to="/auth" className="rounded-xl bg-[#0e8f4a] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5">Create your SifoBooks account</Link>
-            </div>
+        </div>
+
+        <div className="mt-12 rounded-xl border border-sifo-line/70 bg-sifo-ink-2/60 p-4 text-[11.5px] leading-6 text-sifo-haze/85">
+          Product screens on this page are previews with illustrative figures — no customer or company data is shown.
+          SifoBooks supports ZRA Smart Invoice submission using credentials issued to your own business; certification of
+          that connection is granted by ZRA, not by SifoBooks.
+        </div>
+
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t border-sifo-line/70 pt-6 sm:flex-row sm:items-center">
+          <p className="text-[12px] text-sifo-haze/70">© {new Date().getFullYear()} SifoBooks. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-sifo-haze/70">
+            <a href="#contact" className="transition-colors hover:text-white">Terms</a>
+            <a href="#contact" className="transition-colors hover:text-white">Privacy</a>
+            <a href="#contact" className="transition-colors hover:text-white">Data protection</a>
+            <span className="inline-flex items-center gap-1.5"><SifoMark className="h-4 w-4" /> Lusaka, Zambia</span>
           </div>
         </div>
-      </section>
-      <div id="whiteboard"><SifoLandingPresentation /></div>
-    </main>
+      </div>
+    </footer>
   );
 }
