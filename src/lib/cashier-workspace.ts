@@ -172,23 +172,25 @@ export function expectedCash(shift: Record<string, any> | null, totals: ShiftTot
   );
 }
 
-export async function submitShift(shiftId: string, actualCash: number, totals: ShiftTotals) {
-  const other = Object.entries(totals.byMethod)
-    .filter(([m]) => !["cash", "card", "momo", "mobile_money"].includes(m))
-    .reduce((s, [, v]) => s + n(v), 0);
+/**
+ * Submit the cash declaration. The database recomputes expected cash and the
+ * variance from the recorded sales, payments and cash movements — nothing the
+ * terminal calculates is trusted for the cash-up.
+ */
+export async function submitShift(
+  shiftId: string,
+  actualCash: number,
+  reason?: string,
+  denominations?: Record<string, number>,
+) {
   const { data, error } = await supabase.rpc("submit_cashier_shift" as never, {
     _shift_id: shiftId,
     _actual_cash: actualCash,
-    _breakdown: {
-      cash_sales: n(totals.byMethod["cash"]),
-      card_sales: n(totals.byMethod["card"]),
-      momo_sales: n(totals.byMethod["momo"]) + n(totals.byMethod["mobile_money"]),
-      other_sales: other,
-      refunds_total: totals.refunds,
-    },
+    _reason: reason?.trim() || null,
+    _denominations: denominations && Object.keys(denominations).length ? denominations : null,
   } as never);
   if (error) throw new Error(error.message);
-  const res = data as unknown as { ok: boolean; error?: string };
+  const res = data as unknown as { ok: boolean; error?: string; expected_cash?: number; variance?: number };
   if (!res?.ok) throw new Error(res?.error ?? "Could not submit the shift");
   return res;
 }
