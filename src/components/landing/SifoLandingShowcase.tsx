@@ -23,10 +23,10 @@ export function SifoHero() {
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div className="sifo-reveal">
             <Eyebrow tone="copper">Built in Zambia for Zambian business</Eyebrow>
-            <h1 className="mt-6 font-display text-[2.6rem] font-bold leading-[0.98] tracking-[-0.04em] text-white sm:text-6xl lg:text-[4.1rem]">
-              Business management,
-              <span className="block text-sifo-mint">POS, accounting</span>
-              and compliance — one platform.
+            <h1 className="mt-6 font-display text-[2.75rem] font-extrabold leading-[0.96] tracking-[-0.04em] text-white sm:text-6xl lg:text-[4.5rem]">
+              One platform.
+              <span className="block text-sifo-mint">Every operation.</span>
+              <span className="block text-white/90">Fully accounted for.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-sifo-haze sm:text-lg sm:leading-8">
               SifoBooks runs the till, the stores, the payroll and the ledger on one record — so the figure a manager
