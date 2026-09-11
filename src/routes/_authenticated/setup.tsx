@@ -114,6 +114,8 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
     if (data) { onSaved(data as Company); toast.success("Company profile saved"); }
   };
   return (
+    <div className="space-y-4">
+    <AdministratorEmailCard companyId={c.id} companyName={c.name} />
     <Card>
       <CardHeader><CardTitle>Company Profile</CardTitle><CardDescription>Your legal, contact and branding details for invoices and compliance.</CardDescription></CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
