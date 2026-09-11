@@ -7383,6 +7383,7 @@ export type Database = {
           actual_cash: number | null
           branch_id: string | null
           card_sales: number
+          cash_denominations: Json | null
           cash_in: number
           cash_out: number
           cash_sales: number
@@ -7412,11 +7413,13 @@ export type Database = {
           updated_at: string
           user_id: string
           variance: number | null
+          variance_reason: string | null
         }
         Insert: {
           actual_cash?: number | null
           branch_id?: string | null
           card_sales?: number
+          cash_denominations?: Json | null
           cash_in?: number
           cash_out?: number
           cash_sales?: number
@@ -7446,11 +7449,13 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variance?: number | null
+          variance_reason?: string | null
         }
         Update: {
           actual_cash?: number | null
           branch_id?: string | null
           card_sales?: number
+          cash_denominations?: Json | null
           cash_in?: number
           cash_out?: number
           cash_sales?: number
@@ -7480,6 +7485,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variance?: number | null
+          variance_reason?: string | null
         }
         Relationships: [
           {
@@ -12077,7 +12083,12 @@ export type Database = {
         }[]
       }
       submit_cashier_shift: {
-        Args: { _actual_cash: number; _breakdown?: Json; _shift_id: string }
+        Args: {
+          _actual_cash: number
+          _denominations?: Json
+          _reason?: string
+          _shift_id: string
+        }
         Returns: Json
       }
       sync_pos_sale: {
