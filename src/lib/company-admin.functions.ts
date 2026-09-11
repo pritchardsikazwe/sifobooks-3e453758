@@ -222,7 +222,7 @@ export const replaceCompanyAdministratorEmail = createServerFn({ method: "POST" 
       }
     } catch (e: any) {
       // Roll the owner identity back so the company is never left headless.
-      await db.from("companies").update({ user_id: oldUserId }).eq("id", companyId);
+      if (oldUserId) await db.from("companies").update({ user_id: oldUserId }).eq("id", companyId);
       await log("company.admin_email_change_failed", { result: "failed", error: e?.message ?? String(e) });
       throw new Error(e?.message ?? "Administrator replacement failed and was rolled back");
     }
