@@ -487,7 +487,13 @@ function CompaniesTab({ userId, activeId }: { userId: string; activeId: string }
 
   return (
     <Card>
-      <CardHeader><CardTitle>Companies</CardTitle><CardDescription>Run several businesses from one account — each keeps its own books.</CardDescription></CardHeader>
+      <CardHeader>
+        <CardTitle>Companies</CardTitle>
+        <CardDescription>
+          Run several businesses from one account — each keeps its own books.{" "}
+          <a href="/companies" className="underline underline-offset-2">Company management (archive, restore, delete)</a>
+        </CardDescription>
+      </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_120px_auto] gap-2 items-end">
           <Field label="New company name"><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Sifo Trading Ltd" /></Field>
