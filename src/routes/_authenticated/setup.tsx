@@ -13,6 +13,7 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { Building2, MapPin, Users, Wallet, CalendarRange, Percent, BriefcaseBusiness, ShieldCheck, GitBranch, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { monthName } from "@/lib/format";
+import { AdministratorEmailCard } from "@/components/company/AdministratorEmailCard";
 
 export const Route = createFileRoute("/_authenticated/setup")({
   head: () => ({ meta: [{ title: "Company Setup — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -114,6 +115,8 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
     if (data) { onSaved(data as Company); toast.success("Company profile saved"); }
   };
   return (
+    <div className="space-y-4">
+    <AdministratorEmailCard companyId={c.id} companyName={c.name} />
     <Card>
       <CardHeader><CardTitle>Company Profile</CardTitle><CardDescription>Your legal, contact and branding details for invoices and compliance.</CardDescription></CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -159,6 +162,7 @@ function ProfileTab({ company, onSaved }: { company: Company; onSaved: (c: Compa
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
 
