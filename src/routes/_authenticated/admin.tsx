@@ -95,6 +95,7 @@ function AdminPage() {
 
   const shortcuts = [
     { title: "Company Setup", desc: "Profile, logo, branches, tax settings", icon: Building2, to: "/setup" },
+    { title: "Company Management", desc: "Archive, restore or remove companies", icon: Building2, to: "/companies" },
     { title: "Employees", desc: "HR master data", icon: Users2, to: "/employees" },
     { title: "Subscription", desc: "Plans & billing", icon: Sparkles, to: "/subscription" },
     { title: "Audit Logs", desc: "All system activity", icon: ShieldCheck, to: "/audit-logs" },

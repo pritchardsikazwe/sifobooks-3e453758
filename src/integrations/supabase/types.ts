@@ -1646,6 +1646,9 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           base_currency: string
           city: string | null
           country: string | null
@@ -1660,6 +1663,7 @@ export type Database = {
           payslip_footer: string | null
           payslip_header: string | null
           phone: string | null
+          status: string
           timezone: string
           tpin: string | null
           trading_name: string | null
@@ -1672,6 +1676,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           base_currency?: string
           city?: string | null
           country?: string | null
@@ -1686,6 +1693,7 @@ export type Database = {
           payslip_footer?: string | null
           payslip_header?: string | null
           phone?: string | null
+          status?: string
           timezone?: string
           tpin?: string | null
           trading_name?: string | null
@@ -1698,6 +1706,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           base_currency?: string
           city?: string | null
           country?: string | null
@@ -1712,6 +1723,7 @@ export type Database = {
           payslip_footer?: string | null
           payslip_header?: string | null
           phone?: string | null
+          status?: string
           timezone?: string
           tpin?: string | null
           trading_name?: string | null
@@ -11862,10 +11874,18 @@ export type Database = {
       }
       approve_stock_count: { Args: { _count_id: string }; Returns: Json }
       approver_role_for_request: { Args: { _req: string }; Returns: string }
+      archive_company: {
+        Args: { _company: string; _reason?: string }
+        Returns: Json
+      }
       auto_match_bank_transactions: { Args: never; Returns: Json }
       branch_ok: { Args: { _row_branch: string }; Returns: boolean }
       can_act_on_request: {
         Args: { _req: string; _user: string }
+        Returns: boolean
+      }
+      can_manage_company: {
+        Args: { _company: string; _user: string }
         Returns: boolean
       }
       clear_bank_transaction: {
@@ -11874,10 +11894,15 @@ export type Database = {
       }
       close_month: { Args: { _month: number; _year: number }; Returns: Json }
       close_year: { Args: { _year: number }; Returns: Json }
+      company_data_inventory: { Args: { _company: string }; Returns: Json }
       complete_pos_sale: { Args: { _sale_id: string }; Returns: string }
       compute_reconciliation: { Args: { _session_id: string }; Returns: Json }
       confirm_pos_pin_reset: { Args: { _pin: string }; Returns: Json }
       current_tenant: { Args: never; Returns: string }
+      delete_company: {
+        Args: { _company: string; _confirm_name: string }
+        Returns: Json
+      }
       deny_pos_pin_reset: {
         Args: { _reason?: string; _reset_id: string }
         Returns: Json
@@ -12010,6 +12035,7 @@ export type Database = {
         Args: { _order_id: string; _server_name?: string; _table_id?: string }
         Returns: string
       }
+      restore_company: { Args: { _company: string }; Returns: Json }
       reverse_bank_allocation: {
         Args: { _alloc_id: string; _reason?: string }
         Returns: Json
