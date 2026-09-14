@@ -113,15 +113,14 @@ function MyShift() {
           <p className="pt-1 text-xs">A submitted shift can no longer be changed by you.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
-          <label className="block text-sm">Actual cash counted</label>
-          <Input inputMode="decimal" value={counted} onChange={(e) => setCounted(e.target.value)} placeholder="0.00" />
-          {counted !== "" && (
-            <div className={`text-sm font-semibold ${variance === 0 ? "text-emerald-400" : variance > 0 ? "text-sky-400" : "text-rose-400"}`}>
-              Variance: {kw(variance)}
-            </div>
-          )}
-          <Button className="w-full" disabled={busy} onClick={() => void onSubmit()}>End shift &amp; submit</Button>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-sm">
+          <p className="text-slate-400">
+            To end your shift, count the drawer on the cash declaration screen. SifoBooks works out the expected cash from
+            your recorded sales and sends the difference to your manager.
+          </p>
+          <Button asChild className="w-full bg-emerald-500 text-slate-950">
+            <Link to="/w/cashup">Count cash &amp; end shift</Link>
+          </Button>
         </div>
       )}
     </div>
