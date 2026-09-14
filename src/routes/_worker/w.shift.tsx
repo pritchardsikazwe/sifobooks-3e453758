@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  loadAssignment, currentShiftFor, shiftTotals, expectedCash, startShift, submitShift, kw,
+  loadAssignment, currentShiftFor, shiftTotals, expectedCash, startShift, kw,
   type CashierAssignment, type ShiftTotals,
 } from "@/lib/cashier-workspace";
 
