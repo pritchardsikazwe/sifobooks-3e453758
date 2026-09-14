@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_worker/w/")({
 
 function CashierHome() {
   const ctx = usePosContext();
+  const net = useNetworkStatus();
   const navigate = useNavigate();
   const [a, setA] = useState<CashierAssignment | null>(null);
   const [shift, setShift] = useState<Record<string, any> | null>(null);
