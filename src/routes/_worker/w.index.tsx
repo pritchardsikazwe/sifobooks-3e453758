@@ -102,15 +102,22 @@ function CashierHome() {
             <div className={shift ? "text-emerald-400" : "text-amber-400"}>
               {shift ? `Shift open since ${new Date(shift.opened_at).toLocaleTimeString("en-ZM", { hour: "2-digit", minute: "2-digit" })}` : "No shift open"}
             </div>
+            <div className={net.state === "offline" ? "text-rose-400" : net.state === "syncing" ? "text-sky-400" : "text-emerald-400"}>
+              {net.state === "offline"
+                ? `Offline${net.pending ? ` · ${net.pending} waiting to sync` : ""}`
+                : net.state === "syncing"
+                  ? "Syncing…"
+                  : "Online"}
+            </div>
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card label="Today's sales" value={kw(totals?.salesTotal ?? 0)} icon="TrendingUp" />
-        <Card label="Transactions" value={String(totals?.transactions ?? 0)} icon="Receipt" />
-        <Card label="Items sold" value={String(totals?.itemsSold ?? 0)} icon="Package" />
-        <Card label="Expected cash" value={kw(expected)} icon="Wallet" />
+        <Card label="Today's sales" value={kw(totals?.salesTotal ?? 0)} icon="TrendingUp" to="/w/sales" />
+        <Card label="Transactions" value={String(totals?.transactions ?? 0)} icon="Receipt" to="/w/receipts" />
+        <Card label="Items sold" value={String(totals?.itemsSold ?? 0)} icon="Package" to="/w/stock" />
+        <Card label="Expected cash" value={kw(expected)} icon="Wallet" to="/w/cashup" />
       </div>
 
       {lowStock > 0 && (
@@ -145,14 +152,20 @@ function CashierHome() {
   );
 }
 
-function Card({ label, value, icon }: { label: string; value: string; icon: keyof typeof Icons }) {
+function Card({ label, value, icon, to }: { label: string; value: string; icon: keyof typeof Icons; to?: string }) {
   const Icon = (Icons as any)[icon] ?? Icons.Circle;
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+  const body = (
+    <>
       <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
         <Icon className="h-4 w-4" /> {label}
       </div>
       <div className="mt-1 text-xl font-bold">{value}</div>
-    </div>
+    </>
+  );
+  const cls = "block rounded-2xl border border-slate-800 bg-slate-900/60 p-4";
+  return to ? (
+    <Link to={to} className={`${cls} transition-colors hover:border-slate-600 hover:bg-slate-800/70`}>{body}</Link>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }
