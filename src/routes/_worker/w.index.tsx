@@ -7,6 +7,7 @@ import {
   type CashierAssignment, type ShiftTotals,
 } from "@/lib/cashier-workspace";
 import { usePosContext } from "@/components/pos/PosContextProvider";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export const Route = createFileRoute("/_worker/w/")({
   head: () => ({
