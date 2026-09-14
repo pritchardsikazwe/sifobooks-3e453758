@@ -30,7 +30,7 @@ function MyShift() {
   const [shift, setShift] = useState<Record<string, any> | null>(null);
   const [totals, setTotals] = useState<ShiftTotals>(EMPTY);
   const [opening, setOpening] = useState("");
-  const [counted, setCounted] = useState("");
+  
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
