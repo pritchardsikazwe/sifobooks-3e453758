@@ -60,20 +60,9 @@ function MyShift() {
     setBusy(false);
   };
 
-  const onSubmit = async () => {
-    if (!shift?.id) return;
-    if (counted === "") return toast.error("Enter the cash you counted");
-    setBusy(true);
-    try {
-      await submitShift(shift.id, Number(counted), totals);
-      toast.success("Shift submitted — waiting for manager review");
-      setCounted("");
-      await load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit the shift");
-    }
-    setBusy(false);
-  };
+  // Ending a shift now happens on the cash declaration screen, where the drawer
+  // is counted note by note and the difference is explained before submission.
+
 
   if (!shift) {
     return (
