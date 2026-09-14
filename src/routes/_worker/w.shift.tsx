@@ -44,7 +44,7 @@ function MyShift() {
   useEffect(() => { void load(); }, []);
 
   const expected = expectedCash(shift, totals);
-  const variance = Number(counted || 0) - expected;
+  
 
   const onStart = async () => {
     if (!a) return;
