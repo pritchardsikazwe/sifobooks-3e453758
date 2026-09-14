@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  loadAssignment, currentShiftFor, shiftTotals, expectedCash, startShift, submitShift, kw,
+  loadAssignment, currentShiftFor, shiftTotals, expectedCash, startShift, kw,
   type CashierAssignment, type ShiftTotals,
 } from "@/lib/cashier-workspace";
 
@@ -30,7 +30,7 @@ function MyShift() {
   const [shift, setShift] = useState<Record<string, any> | null>(null);
   const [totals, setTotals] = useState<ShiftTotals>(EMPTY);
   const [opening, setOpening] = useState("");
-  const [counted, setCounted] = useState("");
+  
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -44,7 +44,7 @@ function MyShift() {
   useEffect(() => { void load(); }, []);
 
   const expected = expectedCash(shift, totals);
-  const variance = Number(counted || 0) - expected;
+  
 
   const onStart = async () => {
     if (!a) return;
@@ -60,20 +60,9 @@ function MyShift() {
     setBusy(false);
   };
 
-  const onSubmit = async () => {
-    if (!shift?.id) return;
-    if (counted === "") return toast.error("Enter the cash you counted");
-    setBusy(true);
-    try {
-      await submitShift(shift.id, Number(counted), totals);
-      toast.success("Shift submitted — waiting for manager review");
-      setCounted("");
-      await load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not submit the shift");
-    }
-    setBusy(false);
-  };
+  // Ending a shift now happens on the cash declaration screen, where the drawer
+  // is counted note by note and the difference is explained before submission.
+
 
   if (!shift) {
     return (
@@ -124,15 +113,14 @@ function MyShift() {
           <p className="pt-1 text-xs">A submitted shift can no longer be changed by you.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
-          <label className="block text-sm">Actual cash counted</label>
-          <Input inputMode="decimal" value={counted} onChange={(e) => setCounted(e.target.value)} placeholder="0.00" />
-          {counted !== "" && (
-            <div className={`text-sm font-semibold ${variance === 0 ? "text-emerald-400" : variance > 0 ? "text-sky-400" : "text-rose-400"}`}>
-              Variance: {kw(variance)}
-            </div>
-          )}
-          <Button className="w-full" disabled={busy} onClick={() => void onSubmit()}>End shift &amp; submit</Button>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3 text-sm">
+          <p className="text-slate-400">
+            To end your shift, count the drawer on the cash declaration screen. SifoBooks works out the expected cash from
+            your recorded sales and sends the difference to your manager.
+          </p>
+          <Button asChild className="w-full bg-emerald-500 text-slate-950">
+            <Link to="/w/cashup">Count cash &amp; end shift</Link>
+          </Button>
         </div>
       )}
     </div>

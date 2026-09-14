@@ -52,18 +52,18 @@ function Receipts() {
       supabase.from("pos_payments").select("method,amount").eq("sale_id", sale.id),
     ]);
     const html = `
-      <h2 style="margin:0">Receipt ${sale.sale_no ?? sale.id.slice(0, 8)}</h2>
-      <p style="margin:2px 0">${new Date(sale.sold_at).toLocaleString("en-ZM")}</p>
-      <p style="margin:2px 0">Customer: ${sale.customer_name ?? "Walk-in"} · Served by ${a?.displayName ?? ""}</p>
+      <h2 style="margin:0">Receipt ${esc(sale.sale_no ?? sale.id.slice(0, 8))}</h2>
+      <p style="margin:2px 0">${esc(new Date(sale.sold_at).toLocaleString("en-ZM"))}</p>
+      <p style="margin:2px 0">Customer: ${esc(sale.customer_name ?? "Walk-in")} · Served by ${esc(a?.displayName ?? "")}</p>
       <table style="width:100%;border-collapse:collapse;margin-top:10px">
         <thead><tr><th align="left">Item</th><th align="right">Qty</th><th align="right">Price</th><th align="right">Amount</th></tr></thead>
         <tbody>
-          ${(lines ?? []).map((l: any) => `<tr><td>${l.name ?? "Item"}</td><td align="right">${l.qty}</td><td align="right">${kw(Number(l.price))}</td><td align="right">${kw(Number(l.line_total))}</td></tr>`).join("")}
+          ${(lines ?? []).map((l: any) => `<tr><td>${esc(l.name ?? "Item")}</td><td align="right">${Number(l.qty ?? 0)}</td><td align="right">${esc(kw(Number(l.price)))}</td><td align="right">${esc(kw(Number(l.line_total)))}</td></tr>`).join("")}
         </tbody>
       </table>
-      <p style="margin-top:10px"><strong>VAT:</strong> ${kw(Number(sale.tax ?? 0))}<br/>
-      <strong>Total:</strong> ${kw(Number(sale.total ?? 0))}<br/>
-      <strong>Paid:</strong> ${(pays ?? []).map((p: any) => `${p.method} ${kw(Number(p.amount))}`).join(", ") || "—"}</p>
+      <p style="margin-top:10px"><strong>VAT:</strong> ${esc(kw(Number(sale.tax ?? 0)))}<br/>
+      <strong>Total:</strong> ${esc(kw(Number(sale.total ?? 0)))}<br/>
+      <strong>Paid:</strong> ${(pays ?? []).map((p: any) => `${esc(String(p.method ?? ""))} ${esc(kw(Number(p.amount)))}`).join(", ") || "—"}</p>
       <p style="margin-top:10px;font-size:11px">Reprint — this is a copy of an existing receipt. No new sale was recorded.</p>`;
     try {
       await printHtmlDocument(`Receipt ${sale.sale_no ?? ""}`, html, `receipt-${sale.sale_no ?? sale.id}.pdf`);
