@@ -48,7 +48,9 @@ export const POS_FEATURES: { key: PosFeature; label: string }[] = [
 const F: Level = "full", L: Level = "limited", N: Level = "none";
 
 export const POS_MATRIX: Record<PosRole, Record<PosFeature, Level>> = {
-  cashier:    { pos_sales: F, dine_in: N, takeaway: F, delivery: F, tables: N, kitchen_display: N, hold_order: F, void_item: L, discount: L, cash_drawer: F, cash_payout: N, stock_view: N, stock_transfer: N, reports: N, end_of_day: N, settings: N },
+  // A cashier may LOOK UP stock at their own store (limited = read-only, no
+  // transfers, no location administration) — they must never be blind at the till.
+  cashier:    { pos_sales: F, dine_in: N, takeaway: F, delivery: F, tables: N, kitchen_display: N, hold_order: F, void_item: L, discount: L, cash_drawer: F, cash_payout: N, stock_view: L, stock_transfer: N, reports: N, end_of_day: N, settings: N },
   waiter:     { pos_sales: F, dine_in: F, takeaway: F, delivery: N, tables: F, kitchen_display: F, hold_order: F, void_item: L, discount: N, cash_drawer: N, cash_payout: N, stock_view: L, stock_transfer: N, reports: N, end_of_day: N, settings: N },
   supervisor: { pos_sales: F, dine_in: F, takeaway: F, delivery: F, tables: F, kitchen_display: F, hold_order: F, void_item: F, discount: F, cash_drawer: F, cash_payout: F, stock_view: F, stock_transfer: F, reports: F, end_of_day: N, settings: L },
   manager:    { pos_sales: F, dine_in: F, takeaway: F, delivery: F, tables: F, kitchen_display: F, hold_order: F, void_item: F, discount: F, cash_drawer: F, cash_payout: F, stock_view: F, stock_transfer: F, reports: F, end_of_day: F, settings: F },
@@ -164,12 +166,14 @@ export const WORKER_NAV: { to: string; label: string; icon: string; feature?: Po
   { to: "/w/orders", label: "Orders", icon: "ReceiptText", feature: "pos_sales", channel: "restaurant" },
   { to: "/w/kitchen", label: "Kitchen", icon: "ChefHat", feature: "kitchen_display", channel: "restaurant" },
   { to: "/w/sales", label: "My sales", icon: "ReceiptText", feature: "pos_sales" },
+  { to: "/w/receipts", label: "Receipts", icon: "Printer", feature: "pos_sales" },
   { to: "/w/shift", label: "My shift", icon: "Clock", feature: "pos_sales" },
-  { to: "/w/cash", label: "Cash", icon: "Banknote", feature: "cash_drawer" },
+  { to: "/w/cashup", label: "Cash up", icon: "Calculator", feature: "cash_drawer" },
+  { to: "/w/cash", label: "Cash", icon: "Banknote", feature: "cash_drawer", channel: "restaurant" },
   { to: "/w/returns", label: "Returns", icon: "Undo2", feature: "pos_sales", channel: "retail" },
   { to: "/w/lookup", label: "Lookup", icon: "Search", feature: "pos_sales" },
   { to: "/w/count", label: "Count", icon: "ClipboardList", feature: "pos_sales" },
-  { to: "/w/stock", label: "Stock", icon: "Boxes", feature: "stock_view" },
+  { to: "/w/stock", label: "My stock", icon: "Boxes", feature: "stock_view" },
   { to: "/w/reports", label: "Reports", icon: "BarChart3", feature: "reports" },
 ];
 
