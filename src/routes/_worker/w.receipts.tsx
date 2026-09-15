@@ -22,6 +22,14 @@ export const Route = createFileRoute("/_worker/w/receipts")({
   component: Receipts,
 });
 
+/** Escape anything that goes into the printed receipt HTML. */
+const esc = (v: unknown) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
 function Receipts() {
   const [a, setA] = useState<CashierAssignment | null>(null);
   const [rows, setRows] = useState<any[]>([]);
