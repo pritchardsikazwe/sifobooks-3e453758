@@ -286,12 +286,58 @@ export async function mySales(cashierUserId: string, period: Period, from?: stri
   };
 }
 
-/** Stock available at the cashier's own store — quantities only, no costs. */
-export async function storeStock(tenantId: string, locationId: string | null, search: string) {
-  if (!locationId) return [] as { name: string; sku: string | null; qty: number; price: number }[];
+export type StoreStockRow = { name: string; sku: string | null; qty: number; price: number; reorder: number };
+
+/**
+ * Stock available at the cashier's own store — quantities only, no costs.
+ * Per-location balances are authoritative; when a tenant keeps a single stock
+ * pool (no location balances recorded) we fall back to the item's own
+ * quantity on hand so the cashier is never left with an empty shelf list.
+ */
+export async function storeStock(tenantId: string, locationId: string | null, search: string): Promise<StoreStockRow[]> {
+  const match = (r: StoreStockRow) =>
+    !search || `${r.name} ${r.sku ?? ""}`.toLowerCase().includes(search.toLowerCase());
+
+  if (locationId) {
+    const { data } = await supabase
+      .from("stock_balances")
+      .select("quantity, item_id, stock_items(name, sku, sell_price, reorder_level)")
+      .eq("user_id", tenantId)
+      .eq("location_id", locationId);
+    const rows = ((data ?? []) as any[]).map((r) => ({
+      name: r.stock_items?.name ?? "Item",
+      sku: r.stock_items?.sku ?? null,
+      qty: n(r.quantity),
+      price: n(r.stock_items?.sell_price),
+      reorder: n(r.stock_items?.reorder_level),
+    }));
+    if (rows.length) return rows.filter(match).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  const { data: items } = await supabase
+    .from("stock_items")
+    .select("name, sku, sell_price, quantity_on_hand, reorder_level, is_active")
+    .eq("user_id", tenantId)
+    .order("name")
+    .limit(2000);
+  return ((items ?? []) as any[])
+    .filter((r) => r.is_active !== false)
+    .map((r) => ({
+      name: r.name ?? "Item",
+      sku: r.sku ?? null,
+      qty: n(r.quantity_on_hand),
+      price: n(r.sell_price),
+      reorder: n(r.reorder_level),
+    }))
+    .filter(match)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** @deprecated kept for the old shape — see storeStock above. */
+async function legacyStoreStock(tenantId: string, locationId: string, search: string) {
   const { data } = await supabase
     .from("stock_balances")
-    .select("qty, item_id, stock_items(name, sku, sell_price)")
+    .select("quantity, item_id, stock_items(name, sku, sell_price)")
     .eq("user_id", tenantId)
     .eq("location_id", locationId);
   const rows = (data ?? []) as any[];
