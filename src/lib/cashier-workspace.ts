@@ -333,25 +333,6 @@ export async function storeStock(tenantId: string, locationId: string | null, se
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** @deprecated kept for the old shape — see storeStock above. */
-async function legacyStoreStock(tenantId: string, locationId: string, search: string) {
-  const { data } = await supabase
-    .from("stock_balances")
-    .select("quantity, item_id, stock_items(name, sku, sell_price)")
-    .eq("user_id", tenantId)
-    .eq("location_id", locationId);
-  const rows = (data ?? []) as any[];
-  return rows
-    .map((r) => ({
-      name: r.stock_items?.name ?? "Item",
-      sku: r.stock_items?.sku ?? null,
-      qty: n(r.qty),
-      price: n(r.stock_items?.sell_price),
-    }))
-    .filter((r) => !search || `${r.name} ${r.sku ?? ""}`.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
 /** Month-by-month history for one cashier, combining POS shifts and historical records. */
 export async function monthlyHistory(tenantId: string, cashierUserId: string) {
   const { data: shifts } = await supabase
