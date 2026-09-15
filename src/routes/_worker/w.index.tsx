@@ -53,10 +53,10 @@ function CashierHome() {
       if (store) {
         const { data } = await supabase
           .from("stock_balances")
-          .select("qty, stock_items(reorder_level)")
+          .select("quantity, stock_items(reorder_level)")
           .eq("location_id", store.id);
         setLowStock(
-          (data ?? []).filter((r: any) => Number(r.qty ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
+          (data ?? []).filter((r: any) => Number(r.quantity ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
         );
       }
     })();
@@ -82,6 +82,7 @@ function CashierHome() {
     { label: "Returns", icon: "Undo2", to: isRestaurant ? "/w/orders" : "/w/returns" },
     { label: "Stock count", icon: "ClipboardList", to: "/w/count" },
     { label: "My shift", icon: "Clock", to: "/w/shift" },
+    { label: "End of day", icon: "BarChart3", to: "/w/reports" },
     { label: "Cash up", icon: "Calculator", to: "/w/cashup", tone: "bg-sky-500/15 text-sky-200" },
     ...(isRestaurant ? [{ label: "Cash drawer", icon: "Banknote" as keyof typeof Icons, to: "/w/cash" }] : []),
     { label: "Log out", icon: "LogOut", onClick: signOut, tone: "bg-rose-500/15 text-rose-300" },
