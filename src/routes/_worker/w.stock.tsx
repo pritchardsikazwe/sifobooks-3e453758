@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_worker/w/stock")({
   component: WorkerStock,
 });
 
-type Row = { name: string; sku: string | null; qty: number; price: number };
+type Row = { name: string; sku: string | null; qty: number; price: number; reorder: number };
 
 function WorkerStock() {
   const ctx = usePosContext();
@@ -90,7 +90,7 @@ function WorkerStock() {
               <tr key={`${r.name}-${r.sku ?? ""}`} className="border-t border-slate-800">
                 <td className="px-3 py-2">{r.name}</td>
                 <td className="px-3 py-2 text-slate-400">{r.sku ?? "—"}</td>
-                <td className={`px-3 py-2 font-semibold ${r.qty <= 0 ? "text-rose-400" : r.qty <= 5 ? "text-amber-400" : ""}`}>
+                <td className={`px-3 py-2 font-semibold ${r.qty <= 0 ? "text-rose-400" : r.reorder > 0 && r.qty <= r.reorder ? "text-amber-400" : ""}`}>
                   {r.qty}
                 </td>
                 <td className="px-3 py-2">{kw(r.price)}</td>
