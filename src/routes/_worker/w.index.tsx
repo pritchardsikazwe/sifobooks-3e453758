@@ -94,6 +94,7 @@ function CashierHome() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-xl font-bold">{a?.displayName ?? ctx?.displayName ?? "Cashier"}</h1>
+            {a?.companyName && <p className="text-sm font-medium text-slate-300">{a.companyName}</p>}
             <p className="text-sm text-slate-400">
               {storeName ?? a?.branchName ?? a?.locationName ?? "Your store"}
               {a?.stationName ? ` · ${a.stationName}` : ""}

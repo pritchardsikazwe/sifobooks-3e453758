@@ -17,6 +17,7 @@ export const kw = (v: number) =>
 export type CashierAssignment = {
   permissionId: string | null;
   tenantId: string;
+  companyName: string | null;
   cashierUserId: string;
   displayName: string;
   posRole: string;
@@ -69,9 +70,28 @@ export async function loadAssignment(): Promise<CashierAssignment | null> {
     stationName = (r?.name as string) ?? null;
   }
 
+  // The company the till belongs to: the explicit link on the permission row
+  // first, otherwise the company record owned by the tenant.
+  let companyName: string | null = null;
+  if (p?.company_id) {
+    const { data: c } = await supabase.from("companies").select("name").eq("id", p.company_id).maybeSingle();
+    companyName = (c?.name as string) ?? null;
+  }
+  if (!companyName) {
+    const { data: c } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("user_id", tenantId)
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    companyName = (c?.name as string) ?? null;
+  }
+
   return {
     permissionId: (p?.id as string) ?? null,
     tenantId,
+    companyName,
     cashierUserId: user.id,
     displayName: (p?.full_name as string) || user.email || "Cashier",
     posRole: (p?.pos_role as string) ?? (p ? "cashier" : "manager"),
