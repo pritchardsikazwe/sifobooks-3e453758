@@ -17,6 +17,7 @@ export const kw = (v: number) =>
 export type CashierAssignment = {
   permissionId: string | null;
   tenantId: string;
+  companyName: string | null;
   cashierUserId: string;
   displayName: string;
   posRole: string;
