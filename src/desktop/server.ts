@@ -8,7 +8,7 @@
  * Compile with:  bun run build:desktop
  */
 
-import { existsSync, mkdirSync, statSync } from "fs";
+import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
 
 // ── Resolve the application base directory ────────────────────────────
@@ -48,7 +48,15 @@ if (!process.env.DATABASE_PATH) {
   process.env.DATABASE_PATH = join(dataDir, "sifobooks.db");
 }
 if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = "sifobooks-local-dev-secret-change-in-production";
+  // Persist a per-installation secret so desktop sessions survive restarts
+  // without embedding a shared production credential in the executable.
+  const secretPath = join(dataDir, ".jwt-secret");
+  if (existsSync(secretPath)) {
+    process.env.JWT_SECRET = readFileSync(secretPath, "utf8").trim();
+  } else {
+    process.env.JWT_SECRET = crypto.randomUUID() + crypto.randomUUID();
+    writeFileSync(secretPath, process.env.JWT_SECRET, { mode: 0o600 });
+  }
 }
 
 // Change working directory to the app folder so that all process.cwd()

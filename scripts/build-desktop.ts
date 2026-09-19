@@ -54,12 +54,14 @@ copyDir("dist/client", CLIENT_DIR);
 console.log("\n📦 Step 4/4: Copying schema and creating config...\n");
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
 
-// Default .env (user can edit this)
+// Safe desktop configuration. The executable creates a persistent local JWT
+// secret in data/.jwt-secret on first launch, so no production secret is
+// embedded in the package.
 writeFileSync(
-  join(OUT_DIR, ".env"),
+  join(OUT_DIR, ".env.example"),
   [
-    "JWT_SECRET=sifobooks-local-dev-secret-change-in-production",
     "DATABASE_PATH=data/sifobooks.db",
+    "PORT=3000",
     "",
   ].join("\n"),
 );
