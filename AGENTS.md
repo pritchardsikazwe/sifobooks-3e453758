@@ -1,10 +1,35 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+# SifoBooks — Independent Project
+
+This project is an independent TanStack Start application with local SQLite + JWT auth.
+It is no longer connected to Lovable, Base44, or Supabase.
+
+## Architecture
+
+- **Frontend**: TanStack Start (React + Vite + SSR)
+- **Database**: Local SQLite via `bun:sqlite` (see `src/lib/db/`)
+- **Auth**: JWT-based local auth (see `src/lib/db/auth.ts`)
+- **Storage**: Local file storage (see `src/lib/db/storage.ts`)
+- **Compatibility**: `src/integrations/supabase/client.ts` is a shim that mimics the Supabase JS client API but routes all calls to local SQLite via server functions. This allows 226+ files that use `supabase.from(...)` to work without changes.
+
+## Development
+
+```sh
+bun install
+bun run dev
+```
+
+## Build
+
+```sh
+bun run build
+```
+
+## Environment Variables
+
+See `.env` for required variables. Key variables:
+
+- `JWT_SECRET` — secret key for JWT signing/verification (auto-generated if not set)
+- `DATABASE_PATH` — path to SQLite database file (defaults to `data/sifobooks.db`)
+- `AI_API_KEY` — API key for the AI commentary feature (OpenAI-compatible endpoint)
+- `AI_API_URL` — base URL for the AI API (defaults to OpenAI)
+- `AI_MODEL` — model name for the AI API

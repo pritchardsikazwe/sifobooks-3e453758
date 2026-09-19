@@ -1,10 +1,9 @@
 /**
  * Single, guarded service-worker registrar.
  *
- * Refuses to register in dev, inside iframes and in every Lovable preview
- * context (a stale SW there would serve deleted chunks), and unregisters any
- * matching worker it finds in those contexts. Supports the `?sw=off`
- * kill switch.
+ * Refuses to register in dev and inside iframes (a stale SW there would serve
+ * deleted chunks), and unregisters any matching worker it finds in those
+ * contexts. Supports the `?sw=off` kill switch.
  */
 
 const SW_URL = "/sw.js";
@@ -49,11 +48,6 @@ function isRefusedContext(): boolean {
   } catch {
     return true;
   }
-  const h = window.location.hostname;
-  if (h.startsWith("id-preview--") || h.startsWith("preview--")) return true;
-  if (h === "lovableproject.com" || h.endsWith(".lovableproject.com")) return true;
-  if (h === "lovableproject-dev.com" || h.endsWith(".lovableproject-dev.com")) return true;
-  if (h === "beta.lovable.dev" || h.endsWith(".beta.lovable.dev")) return true;
   if (new URLSearchParams(window.location.search).get("sw") === "off") return true;
   return false;
 }

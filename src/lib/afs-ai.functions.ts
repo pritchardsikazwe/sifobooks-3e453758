@@ -31,18 +31,20 @@ export const generateAfsCommentary = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.AI_API_KEY;
+    if (!key) throw new Error("Missing AI_API_KEY — set it in your environment to enable AI commentary.");
+    const apiUrl = process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
+    const model = process.env.AI_MODEL || "gpt-4o-mini";
     const spec = PROMPTS[data.section];
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Lovable-API-Key": key,
+        "Authorization": `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model,
         messages: [
           { role: "system", content: spec.system },
           { role: "user", content: spec.user(data.factSheet) },
@@ -53,10 +55,43 @@ export const generateAfsCommentary = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text();
       if (res.status === 429) throw new Error("AI rate limit reached — try again shortly.");
-      if (res.status === 402) throw new Error("AI credits exhausted — top up in Settings → Plans & credits.");
-      throw new Error(`AI gateway error ${res.status}: ${text.slice(0, 200)}`);
+      if (res.status === 402) throw new Error("AI credits exhausted — check your API provider account.");
+      throw new Error(`AI API error ${res.status}: ${text.slice(0, 200)}`);
     }
     const json: any = await res.json();
     const content: string = json?.choices?.[0]?.message?.content ?? "";
     return { content };
+  });
+
+export const generateManagementInsight = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => {
+    const d = raw as { context: Record<string, unknown> };
+    if (!d?.context || typeof d.context !== "object") throw new Error("missing context");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const key = process.env.AI_API_KEY;
+    if (!key) throw new Error("Missing AI_API_KEY");
+    const apiUrl = process.env.AI_API_URL || "https://api.openai.com/v1/chat/completions";
+    const model = process.env.AI_MODEL || "gpt-4o-mini";
+
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "You are a Zambian CFO. Write 4-6 concise, plain-English insights for a monthly management pack. Cover profitability, cash, receivables/payables risk, and one recommendation. No markdown headings." },
+          { role: "user", content: `Financials:\n${JSON.stringify(data.context, null, 2)}` },
+        ],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`${res.status}`);
+    const json: any = await res.json();
+    return { content: json?.choices?.[0]?.message?.content ?? "" };
   });

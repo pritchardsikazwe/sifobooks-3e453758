@@ -1,148 +1,163 @@
-# Fiscal Edge Suite
-
-Create similar app like What's new
-
-Announcing Unlimited Invoices with EdgeCore
-
-Africa's No. 1 Platform for Fiscal Compliance
-
-Fiscal Edge helps businesses in Africa manage everyday invoicing with centralized invoice management and stay tax-compliant by integrating directly with government tax authorities.
-
-Trusted by Global Brands
-
-We are trusted by some of the foremost brands in the world.
-
-Who we are
-
-Simplifying Invoicing,
-Strengthening Fiscal
-Compliance.
-
-Fiscal Edge simplifies invoicing for freelancers, small business owners, and large enterprises, ensuring full tax compliance through direct integration with government tax authorities.
-
-Learn more
-
-What we do
-
-One Platform, Many Possibilities
-
-EdgeCore — For All Business Types, Freelancers, and Entrepreneurs.
-
-Create, customize, and send invoices in minutes. Track payments, manage expenses, get paid faster and stay compliant with tax authorities all from one dashboard.
-
-Learn more
-
-EdgeComply — For Tax-Compliant Businesses
-
-Built for businesses operating in countries with E-invoice mandates. Currently live in Zambia with the Zambian Revenue Authority integration, our platform offers real-time tax compliance, ERP integrations, alert systems, and fiscal device syncing with more country rollouts coming soon.
-
-Learn more
-
-Customer Testimonials
-
-Over 200+ businesses trust Fiscal Edge to keep them compliant. Here is what some of them have to say.
-
-Coca-Cola Beverages Zambia
-
-We have partnered with Fiscal Edge Solutions to handle our invoice fiscalization needs in Zambia and we have been very satisfied with the service. Their platform has allowed us to stay fully compliant with ZRA requirements through a seamless integration. We are happy to recommend Fiscal Edge Solutions as a reliable and capable fiscalization partner
-
-SANDVIK
-
-I am pleased to recommend Fiscal Edge Solutions who have been supporting us with their smart invoice fiscalisation solution for Zambia. Their API and service have made it simple for us to meet all ZRA compliance requirements without internal complexity... we confidently recommend Fiscal Edge Solutions to any business needing a dependable fiscalization partner in Zambia
-
-Adbims Sales and Distribution
-
-Fiscal Edge has been an incredible support company to us. If we were to describe them, we would say that they have consistently gone above and beyond in their service. Their response to our problems is always timely and we truly appreciate the dedication and support they provide.
-
-Dharti Technology
-
-In an era where digital transformation is not just a strategic advantage but a regulatory necessity, Fiscal Edge has proven to be an indispensable partner in navigating Zambia e-invoicing landscape. We highly recommend their platform to any organization seeking a reliable and forward-thinking e-invoicing solution.
-
-Learn More from Our Blog
-
-The latest news, technologies, and resources
-from our team.
-
-Fiscal Edge Solutions
-
-Integrating Your ERP with Fiscal Edge
-
-Integrating Fiscal Edge With Your ERP System
-
-Powering Growth for Businesses in Africa.
-
-Fiscal Edge is a growth engine for innovative, forward-looking organizations operating in Africa. Our system integrates with government e-invoicing system and support businesses across retail, hospitality, wholesale, and manufacturing sectors.
-
-As we grow, we're expanding to support other countries rolling out similar fiscal reforms, helping businesses of all sizes stay ahead of government tax compliance requirements in Africa.
-
-Send invoices or get tax-compliant
-in minutes.
-
-Whether you're looking for an invoice app to help manage your
-day-to-day billing or an integrated solution to stay compliant with
-tax authorities, Fiscal Edge is your competitive advantage.
-
-BOOK A DEMOSEE SOLUTION
-
-Get in touch or stay in the loop with company updates.
-
-Company
-
-Home
-
-About
-
-Solutions
-
-Pricing
-
-Teams
-
-Careers
-
-Socials
-
-Facebook
-
-Instagram
-
-Blog
-
-Linkedin
-
-Documentation
-
-Help Center
-
-Contact Us
-
-FAQs
-
-Privacy Policy
-
-Privacy Policy
-
-Create an invoice app company saas brand Kopelacode
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://sifobooks.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/0e1852fa-1a81-48d4-805f-e38d44f2b7c6).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+# SifoBooks
+
+SifoBooks is a standalone accounting, POS, inventory and business-management platform designed for Zambia and other African markets.
+
+The application is designed to run **without Base44**. It can run locally as a Windows desktop/offline POS application and can also be deployed as a self-hosted web application.
+
+## Architecture
+
+```
+                         SIFOBOOKS
+                            |
+              +-------------+-------------+
+              |                           |
+        Windows Desktop              Self-hosted SaaS
+              |                           |
+        Local SQLite                 Server database
+              |                           |
+        Offline POS               Web dashboard / API
+              |
+       Local printing & data
+              |
+        Optional cloud sync
+```
+
+### Desktop mode
+
+- Standalone Windows `.exe`
+- Local SQLite database
+- Works without GitHub, Base44 or an internet connection
+- Local data and storage
+- POS and inventory operations can continue offline
+- Local printing agents can be used
+- Database is stored under `data/`
+
+### Server mode
+
+- Self-hosted with Bun
+- Docker Compose deployment supported
+- Environment variables are controlled by the server owner
+- No Base44 runtime dependency
+- Authentication uses the application's own JWT implementation
+- File storage uses the application's local storage layer
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requirements:
+- Bun 1.3.x
+- Git
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+git clone https://github.com/pritchardsikazwe/sifobooks-3e453758.git
+cd sifobooks-3e453758
+bun install
+cp .env.example .env
+bun run dev
 ```
+
+## Production deployment
+
+Create a real `.env` on the server. Do not commit it.
+
+At minimum:
+
+```env
+DATABASE_PATH=data/sifobooks.db
+JWT_SECRET=generate-a-long-random-production-secret
+PORT=3000
+NODE_ENV=production
+```
+
+Then:
+
+```sh
+bun install --frozen-lockfile
+bun run build
+bun run start
+```
+
+Or with Docker Compose:
+
+```sh
+cp .env.example .env
+# edit .env and set a strong JWT_SECRET
+docker compose up -d
+```
+
+The persistent application data is mounted at `./data`.
+
+## Windows desktop build
+
+Build the portable Windows package from a Windows development machine:
+
+```sh
+bun install
+bun run build:desktop
+```
+
+The resulting `desktop-dist/` package contains:
+- `sifobooks.exe`
+- `client/`
+- `schema.sql`
+- `.env.example`
+- `start-sifobooks.bat`
+
+Copy the complete `desktop-dist/` folder to a Windows PC and run `sifobooks.exe`.
+
+On first launch, the desktop runtime creates `data/.jwt-secret` automatically when no `JWT_SECRET` is supplied. This keeps the authentication secret local to that installation instead of embedding a shared development secret.
+
+## Database
+
+The current desktop/server implementation uses the application's SQLite database layer and schema in `src/lib/db/`.
+
+The repository also contains historical Supabase migrations and compatibility shims from the migration period. They are retained until the migration is fully verified; they are not required by the standalone SQLite runtime.
+
+## Zambia functionality
+
+The application contains modules and foundations for:
+- Accounting and chart of accounts
+- Sales and invoicing
+- Purchases and suppliers
+- Inventory and warehouses
+- POS and cashier controls
+- VAT and tax configuration
+- ZRA Smart Invoice integration
+- Banking and reconciliation
+- Multi-company / branch structures
+- Restaurant and sector-specific ERP features
+- Reports and exports
+
+ZRA credentials, API secrets and other production credentials must be supplied through server-side environment variables or a secure secrets manager.
+
+## Migration principle
+
+Base44 is no longer part of the runtime architecture. Changes should be made in the Git repository and deployed from source.
+
+Before removing the historical Supabase migration files or changing database schemas, back up production data and verify all affected modules.
+
+
+## Repository verification and data tools
+
+Run the standalone dependency guard:
+
+```bash
+bun run scripts/standalone-check.ts
+```
+
+Create a safe SQLite backup:
+
+```bash
+bun run scripts/backup-db.ts
+```
+
+Restore a SQLite backup:
+
+```bash
+bun run scripts/restore-db.ts backups/sifobooks-YYYY-MM-DD.db
+```
+
+The repository also includes a provider-neutral `Dockerfile`, Docker Compose configuration, architecture documentation, and GitHub Actions CI. These files are packaging and verification options; they do not select or lock SifoBooks to a hosting provider.
+
+## What is intentionally not selected yet
+
+SifoBooks does not currently depend on a specific VPS, cloud provider, or managed database. Hosting, cloud database selection, and production sync can be decided after the standalone application is fully verified.

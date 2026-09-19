@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, monthRange } from "@/lib/reports";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { generateManagementInsight } from "@/lib/afs-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/reports/management-pack")({
   head: () => ({ meta: [{ title: "Monthly Management Pack — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -22,6 +24,7 @@ function ManagementPackPage() {
   const [cash, setCash] = useState<number>(0);
   const [insight, setInsight] = useState<string>("");
   const [aiBusy, setAIBusy] = useState(false);
+  const generateInsightFn = useServerFn(generateManagementInsight);
 
   useEffect(() => {
     (async () => {
@@ -77,20 +80,8 @@ function ManagementPackPage() {
         ap_total: ap.current + ap.d30 + ap.d60 + ap.d90,
         overdue_ar: ar.d30 + ar.d60 + ar.d90, overdue_ap: ap.d30 + ap.d60 + ap.d90,
       };
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": "" },
-        body: JSON.stringify({
-          model: "google/gemini-3.6-flash",
-          messages: [
-            { role: "system", content: "You are a Zambian CFO. Write 4-6 concise, plain-English insights for a monthly management pack. Cover profitability, cash, receivables/payables risk, and one recommendation. No markdown headings." },
-            { role: "user", content: `Financials for ${month}:\n${JSON.stringify(context, null, 2)}` },
-          ],
-        }),
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const j = await res.json();
-      setInsight(j.choices?.[0]?.message?.content ?? "");
+      const result = await generateInsightFn({ data: { context } });
+      setInsight(result.content);
     } catch (e: any) {
       // AI Gateway auth is server-side; fall back to a rule-based summary.
       setInsight(fallbackInsight({ month, ...totals, margin, cash, ar, ap }));
