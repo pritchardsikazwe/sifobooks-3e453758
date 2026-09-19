@@ -134,3 +134,30 @@ ZRA credentials, API secrets and other production credentials must be supplied t
 Base44 is no longer part of the runtime architecture. Changes should be made in the Git repository and deployed from source.
 
 Before removing the historical Supabase migration files or changing database schemas, back up production data and verify all affected modules.
+
+
+## Repository verification and data tools
+
+Run the standalone dependency guard:
+
+```bash
+bun run scripts/standalone-check.ts
+```
+
+Create a safe SQLite backup:
+
+```bash
+bun run scripts/backup-db.ts
+```
+
+Restore a SQLite backup:
+
+```bash
+bun run scripts/restore-db.ts backups/sifobooks-YYYY-MM-DD.db
+```
+
+The repository also includes a provider-neutral `Dockerfile`, Docker Compose configuration, architecture documentation, and GitHub Actions CI. These files are packaging and verification options; they do not select or lock SifoBooks to a hosting provider.
+
+## What is intentionally not selected yet
+
+SifoBooks does not currently depend on a specific VPS, cloud provider, or managed database. Hosting, cloud database selection, and production sync can be decided after the standalone application is fully verified.
