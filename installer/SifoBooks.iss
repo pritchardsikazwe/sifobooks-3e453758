@@ -23,7 +23,6 @@ WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 UninstallDisplayIcon={app}\{#MyAppExeName}
-SetupIconFile={app}\client\favicon.ico
 ChangesAssociations=no
 
 [Files]
