@@ -13,7 +13,8 @@
     "start": "bun dist/server/server.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:desktop": "bun run scripts/build-desktop.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

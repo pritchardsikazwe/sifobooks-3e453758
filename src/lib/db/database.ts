@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { readFileSync, mkdirSync } from "fs";
+import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 
 let db: Database | null = null;
@@ -16,9 +16,24 @@ export function getDb(): Database {
   return db;
 }
 
+function findSchemaSql(): string {
+  // Dev mode: schema.sql next to the source file
+  const devPath = join(import.meta.dir, "schema.sql");
+  if (existsSync(devPath)) return readFileSync(devPath, "utf8");
+
+  // Desktop mode: schema.sql in the working directory (next to the .exe)
+  const desktopPath = join(process.cwd(), "schema.sql");
+  if (existsSync(desktopPath)) return readFileSync(desktopPath, "utf8");
+
+  // Desktop mode: schema.sql in the data directory
+  const dataPath = join(process.cwd(), "data", "schema.sql");
+  if (existsSync(dataPath)) return readFileSync(dataPath, "utf8");
+
+  throw new Error("schema.sql not found. Expected next to source, executable, or in data/ directory.");
+}
+
 function initSchema(database: Database) {
-  const schemaPath = join(import.meta.dir, "schema.sql");
-  const schema = readFileSync(schemaPath, "utf8");
+  const schema = findSchemaSql();
   const statements = schema.split(/;\s*\n/).filter(s => s.trim() && !s.trim().startsWith("--"));
   for (const stmt of statements) {
     try {
