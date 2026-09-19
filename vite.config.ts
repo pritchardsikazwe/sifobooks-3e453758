@@ -6,12 +6,8 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  // Allow other computers on the same network to connect (multi-terminal mode).
-  // Run: bun run dev --host 0.0.0.0  →  others browse to http://<this-laptop-ip>:3000
-  server: {
-    host: true,
-    allowedHosts: true,
-  },
+  // Multi-terminal: run `bun run dev:lan` to bind 0.0.0.0 so other
+  // computers on the same network can connect to http://<this-laptop-ip>:3000
   plugins: [
     tanstackStart({
       // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
