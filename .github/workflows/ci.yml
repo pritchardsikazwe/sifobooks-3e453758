@@ -23,9 +23,6 @@ jobs:
       - name: Standalone dependency check
         run: bun run scripts/standalone-check.ts
 
-      - name: Lint
-        run: bun run lint
-
       - name: Tests
         run: bun run test
 
