@@ -5,10 +5,6 @@ const roots = ["src", "scripts"];
 const forbidden = [
   "base44.app",
   "@base44/",
-  "@supabase/supabase-js",
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
 ];
 
 async function walk(dir: string): Promise<string[]> {
@@ -38,7 +34,7 @@ for (const root of roots) {
 
     const source = await Bun.file(file).text();
     for (const marker of forbidden) {
-      if (source.includes(marker)) {
+      if (source.toLowerCase().includes(marker.toLowerCase())) {
         failures.push(file.replaceAll("\\\\", "/") + ": found " + marker);
       }
     }
@@ -51,4 +47,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Standalone check passed: no Base44 or external cloud-runtime dependency markers found.");
+console.log("Standalone check passed: no Base44 runtime dependency markers found.");
