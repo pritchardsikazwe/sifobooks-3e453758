@@ -49,3 +49,15 @@ jobs:
 
       - name: Build Windows desktop package
         run: bun run build:desktop
+
+      - name: Create portable Windows ZIP
+        shell: pwsh
+        run: Compress-Archive -Path desktop-dist\\* -DestinationPath SifoBooks-Windows-Portable.zip -Force
+
+      - name: Upload Windows portable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SifoBooks-Windows-Portable
+          path: SifoBooks-Windows-Portable.zip
+          if-no-files-found: error
+          retention-days: 14
