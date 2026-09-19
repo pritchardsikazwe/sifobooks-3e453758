@@ -5,6 +5,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - db_data:/app/data
     ports:
       - "3000:3000"
     environment:
@@ -12,3 +13,6 @@ services:
     env_file:
       - .env
     command: sh -c "bun install && bun run dev --host 0.0.0.0 --port 3000"
+
+volumes:
+  db_data:

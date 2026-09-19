@@ -4,13 +4,13 @@
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
   "secrets": [
     {
-      "name": "SUPABASE_SERVICE_ROLE_KEY",
-      "description": "Supabase service role key for server-side admin operations (bypasses RLS). Find it in your Supabase dashboard under Settings → API → service_role key.",
+      "name": "JWT_SECRET",
+      "description": "Secret key for JWT auth token signing/verification. A default dev value is in .env — replace with a strong random string for production.",
       "requiredAtBoot": false
     },
     {
       "name": "AI_API_KEY",
-      "description": "API key for the AI commentary feature (OpenAI-compatible endpoint). Get it from your AI provider (OpenAI, etc.).",
+      "description": "API key for the AI commentary feature (OpenAI-compatible endpoint). Optional — the app works without it, AI features will show fallback messages.",
       "requiredAtBoot": false
     }
   ]
