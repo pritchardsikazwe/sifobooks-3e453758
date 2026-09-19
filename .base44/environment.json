@@ -1,0 +1,17 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "description": "Supabase service role key for server-side admin operations (bypasses RLS). Find it in your Supabase dashboard under Settings → API → service_role key.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "AI_API_KEY",
+      "description": "API key for the AI commentary feature (OpenAI-compatible endpoint). Get it from your AI provider (OpenAI, etc.).",
+      "requiredAtBoot": false
+    }
+  ]
+}

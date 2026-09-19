@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PublicJobsRouteImport } from './routes/public-jobs'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LandingWhiteboardRouteImport } from './routes/landing-whiteboard'
 import { Route as InteractivePresentationRouteImport } from './routes/interactive-presentation'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -122,7 +121,6 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as DemoIndustryIndexRouteImport } from './routes/demo.$industry.index'
 import { Route as WorkerWIndexRouteImport } from './routes/_worker/w.index'
 import { Route as AuthenticatedRestaurantIndexRouteImport } from './routes/_authenticated/restaurant.index'
@@ -270,9 +268,6 @@ import { Route as AuthenticatedHotelAccountingRouteImport } from './routes/_auth
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as AuthenticatedBillPaymentDetailIdRouteImport } from './routes/_authenticated/bill-payment-detail.$id'
 import { Route as AuthenticatedBillDetailIdRouteImport } from './routes/_authenticated/bill-detail.$id'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedTeachingMaterialsIdQuoteRouteImport } from './routes/_authenticated/teaching-materials.$id.quote'
 import { Route as AuthenticatedJournalEntryEditIdRouteImport } from './routes/_authenticated/journal-entry.edit.$id'
 
@@ -289,11 +284,6 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PublicJobsRoute = PublicJobsRouteImport.update({
   id: '/public-jobs',
   path: '/public-jobs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LandingWhiteboardRoute = LandingWhiteboardRouteImport.update({
@@ -885,12 +875,6 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const DemoIndustryIndexRoute = DemoIndustryIndexRouteImport.update({
   id: '/demo/$industry/',
   path: '/demo/$industry/',
@@ -1744,21 +1728,6 @@ const AuthenticatedBillDetailIdRoute =
     path: '/bill-detail/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedTeachingMaterialsIdQuoteRoute =
   AuthenticatedTeachingMaterialsIdQuoteRouteImport.update({
     id: '/$id/quote',
@@ -1777,11 +1746,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/interactive-presentation': typeof InteractivePresentationRoute
   '/landing-whiteboard': typeof LandingWhiteboardRoute
-  '/mcp': typeof McpRoute
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
@@ -1885,7 +1852,6 @@ export interface FileRoutesByFullPath {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo/': typeof DemoIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
@@ -2035,19 +2001,15 @@ export interface FileRoutesByFullPath {
   '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/interactive-presentation': typeof InteractivePresentationRoute
   '/landing-whiteboard': typeof LandingWhiteboardRoute
-  '/mcp': typeof McpRoute
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
@@ -2145,7 +2107,6 @@ export interface FileRoutesByTo {
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo': typeof DemoIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRoute
@@ -2295,8 +2256,6 @@ export interface FileRoutesByTo {
   '/demo/$industry': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -2306,11 +2265,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/interactive-presentation': typeof InteractivePresentationRoute
   '/landing-whiteboard': typeof LandingWhiteboardRoute
-  '/mcp': typeof McpRoute
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
@@ -2414,7 +2371,6 @@ export interface FileRoutesById {
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/workspace': typeof AuthenticatedWorkspaceRoute
   '/demo/': typeof DemoIndexRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/_authenticated/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRoute
@@ -2564,8 +2520,6 @@ export interface FileRoutesById {
   '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/_authenticated/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
   '/_authenticated/teaching-materials/$id/quote': typeof AuthenticatedTeachingMaterialsIdQuoteRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2574,11 +2528,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/interactive-presentation'
     | '/landing-whiteboard'
-    | '/mcp'
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/approvals'
     | '/attendance'
@@ -2682,7 +2634,6 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/workspace'
     | '/demo/'
-    | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
     | '/customers/$id'
@@ -2832,19 +2783,15 @@ export interface FileRouteTypes {
     | '/demo/$industry/'
     | '/journal-entry/edit/$id'
     | '/teaching-materials/$id/quote'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/interactive-presentation'
     | '/landing-whiteboard'
-    | '/mcp'
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/approvals'
     | '/attendance'
@@ -2942,7 +2889,6 @@ export interface FileRouteTypes {
     | '/workshops'
     | '/workspace'
     | '/demo'
-    | '/.lovable/oauth/consent'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
     | '/customers/$id'
@@ -3092,8 +3038,6 @@ export interface FileRouteTypes {
     | '/demo/$industry'
     | '/journal-entry/edit/$id'
     | '/teaching-materials/$id/quote'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -3102,11 +3046,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/interactive-presentation'
     | '/landing-whiteboard'
-    | '/mcp'
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/approvals'
     | '/_authenticated/attendance'
@@ -3210,7 +3152,6 @@ export interface FileRouteTypes {
     | '/_authenticated/workshops'
     | '/_authenticated/workspace'
     | '/demo/'
-    | '/.lovable/oauth/consent'
     | '/_authenticated/bill-detail/$id'
     | '/_authenticated/bill-payment-detail/$id'
     | '/_authenticated/customers/$id'
@@ -3360,8 +3301,6 @@ export interface FileRouteTypes {
     | '/demo/$industry/'
     | '/_authenticated/journal-entry/edit/$id'
     | '/_authenticated/teaching-materials/$id/quote'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -3371,18 +3310,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   InteractivePresentationRoute: typeof InteractivePresentationRoute
   LandingWhiteboardRoute: typeof LandingWhiteboardRoute
-  McpRoute: typeof McpRoute
   PublicJobsRoute: typeof PublicJobsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DemoIndexRoute: typeof DemoIndexRoute
-  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPrintingJobsRoute: typeof ApiPrintingJobsRoute
   DemoIndustrySectionRoute: typeof DemoIndustrySectionRoute
   DemoIndustryIndexRoute: typeof DemoIndustryIndexRoute
-  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
-  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -3406,13 +3340,6 @@ declare module '@tanstack/react-router' {
       path: '/public-jobs'
       fullPath: '/public-jobs'
       preLoaderRoute: typeof PublicJobsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/landing-whiteboard': {
@@ -4177,13 +4104,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/demo/$industry/': {
       id: '/demo/$industry/'
@@ -5214,27 +5134,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBillDetailIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/teaching-materials/$id/quote': {
       id: '/_authenticated/teaching-materials/$id/quote'
       path: '/$id/quote'
@@ -5908,19 +5807,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   InteractivePresentationRoute: InteractivePresentationRoute,
   LandingWhiteboardRoute: LandingWhiteboardRoute,
-  McpRoute: McpRoute,
   PublicJobsRoute: PublicJobsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  Char91DotwellKnownChar93OauthProtectedResourceRoute:
-    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DemoIndexRoute: DemoIndexRoute,
-  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPrintingJobsRoute: ApiPrintingJobsRoute,
   DemoIndustrySectionRoute: DemoIndustrySectionRoute,
   DemoIndustryIndexRoute: DemoIndustryIndexRoute,
-  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
-  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

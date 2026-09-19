@@ -1,21 +1,20 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, nitro (build-only using cloudflare as a default target),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
-import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
   plugins: [
-    mcpPlugin(),
+    tanstackStart({
+      // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
+      // nitro/vite builds from this
+      server: { entry: "server" },
+    }),
+    react(),
+    tailwindcss(),
+    tsConfigPaths(),
     VitePWA({
       strategies: "generateSW",
       registerType: "autoUpdate",
@@ -30,7 +29,7 @@ export default defineConfig({
         globDirectory: "dist/client",
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff,woff2}"],
         navigateFallback: "/",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/lovable\//],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
         // Adds the SKIP_WAITING message listener used by the in-app update prompt.
         importScripts: ["/sw-skip-waiting.js"],
         cleanupOutdatedCaches: true,
