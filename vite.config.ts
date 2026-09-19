@@ -10,9 +10,9 @@ export default defineConfig({
   // computers on the same network can connect to http://<this-laptop-ip>:3000
   plugins: [
     tanstackStart({
-      // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-      // nitro/vite builds from this
-      server: { entry: "server" },
+      // The local app relies on browser-side SQLite server functions; avoid the
+      // incompatible SSR virtual-module path while preserving all client features.
+      spa: { enabled: true },
     }),
     react(),
     tailwindcss(),
