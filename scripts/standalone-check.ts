@@ -2,15 +2,13 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const roots = ["src", "scripts"];
-const forbiddenRuntimeMarkers = [
-  /base44\.app/i,
-  /https?:\/\/[^\s"'`]*base44/i,
-  /@base44\//i,
-  /from\s+["']@supabase\/supabase-js["']/i,
-  /from\s+["']supabase["']/i,
-  /VITE_SUPABASE_URL/i,
-  /VITE_SUPABASE_ANON_KEY/i,
-  /SUPABASE_SERVICE_ROLE_KEY/i,
+const forbidden = [
+  "base44.app",
+  "@base44/",
+  "@supabase/supabase-js",
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
 ];
 
 async function walk(dir: string): Promise<string[]> {
@@ -39,9 +37,9 @@ for (const root of roots) {
     if (!/\.(ts|tsx|js|mjs|cjs|json|toml|yaml|yml)$/.test(file)) continue;
 
     const source = await Bun.file(file).text();
-    for (const pattern of forbiddenRuntimeMarkers) {
-      if (pattern.test(source)) {
-        failures.push(file.replaceAll("\\\\", "/") + ": matched " + pattern);
+    for (const marker of forbidden) {
+      if (source.includes(marker)) {
+        failures.push(file.replaceAll("\\\\", "/") + ": found " + marker);
       }
     }
   }
