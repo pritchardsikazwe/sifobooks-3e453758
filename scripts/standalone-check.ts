@@ -37,6 +37,7 @@ for (const root of roots) {
   }
 
   for (const file of files) {
+    if (file === join("scripts", "standalone-check.ts")) continue;
     if (!/\.(ts|tsx|js|mjs|cjs|json|toml|yaml|yml)$/.test(file)) continue;
     const source = await Bun.file(file).text();
 
