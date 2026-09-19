@@ -1,0 +1,99 @@
+import type { ReactNode } from "react";
+import { Download, Mail, Pencil, Printer, Send, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export type SifoDocumentLine = {
+  code?: ReactNode;
+  description: ReactNode;
+  quantity?: ReactNode;
+  unit?: ReactNode;
+  unitPrice?: ReactNode;
+  discount?: ReactNode;
+  tax?: ReactNode;
+  total: ReactNode;
+};
+
+export type SifoDocumentViewerProps = {
+  documentType: string;
+  documentNumber: string;
+  status?: string;
+  companyName: string;
+  companyDetails?: ReactNode;
+  logo?: ReactNode;
+  customerLabel?: string;
+  customer?: ReactNode;
+  documentDate?: ReactNode;
+  dueDate?: ReactNode;
+  reference?: ReactNode;
+  branch?: ReactNode;
+  lines: SifoDocumentLine[];
+  totals: Array<{ label: string; value: ReactNode; emphasis?: boolean }>;
+  notes?: ReactNode;
+  terms?: ReactNode;
+  footer?: ReactNode;
+  onEdit?: () => void;
+  onPrint?: () => void;
+  onPdf?: () => void;
+  onEmail?: () => void;
+  onSend?: () => void;
+  onCancel?: () => void;
+};
+
+export function SifoDocumentViewer({
+  documentType, documentNumber, status, companyName, companyDetails, logo,
+  customerLabel = "Bill To", customer, documentDate, dueDate, reference, branch,
+  lines, totals, notes, terms, footer, onEdit, onPrint, onPdf, onEmail, onSend, onCancel,
+}: SifoDocumentViewerProps) {
+  return (
+    <section className="sifo-document-page">
+      <header className="sifo-page-header print:hidden">
+        <div className="min-w-0">
+          <div className="sifo-breadcrumb">Documents / {documentType}</div>
+          <h1>{documentType} <span className="font-normal text-muted-foreground">#{documentNumber}</span></h1>
+          {status && <span className="sifo-document-status">{status}</span>}
+        </div>
+        <div className="sifo-page-actions">
+          {onEdit && <Button variant="outline" className="h-9" onClick={onEdit}><Pencil className="mr-1.5 h-4 w-4" />Edit</Button>}
+          {onPrint && <Button variant="outline" className="h-9" onClick={onPrint}><Printer className="mr-1.5 h-4 w-4" />Print</Button>}
+          {onPdf && <Button variant="outline" className="h-9" onClick={onPdf}><Download className="mr-1.5 h-4 w-4" />PDF</Button>}
+          {onEmail && <Button variant="outline" className="h-9" onClick={onEmail}><Mail className="mr-1.5 h-4 w-4" />Email</Button>}
+          {onSend && <Button className="h-9" onClick={onSend}><Send className="mr-1.5 h-4 w-4" />Send</Button>}
+          {onCancel && <Button variant="ghost" className="h-9 text-destructive" onClick={onCancel}><XCircle className="mr-1.5 h-4 w-4" />Cancel</Button>}
+        </div>
+      </header>
+
+      <article className="sifo-document-paper">
+        <div className="sifo-document-topline" />
+        <header className="sifo-document-header">
+          <div className="sifo-document-company">
+            {logo && <div className="sifo-document-logo">{logo}</div>}
+            <div><h2>{companyName}</h2>{companyDetails && <div className="sifo-document-company-details">{companyDetails}</div>}</div>
+          </div>
+          <div className="sifo-document-title"><div>{documentType}</div><strong>#{documentNumber}</strong></div>
+        </header>
+
+        <div className="sifo-document-meta">
+          <div><span>{customerLabel}</span><strong>{customer ?? "—"}</strong></div>
+          <div><span>Date</span><strong>{documentDate ?? "—"}</strong></div>
+          <div><span>Due Date</span><strong>{dueDate ?? "—"}</strong></div>
+          <div><span>Reference</span><strong>{reference ?? "—"}</strong></div>
+          <div><span>Branch</span><strong>{branch ?? "—"}</strong></div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="sifo-document-table">
+            <thead><tr><th>Code</th><th>Description</th><th className="text-right">Qty</th><th>Unit</th><th className="text-right">Unit Price</th><th className="text-right">Discount</th><th className="text-right">Tax</th><th className="text-right">Total</th></tr></thead>
+            <tbody>{lines.map((line, i) => <tr key={i}><td>{line.code ?? "—"}</td><td>{line.description}</td><td className="text-right">{line.quantity ?? "—"}</td><td>{line.unit ?? "—"}</td><td className="text-right">{line.unitPrice ?? "—"}</td><td className="text-right">{line.discount ?? "—"}</td><td className="text-right">{line.tax ?? "—"}</td><td className="text-right font-medium">{line.total}</td></tr>)}</tbody>
+          </table>
+        </div>
+
+        <div className="sifo-document-bottom">
+          <div className="sifo-document-notes">{notes && <><h3>Notes</h3><div>{notes}</div></>}{terms && <><h3>Terms & Conditions</h3><div>{terms}</div></>}</div>
+          <div className="sifo-document-totals">{totals.map(t => <div key={t.label} className={t.emphasis ? "sifo-document-total emphasis" : "sifo-document-total"}><span>{t.label}</span><strong>{t.value}</strong></div>)}</div>
+        </div>
+
+        <footer className="sifo-document-footer">{footer ?? "Generated by SifoBooks"}</footer>
+      </article>
+    </section>
+  );
+}
