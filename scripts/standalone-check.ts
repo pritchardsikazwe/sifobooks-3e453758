@@ -2,17 +2,15 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const roots = ["src", "scripts"];
-const forbidden = [
-  /base44/i,
+const forbiddenRuntimeMarkers = [
   /base44\.app/i,
-  /VITE_SUPABASE_/i,
-  /SUPABASE_URL/i,
-  /SUPABASE_ANON_KEY/i,
-];
-
-const allowedSupabasePaths = [
-  "src/integrations/supabase/",
-  "src/lib/db/",
+  /https?:\/\/[^\s"'`]*base44/i,
+  /@base44\//i,
+  /from\s+["']@supabase\/supabase-js["']/i,
+  /from\s+["']supabase["']/i,
+  /VITE_SUPABASE_URL/i,
+  /VITE_SUPABASE_ANON_KEY/i,
+  /SUPABASE_SERVICE_ROLE_KEY/i,
 ];
 
 async function walk(dir: string): Promise<string[]> {
@@ -39,18 +37,11 @@ for (const root of roots) {
   for (const file of files) {
     if (file === join("scripts", "standalone-check.ts")) continue;
     if (!/\.(ts|tsx|js|mjs|cjs|json|toml|yaml|yml)$/.test(file)) continue;
+
     const source = await Bun.file(file).text();
-
-    for (const pattern of forbidden) {
-      if (!pattern.test(source)) continue;
-
-      const relative = file.replaceAll("\\\\", "/");
-      const isAllowedCompatibility =
-        pattern.source.includes("SUPABASE") &&
-        allowedSupabasePaths.some((prefix) => relative.startsWith(prefix));
-
-      if (!isAllowedCompatibility) {
-        failures.push(relative + ": matched " + pattern);
+    for (const pattern of forbiddenRuntimeMarkers) {
+      if (pattern.test(source)) {
+        failures.push(file.replaceAll("\\\\", "/") + ": matched " + pattern);
       }
     }
   }
@@ -62,4 +53,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Standalone check passed.");
+console.log("Standalone check passed: no Base44 or external cloud-runtime dependency markers found.");
