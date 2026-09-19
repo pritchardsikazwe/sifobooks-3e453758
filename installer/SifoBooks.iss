@@ -15,7 +15,7 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\SifoBooks
 DefaultGroupName=SifoBooks
-OutputDir=installer-dist
+OutputDir=..\installer-dist
 OutputBaseFilename=SifoBooks-Setup
 Compression=lzma2
 SolidCompression=yes
@@ -27,10 +27,10 @@ SetupIconFile={app}\client\favicon.ico
 ChangesAssociations=no
 
 [Files]
-Source: "desktop-dist\sifobooks.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "desktop-dist\schema.sql"; DestDir: "{app}"; Flags: ignoreversion
-Source: "desktop-dist\client\*"; DestDir: "{app}\client"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "desktop-dist\start-sifobooks.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\desktop-dist\sifobooks.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\desktop-dist\schema.sql"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\desktop-dist\client\*"; DestDir: "{app}\client"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\desktop-dist\start-sifobooks.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 Name: "{app}\data"
