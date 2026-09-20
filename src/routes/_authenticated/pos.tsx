@@ -330,7 +330,7 @@ function RetailPos() {
           const zraData = response?.data?.receipt ?? response?.data ?? {};
           if (response?.resultCd === "000") {
             snapshot.zra = {
-              status: "submitted",
+              status: zraResult?.fiscalState === "FISCALIZED" ? "fiscalized" : "submitted",
               receiptNumber: zraData.rcptNo ?? null,
               internalData: zraData.intrlData ?? null,
               receiptSignature: zraData.rcptSign ?? null,
