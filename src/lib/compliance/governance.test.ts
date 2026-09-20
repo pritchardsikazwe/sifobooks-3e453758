@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { assertFiscalTransition } from "@/lib/compliance/governance";
+import { assertFiscalTransition } from "@/lib/compliance/fiscal-state";
 
 describe("fiscal transaction state machine", () => {
   test("allows posted -> submitted", () => {

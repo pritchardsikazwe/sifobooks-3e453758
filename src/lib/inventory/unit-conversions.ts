@@ -1,4 +1,4 @@
-import { getDb, generateUUID } from "@/lib/db/database";
+const generateId = () => crypto.randomUUID();
 
 export type UnitConversion = {
   id: string;
@@ -78,7 +78,7 @@ export function convertFromBaseUnit(
   };
 }
 
-export function saveUnitConversion(args: {
+export async function saveUnitConversion(args: {
   userId: string;
   itemId: string;
   fromUnit: string;
@@ -86,6 +86,7 @@ export function saveUnitConversion(args: {
   multiplier: number;
   actorId?: string | null;
 }) {
+  const { getDb } = await import("@/lib/db/database");
   const db = getDb();
   const fromUnit = normalizeUnit(args.fromUnit);
   const toUnit = normalizeUnit(args.toUnit);
@@ -97,7 +98,7 @@ export function saveUnitConversion(args: {
   const item = db.prepare("SELECT id,base_unit FROM stock_items WHERE id=? AND user_id=? LIMIT 1").get(args.itemId,args.userId) as any;
   if (!item) throw new Error("ITEM_NOT_FOUND");
 
-  const id = generateUUID();
+  const id = generateId();
   db.prepare(
     "INSERT INTO item_unit_conversions (id,user_id,item_id,from_unit,to_unit,multiplier,is_active) VALUES (?,?,?,?,?,?,1) ON CONFLICT(user_id,item_id,from_unit,to_unit) DO UPDATE SET multiplier=excluded.multiplier,is_active=1,updated_at=datetime('now')",
   ).run(id,args.userId,args.itemId,fromUnit,toUnit,multiplier);
@@ -108,12 +109,13 @@ export function saveUnitConversion(args: {
 
   db.prepare(
     "INSERT INTO item_unit_conversion_audit (id,user_id,item_id,conversion_id,action,from_unit,to_unit,multiplier,actor_id) VALUES (?,?,?,?,?,?,?,?,?)",
-  ).run(generateUUID(),args.userId,args.itemId,row?.id ?? id,"UPSERT",fromUnit,toUnit,multiplier,args.actorId ?? args.userId);
+  ).run(generateId(),args.userId,args.itemId,row?.id ?? id,"UPSERT",fromUnit,toUnit,multiplier,args.actorId ?? args.userId);
 
   return { id: row?.id ?? id, itemId: args.itemId, fromUnit, toUnit, multiplier };
 }
 
-export function listUnitConversions(userId: string, itemId: string) {
+export async function listUnitConversions(userId: string, itemId: string) {
+  const { getDb } = await import("@/lib/db/database");
   const db = getDb();
   return db.prepare(
     "SELECT * FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 ORDER BY from_unit,to_unit",
