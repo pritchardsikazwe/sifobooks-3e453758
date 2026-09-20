@@ -2938,3 +2938,43 @@ SELECT ba.id AS bank_account_id, ba.user_id, ba.name, ba.currency,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND NOT COALESCE(bt.reconciled,0)) AS unreconciled_count,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND COALESCE(bt.status,'unallocated')='unallocated') AS unallocated_count
 FROM bank_accounts ba;
+-- ZRA Smart Invoice VSDC response metadata. ALTER statements are idempotent
+-- through the database initializer, which ignores duplicate-column errors.
+ALTER TABLE zra_invoice_queue ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE zra_invoice_queue ADD COLUMN last_attempt_at TEXT;
+ALTER TABLE zra_invoice_queue ADD COLUMN zra_receipt_number TEXT;
+ALTER TABLE zra_invoice_queue ADD COLUMN zra_internal_data TEXT;
+ALTER TABLE zra_invoice_queue ADD COLUMN zra_receipt_signature TEXT;
+ALTER TABLE zra_invoice_queue ADD COLUMN zra_qr_url TEXT;
+ALTER TABLE zra_invoice_queue ADD COLUMN error_code TEXT;
+
+CREATE TABLE IF NOT EXISTS zra_standard_codes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  branch_id TEXT,
+  code_class TEXT NOT NULL,
+  code TEXT NOT NULL,
+  name TEXT,
+  description TEXT,
+  raw_data TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, branch_id, code_class, code)
+);
+
+CREATE TABLE IF NOT EXISTS zra_item_classes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  branch_id TEXT,
+  item_cls_cd TEXT NOT NULL,
+  item_cls_nm TEXT,
+  item_cls_lvl INTEGER,
+  tax_ty_cd TEXT,
+  use_yn TEXT,
+  raw_data TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, branch_id, item_cls_cd)
+);
+
+CREATE INDEX IF NOT EXISTS idx_zra_invoice_queue_status ON zra_invoice_queue(user_id, status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_zra_standard_codes_lookup ON zra_standard_codes(user_id, branch_id, code_class, code);
+CREATE INDEX IF NOT EXISTS idx_zra_item_classes_lookup ON zra_item_classes(user_id, branch_id, item_cls_cd);
