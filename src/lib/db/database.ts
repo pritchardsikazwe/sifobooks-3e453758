@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
+import { readdirSync } from "fs";
 
 let db: Database | null = null;
 const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobooks.db");
@@ -13,6 +14,7 @@ export function getDb(): Database {
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
     runCompatibilityMigrations(db);
+    runSqlMigrations(db);
   }
   return db;
 }
@@ -108,4 +110,35 @@ function runCompatibilityMigrations(database: Database) {
 
 function getTableColumns(database: Database, table: string): string[] {
   return (database.prepare(`PRAGMA table_info("${table}")`).all() as any[]).map((row) => String(row.name));
+}
+
+
+function runSqlMigrations(database: Database) {
+  database.exec(
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );`,
+  );
+  const dir = join(process.cwd(), "src", "lib", "db", "migrations");
+  if (!existsSync(dir)) return;
+  const applied = new Set(
+    (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
+  );
+  const files = readdirSync(dir).filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort();
+  for (const file of files) {
+    if (applied.has(file)) continue;
+    const sql = readFileSync(join(dir, file), "utf8");
+    const tx = database.transaction(() => {
+      const statements = sql.split(/;\\s*\\n/).map((s) => s.trim()).filter(Boolean);
+      for (const statement of statements) database.exec(statement + ";");
+      database.prepare("INSERT INTO schema_migrations (id) VALUES (?)").run(file);
+    });
+    try {
+      tx();
+    } catch (error: any) {
+      console.error("[db] Migration failed:", file, error?.message?.slice(0, 500));
+      throw error;
+    }
+  }
 }
