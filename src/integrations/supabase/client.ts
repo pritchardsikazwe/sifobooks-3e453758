@@ -89,7 +89,7 @@ class RpcBuilder {
     this.name = name; this.args = args;
   }
   then(onFulfilled?: (value: any) => any, onRejected?: (reason: any) => any) {
-    return rpcFn({ data: { name: this.name, args: this.args } } as any).then(
+    return rpcFn({ data: { name: this.name, args: this.args, authToken: getToken() } } as any).then(
       (result: any) => onFulfilled ? onFulfilled(result) : result,
       (err: any) => onRejected ? onRejected(err) : err
     );
