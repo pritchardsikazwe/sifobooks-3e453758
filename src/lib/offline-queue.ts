@@ -283,6 +283,28 @@ export async function drainQueue(): Promise<{ ok: number; failed: number }> {
         } else {
           ok++;
           it.serverId = (data as any)?.id;
+
+          // A POS checkout can be accepted by SifoBooks while its ZRA VSDC
+          // submission was waiting for connectivity. Once the POS RPC reaches
+          // the server, submit that exact sale to VSDC. A ZRA failure is kept
+          // in the SifoBooks ZRA queue and must never make an already-accepted
+          // accounting sale fail or replay.
+          if (it.kind === "rpc" && it.table === "pos_checkout") {
+            try {
+              const { zraSubmitPosSaleFn } = await import("@/lib/zra/server");
+              const { data: auth } = await supabase.auth.getUser();
+              const saleId = (data as any)?.id;
+              const saleNo = it.payload?._sale?.sale_no;
+              if (auth.user && saleId && saleNo) {
+                await zraSubmitPosSaleFn({ data: { userId: auth.user.id, saleId, saleNo, terminalId: (it.payload?._sale?.register_id ?? null) } });
+              }
+            } catch (zraError) {
+              // The accepted POS transaction remains synced. zra_invoice_queue
+              // records the VSDC failure when the submission reaches the server.
+              console.warn("[offline-queue] ZRA submission deferred:", zraError);
+            }
+          }
+
           if (it.id != null) await removeItem(it.id);
         }
       } catch (e: any) {

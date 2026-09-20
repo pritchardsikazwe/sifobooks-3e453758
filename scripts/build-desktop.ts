@@ -1,18 +1,11 @@
 /**
- * Build script for the SifoBooks desktop Windows .exe package.
+ * Build the standalone SifoBooks Windows package.
  *
- * Usage:  bun run build:desktop
- *
- * Steps:
- *   1. Build the web app (vite build → dist/client + dist/server)
- *   2. Compile the desktop server to a standalone Windows .exe
- *   3. Copy client assets, schema.sql, and config to the output folder
- *
- * The resulting desktop-dist/ folder is fully portable — copy it to any
- * Windows machine and double-click sifobooks.exe to run.
+ * Output: desktop-dist/ with the executable, browser assets, schema,
+ * one-click launcher and first-run instructions.
  */
 
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, rmSync } from "fs";
 import { join } from "path";
 import { $ } from "bun";
 
@@ -25,66 +18,55 @@ function copyDir(src: string, dest: string) {
   for (const entry of readdirSync(src)) {
     const srcPath = join(src, entry);
     const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) {
-      copyDir(srcPath, destPath);
-    } else {
-      copyFileSync(srcPath, destPath);
-    }
+    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
+    else copyFileSync(srcPath, destPath);
   }
 }
 
-// ── Step 1: Build the web app ─────────────────────────────────────────
-console.log("\n📦 Step 1/4: Building web app (vite build)...\n");
+console.log("\nStep 1/4: Building web application...\n");
 await $`bun run build`;
 
-// ── Step 2: Compile the desktop server ────────────────────────────────
-console.log("\n📦 Step 2/4: Compiling desktop server to Windows .exe...\n");
+console.log("\nStep 2/4: Compiling standalone Windows executable...\n");
 mkdirSync(OUT_DIR, { recursive: true });
 await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, "sifobooks.exe")}`;
 
-// ── Step 3: Copy client assets ────────────────────────────────────────
-console.log("\n📦 Step 3/4: Copying client assets...\n");
-// Clean and copy
-if (existsSync(CLIENT_DIR)) {
-  await $`rm -rf ${CLIENT_DIR}`;
-}
+console.log("\nStep 3/4: Copying application files...\n");
+if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
 copyDir("dist/client", CLIENT_DIR);
-
-// ── Step 4: Copy schema.sql and create config files ───────────────────
-console.log("\n📦 Step 4/4: Copying schema and creating config...\n");
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
+copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
 
-// Safe desktop configuration. The executable creates a persistent local JWT
-// secret in data/.jwt-secret on first launch, so no production secret is
-// embedded in the package.
-writeFileSync(
-  join(OUT_DIR, ".env.example"),
-  [
-    "DATABASE_PATH=data/sifobooks.db",
-    "PORT=3000",
-    "",
-  ].join("\n"),
-);
+writeFileSync(join(OUT_DIR, ".env.example"), [
+  "# Optional desktop configuration",
+  "DATABASE_PATH=data/sifobooks.db",
+  "PORT=3000",
+  "",
+].join("\n"));
 
-// Windows launcher batch file
-writeFileSync(
-  join(OUT_DIR, "start-sifobooks.bat"),
-  ["@echo off", "cd /d \"%~dp0\"", "start \"\" sifobooks.exe", ""].join("\r\n"),
-);
+writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
+  "@echo off",
+  "cd /d \"%~dp0\"",
+  "start \"\" sifobooks.exe",
+  "",
+].join("\r\n"));
 
-// ── Done ──────────────────────────────────────────────────────────────
-console.log("");
-console.log("  ╔══════════════════════════════════════════════════╗");
-console.log("  ║  ✅ Desktop package ready!                      ║");
-console.log(`  ║  Output: ${OUT_DIR}/                              ║`);
-console.log("  ╠══════════════════════════════════════════════════╣");
-console.log(`  ║  ${OUT_DIR}/sifobooks.exe   ← double-click to run ║`);
-console.log(`  ║  ${OUT_DIR}/client/         ← web assets          ║`);
-console.log(`  ║  ${OUT_DIR}/schema.sql      ← database schema     ║`);
-console.log(`  ║  ${OUT_DIR}/.env            ← configuration       ║`);
-console.log("  ╚══════════════════════════════════════════════════╝");
-console.log("");
-console.log("  Copy the entire desktop-dist/ folder to your Windows");
-console.log("  machine and run sifobooks.exe (or start-sifobooks.bat).");
-console.log("  The app opens at http://localhost:3000 automatically.");
-console.log("");
+writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
+  "SIFOBOOKS - STANDALONE WINDOWS EDITION",
+  "",
+  "1. Keep this entire folder together.",
+  "2. Double-click start-sifobooks.bat.",
+  "3. SifoBooks starts a local server and opens your browser.",
+  "4. The application runs at http://localhost:3000.",
+  "5. Your SQLite database is created at data\\sifobooks.db.",
+  "6. Do not delete the data folder - it contains company data.",
+  "7. To move SifoBooks to another PC, copy the entire folder including data.",
+  "8. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required.",
+  "",
+  "IMPORTANT: Keep the data folder when moving an existing installation.",
+  "",
+].join("\r\n"));
+
+console.log("\nStep 4/4: Standalone package ready.");
+console.log("Copy the complete desktop-dist/ folder to a Windows PC.");
+console.log("Run start-sifobooks.bat or sifobooks.exe.");
+console.log("SifoBooks opens at http://localhost:3000.");

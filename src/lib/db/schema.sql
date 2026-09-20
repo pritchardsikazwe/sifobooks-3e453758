@@ -2679,7 +2679,18 @@ CREATE TABLE IF NOT EXISTS "stock_items" (
   "warehouse_id" TEXT,
   "branch_id" TEXT,
   "brand" TEXT,
-  "source_unit" TEXT
+  "source_unit" TEXT,
+  "zra_item_code" TEXT,
+  "zra_item_class_code" TEXT,
+  "zra_item_type_code" TEXT,
+  "zra_origin_country_code" TEXT,
+  "zra_pkg_unit_code" TEXT,
+  "zra_qty_unit_code" TEXT,
+  "zra_vat_category_code" TEXT,
+  "zra_tax_rate" REAL,
+  "zra_sync_status" TEXT NOT NULL DEFAULT 'unmapped',
+  "zra_last_sync_at" TEXT,
+  "zra_raw_data" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "stock_movements" (
@@ -2904,6 +2915,13 @@ CREATE TABLE IF NOT EXISTS "zra_invoice_queue" (
   "response_code" TEXT,
   "response_message" TEXT,
   "payload" TEXT,
+  "attempt_count" INTEGER NOT NULL DEFAULT 0,
+  "last_attempt_at" TEXT,
+  "zra_receipt_number" TEXT,
+  "zra_internal_data" TEXT,
+  "zra_receipt_signature" TEXT,
+  "zra_qr_url" TEXT,
+  "error_code" TEXT,
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -2938,3 +2956,34 @@ SELECT ba.id AS bank_account_id, ba.user_id, ba.name, ba.currency,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND NOT COALESCE(bt.reconciled,0)) AS unreconciled_count,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND COALESCE(bt.status,'unallocated')='unallocated') AS unallocated_count
 FROM bank_accounts ba;
+
+CREATE TABLE IF NOT EXISTS zra_standard_codes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  branch_id TEXT,
+  code_class TEXT NOT NULL,
+  code TEXT NOT NULL,
+  name TEXT,
+  description TEXT,
+  raw_data TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, branch_id, code_class, code)
+);
+
+CREATE TABLE IF NOT EXISTS zra_item_classes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  branch_id TEXT,
+  item_cls_cd TEXT NOT NULL,
+  item_cls_nm TEXT,
+  item_cls_lvl INTEGER,
+  tax_ty_cd TEXT,
+  use_yn TEXT,
+  raw_data TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, branch_id, item_cls_cd)
+);
+
+CREATE INDEX IF NOT EXISTS idx_zra_invoice_queue_status ON zra_invoice_queue(user_id, status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_zra_standard_codes_lookup ON zra_standard_codes(user_id, branch_id, code_class, code);
+CREATE INDEX IF NOT EXISTS idx_zra_item_classes_lookup ON zra_item_classes(user_id, branch_id, item_cls_cd);
