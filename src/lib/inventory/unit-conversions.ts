@@ -87,7 +87,6 @@ export async function saveUnitConversion(args: {
   actorId?: string | null;
 }) {
   const { getDb } = await import("@/lib/db/database");
-  const { getDb } = await import("@/lib/db/database");
   const db = getDb();
   const fromUnit = normalizeUnit(args.fromUnit);
   const toUnit = normalizeUnit(args.toUnit);
@@ -116,6 +115,7 @@ export async function saveUnitConversion(args: {
 }
 
 export async function listUnitConversions(userId: string, itemId: string) {
+  const { getDb } = await import("@/lib/db/database");
   const db = getDb();
   return db.prepare(
     "SELECT * FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 ORDER BY from_unit,to_unit",
