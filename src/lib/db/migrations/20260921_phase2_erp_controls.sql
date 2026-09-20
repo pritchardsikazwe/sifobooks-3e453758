@@ -178,3 +178,23 @@ CREATE INDEX IF NOT EXISTS idx_tax_transaction_source ON tax_transaction_lines(u
 CREATE INDEX IF NOT EXISTS idx_purchase_receipts_date ON purchase_receipts(user_id,receipt_date,status);
 CREATE INDEX IF NOT EXISTS idx_stock_reconciliation_status ON stock_reconciliations(user_id,status);
 CREATE INDEX IF NOT EXISTS idx_correction_controls_source ON document_correction_controls(user_id,source_type,source_id);
+
+ALTER TABLE stock_items ADD COLUMN barcode TEXT;
+ALTER TABLE stock_items ADD COLUMN category TEXT;
+ALTER TABLE stock_items ADD COLUMN subcategory TEXT;
+ALTER TABLE stock_items ADD COLUMN item_type TEXT NOT NULL DEFAULT 'stock';
+ALTER TABLE stock_items ADD COLUMN active INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE stock_items ADD COLUMN service_item INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN bundle_item INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN base_unit TEXT;
+ALTER TABLE stock_items ADD COLUMN sales_unit TEXT;
+ALTER TABLE stock_items ADD COLUMN purchase_unit TEXT;
+ALTER TABLE stock_items ADD COLUMN decimal_qty_allowed INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN average_cost REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN last_purchase_price REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN retail_price REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN wholesale_price REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN dealer_price REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN minimum_selling_price REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN maximum_stock REAL NOT NULL DEFAULT 0;
+ALTER TABLE stock_items ADD COLUMN reserved_stock REAL NOT NULL DEFAULT 0;
