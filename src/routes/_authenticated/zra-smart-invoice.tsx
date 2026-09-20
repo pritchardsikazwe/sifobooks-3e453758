@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   zraGetConfigFn, zraGetStandardCodesFn, zraInitializeDeviceFn, zraSaveConfigFn,
   zraSyncCatalogFn, zraListInventoryFn, zraSearchItemClassesFn, zraListStandardCodesFn,
-  zraMapInventoryItemFn,
+  zraMapInventoryItemFn, zraRegisterInventoryItemFn,
 } from "@/lib/zra/server";
 
 export const Route = createFileRoute("/_authenticated/zra-smart-invoice")({
@@ -219,7 +219,7 @@ function ZraSmartInvoicePage() {
               <div><Label>Product Type Code</Label><Input list="zra-type-codes" value={mapForm.itemTypeCode||""} onChange={e=>setMapForm((x:any)=>({...x,itemTypeCode:e.target.value}))} placeholder="ZRA code"/><datalist id="zra-type-codes">{itemTypeCodes.map((c:any)=><option key={c.id} value={c.code}>{c.code} — {c.name}</option>)}</datalist></div>
               <div><Label>Origin Country Code</Label><Input list="zra-country-codes" value={mapForm.originCountryCode||""} onChange={e=>setMapForm((x:any)=>({...x,originCountryCode:e.target.value}))} placeholder="ZM"/><datalist id="zra-country-codes">{countryCodes.map((c:any)=><option key={c.id} value={c.code}>{c.code} — {c.name}</option>)}</datalist></div>
             </div>
-            <Button onClick={saveMapping} disabled={busy}><Save className="mr-2 h-4 w-4"/>Save ZRA Mapping</Button>
+            <div className="flex flex-wrap gap-2"><Button onClick={saveMapping} disabled={busy}><Save className="mr-2 h-4 w-4"/>Save ZRA Mapping</Button><Button variant="outline" onClick={async()=>{if(!selectedItem||!userId)return;setBusy(true);try{const r:any=await zraRegisterInventoryItemFn({data:{userId,itemId:selectedItem.id}});if(r?.response?.resultCd==="000"){setSelectedItem(r.data);setInventory(old=>old.map(x=>x.id===selectedItem.id?r.data:x));toast.success("Item registered with ZRA VSDC");}else toast.error(r?.response?.resultMsg||"ZRA item registration failed");}catch(e:any){toast.error(e?.message||"Could not register item with ZRA");}finally{setBusy(false);}}} disabled={busy||selectedItem.zra_sync_status!=="mapped"}>Register with ZRA</Button></div>
           </div>}
         </div>
       </div>
