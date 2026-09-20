@@ -213,11 +213,44 @@ export const zraSaveItemFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveItem(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
+function zraStandardCode(db:any,userId:string,classNeedle:string,nameNeedles:string[]) {
+  const rows=db.prepare(
+    "SELECT code,code_class_name,name FROM zra_standard_codes WHERE user_id=? AND lower(COALESCE(code_class_name,'')) LIKE lower(?)",
+  ).all(userId,`%${classNeedle}%`) as any[];
+  const match=rows.find((row:any)=>{
+    const name=String(row.name||"").toLowerCase().replace(/&/g," ");
+    return nameNeedles.some((needle)=>name.includes(String(needle).toLowerCase().replace(/&/g," ")));
+  });
+  if(!match) throw new Error(`ZRA_STANDARD_CODE_UNMAPPED: ${classNeedle} / ${nameNeedles.join(" or ")}. Synchronize the VSDC standard-code dictionary and map this transaction value.`);
+  return String(match.code);
+}
+
+function zraPaymentTypeCode(db:any,userId:string,saleId:string) {
+  const payments=db.prepare("SELECT method,amount FROM pos_payments WHERE sale_id=? AND user_id=? ORDER BY id").all(saleId,userId) as any[];
+  const methods=payments.filter((p:any)=>Number(p.amount||0)>0).map((p:any)=>String(p.method||"cash").toLowerCase());
+  if(methods.length===0) throw new Error("ZRA_PAYMENT_METHOD_REQUIRED");
+  if(methods.length===1){
+    const m=methods[0];
+    if(m==="cash") return zraStandardCode(db,userId,"Payment Method",["cash"]);
+    if(m==="credit") return zraStandardCode(db,userId,"Payment Method",["credit"]);
+    if(m.includes("mobile") || m.includes("momo")) return zraStandardCode(db,userId,"Payment Method",["mobile money"]);
+    if(m.includes("card") || m.includes("visa") || m.includes("master")) return zraStandardCode(db,userId,"Payment Method",["debit credit card","card"]);
+    if(m.includes("bank")) return zraStandardCode(db,userId,"Payment Method",["bank check","bank"]);
+    throw new Error(`ZRA_PAYMENT_METHOD_UNMAPPED: ${m}`);
+  }
+  if(methods.every((m)=>m==="cash" || m==="credit")) return zraStandardCode(db,userId,"Payment Method",["cash/credit"]);
+  throw new Error("ZRA_PAYMENT_METHOD_UNMAPPED: Split payment requires an applicable VSDC Payment Method standard code.");
+}
+
 function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
   const cfg=getSavedConfig(userId,null);
   if(!cfg?.tpin || !cfg?.branch_code) throw new Error("ZRA_NOT_CONFIGURED: Configure TPIN and Branch ID before submitting sales.");
   const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=? LIMIT 1").get(saleId,userId) as any;
   if(!sale) throw new Error("POS sale not found.");
+  const paymentTypeCode=zraPaymentTypeCode(db,userId,saleId);
+  const salesTypeCode=zraStandardCode(db,userId,"Transaction Type",["normal"]);
+  const receiptTypeCode=zraStandardCode(db,userId,"Sales Receipt Type",["sale"]);
+  const statusCode=zraStandardCode(db,userId,"Transaction Progress",["approved"]);
   const rows=db.prepare(
     `SELECT psi.*, si.name AS stock_name, si.sku, si.barcode, si.hs_code, si.unit, si.vat_rate,
             si.zra_item_code,si.zra_item_class_code,si.zra_item_type_code,si.zra_origin_country_code,
@@ -249,9 +282,9 @@ function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
   const clean=(prefix:string,b:string)=>Number((prefix==="taxbl"?taxbl[b]:prefix==="taxAmt"?taxAmt[b]:taxRt[b])||0);
   const payload:any={
     tpin:cfg.tpin,bhfId:cfg.branch_code,orgInvcNo:0,cisInvcNo:saleNo,custNm:sale.customer_name,
-    salesTyCd:"N",rcptTyCd:"S",pmtTyCd:"01",salesSttsCd:"02",cfmDt:nowZraDate(),salesDt:toDateOnly(),
+    salesTyCd:salesTypeCode,rcptTyCd:receiptTypeCode,pmtTyCd:paymentTypeCode,salesSttsCd:statusCode,cfmDt:nowZraDate(),salesDt:toDateOnly(),
     stockRlsDt:nowZraDate(),cnclReqDt:null,cnclDt:null,rfdDt:null,rfdRsnCd:null,totItemCnt:itemList.length,
-    currencyTyCd:"ZMW",exchangeRt:"1",prchrAcptcYn:"N",remark:"",regrId:userId,regrNm:userId,
+    currencyTyCd:zraStandardCode(db,userId,"Currency",["zambian kwacha","zambia kwacha","zmw"]),exchangeRt:"1",prchrAcptcYn:"N",remark:"",regrId:userId,regrNm:userId,
     totTaxblAmt:itemList.reduce((a:number,i:any)=>a+i.vatTaxblAmt,0),totTaxAmt:itemList.reduce((a:number,i:any)=>a+i.vatAmt,0),
     totAmt:Number(sale.total||0),taxblAmtTot:0,taxAmtTot:0,
     itemList:itemList.map(({_taxRate,_vatCat,...i}:any)=>i),
