@@ -45,7 +45,6 @@ function InventoryControl(){
     try{
       const {data,error}=await supabase.rpc("create_stock_reconciliation" as any,{locationId:count.location,countDate:new Date().toISOString().slice(0,10),reason:count.reason,items:[{itemId:count.itemId,countedQty:Number(count.countedQty)}]} as any);
       if(error)throw error;
-      if(data?.id) await supabase.rpc("post_stock_reconciliation" as any,{reconciliationId:data.id,approvedBy:(await supabase.auth.getUser()).data.user?.id} as any);
       setCount(f=>({...f,countedQty:"0",reason:""}));await load();
     } finally{setBusy(false);}
   };
@@ -67,7 +66,7 @@ function InventoryControl(){
     </div>
     <div className="grid gap-5 lg:grid-cols-2">
       <Card className="p-5"><h2 className="mb-3 font-semibold">Recent transfers</h2>{transfers.map(x=><div key={x.id} className="flex justify-between border-b py-2 text-sm"><span>{x.transfer_number}</span><Badge variant={x.status==="POSTED"?"default":"secondary"}>{x.status}</Badge></div>)}{!transfers.length&&<p className="text-sm text-muted-foreground">No transfers posted.</p>}</Card>
-      <Card className="p-5"><h2 className="mb-3 font-semibold">Recent reconciliations</h2>{counts.map(x=><div key={x.id} className="flex justify-between border-b py-2 text-sm"><span>{x.count_number}</span><span>{Number(x.total_variance_value||0).toFixed(2)} ZMW <Badge variant={x.status==="POSTED"?"default":"secondary"}>{x.status}</Badge></span></div>)}{!counts.length&&<p className="text-sm text-muted-foreground">No reconciliations posted.</p>}</Card>
+      <Card className="p-5"><h2 className="mb-3 font-semibold">Recent reconciliations</h2>{counts.map(x=><div key={x.id} className="flex items-center justify-between border-b py-2 text-sm"><span>{x.count_number}<span className="ml-2 text-muted-foreground">{Number(x.total_variance_value||0).toFixed(2)} ZMW</span></span><span className="flex items-center gap-2"><Badge variant={x.status==="POSTED"?"default":"secondary"}>{x.status}</Badge>{x.status==="DRAFT"&&<Button size="sm" variant="outline" onClick={async()=>{const u=await supabase.auth.getUser();const r=await supabase.rpc("post_stock_reconciliation" as any,{reconciliationId:x.id,approvedBy:u.data.user?.id} as any);if(r.error)throw r.error;await load();}}>Approve</Button>}</span></div>)}{!counts.length&&<p className="text-sm text-muted-foreground">No reconciliations posted.</p>}</Card>
     </div>
   </div>;
 }
