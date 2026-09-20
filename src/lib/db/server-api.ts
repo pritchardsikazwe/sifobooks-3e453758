@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
+import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
 import { getDb, generateUUID } from "./database";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
 import { receivePurchase, transferStock, createStockReconciliation, postStockReconciliation } from "@/lib/erp/phase2";
@@ -173,10 +174,17 @@ function executePosCheckout(args: Record<string, any>) {
     if (!item) throw new Error("UNKNOWN_ITEM");
     const qty=Number(draft.qty);
     if (!(qty>0)) throw new Error("BAD_QUANTITY");
+    const converted=convertToBaseUnit(db,uid,item,qty,draft.unit ?? item.sales_unit ?? item.base_unit);
+    const baseQty=Number(converted.quantity);
+    const saleUnit=converted.fromUnit;
+    const baseUnit=converted.baseUnit;
     const price=Number(draft.price);
     if (!(price>=0)) throw new Error("NO_PRICE");
     const currentStock=Number(item.quantity_on_hand || 0);
-    if (!allowNegative && currentStock < qty) throw new Error(`INSUFFICIENT_STOCK:${item.name}`);
+    const locationId=saleDraft.location_id ?? item.warehouse_id ?? null;
+    const balance=db.prepare("SELECT quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,item.id,locationId ?? "default") as any;
+    const locationStock=Number(balance?.quantity ?? currentStock);
+    if (!allowNegative && locationStock < baseQty) throw new Error(`INSUFFICIENT_STOCK:${item.name}`);
     const unitCost=Number(item.cost_price || 0);
     if (!(unitCost>=0)) throw new Error(`NO_COST:${item.name}`);
     const discountPct=Math.min(100,Math.max(0,Number(draft.discount_pct || 0)));
@@ -187,7 +195,7 @@ function executePosCheckout(args: Record<string, any>) {
     const taxInclusiveLine=taxInclusive ? afterLine : afterLine + afterLine*rate/100;
     const lineTax=taxInclusive ? afterLine-afterLine/(1+rate/100) : afterLine*rate/100;
     const taxable=taxInclusive ? afterLine-lineTax : afterLine;
-    lines.push({item,qty,price,discountPct,gross,lineDiscount,afterLine,rate,taxable,lineTax,total:taxInclusiveLine,unitCost});
+    lines.push({item,qty,baseQty,saleUnit,baseUnit,price,discountPct,gross,lineDiscount,afterLine,rate,taxable,lineTax,total:taxInclusiveLine,unitCost});
   }
 
   const gross=lines.reduce((s,l)=>s+l.gross,0);
@@ -199,7 +207,7 @@ function executePosCheckout(args: Record<string, any>) {
   const tax=lines.reduce((s,l)=>s+l.lineTax*discountFactor,0);
   const subtotal=taxInclusive ? taxable : afterLine-saleDiscount;
   const total=taxInclusive ? taxable+tax : subtotal+tax;
-  const costTotal=lines.reduce((s,l)=>s+l.qty*l.unitCost,0);
+  const costTotal=lines.reduce((s,l)=>s+l.baseQty*l.unitCost,0);
   const rounded=(v:number)=>Math.round(v*100)/100;
   const expectedTotal=rounded(total);
 
@@ -232,18 +240,18 @@ function executePosCheckout(args: Record<string, any>) {
 
     for (const l of lines) {
       const saleLineId=generateUUID();
-      db.prepare("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(saleLineId,uid,saleId,l.item.id,l.item.name,l.item.sku ?? null,l.qty,l.price,l.unitCost,l.discountPct,l.rate,rounded(l.total*discountFactor),l.note ?? null);
+      db.prepare("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note,unit,base_qty,base_unit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .run(saleLineId,uid,saleId,l.item.id,l.item.name,l.item.sku ?? null,l.qty,l.price,l.unitCost,l.discountPct,l.rate,rounded(l.total*discountFactor),l.note ?? null,l.saleUnit,l.baseQty,l.baseUnit);
       const taxCode=db.prepare("SELECT * FROM tax_codes WHERE user_id=? AND active=1 AND (code=? OR category=?) AND effective_from<=? AND (effective_to IS NULL OR effective_to>=?) ORDER BY effective_from DESC LIMIT 1")
         .get(uid,l.item.tax_category||"standard",l.item.tax_category||"standard",periodDate,periodDate) as any;
       db.prepare("INSERT INTO tax_transaction_lines (id,user_id,source_type,source_id,line_id,tax_code_id,tax_code,tax_category,rate,taxable_amount,tax_amount,inclusive,effective_from,snapshot_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,"pos_sale",saleId,saleLineId,taxCode?.id??null,taxCode?.code??l.item.tax_category??"standard",taxCode?.category??l.item.tax_category??"standard",l.rate,rounded(l.taxable*discountFactor),rounded(l.lineTax*discountFactor),taxInclusive?1:0,taxCode?.effective_from??periodDate,JSON.stringify({code:taxCode?.code??l.item.tax_category??"standard",rate:l.rate,category:taxCode?.category??l.item.tax_category??"standard",inclusive:taxInclusive}));
-      const newQty=Number(l.item.quantity_on_hand||0)-l.qty;
+      const newQty=Number(l.item.quantity_on_hand||0)-l.baseQty;
       db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,l.item.id,uid);
       const locationId=saleDraft.location_id ?? l.item.warehouse_id ?? null;
       const balance=db.prepare("SELECT quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,l.item.id,locationId ?? "default") as any;
       const before=Number(balance?.quantity ?? l.item.quantity_on_hand ?? 0);
-      const after=before-l.qty;
+      const after=before-l.baseQty;
       if(!allowNegative && after<0) throw new Error(`INSUFFICIENT_STOCK:${l.item.name}`);
       if(balance){
         db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(after,balance.id);
@@ -251,9 +259,9 @@ function executePosCheckout(args: Record<string, any>) {
         db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,l.item.id,locationId ?? "default",after);
       }
       db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,l.item.id,"SALE",l.qty,l.unitCost,saleNo,"POS sale",locationId);
+        .run(generateUUID(),uid,l.item.id,"SALE",l.baseQty,l.unitCost,saleNo,"POS sale",locationId);
       db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,movement_date,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.qty,after,l.unitCost,l.qty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
+        .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.baseQty,after,l.unitCost,l.baseQty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
     }
 
     for (const p of payments) {
