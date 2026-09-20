@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Barcode, Check, CreditCard, Minus, Percent, Plus, Printer, RotateCcw, Search,
   Settings2, ShoppingBag, Smartphone, Star, Trash2, User, Wallet, X, Clock, Ban,
