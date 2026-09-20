@@ -195,8 +195,8 @@ export const zraRegisterInventoryItemFn = createServerFn({method:"POST"})
       throw new Error("ZRA_ITEM_NOT_MAPPED: Complete the ZRA mapping before registering this item.");
     const payload={
       tpin:cfg.tpin,bhfId:cfg.branch_code,itemCd:item.zra_item_code||item.sku||item.barcode||item.id,
-      itemClsCd:item.zra_item_class_code,itemTyCd:item.zra_item_type_code||"2",itemNm:item.name,
-      itemStdNm:item.name,orgnNatCd:item.zra_origin_country_code||"ZM",pkgUnitCd:item.zra_pkg_unit_code,
+      itemClsCd:item.zra_item_class_code,itemTyCd:item.zra_item_type_code,itemNm:item.name,
+      itemStdNm:item.name,orgnNatCd:item.zra_origin_country_code,pkgUnitCd:item.zra_pkg_unit_code,
       qtyUnitCd:item.zra_qty_unit_code,rrp:Number(item.sell_price||0),useYn:"Y",
       vatCatCd:item.zra_vat_category_code,regrId:data.regrId||data.userId,regrNm:data.regrNm||data.userId,
     };
