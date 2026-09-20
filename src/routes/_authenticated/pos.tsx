@@ -300,6 +300,7 @@ function RetailPos() {
         {
           lines, totals, customer, customerName: customer?.name ?? settings.default_customer,
           priceLevel, saleDiscountPct, shiftId: shift.id, registerId: register?.id ?? null,
+          locationId: lines.length ? (products.find((p:any)=>p.id===lines[0].item_id)?.warehouse_id ?? null) : null,
           // Use the company's own VAT configuration — assuming 16% inclusive
           // rejects every sale for a till configured any other way.
           taxRate: settings.tax_rate, taxInclusive: settings.tax_inclusive,
