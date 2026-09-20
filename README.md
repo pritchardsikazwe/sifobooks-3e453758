@@ -88,23 +88,29 @@ The persistent application data is mounted at `./data`.
 
 ## Windows desktop build
 
-Build the portable Windows package from a Windows development machine:
+The standalone Windows edition is the primary local/offline testing target.
+
+Build it from a Windows development machine:
 
 ```sh
 bun install
 bun run build:desktop
 ```
 
-The resulting `desktop-dist/` package contains:
-- `sifobooks.exe`
-- `client/`
-- `schema.sql`
-- `.env.example`
-- `start-sifobooks.bat`
+The resulting `desktop-dist/` folder is a self-contained local application package:
+- `sifobooks.exe` — standalone application server
+- `client/` — browser assets
+- `schema.sql` — local SQLite schema
+- `start-sifobooks.bat` — one-click Windows launcher
+- `README-FIRST.txt` — first-run instructions
+- `.env.example` — optional configuration example
+- `data/` — created automatically on first launch and contains the local company database
 
-Copy the complete `desktop-dist/` folder to a Windows PC and run `sifobooks.exe`.
+Copy the complete `desktop-dist/` folder to another Windows PC. Double-click `start-sifobooks.bat`; the local server starts and the browser opens at `http://localhost:3000`.
 
-On first launch, the desktop runtime creates `data/.jwt-secret` automatically when no `JWT_SECRET` is supplied. This keeps the authentication secret local to that installation instead of embedding a shared development secret.
+The local edition does not require GitHub, Base44, Namecheap, Contabo, WAMP, or an internet connection.
+
+**Important:** keep the `data/` folder. It contains the company's SQLite database. Do not replace or delete it when moving an existing installation.
 
 ## Database
 
