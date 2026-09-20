@@ -172,6 +172,31 @@ export const zraMapInventoryItemFn = createServerFn({ method:"POST" })
     return {data:db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId)};
   });
 
+export const zraRegisterInventoryItemFn = createServerFn({method:"POST"})
+  .inputValidator((raw:unknown)=>raw as {userId:string;itemId:string;regrId?:string;regrNm?:string})
+  .handler(async ({data})=>{
+    const db=getDb();
+    const cfg=getSavedConfig(data.userId,null);
+    if(!cfg?.tpin||!cfg?.branch_code) throw new Error("ZRA_NOT_CONFIGURED: Configure TPIN and Branch ID first.");
+    const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId) as any;
+    if(!item) throw new Error("Inventory item not found.");
+    if(!item.zra_item_class_code||!item.zra_pkg_unit_code||!item.zra_qty_unit_code||!item.zra_vat_category_code)
+      throw new Error("ZRA_ITEM_NOT_MAPPED: Complete the ZRA mapping before registering this item.");
+    const payload={
+      tpin:cfg.tpin,bhfId:cfg.branch_code,itemCd:item.zra_item_code||item.sku||item.barcode||item.id,
+      itemClsCd:item.zra_item_class_code,itemTyCd:item.zra_item_type_code||"2",itemNm:item.name,
+      itemStdNm:item.name,orgnNatCd:item.zra_origin_country_code||"ZM",pkgUnitCd:item.zra_pkg_unit_code,
+      qtyUnitCd:item.zra_qty_unit_code,rrp:Number(item.sell_price||0),useYn:"Y",
+      vatCatCd:item.zra_vat_category_code,regrId:data.regrId||data.userId,regrNm:data.regrNm||data.userId,
+    };
+    const response:any=await saveItem(payload,{baseUrl:requireVsdcUrl(cfg)});
+    if(isSuccessfulVsdcResponse(response)){
+      db.prepare("UPDATE stock_items SET zra_sync_status='registered',zra_last_sync_at=datetime('now'),zra_raw_data=? WHERE id=? AND user_id=?")
+        .run(JSON.stringify({registration:response,payload}),data.itemId,data.userId);
+    }
+    return {response,payload,data:db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId)};
+  });
+
 export const zraSaveItemFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveItem(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
