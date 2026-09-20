@@ -345,6 +345,32 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
       case "post_stock_reconciliation": {
         return { data: postStockReconciliation({ ...args, userId: String(args._uid || "") }), error: null };
       }
+      case "close_pos_shift": {
+        const uid=String(args._uid||"");
+        const shiftId=String(args._shift_id||"");
+        if(!uid||!shiftId) throw new Error("SHIFT_REFERENCE_REQUIRED");
+        const shift=db.prepare("SELECT * FROM pos_shifts WHERE id=? AND user_id=? LIMIT 1").get(shiftId,uid) as any;
+        if(!shift) throw new Error("SHIFT_NOT_FOUND");
+        if(shift.status!=="open") throw new Error("SHIFT_ALREADY_CLOSED");
+        const sales=db.prepare("SELECT id,total,status FROM pos_sales WHERE shift_id=? AND user_id=?").all(shiftId,uid) as any[];
+        const completed=sales.filter((s:any)=>s.status==="completed");
+        const ids=completed.map((s:any)=>s.id);
+        let cashSales=0;
+        if(ids.length){
+          const placeholders=ids.map(()=>"?").join(",");
+          const rows=db.prepare(`SELECT COALESCE(SUM(amount),0) AS total FROM pos_payments WHERE user_id=? AND method='cash' AND sale_id IN (${placeholders})`).get(uid,...ids) as any;
+          cashSales=Number(rows?.total||0);
+        }
+        const cashIn=Number(shift.cash_in||0), cashOut=Number(shift.cash_out||0);
+        const expected=Number(shift.opening_float||0)+cashSales+cashIn-cashOut;
+        const actual=Number(args._actual_cash);
+        if(!Number.isFinite(actual)||actual<0) throw new Error("INVALID_ACTUAL_CASH");
+        const variance=actual-expected;
+        db.prepare("UPDATE pos_shifts SET status='closed',closed_at=datetime('now'),actual_cash=?,expected_cash=?,variance=?,updated_at=datetime('now') WHERE id=? AND user_id=? AND status='open'")
+          .run(actual,expected,variance,shiftId,uid);
+        void recordAuditEvent({userId:uid,terminalId:shift.register_id,action:"POS_SHIFT_CLOSED",entityType:"pos_shift",entityId:shiftId,newValue:{expectedCash:expected,actualCash:actual,variance}});
+        return {data:{shiftId,expectedCash:expected,actualCash:actual,variance},error:null};
+      }
       case "pos_checkout": {
         const result=executePosCheckout(args);
         return { data: result, error: null };
