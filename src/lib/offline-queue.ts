@@ -296,7 +296,7 @@ export async function drainQueue(): Promise<{ ok: number; failed: number }> {
               const saleId = (data as any)?.id;
               const saleNo = it.payload?._sale?.sale_no;
               if (auth.user && saleId && saleNo) {
-                await zraSubmitPosSaleFn({ data: { userId: auth.user.id, saleId, saleNo } });
+                await zraSubmitPosSaleFn({ data: { userId: auth.user.id, saleId, saleNo, terminalId: (it.payload?._sale?.register_id ?? null) } });
               }
             } catch (zraError) {
               // The accepted POS transaction remains synced. zra_invoice_queue
