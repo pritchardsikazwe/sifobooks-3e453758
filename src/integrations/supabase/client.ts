@@ -33,6 +33,7 @@ class QueryBuilder {
 
   select(columns: string = "*") { this.spec.columns = columns; return this; }
   insert(data: any) { this.spec.operation = "insert"; this.spec.insertData = data; return this; }
+  upsert(data: any, opts?: { onConflict?: string }) { this.spec.operation = "insert"; this.spec.insertData = data; this.spec.onConflict = opts?.onConflict ?? null; return this; }
   update(data: any) { this.spec.operation = "update"; this.spec.updateData = data; return this; }
   delete() { this.spec.operation = "delete"; return this; }
 
