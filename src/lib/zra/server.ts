@@ -101,9 +101,9 @@ export const zraSyncCatalogFn = createServerFn({ method:"POST" })
     ]);
     if(isSuccessfulVsdcResponse(codes)){
       const clsList=Array.isArray(codes.data?.clsList)?codes.data.clsList:[];
-      const ins=db.prepare("INSERT OR REPLACE INTO zra_standard_codes (id,user_id,branch_id,code_class,code,name,description,raw_data,updated_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'))");
+      const ins=db.prepare("INSERT OR REPLACE INTO zra_standard_codes (id,user_id,branch_id,code_class,code_class_name,code,name,description,raw_data,updated_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))");
       for(const cls of clsList) for(const item of (cls.dtlList ?? [])){
-        ins.run(generateUUID(),data.userId,data.branchId ?? null,String(cls.cdCls ?? ""),String(item.cd ?? ""),item.cdNm ?? null,item.userDfnNm1 ?? null,JSON.stringify(item));
+        ins.run(generateUUID(),data.userId,data.branchId ?? null,String(cls.cdCls ?? ""),cls.cdClsNm ?? null,String(item.cd ?? ""),item.cdNm ?? null,item.userDfnNm1 ?? null,JSON.stringify(item));
       }
     }
     if(isSuccessfulVsdcResponse(classes)){
