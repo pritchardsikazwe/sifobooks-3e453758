@@ -179,7 +179,7 @@ function RetailPos() {
       }
       const line: CartLine = {
         key: `${p.id}-${Date.now()}`, item_id: p.id, name: p.name, sku: p.sku,
-        qty, price, unit_cost: p.cost, discount_pct: 0,
+        qty, unit: p.sales_unit ?? p.unit ?? null, price, unit_cost: p.cost, discount_pct: 0,
       };
       setSelected(line.key);
       return [...prev, line];
