@@ -60,20 +60,4 @@ jobs:
           name: SifoBooks-Windows-Portable
           path: SifoBooks-Windows-Portable.zip
           if-no-files-found: error
-          retention-days: 14
-
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup --yes --no-progress
-
-      - name: Build Windows installer
-        shell: pwsh
-        run: Set-Location installer; iscc SifoBooks.iss
-
-      - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: SifoBooks-Windows-Installer
-          path: installer-dist/SifoBooks-Setup.exe
-          if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
