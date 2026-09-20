@@ -167,3 +167,35 @@ https://www.zra.org.zm/smart-invoice-registration-guide/
 
 Official VSDC API Specification v1.0.8:
 https://www.zra.org.zm/wp-content/uploads/2026/05/VSDC-API-Specification-Document-v1.0.8.pdf
+
+
+## Phase 2 implementation now added
+
+The Phase 2 ERP control layer now includes:
+
+- Central tax-code table with effective dates and ZRA mapping fields.
+- Historical tax transaction snapshots for POS and purchasing.
+- Purchase receipt / GRN posting service with stock ledger and accounts payable accounting.
+- Weighted inventory receipt foundation (with future moving-average enhancement).
+- Warehouse/store transfer posting with separate outbound/inbound stock ledger movements.
+- Physical stock reconciliation creation and approval/posting workflow.
+- Credit-note fiscal-control fields and a debit-note foundation.
+- Compliance Centre dashboard showing fiscal state, ZRA outbox, purchasing receipts, transfers and stock reconciliation exceptions.
+- Central Tax Engine screen for maintaining effective-dated tax codes.
+
+### Phase 2 business-rule boundary
+
+Purchases, transfers and stock reconciliations are posted through authenticated server-side services. The UI is not permitted to create completed accounting/stock postings by writing directly to the tables.
+
+Fiscalized POS transactions remain immutable through the generic local query layer.
+
+### Next implementation sequence
+
+1. Complete Item Master tabbed UI and item-unit conversion service.
+2. Add full purchase order -> GRN -> supplier bill/AP workflow.
+3. Add Warehouse -> Chibombo Store transfer UI with approval.
+4. Add stock count scanning and variance approval UI.
+5. Add credit/debit note business services and ZRA VSDC submission workflow.
+6. Add accounting period open/close/reopen controls.
+7. Add Compliance Centre retry/manual-review actions.
+8. Add automated acceptance tests and reconciliation reports.
