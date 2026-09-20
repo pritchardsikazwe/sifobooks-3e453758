@@ -100,10 +100,12 @@ export const zraSyncCatalogFn = createServerFn({ method:"POST" })
     // ZRA documents classification retrieval as paged in batches of up to 1000.
     // Continue with the VSDC result timestamp until the batch is exhausted.
     const classResponses=[classes];
+    let previousDt=data.lastReqDt;
     for(let page=1;page<20 && isSuccessfulVsdcResponse(classes);page++){
       const batch=listFromResponse(classes,["itemClsList","itemClassList","clsList","list"]);
       const nextDt=String(classes.resultDt ?? "");
-      if(batch.length<1000 || !nextDt || nextDt===data.lastReqDt) break;
+      if(batch.length<1000 || !nextDt || nextDt===previousDt) break;
+      previousDt=nextDt;
       const next=await getItemClasses({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:nextDt},{baseUrl:requireVsdcUrl(cfg)});
       classResponses.push(next); classes=next;
       if(!isSuccessfulVsdcResponse(next)) break;
