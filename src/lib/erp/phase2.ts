@@ -133,12 +133,20 @@ export function createStockReconciliation(args:{userId:string;companyId?:string|
   return tx;
 }
 
+function assertInventoryApprovalRole(db:any,userId:string){
+  const row=db.prepare("SELECT rr.key,rr.name FROM staff_members sm LEFT JOIN rbac_roles rr ON rr.id=sm.role_id WHERE sm.user_id=? AND sm.is_active=1 LIMIT 1").get(userId) as any;
+  const key=String(row?.key||"").toLowerCase(), name=String(row?.name||"").toLowerCase();
+  const allowed=["owner","admin","super_admin","business_owner","inventory_manager","store_manager","finance_manager","accountant","auditor"];
+  if(!allowed.some((r)=>key.includes(r)||name.includes(r))) throw new Error("APPROVAL_REQUIRED: Inventory reconciliation requires an authorized management role.");
+}
+
 export function postStockReconciliation(args:{userId:string;reconciliationId:string;approvedBy?:string|null}) {
   const db=getDb();
   const rec=db.prepare("SELECT * FROM stock_reconciliations WHERE id=? AND user_id=? LIMIT 1").get(args.reconciliationId,args.userId) as any;
   if(!rec) throw new Error("RECONCILIATION_NOT_FOUND");
   if(rec.status!=="DRAFT") throw new Error("RECONCILIATION_NOT_DRAFT");
   if(!args.approvedBy) throw new Error("STOCK_RECONCILIATION_APPROVAL_REQUIRED");
+  assertInventoryApprovalRole(db,String(args.approvedBy));
   const tx=db.transaction(()=>{
     const lines=db.prepare("SELECT * FROM stock_reconciliation_items WHERE reconciliation_id=? AND user_id=?").all(rec.id,args.userId) as any[];
     for(const line of lines){
