@@ -19,6 +19,7 @@ import { Route as WorkerRouteRouteImport } from './routes/_worker/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoIndexRouteImport } from './routes/demo.index'
+import { Route as AuthenticatedZraSmartInvoiceRouteImport } from './routes/_authenticated/zra-smart-invoice'
 import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as AuthenticatedWorkshopsRouteImport } from './routes/_authenticated/workshops'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedTuckshopRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedTimesheetRouteImport } from './routes/_authenticated/timesheet'
 import { Route as AuthenticatedTimeEntriesRouteImport } from './routes/_authenticated/time-entries'
 import { Route as AuthenticatedTeachingMaterialsRouteImport } from './routes/_authenticated/teaching-materials'
+import { Route as AuthenticatedTaxEngineRouteImport } from './routes/_authenticated/tax-engine'
 import { Route as AuthenticatedSystemHealthRouteImport } from './routes/_authenticated/system-health'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
@@ -85,10 +87,12 @@ import { Route as AuthenticatedLaunchRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedJournalEntriesRouteImport } from './routes/_authenticated/journal-entries'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedJobCardsRouteImport } from './routes/_authenticated/job-cards'
+import { Route as AuthenticatedItemMasterRouteImport } from './routes/_authenticated/item-master'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedInventorySheetsRouteImport } from './routes/_authenticated/inventory-sheets'
 import { Route as AuthenticatedInventoryFlowAuditRouteImport } from './routes/_authenticated/inventory-flow-audit'
 import { Route as AuthenticatedInventoryControlCentreRouteImport } from './routes/_authenticated/inventory-control-centre'
+import { Route as AuthenticatedInventoryControlRouteImport } from './routes/_authenticated/inventory-control'
 import { Route as AuthenticatedIndustryRouteImport } from './routes/_authenticated/industry'
 import { Route as AuthenticatedImprestRouteImport } from './routes/_authenticated/imprest'
 import { Route as AuthenticatedHotelRouteImport } from './routes/_authenticated/hotel'
@@ -105,6 +109,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedCsatRouteImport } from './routes/_authenticated/csat'
 import { Route as AuthenticatedCreditNotesRouteImport } from './routes/_authenticated/credit-notes'
+import { Route as AuthenticatedComplianceCentreRouteImport } from './routes/_authenticated/compliance-centre'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
 import { Route as AuthenticatedComplaintsRouteImport } from './routes/_authenticated/complaints'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
@@ -319,6 +324,12 @@ const DemoIndexRoute = DemoIndexRouteImport.update({
   path: '/demo/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedZraSmartInvoiceRoute =
+  AuthenticatedZraSmartInvoiceRouteImport.update({
+    id: '/zra-smart-invoice',
+    path: '/zra-smart-invoice',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
   id: '/workspace',
   path: '/workspace',
@@ -356,6 +367,11 @@ const AuthenticatedTeachingMaterialsRoute =
     path: '/teaching-materials',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTaxEngineRoute = AuthenticatedTaxEngineRouteImport.update({
+  id: '/tax-engine',
+  path: '/tax-engine',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSystemHealthRoute =
   AuthenticatedSystemHealthRouteImport.update({
     id: '/system-health',
@@ -683,6 +699,11 @@ const AuthenticatedJobCardsRoute = AuthenticatedJobCardsRouteImport.update({
   path: '/job-cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedItemMasterRoute = AuthenticatedItemMasterRouteImport.update({
+  id: '/item-master',
+  path: '/item-master',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
@@ -704,6 +725,12 @@ const AuthenticatedInventoryControlCentreRoute =
   AuthenticatedInventoryControlCentreRouteImport.update({
     id: '/inventory-control-centre',
     path: '/inventory-control-centre',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInventoryControlRoute =
+  AuthenticatedInventoryControlRouteImport.update({
+    id: '/inventory-control',
+    path: '/inventory-control',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedIndustryRoute = AuthenticatedIndustryRouteImport.update({
@@ -790,6 +817,12 @@ const AuthenticatedCreditNotesRoute =
   AuthenticatedCreditNotesRouteImport.update({
     id: '/credit-notes',
     path: '/credit-notes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedComplianceCentreRoute =
+  AuthenticatedComplianceCentreRouteImport.update({
+    id: '/compliance-centre',
+    path: '/compliance-centre',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedComplianceRoute = AuthenticatedComplianceRouteImport.update({
@@ -1765,6 +1798,7 @@ export interface FileRoutesByFullPath {
   '/companies': typeof AuthenticatedCompaniesRoute
   '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
+  '/compliance-centre': typeof AuthenticatedComplianceCentreRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/csat': typeof AuthenticatedCsatRoute
   '/customers': typeof AuthenticatedCustomersRouteWithChildren
@@ -1781,10 +1815,12 @@ export interface FileRoutesByFullPath {
   '/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-control': typeof AuthenticatedInventoryControlRoute
   '/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
   '/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/item-master': typeof AuthenticatedItemMasterRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -1844,6 +1880,7 @@ export interface FileRoutesByFullPath {
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/system-health': typeof AuthenticatedSystemHealthRoute
+  '/tax-engine': typeof AuthenticatedTaxEngineRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
@@ -1851,6 +1888,7 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/workspace': typeof AuthenticatedWorkspaceRoute
+  '/zra-smart-invoice': typeof AuthenticatedZraSmartInvoiceRoute
   '/demo/': typeof DemoIndexRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -2026,6 +2064,7 @@ export interface FileRoutesByTo {
   '/companies': typeof AuthenticatedCompaniesRoute
   '/complaints': typeof AuthenticatedComplaintsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
+  '/compliance-centre': typeof AuthenticatedComplianceCentreRoute
   '/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/csat': typeof AuthenticatedCsatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -2041,9 +2080,11 @@ export interface FileRoutesByTo {
   '/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/imprest': typeof AuthenticatedImprestRoute
   '/industry': typeof AuthenticatedIndustryRoute
+  '/inventory-control': typeof AuthenticatedInventoryControlRoute
   '/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
   '/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
+  '/item-master': typeof AuthenticatedItemMasterRoute
   '/job-cards': typeof AuthenticatedJobCardsRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -2099,6 +2140,7 @@ export interface FileRoutesByTo {
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/system-health': typeof AuthenticatedSystemHealthRoute
+  '/tax-engine': typeof AuthenticatedTaxEngineRoute
   '/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/timesheet': typeof AuthenticatedTimesheetRoute
@@ -2106,6 +2148,7 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/workshops': typeof AuthenticatedWorkshopsRoute
   '/workspace': typeof AuthenticatedWorkspaceRoute
+  '/zra-smart-invoice': typeof AuthenticatedZraSmartInvoiceRoute
   '/demo': typeof DemoIndexRoute
   '/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -2284,6 +2327,7 @@ export interface FileRoutesById {
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/complaints': typeof AuthenticatedComplaintsRoute
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
+  '/_authenticated/compliance-centre': typeof AuthenticatedComplianceCentreRoute
   '/_authenticated/credit-notes': typeof AuthenticatedCreditNotesRoute
   '/_authenticated/csat': typeof AuthenticatedCsatRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRouteWithChildren
@@ -2300,10 +2344,12 @@ export interface FileRoutesById {
   '/_authenticated/hotel': typeof AuthenticatedHotelRouteWithChildren
   '/_authenticated/imprest': typeof AuthenticatedImprestRoute
   '/_authenticated/industry': typeof AuthenticatedIndustryRoute
+  '/_authenticated/inventory-control': typeof AuthenticatedInventoryControlRoute
   '/_authenticated/inventory-control-centre': typeof AuthenticatedInventoryControlCentreRoute
   '/_authenticated/inventory-flow-audit': typeof AuthenticatedInventoryFlowAuditRoute
   '/_authenticated/inventory-sheets': typeof AuthenticatedInventorySheetsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
+  '/_authenticated/item-master': typeof AuthenticatedItemMasterRoute
   '/_authenticated/job-cards': typeof AuthenticatedJobCardsRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/journal-entries': typeof AuthenticatedJournalEntriesRoute
@@ -2363,6 +2409,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/system-health': typeof AuthenticatedSystemHealthRoute
+  '/_authenticated/tax-engine': typeof AuthenticatedTaxEngineRoute
   '/_authenticated/teaching-materials': typeof AuthenticatedTeachingMaterialsRouteWithChildren
   '/_authenticated/time-entries': typeof AuthenticatedTimeEntriesRoute
   '/_authenticated/timesheet': typeof AuthenticatedTimesheetRoute
@@ -2370,6 +2417,7 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/_authenticated/workshops': typeof AuthenticatedWorkshopsRoute
   '/_authenticated/workspace': typeof AuthenticatedWorkspaceRoute
+  '/_authenticated/zra-smart-invoice': typeof AuthenticatedZraSmartInvoiceRoute
   '/demo/': typeof DemoIndexRoute
   '/_authenticated/bill-detail/$id': typeof AuthenticatedBillDetailIdRoute
   '/_authenticated/bill-payment-detail/$id': typeof AuthenticatedBillPaymentDetailIdRoute
@@ -2547,6 +2595,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/complaints'
     | '/compliance'
+    | '/compliance-centre'
     | '/credit-notes'
     | '/csat'
     | '/customers'
@@ -2563,10 +2612,12 @@ export interface FileRouteTypes {
     | '/hotel'
     | '/imprest'
     | '/industry'
+    | '/inventory-control'
     | '/inventory-control-centre'
     | '/inventory-flow-audit'
     | '/inventory-sheets'
     | '/invoices'
+    | '/item-master'
     | '/job-cards'
     | '/jobs'
     | '/journal-entries'
@@ -2626,6 +2677,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/suppliers'
     | '/system-health'
+    | '/tax-engine'
     | '/teaching-materials'
     | '/time-entries'
     | '/timesheet'
@@ -2633,6 +2685,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/workspace'
+    | '/zra-smart-invoice'
     | '/demo/'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
@@ -2808,6 +2861,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/complaints'
     | '/compliance'
+    | '/compliance-centre'
     | '/credit-notes'
     | '/csat'
     | '/dashboard'
@@ -2823,9 +2877,11 @@ export interface FileRouteTypes {
     | '/hotel'
     | '/imprest'
     | '/industry'
+    | '/inventory-control'
     | '/inventory-control-centre'
     | '/inventory-flow-audit'
     | '/inventory-sheets'
+    | '/item-master'
     | '/job-cards'
     | '/jobs'
     | '/journal-entries'
@@ -2881,6 +2937,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/suppliers'
     | '/system-health'
+    | '/tax-engine'
     | '/teaching-materials'
     | '/time-entries'
     | '/timesheet'
@@ -2888,6 +2945,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/workshops'
     | '/workspace'
+    | '/zra-smart-invoice'
     | '/demo'
     | '/bill-detail/$id'
     | '/bill-payment-detail/$id'
@@ -3065,6 +3123,7 @@ export interface FileRouteTypes {
     | '/_authenticated/companies'
     | '/_authenticated/complaints'
     | '/_authenticated/compliance'
+    | '/_authenticated/compliance-centre'
     | '/_authenticated/credit-notes'
     | '/_authenticated/csat'
     | '/_authenticated/customers'
@@ -3081,10 +3140,12 @@ export interface FileRouteTypes {
     | '/_authenticated/hotel'
     | '/_authenticated/imprest'
     | '/_authenticated/industry'
+    | '/_authenticated/inventory-control'
     | '/_authenticated/inventory-control-centre'
     | '/_authenticated/inventory-flow-audit'
     | '/_authenticated/inventory-sheets'
     | '/_authenticated/invoices'
+    | '/_authenticated/item-master'
     | '/_authenticated/job-cards'
     | '/_authenticated/jobs'
     | '/_authenticated/journal-entries'
@@ -3144,6 +3205,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin'
     | '/_authenticated/suppliers'
     | '/_authenticated/system-health'
+    | '/_authenticated/tax-engine'
     | '/_authenticated/teaching-materials'
     | '/_authenticated/time-entries'
     | '/_authenticated/timesheet'
@@ -3151,6 +3213,7 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/_authenticated/workshops'
     | '/_authenticated/workspace'
+    | '/_authenticated/zra-smart-invoice'
     | '/demo/'
     | '/_authenticated/bill-detail/$id'
     | '/_authenticated/bill-payment-detail/$id'
@@ -3391,6 +3454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/zra-smart-invoice': {
+      id: '/_authenticated/zra-smart-invoice'
+      path: '/zra-smart-invoice'
+      fullPath: '/zra-smart-invoice'
+      preLoaderRoute: typeof AuthenticatedZraSmartInvoiceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/workspace': {
       id: '/_authenticated/workspace'
       path: '/workspace'
@@ -3438,6 +3508,13 @@ declare module '@tanstack/react-router' {
       path: '/teaching-materials'
       fullPath: '/teaching-materials'
       preLoaderRoute: typeof AuthenticatedTeachingMaterialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tax-engine': {
+      id: '/_authenticated/tax-engine'
+      path: '/tax-engine'
+      fullPath: '/tax-engine'
+      preLoaderRoute: typeof AuthenticatedTaxEngineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/system-health': {
@@ -3853,6 +3930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/item-master': {
+      id: '/_authenticated/item-master'
+      path: '/item-master'
+      fullPath: '/item-master'
+      preLoaderRoute: typeof AuthenticatedItemMasterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/invoices': {
       id: '/_authenticated/invoices'
       path: '/invoices'
@@ -3879,6 +3963,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory-control-centre'
       fullPath: '/inventory-control-centre'
       preLoaderRoute: typeof AuthenticatedInventoryControlCentreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory-control': {
+      id: '/_authenticated/inventory-control'
+      path: '/inventory-control'
+      fullPath: '/inventory-control'
+      preLoaderRoute: typeof AuthenticatedInventoryControlRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/industry': {
@@ -3991,6 +4082,13 @@ declare module '@tanstack/react-router' {
       path: '/credit-notes'
       fullPath: '/credit-notes'
       preLoaderRoute: typeof AuthenticatedCreditNotesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/compliance-centre': {
+      id: '/_authenticated/compliance-centre'
+      path: '/compliance-centre'
+      fullPath: '/compliance-centre'
+      preLoaderRoute: typeof AuthenticatedComplianceCentreRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/compliance': {
@@ -5504,6 +5602,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedComplaintsRoute: typeof AuthenticatedComplaintsRoute
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
+  AuthenticatedComplianceCentreRoute: typeof AuthenticatedComplianceCentreRoute
   AuthenticatedCreditNotesRoute: typeof AuthenticatedCreditNotesRoute
   AuthenticatedCsatRoute: typeof AuthenticatedCsatRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRouteWithChildren
@@ -5520,10 +5619,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHotelRoute: typeof AuthenticatedHotelRouteWithChildren
   AuthenticatedImprestRoute: typeof AuthenticatedImprestRoute
   AuthenticatedIndustryRoute: typeof AuthenticatedIndustryRoute
+  AuthenticatedInventoryControlRoute: typeof AuthenticatedInventoryControlRoute
   AuthenticatedInventoryControlCentreRoute: typeof AuthenticatedInventoryControlCentreRoute
   AuthenticatedInventoryFlowAuditRoute: typeof AuthenticatedInventoryFlowAuditRoute
   AuthenticatedInventorySheetsRoute: typeof AuthenticatedInventorySheetsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
+  AuthenticatedItemMasterRoute: typeof AuthenticatedItemMasterRoute
   AuthenticatedJobCardsRoute: typeof AuthenticatedJobCardsRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedJournalEntriesRoute: typeof AuthenticatedJournalEntriesRoute
@@ -5583,6 +5684,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedSystemHealthRoute: typeof AuthenticatedSystemHealthRoute
+  AuthenticatedTaxEngineRoute: typeof AuthenticatedTaxEngineRoute
   AuthenticatedTeachingMaterialsRoute: typeof AuthenticatedTeachingMaterialsRouteWithChildren
   AuthenticatedTimeEntriesRoute: typeof AuthenticatedTimeEntriesRoute
   AuthenticatedTimesheetRoute: typeof AuthenticatedTimesheetRoute
@@ -5590,6 +5692,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedWorkshopsRoute: typeof AuthenticatedWorkshopsRoute
   AuthenticatedWorkspaceRoute: typeof AuthenticatedWorkspaceRoute
+  AuthenticatedZraSmartInvoiceRoute: typeof AuthenticatedZraSmartInvoiceRoute
   AuthenticatedBillDetailIdRoute: typeof AuthenticatedBillDetailIdRoute
   AuthenticatedBillPaymentDetailIdRoute: typeof AuthenticatedBillPaymentDetailIdRoute
   AuthenticatedHubHubRoute: typeof AuthenticatedHubHubRoute
@@ -5634,6 +5737,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedComplaintsRoute: AuthenticatedComplaintsRoute,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
+  AuthenticatedComplianceCentreRoute: AuthenticatedComplianceCentreRoute,
   AuthenticatedCreditNotesRoute: AuthenticatedCreditNotesRoute,
   AuthenticatedCsatRoute: AuthenticatedCsatRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRouteWithChildren,
@@ -5650,11 +5754,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHotelRoute: AuthenticatedHotelRouteWithChildren,
   AuthenticatedImprestRoute: AuthenticatedImprestRoute,
   AuthenticatedIndustryRoute: AuthenticatedIndustryRoute,
+  AuthenticatedInventoryControlRoute: AuthenticatedInventoryControlRoute,
   AuthenticatedInventoryControlCentreRoute:
     AuthenticatedInventoryControlCentreRoute,
   AuthenticatedInventoryFlowAuditRoute: AuthenticatedInventoryFlowAuditRoute,
   AuthenticatedInventorySheetsRoute: AuthenticatedInventorySheetsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
+  AuthenticatedItemMasterRoute: AuthenticatedItemMasterRoute,
   AuthenticatedJobCardsRoute: AuthenticatedJobCardsRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedJournalEntriesRoute: AuthenticatedJournalEntriesRoute,
@@ -5715,6 +5821,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedSystemHealthRoute: AuthenticatedSystemHealthRoute,
+  AuthenticatedTaxEngineRoute: AuthenticatedTaxEngineRoute,
   AuthenticatedTeachingMaterialsRoute:
     AuthenticatedTeachingMaterialsRouteWithChildren,
   AuthenticatedTimeEntriesRoute: AuthenticatedTimeEntriesRoute,
@@ -5723,6 +5830,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedWorkshopsRoute: AuthenticatedWorkshopsRoute,
   AuthenticatedWorkspaceRoute: AuthenticatedWorkspaceRoute,
+  AuthenticatedZraSmartInvoiceRoute: AuthenticatedZraSmartInvoiceRoute,
   AuthenticatedBillDetailIdRoute: AuthenticatedBillDetailIdRoute,
   AuthenticatedBillPaymentDetailIdRoute: AuthenticatedBillPaymentDetailIdRoute,
   AuthenticatedHubHubRoute: AuthenticatedHubHubRoute,
