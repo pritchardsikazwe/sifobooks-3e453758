@@ -257,14 +257,7 @@ function executePosCheckout(args: Record<string, any>) {
       } else {
         db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,l.item.id,locationId ?? "default",after);
       }
-      const loc=sale.location_id ?? stock.warehouse_id ?? null;
-              if(loc){
-                const bal=db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,item.item_id,loc) as any;
-                const balAfter=Number(bal?.quantity||0)+returnQty;
-                if(bal) db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(balAfter,bal.id);
-                else db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,item.item_id,loc,balAfter);
-              }
-              db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+      db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,l.item.id,"SALE",l.baseQty,l.unitCost,saleNo,"POS sale",locationId);
       db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,movement_date,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.baseQty,after,l.unitCost,l.baseQty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
@@ -376,6 +369,13 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
             if(stock){
               const returnQty=Number(item.base_qty ?? item.qty ?? 0);
               const newQty=Number(stock.quantity_on_hand||0)+returnQty;
+              const loc=sale.location_id ?? stock.warehouse_id ?? null;
+              if(loc){
+                const bal=db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,item.item_id,loc) as any;
+                const balAfter=Number(bal?.quantity||0)+returnQty;
+                if(bal) db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(balAfter,bal.id);
+                else db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,item.item_id,loc,balAfter);
+              }
               db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,item.item_id,uid);
               db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
                 .run(generateUUID(),uid,item.item_id,"RETURN",returnQty,Number(item.unit_cost||stock.cost_price||0),reversalNo,reason,sale.location_id ?? stock.warehouse_id ?? null);
