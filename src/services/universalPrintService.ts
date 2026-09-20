@@ -285,6 +285,7 @@ function renderJobHtml(job: PrintJob): string {
       <div class="row b"><span>TOTAL</span><span>ZMW ${money(r.total)}</span></div>
       ${r.paymentMethod ? `<div class="row"><span>${r.paymentMethod}</span><span>${money(r.amountPaid)}</span></div>` : ""}
       ${r.change != null ? `<div class="row"><span>Change</span><span>${money(r.change)}</span></div>` : ""}
+      ${r.zra ? `<hr/><div class="c b">ZRA SMART INVOICE</div>${r.zra.receiptNumber ? `<div class="c">ZRA Receipt: ${r.zra.receiptNumber}</div>` : ""}${r.zra.sdcId ? `<div class="c sm">SDC: ${r.zra.sdcId}</div>` : ""}${r.zra.mrcNo ? `<div class="c sm">MRC: ${r.zra.mrcNo}</div>` : ""}${r.zra.status === "submitted" && r.zra.qrDataUrl ? `<div class="c"><img alt="ZRA QR" src="${r.zra.qrDataUrl}" style="width:140px;height:140px"/></div>` : ""}${r.zra.qrCodeUrl ? `<div class="c sm">Verify: ${r.zra.qrCodeUrl}</div>` : ""}${r.zra.status !== "submitted" ? `<div class="c sm">ZRA status: ${r.zra.status ?? "pending"}${r.zra.message ? ` — ${r.zra.message}` : ""}</div>` : ""}${r.zra.internalData ? `<div class="sm">Internal: ${r.zra.internalData}</div>` : ""}${r.zra.receiptSignature ? `<div class="sm">Signature: ${r.zra.receiptSignature}</div>` : ""}` : ""}
       <hr/>
       <div class="c sm">${r.footer ?? "Thank you"}</div>`;
   } else if (job.kitchenOrder) {
