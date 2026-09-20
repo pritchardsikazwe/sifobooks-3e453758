@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { getDb, generateUUID } from "./database";
+import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -101,10 +102,229 @@ export const verifyTokenFn = createServerFn({ method: "POST" })
   });
 
 // ── RPC implementations ──
+function postingAccount(db: any, userId: string, companyId: string | null, ruleKey: string, candidates: string[]) {
+  const configured = db.prepare(
+    "SELECT debit_account_id,credit_account_id FROM accounting_posting_rules WHERE user_id=? AND (? IS NULL OR company_id=?) AND rule_key=? AND active=1 LIMIT 1",
+  ).get(userId,companyId,companyId,ruleKey) as any;
+  const configuredId = configured?.debit_account_id || configured?.credit_account_id;
+  if (configuredId) return configuredId;
+  const placeholders = candidates.map(() => "?").join(",");
+  const row = db.prepare(`SELECT id FROM chart_of_accounts WHERE user_id=? AND account_code IN (${placeholders}) AND is_active=1 ORDER BY account_code LIMIT 1`)
+    .get(userId,...candidates) as any;
+  if (row?.id) return row.id;
+  const byPurpose = db.prepare("SELECT id FROM chart_of_accounts WHERE user_id=? AND lower(COALESCE(purpose,''))=lower(?) AND is_active=1 LIMIT 1")
+    .get(userId,ruleKey) as any;
+  if (byPurpose?.id) return byPurpose.id;
+  throw new Error(`ACCOUNTING_POSTING_RULE_MISSING: Configure the ${ruleKey} account before posting sales.`);
+}
+
+function activeTaxRate(db:any,userId:string,item:any) {
+  const now = new Date().toISOString().slice(0,10);
+  const code = item.tax_category || "standard";
+  const row = db.prepare(
+    "SELECT rate FROM tax_codes WHERE user_id=? AND active=1 AND (code=? OR category=?) AND effective_from<=? AND (effective_to IS NULL OR effective_to>=?) ORDER BY effective_from DESC LIMIT 1",
+  ).get(userId,code,code,now,now) as any;
+  return row ? Number(row.rate) : Number(item.zra_tax_rate ?? item.vat_rate ?? 0);
+}
+
+function executePosCheckout(args: Record<string, any>) {
+  const db = getDb();
+  const uid = String(args._uid || "");
+  if (!uid) throw new Error("NOT_SIGNED_IN");
+  const saleDraft = args._sale || {};
+  const itemRows = Array.isArray(args._items) ? args._items : [];
+  const payRows = Array.isArray(args._payments) ? args._payments : [];
+  if (!itemRows.length) throw new Error("EMPTY_SALE");
+  const clientRef = String(saleDraft.client_ref || "");
+  if (!clientRef) throw new Error("CLIENT_REF_REQUIRED");
+
+  const duplicate = db.prepare("SELECT id,sale_no,status FROM pos_sales WHERE user_id=? AND client_ref=? LIMIT 1").get(uid,clientRef) as any;
+  if (duplicate) return { sale_id:duplicate.id,sale_no:duplicate.sale_no,duplicate:true,status:duplicate.status };
+
+  const registerId = saleDraft.register_id ?? null;
+  const register = registerId ? db.prepare("SELECT id,branch FROM pos_registers WHERE id=? AND user_id=? AND is_active=1").get(registerId,uid) as any : null;
+  if (!register) throw new Error("NO_REGISTER");
+
+  const shift = saleDraft.shift_id
+    ? db.prepare("SELECT * FROM pos_shifts WHERE id=? AND user_id=? AND status='open'").get(saleDraft.shift_id,uid) as any
+    : db.prepare("SELECT * FROM pos_shifts WHERE user_id=? AND status='open' ORDER BY opened_at DESC LIMIT 1").get(uid) as any;
+  if (!shift) throw new Error("NO_ACTIVE_SHIFT");
+
+  const periodDate = String(saleDraft.sold_at || new Date().toISOString()).slice(0,10);
+  assertPeriodOpen(uid,periodDate);
+
+  const settings = db.prepare("SELECT * FROM pos_settings WHERE user_id=? LIMIT 1").get(uid) as any;
+  const taxInclusive = settings?.tax_inclusive !== 0;
+  const allowNegative = settings?.allow_negative_stock === 1;
+  const saleDiscountPct = Math.max(0,Number(saleDraft.sale_discount_pct || 0));
+
+  const lines:any[]=[];
+  for (const draft of itemRows) {
+    if (!draft.item_id) throw new Error("ITEM_REQUIRED");
+    const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(draft.item_id,uid) as any;
+    if (!item) throw new Error("UNKNOWN_ITEM");
+    const qty=Number(draft.qty);
+    if (!(qty>0)) throw new Error("BAD_QUANTITY");
+    const price=Number(draft.price);
+    if (!(price>=0)) throw new Error("NO_PRICE");
+    const currentStock=Number(item.quantity_on_hand || 0);
+    if (!allowNegative && currentStock < qty) throw new Error(`INSUFFICIENT_STOCK:${item.name}`);
+    const unitCost=Number(item.cost_price || 0);
+    if (!(unitCost>=0)) throw new Error(`NO_COST:${item.name}`);
+    const discountPct=Math.min(100,Math.max(0,Number(draft.discount_pct || 0)));
+    const gross=qty*price;
+    const lineDiscount=gross*discountPct/100;
+    const afterLine=Math.max(gross-lineDiscount,0);
+    const rate=activeTaxRate(db,uid,item);
+    const taxInclusiveLine=taxInclusive ? afterLine : afterLine + afterLine*rate/100;
+    const lineTax=taxInclusive ? afterLine-afterLine/(1+rate/100) : afterLine*rate/100;
+    const taxable=taxInclusive ? afterLine-lineTax : afterLine;
+    lines.push({item,qty,price,discountPct,gross,lineDiscount,afterLine,rate,taxable,lineTax,total:taxInclusiveLine,unitCost});
+  }
+
+  const gross=lines.reduce((s,l)=>s+l.gross,0);
+  const lineDiscount=lines.reduce((s,l)=>s+l.lineDiscount,0);
+  const afterLine=Math.max(gross-lineDiscount,0);
+  const saleDiscount=Math.max(0,afterLine*saleDiscountPct/100);
+  const discountFactor=afterLine>0 ? Math.max(0,(afterLine-saleDiscount)/afterLine) : 1;
+  const taxable=lines.reduce((s,l)=>s+l.taxable*discountFactor,0);
+  const tax=lines.reduce((s,l)=>s+l.lineTax*discountFactor,0);
+  const subtotal=taxInclusive ? taxable : afterLine-saleDiscount;
+  const total=taxInclusive ? taxable+tax : subtotal+tax;
+  const costTotal=lines.reduce((s,l)=>s+l.qty*l.unitCost,0);
+  const rounded=(v:number)=>Math.round(v*100)/100;
+  const expectedTotal=rounded(total);
+
+  const paymentTotal=payRows.reduce((s,p)=>s+Number(p.amount||0),0);
+  if (paymentTotal + 0.005 < expectedTotal) throw new Error("PAYMENT_SHORT");
+  const change=Math.max(0,paymentTotal-expectedTotal);
+  const payments=payRows.map((p,i)=>({...p,amount:Number(p.amount||0)}));
+  if(change>0){
+    const cash=payments.findIndex(p=>String(p.method||"").toLowerCase()==="cash");
+    if(cash>=0) payments[cash].amount=Math.max(0,payments[cash].amount-change);
+  }
+
+  const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId=company?.company_id ?? null;
+  const saleNo=nextDocumentNumber({userId:uid,companyId,branchId:register.branch ?? null,documentType:"POS_SALE",prefix:"POS",padding:6});
+
+  const cashAccount=postingAccount(db,uid,companyId,"SALE_CASH",["1000","1100"]);
+  const cardAccount=postingAccount(db,uid,companyId,"SALE_CARD",["1110","1200"]);
+  const mobileAccount=postingAccount(db,uid,companyId,"SALE_MOBILE_MONEY",["1120","1210"]);
+  const receivableAccount=postingAccount(db,uid,companyId,"SALE_RECEIVABLE",["1200","1300"]);
+  const revenueAccount=postingAccount(db,uid,companyId,"SALES_REVENUE",["4000","4100"]);
+  const vatAccount=tax>0 ? postingAccount(db,uid,companyId,"OUTPUT_VAT",["2100","2200"]) : null;
+  const inventoryAccount=costTotal>0 ? postingAccount(db,uid,companyId,"INVENTORY_ASSET",["1300","1400"]) : null;
+  const cogsAccount=costTotal>0 ? postingAccount(db,uid,companyId,"COST_OF_SALES",["5000","5100"]) : null;
+
+  const transaction=db.transaction(()=>{
+    const saleId=generateUUID();
+    db.prepare("INSERT INTO pos_sales (id,user_id,sale_no,client_ref,shift_id,register_id,customer_id,customer_name,price_level,status,subtotal,discount,tax,total,paid,change_due,cost_total,note,sold_at,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(saleId,uid,saleNo,clientRef,shift.id,registerId,saleDraft.customer_id ?? null,saleDraft.customer_name ?? "Walk-in Customer",saleDraft.price_level ?? "normal","completed",rounded(taxable),rounded(lineDiscount+saleDiscount),rounded(tax),expectedTotal,rounded(Math.min(paymentTotal,expectedTotal)),rounded(change),rounded(costTotal),saleDraft.note ?? null,saleDraft.sold_at ?? new Date().toISOString(),uid);
+
+    for (const l of lines) {
+      db.prepare("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,saleId,l.item.id,l.item.name,l.item.sku ?? null,l.qty,l.price,l.unitCost,l.discountPct,l.rate,rounded(l.total*discountFactor),l.note ?? null);
+      const newQty=Number(l.item.quantity_on_hand||0)-l.qty;
+      db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,l.item.id,uid);
+      const locationId=saleDraft.location_id ?? l.item.warehouse_id ?? null;
+      const balance=db.prepare("SELECT quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,l.item.id,locationId ?? "default") as any;
+      const before=Number(balance?.quantity ?? l.item.quantity_on_hand ?? 0);
+      const after=before-l.qty;
+      if(!allowNegative && after<0) throw new Error(`INSUFFICIENT_STOCK:${l.item.name}`);
+      if(balance){
+        db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(after,balance.id);
+      } else {
+        db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,l.item.id,locationId ?? "default",after);
+      }
+      db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,l.item.id,"SALE",l.qty,l.unitCost,saleNo,"POS sale",locationId);
+      db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,movement_date,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.qty,after,l.unitCost,l.qty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
+    }
+
+    for (const p of payments) {
+      if (p.amount<=0) continue;
+      db.prepare("INSERT INTO pos_payments (id,user_id,sale_id,method,amount,reference) VALUES (?,?,?,?,?,?)")
+        .run(generateUUID(),uid,saleId,String(p.method||"cash"),rounded(p.amount),p.reference ?? null);
+    }
+
+    const entryId=generateUUID();
+    const entryNumber=`JE-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
+    db.prepare("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+      .run(entryId,uid,entryNumber,periodDate,saleNo,`POS sale ${saleNo}`,"posted",expectedTotal+rounded(costTotal),expectedTotal+rounded(costTotal),"ZMW",1);
+    let lineNo=0;
+    for (const p of payments) {
+      if (p.amount<=0) continue;
+      const m=String(p.method||"cash").toLowerCase();
+      const account=m==="card"?cardAccount:m.includes("mobile")?mobileAccount:m==="credit"?receivableAccount:cashAccount;
+      db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,entryId,account,`Payment ${p.method}`,rounded(p.amount),0);
+      lineNo++;
+    }
+    if (change>0) {
+      db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,entryId,cashAccount,"Change given",0,rounded(change));
+    }
+    db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+      .run(generateUUID(),uid,entryId,revenueAccount,"Sales revenue",0,rounded(taxable));
+    if(vatAccount) db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+      .run(generateUUID(),uid,entryId,vatAccount,"Output VAT",0,rounded(tax));
+    if(cogsAccount && inventoryAccount){
+      db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,entryId,cogsAccount,"Cost of sales",rounded(costTotal),0);
+      db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,entryId,inventoryAccount,"Inventory asset",0,rounded(costTotal));
+    }
+    db.prepare("UPDATE pos_sales SET journal_entry_id=? WHERE id=?").run(entryId,saleId);
+    return {saleId,saleNo,total:expectedTotal,tax:rounded(tax),costTotal:rounded(costTotal),change:rounded(change)};
+  });
+  void recordAuditEvent({userId:uid,terminalId:registerId,action:"SALE_POSTED",entityType:"pos_sale",entityId:transaction.saleId,newValue:{saleNo:transaction.saleNo,total:transaction.total}});
+  return {...transaction,duplicate:false};
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
     switch (name) {
+      case "pos_checkout": {
+        const result=executePosCheckout(args);
+        return { data: result, error: null };
+      }
+      case "reverse_pos_sale": {
+        const uid=String(args._uid||"");
+        const saleId=String(args._sale_id||"");
+        const action=String(args._action||"void");
+        const reason=String(args._reason||"");
+        if(!uid||!saleId) throw new Error("SALE_REFERENCE_REQUIRED");
+        const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=?").get(saleId,uid) as any;
+        if(!sale) throw new Error("SALE_NOT_FOUND");
+        if(sale.status==="voided"||sale.status==="refunded") throw new Error("SALE_ALREADY_REVERSED");
+        const fiscal=db.prepare("SELECT * FROM fiscal_transaction_controls WHERE user_id=? AND sale_id=? LIMIT 1").get(uid,saleId) as any;
+        if(fiscal?.state==="FISCALIZED") throw new Error("FISCALIZED_SALE_REQUIRES_ZRA_CORRECTION_WORKFLOW");
+        const reversalId=generateUUID();
+        const reversalNo=nextDocumentNumber({userId:uid,documentType:action==="refund"?"POS_REFUND":"POS_VOID",prefix:action==="refund"?"RF":"VD",padding:6});
+        const transaction=db.transaction(()=>{
+          const items=db.prepare("SELECT * FROM pos_sale_items WHERE sale_id=? AND user_id=?").all(saleId,uid) as any[];
+          for(const item of items){
+            const stock=db.prepare("SELECT quantity_on_hand,cost_price,warehouse_id,name FROM stock_items WHERE id=? AND user_id=?").get(item.item_id,uid) as any;
+            if(stock){
+              const newQty=Number(stock.quantity_on_hand||0)+Number(item.qty||0);
+              db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,item.item_id,uid);
+              db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+                .run(generateUUID(),uid,item.item_id,"RETURN",Number(item.qty||0),Number(item.unit_cost||stock.cost_price||0),reversalNo,reason,sale.location_id ?? stock.warehouse_id ?? null);
+              db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,reason,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .run(generateUUID(),uid,item.item_id,stock.warehouse_id ?? null,sale.location_id ?? null,"RETURN",Number(item.qty||0),0,newQty,Number(item.unit_cost||stock.cost_price||0),Number(item.qty||0)*Number(item.unit_cost||stock.cost_price||0),"pos_reversal",reversalId,reversalNo,reason,uid);
+            }
+          }
+          db.prepare("UPDATE pos_sales SET status=?,void_reason=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(action==="refund"?"refunded":"voided",reason,saleId,uid);
+          db.prepare("INSERT INTO pos_reversal_actions (id,user_id,original_sale_id,reversal_sale_id,action,reason,refund_method) VALUES (?,?,?,?,?,?,?)")
+            .run(generateUUID(),uid,saleId,reversalId,action,reason,args._refund_method ?? null);
+          return reversalId;
+        });
+        void recordAuditEvent({userId:uid,action:action==="refund"?"REFUND_CREATED":"SALE_CANCELLED",entityType:"pos_sale",entityId:saleId,newValue:{reason,reversalId:transaction}});
+        return {data:transaction,error:null};
+      }
       case "next_doc_number": {
         const uid = args._uid;
         const prefix = args._prefix || "DOC";
