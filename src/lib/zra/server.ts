@@ -440,6 +440,88 @@ export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
     }
   });
 
+
+export async function submitZraSaleCorrection(args:{
+  userId:string;
+  saleId:string;
+  correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";
+  reason:string;
+  terminalId?:string|null;
+}) {
+  const db=getDb();
+  const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=? LIMIT 1").get(args.saleId,args.userId) as any;
+  if(!sale) throw new Error("SALE_NOT_FOUND");
+  const fiscal=db.prepare("SELECT * FROM fiscal_transaction_controls WHERE user_id=? AND sale_id=? LIMIT 1").get(args.userId,args.saleId) as any;
+  if(fiscal?.state!=="FISCALIZED" || !fiscal?.zra_receipt_number) throw new Error("ZRA_CORRECTION_REQUIRES_FISCALIZED_SALE");
+  if(!args.reason.trim()) throw new Error("CORRECTION_REASON_REQUIRED");
+  const existing=db.prepare("SELECT * FROM document_correction_controls WHERE user_id=? AND source_type='pos_sale' AND source_id=? AND correction_type=? LIMIT 1")
+    .get(args.userId,args.saleId,args.correctionType) as any;
+  if(existing?.status==="FISCALIZED") return existing;
+
+  const cfg=getSavedConfig(args.userId,sale.location_id ?? null);
+  if(!cfg?.tpin || !cfg?.branch_code || !cfg?.device_serial) throw new Error("ZRA_CORRECTION_CONFIG_REQUIRED: TPIN, Branch ID and device/SDC identifier are required.");
+  const {payload:original}=buildSalesPayload(db,args.userId,args.saleId,sale.sale_no);
+  const receiptTypeCode=zraStandardCode(db,args.userId,"Sales Receipt Type",
+    [args.correctionType==="CREDIT_NOTE"?"reversal after sale":"adjustment upwards after sale"]);
+  const salesTypeCode=zraStandardCode(db,args.userId,"Transaction Type",["normal"]);
+  const statusCode=zraStandardCode(db,args.userId,"Transaction Progress",["approved"]);
+  const correctionNo=nextCorrectionNumber(db,args.userId,args.correctionType);
+  const payload={
+    ...original,
+    cisInvcNo:correctionNo,
+    orgSdcId:String(cfg.device_serial),
+    orgIncNo:Number(fiscal.zra_receipt_number),
+    rcptTyCd:receiptTypeCode,
+    salesTyCd:salesTypeCode,
+    salesSttsCd:statusCode,
+    remark:args.reason.slice(0,400),
+    cfmDt:nowZraDate(),
+    salesDt:toDateOnly(),
+  } as any;
+  const id=existing?.id ?? generateUUID();
+  if(!existing) {
+    db.prepare("INSERT INTO document_correction_controls (id,user_id,source_type,source_id,correction_type,original_reference,status,reason,created_by,updated_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))")
+      .run(id,args.userId,"pos_sale",args.saleId,args.correctionType,String(fiscal.zra_receipt_number),"SUBMITTED",args.reason,args.userId);
+  } else {
+    db.prepare("UPDATE document_correction_controls SET status='SUBMITTED',reason=?,updated_at=datetime('now') WHERE id=?").run(args.reason,id);
+  }
+  const outbox=enqueueZraOperation({
+    userId:args.userId,branchId:cfg.branch_code,terminalId:args.terminalId ?? sale.register_id ?? null,
+    sourceType:"pos_sale",sourceId:args.saleId,
+    operation:args.correctionType==="CREDIT_NOTE"?"submitCreditNote":"submitDebitNote",
+    idempotencyKey:`zra:correction:${args.correctionType}:${args.saleId}`,
+    payload
+  });
+  try {
+    const response:any=await saveSales(payload,{baseUrl:requireVsdcUrl(cfg)});
+    const success=isSuccessfulVsdcResponse(response);
+    const data:any=response.data ?? {};
+    const receipt:any=data.receipt ?? data;
+    const receiptNo=receipt.rcptNo ?? data.rcptNo ?? null;
+    db.prepare("UPDATE document_correction_controls SET status=?,zra_status=?,zra_reference=?,zra_response=?,updated_at=datetime('now') WHERE id=?")
+      .run(success?"FISCALIZED":"REJECTED",success?"SUCCESS":"FAILED",receiptNo,JSON.stringify(response),id);
+    updateZraOutbox(outbox.id,{status:success?"SUCCESS":"FAILED",response,resultCode:response.resultCd,resultMessage:response.resultMsg,errorCode:success?null:response.resultCd,errorMessage:success?null:response.resultMsg});
+    await recordAuditEvent({userId:args.userId,terminalId:args.terminalId ?? sale.register_id ?? null,
+      action:success?"ZRA_CORRECTION_FISCALIZED":"ZRA_CORRECTION_REJECTED",entityType:"pos_sale",entityId:args.saleId,
+      reason:args.reason,newValue:{correctionType:args.correctionType,originalReceipt:fiscal.zra_receipt_number,correctionReceipt:receiptNo}});
+    return {correctionId:id,correctionType:args.correctionType,status:success?"FISCALIZED":"REJECTED",response,payload};
+  } catch(error:any) {
+    db.prepare("UPDATE document_correction_controls SET status='RETRY_REQUIRED',zra_status='REQUEST_FAILED',updated_at=datetime('now') WHERE id=?").run(id);
+    updateZraOutbox(outbox.id,{status:"RETRY_REQUIRED",errorCode:"VSDC_REQUEST_FAILED",errorMessage:error?.message || "VSDC request failed"});
+    throw error;
+  }
+}
+
+function nextCorrectionNumber(db:any,userId:string,type:string) {
+  const prefix=type==="CREDIT_NOTE"?"CN":"DN";
+  const row=db.prepare("SELECT COUNT(*) AS n FROM document_correction_controls WHERE user_id=? AND correction_type=?").get(userId,type) as any;
+  return `${prefix}-${new Date().getFullYear()}-${String(Number(row?.n||0)+1).padStart(6,"0")}`;
+}
+
+export const zraSubmitCorrectionFn = createServerFn({method:"POST"})
+  .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";reason:string;terminalId?:string|null})
+  .handler(async ({data})=>submitZraSaleCorrection(data));
+
 export const zraSelectInvoiceFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return selectInvoice(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
