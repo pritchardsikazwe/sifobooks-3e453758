@@ -23,15 +23,18 @@ export type VsdcConfig = {
 };
 
 export const DEFAULT_PATHS = {
-  initialize: "/initializer/selectInitInfo",
-  codes: "/code/selectCodes",
-  itemClasses: "/itemClass/selectItemsClass",
-  saveItem: "/items/saveItem",
-  selectItems: "/items/selectItems",
-  saveSales: "/trnsSales/saveSales",
-  selectInvoice: "/trnsSales/selectInvoice",
-  saveStockItems: "/stock/saveStockItems",
-  saveStockMaster: "/stockMaster/saveStockMaster",
+  testEcho: "/test/echo",
+  initialize: "/initializer/selectInitVsdcInfo",
+  serverTime: "/serverTime/selectServerTime",
+  taxpayerInfo: "/taxpayerInfo/selectTaxpayerInfo",
+  codes: "/code/search/selectCodeList",
+  itemClasses: "/item/class/search/selectItemClsList",
+  saveItem: "/item/base/saveItem",
+  selectItems: "/item/base/search/selectItemList",
+  saveSales: "/trns/sales/base/saveTrnsSalesVsdc",
+  selectInvoice: "/trns/sales/base/search/selectTrnsInvoiceVsdc",
+  saveStockItems: "/stock/io/saveStockIO",
+  saveStockMaster: "/stockMaster/saveStockMasterList",
 } as const;
 
 function normaliseBaseUrl(value: string): string {
