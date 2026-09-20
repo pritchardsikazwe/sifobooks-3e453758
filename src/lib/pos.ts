@@ -22,15 +22,15 @@ export const PRICE_LEVELS: { key: PriceLevel; label: string; factor: number }[] 
 ];
 export const priceFactor = (level: PriceLevel) => PRICE_LEVELS.find((l) => l.key === level)?.factor ?? 1;
 
-export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
+export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
 export type PosCustomer = { id:string; name:string; phone:string|null; code:string|null; price_level?:PriceLevel };
 export type PosSettings = { show_images:boolean; show_stock:boolean; show_sku:boolean; products_per_row:number; enable_fast_sellers:boolean; enable_quick_qty:boolean; enable_quick_discounts:boolean; allow_price_change:boolean; allow_negative_stock:boolean; default_customer:string; default_price_level:PriceLevel; default_payment:string; tax_rate:number; tax_inclusive:boolean; auto_new_sale:boolean; auto_print_receipt:boolean; silent_print:boolean; receipt_footer:string|null };
 export const DEFAULT_SETTINGS: PosSettings = { show_images:true, show_stock:true, show_sku:true, products_per_row:4, enable_fast_sellers:true, enable_quick_qty:true, enable_quick_discounts:true, allow_price_change:true, allow_negative_stock:false, default_customer:"Walk-in Customer", default_price_level:"normal", default_payment:"cash", tax_rate:16, tax_inclusive:true, auto_new_sale:true, auto_print_receipt:false, silent_print:false, receipt_footer:null };
-export type CartLine = { key:string; item_id:string|null; name:string; sku:string|null; qty:number; price:number; unit_cost:number; discount_pct:number; note?:string };
+export type CartLine = { key:string; item_id:string|null; name:string; sku:string|null; qty:number; unit:string|null; price:number; unit_cost:number; discount_pct:number; note?:string };
 export type PosTotals = { gross:number; lineDiscount:number; saleDiscount:number; subtotal:number; tax:number; total:number; cost:number; items:number };
 const n = (v:any) => Number(v ?? 0);
 
-export async function loadProducts():Promise<PosProduct[]> { try { const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000); if(error)throw error; const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[]; void cacheRows("products",rows); return rows; } catch { return await readCached<PosProduct>("products"); } }
+export async function loadProducts():Promise<PosProduct[]> { try { const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000); if(error)throw error; const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[]; void cacheRows("products",rows); return rows; } catch { return await readCached<PosProduct>("products"); } }
 export async function loadCustomers():Promise<PosCustomer[]> { try { const {data}=await supabase.from("customers").select("id,name,phone").order("name").limit(1000); const rows=(data??[]).map((c:any)=>({id:c.id,name:c.name,phone:c.phone??null,code:null})) as PosCustomer[]; void cacheRows("customers",rows); return rows; } catch { return await readCached<PosCustomer>("customers"); } }
 export async function loadFavorites():Promise<string[]> { const {data}=await supabase.from("pos_favorites").select("item_id").order("sort_order"); return (data??[]).map((r:any)=>r.item_id as string); }
 export async function toggleFavorite(itemId:string,on:boolean){ if(on)await supabase.from("pos_favorites").insert({item_id:itemId} as any); else await supabase.from("pos_favorites").delete().eq("item_id",itemId); }
@@ -45,7 +45,7 @@ export function computeTotals(lines:CartLine[],saleDiscountPct:number,s:PosSetti
 export const round2=(v:number)=>Math.round((Number(v)||0)*100)/100;
 export function saleNumber(){const d=new Date();const stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;return `POS-${stamp}-${Math.floor(Math.random()*9000+1000)}`;}
 export type SalePayment={method:string;amount:number;reference?:string};
-export type SaleDraft={lines:CartLine[];totals:PosTotals;customer:PosCustomer|null;customerName:string;priceLevel:PriceLevel;saleDiscountPct:number;note?:string;shiftId?:string|null;registerId?:string|null;taxRate?:number;taxInclusive?:boolean;allowNegativeStock?:boolean};
+export type SaleDraft={lines:CartLine[];totals:PosTotals;customer:PosCustomer|null;customerName:string;priceLevel:PriceLevel;saleDiscountPct:number;note?:string;shiftId?:string|null;registerId?:string|null;locationId?:string|null;taxRate?:number;taxInclusive?:boolean;allowNegativeStock?:boolean};
 function isOnline(){return typeof navigator==="undefined"?true:navigator.onLine;}
 
 export async function completeSale(draft:SaleDraft,payments:SalePayment[],changeDue:number){
@@ -70,7 +70,7 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   // shift_id travels with the sale so a queued offline sale still posts to the
   // shift it was rung on, even after that shift has been closed.
   const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
-  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
+  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,unit:l.unit??null,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
   const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const {data:authUser}=await supabase.auth.getUser(); const args={_uid:authUser.user?.id??null,_sale:salePayload,_items:itemRows,_payments:payRows};
   const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
   if(!isOnline())return stash();
