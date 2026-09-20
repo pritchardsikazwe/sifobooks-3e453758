@@ -21,10 +21,10 @@ After approval, the VSDC package is obtained from the ZRA Device Management area
 
 Set these on the Windows Server environment and never commit real credentials:
 
-    ZRA_VSDC_URL=http://127.0.0.1:8080/zrasmartinvoice
+    ZRA_VSDC_URL=http://127.0.0.1:8085
     ZRA_VSDC_TIMEOUT_MS=15000
 
-The exact context path is whatever is produced by the ZRA WAR deployment. Do not assume the WAR filename or context path until the supplied package is installed.
+The supplied sandboxvsdc1.0.11.4.war is a Spring Boot 2.7.18 WAR built with JDK 1.8. Its bundled application.properties sets server.port=8085 and vsdc.profile=UAT, and it uses an embedded SQLite database. The package can therefore be tested as a standalone Java application with java -jar; if deploying it into Tomcat 9, use the WAR deployment model required by your ZRA environment and verify the resulting context path.
 
 ## Implemented VSDC client
 
@@ -89,3 +89,10 @@ Do not store VSDC security keys in the browser or in Git.
         <ZRA VSDC WAR>
 
 Keep SifoBooks and the VSDC separate. This makes it possible to replace the VSDC package or move the ERP later without rewriting the ERP in Java.
+
+
+## Supplied VSDC package inspection
+
+The uploaded package was inspected before wiring SifoBooks. It contains `ebm.vsdc.Application` as the Spring Boot start class and includes the VSDC controllers/models. The local API paths wired into SifoBooks were derived from the WAR constants, including `/initializer/selectInitVsdcInfo`, `/code/search/selectCodeList`, `/item/class/search/selectItemClsList`, `/item/base/saveItem`, `/trns/sales/base/saveTrnsSalesVsdc`, `/trns/sales/base/search/selectTrnsInvoiceVsdc`, `/stock/io/saveStockIO`, and `/stockMaster/saveStockMasterList`.
+
+The WAR's default UAT endpoint is `https://sandboxapi.zra.org.zm`. Production must not be assumed until ZRA provides/authorizes the production configuration.
