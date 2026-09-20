@@ -251,6 +251,12 @@ function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
   const salesTypeCode=zraStandardCode(db,userId,"Transaction Type",["normal"]);
   const receiptTypeCode=zraStandardCode(db,userId,"Sales Receipt Type",["sale"]);
   const statusCode=zraStandardCode(db,userId,"Transaction Progress",["approved"]);
+  const salesCategoryName=String(sale.price_level||"normal").toLowerCase()==="wholesale"?"wholesale":"retail";
+  const salesCategoryCode=zraStandardCode(db,userId,"Sales Category",[salesCategoryName]);
+  const actor=db.prepare("SELECT au.email,p.full_name FROM auth_users au LEFT JOIN profiles p ON p.id=au.id WHERE au.id=? LIMIT 1").get(userId) as any;
+  const actorId=String(userId).replace(/-/g,"").slice(0,20);
+  const actorName=String(actor?.full_name||actor?.email||userId).slice(0,60);
+  const customer=sale.customer_id ? db.prepare("SELECT tpin,name FROM customers WHERE id=? AND user_id=? LIMIT 1").get(sale.customer_id,userId) as any : null;
   const rows=db.prepare(
     `SELECT psi.*, si.name AS stock_name, si.sku, si.barcode, si.hs_code, si.unit, si.vat_rate,
             si.zra_item_code,si.zra_item_class_code,si.zra_item_type_code,si.zra_origin_country_code,
@@ -281,10 +287,10 @@ function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
   }
   const clean=(prefix:string,b:string)=>Number((prefix==="taxbl"?taxbl[b]:prefix==="taxAmt"?taxAmt[b]:taxRt[b])||0);
   const payload:any={
-    tpin:cfg.tpin,bhfId:cfg.branch_code,orgInvcNo:0,cisInvcNo:saleNo,custNm:sale.customer_name,
+    tpin:cfg.tpin,bhfId:cfg.branch_code,orgInvcNo:0,cisInvcNo:saleNo,custTpin:customer?.tpin ?? null,custNm:sale.customer_name,
     salesTyCd:salesTypeCode,rcptTyCd:receiptTypeCode,pmtTyCd:paymentTypeCode,salesSttsCd:statusCode,cfmDt:nowZraDate(),salesDt:toDateOnly(),
     stockRlsDt:nowZraDate(),cnclReqDt:null,cnclDt:null,rfdDt:null,rfdRsnCd:null,totItemCnt:itemList.length,
-    currencyTyCd:zraStandardCode(db,userId,"Currency",["zambian kwacha","zambia kwacha","zmw"]),exchangeRt:"1",prchrAcptcYn:"N",remark:"",regrId:userId,regrNm:userId,
+    currencyTyCd:zraStandardCode(db,userId,"Currency",["zambian kwacha","zambia kwacha","zmw"]),exchangeRt:"1",prchrAcptcYn:"N",remark:"",regrId:actorId,regrNm:actorName,modrId:actorId,modrNm:actorName,saleCtyCd:salesCategoryCode,
     totTaxblAmt:itemList.reduce((a:number,i:any)=>a+i.vatTaxblAmt,0),totTaxAmt:itemList.reduce((a:number,i:any)=>a+i.vatAmt,0),
     totAmt:Number(sale.total||0),taxblAmtTot:0,taxAmtTot:0,
     itemList:itemList.map(({_taxRate,_vatCat,...i}:any)=>i),
