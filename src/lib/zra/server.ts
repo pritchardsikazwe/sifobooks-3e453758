@@ -501,6 +501,52 @@ export async function submitZraSaleCorrection(args:{
     db.prepare("UPDATE document_correction_controls SET status=?,zra_status=?,zra_reference=?,zra_response=?,updated_at=datetime('now') WHERE id=?")
       .run(success?"FISCALIZED":"REJECTED",success?"SUCCESS":"FAILED",receiptNo,JSON.stringify(response),id);
     updateZraOutbox(outbox.id,{status:success?"SUCCESS":"FAILED",response,resultCode:response.resultCd,resultMessage:response.resultMsg,errorCode:success?null:response.resultCd,errorMessage:success?null:response.resultMsg});
+    if(success){
+      try{
+        const local=db.transaction(()=>{
+          const items=db.prepare("SELECT * FROM pos_sale_items WHERE sale_id=? AND user_id=?").all(args.saleId,args.userId) as any[];
+          for(const item of items){
+            const stock=db.prepare("SELECT quantity_on_hand,cost_price,warehouse_id FROM stock_items WHERE id=? AND user_id=?").get(item.item_id,args.userId) as any;
+            if(!stock) continue;
+            const qty=Number(item.base_qty ?? item.qty ?? 0);
+            const unitCost=Number(item.unit_cost ?? stock.cost_price ?? 0);
+            const newQty=Number(stock.quantity_on_hand||0)+qty;
+            db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,item.item_id,args.userId);
+            const loc=sale.location_id ?? stock.warehouse_id ?? null;
+            if(loc){
+              const bal=db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(args.userId,item.item_id,loc) as any;
+              const after=Number(bal?.quantity||0)+qty;
+              if(bal) db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(after,bal.id);
+              else db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),args.userId,item.item_id,loc,after);
+            }
+            db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+              .run(generateUUID(),args.userId,item.item_id,"RETURN",qty,unitCost,correctionNo,args.reason,sale.location_id ?? stock.warehouse_id ?? null);
+          }
+          if(sale.journal_entry_id){
+            const original=db.prepare("SELECT * FROM journal_entries WHERE id=? AND user_id=? LIMIT 1").get(sale.journal_entry_id,args.userId) as any;
+            if(original){
+              const reversalId=generateUUID();
+              const reversalNo=nextDocumentNumber({userId:args.userId,documentType:"JOURNAL",prefix:"JE",padding:6});
+              const lines=db.prepare("SELECT * FROM journal_lines WHERE entry_id=? AND user_id=?").all(original.id,args.userId) as any[];
+              const total=lines.reduce((n:number,l:any)=>n+Number(l.debit||0),0);
+              db.prepare("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate,reversal_of,reversal_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .run(reversalId,args.userId,reversalNo,toDateOnly().slice(0,4)+"-"+toDateOnly().slice(4,6)+"-"+toDateOnly().slice(6,8),correctionNo,"Reversal of "+original.entry_number,"posted",Number(original.total_credit||0),Number(original.total_debit||0),original.currency||"ZMW",original.exchange_rate||1,original.id,args.reason);
+              for(const l of lines){
+                db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+                  .run(generateUUID(),args.userId,reversalId,l.account_id,"Correction reversal: "+(l.description||""),Number(l.credit||0),Number(l.debit||0));
+              }
+              db.prepare("UPDATE document_correction_controls SET journal_entry_id=?,updated_at=datetime('now') WHERE id=?").run(reversalId,id);
+            }
+          }
+          db.prepare("UPDATE pos_sales SET status='refunded',void_reason=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(args.reason,args.saleId,args.userId);
+        });
+        local();
+      }catch(localError:any){
+        db.prepare("UPDATE document_correction_controls SET status='LOCAL_POSTING_REQUIRED',updated_at=datetime('now') WHERE id=?").run(id);
+        await recordAuditEvent({userId:args.userId,action:"ZRA_CORRECTION_LOCAL_POSTING_REQUIRED",entityType:"pos_sale",entityId:args.saleId,reason:localError?.message||"Local correction posting failed"});
+        return {correctionId:id,correctionType:args.correctionType,status:"LOCAL_POSTING_REQUIRED",response,payload};
+      }
+    }
     await recordAuditEvent({userId:args.userId,terminalId:args.terminalId ?? sale.register_id ?? null,
       action:success?"ZRA_CORRECTION_FISCALIZED":"ZRA_CORRECTION_REJECTED",entityType:"pos_sale",entityId:args.saleId,
       reason:args.reason,newValue:{correctionType:args.correctionType,originalReceipt:fiscal.zra_receipt_number,correctionReceipt:receiptNo}});
