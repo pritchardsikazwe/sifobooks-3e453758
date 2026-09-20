@@ -10,7 +10,9 @@ import { join } from "path";
 export const executeQueryFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as QuerySpec)
   .handler(async ({ data }) => {
-    return executeQuery(data);
+    const auth = data.authToken ? await verifyToken(data.authToken) : null;
+    if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
+    return executeQuery(data, auth.userId);
   });
 
 // ── Auth ──
