@@ -20,10 +20,10 @@ OutputBaseFilename=SifoBooks-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-ArchitecturesInstallIn64BitMode=x64compatible
+ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin
+DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
-SetupIconFile={app}\client\favicon.ico
 ChangesAssociations=no
 
 [Files]
