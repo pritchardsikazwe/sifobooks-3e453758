@@ -6,6 +6,7 @@ import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/co
 import { receivePurchase, transferStock, createStockReconciliation, postStockReconciliation } from "@/lib/erp/phase2";
 import { saveUnitConversion, listUnitConversions } from "@/lib/inventory/unit-conversions";
 import { createPurchaseOrder, approvePurchaseOrder, createSupplierBillFromReceipt } from "@/lib/erp/purchasing";
+import { createPurchaseOrder, approvePurchaseOrder, createSupplierBillFromReceipt } from "@/lib/erp/purchasing";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -299,6 +300,15 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
   const db = getDb();
   try {
     switch (name) {
+      case "create_purchase_order": {
+        return { data: createPurchaseOrder({ ...args, userId: String(args._uid || "") }), error: null };
+      }
+      case "approve_purchase_order": {
+        return { data: approvePurchaseOrder({ ...args, userId: String(args._uid || ""), approvedBy: String(args._uid || "") }), error: null };
+      }
+      case "create_supplier_bill": {
+        return { data: createSupplierBillFromReceipt({ ...args, userId: String(args._uid || "") }), error: null };
+      }
       case "save_unit_conversion": {
         const uid=String(args._uid||"");
         return { data: saveUnitConversion({ ...args, userId: uid, actorId: uid }), error: null };
