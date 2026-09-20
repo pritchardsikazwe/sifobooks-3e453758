@@ -324,7 +324,7 @@ function RetailPos() {
         const { data: auth } = await supabase.auth.getUser();
         if (auth.user) {
           const zraResult: any = await zraSubmitPosSaleFn({
-            data: { userId: auth.user.id, saleId: snapshot.saleId, saleNo: res.sale_no },
+            data: { userId: auth.user.id, saleId: snapshot.saleId, saleNo: res.sale_no, terminalId: register?.id ?? null },
           });
           const response = zraResult?.response;
           const zraData = response?.data?.receipt ?? response?.data ?? {};
