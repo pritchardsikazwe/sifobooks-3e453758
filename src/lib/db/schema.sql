@@ -1795,7 +1795,10 @@ CREATE TABLE IF NOT EXISTS "pos_sale_items" (
   "discount" REAL NOT NULL DEFAULT 0,
   "tax_rate" REAL NOT NULL DEFAULT 0,
   "line_total" REAL NOT NULL DEFAULT 0,
-  "note" TEXT
+  "note" TEXT,
+  "unit" TEXT,
+  "base_qty" REAL,
+  "base_unit" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "pos_sales" (
