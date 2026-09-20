@@ -69,13 +69,13 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
       .run(receiptId,args.userId,companyId,args.branchId??null,args.warehouseId??null,args.locationId,args.supplierId??null,args.poId??null,receiptNumber,args.supplierInvoiceNumber??null,args.receiptDate,"POSTED",subtotal,taxTotal,total,"ZMW",args.userId);
     const inv=postingAccount(db,args.userId,companyId,"INVENTORY_ASSET",["1300","1400"]);
     const inputVat=taxTotal>0?postingAccount(db,args.userId,companyId,"INPUT_VAT",["2110","2210"]):null;
-    const ap=postingAccount(db,args.userId,companyId,"ACCOUNTS_PAYABLE",["2000","2100"]);
+    const grni=postingAccount(db,args.userId,companyId,"GOODS_RECEIVED_NOT_INVOICED",["2050","2150","2200"]);
     const jeId=generateUUID(),jeNo=nextDocumentNumber({userId:args.userId,companyId,branchId:args.branchId??null,documentType:"JOURNAL",prefix:"JE",padding:6});
     db.prepare("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
       .run(jeId,args.userId,jeNo,args.receiptDate,receiptNumber,`Goods received ${receiptNumber}`,"posted",total,total,"ZMW",1);
     db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,inv,"Inventory received",subtotal,0);
     if(inputVat) db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,inputVat,"Input VAT",taxTotal,0);
-    db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,ap,"Supplier payable",0,total);
+    db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,grni,"Goods received not invoiced",0,total);
     db.prepare("UPDATE purchase_receipts SET journal_entry_id=? WHERE id=?").run(jeId,receiptId);
     return {receiptId,receiptNumber,subtotal,taxAmount:taxTotal,total,journalEntryId:jeId};
   });
