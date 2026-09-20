@@ -61,6 +61,12 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
       const movingAverage=newQty>0 ? ((oldQty*oldCost)+(baseQuantity*row.unitCost))/newQty : row.unitCost;
       db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,last_purchase_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,movingAverage,movingAverage,row.unitCost,row.itemId,args.userId);
       ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:baseQuantity,quantityOut:0,unitCost:row.unitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
+      if(row.poItemId){
+        const poLine=db.prepare("SELECT quantity,received_quantity FROM purchase_order_items WHERE id=? AND user_id=? LIMIT 1").get(row.poItemId,args.userId) as any;
+        if(!poLine) throw new Error("PO_ITEM_NOT_FOUND");
+        if(Number(poLine.received_quantity||0)+baseQuantity>Number(poLine.quantity||0)+0.000001) throw new Error("PO_OVER_RECEIPT");
+        db.prepare("UPDATE purchase_order_items SET received_quantity=COALESCE(received_quantity,0)+? WHERE id=? AND user_id=?").run(baseQuantity,row.poItemId,args.userId);
+      }
       db.prepare("INSERT INTO tax_transaction_lines (id,user_id,source_type,source_id,line_id,tax_code_id,tax_code,tax_category,rate,taxable_amount,tax_amount,inclusive,effective_from,snapshot_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),args.userId,"purchase_receipt",receiptId,row.itemId,tax.id,tax.code,tax.category,Number(tax.rate||0),taxable,taxAmount,0,tax.effective_from,JSON.stringify(tax));
     }
