@@ -39,6 +39,12 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
   if(!args.items.length) throw new Error("GRN_EMPTY");
   const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(args.userId) as any;
   const companyId=company?.company_id??null;
+  if(args.poId){
+    const po=db.prepare("SELECT status,supplier_id FROM purchase_orders WHERE id=? AND user_id=? LIMIT 1").get(args.poId,args.userId) as any;
+    if(!po) throw new Error("PO_NOT_FOUND");
+    if(!["APPROVED","PARTIAL"].includes(String(po.status))) throw new Error("PO_NOT_APPROVED");
+    if(po.supplier_id && args.supplierId && po.supplier_id!==args.supplierId) throw new Error("PO_SUPPLIER_MISMATCH");
+  }
   const receiptNumber=nextDocumentNumber({userId:args.userId,companyId,branchId:args.branchId??null,documentType:"GRN",prefix:"GRN",padding:6});
   const tx=db.transaction(()=>{
     let subtotal=0,taxTotal=0;
@@ -49,17 +55,18 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
       if(!item) throw new Error("GRN_UNKNOWN_ITEM");
       const converted=convertToBaseUnit(db,args.userId,item,Number(row.quantity),row.unit);
       const baseQuantity=converted.quantity;
+      const baseUnitCost=Number(row.unitCost)/Number(converted.multiplier||1);
       const tax=taxFor(db,args.userId,companyId,row.taxCode||item.tax_category,Number(row.taxRate??item.vat_rate??0),args.receiptDate);
-      const taxable=baseQuantity*Number(row.unitCost);
+      const taxable=Number(row.quantity)*Number(row.unitCost);
       const taxAmount=taxable*Number(tax.rate||0)/100;
       subtotal+=taxable; taxTotal+=taxAmount;
       db.prepare("INSERT INTO purchase_receipt_items (id,user_id,receipt_id,item_id,po_item_id,quantity,unit_cost,tax_rate,taxable_amount,tax_amount,total_amount,batch_no,expiry_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),args.userId,receiptId,row.itemId,row.poItemId??null,baseQuantity,row.unitCost,Number(tax.rate||0),taxable,taxAmount,taxable+taxAmount,row.batchNo??null,row.expiryDate??null);
+        .run(generateUUID(),args.userId,receiptId,row.itemId,row.poItemId??null,baseQuantity,baseUnitCost,Number(tax.rate||0),taxable,taxAmount,taxable+taxAmount,row.batchNo??null,row.expiryDate??null);
       const oldQty=Number(item.quantity_on_hand||0);
       const oldCost=Number(item.cost_price||0);
       const newQty=oldQty+baseQuantity;
-      const movingAverage=newQty>0 ? ((oldQty*oldCost)+(baseQuantity*row.unitCost))/newQty : row.unitCost;
-      db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,last_purchase_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,movingAverage,movingAverage,row.unitCost,row.itemId,args.userId);
+      const movingAverage=newQty>0 ? ((oldQty*oldCost)+(baseQuantity*baseUnitCost))/newQty : baseUnitCost;
+      db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,last_purchase_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,movingAverage,movingAverage,baseUnitCost,row.itemId,args.userId);
       ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:baseQuantity,quantityOut:0,unitCost:row.unitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
       if(row.poItemId){
         const poLine=db.prepare("SELECT quantity,received_quantity FROM purchase_order_items WHERE id=? AND user_id=? LIMIT 1").get(row.poItemId,args.userId) as any;
@@ -83,6 +90,12 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
     if(inputVat) db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,inputVat,"Input VAT",taxTotal,0);
     db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),args.userId,jeId,grni,"Goods received not invoiced",0,total);
     db.prepare("UPDATE purchase_receipts SET journal_entry_id=? WHERE id=?").run(jeId,receiptId);
+    if(args.poId){
+      const remaining=db.prepare("SELECT COUNT(*) AS n FROM purchase_order_items WHERE po_id=? AND user_id=? AND COALESCE(received_quantity,0)+0.000001 < quantity").get(args.poId,args.userId) as any;
+      const hasReceived=db.prepare("SELECT COUNT(*) AS n FROM purchase_order_items WHERE po_id=? AND user_id=? AND COALESCE(received_quantity,0)>0").get(args.poId,args.userId) as any;
+      const status=Number(remaining?.n||0)===0 ? "RECEIVED" : (Number(hasReceived?.n||0)>0 ? "PARTIAL" : "APPROVED");
+      db.prepare("UPDATE purchase_orders SET status=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(status,args.poId,args.userId);
+    }
     return {receiptId,receiptNumber,subtotal,taxAmount:taxTotal,total,journalEntryId:jeId};
   });
   void recordAuditEvent({userId:args.userId,branchId:args.branchId,action:"PURCHASE_RECEIVED",entityType:"purchase_receipt",entityId:tx.receiptId,newValue:{receiptNumber:tx.receiptNumber,total:tx.total}});
@@ -101,14 +114,14 @@ export function transferStock(args:{userId:string;companyId?:string|null;branchI
     let total=0;
     for(const row of args.items){
       if(!(row.quantity>0)) throw new Error("TRANSFER_BAD_QTY");
-      const balance=db.prepare("SELECT quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(args.userId,row.itemId,args.fromLocationId) as any;
-      const available=Number(balance?.quantity||0);
-      if(available<row.quantity) throw new Error(`TRANSFER_INSUFFICIENT_STOCK:${row.itemId}`);
       const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(row.itemId,args.userId) as any;
       if(!item) throw new Error("TRANSFER_UNKNOWN_ITEM");
       const converted=convertToBaseUnit(db,args.userId,item,Number(row.quantity),row.unit);
       const baseQuantity=converted.quantity;
-      const unitCost=Number(row.unitCost??item.cost_price??0);
+      const balance=db.prepare("SELECT quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(args.userId,row.itemId,args.fromLocationId) as any;
+      const available=Number(balance?.quantity||0);
+      if(available+0.000001<baseQuantity) throw new Error(`TRANSFER_INSUFFICIENT_STOCK:${row.itemId}`);
+      const unitCost=Number(row.unitCost??item.cost_price??0)/Number(converted.multiplier||1);
       ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_OUT",quantityIn:0,quantityOut:baseQuantity,unitCost,reference:transferNumber,note:"Warehouse/store transfer out",locationId:args.fromLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
       ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_IN",quantityIn:baseQuantity,quantityOut:0,unitCost,reference:transferNumber,note:"Warehouse/store transfer in",locationId:args.toLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
       db.prepare("INSERT INTO inventory_transfer_items (id,transfer_id,item_id,description,quantity,unit_cost,qty_received) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),id,row.itemId,item.name,baseQuantity,unitCost,baseQuantity);
