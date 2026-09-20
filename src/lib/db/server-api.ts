@@ -292,6 +292,18 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
   const db = getDb();
   try {
     switch (name) {
+      case "receive_purchase": {
+        return { data: receivePurchase({ ...args, userId: String(args._uid || "") }), error: null };
+      }
+      case "transfer_stock": {
+        return { data: transferStock({ ...args, userId: String(args._uid || "") }), error: null };
+      }
+      case "create_stock_reconciliation": {
+        return { data: createStockReconciliation({ ...args, userId: String(args._uid || "") }), error: null };
+      }
+      case "post_stock_reconciliation": {
+        return { data: postStockReconciliation({ ...args, userId: String(args._uid || "") }), error: null };
+      }
       case "pos_checkout": {
         const result=executePosCheckout(args);
         return { data: result, error: null };
