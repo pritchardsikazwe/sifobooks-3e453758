@@ -1457,7 +1457,10 @@ CREATE TABLE IF NOT EXISTS "module_dependencies" (
   "module_key" TEXT NOT NULL,
   "depends_on" TEXT NOT NULL,
   "is_hard" INTEGER NOT NULL DEFAULT 1,
-  "note" TEXT
+  "note" TEXT,
+  "unit" TEXT,
+  "base_qty" REAL,
+  "base_unit" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "moe_charge_codes" (
