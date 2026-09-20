@@ -96,3 +96,23 @@ Keep SifoBooks and the VSDC separate. This makes it possible to replace the VSDC
 The uploaded package was inspected before wiring SifoBooks. It contains `ebm.vsdc.Application` as the Spring Boot start class and includes the VSDC controllers/models. The local API paths wired into SifoBooks were derived from the WAR constants, including `/initializer/selectInitVsdcInfo`, `/code/search/selectCodeList`, `/item/class/search/selectItemClsList`, `/item/base/saveItem`, `/trns/sales/base/saveTrnsSalesVsdc`, `/trns/sales/base/search/selectTrnsInvoiceVsdc`, `/stock/io/saveStockIO`, and `/stockMaster/saveStockMasterList`.
 
 The WAR's default UAT endpoint is `https://sandboxapi.zra.org.zm`. Production must not be assumed until ZRA provides/authorizes the production configuration.
+
+## Inventory mapping and POS automation
+
+SifoBooks stores the ZRA mapping on each stock_items record:
+
+- zra_item_code
+- zra_item_class_code (UNSPSC)
+- zra_item_type_code
+- zra_origin_country_code
+- zra_pkg_unit_code
+- zra_qty_unit_code
+- zra_vat_category_code
+- zra_tax_rate
+- zra_sync_status
+
+The ZRA Smart Invoice screen downloads the VSDC standard-code and classification dictionaries, lets the operator search the UNSPSC catalogue, and saves the selected ZRA codes against the local inventory item. A mapped item can then be registered with ZRA through /items/saveItem.
+
+When a POS sale is completed online, SifoBooks builds the ZRA sales payload from the mapped inventory records and submits it to /trns/sales/base/saveTrnsSalesVsdc. The returned ZRA receipt number, internal data, receipt signature, SDC/MRC identifiers and QR verification URL are stored in zra_invoice_queue and attached to the POS receipt. The QR verification URL is also rendered as a printable QR code.
+
+If the POS transaction was created offline, the accounting sale is queued normally. When the POS checkout RPC later reaches the server, SifoBooks automatically attempts the corresponding ZRA submission without replaying the accounting sale.
