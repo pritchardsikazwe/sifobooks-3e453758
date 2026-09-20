@@ -32,9 +32,10 @@ class QueryBuilder {
   }
 
   select(columns: string = "*") { this.spec.columns = columns; return this; }
-  insert(data: any) { this.spec.insertData = data; return this; }
-  update(data: any) { this.spec.updateData = data; return this; }
-  delete() { return this; }
+  insert(data: any) { this.spec.operation = "insert"; this.spec.insertData = data; return this; }
+  upsert(data: any, opts?: { onConflict?: string }) { this.spec.operation = "insert"; this.spec.insertData = data; this.spec.onConflict = opts?.onConflict ?? null; return this; }
+  update(data: any) { this.spec.operation = "update"; this.spec.updateData = data; return this; }
+  delete() { this.spec.operation = "delete"; return this; }
 
   eq(col: string, val: any) { this.spec.filters.push({ column: col, op: "eq", value: val }); return this; }
   neq(col: string, val: any) { this.spec.filters.push({ column: col, op: "neq", value: val }); return this; }
@@ -73,7 +74,7 @@ class QueryBuilder {
 
   // Make thenable — `await` triggers execution
   then(onFulfilled?: (value: any) => any, onRejected?: (reason: any) => any) {
-    return executeQueryFn({ data: this.spec } as any).then(
+    return executeQueryFn({ data: { ...this.spec, authToken: getToken() } } as any).then(
       (result: any) => onFulfilled ? onFulfilled(result) : result,
       (err: any) => onRejected ? onRejected(err) : err
     );
@@ -88,7 +89,7 @@ class RpcBuilder {
     this.name = name; this.args = args;
   }
   then(onFulfilled?: (value: any) => any, onRejected?: (reason: any) => any) {
-    return rpcFn({ data: { name: this.name, args: this.args } } as any).then(
+    return rpcFn({ data: { name: this.name, args: this.args, authToken: getToken() } } as any).then(
       (result: any) => onFulfilled ? onFulfilled(result) : result,
       (err: any) => onRejected ? onRejected(err) : err
     );

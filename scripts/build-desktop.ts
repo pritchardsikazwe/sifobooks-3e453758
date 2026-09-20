@@ -34,6 +34,7 @@ console.log("\nStep 3/4: Copying application files...\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
 copyDir("dist/client", CLIENT_DIR);
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
+copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
 
 writeFileSync(join(OUT_DIR, ".env.example"), [
   "# Optional desktop configuration",

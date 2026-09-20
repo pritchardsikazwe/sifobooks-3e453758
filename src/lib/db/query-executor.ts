@@ -19,6 +19,7 @@ export type QuerySpec = {
   updateData?: Record<string, any>;
   onConflict?: string;
   count?: string | null;
+  authToken?: string | null;
 };
 
 export type QueryResult = { data: any; error: any; count?: number | null };
@@ -215,27 +216,64 @@ function transformJoinResults(rows: any[], joins: ParsedColumns["joins"]): any[]
   });
 }
 
-export function executeQuery(spec: QuerySpec): QueryResult {
+export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): QueryResult {
   const database = getDb();
-  try {
-    if (spec.operation === "select") {
-      const { sql, params, joins } = buildSelect(spec);
-      const rows = database.prepare(sql).all(...params);
+  const secured: QuerySpec = {
+    ...spec,
+    filters: [...spec.filters],
+    insertData: spec.insertData,
+    updateData: spec.updateData ? { ...spec.updateData } : spec.updateData,
+  };
 
+  if (authenticatedUserId && getColumns(spec.table).includes("user_id")) {
+    secured.filters.push({ column: "user_id", op: "eq", value: authenticatedUserId });
+    if (secured.operation === "insert") {
+      const records = Array.isArray(secured.insertData) ? secured.insertData : [secured.insertData];
+      for (const record of records) if (record) record.user_id = authenticatedUserId;
+    }
+    if (secured.operation === "update" && secured.updateData) {
+      secured.updateData.user_id = authenticatedUserId;
+    }
+  }
+
+  const protectedTables = new Set(["audit_event_log", "fiscal_transaction_controls", "zra_outbox"]);
+  if (protectedTables.has(spec.table) && ["insert", "update", "delete"].includes(spec.operation)) {
+    return { data: null, error: { message: "PROTECTED_COMPLIANCE_RECORD: use the application service." } };
+  }
+
+  if (spec.table === "pos_sales") {
+    if (spec.operation === "insert") {
+      const records = Array.isArray(spec.insertData) ? spec.insertData : [spec.insertData];
+      if (records.some((row: any) => !["held", "draft"].includes(String(row?.status ?? "").toLowerCase()))) {
+        return { data: null, error: { message: "POS_SALE_POSTING_REQUIRED: use the POS checkout service." } };
+      }
+    }
+    if (["update", "delete"].includes(spec.operation)) {
+      const { clause, params } = buildWhereClause(secured.filters);
+      const targeted = database.prepare(`SELECT status FROM pos_sales${clause}`).all(...params) as any[];
+      if (targeted.some((row) => !["held", "draft"].includes(String(row.status ?? "").toLowerCase()))) {
+        return { data: null, error: { message: "POSTED_POS_SALE_IMMUTABLE: use the reversal/correction workflow." } };
+      }
+    }
+  }
+
+  try {
+    if (secured.operation === "select") {
+      const { sql, params, joins } = buildSelect(secured);
+      const rows = database.prepare(sql).all(...params);
       let data: any = transformJoinResults(rows, joins);
 
-      if (spec.single) {
+      if (secured.single) {
         data = data[0] ?? null;
         if (!data) return { data: null, error: { message: "No rows found" } };
-      } else if (spec.maybeSingle) {
+      } else if (secured.maybeSingle) {
         data = data[0] ?? null;
       }
-
       return { data, error: null };
     }
 
-    if (spec.operation === "insert") {
-      const records = Array.isArray(spec.insertData) ? spec.insertData : [spec.insertData];
+    if (secured.operation === "insert") {
+      const records = Array.isArray(secured.insertData) ? secured.insertData : [secured.insertData];
       const results: any[] = [];
       for (const record of records) {
         const cols = Object.keys(record);
@@ -245,46 +283,48 @@ export function executeQuery(spec: QuerySpec): QueryResult {
           if (typeof v === "object" && v !== null) return JSON.stringify(v);
           return v;
         });
-        // Ensure id is set
         if (!cols.includes("id") && !cols.includes("ID")) {
           cols.push("id");
           vals.push(generateUUID());
         }
         const placeholders = cols.map(() => "?").join(",");
-        const sql = `INSERT INTO "${spec.table}" (${cols.map(c => `"${c}"`).join(",")}) VALUES (${placeholders})`;
+        const colSql = cols.map(c => `"${c}"`).join(",");
+        let sql = `INSERT INTO "${secured.table}" (${colSql}) VALUES (${placeholders})`;
+        if (secured.onConflict) {
+          const conflictCols = secured.onConflict.split(",").map((c) => c.trim()).filter(Boolean);
+          if (conflictCols.length) {
+            const updates = cols.filter((col) => !conflictCols.includes(col)).map((col) => `"${col}"=excluded."${col}"`);
+            sql += ` ON CONFLICT (${conflictCols.map((col) => `"${col}"`).join(",")}) DO ${updates.length ? `UPDATE SET ${updates.join(",")}` : "NOTHING"}`;
+          }
+        }
         database.prepare(sql).run(...vals);
         const id = vals[cols.indexOf("id")];
-        const inserted = database.prepare(`SELECT * FROM "${spec.table}" WHERE id = ?`).get(id);
+        const inserted = database.prepare(`SELECT * FROM "${secured.table}" WHERE id = ?`).get(id);
         results.push(inserted);
       }
-      return { data: Array.isArray(spec.insertData) ? results : results[0], error: null };
+      return { data: Array.isArray(secured.insertData) ? results : results[0], error: null };
     }
 
-    if (spec.operation === "update") {
-      const setCols = Object.keys(spec.updateData || {});
+    if (secured.operation === "update") {
+      const setCols = Object.keys(secured.updateData || {});
       const setVals = setCols.map(c => {
-        const v = spec.updateData![c];
+        const v = secured.updateData![c];
         if (v === undefined) return null;
         if (typeof v === "object" && v !== null) return JSON.stringify(v);
         return v;
       });
       const setClause = setCols.map(c => `"${c}" = ?`).join(",");
-      const { clause, params } = buildWhereClause(spec.filters);
-      const sql = `UPDATE "${spec.table}" SET ${setClause}${clause}`;
+      const { clause, params } = buildWhereClause(secured.filters);
+      const sql = `UPDATE "${secured.table}" SET ${setClause}${clause}`;
       database.prepare(sql).run(...setVals, ...params);
-
-      // Return updated rows
-      const selectSql = `SELECT * FROM "${spec.table}"${clause}`;
-      const rows = database.prepare(selectSql).all(...params);
+      const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
       return { data: rows, error: null };
     }
 
-    if (spec.operation === "delete") {
-      const { clause, params } = buildWhereClause(spec.filters);
-      const selectSql = `SELECT * FROM "${spec.table}"${clause}`;
-      const rows = database.prepare(selectSql).all(...params);
-      const sql = `DELETE FROM "${spec.table}"${clause}`;
-      database.prepare(sql).run(...params);
+    if (secured.operation === "delete") {
+      const { clause, params } = buildWhereClause(secured.filters);
+      const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
+      database.prepare(`DELETE FROM "${secured.table}"${clause}`).run(...params);
       return { data: rows, error: null };
     }
 
