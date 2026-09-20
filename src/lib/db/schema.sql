@@ -2938,8 +2938,7 @@ SELECT ba.id AS bank_account_id, ba.user_id, ba.name, ba.currency,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND NOT COALESCE(bt.reconciled,0)) AS unreconciled_count,
   (SELECT COUNT(*) FROM bank_transactions bt WHERE bt.bank_account_id = ba.id AND COALESCE(bt.status,'unallocated')='unallocated') AS unallocated_count
 FROM bank_accounts ba;
--- ZRA Smart Invoice VSDC response metadata. ALTER statements are idempotent
--- through the database initializer, which ignores duplicate-column errors.
+-- ZRA Smart Invoice VSDC response metadata.
 ALTER TABLE zra_invoice_queue ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE zra_invoice_queue ADD COLUMN last_attempt_at TEXT;
 ALTER TABLE zra_invoice_queue ADD COLUMN zra_receipt_number TEXT;
