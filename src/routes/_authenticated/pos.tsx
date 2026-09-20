@@ -29,6 +29,7 @@ import {
 import { printReceipt as sendReceiptToPrinter, type ReceiptData } from "@/services/universalPrintService";
 import { getPrinterForType } from "@/services/printerConfiguration";
 import { savePrintQueueJob } from "@/services/printQueue";
+import { zraSubmitPosSaleFn } from "@/lib/zra/server";
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
@@ -269,6 +270,7 @@ function RetailPos() {
       amountPaid: round2(snapshot.payments.reduce((a, p) => a + Number(p.amount || 0), 0)),
       change: snapshot.change,
       footer: settings.receipt_footer ?? "Thank you for your business",
+      zra: snapshot.zra,
     };
     try {
       await sendReceiptToPrinter(data, getPrinterForType("receipt"), 1);
@@ -309,10 +311,47 @@ function RetailPos() {
       toast.error(posErrorMessage(e?.message ?? ""));
       return;
     }
-    const snapshot = { saleNo: res.sale_no, saleId: (res as any).id as string | undefined, lines, totals, payments, change };
+    const snapshot: any = { saleNo: res.sale_no, saleId: (res as any).id as string | undefined, lines, totals, payments, change, zra: null };
     setPayOpen(false);
+
+    // The accounting sale is already committed. Submit it to the local ZRA VSDC
+    // before printing when online, so the returned receipt number/signature/QR
+    // can be attached to the customer's receipt. A VSDC failure never reverses
+    // the accounting transaction; it remains visible in the ZRA queue for retry.
+    if (!res.offline && snapshot.saleId) {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        if (auth.user) {
+          const zraResult: any = await zraSubmitPosSaleFn({
+            data: { userId: auth.user.id, saleId: snapshot.saleId, saleNo: res.sale_no },
+          });
+          const response = zraResult?.response;
+          const zraData = response?.data?.receipt ?? response?.data ?? {};
+          if (response?.resultCd === "000") {
+            snapshot.zra = {
+              status: "submitted",
+              receiptNumber: zraData.rcptNo ?? null,
+              internalData: zraData.intrlData ?? null,
+              receiptSignature: zraData.rcptSign ?? null,
+              qrCodeUrl: zraData.qrCodeUrl ?? null,
+              sdcId: zraData.sdcId ?? null,
+              mrcNo: zraData.mrcNo ?? null,
+            };
+            toast.success(`ZRA receipt ${snapshot.zra.receiptNumber ?? ""} issued`.trim());
+          } else {
+            snapshot.zra = { status: "pending", message: response?.resultMsg ?? "ZRA submission was not accepted." };
+            toast.warning("Sale completed, but ZRA did not accept the invoice. It is in the ZRA queue.");
+          }
+        }
+      } catch (e: any) {
+        snapshot.zra = { status: "pending", message: e?.message ?? "VSDC unavailable" };
+        toast.warning("Sale completed, but ZRA VSDC is unavailable. The submission remains queued.");
+      }
+    } else if (res.offline) {
+      snapshot.zra = { status: "offline", message: "ZRA submission will be attempted when the sale reaches the server." };
+    }
+
     setReceipt({ sale_no: res.sale_no, total: totals.total, offline: res.offline, snapshot });
-    // Fire-and-forget: the sale is already saved and must never be reversed by a print failure.
     if (settings.auto_print_receipt !== false) void printSaleReceipt(snapshot);
     newSale();
     void refresh();
