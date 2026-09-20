@@ -22,15 +22,15 @@ export const PRICE_LEVELS: { key: PriceLevel; label: string; factor: number }[] 
 ];
 export const priceFactor = (level: PriceLevel) => PRICE_LEVELS.find((l) => l.key === level)?.factor ?? 1;
 
-export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
+export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; warehouse_id?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
 export type PosCustomer = { id:string; name:string; phone:string|null; code:string|null; price_level?:PriceLevel };
 export type PosSettings = { show_images:boolean; show_stock:boolean; show_sku:boolean; products_per_row:number; enable_fast_sellers:boolean; enable_quick_qty:boolean; enable_quick_discounts:boolean; allow_price_change:boolean; allow_negative_stock:boolean; default_customer:string; default_price_level:PriceLevel; default_payment:string; tax_rate:number; tax_inclusive:boolean; auto_new_sale:boolean; auto_print_receipt:boolean; silent_print:boolean; receipt_footer:string|null };
 export const DEFAULT_SETTINGS: PosSettings = { show_images:true, show_stock:true, show_sku:true, products_per_row:4, enable_fast_sellers:true, enable_quick_qty:true, enable_quick_discounts:true, allow_price_change:true, allow_negative_stock:false, default_customer:"Walk-in Customer", default_price_level:"normal", default_payment:"cash", tax_rate:16, tax_inclusive:true, auto_new_sale:true, auto_print_receipt:false, silent_print:false, receipt_footer:null };
-export type CartLine = { key:string; item_id:string|null; name:string; sku:string|null; qty:number; price:number; unit_cost:number; discount_pct:number; note?:string };
+export type CartLine = { key:string; item_id:string|null; name:string; sku:string|null; qty:number; unit:string|null; price:number; unit_cost:number; discount_pct:number; note?:string };
 export type PosTotals = { gross:number; lineDiscount:number; saleDiscount:number; subtotal:number; tax:number; total:number; cost:number; items:number };
 const n = (v:any) => Number(v ?? 0);
 
-export async function loadProducts():Promise<PosProduct[]> { try { const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000); if(error)throw error; const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[]; void cacheRows("products",rows); return rows; } catch { return await readCached<PosProduct>("products"); } }
+export async function loadProducts():Promise<PosProduct[]> { try { const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000); if(error)throw error; const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[]; void cacheRows("products",rows); return rows; } catch { return await readCached<PosProduct>("products"); } }
 export async function loadCustomers():Promise<PosCustomer[]> { try { const {data}=await supabase.from("customers").select("id,name,phone").order("name").limit(1000); const rows=(data??[]).map((c:any)=>({id:c.id,name:c.name,phone:c.phone??null,code:null})) as PosCustomer[]; void cacheRows("customers",rows); return rows; } catch { return await readCached<PosCustomer>("customers"); } }
 export async function loadFavorites():Promise<string[]> { const {data}=await supabase.from("pos_favorites").select("item_id").order("sort_order"); return (data??[]).map((r:any)=>r.item_id as string); }
 export async function toggleFavorite(itemId:string,on:boolean){ if(on)await supabase.from("pos_favorites").insert({item_id:itemId} as any); else await supabase.from("pos_favorites").delete().eq("item_id",itemId); }
@@ -40,12 +40,17 @@ export async function ensureRegister():Promise<{id:string;name:string;branch:str
 export async function currentShift(registerId?:string|null){ const {data}=await supabase.from("pos_shifts").select("*").eq("status","open").order("opened_at",{ascending:false}).limit(1); const row=(data??[])[0] as any; if(row)return row; if(!registerId)return null; return null; }
 export async function openShift(registerId:string|null,cashier:string,float_:number){ const {data}=await supabase.from("pos_shifts").insert({register_id:registerId,cashier_name:cashier,opening_float:float_} as any).select("*").maybeSingle(); return data as any; }
 export async function shiftSummary(shiftId:string){ const {data:sales}=await supabase.from("pos_sales").select("id,total,status").eq("shift_id",shiftId); const ids=(sales??[]).map((s:any)=>s.id); let byMethod:Record<string,number>={}; if(ids.length){const {data:pays}=await supabase.from("pos_payments").select("method,amount").in("sale_id",ids);(pays??[]).forEach((p:any)=>{byMethod[p.method]=(byMethod[p.method]??0)+n(p.amount);});} const completed=(sales??[]).filter((s:any)=>s.status==="completed"); const voided=(sales??[]).filter((s:any)=>s.status==="voided"); const refunds=(sales??[]).filter((s:any)=>s.status==="refunded"); return {transactions:completed.length,salesTotal:completed.reduce((a:number,s:any)=>a+n(s.total),0),voids:voided.length,refunds:refunds.length,byMethod}; }
-export async function closeShift(shiftId:string,actualCash:number,expectedCash:number){ await supabase.from("pos_shifts").update({status:"closed",closed_at:new Date().toISOString(),actual_cash:actualCash,expected_cash:expectedCash,variance:actualCash-expectedCash} as any).eq("id",shiftId); }
+export async function closeShift(shiftId:string,actualCash:number,expectedCash:number){
+  const {data:authUser}=await supabase.auth.getUser();
+  const {data,error}=await supabase.rpc("close_pos_shift" as any,{_uid:authUser.user?.id??null,_shift_id:shiftId,_actual_cash:actualCash,_expected_cash:expectedCash} as any);
+  if(error) throw new Error(error.message);
+  return data as any;
+}
 export function computeTotals(lines:CartLine[],saleDiscountPct:number,s:PosSettings):PosTotals{let gross=0,lineDiscount=0,cost=0,items=0;for(const l of lines){const g=l.qty*l.price;gross+=g;lineDiscount+=(g*(l.discount_pct||0))/100;cost+=l.qty*l.unit_cost;items+=l.qty;}const afterLine=gross-lineDiscount;const saleDiscount=(afterLine*(saleDiscountPct||0))/100;const net=Math.max(afterLine-saleDiscount,0);const rate=n(s.tax_rate)/100;const tax=s.tax_inclusive?net-net/(1+rate):net*rate;const subtotal=s.tax_inclusive?net-tax:net;const total=s.tax_inclusive?net:net+tax;return {gross,lineDiscount,saleDiscount,subtotal:round2(subtotal),tax:round2(tax),total:round2(total),cost:round2(cost),items};}
 export const round2=(v:number)=>Math.round((Number(v)||0)*100)/100;
 export function saleNumber(){const d=new Date();const stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;return `POS-${stamp}-${Math.floor(Math.random()*9000+1000)}`;}
 export type SalePayment={method:string;amount:number;reference?:string};
-export type SaleDraft={lines:CartLine[];totals:PosTotals;customer:PosCustomer|null;customerName:string;priceLevel:PriceLevel;saleDiscountPct:number;note?:string;shiftId?:string|null;registerId?:string|null;taxRate?:number;taxInclusive?:boolean;allowNegativeStock?:boolean};
+export type SaleDraft={lines:CartLine[];totals:PosTotals;customer:PosCustomer|null;customerName:string;priceLevel:PriceLevel;saleDiscountPct:number;note?:string;shiftId?:string|null;registerId?:string|null;locationId?:string|null;taxRate?:number;taxInclusive?:boolean;allowNegativeStock?:boolean};
 function isOnline(){return typeof navigator==="undefined"?true:navigator.onLine;}
 
 export async function completeSale(draft:SaleDraft,payments:SalePayment[],changeDue:number){
@@ -69,8 +74,8 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   // checks stock at the selling location before anything is posted.
   // shift_id travels with the sale so a queued offline sale still posts to the
   // shift it was rung on, even after that shift has been closed.
-  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
-  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
+  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,location_id:draft.locationId??null,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
+  const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,unit:l.unit??null,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
   const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const {data:authUser}=await supabase.auth.getUser(); const args={_uid:authUser.user?.id??null,_sale:salePayload,_items:itemRows,_payments:payRows};
   const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
   if(!isOnline())return stash();
@@ -105,5 +110,17 @@ export async function listHeldSales(){const {data}=await supabase.from("pos_sale
 export async function recallSale(saleId:string):Promise<CartLine[]>{const {data}=await supabase.from("pos_sale_items").select("*").eq("sale_id",saleId);await supabase.from("pos_sales").delete().eq("id",saleId);return(data??[]).map((r:any,i:number)=>({key:`${r.item_id??"x"}-${i}-${Date.now()}`,item_id:r.item_id,name:r.name,sku:r.sku,qty:n(r.qty),price:n(r.price),unit_cost:n(r.unit_cost),discount_pct:n(r.discount),note:r.note??undefined}));}
 export async function listRecentSales(limit=30){await pruneSyncedOfflineSales();const offline=await listOfflineSales();let online:any[]=[];if(isOnline()){try{const {data}=await supabase.from("pos_sales").select("id,sale_no,customer_name,total,status,sold_at").in("status",["completed","refunded","voided"]).order("sold_at",{ascending:false}).limit(limit);online=(data??[]) as any[];void cacheRows("pos_transactions",online.map((r)=>({...r,__offline:false})));}catch{}}if(!online.length)online=(await readCached<any>("pos_transactions")).filter((r)=>!r.__offline);return[...offline,...online].sort((a,b)=>new Date(b.sold_at).getTime()-new Date(a.sold_at).getTime()).slice(0,limit);}
 export async function voidSale(saleId:string,reason:string){const {data:authUser}=await supabase.auth.getUser(); const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:authUser.user?.id??null,_sale_id:saleId,_action:"void",_reason:reason,_refund_method:null} as any);if(error)throw new Error(error.message);return data as string;}
-export async function refundSale(saleId:string,refundMethod="cash",reason="Customer refund"){const {data:authUser}=await supabase.auth.getUser(); const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:authUser.user?.id??null,_sale_id:saleId,_action:"refund",_reason:reason,_refund_method:refundMethod} as any);if(error)throw new Error(error.message);return data as string;}
+export async function refundSale(saleId:string,refundMethod="cash",reason="Customer refund"){
+  const {data:authUser}=await supabase.auth.getUser();
+  const uid=authUser.user?.id??null;
+  const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:uid,_sale_id:saleId,_action:"refund",_reason:reason,_refund_method:refundMethod} as any);
+  if(!error) return data as string;
+  if(String(error.message||"").includes("FISCALIZED_SALE_REQUIRES_ZRA_CORRECTION_WORKFLOW")){
+    const { zraSubmitCorrectionFn }=await import("@/lib/zra/server");
+    const correction=await zraSubmitCorrectionFn({data:{userId:String(uid),saleId,correctionType:"CREDIT_NOTE",reason,terminalId:null}} as any);
+    if((correction as any)?.status==="FISCALIZED") return correction as any;
+    throw new Error("ZRA correction did not complete: "+String((correction as any)?.status||"UNKNOWN"));
+  }
+  throw new Error(error.message);
+}
 export async function todayMetrics(){const start=new Date();start.setHours(0,0,0,0);const {data}=await supabase.from("pos_sales").select("total,status,sold_at").eq("status","completed").gte("sold_at",start.toISOString());const rows=data??[];const sales=rows.reduce((a:number,r:any)=>a+n(r.total),0);return{sales,transactions:rows.length,average:rows.length?sales/rows.length:0};}

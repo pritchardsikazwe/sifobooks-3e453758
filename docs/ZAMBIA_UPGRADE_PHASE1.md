@@ -201,3 +201,32 @@ Fiscalized POS transactions remain immutable through the generic local query lay
 6. Add accounting period open/close/reopen controls.
 7. Add Compliance Centre retry/manual-review actions.
 8. Add automated acceptance tests and reconciliation reports.
+
+
+## Phase 3 implementation — purchasing and unit controls
+
+The Zambia upgrade now includes the next ERP control layer:
+
+- Item unit conversion master data with explicit from-unit → base-unit multipliers.
+- Base-unit normalization for goods receiving and warehouse/store transfers.
+- Missing conversions are rejected instead of silently changing stock quantities.
+- Item Master now exposes base, purchase and sales units and conversion configuration.
+- Purchase Order service with supplier/item/quantity/price/tax lines.
+- Purchase Order approval control.
+- GRN receiving now links to PO lines and prevents receiving beyond ordered quantity.
+- GRN accounting uses a Goods Received Not Invoiced control account; the supplier bill clears GRNI into Accounts Payable.
+- Supplier bill creation from a posted GRN, including bill lines, supplier balance and journal entry.
+- RPC endpoints are exposed through the authenticated local server layer.
+
+The workflow is therefore:
+
+Purchase Order → Approval → Goods Receipt → GRNI → Supplier Bill → Accounts Payable.
+
+Unit example:
+
+Carton → Piece
+1 carton = 24 pieces
+
+A purchase of 3 cartons posts 72 base pieces to inventory. The conversion is stored as master data and audited rather than embedded in transaction code.
+
+The next validation requirement is end-to-end UAT against a real local database: PO creation, approval, GRN, over-receipt rejection, unit conversion, supplier bill, AP balance, journal balance, inventory balance and audit trail.
