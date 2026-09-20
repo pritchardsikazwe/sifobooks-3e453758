@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
+import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition } from "@/lib/compliance/governance";
 import {
   getItemClasses,
   getStandardCodes,
@@ -261,31 +262,70 @@ function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
 }
 
 export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
-  .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;saleNo?:string})
+  .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;saleNo?:string;terminalId?:string|null})
   .handler(async ({data})=>{
     const db=getDb();
-    const sale=db.prepare("SELECT sale_no,total,tax FROM pos_sales WHERE id=? AND user_id=?").get(data.saleId,data.userId) as any;
+    const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=?").get(data.saleId,data.userId) as any;
     if(!sale) throw new Error("POS sale not found.");
     const saleNo=data.saleNo || sale.sale_no;
-    const existing=db.prepare("SELECT * FROM zra_invoice_queue WHERE user_id=? AND source_id=? AND status='submitted' LIMIT 1").get(data.userId,data.saleId) as any;
-    if(existing) return {queueId:existing.id,response:{resultCd:"000",data:{rcptNo:existing.zra_receipt_number,intrlData:existing.zra_internal_data,rcptSign:existing.zra_receipt_signature,qrCodeUrl:existing.zra_qr_url}}};
+    const idempotencyKey=`zra:${data.userId}:${data.terminalId || sale.register_id || "terminal"}:${data.saleId}`;
+    const control=db.prepare("SELECT * FROM fiscal_transaction_controls WHERE user_id=? AND sale_id=? LIMIT 1").get(data.userId,data.saleId) as any;
+    if(control?.state==="FISCALIZED"){
+      return {queueId:null,response:{resultCd:"000",data:{rcptNo:control.zra_receipt_number,intrlData:control.zra_internal_data,rcptSign:control.zra_receipt_signature,qrCodeUrl:control.zra_qr_data}},fiscalState:control.state};
+    }
     const {cfg,payload}=buildSalesPayload(db,data.userId,data.saleId,saleNo);
-    const queueId=generateUUID();
-    db.prepare("INSERT INTO zra_invoice_queue (id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,last_attempt_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))")
-      .run(queueId,data.userId,"pos_sale",data.saleId,saleNo,Number(sale.total||0),Number(sale.tax||0),"submitting",JSON.stringify(payload),1);
+    if(control && control.state==="REJECTED") assertFiscalTransition("REJECTED","SUBMITTED");
+    if(control){
+      db.prepare("UPDATE fiscal_transaction_controls SET state='SUBMITTED',terminal_id=?,invoice_number=?,updated_at=datetime('now'),version=version+1 WHERE id=?")
+        .run(data.terminalId ?? sale.register_id ?? null,saleNo,control.id);
+    } else {
+      db.prepare("INSERT INTO fiscal_transaction_controls (id,user_id,company_id,branch_id,terminal_id,sale_id,invoice_number,state,idempotency_key,submission_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))")
+        .run(generateUUID(),data.userId,null,sale.location_id ?? null,data.terminalId ?? sale.register_id ?? null,data.saleId,saleNo,"SUBMITTED",idempotencyKey);
+    }
+    const outbox:any=enqueueZraOperation({
+      userId:data.userId,branchId:cfg.branch_code ?? null,terminalId:data.terminalId ?? sale.register_id ?? null,
+      sourceType:"pos_sale",sourceId:data.saleId,operation:"submitSales",idempotencyKey,payload,
+    });
+    let queue=db.prepare("SELECT * FROM zra_invoice_queue WHERE user_id=? AND source_id=? ORDER BY updated_at DESC LIMIT 1").get(data.userId,data.saleId) as any;
+    if(!queue){
+      const queueId=generateUUID();
+      db.prepare("INSERT INTO zra_invoice_queue (id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,last_attempt_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))")
+        .run(queueId,data.userId,"pos_sale",data.saleId,saleNo,Number(sale.total||0),Number(sale.tax||0),"submitting",JSON.stringify(payload),1);
+      queue={id:queueId};
+    } else {
+      db.prepare("UPDATE zra_invoice_queue SET status='submitting',last_attempt_at=datetime('now'),attempt_count=attempt_count+1,payload=?,updated_at=datetime('now') WHERE id=?")
+        .run(JSON.stringify(payload),queue.id);
+    }
     try{
       const response:any=await saveSales(payload,{baseUrl:requireVsdcUrl(cfg)});
-      const success=isSuccessfulVsdcResponse(response); const zraData=response.data ?? response.data?.receipt ?? {};
+      const success=isSuccessfulVsdcResponse(response);
+      const zraData=response.data ?? {};
       const receipt=zraData.receipt ?? zraData;
-      db.prepare(`UPDATE zra_invoice_queue SET status=?,submitted_at=CASE WHEN ? THEN datetime('now') ELSE submitted_at END,
-        response_code=?,response_message=?,zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_url=?,updated_at=datetime('now')
-        WHERE id=?`).run(success?"submitted":"failed",success?1:0,response.resultCd ?? null,response.resultMsg ?? null,
-        receipt.rcptNo ?? zraData.rcptNo ?? null,receipt.intrlData ?? zraData.intrlData ?? null,receipt.rcptSign ?? zraData.rcptSign ?? null,
-        receipt.qrCodeUrl ?? zraData.qrCodeUrl ?? null,queueId);
-      return {queueId,response,payload};
+      const receiptNo=receipt.rcptNo ?? zraData.rcptNo ?? null;
+      const internalData=receipt.intrlData ?? zraData.intrlData ?? null;
+      const signature=receipt.rcptSign ?? zraData.rcptSign ?? null;
+      const qrUrl=receipt.qrCodeUrl ?? zraData.qrCodeUrl ?? null;
+      db.prepare(`UPDATE zra_invoice_queue SET status=?,submitted_at=CASE WHEN ? THEN datetime('now') ELSE submitted_at END,response_code=?,response_message=?,zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_url=?,error_code=?,updated_at=datetime('now') WHERE id=?`)
+        .run(success?"submitted":"failed",success?1:0,response.resultCd ?? null,response.resultMsg ?? null,receiptNo,internalData,signature,qrUrl,success?null:response.resultCd ?? null,queue.id);
+      if(success){
+        db.prepare("UPDATE fiscal_transaction_controls SET state='FISCALIZED',zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_data=?,zra_response_json=?,fiscalized_at=datetime('now'),submission_at=COALESCE(submission_at,datetime('now')),error_code=NULL,error_message=NULL,updated_at=datetime('now'),version=version+1 WHERE user_id=? AND sale_id=?")
+          .run(receiptNo,internalData,signature,qrUrl,JSON.stringify(response),data.userId,data.saleId);
+        updateZraOutbox(outbox.id,{status:"SUCCESS",response,resultCode:response.resultCd,resultMessage:response.resultMsg});
+        await recordAuditEvent({userId:data.userId,terminalId:data.terminalId ?? sale.register_id ?? null,action:"SALE_FISCALIZED",entityType:"pos_sale",entityId:data.saleId,newValue:{receiptNumber:receiptNo,resultCode:response.resultCd}});
+      } else {
+        db.prepare("UPDATE fiscal_transaction_controls SET state='REJECTED',zra_response_json=?,error_code=?,error_message=?,updated_at=datetime('now'),version=version+1 WHERE user_id=? AND sale_id=?")
+          .run(JSON.stringify(response),response.resultCd ?? null,response.resultMsg ?? "ZRA rejected transaction",data.userId,data.saleId);
+        updateZraOutbox(outbox.id,{status:"FAILED",response,resultCode:response.resultCd,resultMessage:response.resultMsg,errorCode:response.resultCd,errorMessage:response.resultMsg});
+        await recordAuditEvent({userId:data.userId,action:"ZRA_REJECTION",entityType:"pos_sale",entityId:data.saleId,newValue:{resultCode:response.resultCd,message:response.resultMsg}});
+      }
+      return {queueId:queue.id,response,payload,fiscalState:success?"FISCALIZED":"REJECTED"};
     }catch(error:any){
-      db.prepare("UPDATE zra_invoice_queue SET status='failed',response_message=?,last_attempt_at=datetime('now'),updated_at=datetime('now') WHERE id=?")
-        .run(error?.message || "VSDC request failed",queueId);
+      db.prepare("UPDATE zra_invoice_queue SET status='failed',response_message=?,error_code='VSDC_REQUEST_FAILED',last_attempt_at=datetime('now'),updated_at=datetime('now') WHERE id=?")
+        .run(error?.message || "VSDC request failed",queue.id);
+      db.prepare("UPDATE fiscal_transaction_controls SET state='REJECTED',error_code='VSDC_REQUEST_FAILED',error_message=?,updated_at=datetime('now'),version=version+1 WHERE user_id=? AND sale_id=?")
+        .run(error?.message || "VSDC request failed",data.userId,data.saleId);
+      updateZraOutbox(outbox.id,{status:"RETRY_REQUIRED",errorCode:"VSDC_REQUEST_FAILED",errorMessage:error?.message || "VSDC request failed"});
+      await recordAuditEvent({userId:data.userId,action:"ZRA_SUBMISSION_FAILED",entityType:"pos_sale",entityId:data.saleId,newValue:{error:error?.message || "VSDC request failed"}});
       throw error;
     }
   });
