@@ -3,6 +3,7 @@ import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
 import { getDb, generateUUID } from "./database";
+import { runAccountingIntegrityReconciliation } from "@/lib/compliance/reconciliation";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
 import { receivePurchase, transferStock, createStockReconciliation, postStockReconciliation } from "@/lib/erp/phase2";
 import { saveUnitConversion, listUnitConversions } from "@/lib/inventory/unit-conversions";
@@ -416,6 +417,11 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
         });
         void recordAuditEvent({userId:uid,action:action==="refund"?"REFUND_CREATED":"SALE_CANCELLED",entityType:"pos_sale",entityId:saleId,newValue:{reason,reversalId:transaction}});
         return {data:transaction,error:null};
+      }
+      case "run_accounting_integrity_reconciliation": {
+        const uid=String(args._uid||"");
+        if(!uid) throw new Error("NOT_SIGNED_IN");
+        return {data:runAccountingIntegrityReconciliation({userId:uid,fromDate:args._from_date??null,toDate:args._to_date??null}),error:null};
       }
       case "next_doc_number": {
         const uid = args._uid;
