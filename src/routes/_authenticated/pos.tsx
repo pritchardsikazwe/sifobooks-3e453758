@@ -798,7 +798,7 @@ function SalePanel(props: {
             <button onClick={() => setSelected(l.key === selected ? null : l.key)}
               className={cn("grid w-full grid-cols-[2.25rem_minmax(0,1fr)_4.5rem_3.25rem_5rem] items-center gap-1 border-b px-2 py-2 text-left text-sm tabular-nums",
                 l.key === selected ? "bg-primary/10" : "hover:bg-muted/60")}>
-              <span className="font-bold">{l.qty}</span>
+              <span className="font-bold">{l.qty}<span className="ml-0.5 text-[9px] text-muted-foreground">{l.unit ?? "unit"}</span></span>
               <span className="min-w-0">
                 <span className="block truncate font-semibold uppercase leading-tight">{l.name}</span>
                 {l.discount_pct ? <span className="text-[10px] text-muted-foreground">−{l.discount_pct}%</span> : null}
