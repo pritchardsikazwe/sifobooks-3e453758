@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
-import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition } from "@/lib/compliance/governance";
+import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
   getItemClasses,
   getStandardCodes,
