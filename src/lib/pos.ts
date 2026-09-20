@@ -105,5 +105,17 @@ export async function listHeldSales(){const {data}=await supabase.from("pos_sale
 export async function recallSale(saleId:string):Promise<CartLine[]>{const {data}=await supabase.from("pos_sale_items").select("*").eq("sale_id",saleId);await supabase.from("pos_sales").delete().eq("id",saleId);return(data??[]).map((r:any,i:number)=>({key:`${r.item_id??"x"}-${i}-${Date.now()}`,item_id:r.item_id,name:r.name,sku:r.sku,qty:n(r.qty),price:n(r.price),unit_cost:n(r.unit_cost),discount_pct:n(r.discount),note:r.note??undefined}));}
 export async function listRecentSales(limit=30){await pruneSyncedOfflineSales();const offline=await listOfflineSales();let online:any[]=[];if(isOnline()){try{const {data}=await supabase.from("pos_sales").select("id,sale_no,customer_name,total,status,sold_at").in("status",["completed","refunded","voided"]).order("sold_at",{ascending:false}).limit(limit);online=(data??[]) as any[];void cacheRows("pos_transactions",online.map((r)=>({...r,__offline:false})));}catch{}}if(!online.length)online=(await readCached<any>("pos_transactions")).filter((r)=>!r.__offline);return[...offline,...online].sort((a,b)=>new Date(b.sold_at).getTime()-new Date(a.sold_at).getTime()).slice(0,limit);}
 export async function voidSale(saleId:string,reason:string){const {data:authUser}=await supabase.auth.getUser(); const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:authUser.user?.id??null,_sale_id:saleId,_action:"void",_reason:reason,_refund_method:null} as any);if(error)throw new Error(error.message);return data as string;}
-export async function refundSale(saleId:string,refundMethod="cash",reason="Customer refund"){const {data:authUser}=await supabase.auth.getUser(); const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:authUser.user?.id??null,_sale_id:saleId,_action:"refund",_reason:reason,_refund_method:refundMethod} as any);if(error)throw new Error(error.message);return data as string;}
+export async function refundSale(saleId:string,refundMethod="cash",reason="Customer refund"){
+  const {data:authUser}=await supabase.auth.getUser();
+  const uid=authUser.user?.id??null;
+  const {data,error}=await supabase.rpc("reverse_pos_sale" as any,{_uid:uid,_sale_id:saleId,_action:"refund",_reason:reason,_refund_method:refundMethod} as any);
+  if(!error) return data as string;
+  if(String(error.message||"").includes("FISCALIZED_SALE_REQUIRES_ZRA_CORRECTION_WORKFLOW")){
+    const { zraSubmitCorrectionFn }=await import("@/lib/zra/server");
+    const correction=await zraSubmitCorrectionFn({data:{userId:String(uid),saleId,correctionType:"CREDIT_NOTE",reason,terminalId:null}} as any);
+    if((correction as any)?.status==="FISCALIZED") return correction as any;
+    throw new Error("ZRA correction did not complete: "+String((correction as any)?.status||"UNKNOWN"));
+  }
+  throw new Error(error.message);
+}
 export async function todayMetrics(){const start=new Date();start.setHours(0,0,0,0);const {data}=await supabase.from("pos_sales").select("total,status,sold_at").eq("status","completed").gte("sold_at",start.toISOString());const rows=data??[];const sales=rows.reduce((a:number,r:any)=>a+n(r.total),0);return{sales,transactions:rows.length,average:rows.length?sales/rows.length:0};}
