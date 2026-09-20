@@ -126,7 +126,7 @@ function ZraSmartInvoicePage() {
     setMapForm({
       itemClassCode:item.zra_item_class_code??"",
       itemTypeCode:item.zra_item_type_code??"",
-      originCountryCode:item.zra_origin_country_code??"ZM",
+      originCountryCode:item.zra_origin_country_code??"",
       pkgUnitCode:item.zra_pkg_unit_code??"",
       qtyUnitCode:item.zra_qty_unit_code??"",
       vatCategoryCode:item.zra_vat_category_code??"",
@@ -143,7 +143,7 @@ function ZraSmartInvoicePage() {
 
   const saveMapping=async()=>{
     if(!userId||!selectedItem)return;
-    const required=["itemClassCode","pkgUnitCode","qtyUnitCode","vatCategoryCode"];
+    const required=["itemClassCode","itemTypeCode","originCountryCode","pkgUnitCode","qtyUnitCode","vatCategoryCode"];
     if(required.some(k=>!mapForm[k])){toast.error("Classification, packaging unit, quantity unit and VAT category are required.");return;}
     setBusy(true);
     try{
