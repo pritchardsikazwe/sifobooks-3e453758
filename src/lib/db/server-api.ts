@@ -234,8 +234,8 @@ function executePosCheckout(args: Record<string, any>) {
 
   const transaction=db.transaction(()=>{
     const saleId=generateUUID();
-    db.prepare("INSERT INTO pos_sales (id,user_id,sale_no,client_ref,shift_id,register_id,customer_id,customer_name,price_level,status,subtotal,discount,tax,total,paid,change_due,cost_total,note,sold_at,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .run(saleId,uid,saleNo,clientRef,shift.id,registerId,saleDraft.customer_id ?? null,saleDraft.customer_name ?? "Walk-in Customer",saleDraft.price_level ?? "normal","completed",rounded(taxable),rounded(lineDiscount+saleDiscount),rounded(tax),expectedTotal,rounded(Math.min(paymentTotal,expectedTotal)),rounded(change),rounded(costTotal),saleDraft.note ?? null,saleDraft.sold_at ?? new Date().toISOString(),uid);
+    db.prepare("INSERT INTO pos_sales (id,user_id,sale_no,client_ref,shift_id,register_id,customer_id,customer_name,price_level,status,subtotal,discount,tax,total,paid,change_due,cost_total,note,sold_at,created_by,location_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(saleId,uid,saleNo,clientRef,shift.id,registerId,saleDraft.customer_id ?? null,saleDraft.customer_name ?? "Walk-in Customer",saleDraft.price_level ?? "normal","completed",rounded(taxable),rounded(lineDiscount+saleDiscount),rounded(tax),expectedTotal,rounded(Math.min(paymentTotal,expectedTotal)),rounded(change),rounded(costTotal),saleDraft.note ?? null,saleDraft.sold_at ?? new Date().toISOString(),uid,saleDraft.location_id ?? null);
 
     for (const l of lines) {
       const saleLineId=generateUUID();
@@ -257,7 +257,14 @@ function executePosCheckout(args: Record<string, any>) {
       } else {
         db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,l.item.id,locationId ?? "default",after);
       }
-      db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+      const loc=sale.location_id ?? stock.warehouse_id ?? null;
+              if(loc){
+                const bal=db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid,item.item_id,loc) as any;
+                const balAfter=Number(bal?.quantity||0)+returnQty;
+                if(bal) db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(balAfter,bal.id);
+                else db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,item.item_id,loc,balAfter);
+              }
+              db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,l.item.id,"SALE",l.baseQty,l.unitCost,saleNo,"POS sale",locationId);
       db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,movement_date,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.baseQty,after,l.unitCost,l.baseQty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
@@ -367,12 +374,13 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
           for(const item of items){
             const stock=db.prepare("SELECT quantity_on_hand,cost_price,warehouse_id,name FROM stock_items WHERE id=? AND user_id=?").get(item.item_id,uid) as any;
             if(stock){
-              const newQty=Number(stock.quantity_on_hand||0)+Number(item.qty||0);
+              const returnQty=Number(item.base_qty ?? item.qty ?? 0);
+              const newQty=Number(stock.quantity_on_hand||0)+returnQty;
               db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,item.item_id,uid);
               db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
-                .run(generateUUID(),uid,item.item_id,"RETURN",Number(item.qty||0),Number(item.unit_cost||stock.cost_price||0),reversalNo,reason,sale.location_id ?? stock.warehouse_id ?? null);
+                .run(generateUUID(),uid,item.item_id,"RETURN",returnQty,Number(item.unit_cost||stock.cost_price||0),reversalNo,reason,sale.location_id ?? stock.warehouse_id ?? null);
               db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,reason,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-                .run(generateUUID(),uid,item.item_id,stock.warehouse_id ?? null,sale.location_id ?? null,"RETURN",Number(item.qty||0),0,newQty,Number(item.unit_cost||stock.cost_price||0),Number(item.qty||0)*Number(item.unit_cost||stock.cost_price||0),"pos_reversal",reversalId,reversalNo,reason,uid);
+                .run(generateUUID(),uid,item.item_id,stock.warehouse_id ?? null,sale.location_id ?? null,"RETURN",returnQty,0,newQty,Number(item.unit_cost||stock.cost_price||0),returnQty*Number(item.unit_cost||stock.cost_price||0),"pos_reversal",reversalId,reversalNo,reason,uid);
             }
           }
           db.prepare("UPDATE pos_sales SET status=?,void_reason=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(action==="refund"?"refunded":"voided",reason,saleId,uid);
