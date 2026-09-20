@@ -179,7 +179,7 @@ function RetailPos() {
       }
       const line: CartLine = {
         key: `${p.id}-${Date.now()}`, item_id: p.id, name: p.name, sku: p.sku,
-        qty, price, unit_cost: p.cost, discount_pct: 0,
+        qty, unit: p.sales_unit ?? p.unit ?? null, price, unit_cost: p.cost, discount_pct: 0,
       };
       setSelected(line.key);
       return [...prev, line];
@@ -300,6 +300,7 @@ function RetailPos() {
         {
           lines, totals, customer, customerName: customer?.name ?? settings.default_customer,
           priceLevel, saleDiscountPct, shiftId: shift.id, registerId: register?.id ?? null,
+          locationId: lines.length ? (products.find((p:any)=>p.id===lines[0].item_id)?.warehouse_id ?? null) : null,
           // Use the company's own VAT configuration — assuming 16% inclusive
           // rejects every sale for a till configured any other way.
           taxRate: settings.tax_rate, taxInclusive: settings.tax_inclusive,
@@ -797,7 +798,7 @@ function SalePanel(props: {
             <button onClick={() => setSelected(l.key === selected ? null : l.key)}
               className={cn("grid w-full grid-cols-[2.25rem_minmax(0,1fr)_4.5rem_3.25rem_5rem] items-center gap-1 border-b px-2 py-2 text-left text-sm tabular-nums",
                 l.key === selected ? "bg-primary/10" : "hover:bg-muted/60")}>
-              <span className="font-bold">{l.qty}</span>
+              <span className="font-bold">{l.qty}<span className="ml-0.5 text-[9px] text-muted-foreground">{l.unit ?? "unit"}</span></span>
               <span className="min-w-0">
                 <span className="block truncate font-semibold uppercase leading-tight">{l.name}</span>
                 {l.discount_pct ? <span className="text-[10px] text-muted-foreground">−{l.discount_pct}%</span> : null}

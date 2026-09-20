@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
-import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition } from "@/lib/compliance/governance";
+import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
   getItemClasses,
   getStandardCodes,
@@ -439,6 +439,134 @@ export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
       throw error;
     }
   });
+
+
+export async function submitZraSaleCorrection(args:{
+  userId:string;
+  saleId:string;
+  correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";
+  reason:string;
+  terminalId?:string|null;
+}) {
+  const db=getDb();
+  const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=? LIMIT 1").get(args.saleId,args.userId) as any;
+  if(!sale) throw new Error("SALE_NOT_FOUND");
+  const fiscal=db.prepare("SELECT * FROM fiscal_transaction_controls WHERE user_id=? AND sale_id=? LIMIT 1").get(args.userId,args.saleId) as any;
+  if(fiscal?.state!=="FISCALIZED" || !fiscal?.zra_receipt_number) throw new Error("ZRA_CORRECTION_REQUIRES_FISCALIZED_SALE");
+  if(!args.reason.trim()) throw new Error("CORRECTION_REASON_REQUIRED");
+  const existing=db.prepare("SELECT * FROM document_correction_controls WHERE user_id=? AND source_type='pos_sale' AND source_id=? AND correction_type=? LIMIT 1")
+    .get(args.userId,args.saleId,args.correctionType) as any;
+  if(existing?.status==="FISCALIZED") return existing;
+
+  const cfg=getSavedConfig(args.userId,sale.location_id ?? null);
+  if(!cfg?.tpin || !cfg?.branch_code || !cfg?.device_serial) throw new Error("ZRA_CORRECTION_CONFIG_REQUIRED: TPIN, Branch ID and device/SDC identifier are required.");
+  const {payload:original}=buildSalesPayload(db,args.userId,args.saleId,sale.sale_no);
+  const receiptTypeCode=zraStandardCode(db,args.userId,"Sales Receipt Type",
+    [args.correctionType==="CREDIT_NOTE"?"reversal after sale":"adjustment upwards after sale"]);
+  const salesTypeCode=zraStandardCode(db,args.userId,"Transaction Type",["normal"]);
+  const statusCode=zraStandardCode(db,args.userId,"Transaction Progress",["approved"]);
+  const correctionNo=nextCorrectionNumber(db,args.userId,args.correctionType);
+  const payload={
+    ...original,
+    cisInvcNo:correctionNo,
+    orgSdcId:String(cfg.device_serial),
+    orgIncNo:Number(fiscal.zra_receipt_number),
+    rcptTyCd:receiptTypeCode,
+    salesTyCd:salesTypeCode,
+    salesSttsCd:statusCode,
+    remark:args.reason.slice(0,400),
+    cfmDt:nowZraDate(),
+    salesDt:toDateOnly(),
+  } as any;
+  const id=existing?.id ?? generateUUID();
+  if(!existing) {
+    db.prepare("INSERT INTO document_correction_controls (id,user_id,source_type,source_id,correction_type,original_reference,status,reason,created_by,updated_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))")
+      .run(id,args.userId,"pos_sale",args.saleId,args.correctionType,String(fiscal.zra_receipt_number),"SUBMITTED",args.reason,args.userId);
+  } else {
+    db.prepare("UPDATE document_correction_controls SET status='SUBMITTED',reason=?,updated_at=datetime('now') WHERE id=?").run(args.reason,id);
+  }
+  const outbox=enqueueZraOperation({
+    userId:args.userId,branchId:cfg.branch_code,terminalId:args.terminalId ?? sale.register_id ?? null,
+    sourceType:"pos_sale",sourceId:args.saleId,
+    operation:args.correctionType==="CREDIT_NOTE"?"submitCreditNote":"submitDebitNote",
+    idempotencyKey:`zra:correction:${args.correctionType}:${args.saleId}`,
+    payload
+  });
+  try {
+    const response:any=await saveSales(payload,{baseUrl:requireVsdcUrl(cfg)});
+    const success=isSuccessfulVsdcResponse(response);
+    const data:any=response.data ?? {};
+    const receipt:any=data.receipt ?? data;
+    const receiptNo=receipt.rcptNo ?? data.rcptNo ?? null;
+    db.prepare("UPDATE document_correction_controls SET status=?,zra_status=?,zra_reference=?,zra_response=?,updated_at=datetime('now') WHERE id=?")
+      .run(success?"FISCALIZED":"REJECTED",success?"SUCCESS":"FAILED",receiptNo,JSON.stringify(response),id);
+    updateZraOutbox(outbox.id,{status:success?"SUCCESS":"FAILED",response,resultCode:response.resultCd,resultMessage:response.resultMsg,errorCode:success?null:response.resultCd,errorMessage:success?null:response.resultMsg});
+    if(success){
+      try{
+        const local=db.transaction(()=>{
+          const items=db.prepare("SELECT * FROM pos_sale_items WHERE sale_id=? AND user_id=?").all(args.saleId,args.userId) as any[];
+          for(const item of items){
+            const stock=db.prepare("SELECT quantity_on_hand,cost_price,warehouse_id FROM stock_items WHERE id=? AND user_id=?").get(item.item_id,args.userId) as any;
+            if(!stock) continue;
+            const qty=Number(item.base_qty ?? item.qty ?? 0);
+            const unitCost=Number(item.unit_cost ?? stock.cost_price ?? 0);
+            const newQty=Number(stock.quantity_on_hand||0)+qty;
+            db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,item.item_id,args.userId);
+            const loc=sale.location_id ?? stock.warehouse_id ?? null;
+            if(loc){
+              const bal=db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(args.userId,item.item_id,loc) as any;
+              const after=Number(bal?.quantity||0)+qty;
+              if(bal) db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=?").run(after,bal.id);
+              else db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),args.userId,item.item_id,loc,after);
+            }
+            db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+              .run(generateUUID(),args.userId,item.item_id,"RETURN",qty,unitCost,correctionNo,args.reason,sale.location_id ?? stock.warehouse_id ?? null);
+          }
+          if(sale.journal_entry_id){
+            const original=db.prepare("SELECT * FROM journal_entries WHERE id=? AND user_id=? LIMIT 1").get(sale.journal_entry_id,args.userId) as any;
+            if(original){
+              const reversalId=generateUUID();
+              const reversalNo=nextDocumentNumber({userId:args.userId,documentType:"JOURNAL",prefix:"JE",padding:6});
+              const lines=db.prepare("SELECT * FROM journal_lines WHERE entry_id=? AND user_id=?").all(original.id,args.userId) as any[];
+              const total=lines.reduce((n:number,l:any)=>n+Number(l.debit||0),0);
+              db.prepare("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate,reversal_of,reversal_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .run(reversalId,args.userId,reversalNo,toDateOnly().slice(0,4)+"-"+toDateOnly().slice(4,6)+"-"+toDateOnly().slice(6,8),correctionNo,"Reversal of "+original.entry_number,"posted",Number(original.total_credit||0),Number(original.total_debit||0),original.currency||"ZMW",original.exchange_rate||1,original.id,args.reason);
+              for(const l of lines){
+                db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+                  .run(generateUUID(),args.userId,reversalId,l.account_id,"Correction reversal: "+(l.description||""),Number(l.credit||0),Number(l.debit||0));
+              }
+              db.prepare("UPDATE document_correction_controls SET journal_entry_id=?,updated_at=datetime('now') WHERE id=?").run(reversalId,id);
+            }
+          }
+          db.prepare("UPDATE pos_sales SET status='refunded',void_reason=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(args.reason,args.saleId,args.userId);
+        });
+        local();
+      }catch(localError:any){
+        db.prepare("UPDATE document_correction_controls SET status='LOCAL_POSTING_REQUIRED',updated_at=datetime('now') WHERE id=?").run(id);
+        await recordAuditEvent({userId:args.userId,action:"ZRA_CORRECTION_LOCAL_POSTING_REQUIRED",entityType:"pos_sale",entityId:args.saleId,reason:localError?.message||"Local correction posting failed"});
+        return {correctionId:id,correctionType:args.correctionType,status:"LOCAL_POSTING_REQUIRED",response,payload};
+      }
+    }
+    await recordAuditEvent({userId:args.userId,terminalId:args.terminalId ?? sale.register_id ?? null,
+      action:success?"ZRA_CORRECTION_FISCALIZED":"ZRA_CORRECTION_REJECTED",entityType:"pos_sale",entityId:args.saleId,
+      reason:args.reason,newValue:{correctionType:args.correctionType,originalReceipt:fiscal.zra_receipt_number,correctionReceipt:receiptNo}});
+    return {correctionId:id,correctionType:args.correctionType,status:success?"FISCALIZED":"REJECTED",response,payload};
+  } catch(error:any) {
+    db.prepare("UPDATE document_correction_controls SET status='RETRY_REQUIRED',zra_status='REQUEST_FAILED',updated_at=datetime('now') WHERE id=?").run(id);
+    updateZraOutbox(outbox.id,{status:"RETRY_REQUIRED",errorCode:"VSDC_REQUEST_FAILED",errorMessage:error?.message || "VSDC request failed"});
+    throw error;
+  }
+}
+
+function nextCorrectionNumber(db:any,userId:string,type:string) {
+  const prefix=type==="CREDIT_NOTE"?"CN":"DN";
+  const row=db.prepare("SELECT COUNT(*) AS n FROM document_correction_controls WHERE user_id=? AND correction_type=?").get(userId,type) as any;
+  return `${prefix}-${new Date().getFullYear()}-${String(Number(row?.n||0)+1).padStart(6,"0")}`;
+}
+
+export const zraSubmitCorrectionFn = createServerFn({method:"POST"})
+  .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";reason:string;terminalId?:string|null})
+  .handler(async ({data})=>submitZraSaleCorrection(data));
 
 export const zraSelectInvoiceFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
