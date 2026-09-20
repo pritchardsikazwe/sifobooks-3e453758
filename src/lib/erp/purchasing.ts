@@ -15,6 +15,13 @@ function account(db:any,userId:string,companyId:string|null,ruleKey:string,candi
   throw new Error("ACCOUNTING_POSTING_RULE_MISSING:"+ruleKey);
 }
 
+function assertPurchaseApprovalRole(db:any,userId:string){
+  const row=db.prepare("SELECT rr.key,rr.name FROM staff_members sm LEFT JOIN rbac_roles rr ON rr.id=sm.role_id WHERE sm.user_id=? AND sm.is_active=1 LIMIT 1").get(userId) as any;
+  const key=String(row?.key||"").toLowerCase(), name=String(row?.name||"").toLowerCase();
+  const allowed=["owner","admin","super_admin","business_owner","procurement_manager","purchasing_manager","inventory_manager","store_manager","finance_manager","accountant"];
+  if(!allowed.some((r)=>key===r || key.includes(r) || name.includes(r))) throw new Error("PO_APPROVER_NOT_AUTHORIZED");
+}
+
 export function createPurchaseOrder(args:{
   userId:string; supplierId?:string|null; orderDate:string; expectedDate?:string|null;
   notes?:string|null; items:Array<{itemId?:string|null;description:string;quantity:number;unitPrice:number;taxRate?:number}>
@@ -51,8 +58,7 @@ export function approvePurchaseOrder(args:{userId:string;poId:string;approvedBy:
   if(!po) throw new Error("PO_NOT_FOUND");
   if(po.status!=="DRAFT") throw new Error("PO_NOT_DRAFT");
   if(!args.approvedBy) throw new Error("PO_APPROVER_REQUIRED");
-  const staff=db.prepare("SELECT id FROM staff_members WHERE user_id=? AND is_active=1 LIMIT 1").get(args.approvedBy);
-  if(!staff) throw new Error("PO_APPROVER_NOT_AUTHORIZED");
+  assertPurchaseApprovalRole(db,args.approvedBy);
   db.prepare("UPDATE purchase_orders SET status='APPROVED',approved_by=?,approved_at=datetime('now'),updated_at=datetime('now') WHERE id=? AND user_id=?")
     .run(args.approvedBy,args.poId,args.userId);
   void recordAuditEvent({userId:args.userId,action:"PURCHASE_ORDER_APPROVED",entityType:"purchase_order",entityId:args.poId,newValue:{approvedBy:args.approvedBy}});
@@ -68,6 +74,12 @@ export function createSupplierBillFromReceipt(args:{
   if(!receipt) throw new Error("GRN_NOT_FOUND");
   if(receipt.status!=="POSTED") throw new Error("GRN_NOT_POSTED");
   if(receipt.bill_id) throw new Error("GRN_ALREADY_BILLED");
+  if(receipt.po_id){
+    const po=db.prepare("SELECT status,supplier_id FROM purchase_orders WHERE id=? AND user_id=? LIMIT 1").get(receipt.po_id,args.userId) as any;
+    if(!po) throw new Error("PO_NOT_FOUND");
+    if(po.status!=="APPROVED" && po.status!=="PARTIAL" && po.status!=="RECEIVED") throw new Error("PO_NOT_APPROVED");
+    if(po.supplier_id && receipt.supplier_id && po.supplier_id!==receipt.supplier_id) throw new Error("PO_SUPPLIER_MISMATCH");
+  }
   if(!args.supplierInvoiceNumber?.trim()) throw new Error("SUPPLIER_INVOICE_REQUIRED");
   const companyId=receipt.company_id??null;
   const billNumber=nextDocumentNumber({userId:args.userId,companyId,branchId:receipt.branch_id??null,documentType:"SUPPLIER_BILL",prefix:"BILL",padding:6});
