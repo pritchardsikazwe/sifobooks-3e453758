@@ -411,11 +411,16 @@ export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
       const qrUrl=receipt.qrCodeUrl ?? zraData.qrCodeUrl ?? null;
       db.prepare(`UPDATE zra_invoice_queue SET status=?,submitted_at=CASE WHEN ? THEN datetime('now') ELSE submitted_at END,response_code=?,response_message=?,zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_url=?,error_code=?,updated_at=datetime('now') WHERE id=?`)
         .run(success?"submitted":"failed",success?1:0,response.resultCd ?? null,response.resultMsg ?? null,receiptNo,internalData,signature,qrUrl,success?null:response.resultCd ?? null,queue.id);
+      let stockSync:any=null;
       if(success){
         db.prepare("UPDATE fiscal_transaction_controls SET state='FISCALIZED',zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_data=?,zra_response_json=?,fiscalized_at=datetime('now'),submission_at=COALESCE(submission_at,datetime('now')),error_code=NULL,error_message=NULL,updated_at=datetime('now'),version=version+1 WHERE user_id=? AND sale_id=?")
           .run(receiptNo,internalData,signature,qrUrl,JSON.stringify(response),data.userId,data.saleId);
         updateZraOutbox(outbox.id,{status:"SUCCESS",response,resultCode:response.resultCd,resultMessage:response.resultMsg});
-        const stockSync=await syncZraStockAfterSale(db,data.userId,data.saleId,saleNo,cfg,payload,data.terminalId ?? sale.register_id ?? null);
+        try {
+          stockSync=await syncZraStockAfterSale(db,data.userId,data.saleId,saleNo,cfg,payload,data.terminalId ?? sale.register_id ?? null);
+        } catch (stockError:any) {
+          stockSync={status:"RETRY_REQUIRED",error:stockError?.message || "ZRA stock synchronization failed"};
+        }
         await recordAuditEvent({userId:data.userId,terminalId:data.terminalId ?? sale.register_id ?? null,action:"SALE_FISCALIZED",entityType:"pos_sale",entityId:data.saleId,newValue:{receiptNumber:receiptNo,resultCode:response.resultCd}});
       } else {
         db.prepare("UPDATE fiscal_transaction_controls SET state='REJECTED',zra_response_json=?,error_code=?,error_message=?,updated_at=datetime('now'),version=version+1 WHERE user_id=? AND sale_id=?")
