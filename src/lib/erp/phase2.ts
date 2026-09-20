@@ -1,5 +1,6 @@
 import { getDb, generateUUID } from "@/lib/db/database";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
+import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
 
 function postingAccount(db:any,userId:string,companyId:string|null,ruleKey:string,candidates:string[]) {
   const configured=db.prepare("SELECT debit_account_id,credit_account_id FROM accounting_posting_rules WHERE user_id=? AND (? IS NULL OR company_id=?) AND rule_key=? AND active=1 LIMIT 1")
@@ -33,7 +34,7 @@ function ledger(db:any,args:any) {
   return after;
 }
 
-export function receivePurchase(args:{userId:string;supplierId?:string|null;poId?:string|null;branchId?:string|null;warehouseId?:string|null;locationId:string;receiptDate:string;supplierInvoiceNumber?:string|null;items:Array<{itemId:string;poItemId?:string|null;quantity:number;unitCost:number;taxRate?:number;taxCode?:string|null;batchNo?:string|null;expiryDate?:string|null}>}) {
+export function receivePurchase(args:{userId:string;supplierId?:string|null;poId?:string|null;branchId?:string|null;warehouseId?:string|null;locationId:string;receiptDate:string;supplierInvoiceNumber?:string|null;items:Array<{itemId:string;poItemId?:string|null;quantity:number;unit?:string|null;unitCost:number;taxRate?:number;taxCode?:string|null;batchNo?:string|null;expiryDate?:string|null}>}) {
   const db=getDb(); assertPeriodOpen(args.userId,args.receiptDate);
   if(!args.items.length) throw new Error("GRN_EMPTY");
   const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(args.userId) as any;
@@ -46,18 +47,20 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
       if(!(row.quantity>0)||!(row.unitCost>=0)) throw new Error("GRN_BAD_LINE");
       const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(row.itemId,args.userId) as any;
       if(!item) throw new Error("GRN_UNKNOWN_ITEM");
+      const converted=convertToBaseUnit(db,args.userId,item,Number(row.quantity),row.unit);
+      const baseQuantity=converted.quantity;
       const tax=taxFor(db,args.userId,companyId,row.taxCode||item.tax_category,Number(row.taxRate??item.vat_rate??0),args.receiptDate);
-      const taxable=Number(row.quantity)*Number(row.unitCost);
+      const taxable=baseQuantity*Number(row.unitCost);
       const taxAmount=taxable*Number(tax.rate||0)/100;
       subtotal+=taxable; taxTotal+=taxAmount;
       db.prepare("INSERT INTO purchase_receipt_items (id,user_id,receipt_id,item_id,po_item_id,quantity,unit_cost,tax_rate,taxable_amount,tax_amount,total_amount,batch_no,expiry_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),args.userId,receiptId,row.itemId,row.poItemId??null,row.quantity,row.unitCost,Number(tax.rate||0),taxable,taxAmount,taxable+taxAmount,row.batchNo??null,row.expiryDate??null);
+        .run(generateUUID(),args.userId,receiptId,row.itemId,row.poItemId??null,baseQuantity,row.unitCost,Number(tax.rate||0),taxable,taxAmount,taxable+taxAmount,row.batchNo??null,row.expiryDate??null);
       const oldQty=Number(item.quantity_on_hand||0);
       const oldCost=Number(item.cost_price||0);
-      const newQty=oldQty+row.quantity;
-      const movingAverage=newQty>0 ? ((oldQty*oldCost)+(row.quantity*row.unitCost))/newQty : row.unitCost;
+      const newQty=oldQty+baseQuantity;
+      const movingAverage=newQty>0 ? ((oldQty*oldCost)+(baseQuantity*row.unitCost))/newQty : row.unitCost;
       db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,last_purchase_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,movingAverage,movingAverage,row.unitCost,row.itemId,args.userId);
-      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:row.quantity,quantityOut:0,unitCost:row.unitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
+      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:baseQuantity,quantityOut:0,unitCost:row.unitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
       db.prepare("INSERT INTO tax_transaction_lines (id,user_id,source_type,source_id,line_id,tax_code_id,tax_code,tax_category,rate,taxable_amount,tax_amount,inclusive,effective_from,snapshot_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),args.userId,"purchase_receipt",receiptId,row.itemId,tax.id,tax.code,tax.category,Number(tax.rate||0),taxable,taxAmount,0,tax.effective_from,JSON.stringify(tax));
     }
@@ -80,7 +83,7 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
   return tx;
 }
 
-export function transferStock(args:{userId:string;companyId?:string|null;branchId?:string|null;fromLocationId:string;toLocationId:string;transferDate:string;items:Array<{itemId:string;quantity:number;unitCost?:number}>;reason?:string}) {
+export function transferStock(args:{userId:string;companyId?:string|null;branchId?:string|null;fromLocationId:string;toLocationId:string;transferDate:string;items:Array<{itemId:string;quantity:number;unit?:string|null;unitCost?:number}>;reason?:string}) {
   const db=getDb(); assertPeriodOpen(args.userId,args.transferDate);
   if(args.fromLocationId===args.toLocationId) throw new Error("TRANSFER_SAME_LOCATION");
   if(!args.items.length) throw new Error("TRANSFER_EMPTY");
@@ -97,11 +100,13 @@ export function transferStock(args:{userId:string;companyId?:string|null;branchI
       if(available<row.quantity) throw new Error(`TRANSFER_INSUFFICIENT_STOCK:${row.itemId}`);
       const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(row.itemId,args.userId) as any;
       if(!item) throw new Error("TRANSFER_UNKNOWN_ITEM");
+      const converted=convertToBaseUnit(db,args.userId,item,Number(row.quantity),row.unit);
+      const baseQuantity=converted.quantity;
       const unitCost=Number(row.unitCost??item.cost_price??0);
-      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_OUT",quantityIn:0,quantityOut:row.quantity,unitCost,reference:transferNumber,note:"Warehouse/store transfer out",locationId:args.fromLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
-      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_IN",quantityIn:row.quantity,quantityOut:0,unitCost,reference:transferNumber,note:"Warehouse/store transfer in",locationId:args.toLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
-      db.prepare("INSERT INTO inventory_transfer_items (id,transfer_id,item_id,description,quantity,unit_cost,qty_received) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),id,row.itemId,item.name,row.quantity,unitCost,row.quantity);
-      total+=row.quantity*unitCost;
+      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_OUT",quantityIn:0,quantityOut:baseQuantity,unitCost,reference:transferNumber,note:"Warehouse/store transfer out",locationId:args.fromLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
+      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"TRANSFER_IN",quantityIn:baseQuantity,quantityOut:0,unitCost,reference:transferNumber,note:"Warehouse/store transfer in",locationId:args.toLocationId,sourceType:"inventory_transfer",sourceId:id,date:args.transferDate,reason:args.reason});
+      db.prepare("INSERT INTO inventory_transfer_items (id,transfer_id,item_id,description,quantity,unit_cost,qty_received) VALUES (?,?,?,?,?,?,?)").run(generateUUID(),id,row.itemId,item.name,baseQuantity,unitCost,baseQuantity);
+      total+=baseQuantity*unitCost;
     }
     return {id,transferNumber,total};
   });
