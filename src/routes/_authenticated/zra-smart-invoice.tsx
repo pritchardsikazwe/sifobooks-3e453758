@@ -43,7 +43,7 @@ function ZraSmartInvoicePage() {
   const [config, setConfig] = useState<Config>({});
   const [form, setForm] = useState<Config>({
     mode: "test",
-    vsdc_endpoint: "http://127.0.0.1:8080/zrasmartinvoice",
+    vsdc_endpoint: "http://127.0.0.1:8085",
   });
   const [stats, setStats] = useState({ pending: 0, submitted: 0, failed: 0, total: 0 });
   const [busy, setBusy] = useState(false);
@@ -147,7 +147,7 @@ function ZraSmartInvoicePage() {
           userId,
           tpin: form.tpin,
           bhfId: form.branch_code,
-          lastReqDt: "2010-01-01 00:00:00",
+          lastReqDt: "20100101000000",
         },
       });
       if (result?.resultCd === "000") {
