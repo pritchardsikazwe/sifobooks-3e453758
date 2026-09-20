@@ -228,8 +228,13 @@ function executePosCheckout(args: Record<string, any>) {
       .run(saleId,uid,saleNo,clientRef,shift.id,registerId,saleDraft.customer_id ?? null,saleDraft.customer_name ?? "Walk-in Customer",saleDraft.price_level ?? "normal","completed",rounded(taxable),rounded(lineDiscount+saleDiscount),rounded(tax),expectedTotal,rounded(Math.min(paymentTotal,expectedTotal)),rounded(change),rounded(costTotal),saleDraft.note ?? null,saleDraft.sold_at ?? new Date().toISOString(),uid);
 
     for (const l of lines) {
+      const saleLineId=generateUUID();
       db.prepare("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,saleId,l.item.id,l.item.name,l.item.sku ?? null,l.qty,l.price,l.unitCost,l.discountPct,l.rate,rounded(l.total*discountFactor),l.note ?? null);
+        .run(saleLineId,uid,saleId,l.item.id,l.item.name,l.item.sku ?? null,l.qty,l.price,l.unitCost,l.discountPct,l.rate,rounded(l.total*discountFactor),l.note ?? null);
+      const taxCode=db.prepare("SELECT * FROM tax_codes WHERE user_id=? AND active=1 AND (code=? OR category=?) AND effective_from<=? AND (effective_to IS NULL OR effective_to>=?) ORDER BY effective_from DESC LIMIT 1")
+        .get(uid,l.item.tax_category||"standard",l.item.tax_category||"standard",periodDate,periodDate) as any;
+      db.prepare("INSERT INTO tax_transaction_lines (id,user_id,source_type,source_id,line_id,tax_code_id,tax_code,tax_category,rate,taxable_amount,tax_amount,inclusive,effective_from,snapshot_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,"pos_sale",saleId,saleLineId,taxCode?.id??null,taxCode?.code??l.item.tax_category??"standard",taxCode?.category??l.item.tax_category??"standard",l.rate,rounded(l.taxable*discountFactor),rounded(l.lineTax*discountFactor),taxInclusive?1:0,taxCode?.effective_from??periodDate,JSON.stringify({code:taxCode?.code??l.item.tax_category??"standard",rate:l.rate,category:taxCode?.category??l.item.tax_category??"standard",inclusive:taxInclusive}));
       const newQty=Number(l.item.quantity_on_hand||0)-l.qty;
       db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,l.item.id,uid);
       const locationId=saleDraft.location_id ?? l.item.warehouse_id ?? null;
