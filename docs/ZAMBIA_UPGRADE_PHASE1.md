@@ -155,6 +155,8 @@ Phase 2 should focus on the user-facing accounting discipline:
 9. ZRA outbox retry/review UI.
 10. Automated tests for POS, inventory, accounting and ZRA.
 
+The Windows desktop packaging has also been updated to carry versioned database migrations so future local installations receive the same schema controls as the development runtime.
+
 ## Regulatory source of truth
 
 Use the current ZRA VSDC/CIS specification and ZRA Smart Invoice guidance as the regulatory source of truth. Do not invent endpoints or regulatory codes.
@@ -191,7 +193,7 @@ Fiscalized POS transactions remain immutable through the generic local query lay
 
 ### Next implementation sequence
 
-1. Complete Item Master tabbed UI and item-unit conversion service.
+1. Complete item-unit conversion service and connect all purchasing/transfer/POS quantity calculations to it.
 2. Add full purchase order -> GRN -> supplier bill/AP workflow.
 3. Add Warehouse -> Chibombo Store transfer UI with approval.
 4. Add stock count scanning and variance approval UI.
