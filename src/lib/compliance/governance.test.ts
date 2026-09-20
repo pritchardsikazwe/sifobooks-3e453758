@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { assertFiscalTransition } from "@/lib/compliance/governance";
 
 describe("fiscal transaction state machine", () => {
