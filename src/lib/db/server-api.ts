@@ -90,9 +90,11 @@ export const removeFileFn = createServerFn({ method: "POST" })
 
 // ── RPC ──
 export const rpcFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => raw as { name: string; args: Record<string, any> })
+  .inputValidator((raw: unknown) => raw as { name: string; args: Record<string, any>; authToken?: string | null })
   .handler(async ({ data }) => {
-    return executeRpc(data.name, data.args);
+    const auth = data.authToken ? await verifyToken(data.authToken) : null;
+    if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
+    return executeRpc(data.name, { ...(data.args || {}), _uid: auth.userId });
   });
 
 // ── Token verification (for auth middleware) ──
