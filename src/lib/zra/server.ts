@@ -95,10 +95,19 @@ export const zraSyncCatalogFn = createServerFn({ method:"POST" })
   .handler(async ({data}) => {
     const cfg=getSavedConfig(data.userId,data.branchId);
     const db=getDb();
-    const [codes,classes]=await Promise.all([
-      getStandardCodes({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)}),
-      getItemClasses({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)}),
-    ]);
+    const codes=await getStandardCodes({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)});
+    let classes:any=await getItemClasses({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)});
+    // ZRA documents classification retrieval as paged in batches of up to 1000.
+    // Continue with the VSDC result timestamp until the batch is exhausted.
+    const classResponses=[classes];
+    for(let page=1;page<20 && isSuccessfulVsdcResponse(classes);page++){
+      const batch=listFromResponse(classes,["itemClsList","itemClassList","clsList","list"]);
+      const nextDt=String(classes.resultDt ?? "");
+      if(batch.length<1000 || !nextDt || nextDt===data.lastReqDt) break;
+      const next=await getItemClasses({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:nextDt},{baseUrl:requireVsdcUrl(cfg)});
+      classResponses.push(next); classes=next;
+      if(!isSuccessfulVsdcResponse(next)) break;
+    }
     if(isSuccessfulVsdcResponse(codes)){
       const clsList=Array.isArray(codes.data?.clsList)?codes.data.clsList:[];
       const ins=db.prepare("INSERT OR REPLACE INTO zra_standard_codes (id,user_id,branch_id,code_class,code_class_name,code,name,description,raw_data,updated_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))");
@@ -106,15 +115,15 @@ export const zraSyncCatalogFn = createServerFn({ method:"POST" })
         ins.run(generateUUID(),data.userId,data.branchId ?? null,String(cls.cdCls ?? ""),cls.cdClsNm ?? null,String(item.cd ?? ""),item.cdNm ?? null,item.userDfnNm1 ?? null,JSON.stringify(item));
       }
     }
-    if(isSuccessfulVsdcResponse(classes)){
-      const rows=listFromResponse(classes,["itemClsList","itemClassList","clsList","list"]);
+    if(classResponses.some(isSuccessfulVsdcResponse)){
+      const rows=classResponses.flatMap((response:any)=>listFromResponse(response,["itemClsList","itemClassList","clsList","list"]));
       const ins=db.prepare("INSERT OR REPLACE INTO zra_item_classes (id,user_id,branch_id,item_cls_cd,item_cls_nm,item_cls_lvl,tax_ty_cd,use_yn,raw_data,updated_at) VALUES (?,?,?,?,?,?,?,?,?,datetime('now'))");
       for(const item of rows){
         ins.run(generateUUID(),data.userId,data.branchId ?? null,String(item.itemClsCd ?? ""),item.itemClsNm ?? null,
           item.itemClsLvl == null ? null:Number(item.itemClsLvl),item.taxTyCd ?? null,item.useYn ?? null,JSON.stringify(item));
       }
     }
-    return {codes,classes,codeCount:db.prepare("SELECT COUNT(*) AS n FROM zra_standard_codes WHERE user_id=? AND (? IS NULL OR branch_id=?)").get(data.userId,data.branchId ?? null,data.branchId ?? null)?.n ?? 0,
+    return {codes,classes,classResponses,classCountFromResponses:classResponses.length,codeCount:db.prepare("SELECT COUNT(*) AS n FROM zra_standard_codes WHERE user_id=? AND (? IS NULL OR branch_id=?)").get(data.userId,data.branchId ?? null,data.branchId ?? null)?.n ?? 0,
       classCount:db.prepare("SELECT COUNT(*) AS n FROM zra_item_classes WHERE user_id=? AND (? IS NULL OR branch_id=?)").get(data.userId,data.branchId ?? null,data.branchId ?? null)?.n ?? 0};
   });
 
