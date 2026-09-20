@@ -12,6 +12,7 @@
  *
  * Only an agent- or gateway-confirmed acceptance counts as printed.
  */
+import QRCode from "qrcode";
 import {
   discoverAgent,
   agentFetch,
@@ -67,6 +68,17 @@ export interface ReceiptData {
   amountPaid?: number;
   change?: number;
   footer?: string;
+  zra?: {
+    status?: "submitted" | "pending" | "offline";
+    receiptNumber?: string | null;
+    internalData?: string | null;
+    receiptSignature?: string | null;
+    qrCodeUrl?: string | null;
+    qrDataUrl?: string | null;
+    sdcId?: string | null;
+    mrcNo?: string | null;
+    message?: string | null;
+  };
 }
 
 export interface KitchenOrder {
@@ -394,9 +406,13 @@ export async function printPdf(pdfBase64: string, printer?: string, copies = 1, 
 }
 
 export async function printReceipt(receipt: ReceiptData, printer?: string, copies = 1) {
+  const printable = { ...receipt, zra: receipt.zra ? { ...receipt.zra } : receipt.zra };
+  if (printable.zra?.status === "submitted" && printable.zra.qrCodeUrl && !printable.zra.qrDataUrl) {
+    try { printable.zra.qrDataUrl = await QRCode.toDataURL(printable.zra.qrCodeUrl, { margin: 1, width: 240 }); } catch { /* URL is still printed as verification text. */ }
+  }
   return dispatch(
     "receipt",
-    { receipt },
+    { receipt: printable },
     {
       printer,
       copies,
