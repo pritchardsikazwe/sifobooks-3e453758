@@ -67,7 +67,7 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
       const newQty=oldQty+baseQuantity;
       const movingAverage=newQty>0 ? ((oldQty*oldCost)+(baseQuantity*baseUnitCost))/newQty : baseUnitCost;
       db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,last_purchase_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,movingAverage,movingAverage,baseUnitCost,row.itemId,args.userId);
-      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:baseQuantity,quantityOut:0,unitCost:row.unitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
+      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"PURCHASE",quantityIn:baseQuantity,quantityOut:0,unitCost:baseUnitCost,reference:receiptNumber,note:"Goods received",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"purchase_receipt",sourceId:receiptId,date:args.receiptDate});
       if(row.poItemId){
         const poLine=db.prepare("SELECT quantity,received_quantity FROM purchase_order_items WHERE id=? AND user_id=? LIMIT 1").get(row.poItemId,args.userId) as any;
         if(!poLine) throw new Error("PO_ITEM_NOT_FOUND");
