@@ -18,7 +18,7 @@ export type QuerySpec = {
   insertData?: Record<string, any> | Record<string, any>[];
   updateData?: Record<string, any>;
   onConflict?: string;
-  count?: string | null;
+  count?: string | null;\n  authToken?: string | null;
 };
 
 export type QueryResult = { data: any; error: any; count?: number | null };
@@ -219,7 +219,7 @@ export function executeQuery(spec: QuerySpec): QueryResult {
   const database = getDb();
   try {
     if (spec.operation === "select") {
-      const { sql, params, joins } = buildSelect(spec);
+      const { sql, params, joins } = buildSelect(secured);
       const rows = database.prepare(sql).all(...params);
 
       let data: any = transformJoinResults(rows, joins);
@@ -235,7 +235,7 @@ export function executeQuery(spec: QuerySpec): QueryResult {
     }
 
     if (spec.operation === "insert") {
-      const records = Array.isArray(spec.insertData) ? spec.insertData : [spec.insertData];
+      const records = Array.isArray(secured.insertData) ? secured.insertData : [secured.insertData];
       const results: any[] = [];
       for (const record of records) {
         const cols = Object.keys(record);
@@ -257,19 +257,19 @@ export function executeQuery(spec: QuerySpec): QueryResult {
         const inserted = database.prepare(`SELECT * FROM "${spec.table}" WHERE id = ?`).get(id);
         results.push(inserted);
       }
-      return { data: Array.isArray(spec.insertData) ? results : results[0], error: null };
+      return { data: Array.isArray(secured.insertData) ? results : results[0], error: null };
     }
 
     if (spec.operation === "update") {
-      const setCols = Object.keys(spec.updateData || {});
+      const setCols = Object.keys(secured.updateData || {});
       const setVals = setCols.map(c => {
-        const v = spec.updateData![c];
+        const v = secured.updateData![c];
         if (v === undefined) return null;
         if (typeof v === "object" && v !== null) return JSON.stringify(v);
         return v;
       });
       const setClause = setCols.map(c => `"${c}" = ?`).join(",");
-      const { clause, params } = buildWhereClause(spec.filters);
+      const { clause, params } = buildWhereClause(secured.filters);
       const sql = `UPDATE "${spec.table}" SET ${setClause}${clause}`;
       database.prepare(sql).run(...setVals, ...params);
 
@@ -280,7 +280,7 @@ export function executeQuery(spec: QuerySpec): QueryResult {
     }
 
     if (spec.operation === "delete") {
-      const { clause, params } = buildWhereClause(spec.filters);
+      const { clause, params } = buildWhereClause(secured.filters);
       const selectSql = `SELECT * FROM "${spec.table}"${clause}`;
       const rows = database.prepare(selectSql).all(...params);
       const sql = `DELETE FROM "${spec.table}"${clause}`;
