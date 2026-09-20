@@ -4,6 +4,7 @@ import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToke
 import { getDb, generateUUID } from "./database";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
 import { receivePurchase, transferStock, createStockReconciliation, postStockReconciliation } from "@/lib/erp/phase2";
+import { saveUnitConversion, listUnitConversions } from "@/lib/inventory/unit-conversions";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -297,6 +298,14 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
   const db = getDb();
   try {
     switch (name) {
+      case "save_unit_conversion": {
+        const uid=String(args._uid||"");
+        return { data: saveUnitConversion({ ...args, userId: uid, actorId: uid }), error: null };
+      }
+      case "list_unit_conversions": {
+        const uid=String(args._uid||"");
+        return { data: listUnitConversions(uid, String(args.itemId||"")), error: null };
+      }
       case "receive_purchase": {
         return { data: receivePurchase({ ...args, userId: String(args._uid || "") }), error: null };
       }
