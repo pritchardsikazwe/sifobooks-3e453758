@@ -120,8 +120,9 @@ function runSqlMigrations(database: Database) {
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     );`,
   );
-  const dir = join(process.cwd(), "src", "lib", "db", "migrations");
-  if (!existsSync(dir)) return;
+  const candidates = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")];
+  const dir = candidates.find((candidate) => existsSync(candidate));
+  if (!dir) return;
   const applied = new Set(
     (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
   );
