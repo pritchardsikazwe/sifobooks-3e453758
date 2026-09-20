@@ -3,6 +3,7 @@ import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { getDb, generateUUID } from "./database";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
+import { receivePurchase, transferStock, createStockReconciliation, postStockReconciliation } from "@/lib/erp/phase2";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
 
