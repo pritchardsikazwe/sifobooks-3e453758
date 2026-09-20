@@ -288,7 +288,15 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
           vals.push(generateUUID());
         }
         const placeholders = cols.map(() => "?").join(",");
-        const sql = `INSERT INTO "${secured.table}" (${cols.map(c => `"${c}"`).join(",")}) VALUES (${placeholders})`;
+        const colSql = cols.map(c => `"${c}"`).join(",");
+        let sql = `INSERT INTO "${secured.table}" (${colSql}) VALUES (${placeholders})`;
+        if (secured.onConflict) {
+          const conflictCols = secured.onConflict.split(",").map((c) => c.trim()).filter(Boolean);
+          if (conflictCols.length) {
+            const updates = cols.filter((col) => !conflictCols.includes(col)).map((col) => `"${col}"=excluded."${col}"`);
+            sql += ` ON CONFLICT (${conflictCols.map((col) => `"${col}"`).join(",")}) DO ${updates.length ? `UPDATE SET ${updates.join(",")}` : "NOTHING"}`;
+          }
+        }
         database.prepare(sql).run(...vals);
         const id = vals[cols.indexOf("id")];
         const inserted = database.prepare(`SELECT * FROM "${secured.table}" WHERE id = ?`).get(id);
