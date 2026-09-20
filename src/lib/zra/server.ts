@@ -191,8 +191,8 @@ export const zraRegisterInventoryItemFn = createServerFn({method:"POST"})
     if(!cfg?.tpin||!cfg?.branch_code) throw new Error("ZRA_NOT_CONFIGURED: Configure TPIN and Branch ID first.");
     const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId) as any;
     if(!item) throw new Error("Inventory item not found.");
-    if(!item.zra_item_class_code||!item.zra_pkg_unit_code||!item.zra_qty_unit_code||!item.zra_vat_category_code)
-      throw new Error("ZRA_ITEM_NOT_MAPPED: Complete the ZRA mapping before registering this item.");
+    if(!item.zra_item_class_code||!item.zra_item_type_code||!item.zra_origin_country_code||!item.zra_pkg_unit_code||!item.zra_qty_unit_code||!item.zra_vat_category_code)
+      throw new Error("ZRA_ITEM_NOT_MAPPED: Complete classification, product type, origin, packaging, quantity and VAT mapping before registering this item.");
     const payload={
       tpin:cfg.tpin,bhfId:cfg.branch_code,itemCd:item.zra_item_code||item.sku||item.barcode||item.id,
       itemClsCd:item.zra_item_class_code,itemTyCd:item.zra_item_type_code,itemNm:item.name,
