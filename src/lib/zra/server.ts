@@ -131,7 +131,7 @@ export const zraSaveConfigFn = createServerFn({ method: "POST" })
       data.tpin ?? null,data.branchCode ?? null,data.deviceSerial ?? null,data.vsdcEndpoint ?? null,data.notes ?? null);
     if (data.deviceSerial && data.branchCode) {
       saveZraDevice(db,{
-        userId:data.userId,branchId:data.branchId ?? null,deviceName:data.deviceName ?? `SifoBooks ${data.deviceSerial}`,
+        id:data.deviceId ?? null,userId:data.userId,branchId:data.branchId ?? null,deviceName:data.deviceName ?? `SifoBooks ${data.deviceSerial}`,
         deviceType:data.deviceType ?? "desktop",terminalId:data.terminalId ?? null,
         deploymentMode:data.deploymentMode ?? "local",environment:data.mode === "production" ? "production" : "test",
         tpin:data.tpin ?? null,branchCode:data.branchCode,deviceSerial:data.deviceSerial,
