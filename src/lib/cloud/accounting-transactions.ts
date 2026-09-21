@@ -76,6 +76,9 @@ async function event(tx: Tx, uid: string, transactionId: string, eventType: stri
 }
 async function setUser(tx: Tx, uid: string) {
   await tx.unsafe("SELECT set_config('app.user_id',$1,true)", [uid]);
+  const tenant = await one(tx, "SELECT ct.id FROM cloud_tenants ct INNER JOIN cloud_members cm ON cm.tenant_id=ct.id WHERE cm.user_id=$1 AND cm.status='active' ORDER BY ct.created_at LIMIT 1", [uid]);
+  if (!tenant?.id) throw new Error("CLOUD_TENANT_NOT_FOUND");
+  await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [String(tenant.id)]);
 }
 
 export async function cloudPosCheckout(uid: string, args: any) {
