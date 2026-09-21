@@ -131,6 +131,15 @@ function PayrollReview() {
   return (
     <div className="min-h-full bg-slate-50/60">
       <div className="mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <Button asChild size="sm" variant="secondary" className="shrink-0 rounded-full"><Link to="/payroll">Run Payroll</Link></Button>
+        <Button asChild size="sm" variant="ghost" className="shrink-0 rounded-full"><Link to="/employees">Employees</Link></Button>
+        <Button asChild size="sm" variant="ghost" className="shrink-0 rounded-full"><Link to="/attendance">Attendance</Link></Button>
+        <Button asChild size="sm" variant="ghost" className="shrink-0 rounded-full"><Link to="/timesheet">Timesheets</Link></Button>
+        <Button asChild size="sm" variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-statutory">Statutory</Link></Button>
+        <Button asChild size="sm" variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-payments">Payments</Link></Button>
+      </div>
+
       <div className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-end gap-3">
         <div className="mr-auto">
