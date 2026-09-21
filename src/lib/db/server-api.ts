@@ -514,7 +514,63 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
         return { data: true, error: null };
       }
       case "my_access": {
-        return { data: { role: "admin", permissions: [] }, error: null };
+        const uid = String(args._uid || "");
+        if (!uid) return { data: null, error: { message: "NOT_SIGNED_IN" } };
+
+        // The user who owns a local company is the business owner. The older
+        // local resolver returned an empty permission set, so the UI treated
+        // the owner as a staff member with no features.
+        const owned = db.prepare(
+          "SELECT id, name FROM companies WHERE user_id=? LIMIT 1"
+        ).get(uid) as any;
+
+        if (owned) {
+          return {
+            data: {
+              tenant_id: uid,
+              is_owner: true,
+              is_super_admin: false,
+              full_name: null,
+              role_key: "owner",
+              role_name: "Owner",
+              permissions: [],
+              company_id: owned.id,
+              company_name: owned.name ?? null,
+            },
+            error: null,
+          };
+        }
+
+        const member = db.prepare(
+          "SELECT company_id, role FROM company_members WHERE user_id=? ORDER BY rowid LIMIT 1"
+        ).get(uid) as any;
+
+        if (member) {
+          const role = String(member.role || "staff");
+          return {
+            data: {
+              tenant_id: member.company_id,
+              is_owner: false,
+              is_super_admin: false,
+              role_key: role,
+              role_name: role.replace(/_/g, " "),
+              permissions: [],
+            },
+            error: null,
+          };
+        }
+
+        return {
+          data: {
+            tenant_id: uid,
+            is_owner: true,
+            is_super_admin: false,
+            role_key: "owner",
+            role_name: "Owner",
+            permissions: [],
+          },
+          error: null,
+        };
       }
       case "can_act_on_request": {
         return { data: true, error: null };
