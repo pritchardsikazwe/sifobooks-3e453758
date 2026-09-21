@@ -34,3 +34,7 @@ ZRA's current VSDC specification describes VSDC as the bridge between independen
 7. Add subscription/licensing enforcement.
 8. Enable sync after reconciliation tests.
 9. Keep ZRA in TEST/UAT until formal approval.
+
+
+## Verification
+Cloud control-plane functions are server-only TanStack Start RPCs; browser code never receives the PostgreSQL connection string.
