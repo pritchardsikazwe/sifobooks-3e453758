@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
@@ -20,8 +21,10 @@ function resolveAuthToken(explicitToken?: string | null): string | null {
   if (explicitToken) return explicitToken;
   try {
     const request = getRequest();
-    const header = request?.headers.get("authorization");
-    if (header?.toLowerCase().startsWith("bearer ")) return header.slice(7).trim() || null;
+    const authorization = request?.headers.get("authorization");
+    if (authorization?.toLowerCase().startsWith("bearer ")) return authorization.slice(7).trim() || null;
+    const localHeader = request?.headers.get("x-sifobooks-auth");
+    if (localHeader) return localHeader.trim() || null;
   } catch {
     // Server functions can also execute directly during SSR, where there may
     // be no request context. In that case the explicit token is the only source.
@@ -31,6 +34,7 @@ function resolveAuthToken(explicitToken?: string | null): string | null {
 
 // ── Query execution ──
 export const executeQueryFn = createServerFn({ method: "POST" })
+  .middleware([attachSupabaseAuth])
   .inputValidator((raw: unknown) => raw as QuerySpec)
   .handler(async ({ data }) => {
     const token = resolveAuthToken(data.authToken);
@@ -114,6 +118,7 @@ export const removeFileFn = createServerFn({ method: "POST" })
 
 // ── RPC ──
 export const rpcFn = createServerFn({ method: "POST" })
+  .middleware([attachSupabaseAuth])
   .inputValidator((raw: unknown) => raw as { name: string; args: Record<string, any>; authToken?: string | null })
   .handler(async ({ data }) => {
     const token = resolveAuthToken(data.authToken);
@@ -124,6 +129,7 @@ export const rpcFn = createServerFn({ method: "POST" })
 
 // ── Token verification (for auth middleware) ──
 export const verifyTokenFn = createServerFn({ method: "POST" })
+  .middleware([attachSupabaseAuth])
   .inputValidator((raw: unknown) => raw as { token: string })
   .handler(async ({ data }) => {
     const token = resolveAuthToken(data.token);
