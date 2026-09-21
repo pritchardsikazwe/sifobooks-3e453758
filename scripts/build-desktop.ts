@@ -35,6 +35,8 @@ if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true })
 copyDir("dist/client", CLIENT_DIR);
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
 copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
+mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
+if (existsSync("public/favicon.ico")) copyFileSync("public/favicon.ico", join(OUT_DIR, "SifoBooks.ico"));
 
 writeFileSync(join(OUT_DIR, ".env.example"), [
   "# Optional desktop configuration",
@@ -42,6 +44,17 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "PORT=3000",
   "",
 ].join("\n"));
+
+writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
+  "@echo off",
+  "setlocal",
+  "set "APPDIR=%~dp0"",
+  "powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\SifoBooks.lnk'); $s.TargetPath = (Join-Path $env:APPDIR 'start-sifobooks.bat'); $s.WorkingDirectory = $env:APPDIR; $s.IconLocation = (Join-Path $env:APPDIR 'SifoBooks.ico') + ',0'; $s.Description = 'SifoBooks Accounting ERP'; $s.Save()"",
+  "echo.",
+  "echo SifoBooks desktop shortcut created.",
+  "pause",
+  "",
+].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "@echo off",
@@ -60,7 +73,9 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "5. Your SQLite database is created at data\\sifobooks.db.",
   "6. Do not delete the data folder - it contains company data.",
   "7. To move SifoBooks to another PC, copy the entire folder including data.",
-  "8. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required.",
+  "8. Run Create-SifoBooks-Shortcut.bat once to create a desktop shortcut with the SifoBooks icon.",
+  "9. Backups are stored automatically in the backups\\ folder.",
+  "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required.",
   "",
   "IMPORTANT: Keep the data folder when moving an existing installation.",
   "",
