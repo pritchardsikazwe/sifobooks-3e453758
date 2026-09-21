@@ -160,9 +160,6 @@ export async function getUser(token: string) {
     const profiles = await db`SELECT full_name FROM profiles WHERE id=${user.id} LIMIT 1`;
     return {data:{user:{id:user.id,email:user.email,user_metadata:profiles[0]?{full_name:profiles[0].full_name}: {}}},error:null};
   }
-  if (!token) return { data: { user: null }, error: null };
-  const claims = await verifyJWT(token);
-  if (!claims) return { data: { user: null }, error: null };
   const db = getDb();
   const user = db.prepare("SELECT id, email, created_at FROM auth_users WHERE id = ?").get(claims.sub) as any;
   if (!user) return { data: { user: null }, error: null };
@@ -185,9 +182,6 @@ export async function getSession(token: string) {
     if (!user) return {data:{session:null},error:null};
     return {data:{session:{access_token:token,user:{id:user.id,email:user.email}}},error:null};
   }
-  if (!token) return { data: { session: null }, error: null };
-  const claims = await verifyJWT(token);
-  if (!claims) return { data: { session: null }, error: null };
   const db = getDb();
   const user = db.prepare("SELECT id, email FROM auth_users WHERE id = ?").get(claims.sub) as any;
   if (!user) return { data: { session: null }, error: null };
@@ -213,8 +207,6 @@ export async function updateUser(token: string, attrs: Record<string, any>) {
     const rows = await db`SELECT id,email FROM auth_users WHERE id=${claims.sub} LIMIT 1`;
     return {data:{user:rows[0]},error:null};
   }
-  const claims = await verifyJWT(token);
-  if (!claims) return { data: null, error: { message: "Invalid token" } };
   const db = getDb();
   if (attrs.password) {
     const hash = await Bun.password.hash(attrs.password);
