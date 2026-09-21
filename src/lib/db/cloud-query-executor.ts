@@ -179,6 +179,7 @@ async function executeCloudQueryInTransaction(db: any, spec: QuerySpec, authenti
           if (!tableColumns.has(key)) throw new Error(`COLUMN_NOT_FOUND: ${table}.${key}`);
         }
         if (tableColumns.has("user_id")) record.user_id = authenticatedUserId;
+        if (tableColumns.has("tenant_id")) record.tenant_id = tenantId;
         const cols = Object.keys(record);
         const params: any[] = [];
         const values = cols.map(c => pushParam(params, serializeValue(record[c]))).join(",");
@@ -210,6 +211,7 @@ async function executeCloudQueryInTransaction(db: any, spec: QuerySpec, authenti
         if (!tableColumns.has(key)) throw new Error(`COLUMN_NOT_FOUND: ${table}.${key}`);
       }
       if (tableColumns.has("user_id")) data.user_id = authenticatedUserId;
+      if (tableColumns.has("tenant_id")) data.tenant_id = tenantId;
       const params: any[] = [];
       const setSql = Object.entries(data).map(([key,value]) => `"${key}"=${pushParam(params, serializeValue(value))}`).join(",");
       const where = buildWhere(filters, params);
