@@ -8,6 +8,7 @@
  * Compile with:  bun run build:desktop
  */
 
+import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
 
@@ -49,7 +50,6 @@ function createStartupBackup() {
   if (!existsSync(dbPath)) return;
   try {
     // SQLite WAL checkpoint makes the copied file self-contained and recoverable.
-    const { Database } = require("bun:sqlite");
     const db = new Database(dbPath);
     try { db.exec("PRAGMA wal_checkpoint(TRUNCATE);"); } finally { db.close(); }
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
