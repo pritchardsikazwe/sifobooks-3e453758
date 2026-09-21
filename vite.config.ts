@@ -10,7 +10,7 @@ export default defineConfig({
   // with no node_modules resolution — every dependency must be bundled in.
   // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
   // runtime where the DB layer is actually used.)
-  ssr: { noExternal: true },
+  ssr: { noExternal: true, external: ["bun"] },
   // Multi-terminal: run `bun run dev:lan` to bind 0.0.0.0 so other
   // computers on the same network can connect to http://<this-laptop-ip>:3000
   plugins: [
