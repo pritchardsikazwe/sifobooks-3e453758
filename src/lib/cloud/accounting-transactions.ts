@@ -369,29 +369,3 @@ export async function cloudReversePosSale(uid: string, args: any) {
   });
 }
 
-export async function cloudRecordBillPayment(uid: string, args: any) {
-  const h = args?._payment || {};
-  const billId = String(h.bill_id || ""), amount = money(h.amount);
-  if (!billId || amount <= 0) throw new Error("INVALID_BILL_PAYMENT");
-  return getCloudDb().begin(async (tx: Tx) => {
-    await setUser(tx, uid);
-    const bill = await one(tx, "SELECT * FROM bills WHERE id=$1 AND user_id=$2 FOR UPDATE", [billId, uid]);
-    if (!bill) throw new Error("BILL_NOT_FOUND");
-    const balance = money(bill.balance_due);
-    if (amount > balance + 0.01) throw new Error("PAYMENT_EXCEEDS_BILL_BALANCE");
-    const b = await batch(tx, uid, "BILL_PAYMENT", "bill_payment", billId, String(h.client_ref || h.payment_number || id()));
-    if (b.duplicate) return { payment_id: b.sourceId, duplicate: true, transaction_id: b.id };
-    const paymentId = id();
-    await tx.unsafe("INSERT INTO bill_payments(id,user_id,tenant_id,bill_id,supplier_id,payment_number,payment_date,amount,payment_method,reference,notes,currency,exchange_rate,bank_account_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,1,$12)", [paymentId, uid, billId, bill.supplier_id || null, h.payment_number || "BP-" + Date.now(), dateOnly(h.payment_date), amount, h.payment_method || "bank", h.reference || null, h.notes || null, h.currency || bill.currency || "ZMW", h.bank_account_id || null]);
-    const newPaid = money(Number(bill.amount_paid || 0) + amount), newBalance = money(balance - amount);
-    await tx.unsafe("UPDATE bills SET amount_paid=$1,balance_due=$2,status=$3,updated_at=now() WHERE id=$4", [newPaid, newBalance, newBalance <= 0.01 ? "paid" : "part_paid", billId]);
-    const a = await accounts(tx, uid);
-    const je = await journal(tx, uid, "BILLPAY:" + paymentId, "Payment for supplier bill " + bill.bill_number, dateOnly(h.payment_date), [
-      { accountId: a.payable, debit: amount, credit: 0, description: "Accounts payable settlement" },
-      { accountId: a.cash, debit: 0, credit: amount, description: "Cash / bank payment" },
-    ]);
-    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [paymentId, amount, amount, JSON.stringify({ billId, amount, journalEntryId: je }), b.id]);
-    await event(tx, uid, b.id, "POSTED", "Supplier payment posted atomically", { paymentId, billId, amount, journalEntryId: je });
-    return { payment_id: paymentId, journal_entry_id: je, transaction_id: b.id, duplicate: false, new_balance: newBalance };
-  });
-}
