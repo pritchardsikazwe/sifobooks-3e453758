@@ -129,13 +129,15 @@ function PayrollReview() {
   };
 
   return (
-    <div className="max-w-6xl space-y-5 px-6 py-6">
+    <div className="min-h-full bg-slate-50/60">
+      <div className="mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-end gap-3">
         <div className="mr-auto">
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
             <ClipboardCheck className="h-6 w-6 text-emerald-600" /> Review &amp; approve
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-2xl text-sm text-slate-500">
             Every payslip on the run, compared with last period, with the problems that would break a payment or a statutory file.
             Figures are read-only here — corrections are made on the run itself.
           </p>
@@ -153,6 +155,12 @@ function PayrollReview() {
             </SelectContent>
           </Select>
         </div>
+      <div className="mt-5 grid gap-2 sm:grid-cols-4">
+        <WorkflowStep title="Prepare" icon="🧾" done={["calculated","reviewed","approved","paid"].includes(run?.status ?? "")} />
+        <WorkflowStep title="Audit" icon="🔎" done={run?.status === "reviewed" || ["approved","paid"].includes(run?.status ?? "")} />
+        <WorkflowStep title="Approve" icon="✓" done={["approved","paid"].includes(run?.status ?? "")} />
+        <WorkflowStep title="Pay & Post" icon="₵" done={run?.status === "paid"} />
+      </div>
       </div>
 
       {!run ? (
@@ -170,7 +178,7 @@ function PayrollReview() {
             <Stat label="Net pay" value={fmtMoney(totals.net)} prev={fmtMoney(prevTotals.net)} />
           </div>
 
-          <Card className="rounded-2xl">
+          <Card className="rounded-3xl border-0 shadow-sm">
             <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-2">
               <div>
                 <CardTitle className="text-base">Exceptions</CardTitle>
@@ -210,7 +218,30 @@ function PayrollReview() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl">
+          <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+            <div className="rounded-3xl border bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Payroll day</div>
+                  <div className="text-xs text-slate-500">Use the same smooth sequence every pay cycle.</div>
+                </div>
+                <Badge variant="outline" className="rounded-full">{run.status}</Badge>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-4">
+                <DayTile title="Prepare" text="People & inputs" active={["draft","calculated"].includes(run.status)} />
+                <DayTile title="Audit" text="Exceptions & movement" active={reviewable} />
+                <DayTile title="Approve" text="Independent sign-off" active={run.status === "reviewed"} />
+                <DayTile title="Pay" text="Bank + ledger" active={run.status === "approved"} />
+              </div>
+            </div>
+            <div className="rounded-3xl border bg-emerald-50/70 p-4 shadow-sm">
+              <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Control</div>
+              <div className="mt-2 text-sm font-semibold text-slate-900">{stops.length ? "Action required" : "Ready for next step"}</div>
+              <div className="mt-1 text-xs leading-5 text-slate-600">{stops.length ? "Clear blocking exceptions before approval." : "Audit is clean based on the configured payroll checks."}</div>
+            </div>
+          </div>
+
+          <Card className="rounded-3xl border-0 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Employee by employee</CardTitle>
               <CardDescription>
@@ -281,4 +312,19 @@ function Stat({ label, value, prev }: { label: string; value: string; prev: stri
       <div className="text-xs text-muted-foreground">was {prev}</div>
     </Card>
   );
+}
+
+
+function WorkflowStep({ title, icon, done }: { title: string; icon: string; done: boolean }) {
+  return <div className={`flex items-center gap-3 rounded-2xl border p-3 ${done ? "border-emerald-200 bg-emerald-50/70" : "bg-slate-50/70"}`}>
+    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-sm shadow-sm">{done ? "✓" : icon}</div>
+    <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Payroll</div><div className="text-sm font-semibold text-slate-800">{title}</div></div>
+  </div>;
+}
+
+function DayTile({ title, text, active }: { title: string; text: string; active: boolean }) {
+  return <div className={`rounded-2xl border p-3 transition-all ${active ? "border-emerald-200 bg-emerald-50/80 shadow-sm" : "bg-slate-50/60"}`}>
+    <div className="text-sm font-semibold text-slate-800">{title}</div>
+    <div className="mt-1 text-[11px] text-slate-500">{text}</div>
+  </div>;
 }
