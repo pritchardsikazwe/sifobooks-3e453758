@@ -171,6 +171,7 @@ function PayrollReview() {
         <WorkflowStep title="Pay & Post" icon="₵" done={run?.status === "paid"} />
       </div>
       </div>
+      </div>
 
       {!run ? (
         <Card><CardContent className="p-10 text-center text-sm text-muted-foreground">
