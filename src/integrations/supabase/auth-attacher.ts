@@ -10,7 +10,7 @@ export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
       token = localStorage.getItem(TOKEN_KEY)
     }
     return next({
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: token\n        ? {\n            Authorization: `Bearer ${token}`,\n            "X-SifoBooks-Auth": token,\n          }\n        : {},
     })
   },
 )
