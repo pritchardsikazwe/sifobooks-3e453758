@@ -45,7 +45,7 @@ function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Form>({
-    business_name: "", country: "Nigeria", currency: "NGN", tax_id: "", phone: "", team_size: "", industry: "",
+    business_name: "", country: "Zambia", currency: "ZMW", tax_id: "", phone: "", team_size: "Just me", industry: "general",
   });
   const [mode, setMode] = useState<WorkspaceMode>("accounting");
 
@@ -61,21 +61,19 @@ function OnboardingPage() {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(p => ({ ...p, [k]: v }));
 
   const steps = [
-    { title: "Your business", desc: "Tell us who you're invoicing under" },
-    { title: "Billing basics", desc: "Currency and tax identification" },
-    { title: "About your team", desc: "So we can tailor SifoBooks for you" },
+    { title: "Your business", desc: "Enter the details for your company" },
+    { title: "Accounting setup", desc: "Set your currency and tax details" },
   ];
 
   const canNext =
     (step === 0 && form.business_name.trim() && form.country) ||
-    (step === 1 && form.currency) ||
-    step === 2;
+    (step === 1 && form.currency);
 
   const payrollOnly = isPayrollOnly(mode);
 
   const submit = async () => {
     setError(null);
-    const parsed = schema.safeParse(payrollOnly ? { ...form, industry: form.industry || "payroll" } : form);
+    const parsed = schema.safeParse({ ...form, industry: "general", team_size: form.team_size || "Just me" });
     if (!parsed.success) return setError(parsed.error.issues[0].message);
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
@@ -93,7 +91,7 @@ function OnboardingPage() {
     if (error) { setLoading(false); return setError(error.message); }
 
     // Apply the chosen industry solution to the company workspace (non-destructive).
-    const sol = getSolution(parsed.data.industry);
+    const sol = getSolution("general");
     let landing = "/dashboard";
     try {
       const { data: c } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
@@ -151,68 +149,19 @@ function OnboardingPage() {
                 <div className="space-y-2"><Label>Tax ID / TIN (optional)</Label><Input value={form.tax_id} onChange={e => set("tax_id", e.target.value)} placeholder="e.g. 12345678-0001" /><p className="text-xs text-muted-foreground">Used on invoices for fiscal compliance.</p></div>
               </>
             )}
-            {step === 2 && (
+            {step === 1 && (
               <>
                 <div className="space-y-2">
-                  <Label>What will you primarily use SifoBooks for?</Label>
-                  <p className="text-xs text-muted-foreground">This sets your home screen. Everything still posts to one accounting engine, and you can switch later.</p>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {WORKSPACE_MODES.map(m => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setMode(m.id)}
-                        className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${mode === m.id ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
-                      >
-                        <div className="flex items-center gap-2"><span>{m.emoji}</span><span className="text-sm font-medium truncate">{m.label}</span></div>
-                        <div className="mt-1 text-[11px] text-muted-foreground leading-snug">{m.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Team size</Label>
-                  <Select value={form.team_size} onValueChange={v => set("team_size", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>{TEAM_SIZES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  <Label>Default currency</Label>
+                  <Select value={form.currency} onValueChange={v => set("currency", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                {payrollOnly ? (
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-semibold text-foreground">SifoPayroll only.</span> We will set up employees, pay
-                    components, periods and statutory returns. Accounting, POS and inventory stay switched off — you can
-                    turn them on later from Modules without losing any payroll history.
-                  </div>
-                ) : (
-                <div className="space-y-2">
-                  <Label>What type of business do you operate?</Label>
-                  <p className="text-xs text-muted-foreground">SifoBooks configures your workspace from this — you never have to install modules one by one.</p>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {INDUSTRY_SOLUTIONS.map(s => {
-                      const active = form.industry === s.id;
-                      const soon = s.status === "coming_soon";
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => set("industry", s.id)}
-                          className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${active ? "border-primary ring-1 ring-primary bg-primary/5" : "hover:bg-muted/50"}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{s.emoji}</span>
-                            <span className="text-sm font-medium truncate">{s.label}</span>
-                          </div>
-                          <div className="mt-1">
-                            {soon
-                              ? <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"><Clock className="h-3 w-3" /> Coming soon</span>
-                              : <span className="text-[10px] uppercase tracking-wide text-emerald-600">Available</span>}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div className="space-y-2"><Label>Tax ID / TIN (optional)</Label><Input value={form.tax_id} onChange={e => set("tax_id", e.target.value)} placeholder="e.g. 12345678" /><p className="text-xs text-muted-foreground">You can complete ZRA Smart Invoice and VAT configuration after opening SifoBooks.</p></div>
+                <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                  SifoBooks will open your company automatically after setup. You can configure POS, inventory, payroll, industry features and compliance later from Settings — no module or company-type selection is required now.
                 </div>
-                )}
               </>
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -223,7 +172,7 @@ function OnboardingPage() {
               {step < steps.length - 1 ? (
                 <Button onClick={() => setStep(s => s + 1)} disabled={!canNext}>Next <ArrowRight className="h-4 w-4" /></Button>
               ) : (
-                <Button onClick={submit} disabled={loading || !form.team_size || (!payrollOnly && !form.industry)}>
+                <Button onClick={submit} disabled={loading || !form.business_name.trim() || !form.currency}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Finish setup
                 </Button>
               )}
