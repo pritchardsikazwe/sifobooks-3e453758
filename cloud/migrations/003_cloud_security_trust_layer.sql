@@ -153,3 +153,87 @@ COMMENT ON VIEW cloud_security_rls_inventory IS
   'SifoBooks security inventory: every tenant-scoped table must have RLS, FORCE RLS, tenant_id and the SifoBooks policy.';
 COMMENT ON VIEW cloud_security_runtime_role IS
   'Production verification: the ordinary request-path PostgreSQL role must not be superuser or BYPASSRLS.';
+
+
+-- Protect the cloud control plane as well. These policies use the
+-- transaction-local app.user_id established by the application.
+CREATE OR REPLACE FUNCTION cloud_is_member(p_tenant_id UUID, p_user_id TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM cloud_members
+    WHERE tenant_id=p_tenant_id AND user_id=p_user_id AND status='active'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION cloud_is_admin(p_tenant_id UUID, p_user_id TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM cloud_members
+    WHERE tenant_id=p_tenant_id
+      AND user_id=p_user_id
+      AND status='active'
+      AND role IN ('owner','admin')
+  );
+$$;
+
+ALTER FUNCTION cloud_is_member(UUID,TEXT) SET search_path=public;
+ALTER FUNCTION cloud_is_admin(UUID,TEXT) SET search_path=public;
+
+ALTER TABLE cloud_tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cloud_tenants FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cloud_tenants_access ON cloud_tenants;
+CREATE POLICY cloud_tenants_access ON cloud_tenants
+  FOR ALL
+  USING (cloud_is_member(id, NULLIF(current_setting('app.user_id', true), '')))
+  WITH CHECK (
+    owner_user_id = NULLIF(current_setting('app.user_id', true), '')
+    OR cloud_is_admin(id, NULLIF(current_setting('app.user_id', true), ''))
+  );
+
+ALTER TABLE cloud_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cloud_members FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cloud_members_access ON cloud_members;
+CREATE POLICY cloud_members_access ON cloud_members
+  FOR ALL
+  USING (
+    user_id = NULLIF(current_setting('app.user_id', true), '')
+    OR cloud_is_admin(tenant_id, NULLIF(current_setting('app.user_id', true), ''))
+  )
+  WITH CHECK (
+    user_id = NULLIF(current_setting('app.user_id', true), '')
+    OR cloud_is_admin(tenant_id, NULLIF(current_setting('app.user_id', true), ''))
+  );
+
+ALTER TABLE cloud_branches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cloud_branches FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cloud_branches_access ON cloud_branches;
+CREATE POLICY cloud_branches_access ON cloud_branches
+  FOR ALL
+  USING (cloud_is_member(tenant_id, NULLIF(current_setting('app.user_id', true), '')))
+  WITH CHECK (cloud_is_admin(tenant_id, NULLIF(current_setting('app.user_id', true), '')));
+
+ALTER TABLE cloud_connectors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cloud_connectors FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cloud_connectors_access ON cloud_connectors;
+CREATE POLICY cloud_connectors_access ON cloud_connectors
+  FOR ALL
+  USING (cloud_is_member(tenant_id, NULLIF(current_setting('app.user_id', true), '')))
+  WITH CHECK (cloud_is_admin(tenant_id, NULLIF(current_setting('app.user_id', true), '')));
+
+ALTER TABLE cloud_sync_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cloud_sync_events FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cloud_sync_events_access ON cloud_sync_events;
+CREATE POLICY cloud_sync_events_access ON cloud_sync_events
+  FOR ALL
+  USING (cloud_is_member(tenant_id, NULLIF(current_setting('app.user_id', true), '')))
+  WITH CHECK (cloud_is_member(tenant_id, NULLIF(current_setting('app.user_id', true), '')));
