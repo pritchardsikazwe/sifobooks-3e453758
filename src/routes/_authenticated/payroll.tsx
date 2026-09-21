@@ -166,6 +166,7 @@ function PayrollPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </div>
   );
 }
 
