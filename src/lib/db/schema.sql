@@ -400,6 +400,7 @@ CREATE TABLE IF NOT EXISTS "companies" (
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "industry" TEXT,
   "payslip_header" TEXT,
+  "payslip_footer" TEXT,
   "workspace_mode" TEXT NOT NULL DEFAULT 'accounting',
   "status" TEXT NOT NULL DEFAULT 'active'
 );
@@ -409,6 +410,7 @@ CREATE TABLE IF NOT EXISTS "company_members" (
   "company_id" TEXT NOT NULL,
   "user_id" TEXT NOT NULL,
   "invited_email" TEXT,
+  "role" TEXT NOT NULL DEFAULT 'staff',
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
