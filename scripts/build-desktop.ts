@@ -42,6 +42,13 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "# Optional desktop configuration",
   "DATABASE_PATH=data/sifobooks.db",
   "PORT=3000",
+  "SIFOBOOKS_MODE=offline",
+  "SIFOBOOKS_DATABASE=sqlite",
+  "SIFOBOOKS_HOST=127.0.0.1",
+  "SIFOBOOKS_OFFLINE_ENABLED=true",
+  "SIFOBOOKS_SYNC_ENABLED=false",
+  "SIFOBOOKS_PWA_ENABLED=true",
+  "SIFOBOOKS_PRINTING=system",
   "",
 ].join("\n"));
 
@@ -74,6 +81,18 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "echo.",
   "echo SifoBooks desktop shortcut created.",
   "pause",
+  "",
+].join("\r\n"));
+
+writeFileSync(join(OUT_DIR, "start-sifobooks-network.bat"), [
+  "@echo off",
+  "cd /d \"%~dp0\"",
+  "set SIFOBOOKS_MODE=network",
+  "set SIFOBOOKS_DATABASE=postgres",
+  "set SIFOBOOKS_HOST=0.0.0.0",
+  "set SIFOBOOKS_OFFLINE_ENABLED=false",
+  "set SIFOBOOKS_SYNC_ENABLED=true",
+  "start \"\" sifobooks.exe",
   "",
 ].join("\r\n"));
 
