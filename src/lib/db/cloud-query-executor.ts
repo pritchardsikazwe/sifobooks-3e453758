@@ -193,6 +193,13 @@ export async function executeCloudQuery(spec: QuerySpec, authenticatedUserId: st
         sql += " RETURNING *";
         const rows = await db.unsafe(sql, params);
         results.push(rows[0]);
+        if (table === "companies" && rows[0]) {
+          await db.unsafe("INSERT INTO cloud_tenants(owner_user_id,company_id,name,country,base_currency,trial_ends_at) VALUES($1,$2,$3,$4,$5,now()+interval '14 days') ON CONFLICT(company_id) DO UPDATE SET name=EXCLUDED.name,country=EXCLUDED.country,base_currency=EXCLUDED.base_currency,updated_at=now()", [authenticatedUserId, rows[0].id, rows[0].name || "SifoBooks Company", rows[0].country || "Zambia", rows[0].base_currency || "ZMW"]);
+          await db.unsafe("INSERT INTO cloud_members(tenant_id,user_id,role) SELECT id,$1,'owner' FROM cloud_tenants WHERE company_id=$2 ON CONFLICT(tenant_id,user_id) DO UPDATE SET role='owner'", [authenticatedUserId, rows[0].id]);
+        }
+        if (table === "company_members" && rows[0]) {
+          await db.unsafe("INSERT INTO cloud_members(tenant_id,user_id,role) SELECT id,$1,$2 FROM cloud_tenants WHERE company_id=$3 ON CONFLICT(tenant_id,user_id) DO UPDATE SET role=EXCLUDED.role,status='active'", [rows[0].user_id, rows[0].role || "staff", rows[0].company_id]);
+        }
       }
       return { data: Array.isArray(spec.insertData) ? results : results[0], error: null };
     }
