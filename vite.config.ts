@@ -6,6 +6,11 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // Published hosting loads dist/server/server.js as a self-contained module
+  // with no node_modules resolution — every dependency must be bundled in.
+  // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
+  // runtime where the DB layer is actually used.)
+  ssr: { noExternal: true },
   // Multi-terminal: run `bun run dev:lan` to bind 0.0.0.0 so other
   // computers on the same network can connect to http://<this-laptop-ip>:3000
   plugins: [
