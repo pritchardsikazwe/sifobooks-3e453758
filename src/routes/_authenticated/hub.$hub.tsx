@@ -68,6 +68,25 @@ function HubWorkspace() {
         emptyText={`Nothing outstanding in ${hub.label.toLowerCase()} right now.`}
       />
 
+      {hubKey === "home" && (
+        <Link to="/business-control-centre" className="group block">
+          <Card className="border-primary/20 bg-primary/[0.03] p-4 transition-colors group-hover:border-primary/40">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                <Icons.Gauge className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">Business Control Centre</div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Accounting, banking, inventory, payroll, compliance, approvals and management controls in one place.
+                </p>
+              </div>
+              <Icons.ArrowRight className="h-4 w-4 text-primary" />
+            </div>
+          </Card>
+        </Link>
+      )}
+
       {groups.length === 0 ? (
         <Card className="p-6 text-sm text-muted-foreground">
           Nothing here matches your search, or these features are not enabled for your company.{" "}
