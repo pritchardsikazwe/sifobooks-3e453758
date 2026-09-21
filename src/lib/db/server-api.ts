@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { executeQuery, type QuerySpec } from "./query-executor";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
@@ -11,11 +12,29 @@ import { createPurchaseOrder, approvePurchaseOrder, createSupplierBillFromReceip
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
 
+// Resolve authentication from the explicit server-function payload first, then
+// from the Authorization header attached by the global client middleware.
+// This keeps local SQLite auth reliable even when a caller does not explicitly
+// include authToken in its payload.
+function resolveAuthToken(explicitToken?: string | null): string | null {
+  if (explicitToken) return explicitToken;
+  try {
+    const request = getRequest();
+    const header = request?.headers.get("authorization");
+    if (header?.toLowerCase().startsWith("bearer ")) return header.slice(7).trim() || null;
+  } catch {
+    // Server functions can also execute directly during SSR, where there may
+    // be no request context. In that case the explicit token is the only source.
+  }
+  return null;
+}
+
 // ── Query execution ──
 export const executeQueryFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as QuerySpec)
   .handler(async ({ data }) => {
-    const auth = data.authToken ? await verifyToken(data.authToken) : null;
+    const token = resolveAuthToken(data.authToken);
+    const auth = token ? await verifyToken(token) : null;
     if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
     return executeQuery(data, auth.userId);
   });
@@ -97,7 +116,8 @@ export const removeFileFn = createServerFn({ method: "POST" })
 export const rpcFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { name: string; args: Record<string, any>; authToken?: string | null })
   .handler(async ({ data }) => {
-    const auth = data.authToken ? await verifyToken(data.authToken) : null;
+    const token = resolveAuthToken(data.authToken);
+    const auth = token ? await verifyToken(token) : null;
     if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
     return executeRpc(data.name, { ...(data.args || {}), _uid: auth.userId });
   });
@@ -106,7 +126,8 @@ export const rpcFn = createServerFn({ method: "POST" })
 export const verifyTokenFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { token: string })
   .handler(async ({ data }) => {
-    const result = await verifyToken(data.token);
+    const token = resolveAuthToken(data.token);
+    const result = token ? await verifyToken(token) : null;
     return result;
   });
 
