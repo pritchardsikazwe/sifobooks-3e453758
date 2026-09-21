@@ -1,8 +1,9 @@
 import { getDb, generateUUID } from "./database";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
+import { isCloudDatabaseConfigured, getCloudDb } from "@/lib/cloud/postgres";
 
-const JWT_SECRET = process.env.JWT_SECRET || loadPersistentSecret();
+const JWT_SECRET = isCloudDatabaseConfigured() ? (process.env.JWT_SECRET || (() => { throw new Error("JWT_SECRET is required for SifoBooks Cloud."); })()) : (process.env.JWT_SECRET || loadPersistentSecret());
 const JWT_EXPIRY = 60 * 60 * 24 * 7; // 7 days
 
 function loadPersistentSecret(): string {
@@ -88,6 +89,17 @@ async function verifyJWT(token: string): Promise<Record<string, any> | null> {
 }
 
 export async function signUp(email: string, password: string, metadata?: Record<string, any>) {
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    const existing = await db`SELECT id FROM auth_users WHERE email = ${email} LIMIT 1`;
+    if (existing[0]) return { data: null, error: { message: "User already registered" } };
+    const id = generateUUID();
+    const hash = await Bun.password.hash(password);
+    await db`INSERT INTO auth_users (id,email,password_hash) VALUES (${id},${email},${hash})`;
+    await db`INSERT INTO profiles (id,email,full_name,onboarded,created_at,updated_at) VALUES (${id},${email},${metadata?.full_name || metadata?.name || email},false,now(),now())`;
+    const token = await signJWT({ sub:id, email, iat:Math.floor(Date.now()/1000), exp:Math.floor(Date.now()/1000)+JWT_EXPIRY });
+    return { data:{ user:{id,email,user_metadata:metadata||{}}, session:{access_token:token,user:{id,email}} }, error:null };
+  }
   const db = getDb();
   // Check if user exists
   const existing = db.prepare("SELECT id FROM auth_users WHERE email = ?").get(email);
@@ -110,6 +122,16 @@ export async function signUp(email: string, password: string, metadata?: Record<
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    const rows = await db`SELECT * FROM auth_users WHERE email=${email} LIMIT 1`;
+    const user = rows[0] as any;
+    if (!user) return { data:null, error:{message:"Invalid login credentials"} };
+    const valid = await Bun.password.verify(password,user.password_hash);
+    if (!valid) return { data:null, error:{message:"Invalid login credentials"} };
+    const token = await signJWT({sub:user.id,email:user.email,iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+JWT_EXPIRY});
+    return {data:{user:{id:user.id,email:user.email},session:{access_token:token,user:{id:user.id,email:user.email}}},error:null};
+  }
   const db = getDb();
   const user = db.prepare("SELECT * FROM auth_users WHERE email = ?").get(email) as any;
   if (!user) {
@@ -127,9 +149,17 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function getUser(token: string) {
-  if (!token) return { data: { user: null }, error: null };
+  if (!token) return { data:{user:null}, error:null };
   const claims = await verifyJWT(token);
-  if (!claims) return { data: { user: null }, error: null };
+  if (!claims) return { data:{user:null}, error:null };
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    const rows = await db`SELECT id,email,created_at FROM auth_users WHERE id=${claims.sub} LIMIT 1`;
+    const user = rows[0] as any;
+    if (!user) return {data:{user:null},error:null};
+    const profiles = await db`SELECT full_name FROM profiles WHERE id=${user.id} LIMIT 1`;
+    return {data:{user:{id:user.id,email:user.email,user_metadata:profiles[0]?{full_name:profiles[0].full_name}: {}}},error:null};
+  }
   const db = getDb();
   const user = db.prepare("SELECT id, email, created_at FROM auth_users WHERE id = ?").get(claims.sub) as any;
   if (!user) return { data: { user: null }, error: null };
@@ -142,9 +172,16 @@ export async function getUser(token: string) {
 }
 
 export async function getSession(token: string) {
-  if (!token) return { data: { session: null }, error: null };
+  if (!token) return { data:{session:null}, error:null };
   const claims = await verifyJWT(token);
-  if (!claims) return { data: { session: null }, error: null };
+  if (!claims) return { data:{session:null}, error:null };
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    const rows = await db`SELECT id,email FROM auth_users WHERE id=${claims.sub} LIMIT 1`;
+    const user = rows[0] as any;
+    if (!user) return {data:{session:null},error:null};
+    return {data:{session:{access_token:token,user:{id:user.id,email:user.email}}},error:null};
+  }
   const db = getDb();
   const user = db.prepare("SELECT id, email FROM auth_users WHERE id = ?").get(claims.sub) as any;
   if (!user) return { data: { session: null }, error: null };
@@ -162,7 +199,14 @@ export async function verifyToken(token: string): Promise<{ userId: string; emai
 
 export async function updateUser(token: string, attrs: Record<string, any>) {
   const claims = await verifyJWT(token);
-  if (!claims) return { data: null, error: { message: "Invalid token" } };
+  if (!claims) return {data:null,error:{message:"Invalid token"}};
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    if (attrs.password) { const hash=await Bun.password.hash(attrs.password); await db`UPDATE auth_users SET password_hash=${hash},updated_at=now() WHERE id=${claims.sub}`; }
+    if (attrs.email) await db`UPDATE auth_users SET email=${attrs.email},updated_at=now() WHERE id=${claims.sub}`;
+    const rows = await db`SELECT id,email FROM auth_users WHERE id=${claims.sub} LIMIT 1`;
+    return {data:{user:rows[0]},error:null};
+  }
   const db = getDb();
   if (attrs.password) {
     const hash = await Bun.password.hash(attrs.password);
