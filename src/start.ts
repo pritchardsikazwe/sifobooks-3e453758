@@ -19,6 +19,9 @@ const errorMiddleware = createMiddleware().server(async ({ next, request }) => {
 });
 
 export const startInstance = createStart(() => ({
+  // The Windows portable ERP is client-rendered. Server functions remain available,
+  // but route SSR/streaming must not block the local UI on SQLite/browser-only APIs.
+  defaultSsr: false,
   functionMiddleware: [attachSupabaseAuth],
   requestMiddleware: [errorMiddleware],
 }));
