@@ -220,7 +220,9 @@ export const HUBS: HubDef[] = [
         label: "People admin",
         items: [
           { title: "Leave", url: "/leave", module: "hr_payroll", iconName: "CalendarDays" },
-          { title: "Jobs & Recruitment", url: "/jobs", module: "hr_payroll", iconName: "BriefcaseBusiness" },\n          { title: "HR & Labour Compliance", url: "/hr-compliance", module: "hr_payroll", iconName: "ShieldCheck", hint: "Contracts, labour-law controls, policies and compliance evidence." },\n          { title: "HR 360", url: "/hr360", module: "hr_payroll", iconName: "UsersRound", hint: "Employee lifecycle from onboarding to separation." },
+          { title: "Jobs & Recruitment", url: "/jobs", module: "hr_payroll", iconName: "BriefcaseBusiness" },
+          { title: "HR & Labour Compliance", url: "/hr-compliance", module: "hr_payroll", iconName: "ShieldCheck", hint: "Contracts, labour-law controls, policies and compliance evidence." },
+          { title: "HR 360", url: "/hr360", module: "hr_payroll", iconName: "UsersRound", hint: "Employee lifecycle from onboarding to separation." },
         ],
       },
     ],
