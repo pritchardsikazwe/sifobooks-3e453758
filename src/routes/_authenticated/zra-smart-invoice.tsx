@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, Database, KeyRound, RefreshCw, Server, Wifi, WifiOff, Boxes, Save } from "lucide-react";
+import { CheckCircle2, CircleAlert, Database, KeyRound, RefreshCw, Server, Wifi, WifiOff, Boxes, Save, Laptop, Cloud, Network, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   zraGetConfigFn, zraGetStandardCodesFn, zraInitializeDeviceFn, zraSaveConfigFn,
   zraSyncCatalogFn, zraListInventoryFn, zraSearchItemClassesFn, zraListStandardCodesFn,
-  zraMapInventoryItemFn, zraRegisterInventoryItemFn,
+  zraMapInventoryItemFn, zraRegisterInventoryItemFn, zraListDevicesFn, zraSaveDeviceFn,
 } from "@/lib/zra/server";
 
 export const Route = createFileRoute("/_authenticated/zra-smart-invoice")({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/zra-smart-invoice")({
   component: ZraSmartInvoicePage,
 });
 
-type Config = { id?:string; mode?:string; taxpayer_name?:string; tpin?:string; branch_code?:string; device_serial?:string; vsdc_endpoint?:string; last_verified_at?:string; notes?:string };
+type Config = { id?:string; mode?:string; taxpayer_name?:string; tpin?:string; branch_code?:string; device_serial?:string; vsdc_endpoint?:string; last_verified_at?:string; notes?:string; device_id?:string; deployment_mode?:string; connector_endpoint?:string; device_name?:string; terminal_id?:string };
 type InventoryItem = any;
 type ZraClass = any;
 type ZraCode = any;
@@ -31,7 +31,7 @@ type ZraCode = any;
 function ZraSmartInvoicePage() {
   const [userId,setUserId]=useState("");
   const [config,setConfig]=useState<Config>({});
-  const [form,setForm]=useState<Config>({mode:"test",vsdc_endpoint:"http://127.0.0.1:8085"});
+  const [form,setForm]=useState<Config>({mode:"test",deployment_mode:"local",vsdc_endpoint:""});
   const [stats,setStats]=useState({pending:0,submitted:0,failed:0,total:0});
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
@@ -42,11 +42,22 @@ function ZraSmartInvoicePage() {
   const [classes,setClasses]=useState<ZraClass[]>([]);
   const [codes,setCodes]=useState<ZraCode[]>([]);
   const [mapForm,setMapForm]=useState<any>({});
+  const [devices,setDevices]=useState<any[]>([]);
+  const [selectedDeviceId,setSelectedDeviceId]=useState("");
+  const [deviceDraft,setDeviceDraft]=useState<any>({deviceName:"POS 1",deviceType:"desktop",terminalId:"",deploymentMode:"local",environment:"test",tpin:"",branchCode:"000",deviceSerial:"",vsdcEndpoint:"",connectorEndpoint:""});
 
-  const load=async(uid:string)=>{
-    const result=await zraGetConfigFn({data:{userId:uid}});
-    const saved=(result as any)?.data ?? {};
-    setConfig(saved); setForm(old=>({...old,...saved}));
+
+  const load=async(uid:string,preferredDeviceId?:string)=>{
+    const deviceResult:any=await zraListDevicesFn({data:{userId:uid}});
+    const deviceRows=deviceResult?.data ?? [];
+    setDevices(deviceRows);
+    const nextDeviceId=preferredDeviceId || selectedDeviceId || deviceRows[0]?.id || "";
+    if(nextDeviceId){
+      setSelectedDeviceId(nextDeviceId);
+      const result=await zraGetConfigFn({data:{userId:uid,deviceId:nextDeviceId}});
+      const saved=(result as any)?.data ?? {};
+      setConfig(saved); setForm(old=>({...old,...saved,device_id:nextDeviceId}));
+    }
     const {data:queue}=await supabase.from("zra_invoice_queue").select("status").eq("user_id",uid);
     const rows=queue??[];
     setStats({
@@ -74,8 +85,13 @@ function ZraSmartInvoicePage() {
     if(!userId)return;
     setBusy(true);
     try{
-      await zraSaveConfigFn({data:{userId,mode:form.mode,taxpayerName:form.taxpayer_name,tpin:form.tpin,branchCode:form.branch_code,deviceSerial:form.device_serial,vsdcEndpoint:form.vsdc_endpoint,notes:form.notes}});
-      await load(userId); toast.success("ZRA Smart Invoice configuration saved");
+      await zraSaveConfigFn({data:{
+        userId,deviceId:selectedDeviceId || null,mode:form.mode,taxpayerName:form.taxpayer_name,tpin:form.tpin,
+        branchCode:form.branch_code,deviceSerial:form.device_serial,vsdcEndpoint:form.vsdc_endpoint,notes:form.notes,
+        deviceName:form.device_name || deviceDraft.deviceName || "SifoBooks Device",deviceType:"desktop",
+        terminalId:form.terminal_id || null,deploymentMode:form.deployment_mode || "local",connectorEndpoint:form.connector_endpoint || null
+      }});
+      await load(userId, selectedDeviceId || undefined); toast.success("ZRA Smart Invoice configuration saved");
     }catch(e:any){toast.error(e?.message||"Could not save ZRA configuration");}
     finally{setBusy(false);}
   };
@@ -84,7 +100,7 @@ function ZraSmartInvoicePage() {
     if(!userId||!form.tpin||!form.branch_code||!form.device_serial){toast.error("Enter TPIN, Branch ID and Device Serial first.");return;}
     setBusy(true);setMessage("Initializing the VSDC device...");
     try{
-      const result:any=await zraInitializeDeviceFn({data:{userId,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
+      const result:any=await zraInitializeDeviceFn({data:{userId,deviceId:selectedDeviceId || null,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
       if(result?.resultCd==="000"){setMessage("VSDC initialized successfully.");toast.success("ZRA VSDC initialized");await load(userId);}
       else{setMessage(result?.resultMsg||"VSDC returned an unsuccessful result.");toast.error(result?.resultMsg||"VSDC initialization failed");}
     }catch(e:any){setMessage(e?.message||"Could not reach the VSDC.");toast.error(e?.message||"Could not reach the VSDC");}
@@ -182,10 +198,29 @@ function ZraSmartInvoicePage() {
     </div>
 
     <Card className="rounded-xl p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-2"><Laptop className="h-5 w-5"/><div><h2 className="font-semibold">ZRA Devices</h2><p className="text-xs text-muted-foreground">Each ZRA device keeps its own TPIN + Branch ID + Device Serial identity. Register every computer/device assigned by ZRA separately.</p></div></div>
+        <Button variant="outline" size="sm" onClick={()=>{setSelectedDeviceId("");const next={deviceName:`POS ${devices.length+1}`,deviceType:"desktop",terminalId:`POS-${String(devices.length+1).padStart(3,"0")}`,deploymentMode:"local",environment:"test",tpin:form.tpin||"",branchCode:form.branch_code||"000",deviceSerial:"",vsdcEndpoint:form.vsdc_endpoint||"",connectorEndpoint:""};setDeviceDraft(next);setForm(old=>({...old,device_id:"",device_name:next.deviceName,terminal_id:next.terminalId,deployment_mode:next.deploymentMode,mode:next.environment,tpin:next.tpin,branch_code:next.branchCode,device_serial:"",vsdc_endpoint:next.vsdcEndpoint,connector_endpoint:""}));}}><Plus className="mr-2 h-4 w-4"/>New device</Button>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {devices.map((d:any)=><button type="button" key={d.id} onClick={async()=>{setSelectedDeviceId(d.id);if(userId){const r:any=await zraGetConfigFn({data:{userId,deviceId:d.id}});setConfig(r?.data??{});setForm(old=>({...old,...(r?.data??{}),device_id:d.id}));}}} className={`rounded-xl border p-4 text-left transition hover:border-primary/50 ${selectedDeviceId===d.id?"border-primary bg-primary/5":"bg-background"}`}>
+          <div className="flex items-center justify-between gap-2"><span className="font-medium">{d.device_name}</span><Badge variant={d.initialization_status==="initialized"?"default":"secondary"}>{d.initialization_status==="initialized"?"Active":"Not initialized"}</Badge></div>
+          <div className="mt-2 text-xs text-muted-foreground">Branch {d.branch_code} · Serial {d.device_serial}</div>
+          <div className="mt-1 flex items-center gap-2 text-xs"><span className="capitalize">{d.deployment_mode}</span>{d.deployment_mode==="cloud"?<Cloud className="h-3.5 w-3.5"/>:d.deployment_mode==="hybrid"?<Network className="h-3.5 w-3.5"/>:<Laptop className="h-3.5 w-3.5"/>}</div>
+        </button>)}
+        {!devices.length&&<div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground md:col-span-2 lg:col-span-3">No ZRA devices registered yet. Create one for each computer/device registered by ZRA.</div>}
+      </div>
+    </Card>
+
+    <Card className="rounded-xl p-5">
       <div className="mb-5 flex items-center gap-2"><Server className="h-5 w-5"/><div><h2 className="font-semibold">VSDC Connection</h2><p className="text-xs text-muted-foreground">SifoBooks communicates with the local Java/Tomcat VSDC over REST/JSON.</p></div></div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div><Label>Environment</Label><Select value={form.mode||"test"} onValueChange={v=>update("mode",v)}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="test">TEST / UAT</SelectItem><SelectItem value="production">PRODUCTION</SelectItem></SelectContent></Select></div>
-        <div><Label>VSDC Endpoint</Label><Input className="mt-1" value={form.vsdc_endpoint||""} onChange={e=>update("vsdc_endpoint",e.target.value)} placeholder="http://127.0.0.1:8085"/></div>
+        <div><Label>ZRA Environment</Label><Select value={form.mode||"test"} onValueChange={v=>update("mode",v)}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="test">TEST / UAT</SelectItem><SelectItem value="production">PRODUCTION</SelectItem></SelectContent></Select></div>
+        <div><Label>Deployment</Label><Select value={form.deployment_mode||"local"} onValueChange={v=>update("deployment_mode",v)}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="local">Local VSDC</SelectItem><SelectItem value="network">Network VSDC</SelectItem><SelectItem value="cloud">Cloud + customer connector</SelectItem><SelectItem value="hybrid">Hybrid</SelectItem></SelectContent></Select></div>
+        <div><Label>Device Name</Label><Input className="mt-1" value={form.device_name||""} onChange={e=>update("device_name",e.target.value)} placeholder="POS 1 / Office PC"/></div>
+        <div><Label>Terminal ID</Label><Input className="mt-1" value={form.terminal_id||""} onChange={e=>update("terminal_id",e.target.value)} placeholder="POS-001"/></div>
+        <div><Label>VSDC Endpoint</Label><Input className="mt-1" value={form.vsdc_endpoint||""} onChange={e=>update("vsdc_endpoint",e.target.value)} placeholder="Local VSDC URL supplied by ZRA deployment"/></div>
+        <div><Label>Cloud Connector Endpoint</Label><Input className="mt-1" value={form.connector_endpoint||""} onChange={e=>update("connector_endpoint",e.target.value)} placeholder="Only for cloud/hybrid deployments"/></div>
         <div><Label>TPIN</Label><Input className="mt-1" value={form.tpin||""} onChange={e=>update("tpin",e.target.value)} placeholder="ZRA TPIN"/></div>
         <div><Label>Branch ID</Label><Input className="mt-1" value={form.branch_code||""} onChange={e=>update("branch_code",e.target.value)} placeholder="000"/></div>
         <div><Label>Device Serial</Label><Input className="mt-1" value={form.device_serial||""} onChange={e=>update("device_serial",e.target.value)} placeholder="VSDC device serial"/></div>
@@ -225,6 +260,6 @@ function ZraSmartInvoicePage() {
       </div>
     </Card>
 
-    <Card className="rounded-xl border-blue-200 bg-blue-50/50 p-4 text-sm"><strong>Production safety:</strong> Keep SifoBooks in TEST/UAT until the ZRA integration is approved. ZRA describes certified invoicing systems as ERP/accounting systems integrated through VSDC after certification. <a className="underline" href="https://www.zra.org.zm/smart-invoice-learn-more/" target="_blank" rel="noreferrer">ZRA Smart Invoice guidance</a></Card>
+    <Card className="rounded-xl border-blue-200 bg-blue-50/50 p-4 text-sm"><strong>Device and certification safety:</strong> ZRA's VSDC initialization requires the TPIN, Branch ID and Device Serial Number assigned through Device Management. Each device is initialized separately. Keep TEST/UAT separate from PRODUCTION and do not copy device credentials between computers. SifoBooks does not claim ZRA certification until the formal certification/UAT process is completed.  Keep SifoBooks in TEST/UAT until the ZRA integration is approved. ZRA describes certified invoicing systems as ERP/accounting systems integrated through VSDC after certification. <a className="underline" href="https://www.zra.org.zm/smart-invoice-learn-more/" target="_blank" rel="noreferrer">ZRA Smart Invoice guidance</a></Card>
   </div>;
 }
