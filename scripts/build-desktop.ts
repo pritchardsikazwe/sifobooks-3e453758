@@ -48,7 +48,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "@echo off",
   "setlocal",
-  "set "APPDIR=%~dp0"",
+  'set "APPDIR=%~dp0"',
   "powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\SifoBooks.lnk'); $s.TargetPath = (Join-Path $env:APPDIR 'start-sifobooks.bat'); $s.WorkingDirectory = $env:APPDIR; $s.IconLocation = (Join-Path $env:APPDIR 'SifoBooks.ico') + ',0'; $s.Description = 'SifoBooks Accounting ERP'; $s.Save()"",
   "echo.",
   "echo SifoBooks desktop shortcut created.",
