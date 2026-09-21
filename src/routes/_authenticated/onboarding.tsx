@@ -8,9 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Clock } from "lucide-react";
-import { INDUSTRY_SOLUTIONS, getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
-import { WORKSPACE_MODES, landingFor, type WorkspaceMode } from "@/lib/workspace";
-import { activatePayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
+import { getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -47,7 +45,6 @@ function OnboardingPage() {
   const [form, setForm] = useState<Form>({
     business_name: "", country: "Zambia", currency: "ZMW", tax_id: "", phone: "", team_size: "Just me", industry: "general",
   });
-  const [mode, setMode] = useState<WorkspaceMode>("accounting");
 
   useEffect(() => {
     (async () => {
@@ -68,8 +65,6 @@ function OnboardingPage() {
   const canNext =
     (step === 0 && form.business_name.trim() && form.country) ||
     (step === 1 && form.currency);
-
-  const payrollOnly = isPayrollOnly(mode);
 
   const submit = async () => {
     setError(null);
