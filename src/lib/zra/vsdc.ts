@@ -24,7 +24,7 @@ export type VsdcConfig = {
 
 export const DEFAULT_PATHS = {
   testEcho: "/test/echo",
-  initialize: "/initializer/selectInitVsdcInfo",
+  initialize: "/initializer/selectInitInfo",
   serverTime: "/serverTime/selectServerTime",
   taxpayerInfo: "/taxpayerInfo/selectTaxpayerInfo",
   codes: "/code/search/selectCodeList",
