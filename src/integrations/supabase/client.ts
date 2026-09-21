@@ -1,6 +1,6 @@
 // Client-side Supabase compatibility shim.
 // Mimics the Supabase JS client API but routes all calls to local SQLite via server functions.
-import { executeQueryFn, signUpFn, signInFn, getUserFn, updateUserFn, uploadFileFn, getSignedUrlFn, removeFileFn, rpcFn } from "@/lib/db/server-api";
+import { executeQueryFn, signUpFn, signInFn, getUserFn, getSessionFn, updateUserFn, uploadFileFn, getSignedUrlFn, removeFileFn, rpcFn } from "@/lib/db/server-api";
 import type { QuerySpec, FilterOp } from "@/lib/db/query-executor";
 
 const TOKEN_KEY = "sifobooks-auth-token";
@@ -144,7 +144,13 @@ const auth = {
   async getSession() {
     const token = getToken();
     if (!token) return { data: { session: null }, error: null };
-    return { data: { session: { access_token: token } }, error: null };
+    const result = await getSessionFn({ data: { token } } as any);
+    if (!result?.data?.session) {
+      // Do not leave the UI in a "signed in" state with an expired/invalid JWT.
+      setToken(null);
+      return { data: { session: null }, error: null };
+    }
+    return result;
   },
 
   async signUp({ email, password, options }: { email: string; password: string; options?: { data?: Record<string, any> } }) {
