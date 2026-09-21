@@ -66,6 +66,12 @@ export function getColumns(table: string): string[] {
 
 function runCompatibilityMigrations(database: Database) {
   const migrations: Record<string, string[]> = {
+    companies: [
+      "payslip_footer TEXT",
+    ],
+    company_members: [
+      "role TEXT NOT NULL DEFAULT 'staff'",
+    ],
     stock_items: [
       "zra_item_code TEXT",
       "zra_item_class_code TEXT",
