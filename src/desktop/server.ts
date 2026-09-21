@@ -8,7 +8,7 @@
  * Compile with:  bun run build:desktop
  */
 
-import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
 
 // ── Resolve the application base directory ────────────────────────────
@@ -39,8 +39,34 @@ function findBaseDir(): string {
 const baseDir = findBaseDir();
 const clientDir = join(baseDir, "client");
 const dataDir = join(baseDir, "data");
+const backupsDir = join(baseDir, "backups");
 
 mkdirSync(dataDir, { recursive: true });
+mkdirSync(backupsDir, { recursive: true });
+
+function createStartupBackup() {
+  const dbPath = process.env.DATABASE_PATH || join(dataDir, "sifobooks.db");
+  if (!existsSync(dbPath)) return;
+  try {
+    // SQLite WAL checkpoint makes the copied file self-contained and recoverable.
+    const { Database } = require("bun:sqlite");
+    const db = new Database(dbPath);
+    try { db.exec("PRAGMA wal_checkpoint(TRUNCATE);"); } finally { db.close(); }
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const destination = join(backupsDir, `sifobooks-${stamp}.db`);
+    writeFileSync(destination, readFileSync(dbPath));
+    const backups = readdirSync(backupsDir)
+      .filter((name) => /^sifobooks-.*\.db$/.test(name))
+      .sort()
+      .reverse();
+    for (const old of backups.slice(30)) {
+      try { unlinkSync(join(backupsDir, old)); } catch {}
+    }
+    console.log(`[backup] Created ${destination}`);
+  } catch (error) {
+    console.error("[backup] Startup backup failed:", error);
+  }
+}
 
 // Set environment variables BEFORE the server module loads so that
 // database.ts and auth.ts pick them up correctly.
@@ -169,6 +195,9 @@ console.log(`  ║  Running at http://localhost:${PORT}       ║`);
 console.log("  ║  Press Ctrl+C to stop                     ║");
 console.log("  ╚══════════════════════════════════════════╝");
 console.log("");
+
+// Create a safe local backup after the database has had a chance to initialise.
+setTimeout(() => createStartupBackup(), 2500);
 
 // Open the browser after a short delay to ensure the server is ready
 setTimeout(() => openBrowser(`http://localhost:${PORT}`), 1000);
