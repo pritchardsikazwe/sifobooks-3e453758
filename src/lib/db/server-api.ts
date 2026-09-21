@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 import { executeQuery, type QuerySpec } from "./query-executor";
+import { executeCloudQuery } from "./cloud-query-executor";
+import { isCloudDatabaseConfigured } from "@/lib/cloud/postgres";
 import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
 import { getDb, generateUUID } from "./database";
@@ -40,7 +42,7 @@ export const executeQueryFn = createServerFn({ method: "POST" })
     const token = resolveAuthToken(data.authToken);
     const auth = token ? await verifyToken(token) : null;
     if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
-    return executeQuery(data, auth.userId);
+    return isCloudDatabaseConfigured() ? await executeCloudQuery(data, auth.userId) : executeQuery(data, auth.userId);
   });
 
 // ── Auth ──
