@@ -198,6 +198,21 @@ function ZraSmartInvoicePage() {
     </div>
 
     <Card className="rounded-xl p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-2"><Laptop className="h-5 w-5"/><div><h2 className="font-semibold">ZRA Devices</h2><p className="text-xs text-muted-foreground">Each ZRA device keeps its own TPIN + Branch ID + Device Serial identity. Register every computer/device assigned by ZRA separately.</p></div></div>
+        <Button variant="outline" size="sm" onClick={()=>{setSelectedDeviceId("");const next={deviceName:`POS ${devices.length+1}`,deviceType:"desktop",terminalId:`POS-${String(devices.length+1).padStart(3,"0")}`,deploymentMode:"local",environment:"test",tpin:form.tpin||"",branchCode:form.branch_code||"000",deviceSerial:"",vsdcEndpoint:form.vsdc_endpoint||"",connectorEndpoint:""};setDeviceDraft(next);setForm(old=>({...old,device_id:"",device_name:next.deviceName,terminal_id:next.terminalId,deployment_mode:next.deploymentMode,mode:next.environment,tpin:next.tpin,branch_code:next.branchCode,device_serial:"",vsdc_endpoint:next.vsdcEndpoint,connector_endpoint:""}));}}><Plus className="mr-2 h-4 w-4"/>New device</Button>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {devices.map((d:any)=><button type="button" key={d.id} onClick={async()=>{setSelectedDeviceId(d.id);if(userId){const r:any=await zraGetConfigFn({data:{userId,deviceId:d.id}});setConfig(r?.data??{});setForm(old=>({...old,...(r?.data??{}),device_id:d.id}));}}} className={`rounded-xl border p-4 text-left transition hover:border-primary/50 ${selectedDeviceId===d.id?"border-primary bg-primary/5":"bg-background"}`}>
+          <div className="flex items-center justify-between gap-2"><span className="font-medium">{d.device_name}</span><Badge variant={d.initialization_status==="initialized"?"default":"secondary"}>{d.initialization_status==="initialized"?"Active":"Not initialized"}</Badge></div>
+          <div className="mt-2 text-xs text-muted-foreground">Branch {d.branch_code} · Serial {d.device_serial}</div>
+          <div className="mt-1 flex items-center gap-2 text-xs"><span className="capitalize">{d.deployment_mode}</span>{d.deployment_mode==="cloud"?<Cloud className="h-3.5 w-3.5"/>:d.deployment_mode==="hybrid"?<Network className="h-3.5 w-3.5"/>:<Laptop className="h-3.5 w-3.5"/>}</div>
+        </button>)}
+        {!devices.length&&<div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground md:col-span-2 lg:col-span-3">No ZRA devices registered yet. Create one for each computer/device registered by ZRA.</div>}
+      </div>
+    </Card>
+
+    <Card className="rounded-xl p-5">
       <div className="mb-5 flex items-center gap-2"><Server className="h-5 w-5"/><div><h2 className="font-semibold">VSDC Connection</h2><p className="text-xs text-muted-foreground">SifoBooks communicates with the local Java/Tomcat VSDC over REST/JSON.</p></div></div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div><Label>ZRA Environment</Label><Select value={form.mode||"test"} onValueChange={v=>update("mode",v)}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="test">TEST / UAT</SelectItem><SelectItem value="production">PRODUCTION</SelectItem></SelectContent></Select></div>
