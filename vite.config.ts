@@ -11,6 +11,9 @@ export default defineConfig({
   // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
   // runtime where the DB layer is actually used.)
   ssr: { noExternal: true, external: ["bun"] },
+  // Vite 8/Rolldown resolves build-time imports separately from SSR externals.
+  // Bun is provided by the Bun runtime and must not be bundled/resolved by Rolldown.
+  build: { rolldownOptions: { external: ["bun"] } },
   // Multi-terminal: run `bun run dev:lan` to bind 0.0.0.0 so other
   // computers on the same network can connect to http://<this-laptop-ip>:3000
   plugins: [
