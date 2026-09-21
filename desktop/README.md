@@ -78,3 +78,10 @@ The compiled `sifobooks.exe` contains:
   - Opens the default browser automatically
 
 No external services, cloud dependencies, or internet connection required.
+
+
+## Desktop shortcut and backups
+
+Run `Create-SifoBooks-Shortcut.bat` once to create a **SifoBooks** shortcut on the Windows desktop using the bundled SifoBooks icon.
+
+SifoBooks automatically creates a timestamped SQLite backup in `backups\\` when the desktop application starts. The latest 30 backups are retained. Keep the `backups\\` folder when moving the installation to another PC.
