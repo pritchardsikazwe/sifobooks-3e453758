@@ -86,9 +86,8 @@ function serializeValue(value: any) {
   return typeof value === "object" && value !== null ? JSON.stringify(value) : value;
 }
 
-export async function executeCloudQuery(spec: QuerySpec, authenticatedUserId: string): Promise<QueryResult> {
+async function executeCloudQueryInTransaction(db: any, spec: QuerySpec, authenticatedUserId: string, tenantId: string): Promise<QueryResult> {
   const table = assertIdentifier(spec.table);
-  const db = getCloudDb();
   const tableColumns = await getCloudColumns(table);
   if (!tableColumns.size) return { data: null, error: { message: `TABLE_NOT_FOUND: ${table}` } };
 
@@ -226,6 +225,39 @@ export async function executeCloudQuery(spec: QuerySpec, authenticatedUserId: st
     }
 
     return { data: null, error: { message: "Unknown operation" } };
+  } catch (e: any) {
+    return { data: null, error: { message: e?.message || String(e) } };
+  }
+}
+
+
+export async function executeCloudQuery(spec: QuerySpec, authenticatedUserId: string): Promise<QueryResult> {
+  const db = getCloudDb();
+  const requestedCompany = spec.filters.find(
+    (f) => f.column === "company_id" && f.op === "eq" && typeof f.value === "string",
+  )?.value as string | undefined;
+
+  const tenantRows = requestedCompany
+    ? await db.unsafe(
+        "SELECT ct.id FROM cloud_tenants ct INNER JOIN cloud_members cm ON cm.tenant_id=ct.id WHERE ct.company_id=$1 AND cm.user_id=$2 AND cm.status='active' LIMIT 1",
+        [requestedCompany, authenticatedUserId],
+      )
+    : await db.unsafe(
+        "SELECT ct.id FROM cloud_tenants ct INNER JOIN cloud_members cm ON cm.tenant_id=ct.id WHERE cm.user_id=$1 AND cm.status='active' ORDER BY ct.created_at LIMIT 1",
+        [authenticatedUserId],
+      );
+
+  const tenantId = tenantRows[0]?.id ? String(tenantRows[0].id) : "";
+  if (!tenantId) return { data: null, error: { message: "CLOUD_TENANT_NOT_FOUND" } };
+
+  try {
+    return await db.begin(async (tx: any) => {
+      await tx.unsafe(
+        "SELECT set_config('app.tenant_id',$1,true), set_config('app.user_id',$2,true)",
+        [tenantId, authenticatedUserId],
+      );
+      return executeCloudQueryInTransaction(tx, spec, authenticatedUserId, tenantId);
+    });
   } catch (e: any) {
     return { data: null, error: { message: e?.message || String(e) } };
   }
