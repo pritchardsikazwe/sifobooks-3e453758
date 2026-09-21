@@ -158,10 +158,11 @@ function openBrowser(url: string) {
 
 // ── Start the server ──────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT || "3000", 10);
+const HOST = process.env.SIFOBOOKS_HOST || "127.0.0.1";
 
 const server = Bun.serve({
   port: PORT,
-  host: "127.0.0.1",
+  host: HOST,
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -191,7 +192,7 @@ const server = Bun.serve({
 console.log("");
 console.log("  ╔══════════════════════════════════════════╗");
 console.log("  ║  SifoBooks Desktop                        ║");
-console.log(`  ║  Running at http://localhost:${PORT}       ║`);
+console.log(`  ║  Running at http://${HOST}:${PORT}       ║`);
 console.log("  ║  Press Ctrl+C to stop                     ║");
 console.log("  ╚══════════════════════════════════════════╝");
 console.log("");
@@ -200,7 +201,9 @@ console.log("");
 setTimeout(() => createStartupBackup(), 2500);
 
 // Open the browser after a short delay to ensure the server is ready
-setTimeout(() => openBrowser(`http://localhost:${PORT}`), 1000);
+if (HOST === "127.0.0.1" || HOST === "localhost") {
+  setTimeout(() => openBrowser(`http://localhost:${PORT}`), 1000);
+}
 
 // ── Graceful shutdown ─────────────────────────────────────────────────
 process.on("SIGINT", () => {
