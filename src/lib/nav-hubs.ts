@@ -220,7 +220,9 @@ export const HUBS: HubDef[] = [
         label: "People admin",
         items: [
           { title: "Leave", url: "/leave", module: "hr_payroll", iconName: "CalendarDays" },
-          { title: "Jobs & Recruitment", url: "/jobs", module: "hr_payroll", iconName: "BriefcaseBusiness" },\n          { title: "HR & Labour Compliance", url: "/hr-compliance", module: "hr_payroll", iconName: "ShieldCheck", hint: "Contracts, labour-law controls, policies and compliance evidence." },\n          { title: "HR 360", url: "/hr360", module: "hr_payroll", iconName: "UsersRound", hint: "Employee lifecycle from onboarding to separation." },
+          { title: "Jobs & Recruitment", url: "/jobs", module: "hr_payroll", iconName: "BriefcaseBusiness" },
+          { title: "HR & Labour Compliance", url: "/hr-compliance", module: "hr_payroll", iconName: "ShieldCheck", hint: "Contracts, labour-law controls, policies and compliance evidence." },
+          { title: "HR 360", url: "/hr360", module: "hr_payroll", iconName: "UsersRound", hint: "Employee lifecycle from onboarding to separation." },
         ],
       },
     ],
@@ -285,38 +287,6 @@ export const HUBS: HubDef[] = [
     ],
   },
   {
-    key: "compliance",
-    label: "Compliance",
-    iconName: "ShieldCheck",
-    purpose: "Keep tax, payroll, statutory and industry obligations controlled in one place.",
-    groups: [
-      {
-        label: "Government",
-        items: [
-          { title: "Government Compliance", url: "/compliance-centre", module: "compliance", iconName: "ShieldCheck", primary: true, hint: "ZRA, NAPSA, NHIMA, Workers' Compensation, NCC and statutory deadlines." },
-          { title: "Compliance Calendar", url: "/compliance", module: "compliance", iconName: "CalendarClock", primary: true },
-          { title: "ZRA Smart Invoice", url: "/zra-smart-invoice", module: "compliance", iconName: "ReceiptText", primary: true },
-          { title: "ZRA Item Mapping", url: "/zra-smart-invoice", module: "compliance", iconName: "Boxes" },
-        ],
-      },
-      {
-        label: "Industry",
-        items: [
-          { title: "Mineral Royalty", url: "/compliance-centre", module: "compliance", iconName: "Pickaxe" },
-          { title: "NCC Compliance", url: "/compliance-centre", module: "compliance", iconName: "HardHat" },
-          { title: "Workers' Compensation", url: "/compliance-centre", module: "compliance", iconName: "ShieldPlus" },
-        ],
-      },
-      {
-        label: "Controls",
-        items: [
-          { title: "Submission Queue", url: "/compliance-centre", module: "compliance", iconName: "ListChecks" },
-          { title: "Audit Trail", url: "/audit-logs", module: "admin", iconName: "History" },
-        ],
-      },
-    ],
-  },
-  {
     key: "more",
     label: "More",
     iconName: "Ellipsis",
@@ -338,6 +308,20 @@ export const HUBS: HubDef[] = [
           { title: "School Management", url: "/school", module: "school_erp", iconName: "School" },
           { title: "Hotel Management", url: "/hotel", module: "hotel_erp", iconName: "Hotel" },
           { title: "Public Services", url: "/public-services", module: "public_services", iconName: "Globe2" },
+        ],
+      },
+      {
+        label: "Compliance",
+        items: [
+          { title: "Government Compliance", url: "/compliance-centre", module: "compliance", iconName: "ShieldCheck", primary: true, hint: "ZRA, NAPSA, NHIMA, Workers' Compensation, NCC and statutory deadlines." },
+          { title: "Compliance Calendar", url: "/compliance", module: "compliance", iconName: "CalendarClock", primary: true },
+          { title: "ZRA Smart Invoice", url: "/zra-smart-invoice", module: "compliance", iconName: "ReceiptText", primary: true },
+          { title: "ZRA Item Mapping", url: "/zra-smart-invoice", module: "compliance", iconName: "Boxes" },
+          { title: "Mineral Royalty", url: "/compliance-centre", module: "compliance", iconName: "Pickaxe" },
+          { title: "NCC Compliance", url: "/compliance-centre", module: "compliance", iconName: "HardHat" },
+          { title: "Workers' Compensation", url: "/compliance-centre", module: "compliance", iconName: "ShieldPlus" },
+          { title: "Submission Queue", url: "/compliance-centre", module: "compliance", iconName: "ListChecks" },
+          { title: "Audit Trail", url: "/audit-logs", module: "admin", iconName: "History" },
         ],
       },
       {
