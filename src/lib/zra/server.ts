@@ -15,12 +15,78 @@ import {
 
 type ZraConfigInput = { userId: string; branchId?: string | null };
 
-function getSavedConfig(userId: string, branchId?: string | null) {
+function getSavedConfig(userId: string, branchId?: string | null, deviceId?: string | null) {
   const db = getDb();
+  if (deviceId) {
+    const device = db.prepare("SELECT * FROM zra_devices WHERE id = ? AND user_id = ? LIMIT 1").get(deviceId, userId) as any;
+    if (device) return {
+      id: device.id,
+      user_id: device.user_id,
+      branch_id: device.branch_id,
+      mode: device.environment === "production" ? "production" : (device.initialization_status === "initialized" ? "initialized" : "test"),
+      taxpayer_name: device.taxpayer_name,
+      tpin: device.tpin,
+      branch_code: device.branch_code,
+      device_serial: device.device_serial,
+      vsdc_endpoint: device.vsdc_endpoint,
+      deployment_mode: device.deployment_mode,
+      connector_endpoint: device.connector_endpoint,
+      device_id: device.id,
+    };
+  }
   return db.prepare(
     "SELECT * FROM zra_smart_invoice_config WHERE user_id = ? AND (? IS NULL OR branch_id = ?) ORDER BY updated_at DESC LIMIT 1",
   ).get(userId, branchId ?? null, branchId ?? null) as any;
 }
+
+function saveZraDevice(db: any, data: {
+  id?: string | null; userId: string; companyId?: string | null; branchId?: string | null;
+  deviceName: string; deviceType?: string | null; terminalId?: string | null;
+  deploymentMode?: string | null; environment?: string | null; tpin?: string | null;
+  branchCode: string; deviceSerial: string; vsdcEndpoint?: string | null;
+  connectorEndpoint?: string | null; taxpayerName?: string | null;
+}) {
+  const existing = data.id
+    ? db.prepare("SELECT id FROM zra_devices WHERE id = ? AND user_id = ? LIMIT 1").get(data.id, data.userId) as any
+    : db.prepare("SELECT id FROM zra_devices WHERE user_id = ? AND device_serial = ? LIMIT 1").get(data.userId, data.deviceSerial) as any;
+  const id = existing?.id ?? generateUUID();
+  db.prepare(`INSERT INTO zra_devices
+    (id,user_id,company_id,branch_id,device_name,device_type,terminal_id,deployment_mode,environment,tpin,branch_code,device_serial,vsdc_endpoint,connector_endpoint,taxpayer_name,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+    ON CONFLICT(id) DO UPDATE SET
+      company_id=excluded.company_id,branch_id=excluded.branch_id,device_name=excluded.device_name,
+      device_type=excluded.device_type,terminal_id=excluded.terminal_id,deployment_mode=excluded.deployment_mode,
+      environment=excluded.environment,tpin=excluded.tpin,branch_code=excluded.branch_code,device_serial=excluded.device_serial,
+      vsdc_endpoint=excluded.vsdc_endpoint,connector_endpoint=excluded.connector_endpoint,
+      taxpayer_name=excluded.taxpayer_name,updated_at=datetime('now')`).run(
+    id,data.userId,data.companyId ?? null,data.branchId ?? null,data.deviceName,data.deviceType ?? "desktop",
+    data.terminalId ?? null,data.deploymentMode ?? "local",data.environment ?? "test",data.tpin ?? null,
+    data.branchCode,data.deviceSerial,data.vsdcEndpoint ?? null,data.connectorEndpoint ?? null,data.taxpayerName ?? null,
+  );
+  return db.prepare("SELECT * FROM zra_devices WHERE id = ?").get(id) as any;
+}
+
+function recordZraDeviceEvent(db:any, deviceId:string, userId:string, eventType:string, status:string, message?:string|null, response?:any) {
+  db.prepare("INSERT INTO zra_device_events (id,zra_device_id,user_id,event_type,status,message,response_code,response_json) VALUES (?,?,?,?,?,?,?,?)")
+    .run(generateUUID(),deviceId,userId,eventType,status,message ?? null,response?.resultCd ?? null,response ? JSON.stringify(response) : null);
+}
+
+export const zraListDevicesFn = createServerFn({ method:"POST" })
+  .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null})
+  .handler(async ({data})=>{
+    const db=getDb();
+    const rows=db.prepare("SELECT * FROM zra_devices WHERE user_id=? AND (? IS NULL OR branch_id=?) ORDER BY is_active DESC, device_name").all(data.userId,data.branchId ?? null,data.branchId ?? null);
+    return {data:rows};
+  });
+
+export const zraSaveDeviceFn = createServerFn({ method:"POST" })
+  .inputValidator((raw:unknown)=>raw as {
+    userId:string; deviceId?:string|null; companyId?:string|null; branchId?:string|null;
+    deviceName:string; deviceType?:string; terminalId?:string|null; deploymentMode?:string;
+    environment?:string; tpin?:string|null; branchCode:string; deviceSerial:string;
+    vsdcEndpoint?:string|null; connectorEndpoint?:string|null; taxpayerName?:string|null;
+  })
+  .handler(async ({data})=>({data:saveZraDevice(getDb(),data)}));
 
 function requireVsdcUrl(config?: any) {
   const url = config?.vsdc_endpoint || process.env.ZRA_VSDC_URL;
@@ -51,7 +117,8 @@ export const zraSaveConfigFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as {
     userId: string; branchId?: string | null; mode?: string; taxpayerName?: string | null;
     tpin?: string | null; branchCode?: string | null; deviceSerial?: string | null;
-    vsdcEndpoint?: string | null; notes?: string | null;
+    vsdcEndpoint?: string | null; notes?: string | null; deviceId?: string | null; deviceName?: string | null;
+    deviceType?: string | null; terminalId?: string | null; deploymentMode?: string | null; connectorEndpoint?: string | null;
   })
   .handler(async ({ data }) => {
     const db = getDb();
@@ -62,18 +129,37 @@ export const zraSaveConfigFn = createServerFn({ method: "POST" })
        VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))`,
     ).run(id,data.userId,data.branchId ?? null,data.mode ?? "test",data.taxpayerName ?? null,
       data.tpin ?? null,data.branchCode ?? null,data.deviceSerial ?? null,data.vsdcEndpoint ?? null,data.notes ?? null);
+    if (data.deviceSerial && data.branchCode) {
+      saveZraDevice(db,{
+        userId:data.userId,branchId:data.branchId ?? null,deviceName:data.deviceName ?? `SifoBooks ${data.deviceSerial}`,
+        deviceType:data.deviceType ?? "desktop",terminalId:data.terminalId ?? null,
+        deploymentMode:data.deploymentMode ?? "local",environment:data.mode === "production" ? "production" : "test",
+        tpin:data.tpin ?? null,branchCode:data.branchCode,deviceSerial:data.deviceSerial,
+        vsdcEndpoint:data.vsdcEndpoint ?? null,connectorEndpoint:data.connectorEndpoint ?? null,
+        taxpayerName:data.taxpayerName ?? null
+      });
+    }
     return { data: getSavedConfig(data.userId, data.branchId), error: null };
   });
 
 export const zraInitializeDeviceFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => raw as { userId:string; branchId?:string|null; tpin:string; bhfId:string; dvcSrlNo:string })
+  .inputValidator((raw: unknown) => raw as { userId:string; branchId?:string|null; deviceId?:string|null; tpin:string; bhfId:string; dvcSrlNo:string })
   .handler(async ({ data }) => {
-    const cfg=getSavedConfig(data.userId,data.branchId);
-    const response=await initializeDevice({tpin:data.tpin,bhfId:data.bhfId,dvcSrlNo:data.dvcSrlNo},{baseUrl:requireVsdcUrl(cfg)});
     const db=getDb();
-    db.prepare("UPDATE zra_smart_invoice_config SET mode=?,tpin=?,branch_code=?,device_serial=?,taxpayer_name=COALESCE(?,taxpayer_name),last_verified_at=datetime('now'),updated_at=datetime('now') WHERE id=?")
-      .run(isSuccessfulVsdcResponse(response) ? "initialized":"test",data.tpin,data.bhfId,data.dvcSrlNo,
-        (response as any).data?.info?.taxprNm ?? (response as any).data?.taxprNm ?? null,cfg?.id ?? "");
+    let cfg=getSavedConfig(data.userId,data.branchId,data.deviceId);
+    if (!cfg) throw new Error("ZRA_DEVICE_NOT_CONFIGURED");
+    const response=await initializeDevice({tpin:data.tpin,bhfId:data.bhfId,dvcSrlNo:data.dvcSrlNo},{baseUrl:requireVsdcUrl(cfg)});
+    const success=isSuccessfulVsdcResponse(response);
+    if(cfg.device_id){
+      db.prepare("UPDATE zra_devices SET tpin=?,branch_code=?,device_serial=?,environment=CASE WHEN environment='production' THEN 'production' ELSE environment END,initialization_status=?,status=?,taxpayer_name=COALESCE(?,taxpayer_name),last_verified_at=datetime('now'),updated_at=datetime('now') WHERE id=? AND user_id=?")
+        .run(data.tpin,data.bhfId,data.dvcSrlNo,success?"initialized":"not_initialized",success?"initialized":"error",
+          (response as any).data?.taxprNm ?? (response as any).data?.info?.taxprNm ?? null,cfg.device_id,data.userId);
+      recordZraDeviceEvent(db,cfg.device_id,data.userId,"INITIALIZE",success?"success":"error",response?.resultMsg,response);
+    } else {
+      db.prepare("UPDATE zra_smart_invoice_config SET mode=?,tpin=?,branch_code=?,device_serial=?,taxpayer_name=COALESCE(?,taxpayer_name),last_verified_at=datetime('now'),updated_at=datetime('now') WHERE id=?")
+        .run(success ? "initialized":"test",data.tpin,data.bhfId,data.dvcSrlNo,
+          (response as any).data?.info?.taxprNm ?? (response as any).data?.taxprNm ?? null,cfg?.id ?? "");
+    }
     return response;
   });
 
@@ -242,8 +328,9 @@ function zraPaymentTypeCode(db:any,userId:string,saleId:string) {
   throw new Error("ZRA_PAYMENT_METHOD_UNMAPPED: Split payment requires an applicable VSDC Payment Method standard code.");
 }
 
-function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string) {
-  const cfg=getSavedConfig(userId,null);
+function buildSalesPayload(db:any,userId:string,saleId:string,saleNo:string,terminalId?:string|null) {
+  const device = terminalId ? db.prepare("SELECT * FROM zra_devices WHERE user_id=? AND terminal_id=? AND is_active=1 LIMIT 1").get(userId,terminalId) as any : null;
+  const cfg=getSavedConfig(userId,null,device?.id ?? null);
   if(!cfg?.tpin || !cfg?.branch_code) throw new Error("ZRA_NOT_CONFIGURED: Configure TPIN and Branch ID before submitting sales.");
   const sale=db.prepare("SELECT * FROM pos_sales WHERE id=? AND user_id=? LIMIT 1").get(saleId,userId) as any;
   if(!sale) throw new Error("POS sale not found.");
@@ -377,7 +464,7 @@ export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
     if(control?.state==="FISCALIZED"){
       return {queueId:null,response:{resultCd:"000",data:{rcptNo:control.zra_receipt_number,intrlData:control.zra_internal_data,rcptSign:control.zra_receipt_signature,qrCodeUrl:control.zra_qr_data}},fiscalState:control.state};
     }
-    const {cfg,payload}=buildSalesPayload(db,data.userId,data.saleId,saleNo);
+    const {cfg,payload}=buildSalesPayload(db,data.userId,data.saleId,saleNo,data.terminalId ?? sale.register_id ?? null);
     if(control && control.state==="REJECTED") assertFiscalTransition("REJECTED","SUBMITTED");
     if(control){
       db.prepare("UPDATE fiscal_transaction_controls SET state='SUBMITTED',terminal_id=?,invoice_number=?,updated_at=datetime('now'),version=version+1 WHERE id=?")
@@ -393,8 +480,8 @@ export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
     let queue=db.prepare("SELECT * FROM zra_invoice_queue WHERE user_id=? AND source_id=? ORDER BY updated_at DESC LIMIT 1").get(data.userId,data.saleId) as any;
     if(!queue){
       const queueId=generateUUID();
-      db.prepare("INSERT INTO zra_invoice_queue (id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,last_attempt_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))")
-        .run(queueId,data.userId,"pos_sale",data.saleId,saleNo,Number(sale.total||0),Number(sale.tax||0),"submitting",JSON.stringify(payload),1);
+      db.prepare("INSERT INTO zra_invoice_queue (id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,last_attempt_at,updated_at,zra_device_id) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'),?)")
+        .run(queueId,data.userId,"pos_sale",data.saleId,saleNo,Number(sale.total||0),Number(sale.tax||0),"submitting",JSON.stringify(payload),1, cfg.device_id ?? null);
       queue={id:queueId};
     } else {
       db.prepare("UPDATE zra_invoice_queue SET status='submitting',last_attempt_at=datetime('now'),attempt_count=attempt_count+1,payload=?,updated_at=datetime('now') WHERE id=?")
@@ -460,7 +547,7 @@ export async function submitZraSaleCorrection(args:{
 
   const cfg=getSavedConfig(args.userId,sale.location_id ?? null);
   if(!cfg?.tpin || !cfg?.branch_code || !cfg?.device_serial) throw new Error("ZRA_CORRECTION_CONFIG_REQUIRED: TPIN, Branch ID and device/SDC identifier are required.");
-  const {payload:original}=buildSalesPayload(db,args.userId,args.saleId,sale.sale_no);
+  const {payload:original}=buildSalesPayload(db,args.userId,args.saleId,sale.sale_no,args.terminalId ?? sale.register_id ?? null);
   const receiptTypeCode=zraStandardCode(db,args.userId,"Sales Receipt Type",
     [args.correctionType==="CREDIT_NOTE"?"reversal after sale":"adjustment upwards after sale"]);
   const salesTypeCode=zraStandardCode(db,args.userId,"Transaction Type",["normal"]);
