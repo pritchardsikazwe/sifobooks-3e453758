@@ -1,13 +1,30 @@
 import { getDb, generateUUID } from "./database";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join, dirname } from "path";
 
-const JWT_SECRET = process.env.JWT_SECRET || generateDefaultSecret();
+const JWT_SECRET = process.env.JWT_SECRET || loadPersistentSecret();
 const JWT_EXPIRY = 60 * 60 * 24 * 7; // 7 days
 
-function generateDefaultSecret(): string {
-  // Generate a random secret at startup if none is provided
-  const secret = crypto.randomUUID() + crypto.randomUUID();
-  console.warn("[auth] JWT_SECRET not set — using a random ephemeral secret. Set JWT_SECRET in .env for persistent sessions.");
-  return secret;
+function loadPersistentSecret(): string {
+  // Standalone Windows builds may not have a .env file. Persist the generated
+  // signing key beside the local database so sessions survive application restarts.
+  const secretPath = join(process.cwd(), "data", ".jwt-secret");
+  try {
+    if (existsSync(secretPath)) {
+      const saved = readFileSync(secretPath, "utf8").trim();
+      if (saved.length >= 32) return saved;
+    }
+    const secret = crypto.randomUUID() + crypto.randomUUID();
+    mkdirSync(dirname(secretPath), { recursive: true });
+    writeFileSync(secretPath, secret, { encoding: "utf8" });
+    console.warn("[auth] JWT_SECRET not set — created persistent local signing key at data/.jwt-secret");
+    return secret;
+  } catch (error) {
+    // If the directory is not writable, keep the app usable for this process.
+    const secret = crypto.randomUUID() + crypto.randomUUID();
+    console.warn("[auth] Could not persist local JWT secret; sessions will reset if the app restarts.", error);
+    return secret;
+  }
 }
 
 function base64url(input: string | ArrayBuffer): string {
