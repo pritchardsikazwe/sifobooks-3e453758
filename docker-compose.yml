@@ -10,3 +10,15 @@ services:
     volumes:
       - ./data:/app/data
     command: sh -c "bun install --frozen-lockfile && bun run build && bun run start"
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sifobooks
+      POSTGRES_USER: sifobooks
+      POSTGRES_PASSWORD: sifobooks
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./cloud-data/postgres:/var/lib/postgresql/data
