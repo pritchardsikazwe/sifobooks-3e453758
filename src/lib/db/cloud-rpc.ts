@@ -1,10 +1,26 @@
 import { getCloudDb } from "@/lib/cloud/postgres";
+import {
+  cloudPosCheckout,
+  cloudPostInvoice,
+  cloudPostPurchaseBill,
+  cloudPostCreditNote,
+  cloudRecordBillPayment,
+  cloudReversePosSale,
+} from "@/lib/cloud/accounting-transactions";
 
 export async function executeCloudRpc(name: string, args: Record<string, any>) {
   const db = getCloudDb();
   const uid = String(args._uid || "");
   if (!uid) return { data: null, error: { message: "NOT_SIGNED_IN" } };
   try {
+    switch (name) {
+      case "pos_checkout": return { data: await cloudPosCheckout(uid, args), error: null };
+      case "post_sales_invoice": return { data: await cloudPostInvoice(uid, args), error: null };
+      case "post_purchase_bill": return { data: await cloudPostPurchaseBill(uid, args), error: null };
+      case "post_credit_note": return { data: await cloudPostCreditNote(uid, args), error: null };
+      case "record_bill_payment": return { data: await cloudRecordBillPayment(uid, args), error: null };
+      case "reverse_pos_sale": return { data: await cloudReversePosSale(uid, args), error: null };
+    }
     return await db.begin(async (tx: any) => {
       await tx.unsafe("SELECT set_config('app.user_id',$1,true)", [uid]);
       const requestedCompany = String(args._company_id || "");
