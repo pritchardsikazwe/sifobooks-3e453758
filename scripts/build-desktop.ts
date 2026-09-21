@@ -45,11 +45,32 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "",
 ].join("\n"));
 
+writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
+  "$ErrorActionPreference = 'Stop'",
+  "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
+  "$desktop = [Environment]::GetFolderPath('Desktop')",
+  "$shortcut = Join-Path $desktop 'SifoBooks.lnk'",
+  "$ws = New-Object -ComObject WScript.Shell",
+  "$s = $ws.CreateShortcut($shortcut)",
+  "$s.TargetPath = Join-Path $appDir 'start-sifobooks.bat'",
+  "$s.WorkingDirectory = $appDir",
+  "$s.IconLocation = (Join-Path $appDir 'SifoBooks.ico') + ',0'",
+  "$s.Description = 'SifoBooks Accounting ERP'",
+  "$s.Save()",
+  "Write-Host 'SifoBooks desktop shortcut created.'",
+  "",
+].join("\r\n"));
+
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "@echo off",
   "setlocal",
-  'set "APPDIR=%~dp0"',
-  "powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\SifoBooks.lnk'); $s.TargetPath = (Join-Path $env:APPDIR 'start-sifobooks.bat'); $s.WorkingDirectory = $env:APPDIR; $s.IconLocation = (Join-Path $env:APPDIR 'SifoBooks.ico') + ',0'; $s.Description = 'SifoBooks Accounting ERP'; $s.Save()"",
+  "powershell -NoProfile -ExecutionPolicy Bypass -File \"%~dp0Create-SifoBooks-Shortcut.ps1\"",
+  "if errorlevel 1 (",
+  "  echo.",
+  "  echo Failed to create the SifoBooks desktop shortcut.",
+  "  pause",
+  "  exit /b 1",
+  ")",
   "echo.",
   "echo SifoBooks desktop shortcut created.",
   "pause",
