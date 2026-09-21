@@ -110,8 +110,8 @@ function nowZraDate() {
 function toDateOnly() { return nowZraDate().slice(0, 8); }
 
 export const zraGetConfigFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => raw as ZraConfigInput)
-  .handler(async ({ data }) => ({ data: getSavedConfig(data.userId, data.branchId), error: null }));
+  .inputValidator((raw: unknown) => raw as ZraConfigInput & { deviceId?: string | null })
+  .handler(async ({ data }) => ({ data: getSavedConfig(data.userId, data.branchId, data.deviceId), error: null }));
 
 export const zraSaveConfigFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as {
