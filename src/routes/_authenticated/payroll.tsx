@@ -116,6 +116,8 @@ function PayrollPage() {
         <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-review">Audit</Link></Button>
         <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-statutory">Statutory</Link></Button>
         <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-payments">Payments</Link></Button>
+        <Button variant={tab === "calc" ? "secondary" : "ghost"} className="shrink-0 rounded-full" onClick={() => setTab("calc")}>PAYE Calculator</Button>
+        <Button variant={tab === "benefits" ? "secondary" : "ghost"} className="shrink-0 rounded-full" onClick={() => setTab("benefits")}>Benefits & Overtime</Button>
       </div></div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -127,7 +129,7 @@ function PayrollPage() {
         </TabsList>
 
         <TabsContent value="runs" className="mt-0 space-y-4">
-          <Card>
+          <Card className="rounded-3xl border-0 shadow-sm">
             <CardHeader className="pb-2"><CardTitle>Payroll runs</CardTitle><CardDescription>All monthly payroll runs.</CardDescription></CardHeader>
             <CardContent>
               <DataTable
