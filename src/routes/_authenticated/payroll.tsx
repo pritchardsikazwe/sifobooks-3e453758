@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SifoWorkflowGuide } from "@/components/sifo/SifoWorkflowGuide";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,23 +104,29 @@ function PayrollPage() {
   ];
 
   return (
-    <div className="px-6 py-6 max-w-7xl">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="min-h-full bg-slate-50/60"><div className="mx-auto max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2"><Banknote className="h-6 w-6 text-emerald-600" /> Payroll</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950 flex items-center gap-2 sm:text-3xl"><Banknote className="h-6 w-6 text-emerald-600" /> Payroll</h1>
           <p className="text-sm text-slate-500 mt-1">Zambian PAYE, NAPSA and NHIMA computed automatically. Generate a monthly run and issue payslips per employee.</p>
         </div>
-      </div>
+      </div><div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+        <Button variant={tab === "runs" ? "secondary" : "ghost"} className="shrink-0 rounded-full" onClick={() => setTab("runs")}>Payroll Runs</Button>
+        <Button variant={tab === "generate" ? "secondary" : "ghost"} className="shrink-0 rounded-full" onClick={() => setTab("generate")}>Generate</Button>
+        <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-review">Audit</Link></Button>
+        <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-statutory">Statutory</Link></Button>
+        <Button asChild variant="ghost" className="shrink-0 rounded-full"><Link to="/payroll-payments">Payments</Link></Button>
+      </div></div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="hidden">
           <TabsTrigger value="runs">Runs</TabsTrigger>
           <TabsTrigger value="generate"><Wand2 className="h-3.5 w-3.5 mr-1" /> Generate</TabsTrigger>
           <TabsTrigger value="calc"><Calculator className="h-3.5 w-3.5 mr-1" /> PAYE Calculator</TabsTrigger>
           <TabsTrigger value="benefits"><Calculator className="h-3.5 w-3.5 mr-1" /> Gratuity, Overtime & Backpay</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="runs" className="mt-4 space-y-4">
+        <TabsContent value="runs" className="mt-0 space-y-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle>Payroll runs</CardTitle><CardDescription>All monthly payroll runs.</CardDescription></CardHeader>
             <CardContent>
@@ -145,15 +151,15 @@ function PayrollPage() {
           {selectedRun && <RunDetail run={selectedRun} company={company} userId={userId} onClose={() => setSelectedRun(null)} onChanged={load} />}
         </TabsContent>
 
-        <TabsContent value="generate" className="mt-4">
+        <TabsContent value="generate" className="mt-0">
           <GenerateRun userId={userId} onDone={() => { setTab("runs"); load(); }} />
         </TabsContent>
 
-        <TabsContent value="calc" className="mt-4">
+        <TabsContent value="calc" className="mt-0">
           <PayeCalculator />
         </TabsContent>
 
-        <TabsContent value="benefits" className="mt-4">
+        <TabsContent value="benefits" className="mt-0">
           <BenefitsCalculator />
         </TabsContent>
       </Tabs>
