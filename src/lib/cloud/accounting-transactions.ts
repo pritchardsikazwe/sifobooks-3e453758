@@ -1,0 +1,394 @@
+import { getCloudDb } from "@/lib/cloud/postgres";
+
+type Tx = any;
+const money = (v: unknown) => Math.round((Number(v ?? 0) + Number.EPSILON) * 100) / 100;
+const id = () => crypto.randomUUID();
+const dateOnly = (v?: unknown) => String(v || new Date().toISOString()).slice(0, 10);
+
+async function one(tx: Tx, sql: string, params: any[] = []) {
+  const rows = await tx.unsafe(sql, params);
+  return rows[0] ?? null;
+}
+async function many(tx: Tx, sql: string, params: any[] = []) {
+  return tx.unsafe(sql, params);
+}
+async function account(tx: Tx, uid: string, code: string, name: string, type: string) {
+  const row = await one(tx, "SELECT id FROM chart_of_accounts WHERE user_id=$1 AND account_code=$2 LIMIT 1", [uid, code]);
+  if (row?.id) return String(row.id);
+  const accountId = id();
+  await tx.unsafe(
+    "INSERT INTO chart_of_accounts(id,user_id,tenant_id,account_code,account_name,account_type,is_active) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,true)",
+    [accountId, uid, code, name, type],
+  );
+  return accountId;
+}
+async function accounts(tx: Tx, uid: string) {
+  return {
+    cash: await account(tx, uid, "1000", "Cash & Bank", "asset"),
+    receivable: await account(tx, uid, "1100", "Accounts Receivable", "asset"),
+    inventory: await account(tx, uid, "1300", "Inventory", "asset"),
+    inputVat: await account(tx, uid, "1400", "VAT Input", "asset"),
+    payable: await account(tx, uid, "2100", "Accounts Payable", "liability"),
+    vat: await account(tx, uid, "2200", "VAT Payable", "liability"),
+    revenue: await account(tx, uid, "4000", "Sales Revenue", "revenue"),
+    cogs: await account(tx, uid, "5000", "Cost of Sales", "expense"),
+  };
+}
+async function journal(tx: Tx, uid: string, reference: string, description: string, entryDate: string, lines: any[]) {
+  const debit = money(lines.reduce((s, l) => s + money(l.debit), 0));
+  const credit = money(lines.reduce((s, l) => s + money(l.credit), 0));
+  if (debit <= 0 || Math.abs(debit - credit) > 0.01) throw new Error("UNBALANCED_JOURNAL");
+  const prior = await one(tx, "SELECT id FROM journal_entries WHERE user_id=$1 AND reference=$2 LIMIT 1", [uid, reference]);
+  if (prior?.id) return String(prior.id);
+  const entryId = id();
+  await tx.unsafe(
+    "INSERT INTO journal_entries(id,user_id,tenant_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$7,'ZMW',1)",
+    [entryId, uid, "JE-" + reference, entryDate, reference, description, debit],
+  );
+  for (const line of lines) {
+    await tx.unsafe(
+      "INSERT INTO journal_lines(id,user_id,tenant_id,entry_id,account_id,description,debit,credit) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7)",
+      [id(), uid, entryId, line.accountId, line.description || description, money(line.debit), money(line.credit)],
+    );
+  }
+  return entryId;
+}
+async function batch(tx: Tx, uid: string, type: string, sourceType: string, sourceId: string | null, clientRef: string | null) {
+  if (clientRef) {
+    const prior = await one(tx,
+      "SELECT id,status,source_id FROM cloud_transaction_batches WHERE tenant_id=current_setting('app.tenant_id',true)::uuid AND transaction_type=$1 AND client_ref=$2 LIMIT 1",
+      [type, clientRef],
+    );
+    if (prior) return { id: String(prior.id), duplicate: true, sourceId: prior.source_id ? String(prior.source_id) : null };
+  }
+  const batchId = id();
+  await tx.unsafe(
+    "INSERT INTO cloud_transaction_batches(id,tenant_id,user_id,transaction_type,source_type,source_id,client_ref) VALUES($1,current_setting('app.tenant_id',true)::uuid,$2,$3,$4,$5,$6)",
+    [batchId, uid, type, sourceType, sourceId, clientRef],
+  );
+  return { id: batchId, duplicate: false, sourceId };
+}
+async function event(tx: Tx, uid: string, transactionId: string, eventType: string, message: string, payload: any = {}) {
+  await tx.unsafe(
+    "INSERT INTO cloud_transaction_events(tenant_id,transaction_id,actor_user_id,event_type,message,payload) VALUES(current_setting('app.tenant_id',true)::uuid,$1,$2,$3,$4,$5::jsonb)",
+    [transactionId, uid, eventType, message, JSON.stringify(payload)],
+  );
+}
+async function setUser(tx: Tx, uid: string) {
+  await tx.unsafe("SELECT set_config('app.user_id',$1,true)", [uid]);
+}
+
+export async function cloudPosCheckout(uid: string, args: any) {
+  const sale = args?._sale || {};
+  const items = Array.isArray(args?._items) ? args._items : [];
+  const payments = Array.isArray(args?._payments) ? args._payments : [];
+  if (!items.length) throw new Error("EMPTY_SALE");
+  if (!payments.length) throw new Error("PAYMENT_REQUIRED");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "POS_CHECKOUT", "pos_sale", null, String(sale.client_ref || ""));
+    if (b.duplicate) return { sale_id: b.sourceId, sale_no: sale.sale_no, duplicate: true, transaction_id: b.id };
+
+    const settings = await one(tx, "SELECT tax_rate,tax_inclusive,allow_negative_stock FROM pos_settings WHERE user_id=$1 LIMIT 1", [uid]);
+    const defaultRate = Number(settings?.tax_rate ?? 16);
+    const taxInclusive = Number(settings?.tax_inclusive ?? 1) === 1;
+    const allowNegative = Boolean(sale.allow_negative_stock ?? settings?.allow_negative_stock ?? false);
+    let subtotal = 0, vat = 0, cost = 0, gross = 0;
+    const resolved: any[] = [];
+
+    for (const raw of items) {
+      const qty = Number(raw.qty);
+      if (!Number.isFinite(qty) || qty <= 0) throw new Error("BAD_QUANTITY");
+      if (!raw.item_id) throw new Error("ITEM_REQUIRED");
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [String(raw.item_id), uid]);
+      if (!item) throw new Error("UNKNOWN_ITEM");
+      const price = Number(raw.price ?? item.sell_price ?? 0);
+      if (!Number.isFinite(price) || price < 0) throw new Error("NO_PRICE");
+      const discount = Math.min(100, Math.max(0, Number(raw.discount_pct || 0)));
+      const grossLine = money(qty * price);
+      const net = money(grossLine * (1 - discount / 100));
+      const rate = Number(item.vat_rate ?? defaultRate);
+      const lineVat = taxInclusive && rate > 0 ? money(net - net / (1 + rate / 100)) : money(net * rate / 100);
+      const lineSubtotal = taxInclusive ? money(net - lineVat) : net;
+      const lineTotal = taxInclusive ? net : money(net + lineVat);
+      const unitCost = Number(item.cost_price ?? 0);
+      if (!Number.isFinite(unitCost) || unitCost < 0) throw new Error("BAD_COST");
+      if (!allowNegative && Number(item.quantity_on_hand || 0) + 0.000001 < qty) throw new Error("INSUFFICIENT_STOCK:" + item.name);
+      gross += grossLine; subtotal += lineSubtotal; vat += lineVat; cost += money(qty * unitCost);
+      resolved.push({ raw, item, qty, price, discount, grossLine, lineSubtotal, lineVat, lineTotal, unitCost });
+    }
+
+    const saleDiscountPct = Math.min(100, Math.max(0, Number(sale.sale_discount_pct || 0)));
+    const before = money(subtotal + vat);
+    const saleDiscount = money(before * saleDiscountPct / 100);
+    const ratio = before > 0 ? money((before - saleDiscount) / before) : 1;
+    subtotal = money(subtotal * ratio);
+    vat = money(vat * ratio);
+    const total = taxInclusive ? money(subtotal + vat) : money(subtotal + vat);
+    const paid = money(payments.reduce((s, p) => s + Number(p.amount || 0), 0));
+    const change = money(args?._change_due || 0);
+    if (paid + 0.01 < total + change) throw new Error("PAYMENT_SHORT");
+    if (Math.abs(paid - total - change) > 0.01) throw new Error("PAYMENT_RECONCILIATION_FAILED");
+
+    const saleId = id();
+    const saleNo = String(sale.sale_no || "POS-" + Date.now());
+    await tx.unsafe(
+      "INSERT INTO pos_sales(id,user_id,tenant_id,sale_no,client_ref,shift_id,register_id,customer_id,customer_name,price_level,status,subtotal,discount,tax,total,paid,change_due,cost_total,note,sold_at,created_by,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,'completed',$10,$11,$12,$13,$14,$15,$16,$17,now(),$2,$18)",
+      [saleId, uid, saleNo, sale.client_ref || null, sale.shift_id || null, sale.register_id || null, sale.customer_id || null, sale.customer_name || "Walk-in Customer", sale.price_level || "normal", subtotal + vat, saleDiscount, vat, total, paid, change, cost, sale.note || null, sale.location_id || null],
+    );
+
+    for (const x of resolved) {
+      await tx.unsafe(
+        "INSERT INTO pos_sale_items(id,user_id,tenant_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note,unit,base_qty,base_unit) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)",
+        [id(), uid, saleId, x.item.id, x.item.name, x.item.sku || null, x.qty, x.price, x.unitCost, x.discount, Number(x.item.vat_rate ?? 0), x.grossLine, x.raw.note || null, x.raw.unit || x.item.unit || null, x.qty, x.item.unit || null],
+      );
+      await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item.id, uid]);
+      await tx.unsafe(
+        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
+        [id(), uid, x.item.id, -x.qty, x.unitCost, saleNo, "POS sale", sale.location_id || x.item.warehouse_id || null],
+      );
+      if (sale.location_id) {
+        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, x.item.id, sale.location_id]);
+        const after = money(Number(bal?.quantity || 0) - x.qty);
+        if (bal) await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [after, bal.id]);
+        else await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)", [id(), uid, x.item.id, sale.location_id, after]);
+      }
+    }
+    for (const p of payments) {
+      const amount = money(p.amount);
+      if (amount <= 0) throw new Error("INVALID_PAYMENT");
+      await tx.unsafe("INSERT INTO pos_payments(id,user_id,tenant_id,sale_id,method,amount,reference) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6)", [id(), uid, saleId, p.method || "cash", amount, p.reference || null]);
+    }
+
+    const a = await accounts(tx, uid);
+    const applied: Record<string, number> = {};
+    let remaining = total;
+    for (const p of payments) {
+      const take = money(Math.min(remaining, Number(p.amount || 0)));
+      if (take > 0) {
+        const key = String(p.method || "cash").toLowerCase();
+        applied[key] = money((applied[key] || 0) + take);
+        remaining = money(remaining - take);
+      }
+    }
+    const lines: any[] = Object.entries(applied).map(([method, amount]) => ({ accountId: a.cash, debit: amount, credit: 0, description: "POS " + method }));
+    lines.push({ accountId: a.revenue, debit: 0, credit: subtotal, description: "Sales revenue" });
+    if (vat > 0) lines.push({ accountId: a.vat, debit: 0, credit: vat, description: "VAT output" });
+    if (cost > 0) {
+      lines.push({ accountId: a.cogs, debit: cost, credit: 0, description: "Cost of sales" });
+      lines.push({ accountId: a.inventory, debit: 0, credit: cost, description: "Inventory relief" });
+    }
+    const je = await journal(tx, uid, "POS:" + saleNo, "POS sale " + saleNo, dateOnly(), lines);
+    await tx.unsafe("UPDATE pos_sales SET journal_entry_id=$1,updated_at=now() WHERE id=$2", [je, saleId]);
+    await tx.unsafe(
+      "INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'pos_sale',$3,$4,$5,$6,'pending',$7,0,now())",
+      [id(), uid, saleId, saleNo, total, vat, JSON.stringify({ source: "cloud_pos", saleId, saleNo, total, vat })],
+    );
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [saleId, total + cost, total + cost, JSON.stringify({ saleNo, total, vat, cost }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "POS sale posted atomically", { saleId, saleNo, total, vat, cost });
+    await tx.unsafe("INSERT INTO audit_logs(id,user_id,tenant_id,action,entity_type,entity_id,details) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6)", [id(), uid, "POS_CHECKOUT", "pos_sale", saleId, JSON.stringify({ saleNo, total, vat, cost })]);
+    return { sale_id: saleId, sale_no: saleNo, transaction_id: b.id, duplicate: false, total, vat, cost };
+  });
+}
+
+export async function cloudPostInvoice(uid: string, args: any) {
+  const h = args?._invoice || {};
+  const items = Array.isArray(args?._items) ? args._items : [];
+  if (!h.number) throw new Error("INVOICE_NUMBER_REQUIRED");
+  if (!items.length) throw new Error("INVOICE_ITEMS_REQUIRED");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "SALES_INVOICE", "invoice", null, String(h.client_ref || h.number));
+    if (b.duplicate) return { invoice_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    let subtotal = 0, vat = 0;
+    for (const x of items) {
+      const line = money(Number(x.quantity) * Number(x.unit_price));
+      if (line < 0) throw new Error("INVALID_INVOICE_LINE");
+      subtotal += line; vat += money(line * Number(x.vat_rate ?? 16) / 100);
+    }
+    subtotal = money(subtotal); vat = money(vat); const total = money(subtotal + vat);
+    const invoiceId = id();
+    await tx.unsafe(
+      "INSERT INTO invoices(id,user_id,tenant_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,$9,$10,0,$10,$11,$12,$13,1)",
+      [invoiceId, uid, h.customer_id || null, h.number, dateOnly(h.issue_date), h.due_date || null, h.currency || "ZMW", subtotal, vat, total, h.seller_tpin || null, h.buyer_tpin || null, h.notes || null],
+    );
+    for (const x of items) {
+      const line = money(Number(x.quantity) * Number(x.unit_price));
+      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)", [id(), uid, invoiceId, x.stock_item_id || null, x.description || "Item", x.hs_code || null, Number(x.quantity), Number(x.unit_price), Number(x.vat_rate ?? 16), line]);
+    }
+    const a = await accounts(tx, uid);
+    const je = await journal(tx, uid, "INV:" + h.number, "Sales invoice " + h.number, dateOnly(h.issue_date), [
+      { accountId: a.receivable, debit: total, credit: 0, description: "Accounts receivable" },
+      { accountId: a.revenue, debit: 0, credit: subtotal, description: "Sales revenue" },
+      ...(vat > 0 ? [{ accountId: a.vat, debit: 0, credit: vat, description: "VAT output" }] : []),
+    ]);
+    await tx.unsafe("INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'invoice',$3,$4,$5,$6,'pending',$7,0,now())", [id(), uid, invoiceId, h.number, total, vat, JSON.stringify({ source: "cloud_invoice", invoiceId, invoiceNumber: h.number, total, vat })]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [invoiceId, total, total, JSON.stringify({ number: h.number, total, vat, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Sales invoice posted atomically", { invoiceId, number: h.number, total, vat, journalEntryId: je });
+    return { invoice_id: invoiceId, journal_entry_id: je, total, vat, transaction_id: b.id, duplicate: false };
+  });
+}
+
+export async function cloudPostPurchaseBill(uid: string, args: any) {
+  const h = args?._bill || {};
+  const items = Array.isArray(args?._items) ? args._items : [];
+  if (!h.bill_number) throw new Error("BILL_NUMBER_REQUIRED");
+  if (!items.length) throw new Error("BILL_ITEMS_REQUIRED");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "PURCHASE_BILL", "bill", null, String(h.client_ref || h.bill_number));
+    if (b.duplicate) return { bill_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    let subtotal = 0, tax = 0;
+    const resolved: any[] = [];
+    for (const x of items) {
+      const qty = Number(x.quantity), price = Number(x.unit_price);
+      if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(price) || price < 0) throw new Error("INVALID_BILL_LINE");
+      const line = money(qty * price), t = money(line * Number(x.tax_rate ?? 0) / 100);
+      subtotal += line; tax += t; resolved.push({ ...x, qty, price, line, tax: t });
+    }
+    subtotal = money(subtotal); tax = money(tax); const total = money(subtotal + tax); const billId = id();
+    await tx.unsafe("INSERT INTO bills(id,user_id,tenant_id,supplier_id,po_id,bill_number,supplier_invoice_number,bill_date,due_date,status,subtotal,tax_amount,total,amount_paid,balance_due,currency,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,'unpaid',$9,$10,$11,0,$11,$12,$13,1)", [billId, uid, h.supplier_id || null, h.po_id || null, h.bill_number, h.supplier_invoice_number || null, dateOnly(h.bill_date), h.due_date || null, subtotal, tax, total, h.currency || "ZMW", h.notes || null]);
+    for (const x of resolved) {
+      await tx.unsafe("INSERT INTO bill_items(id,user_id,tenant_id,bill_id,item_id,description,quantity,unit_price,tax_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9)", [id(), uid, billId, x.item_id || null, x.description || "Item", x.qty, x.price, Number(x.tax_rate || 0), x.line]);
+      if (x.item_id) {
+        const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.item_id, uid]);
+        if (!item) throw new Error("UNKNOWN_ITEM");
+        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item_id, uid]);
+        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'PURCHASE',$4,$5,$6,$7,$8)", [id(), uid, x.item_id, x.qty, x.price, h.bill_number, "Purchase receipt", h.location_id || item.warehouse_id || null]);
+      }
+    }
+    const a = await accounts(tx, uid);
+    const je = await journal(tx, uid, "BILL:" + h.bill_number, "Supplier bill " + h.bill_number, dateOnly(h.bill_date), [
+      { accountId: a.inventory, debit: subtotal, credit: 0, description: "Inventory purchase" },
+      ...(tax > 0 ? [{ accountId: a.inputVat, debit: tax, credit: 0, description: "VAT input" }] : []),
+      { accountId: a.payable, debit: 0, credit: total, description: "Accounts payable" },
+    ]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [billId, total, total, JSON.stringify({ billNumber: h.bill_number, total, tax, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Purchase bill posted atomically", { billId, number: h.bill_number, total, tax, journalEntryId: je });
+    return { bill_id: billId, journal_entry_id: je, total, tax, transaction_id: b.id, duplicate: false };
+  });
+}
+
+export async function cloudRecordBillPayment(uid: string, args: any) {
+  const h = args?._payment || {};
+  const billId = String(h.bill_id || ""), amount = money(h.amount);
+  if (!billId || amount <= 0) throw new Error("INVALID_BILL_PAYMENT");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const bill = await one(tx, "SELECT * FROM bills WHERE id=$1 AND user_id=$2 FOR UPDATE", [billId, uid]);
+    if (!bill) throw new Error("BILL_NOT_FOUND");
+    const balance = money(bill.balance_due);
+    if (amount > balance + 0.01) throw new Error("PAYMENT_EXCEEDS_BILL_BALANCE");
+    const b = await batch(tx, uid, "BILL_PAYMENT", "bill_payment", billId, String(h.client_ref || h.payment_number || id()));
+    if (b.duplicate) return { payment_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    const paymentId = id();
+    await tx.unsafe("INSERT INTO bill_payments(id,user_id,tenant_id,bill_id,supplier_id,payment_number,payment_date,amount,payment_method,reference,notes,currency,exchange_rate,bank_account_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,1,$12)", [paymentId, uid, billId, bill.supplier_id || null, h.payment_number || "BP-" + Date.now(), dateOnly(h.payment_date), amount, h.payment_method || "bank", h.reference || null, h.notes || null, h.currency || bill.currency || "ZMW", h.bank_account_id || null]);
+    const newPaid = money(Number(bill.amount_paid || 0) + amount), newBalance = money(balance - amount);
+    await tx.unsafe("UPDATE bills SET amount_paid=$1,balance_due=$2,status=$3,updated_at=now() WHERE id=$4", [newPaid, newBalance, newBalance <= 0.01 ? "paid" : "part_paid", billId]);
+    const a = await accounts(tx, uid);
+    const je = await journal(tx, uid, "BILLPAY:" + paymentId, "Payment for supplier bill " + bill.bill_number, dateOnly(h.payment_date), [
+      { accountId: a.payable, debit: amount, credit: 0, description: "Accounts payable settlement" },
+      { accountId: a.cash, debit: 0, credit: amount, description: "Cash / bank payment" },
+    ]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [paymentId, amount, amount, JSON.stringify({ billId, amount, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Supplier payment posted atomically", { paymentId, billId, amount, journalEntryId: je });
+    return { payment_id: paymentId, journal_entry_id: je, transaction_id: b.id, duplicate: false, new_balance: newBalance };
+  });
+}
+
+export async function cloudPostCreditNote(uid: string, args: any) {
+  const h = args?._credit_note || {}, items = Array.isArray(args?._items) ? args._items : [];
+  if (!h.number || !items.length) throw new Error("CREDIT_NOTE_DATA_REQUIRED");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "CREDIT_NOTE", "credit_note", null, String(h.client_ref || h.number));
+    if (b.duplicate) return { credit_note_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    let subtotal = 0, vat = 0;
+    for (const x of items) { const line = money(Number(x.quantity) * Number(x.unit_price)); subtotal += line; vat += money(line * Number(x.vat_rate ?? 16) / 100); }
+    subtotal = money(subtotal); vat = money(vat); const total = money(subtotal + vat), noteId = id();
+    await tx.unsafe("INSERT INTO credit_notes(id,user_id,tenant_id,customer_id,invoice_id,number,issue_date,currency,reason,subtotal,vat_amount,total,status,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,1)", [noteId, uid, h.customer_id || null, h.invoice_id || null, h.number, dateOnly(h.issue_date), h.currency || "ZMW", h.reason || null, subtotal, vat, total, h.notes || null]);
+    for (const x of items) {
+      await tx.unsafe("INSERT INTO credit_note_items(id,user_id,tenant_id,credit_note_id,stock_item_id,description,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9)", [id(), uid, noteId, x.stock_item_id || null, x.description || "Item", Number(x.quantity), Number(x.unit_price), Number(x.vat_rate ?? 16), money(Number(x.quantity) * Number(x.unit_price))]);
+      if (x.stock_item_id) {
+        const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.stock_item_id, uid]);
+        if (item) {
+          await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(x.quantity), x.stock_item_id, uid]);
+          await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, x.stock_item_id, Number(x.quantity), Number(item.cost_price || 0), h.number, "Credit note return", h.location_id || item.warehouse_id || null]);
+        }
+      }
+    }
+    const a = await accounts(tx, uid);
+    const je = await journal(tx, uid, "CN:" + h.number, "Credit note " + h.number, dateOnly(h.issue_date), [
+      { accountId: a.revenue, debit: subtotal, credit: 0, description: "Sales reversal" },
+      ...(vat > 0 ? [{ accountId: a.vat, debit: vat, credit: 0, description: "VAT reversal" }] : []),
+      { accountId: a.receivable, debit: 0, credit: total, description: "Customer credit" },
+    ]);
+    await tx.unsafe("INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'credit_note',$3,$4,$5,$6,'pending',$7,0,now())", [id(), uid, noteId, h.number, total, vat, JSON.stringify({ source: "cloud_credit_note", creditNoteId: noteId, number: h.number, total, vat })]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [noteId, total, total, JSON.stringify({ number: h.number, total, vat, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Credit note posted atomically", { creditNoteId: noteId, number: h.number, total, vat, journalEntryId: je });
+    return { credit_note_id: noteId, journal_entry_id: je, total, vat, transaction_id: b.id, duplicate: false };
+  });
+}
+
+export async function cloudReversePosSale(uid: string, args: any) {
+  const saleId = String(args?._sale_id || ""), action = String(args?._action || "void"), reason = String(args?._reason || "");
+  if (!saleId || !reason) throw new Error("REVERSAL_REASON_REQUIRED");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const sale = await one(tx, "SELECT * FROM pos_sales WHERE id=$1 AND user_id=$2 FOR UPDATE", [saleId, uid]);
+    if (!sale) throw new Error("SALE_NOT_FOUND");
+    if (["voided", "refunded"].includes(String(sale.status))) return saleId;
+    const fiscal = await one(tx, "SELECT status FROM zra_invoice_queue WHERE source_type='pos_sale' AND source_id=$1 ORDER BY updated_at DESC LIMIT 1", [saleId]);
+    if (fiscal && ["submitted", "fiscalized"].includes(String(fiscal.status))) throw new Error("FISCALIZED_SALE_REQUIRES_ZRA_CORRECTION_WORKFLOW");
+    const b = await batch(tx, uid, "POS_REVERSAL", "pos_sale", saleId, "reverse:" + saleId);
+    if (b.duplicate) return saleId;
+    const lines = await many(tx, "SELECT * FROM pos_sale_items WHERE sale_id=$1 AND user_id=$2", [saleId, uid]);
+    for (const line of lines) {
+      if (!line.item_id) continue;
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [line.item_id, uid]);
+      if (!item) continue;
+      await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(line.qty), line.item_id, uid]);
+      await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, line.item_id, Number(line.qty), Number(line.unit_cost || item.cost_price || 0), sale.sale_no, reason, sale.location_id || item.warehouse_id || null]);
+    }
+    if (sale.journal_entry_id) {
+      const old = await one(tx, "SELECT * FROM journal_entries WHERE id=$1 AND user_id=$2", [sale.journal_entry_id, uid]);
+      if (old) {
+        const oldLines = await many(tx, "SELECT * FROM journal_lines WHERE entry_id=$1 AND user_id=$2", [old.id, uid]);
+        const reversal = oldLines.map((l: any) => ({ accountId: String(l.account_id), debit: Number(l.credit || 0), credit: Number(l.debit || 0), description: "Reversal: " + (l.description || "") }));
+        await journal(tx, uid, "REV:" + sale.sale_no, "Reversal of POS sale " + sale.sale_no, dateOnly(), reversal);
+      }
+    }
+    const status = action === "refund" ? "refunded" : "voided";
+    await tx.unsafe("UPDATE pos_sales SET status=$1,void_reason=$2,updated_at=now() WHERE id=$3", [status, reason, saleId]);
+    if (action === "refund") await tx.unsafe("INSERT INTO cloud_payment_refunds(tenant_id,user_id,sale_id,amount,method,reference,reason) VALUES(current_setting('app.tenant_id',true)::uuid,$1,$2,$3,$4,$5,$6)", [uid, saleId, Number(sale.total || 0), args._refund_method || "cash", "REF-" + sale.sale_no, reason]);
+    await event(tx, uid, b.id, "POSTED", "POS " + status + " posted atomically", { saleId, action, reason });
+    return saleId;
+  });
+}
+
+export async function cloudRecordBillPayment(uid: string, args: any) {
+  const h = args?._payment || {};
+  const billId = String(h.bill_id || ""), amount = money(h.amount);
+  if (!billId || amount <= 0) throw new Error("INVALID_BILL_PAYMENT");
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const bill = await one(tx, "SELECT * FROM bills WHERE id=$1 AND user_id=$2 FOR UPDATE", [billId, uid]);
+    if (!bill) throw new Error("BILL_NOT_FOUND");
+    const balance = money(bill.balance_due);
+    if (amount > balance + 0.01) throw new Error("PAYMENT_EXCEEDS_BILL_BALANCE");
+    const b = await batch(tx, uid, "BILL_PAYMENT", "bill_payment", billId, String(h.client_ref || h.payment_number || id()));
+    if (b.duplicate) return { payment_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    const paymentId = id();
+    await tx.unsafe("INSERT INTO bill_payments(id,user_id,tenant_id,bill_id,supplier_id,payment_number,payment_date,amount,payment_method,reference,notes,currency,exchange_rate,bank_account_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,1,$12)", [paymentId, uid, billId, bill.supplier_id || null, h.payment_number || "BP-" + Date.now(), dateOnly(h.payment_date), amount, h.payment_method || "bank", h.reference || null, h.notes || null, h.currency || bill.currency || "ZMW", h.bank_account_id || null]);
+    const newPaid = money(Number(bill.amount_paid || 0) + amount), newBalance = money(balance - amount);
+    await tx.unsafe("UPDATE bills SET amount_paid=$1,balance_due=$2,status=$3,updated_at=now() WHERE id=$4", [newPaid, newBalance, newBalance <= 0.01 ? "paid" : "part_paid", billId]);
+    const a = await accounts(tx, uid);
+    const je = await journal(tx, uid, "BILLPAY:" + paymentId, "Payment for supplier bill " + bill.bill_number, dateOnly(h.payment_date), [
+      { accountId: a.payable, debit: amount, credit: 0, description: "Accounts payable settlement" },
+      { accountId: a.cash, debit: 0, credit: amount, description: "Cash / bank payment" },
+    ]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [paymentId, amount, amount, JSON.stringify({ billId, amount, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Supplier payment posted atomically", { paymentId, billId, amount, journalEntryId: je });
+    return { payment_id: paymentId, journal_entry_id: je, transaction_id: b.id, duplicate: false, new_balance: newBalance };
+  });
+}
