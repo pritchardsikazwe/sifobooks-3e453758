@@ -579,6 +579,64 @@ export const HOTEL_HUBS: HubDef[] = [
 ];
 
 
+export const SCHOOL_HUBS: HubDef[] = [
+  { key: "school-home", label: "School", iconName: "School", purpose: "Run admissions, learners, teaching and daily school operations.", groups: [
+    { label: "Today", items: [
+      { title: "School Dashboard", url: "/school", module: "school_erp", iconName: "LayoutDashboard", primary: true },
+      { title: "Admissions", url: "/school/admissions", module: "school_erp", iconName: "UserPlus", primary: true },
+      { title: "Students", url: "/school/students", module: "school_erp", iconName: "GraduationCap", primary: true },
+      { title: "Parents & Guardians", url: "/school/parents", module: "school_erp", iconName: "Users", primary: true },
+    ]},
+  ]},
+  { key: "school-academics", label: "Academics", iconName: "BookOpen", purpose: "Manage classes, subjects, timetable, attendance and examinations.", groups: [
+    { label: "Teaching", items: [
+      { title: "Classes & Subjects", url: "/school/academics", module: "school_erp", iconName: "BookOpen", primary: true },
+      { title: "Timetable", url: "/school/timetable", module: "school_erp", iconName: "CalendarDays", primary: true },
+      { title: "Attendance", url: "/school/attendance", module: "school_erp", iconName: "CalendarCheck", primary: true },
+      { title: "Examinations", url: "/school/exams", module: "school_erp", iconName: "ClipboardCheck", primary: true },
+      { title: "Report Cards", url: "/school/report-cards", module: "school_erp", iconName: "FileText", primary: true },
+    ]},
+  ]},
+  { key: "school-fees", label: "Fees", iconName: "Wallet", purpose: "Bill school fees, receive payments and track balances.", groups: [
+    { label: "Finance", items: [
+      { title: "Fees & Billing", url: "/school/fees-billing", module: "school_erp", iconName: "ReceiptText", primary: true },
+      { title: "Fees", url: "/school/fees", module: "school_erp", iconName: "Receipt", primary: true },
+      { title: "Payments", url: "/school/payments", module: "school_erp", iconName: "CreditCard", primary: true },
+      { title: "School Accounting", url: "/reports", module: "reports", iconName: "Landmark" },
+    ]},
+  ]},
+  { key: "school-support", label: "Student Services", iconName: "HeartHandshake", purpose: "Boarding, transport, scholarships and parent communication.", groups: [
+    { label: "Services", items: [
+      { title: "Boarding", url: "/school/boarding", module: "school_erp", iconName: "BedDouble", primary: true },
+      { title: "Transport", url: "/school/transport", module: "school_erp", iconName: "Bus", primary: true },
+      { title: "Scholarships", url: "/school/scholarships", module: "school_erp", iconName: "Award", primary: true },
+      { title: "Parent Portal", url: "/school/parent-portal", module: "school_erp", iconName: "Users", primary: true },
+      { title: "Student Portal", url: "/school/student-portal", module: "school_erp", iconName: "GraduationCap" },
+    ]},
+  ]},
+  { key: "school-people", label: "Staff", iconName: "UsersRound", purpose: "Teachers, staff, HR and payroll.", groups: [
+    { label: "People", items: [
+      { title: "School Staff", url: "/school/staff", module: "school_erp", iconName: "UsersRound", primary: true },
+      { title: "Payroll", url: "/payroll", module: "hr_payroll", iconName: "Banknote", primary: true },
+      { title: "Attendance", url: "/attendance", module: "hr_payroll", iconName: "CalendarCheck" },
+    ]},
+  ]},
+  { key: "school-reports", label: "Reports", iconName: "BarChart3", purpose: "Academic, enrolment, fees and management reporting.", groups: [
+    { label: "Reporting", items: [
+      { title: "School Reports", url: "/school/reports", module: "school_erp", iconName: "BarChart3", primary: true },
+      { title: "Compliance", url: "/school/compliance", module: "school_erp", iconName: "ShieldCheck" },
+      { title: "Grants", url: "/school-grants", module: "school_erp", iconName: "Landmark" },
+    ]},
+  ]},
+  { key: "school-settings", label: "Settings", iconName: "Settings2", purpose: "School setup, users and licensed features.", groups: [
+    { label: "Setup", items: [
+      { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
+      { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
+      { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid" },
+    ]},
+  ]},
+];
+
 /** SifoRetail — focused retail/POS workspace. */
 export const RETAIL_HUBS: HubDef[] = [
   { key: "retail-home", label: "Retail", iconName: "Store", purpose: "Run the shop: sell, control stock and see today's numbers.", groups: [
@@ -689,5 +747,7 @@ export function hubsForMode(mode: string | null | undefined, edition?: string | 
   if (mode === "hotel_only") return HOTEL_HUBS;
   if (edition === "restaurant") return RESTAURANT_HUBS;
   if (edition === "retail") return RETAIL_HUBS;
+  if (edition === "hotel") return HOTEL_HUBS;
+  if (edition === "school") return SCHOOL_HUBS;
   return HUBS;
 }
