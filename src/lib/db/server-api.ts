@@ -398,10 +398,53 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
   return tx;
 }
 
+function executeBillPayment(args: Record<string, any>) {
+  const db=getDb(); const uid=String(args._uid||""); const h=args._payment||{};
+  const billId=String(h.bill_id||""); const amount=Math.round(Number(h.amount||0)*100)/100;
+  if(!uid||!billId||!(amount>0)) throw new Error("INVALID_BILL_PAYMENT");
+  const bill=db.prepare("SELECT * FROM bills WHERE id=? AND user_id=? LIMIT 1").get(billId,uid) as any;
+  if(!bill) throw new Error("BILL_NOT_FOUND");
+  const balance=Math.round(Number(bill.balance_due??(Number(bill.total||0)-Number(bill.amount_paid||0)))*100)/100;
+  if(amount>balance+0.01) throw new Error("PAYMENT_EXCEEDS_BILL_BALANCE");
+  assertPeriodOpen(uid,String(h.payment_date||new Date().toISOString()).slice(0,10));
+  const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId=company?.company_id??null;
+  const payable=postingAccount(db,uid,companyId,"ACCOUNTS_PAYABLE",["2100","2000"]);
+  let bankId=h.bank_account_id||null;
+  let cashAccount:string;
+  if(bankId){
+    const bank=db.prepare("SELECT gl_account_id FROM bank_accounts WHERE id=? AND user_id=? AND is_active=1 LIMIT 1").get(bankId,uid) as any;
+    cashAccount=bank?.gl_account_id||postingAccount(db,uid,companyId,"PAYMENT_CASH",["1000","1100"]);
+  } else {
+    cashAccount=postingAccount(db,uid,companyId,"PAYMENT_CASH",["1000","1100"]);
+  }
+  const tx=db.transaction(()=>{
+    const paymentId=generateUUID();
+    const paymentNumber=String(h.payment_number||nextDocumentNumber({userId:uid,companyId,documentType:"BILL_PAYMENT",prefix:"PAY",padding:6}));
+    db.prepare("INSERT INTO bill_payments(id,user_id,bill_id,supplier_id,payment_number,payment_date,amount,payment_method,reference,notes,currency,exchange_rate,bank_account_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(paymentId,uid,billId,bill.supplier_id??null,paymentNumber,String(h.payment_date||new Date().toISOString()).slice(0,10),amount,h.payment_method||"bank",h.reference??null,h.notes??null,h.currency??bill.currency??"ZMW",1,bankId);
+    const newPaid=Math.round((Number(bill.amount_paid||0)+amount)*100)/100;
+    const newBalance=Math.max(0,Math.round((balance-amount)*100)/100);
+    db.prepare("UPDATE bills SET amount_paid=?,balance_due=?,status=?,updated_at=datetime('now') WHERE id=? AND user_id=?")
+      .run(newPaid,newBalance,newBalance<=0.01?"paid":"part_paid",billId,uid);
+    const jeId=generateUUID(), jeNo=nextDocumentNumber({userId:uid,companyId,documentType:"JOURNAL",prefix:"JE",padding:6});
+    db.prepare("INSERT INTO journal_entries(id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+      .run(jeId,uid,jeNo,String(h.payment_date||new Date().toISOString()).slice(0,10),"BILLPAY:"+paymentId,"Payment for supplier bill "+bill.bill_number,"posted",amount,amount,h.currency??bill.currency??"ZMW",1);
+    db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,jeId,payable,"Accounts payable settlement",amount,0);
+    db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,jeId,cashAccount,"Cash / bank payment",0,amount);
+    void recordAuditEvent({userId:uid,action:"SUPPLIER_PAYMENT_POSTED",entityType:"bill_payment",entityId:paymentId,newValue:{billId,amount,journalEntryId:jeId}});
+    return {payment_id:paymentId,journal_entry_id:jeId,new_balance:newBalance,payment_number:paymentNumber};
+  });
+  return tx;
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
     switch (name) {
+      case "record_bill_payment": {
+        return { data: executeBillPayment(args), error: null };
+      }
       case "post_sales_invoice": {
         return { data: executeSalesInvoicePosting(args), error: null };
       }
