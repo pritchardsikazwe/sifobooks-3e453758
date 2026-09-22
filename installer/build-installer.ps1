@@ -13,8 +13,10 @@ New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
 
 $magick = Get-Command magick -ErrorAction SilentlyContinue
 if (!$magick) { throw "ImageMagick (magick.exe) is required to build the branded installer artwork." }
-& $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "400x400" -gravity center -extent 420x520 (Join-Path $assetDir "SifoBooks-wizard.bmp")
-if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks installer artwork." }
+& $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "180x180" -gravity center -extent 240x459 (Join-Path $assetDir "SifoBooks-wizard.bmp")
+if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks wizard artwork." }
+& $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "110x110" -gravity center -extent 147x147 (Join-Path $assetDir "SifoBooks-small.bmp")
+if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks small installer artwork." }
 
 $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
 $product = if ($Edition -eq "enterprise") { "SifoBooks" } else { "SifoBooks-$display" }
