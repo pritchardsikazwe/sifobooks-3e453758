@@ -384,7 +384,7 @@ function RetailPos() {
             <div className="min-w-0 leading-tight">
               <div className="truncate text-sm font-bold">SifoPOS · Retail</div>
               <div className="truncate text-[11px] text-muted-foreground">
-                {register?.branch ?? "Main"} · {register?.name ?? "Register 01"} · {shift?.cashier_name ?? "Cashier"}
+                {register?.branch ?? "Main"} · {register?.name ?? "Register 01"} · {register?.location_name ?? "No store assigned"} · {shift?.cashier_name ?? "Cashier"}
               </div>
             </div>
           </div>
