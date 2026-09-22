@@ -370,7 +370,7 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
     }
     for(const x of resolved){
       if(!x.stock_item_id) continue;
-      const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=? FOR UPDATE").get(x.stock_item_id,uid) as any;
+      const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(x.stock_item_id,uid) as any;
       if(!item) throw new Error("UNKNOWN_ITEM");
       const available=Number(item.quantity_on_hand||0);
       if(available<x.qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
