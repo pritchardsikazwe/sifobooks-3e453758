@@ -1,0 +1,31 @@
+SIFOBOOKS LAN - THREE POS STATIONS
+
+SERVER PC
+- Run start-sifobooks-network.bat.
+- Keep the central data\\sifobooks.db only on this server.
+- Give the server a fixed LAN IP, for example 192.168.1.100.
+- Allow TCP port 3000 through Windows Firewall on the private LAN.
+
+POS PC 1 / 2 / 3
+- Connect to http://SERVER-IP:3000.
+- Use unique station codes POS-01, POS-02 and POS-03.
+- Assign each station to its cashier/user account and role.
+- Do not run an independent company database on the POS PC in LAN mode.
+
+ROLES
+- Company Administrator: company setup, users, stations, accounting, inventory, ZRA and reports.
+- Manager/Supervisor: operational management and approved reports.
+- Cashier: POS/till operations and own shift records only.
+
+ZRA SMART INVOICE / VSDC
+Each fiscal station must have its applicable ZRA identity recorded against the station. Store:
+- ZRA branch code
+- ZRA device ID where issued
+- SDC ID where applicable
+- device serial number
+- VSDC endpoint
+- ZRA environment (test/production)
+
+Do not invent or reuse ZRA device identifiers. Enter the identifiers supplied/registered by ZRA. Fiscal transaction records must retain the station identity and the ZRA response data (receipt number, internal data, signature and QR information) returned by the approved VSDC integration.
+
+The VSDC integration remains subject to ZRA approval/certification and the applicable ZRA Smart Invoice specifications.

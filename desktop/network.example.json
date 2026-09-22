@@ -1,0 +1,23 @@
+{
+  "mode": "server",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 3000,
+    "display_name": "SifoBooks Server"
+  },
+  "client": {
+    "server_url": "http://192.168.1.100:3000",
+    "station_code": "POS-01",
+    "station_name": "Front Counter 1",
+    "station_type": "pos",
+    "assigned_role": "cashier"
+  },
+  "zra": {
+    "environment": "production",
+    "branch_code": "",
+    "device_id": "",
+    "sdc_id": "",
+    "device_serial": "",
+    "vsdc_endpoint": "http://127.0.0.1:8080"
+  }
+}
