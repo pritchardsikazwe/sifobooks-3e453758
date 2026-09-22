@@ -14,7 +14,6 @@ export const Route = createFileRoute("/license")({
 function LicensePage() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<any>(null);
-  const [trialDays, setTrialDays] = useState("30");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -63,7 +62,7 @@ function LicensePage() {
 
         <Card className="p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <div><div className="font-semibold">Current status</div><div className="text-sm text-muted-foreground">{status?.status === "active" ? "Licensed" : "Unlicensed"}</div></div>
+            <div><div className="font-semibold">Current status</div><div className="text-sm text-muted-foreground">{status?.status === "active" ? "Licensed" : status?.status === "trial" ? `Trial — ${status?.days_remaining ?? ""} days remaining` : "Trial expired / licence required"}</div></div>
             <ShieldCheck className="h-6 w-6 text-[#0f4c5c]" />
           </div>
 
@@ -84,12 +83,18 @@ function LicensePage() {
             </Button>
           </div>
 
+          {status?.status === "trial" && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+              <b>14-day first-install trial</b>
+              <div className="mt-1">Your SifoBooks trial expires on {status.expires_at ? new Date(status.expires_at).toLocaleDateString() : "—"}. Activate a Sifonet licence before expiry to continue using the system.</div>
+            </div>
+          )}
+
           <div className="border-t pt-4">
             <div className="flex items-center gap-2 font-semibold"><Clock3 className="h-4 w-4" /> Demo / Trial</div>
-            <p className="text-sm text-muted-foreground mt-1">Ask Sifonet Technologies for a trial key. Your trial can be issued for 14 or 30 days and tied to this computer.</p>
-            <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-              <Input value={trialDays} onChange={e => setTrialDays(e.target.value)} type="number" min="1" max="90" />
-              <Button variant="outline" onClick={copyFingerprint}><Monitor className="h-4 w-4 mr-2" />{copied ? "Copied" : "Device ID"}</Button>
+            <p className="text-sm text-muted-foreground mt-1">Every new installation starts with a 14-day trial. For a customer-specific signed trial or paid licence, send Sifonet Technologies the Device ID below.</p>
+            <div className="mt-3">
+              <Button variant="outline" onClick={copyFingerprint}><Monitor className="h-4 w-4 mr-2" />{copied ? "Copied" : "Copy Device ID"}</Button>
             </div>
           </div>
         </Card>
