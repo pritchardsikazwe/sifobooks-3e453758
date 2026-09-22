@@ -211,6 +211,7 @@ function NewInvoicePage() {
           issue_date: issueDate,
           due_date: dueDate,
           currency,
+          tax_inclusive: taxInclusive,
           seller_tpin: company?.tpin ?? null,
           buyer_tpin: buyerTpin || null,
           notes,
