@@ -173,13 +173,22 @@ function runSqlMigrations(database: Database) {
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = bundled.length ? bundled.find((entry) => entry.name === file)?.sql || "" : readFileSync(join(dir!, file), "utf8");
-    const tx = database.transaction(() => {
-      const statements = sql.split(/;\\s*\\n/).map((s) => s.trim()).filter(Boolean);
-      for (const statement of statements) database.exec(statement + ";");
-      database.prepare("INSERT INTO schema_migrations (id) VALUES (?)").run(file);
-    });
+    const statements = sql.split(/;\\s*\\n/).map((s) => s.trim()).filter(Boolean);
     try {
-      tx();
+      // Migrations must be safe against databases whose schema already contains
+      // some of the same objects/columns (for example databases created from
+      // the protected schema before a migration bundle was introduced).
+      for (const statement of statements) {
+        try {
+          database.exec(statement + ";");
+        } catch (error: any) {
+          const message = String(error?.message || "");
+          if (!/already exists|duplicate column|duplicate index/i.test(message)) {
+            throw error;
+          }
+        }
+      }
+      database.prepare("INSERT INTO schema_migrations (id) VALUES (?)").run(file);
     } catch (error: any) {
       console.error("[db] Migration failed:", file, error?.message?.slice(0, 500));
       throw error;
