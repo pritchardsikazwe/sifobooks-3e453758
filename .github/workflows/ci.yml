@@ -65,6 +65,10 @@ jobs:
       - name: Standalone dependency check
         run: bun run check:standalone
 
+      - name: Install ImageMagick before desktop build
+        shell: pwsh
+        run: choco install imagemagick.app --no-progress -y
+
       - name: Build Windows desktop package
         run: bun run build:desktop
 
@@ -72,11 +76,9 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path desktop-dist\\* -DestinationPath SifoBooks-${{ matrix.edition }}-Windows-Portable.zip -Force
 
-      - name: Install Inno Setup and ImageMagick
+      - name: Install Inno Setup
         shell: pwsh
-        run: |
-          choco install innosetup --no-progress -y
-          choco install imagemagick.app --no-progress -y
+        run: choco install innosetup --no-progress -y
 
       - name: Build branded Windows installer
         shell: pwsh
