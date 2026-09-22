@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const root = await mkdtemp(join(process.cwd(), ".qa-backup-"));
@@ -7,6 +7,7 @@ const dbPath = join(root, "data", "sifobooks.db");
 const backupPath = join(root, "backups", "qa-backup.db");
 const restoredPath = join(root, "restored.db");
 await Bun.write(join(root, "placeholder"), "qa");
+await mkdir(join(root, "data"), { recursive: true });
 await Bun.write(dbPath, "");
 await Bun.write(join(root, "data", ".keep"), "");
 
