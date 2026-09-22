@@ -13,31 +13,6 @@ const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCas
 const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
 const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
 const exeName = `${productName}.exe`;
-
-function copyDir(src: string, dest: string) {
-  if (!existsSync(src)) return;
-  mkdirSync(dest, { recursive: true });
-  for (const entry of readdirSync(src)) {
-    const srcPath = join(src, entry);
-    const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
-    else copyFileSync(srcPath, destPath);
-  }
-}
-
-console.log(`\nStep 1/4: Building ${productName} web application...\n`);
-process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await /**
- * Build a standalone SifoBooks Windows edition.
- *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant
- */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, rmSync } from "fs";
-import { join } from "path";
-import { $ } from "bun";
-
-const OUT_DIR = "desktop-dist";
-const CLIENT_DIR = join(OUT_DIR, "client");
 const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
 const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
 const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
@@ -56,44 +31,11 @@ function copyDir(src: string, dest: string) {
 
 console.log(`\nStep 1/4: Building ${productName} web application...\n`);
 process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-bun run build`;
+await $\`bun run build\`;
 
 console.log("\nStep 2/4: Compiling standalone Windows executable...\n");
 mkdirSync(OUT_DIR, { recursive: true });
-await /**
- * Build a standalone SifoBooks Windows edition.
- *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant
- */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, rmSync } from "fs";
-import { join } from "path";
-import { $ } from "bun";
-
-const OUT_DIR = "desktop-dist";
-const CLIENT_DIR = join(OUT_DIR, "client");
-const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
-const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
-const exeName = `${productName}.exe`;
-
-function copyDir(src: string, dest: string) {
-  if (!existsSync(src)) return;
-  mkdirSync(dest, { recursive: true });
-  for (const entry of readdirSync(src)) {
-    const srcPath = join(src, entry);
-    const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
-    else copyFileSync(srcPath, destPath);
-  }
-}
-
-console.log(`\nStep 1/4: Building ${productName} web application...\n`);
-process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await $\`bun run build`;
-
-console.log("\nStep 2/4: Compiling standalone Windows executable...\n");
-mkdirSync(OUT_DIR, { recursive: true });
-bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+await $\`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}\`;
 
 console.log("\nStep 3/4: Copying application files...\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
@@ -102,6 +44,7 @@ copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
 copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
 mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
 if (existsSync("public/favicon.ico")) copyFileSync("public/favicon.ico", join(OUT_DIR, "SifoBooks.ico"));
+writeFileSync(join(OUT_DIR, "edition.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, productName }, null, 2));
 writeFileSync(join(OUT_DIR, "edition.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, productName }, null, 2));
 
 writeFileSync(join(OUT_DIR, ".env.example"), [
