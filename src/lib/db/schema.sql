@@ -2874,9 +2874,14 @@ CREATE TABLE IF NOT EXISTS "user_roles" (
 CREATE TABLE IF NOT EXISTS "warehouses" (
   "id" TEXT PRIMARY KEY,
   "user_id" TEXT NOT NULL,
-  "code" TEXT NOT NULL,
+  "company_id" TEXT,
+  "code" TEXT,
+  "name" TEXT NOT NULL DEFAULT 'Warehouse',
   "branch_id" TEXT,
-  "manager" TEXT DEFAULT 1,
+  "location" TEXT,
+  "manager" TEXT,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
