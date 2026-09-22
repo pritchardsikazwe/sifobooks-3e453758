@@ -65,6 +65,25 @@ export function getColumns(table: string): string[] {
 
 
 function runCompatibilityMigrations(database: Database) {
+  // Warehouse records existed in some desktop builds without the columns
+  // required by the current warehouse UI. Create the table first, then add
+  // missing columns safely for existing databases.
+  database.exec(`CREATE TABLE IF NOT EXISTS warehouses (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    company_id TEXT,
+    code TEXT,
+    name TEXT NOT NULL DEFAULT 'Warehouse',
+    branch_id TEXT,
+    location TEXT,
+    manager TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
+  database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_user ON warehouses(user_id);`);
+  database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_branch ON warehouses(branch_id);`);
+
   const migrations: Record<string, string[]> = {
     companies: [
       "payslip_footer TEXT",
@@ -95,6 +114,13 @@ function runCompatibilityMigrations(database: Database) {
       "error_code TEXT",
     ],
     zra_standard_codes: ["code_class_name TEXT"],
+    warehouses: [
+      "company_id TEXT",
+      "name TEXT NOT NULL DEFAULT 'Warehouse'",
+      "location TEXT",
+      "is_active INTEGER NOT NULL DEFAULT 1",
+      "created_at TEXT NOT NULL DEFAULT (datetime('now'))",
+    ],
   };
 
   for (const [table, columns] of Object.entries(migrations)) {
