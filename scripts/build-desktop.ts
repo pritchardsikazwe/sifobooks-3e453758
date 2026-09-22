@@ -116,14 +116,14 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "",
 ].join("\\r\\n"));
 
-writeFileSync(join(OUT_DIR, "start-sifobooks-network.bat"), [
+writeFileSync(join(OUT_DIR, "config", "network.example.json"), JSON.stringify({\n  mode: "server",\n  server: { host: "0.0.0.0", port: 3000, display_name: `${productName} Server` },\n  client: { server_url: "http://192.168.1.100:3000", station_code: "POS-01", station_name: "Front Counter 1", station_type: "pos", assigned_role: "cashier" },\n  zra: { environment: "production", branch_code: "", device_id: "", sdc_id: "", device_serial: "", vsdc_endpoint: "http://127.0.0.1:8080" }\n}, null, 2));\n\nwriteFileSync(join(OUT_DIR, "start-sifobooks-network.bat"), [
   "@echo off",
   "cd /d \"%~dp0\"",
   "set SIFOBOOKS_MODE=network",
-  "set SIFOBOOKS_DATABASE=postgres",
+  "set SIFOBOOKS_DATABASE=sqlite",
   "set SIFOBOOKS_HOST=0.0.0.0",
-  "set SIFOBOOKS_OFFLINE_ENABLED=false",
-  "set SIFOBOOKS_SYNC_ENABLED=true",
+  "set SIFOBOOKS_OFFLINE_ENABLED=true",
+  "set SIFOBOOKS_SYNC_ENABLED=false",
   `start "" "${exeName}"`,
   "",
 ].join("\\n"));
