@@ -39,9 +39,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
-Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
+Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 Name: "startup"; Description: "Start SifoBooks automatically when Windows starts"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
-Name: "launch"; Description: "Launch SifoBooks after installation"; GroupDescription: "After installation:"; Flags: checkedonce
+Name: "launch"; Description: "Launch SifoBooks after installation"; GroupDescription: "After installation:"; Flags: unchecked
 
 [Files]
 Source: "..\desktop-dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -110,8 +110,8 @@ begin
   OptionsPage.Add('Configure for LAN / multiple computers');
   OptionsPage.Add('Open Getting Started Guide');
   OptionsPage.Values[0] := WizardIsTaskSelected('desktopicon');
-  OptionsPage.Values[1] := WizardIsTaskSelected('startmenu');
-  OptionsPage.Values[2] := WizardIsTaskSelected('launch');
+  OptionsPage.Values[1] := True;
+  OptionsPage.Values[2] := True;
   OptionsPage.Values[3] := False;
   OptionsPage.Values[4] := False;
 
@@ -157,9 +157,9 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
   if CurPageID = OptionsPage.ID then begin
-    if OptionsPage.Values[0] then WizardSelectTasks('desktopicon') else WizardDeselectTasks('desktopicon');
-    if OptionsPage.Values[1] then WizardSelectTasks('startmenu') else WizardDeselectTasks('startmenu');
-    if OptionsPage.Values[2] then WizardSelectTasks('launch') else WizardDeselectTasks('launch');
+    if OptionsPage.Values[0] then WizardSelectTasks('desktopicon');
+    if OptionsPage.Values[1] then WizardSelectTasks('startmenu');
+    if OptionsPage.Values[2] then WizardSelectTasks('launch');
     if OptionsPage.Values[4] then
       MsgBox('The Getting Started Guide is included in the installed SifoBooks folder.', mbInformation, MB_OK);
   end;
