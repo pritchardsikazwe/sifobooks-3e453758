@@ -599,7 +599,17 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
       case "can_manage_company": {
         const userId = args._user_id;
         const companyId = args._company_id;
-        const row = db.prepare("SELECT role FROM company_members WHERE user_id = ? AND company_id = ? AND role IN ('admin', 'owner')").get(userId, companyId) as any;
+        const row = db.prepare(`
+          SELECT c.id
+          FROM companies c
+          LEFT JOIN company_members cm
+            ON cm.company_id = c.id
+           AND cm.user_id = ?
+           AND cm.role IN ('admin', 'owner')
+          WHERE c.id = ?
+            AND (c.user_id = ? OR cm.user_id IS NOT NULL)
+          LIMIT 1
+        `).get(userId, companyId, userId) as any;
         return { data: !!row, error: null };
       }
       case "is_company_admin": {
