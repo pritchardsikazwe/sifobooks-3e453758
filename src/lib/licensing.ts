@@ -1,6 +1,9 @@
 import { createHash, createPrivateKey, createPublicKey, sign, verify } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+
+const FIRST_INSTALL_TRIAL_DAYS = 14;
+const INSTALL_MARKER_FILE = "data/.installation.json";
 import os from "node:os";
 
 export type SifoBooksLicense = {
@@ -71,6 +74,48 @@ export function verifyLicenseToken(token: string): SifoBooksLicense {
   return payload;
 }
 
+type FirstInstallTrial = { installed_at: string; expires_at: string; fingerprint: string; };
+
+function firstInstallTrialPath() { return join(baseDir(), INSTALL_MARKER_FILE); }
+
+export function getFirstInstallTrial() {
+  const path = firstInstallTrialPath();
+  try {
+    if (!existsSync(path)) {
+      mkdirSync(join(baseDir(), "data"), { recursive: true });
+      const installed = new Date();
+      const expires = new Date(installed.getTime() + FIRST_INSTALL_TRIAL_DAYS * 86400000);
+      const marker: FirstInstallTrial = {
+        installed_at: installed.toISOString(),
+        expires_at: expires.toISOString(),
+        fingerprint: getDeviceFingerprint(),
+      };
+      writeFileSync(path, JSON.stringify(marker, null, 2), { mode: 0o600 });
+      return marker;
+    }
+    const marker = JSON.parse(readFileSync(path, "utf8")) as FirstInstallTrial;
+    if (!marker.installed_at || !marker.expires_at || !marker.fingerprint) throw new Error("Invalid installation marker");
+    return marker;
+  } catch {
+    return null;
+  }
+}
+
+export function firstInstallTrialStatus() {
+  const marker = getFirstInstallTrial();
+  if (!marker) return { status: "expired", trial_days: FIRST_INSTALL_TRIAL_DAYS, reason: "Installation trial marker is unavailable" };
+  if (marker.fingerprint !== getDeviceFingerprint()) return { status: "expired", trial_days: FIRST_INSTALL_TRIAL_DAYS, expires_at: marker.expires_at, reason: "Trial belongs to a different computer" };
+  const remainingMs = Date.parse(marker.expires_at) - Date.now();
+  if (remainingMs <= 0) return { status: "expired", trial_days: FIRST_INSTALL_TRIAL_DAYS, expires_at: marker.expires_at };
+  return {
+    status: "trial",
+    trial_days: FIRST_INSTALL_TRIAL_DAYS,
+    expires_at: marker.expires_at,
+    days_remaining: Math.ceil(remainingMs / 86400000),
+    device_fingerprint: getDeviceFingerprint(),
+  };
+}
+
 export function readStoredLicense(): { token: string; license: SifoBooksLicense } | null {
   const path = join(baseDir(), LICENSE_FILE);
   if (!existsSync(path)) return null;
@@ -113,6 +158,8 @@ export function issueLicense(input: Omit<SifoBooksLicense, "license_id" | "issue
 
 export function licenseStatus() {
   const stored = readStoredLicense();
-  if (!stored) return { status: "unlicensed", device_fingerprint: getDeviceFingerprint() };
-  return { status: "active", license: stored.license, device_fingerprint: getDeviceFingerprint() };
+  if (stored) return { status: "active", license: stored.license, device_fingerprint: getDeviceFingerprint() };
+  const trial = firstInstallTrialStatus();
+  if (trial.status === "trial") return { ...trial, device_fingerprint: getDeviceFingerprint() };
+  return { status: "unlicensed", ...trial, device_fingerprint: getDeviceFingerprint() };
 }
