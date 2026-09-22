@@ -25,15 +25,15 @@ function copyDir(src: string, dest: string) {
   }
 }
 
-console.log(`\nStep 1/4: Building ${productName} web application...\n`);
+console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
 process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await $\`bun run build\`;
+await $`bun run build`;
 
-console.log("\nStep 2/4: Compiling standalone Windows executable...\n");
+console.log("\\nStep 2/4: Compiling standalone Windows executable...\\n");
 mkdirSync(OUT_DIR, { recursive: true });
-await $\`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}\`;
+await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
 
-console.log("\nStep 3/4: Copying application files...\n");
+console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
 copyDir("dist/client", CLIENT_DIR);
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
@@ -54,7 +54,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "SIFOBOOKS_PWA_ENABLED=true",
   "SIFOBOOKS_PRINTING=system",
   "",
-].join("\n"));
+].join("\\n"));
 
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
@@ -69,21 +69,21 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "End If",
   "Set fso = Nothing",
   "Set shell = Nothing",
-].join("\r\n"));
+].join("\\r\\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
   "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
   "$desktop = [Environment]::GetFolderPath('Desktop')",
   "$startup = [Environment]::GetFolderPath('Startup')",
-  "$wscript = Join-Path $env:WINDIR 'System32\\wscript.exe'",
+  "$wscript = Join-Path $env:WINDIR 'System32\\\\wscript.exe'",
   "$vbs = Join-Path $appDir 'Start-SifoBooks.vbs'",
   "$icon = Join-Path $appDir 'SifoBooks.ico'",
   "function New-SifoBooksShortcut([string]$path) {",
   "  $ws = New-Object -ComObject WScript.Shell",
   "  $s = $ws.CreateShortcut($path)",
   "  $s.TargetPath = $wscript",
-  "  $s.Arguments = ('\"{0}\"' -f $vbs)",
+  "  $s.Arguments = ('\\\"{0}\\\"' -f $vbs)",
   "  $s.WorkingDirectory = $appDir",
   "  if (Test-Path $icon) { $s.IconLocation = $icon + ',0' }",
   `  $s.Description = '${productName}'`,
@@ -93,7 +93,7 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "New-SifoBooksShortcut (Join-Path $startup 'SifoBooks.lnk')",
   `Write-Host '${productName} desktop and startup shortcuts created.'`,
   "",
-].join("\r\n"));
+].join("\\r\\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "@echo off",
@@ -109,7 +109,7 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "echo The app will start automatically after the next Windows sign-in.",
   "pause",
   "",
-].join("\r\n"));
+].join("\\r\\n"));
 
 writeFileSync(join(OUT_DIR, "start-sifobooks-network.bat"), [
   "@echo off",
@@ -121,7 +121,7 @@ writeFileSync(join(OUT_DIR, "start-sifobooks-network.bat"), [
   "set SIFOBOOKS_SYNC_ENABLED=true",
   `start "" "${exeName}"`,
   "",
-].join("\r\n"));
+].join("\\n"));
 
 writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "@echo off",
@@ -129,7 +129,7 @@ writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "start \"\" wscript.exe \"%~dp0Start-SifoBooks.vbs\"",
   "exit /b 0",
   "",
-].join("\r\n"));
+].join("\\n"));
 
 writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "SIFOBOOKS - STANDALONE WINDOWS EDITION",
@@ -139,19 +139,19 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "2. Double-click Start-SifoBooks.vbs for a silent launch, or start-sifobooks.bat for troubleshooting.",
   `3. ${productName} starts a local server and opens your browser.`,
   "4. The application runs at http://localhost:3000.",
-  "5. Your SQLite database is created at data\\sifobooks.db.",
+  "5. Your SQLite database is created at data\\\\sifobooks.db.",
   "6. Do not delete the data folder - it contains company data.",
   `7. To move ${productName} to another PC, copy the entire folder including data.`,
   "8. Run Create-SifoBooks-Shortcut.bat once to create both a desktop shortcut and automatic startup shortcut.",
-  "9. Backups are stored automatically in the backups\\ folder.",
+  "9. Backups are stored automatically in the backups\\\\ folder.",
   "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required.",
   `11. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
   "",
   "IMPORTANT: Keep the data folder when moving an existing installation.",
   "",
-].join("\r\n"));
+].join("\\r\\n"));
 
-console.log("\nStep 4/4: Standalone package ready.");
+console.log("\\nStep 4/4: Standalone package ready.");
 console.log(`Edition: ${productName}`);
 console.log("Copy the complete desktop-dist/ folder to a Windows PC.");
 console.log(`Run start-sifobooks.bat or ${exeName}.`);
