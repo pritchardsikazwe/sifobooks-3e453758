@@ -73,6 +73,7 @@ var
   OptionsPage: TInputOptionWizardPage;
   TrialPage: TWizardPage;
   TrialInfo: TNewStaticText;
+  InstallVerse: TNewStaticText;
 
 function EditionDisplayName(): String;
 begin
@@ -131,6 +132,20 @@ begin
     'Your first installation will initialise the SifoBooks 14-day trial automatically.' + #13#10#13#10 +
     'No internet connection is required for normal offline operation. A valid commercial licence can be activated from inside SifoBooks at any time.' + #13#10#13#10 +
     'Built for today. Ready for tomorrow.';
+
+  InstallVerse := TNewStaticText.Create(WizardForm.InstallingPage);
+  InstallVerse.Parent := WizardForm.InstallingPage.Surface;
+  InstallVerse.Left := ScaleX(35);
+  InstallVerse.Top := ScaleY(145);
+  InstallVerse.Width := WizardForm.InstallingPage.SurfaceWidth - ScaleX(70);
+  InstallVerse.Height := ScaleY(80);
+  InstallVerse.AutoSize := False;
+  InstallVerse.WordWrap := True;
+  InstallVerse.Alignment := taCenter;
+  InstallVerse.Font.Size := 13;
+  InstallVerse.Font.Style := [fsItalic];
+  InstallVerse.Caption := '“And God said, Let there be light: and there was light.”' + #13#10 +
+    'GENESIS 1:3';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
