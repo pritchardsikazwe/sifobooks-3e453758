@@ -67,7 +67,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "SIFOBOOKS_PWA_ENABLED=true",
   "SIFOBOOKS_PRINTING=system",
   "",
-].join("\\n"));
+].join("\n"));
 
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
@@ -82,7 +82,7 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "End If",
   "Set fso = Nothing",
   "Set shell = Nothing",
-].join("\\r\\n"));
+].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
