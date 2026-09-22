@@ -170,6 +170,43 @@ const server = Bun.serve({
       });
     }
 
+    if (url.pathname === "/api/network/config" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        if (!body || !["network", "pos", "offline"].includes(String(body.mode))) {
+          return Response.json({ error: "Invalid deployment mode" }, { status: 400 });
+        }
+        const cfg = {
+          mode: String(body.mode),
+          server: {
+            host: String(body.server?.host || "127.0.0.1"),
+            port: Number(body.server?.port || 3000),
+            display_name: String(body.server?.display_name || "SifoBooks Server"),
+          },
+          client: {
+            server_url: String(body.client?.server_url || ""),
+            station_code: String(body.client?.station_code || "").toUpperCase(),
+            station_name: String(body.client?.station_name || ""),
+            station_type: String(body.client?.station_type || "pos"),
+            assigned_role: String(body.client?.assigned_role || "cashier"),
+          },
+          zra: {
+            environment: String(body.zra?.environment || "production"),
+            branch_code: String(body.zra?.branch_code || ""),
+            device_id: String(body.zra?.device_id || ""),
+            sdc_id: String(body.zra?.sdc_id || ""),
+            device_serial: String(body.zra?.device_serial || ""),
+            vsdc_endpoint: String(body.zra?.vsdc_endpoint || ""),
+          },
+        };
+        mkdirSync(dirname(networkConfigPath), { recursive: true });
+        writeFileSync(networkConfigPath, JSON.stringify(cfg, null, 2));
+        return Response.json({ ok: true, config: cfg, restartRequired: true });
+      } catch (error: any) {
+        return Response.json({ error: error?.message || "Could not save configuration" }, { status: 400 });
+      }
+    }
+
     const staticResponse = serveStatic(url.pathname);
     if (staticResponse) return staticResponse;
 
