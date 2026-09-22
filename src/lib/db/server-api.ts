@@ -348,11 +348,14 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
   const companyId = company?.company_id ?? null;
   assertPeriodOpen(uid,String(h.issue_date));
   const resolved:any[]=[]; let subtotal=0, vat=0;
+  const taxInclusive=h.tax_inclusive!==false;
   for(const x of items){
     const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 0);
     if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
-    const line=Math.round(qty*price*100)/100; const tax=Math.round(line*rate/100*100)/100;
-    subtotal+=line; vat+=tax; resolved.push({...x,qty,price,rate,line,tax});
+    const gross=Math.round(qty*price*100)/100;
+    const tax=taxInclusive ? Math.round((gross-gross/(1+rate/100))*100)/100 : Math.round(gross*rate/100*100)/100;
+    const net=taxInclusive ? Math.round((gross-tax)*100)/100 : gross;
+    subtotal+=net; vat+=tax; resolved.push({...x,qty,price,rate,line:gross,tax,net});
   }
   subtotal=Math.round(subtotal*100)/100; vat=Math.round(vat*100)/100; const total=Math.round((subtotal+vat)*100)/100;
   const ar=postingAccount(db,uid,companyId,"SALES_RECEIVABLE",["1100","1200"]);
