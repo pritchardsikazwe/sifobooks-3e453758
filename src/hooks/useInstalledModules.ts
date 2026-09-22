@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MODULES, isModuleInstalled } from "@/lib/modules";
+import { SIFOBOOKS_EDITION } from "@/lib/edition";
 
 /**
  * Returns which modules are installed for the current user's active company.
@@ -46,6 +47,13 @@ export function useInstalledModules() {
       if (suppressed.has(m.key)) return;
       if (isModuleInstalled(m.key, explicit)) merged.add(m.key);
     });
+    if (SIFOBOOKS_EDITION === "restaurant") {
+      ["core_home", "sales", "purchases", "inventory", "retail_pos", "restaurant", "reports", "admin", "learning"].forEach(k => merged.add(k));
+    } else if (SIFOBOOKS_EDITION === "retail") {
+      ["core_home", "sales", "purchases", "inventory", "retail_pos", "reports", "admin", "learning"].forEach(k => merged.add(k));
+    } else if (SIFOBOOKS_EDITION === "accounting") {
+      ["core_home", "sales", "purchases", "inventory", "finance", "fixed_assets", "budgets", "multi_currency", "hr_payroll", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
+    }
     setInstalled(merged);
     setLoading(false);
   }, []);
