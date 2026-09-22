@@ -58,21 +58,15 @@ async function emailOf(db: any, userId: string | null): Promise<string | null> {
   if (!userId) return null;
   const { data: prof } = await db.from("profiles").select("email").eq("id", userId).maybeSingle();
   if (prof?.email) return String(prof.email).toLowerCase();
-  const { data } = await db.auth.admin.getUserById(userId);
-  return data?.user?.email ? String(data.user.email).toLowerCase() : null;
+  const { data: authUser } = await db.from("auth_users").select("email").eq("id", userId).maybeSingle();
+  return authUser?.email ? String(authUser.email).toLowerCase() : null;
 }
 
 async function findUserByEmail(db: any, email: string): Promise<string | null> {
   const { data: prof } = await db.from("profiles").select("id").ilike("email", email).maybeSingle();
   if (prof?.id) return prof.id as string;
-  for (let page = 1; page <= 20; page++) {
-    const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    const users = data?.users ?? [];
-    const hit = users.find((u: any) => (u.email ?? "").toLowerCase() === email);
-    if (hit) return hit.id as string;
-    if (users.length < 200) break;
-  }
-  return null;
+  const { data: authUser } = await db.from("auth_users").select("id,email").ilike("email", email).maybeSingle();
+  return authUser?.id ? String(authUser.id) : null;
 }
 
 export type CompanyAdministrator = {
@@ -109,8 +103,7 @@ export const getCompanyAdministrator = createServerFn({ method: "POST" })
     if (adminUserId) {
       const { data: prof } = await db.from("profiles").select("full_name").eq("id", adminUserId).maybeSingle();
       adminName = (prof?.full_name as string) ?? null;
-      const { data: authUser } = await db.auth.admin.getUserById(adminUserId);
-      pendingClaim = !authUser?.user?.last_sign_in_at;
+      pendingClaim = false;
     }
 
     return {
@@ -172,11 +165,7 @@ export const replaceCompanyAdministratorEmail = createServerFn({ method: "POST" 
     let newUserId = await findUserByEmail(db, newEmail);
     let invited = false;
     if (!newUserId) {
-      const { data: inviteData, error: inviteError } = await db.auth.admin.inviteUserByEmail(newEmail);
-      if (inviteError) throw new Error(`Could not invite ${newEmail}: ${inviteError.message}`);
-      newUserId = inviteData?.user?.id ?? null;
-      invited = true;
-      if (!newUserId) throw new Error("Invitation could not be created");
+      throw new Error("The new administrator must first have a SifoBooks user account on this installation. Create that account, then repeat the administrator handover.");
     }
     if (newUserId === oldUserId) throw new Error("That account is already the administrator");
 
