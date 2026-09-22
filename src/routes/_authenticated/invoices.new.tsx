@@ -428,17 +428,37 @@ function NewInvoicePage() {
                 {items.map((it, idx) => (
                   <tr key={idx} className="border-b last:border-0">
                     <td className="p-2">
-                      <EntitySelector
-                        label=""
-                        options={stockOptions}
-                        value={it.stockItemId ?? null}
-                        onChange={v => v && pickStock(idx, v)}
-                        placeholder="Select item / service"
-                        recentKey="invoice-item"
-                        emptyTitle="No stock items found."
-                        emptyActionLabel="Create stock item"
-                        emptyActionTo="/stock"
-                      />
+                      <Select
+                        value={it.stockItemId ?? "manual"}
+                        onValueChange={v => {
+                          if (v === "manual") {
+                            updateRow(idx, { stockItemId: null });
+                          } else {
+                            pickStock(idx, v);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-9 min-w-[190px] text-left">
+                          <SelectValue placeholder="Select item / service" />
+                        </SelectTrigger>
+                        <SelectContent position="popper" className="max-h-80">
+                          <SelectItem value="manual">Manual service / description</SelectItem>
+                          {stockOptions.map(option => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.code ? `${option.code} — ` : ""}{option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {stockOptions.length === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toast.info("No inventory items are available for this user yet. Create the item in Stock first.")}
+                          className="mt-1 text-[11px] text-muted-foreground underline"
+                        >
+                          No existing items found — create one in Stock
+                        </button>
+                      )}
                     </td>
                     <td className="p-2"><Input value={it.description} onChange={e => updateRow(idx, { description: e.target.value })} className="h-9" /></td>
                     <td className="p-2">
