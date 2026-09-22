@@ -5,7 +5,7 @@
 #define AppVersion "__APP_VERSION__"
 
 [Setup]
-AppId=__APP_ID__
+AppId={{__APP_ID__}}
 AppName={#ProductName}
 AppVersion={#AppVersion}
 AppPublisher=Sifonet Technologies
