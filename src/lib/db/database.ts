@@ -173,7 +173,7 @@ function runSqlMigrations(database: Database) {
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = bundled.length ? bundled.find((entry) => entry.name === file)?.sql || "" : readFileSync(join(dir!, file), "utf8");
-    const statements = sql.split(/;\\s*\\n/).map((s) => s.trim()).filter(Boolean);
+    const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
     try {
       // Migrations must be safe against databases whose schema already contains
       // some of the same objects/columns (for example databases created from
