@@ -1,4 +1,4 @@
-import { SQL } from "bun";
+import type { SQL } from "bun";
 
 let client: SQL | null = null;
 
@@ -12,9 +12,17 @@ export function isCloudDatabaseConfigured() {
 }
 
 export function getCloudDb() {
-  if (!isCloudDatabaseConfigured()) throw new Error("CLOUD_DATABASE_NOT_CONFIGURED: Set POSTGRES_URL for SifoBooks Cloud.");
+  if (!isCloudDatabaseConfigured()) {
+    throw new Error("CLOUD_DATABASE_NOT_CONFIGURED: Set POSTGRES_URL for SifoBooks Cloud.");
+  }
+
   if (!client) {
-    client = new SQL({
+    const BunSql = (globalThis as any).Bun?.SQL;
+    if (!BunSql) {
+      throw new Error("CLOUD_DATABASE_RUNTIME_UNAVAILABLE: PostgreSQL cloud mode requires the Bun runtime.");
+    }
+
+    client = new BunSql({
       url: getUrl(),
       adapter: "postgres",
       max: Number(process.env.POSTGRES_POOL_MAX || 10),
@@ -23,6 +31,7 @@ export function getCloudDb() {
       tls: process.env.POSTGRES_TLS === "false" ? "disable" : "require",
     });
   }
+
   return client;
 }
 

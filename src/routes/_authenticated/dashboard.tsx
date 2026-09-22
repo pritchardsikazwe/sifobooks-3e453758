@@ -403,6 +403,7 @@ function DashboardPage() {
               <Link to="/posting-wizard"><Plus className="mr-1.5 h-5 w-5" /> New Transaction</Link>
             </Button>
             <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/reports">Reports</Link></Button>
+            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-primary/30 bg-primary/5 px-3.5 text-[14px] font-semibold text-primary"><Link to="/demo-centre">SifoDemo</Link></Button>
             <Button
               variant={editMode ? "default" : "outline"}
               onClick={() => setEditMode(v => !v)}

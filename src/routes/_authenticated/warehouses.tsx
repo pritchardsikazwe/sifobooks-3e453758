@@ -57,7 +57,7 @@ function WarehousesPage() {
     (async () => {
       setDetailLoading(true);
       const { data: stockItems, error: itemsError } = await supabase.from("stock_items")
-        .select("id, name, sku, unit, quantity_on_hand, reserved_qty, cost_price, sell_price, reorder_level, is_active")
+        .select("id, name, sku, unit, quantity_on_hand, reserved_stock, cost_price, sell_price, reorder_level, is_active")
         .eq("warehouse_id", selected.id)
         .order("name");
       if (cancelled) return;
@@ -82,7 +82,7 @@ function WarehousesPage() {
 
   const totals = useMemo(() => {
     const onHand = items.reduce((a, i) => a + num(i.quantity_on_hand), 0);
-    const reserved = items.reduce((a, i) => a + num(i.reserved_qty), 0);
+    const reserved = items.reduce((a, i) => a + num(i.reserved_stock), 0);
     const value = items.reduce((a, i) => a + num(i.quantity_on_hand) * num(i.cost_price), 0);
     return { onHand, reserved, available: onHand - reserved, value };
   }, [items]);
@@ -217,9 +217,9 @@ function WarehousesPage() {
                             {i.sku && <div className="font-mono text-[11px] text-muted-foreground">{i.sku}</div>}
                           </td>
                           <td className="p-2 text-right tabular-nums">{num(i.quantity_on_hand).toLocaleString()}</td>
-                          <td className="p-2 text-right tabular-nums">{num(i.reserved_qty).toLocaleString()}</td>
+                          <td className="p-2 text-right tabular-nums">{num(i.reserved_stock).toLocaleString()}</td>
                           <td className="p-2 text-right tabular-nums">
-                            {(num(i.quantity_on_hand) - num(i.reserved_qty)).toLocaleString()}
+                            {(num(i.quantity_on_hand) - num(i.reserved_stock)).toLocaleString()}
                           </td>
                           <td className="p-2 text-right tabular-nums">
                             {fmtMoney(num(i.quantity_on_hand) * num(i.cost_price))}

@@ -203,32 +203,38 @@ export async function cloudPostInvoice(uid: string, args: any) {
     await setUser(tx, uid);
     const b = await batch(tx, uid, "SALES_INVOICE", "invoice", null, String(h.client_ref || h.number));
     if (b.duplicate) return { invoice_id: b.sourceId, duplicate: true, transaction_id: b.id };
-    let subtotal = 0, vat = 0;
-    for (const x of items) {
-      const line = money(Number(x.quantity) * Number(x.unit_price));
-      if (line < 0) throw new Error("INVALID_INVOICE_LINE");
-      subtotal += line; vat += money(line * Number(x.vat_rate ?? 16) / 100);
+    let subtotal=0, vat=0;
+    const taxInclusive=h.tax_inclusive!==false;
+    for(const x of items){
+      const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 16);
+      if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
+      const gross=money(qty*price);
+      const tax=taxInclusive?money(gross-gross/(1+rate/100)):money(gross*rate/100);
+      subtotal+=taxInclusive?money(gross-tax):gross; vat+=tax;
     }
-    subtotal = money(subtotal); vat = money(vat); const total = money(subtotal + vat);
-    const invoiceId = id();
-    await tx.unsafe(
-      "INSERT INTO invoices(id,user_id,tenant_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,$9,$10,0,$10,$11,$12,$13,1)",
-      [invoiceId, uid, h.customer_id || null, h.number, dateOnly(h.issue_date), h.due_date || null, h.currency || "ZMW", subtotal, vat, total, h.seller_tpin || null, h.buyer_tpin || null, h.notes || null],
-    );
-    for (const x of items) {
-      const line = money(Number(x.quantity) * Number(x.unit_price));
-      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)", [id(), uid, invoiceId, x.stock_item_id || null, x.description || "Item", x.hs_code || null, Number(x.quantity), Number(x.unit_price), Number(x.vat_rate ?? 16), line]);
+    subtotal=money(subtotal); vat=money(vat); const total=money(subtotal+vat); const invoiceId=id();
+    await tx.unsafe("INSERT INTO invoices(id,user_id,tenant_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,$9,$10,0,$10,$11,$12,$13,1)",[invoiceId,uid,h.customer_id||null,h.number,dateOnly(h.issue_date),h.due_date||null,h.currency||"ZMW",subtotal,vat,total,h.seller_tpin||null,h.buyer_tpin||null,h.notes||null]);
+    for(const x of items){
+      const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 16), line=money(qty*price), stockItemId=x.stock_item_id||null;
+      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)",[id(),uid,invoiceId,stockItemId,x.description||"Item",x.hs_code||null,qty,price,rate,line]);
+      if(stockItemId){
+        const item=await one(tx,"SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE",[stockItemId,uid]);
+        if(!item) throw new Error("UNKNOWN_ITEM");
+        if(Number(item.quantity_on_hand||0)<qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3",[qty,stockItemId,uid]);
+        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",[id(),uid,stockItemId,qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id||item.warehouse_id||null]);
+      }
     }
-    const a = await accounts(tx, uid);
-    const je = await journal(tx, uid, "INV:" + h.number, "Sales invoice " + h.number, dateOnly(h.issue_date), [
-      { accountId: a.receivable, debit: total, credit: 0, description: "Accounts receivable" },
-      { accountId: a.revenue, debit: 0, credit: subtotal, description: "Sales revenue" },
-      ...(vat > 0 ? [{ accountId: a.vat, debit: 0, credit: vat, description: "VAT output" }] : []),
+    const a=await accounts(tx,uid);
+    const je=await journal(tx,uid,"INV:"+h.number,"Sales invoice "+h.number,dateOnly(h.issue_date),[
+      {accountId:a.receivable,debit:total,credit:0,description:"Accounts receivable"},
+      {accountId:a.revenue,debit:0,credit:subtotal,description:"Sales revenue"},
+      ...(vat>0?[{accountId:a.vat,debit:0,credit:vat,description:"VAT output"}]:[]),
     ]);
-    await tx.unsafe("INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'invoice',$3,$4,$5,$6,'pending',$7,0,now())", [id(), uid, invoiceId, h.number, total, vat, JSON.stringify({ source: "cloud_invoice", invoiceId, invoiceNumber: h.number, total, vat })]);
-    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [invoiceId, total, total, JSON.stringify({ number: h.number, total, vat, journalEntryId: je }), b.id]);
-    await event(tx, uid, b.id, "POSTED", "Sales invoice posted atomically", { invoiceId, number: h.number, total, vat, journalEntryId: je });
-    return { invoice_id: invoiceId, journal_entry_id: je, total, vat, transaction_id: b.id, duplicate: false };
+    await tx.unsafe("INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'invoice',$3,$4,$5,$6,'pending',$7,0,now())",[id(),uid,invoiceId,h.number,total,vat,JSON.stringify({source:"cloud_invoice",invoiceId,invoiceNumber:h.number,total,vat})]);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4",[invoiceId,total,total,JSON.stringify({number:h.number,total,vat,journalEntryId:je}),b.id]);
+    await event(tx,uid,b.id,"POSTED","Sales invoice posted atomically",{invoiceId,number:h.number,total,vat,journalEntryId:je});
+    return {invoice_id:invoiceId,journal_entry_id:je,total,vat,transaction_id:b.id,duplicate:false};
   });
 }
 

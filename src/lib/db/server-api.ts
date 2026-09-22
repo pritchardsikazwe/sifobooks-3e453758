@@ -15,6 +15,7 @@ import { saveUnitConversion, listUnitConversions } from "@/lib/inventory/unit-co
 import { createPurchaseOrder, approvePurchaseOrder, createSupplierBillFromReceipt } from "@/lib/erp/purchasing";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
+import { loadDemoData } from "@/lib/demo-seed";
 
 // Resolve authentication from the explicit server-function payload first, then
 // from the Authorization header attached by the global client middleware.
@@ -334,10 +335,127 @@ function executePosCheckout(args: Record<string, any>) {
   return {...transaction,duplicate:false};
 }
 
+function executeSalesInvoicePosting(args: Record<string, any>) {
+  const db = getDb();
+  const uid = String(args._uid || "");
+  const h = args._invoice || {};
+  const items = Array.isArray(args._items) ? args._items : [];
+  if (!uid) throw new Error("NOT_SIGNED_IN");
+  if (!h.number) throw new Error("INVOICE_NUMBER_REQUIRED");
+  if (!items.length) throw new Error("INVOICE_ITEMS_REQUIRED");
+  const existing = db.prepare("SELECT id,status FROM invoices WHERE user_id=? AND number=? LIMIT 1").get(uid,h.number) as any;
+  if (existing?.status === "sent" || existing?.status === "posted") return { invoice_id:existing.id, duplicate:true };
+  const company = db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId = company?.company_id ?? null;
+  assertPeriodOpen(uid,String(h.issue_date));
+  const resolved:any[]=[]; let subtotal=0, vat=0;
+  const taxInclusive=h.tax_inclusive!==false;
+  for(const x of items){
+    const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 0);
+    if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
+    const gross=Math.round(qty*price*100)/100;
+    const tax=taxInclusive ? Math.round((gross-gross/(1+rate/100))*100)/100 : Math.round(gross*rate/100*100)/100;
+    const net=taxInclusive ? Math.round((gross-tax)*100)/100 : gross;
+    subtotal+=net; vat+=tax; resolved.push({...x,qty,price,rate,line:gross,tax,net});
+  }
+  subtotal=Math.round(subtotal*100)/100; vat=Math.round(vat*100)/100; const total=Math.round((subtotal+vat)*100)/100;
+  const ar=postingAccount(db,uid,companyId,"SALES_RECEIVABLE",["1100","1200"]);
+  const revenue=postingAccount(db,uid,companyId,"SALES_REVENUE",["4000","4100"]);
+  const vatAccount=vat>0?postingAccount(db,uid,companyId,"OUTPUT_VAT",["2200","2100"]):null;
+  const tx=db.transaction(()=>{
+    const invoiceId=existing?.id ?? generateUUID();
+    if(existing) db.prepare("UPDATE invoices SET customer_id=?,issue_date=?,due_date=?,status='sent',currency=?,subtotal=?,vat_amount=?,total=?,amount_paid=0,balance_due=?,seller_tpin=?,buyer_tpin=?,notes=?,updated_at=datetime('now') WHERE id=? AND user_id=?")
+      .run(h.customer_id??null,h.issue_date,h.due_date??null,h.currency??"ZMW",subtotal,vat,total,total,h.seller_tpin??null,h.buyer_tpin??null,h.notes??null,invoiceId,uid);
+    else db.prepare("INSERT INTO invoices(id,user_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(invoiceId,uid,h.customer_id??null,h.number,h.issue_date,h.due_date??null,"sent",h.currency??"ZMW",subtotal,vat,total,0,total,h.seller_tpin??null,h.buyer_tpin??null,h.notes??null);
+    if(!existing){
+      for(const x of resolved) db.prepare("INSERT INTO invoice_items(id,user_id,invoice_id,stock_item_id,description,quantity,unit_price,vat_rate,line_total) VALUES(?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,invoiceId,x.stock_item_id??null,x.description??"Item",x.qty,x.price,x.rate,x.line);
+    }
+    for(const x of resolved){
+      if(!x.stock_item_id) continue;
+      const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(x.stock_item_id,uid) as any;
+      if(!item) throw new Error("UNKNOWN_ITEM");
+      const available=Number(item.quantity_on_hand||0);
+      if(available<x.qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+      db.prepare("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(x.qty,x.stock_item_id,uid);
+      db.prepare("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES(?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,x.stock_item_id,"SALE",x.qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id??item.warehouse_id??null);
+    }
+    const prior=db.prepare("SELECT id FROM journal_entries WHERE user_id=? AND reference=? LIMIT 1").get(uid,"INV:"+h.number) as any;
+    let entryId=prior?.id;
+    if(!entryId){
+      entryId=generateUUID();
+      const entryNo=nextDocumentNumber({userId:uid,companyId,documentType:"JOURNAL",prefix:"JE",padding:6});
+      db.prepare("INSERT INTO journal_entries(id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+        .run(entryId,uid,entryNo,h.issue_date,"INV:"+h.number,"Sales invoice "+h.number,"posted",total,total,h.currency??"ZMW",1);
+      db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,ar,"Trade receivable",total,0);
+      db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,revenue,"Sales revenue",0,subtotal);
+      if(vatAccount) db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,vatAccount,"Output VAT",0,vat);
+    }
+    const queued=db.prepare("SELECT id FROM zra_invoice_queue WHERE user_id=? AND invoice_number=? LIMIT 1").get(uid,h.number) as any;
+    if(!queued) db.prepare("INSERT INTO zra_invoice_queue(id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload) VALUES(?,?,?,?,?,?,?,?,?)")
+      .run(generateUUID(),uid,"invoice",invoiceId,h.number,total,vat,"pending",JSON.stringify({source:"sales_invoice",invoiceId,invoiceNumber:h.number,total,vat}));
+    return {invoice_id:invoiceId,journal_entry_id:entryId,total,vat,duplicate:false};
+  });
+  void recordAuditEvent({userId:uid,action:"SALES_INVOICE_POSTED",entityType:"invoice",entityId:tx.invoice_id,newValue:tx});
+  return tx;
+}
+
+function executeBillPayment(args: Record<string, any>) {
+  const db=getDb(); const uid=String(args._uid||""); const h=args._payment||{};
+  const billId=String(h.bill_id||""); const amount=Math.round(Number(h.amount||0)*100)/100;
+  if(!uid||!billId||!(amount>0)) throw new Error("INVALID_BILL_PAYMENT");
+  const bill=db.prepare("SELECT * FROM bills WHERE id=? AND user_id=? LIMIT 1").get(billId,uid) as any;
+  if(!bill) throw new Error("BILL_NOT_FOUND");
+  const balance=Math.round(Number(bill.balance_due??(Number(bill.total||0)-Number(bill.amount_paid||0)))*100)/100;
+  if(amount>balance+0.01) throw new Error("PAYMENT_EXCEEDS_BILL_BALANCE");
+  assertPeriodOpen(uid,String(h.payment_date||new Date().toISOString()).slice(0,10));
+  const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId=company?.company_id??null;
+  const payable=postingAccount(db,uid,companyId,"ACCOUNTS_PAYABLE",["2100","2000"]);
+  let bankId=h.bank_account_id||null;
+  let cashAccount:string;
+  if(bankId){
+    const bank=db.prepare("SELECT gl_account_id FROM bank_accounts WHERE id=? AND user_id=? AND is_active=1 LIMIT 1").get(bankId,uid) as any;
+    cashAccount=bank?.gl_account_id||postingAccount(db,uid,companyId,"PAYMENT_CASH",["1000","1100"]);
+  } else {
+    cashAccount=postingAccount(db,uid,companyId,"PAYMENT_CASH",["1000","1100"]);
+  }
+  const tx=db.transaction(()=>{
+    const paymentId=generateUUID();
+    const paymentNumber=String(h.payment_number||nextDocumentNumber({userId:uid,companyId,documentType:"BILL_PAYMENT",prefix:"PAY",padding:6}));
+    db.prepare("INSERT INTO bill_payments(id,user_id,bill_id,supplier_id,payment_number,payment_date,amount,payment_method,reference,notes,currency,exchange_rate,bank_account_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(paymentId,uid,billId,bill.supplier_id??null,paymentNumber,String(h.payment_date||new Date().toISOString()).slice(0,10),amount,h.payment_method||"bank",h.reference??null,h.notes??null,h.currency??bill.currency??"ZMW",1,bankId);
+    const newPaid=Math.round((Number(bill.amount_paid||0)+amount)*100)/100;
+    const newBalance=Math.max(0,Math.round((balance-amount)*100)/100);
+    db.prepare("UPDATE bills SET amount_paid=?,balance_due=?,status=?,updated_at=datetime('now') WHERE id=? AND user_id=?")
+      .run(newPaid,newBalance,newBalance<=0.01?"paid":"part_paid",billId,uid);
+    const jeId=generateUUID(), jeNo=nextDocumentNumber({userId:uid,companyId,documentType:"JOURNAL",prefix:"JE",padding:6});
+    db.prepare("INSERT INTO journal_entries(id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+      .run(jeId,uid,jeNo,String(h.payment_date||new Date().toISOString()).slice(0,10),"BILLPAY:"+paymentId,"Payment for supplier bill "+bill.bill_number,"posted",amount,amount,h.currency??bill.currency??"ZMW",1);
+    db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,jeId,payable,"Accounts payable settlement",amount,0);
+    db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,jeId,cashAccount,"Cash / bank payment",0,amount);
+    void recordAuditEvent({userId:uid,action:"SUPPLIER_PAYMENT_POSTED",entityType:"bill_payment",entityId:paymentId,newValue:{billId,amount,journalEntryId:jeId}});
+    return {payment_id:paymentId,journal_entry_id:jeId,new_balance:newBalance,payment_number:paymentNumber};
+  });
+  return tx;
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
     switch (name) {
+      case "load_demo_data": {
+        const uid = String(args._uid || "");
+        return { data: loadDemoData(uid), error: null };
+      }
+      case "record_bill_payment": {
+        return { data: executeBillPayment(args), error: null };
+      }
+      case "post_sales_invoice": {
+        return { data: executeSalesInvoicePosting(args), error: null };
+      }
       case "create_purchase_order": {
         return { data: createPurchaseOrder({ ...args, userId: String(args._uid || "") }), error: null };
       }

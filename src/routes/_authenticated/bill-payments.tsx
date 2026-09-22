@@ -149,30 +149,22 @@ function BillPaymentsPage() {
       let posted = 0;
       for (const [i, line] of lines.entries()) {
         const payment_number = await nextNumber(u.user.id, i);
-        // Insert only — the existing bill_payments auto-post trigger writes the journal.
-        const { error } = await supabase.from("bill_payments").insert({
-          user_id: u.user.id,
-          bill_id: line.bill.id,
-          supplier_id: supplierId,
-          payment_number,
-          payment_date: paymentDate,
-          amount: toMajor(line.minor),
-          payment_method: method,
-          reference: reference || null,
-          notes: notes || null,
-          bank_account_id: method === "bank" ? bankAccountId : null,
+        const { data: result, error } = await supabase.rpc("record_bill_payment", {
+          _payment: {
+            bill_id: line.bill.id,
+            supplier_id: supplierId,
+            payment_number,
+            payment_date: paymentDate,
+            amount: toMajor(line.minor),
+            payment_method: method,
+            reference: reference || null,
+            notes: notes || null,
+            bank_account_id: method === "bank" ? bankAccountId : null,
+            currency: "ZMW",
+            client_ref: `bill-payment:${payment_number}`,
+          },
         } as any);
-        if (error) throw new Error(`${line.bill.bill_number ?? "Bill"}: ${error.message}`);
-
-        // Keep the bill's own paid / outstanding figures in step with the payment.
-        const paidMinor = toMinor(line.bill.amount_paid) + line.minor;
-        const balMinor = Math.max(toMinor(line.bill.total) - paidMinor, 0);
-        const { error: upErr } = await supabase.from("bills").update({
-          amount_paid: toMajor(paidMinor),
-          balance_due: toMajor(balMinor),
-          status: balMinor === 0 ? "paid" : "open",
-        } as any).eq("id", line.bill.id);
-        if (upErr) throw new Error(upErr.message);
+        if (error || !result) throw new Error(`${line.bill.bill_number ?? "Bill"}: ${error?.message ?? "Payment could not be posted"}`);
         posted += 1;
       }
 
