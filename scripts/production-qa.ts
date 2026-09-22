@@ -46,7 +46,7 @@ requireText("LAN/ZRA","src/lib/db/migrations/20260922130000_network_pos_zra_stat
 requireFile("Branding","public/favicon.ico");
 requireText("Branding","scripts/build-desktop.ts",["SifoBooks.ico","README-FIRST.txt","license-public-key.pem"]);
 
-const forbidden = ["base44.app","@base44/"];
+const forbidden = ["base" + "44.app","@" + "base44/"];
 const violations: string[] = [];
 function walk(dir: string): string[] {
   const out: string[] = []; if (!existsSync(dir)) return out;
