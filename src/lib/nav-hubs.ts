@@ -578,9 +578,116 @@ export const HOTEL_HUBS: HubDef[] = [
   },
 ];
 
-/** Which hub set to present for a company's workspace mode. */
-export function hubsForMode(mode: string | null | undefined): HubDef[] {
+
+/** SifoRetail — focused retail/POS workspace. */
+export const RETAIL_HUBS: HubDef[] = [
+  { key: "retail-home", label: "Retail", iconName: "Store", purpose: "Run the shop: sell, control stock and see today's numbers.", groups: [
+    { label: "Today", items: [
+      { title: "Retail Dashboard", url: "/pos/retail-command-center", module: "retail_pos", iconName: "LayoutDashboard", primary: true, hint: "Sales, shifts, cash and alerts." },
+      { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
+      { title: "Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
+      { title: "Cashier & Shifts", url: "/pos/command-center", module: "retail_pos", iconName: "Users", primary: true },
+    ]},
+  ]},
+  { key: "retail-stock", label: "Stock", iconName: "Boxes", purpose: "Products, stock movement and replenishment.", groups: [
+    { label: "Inventory", items: [
+      { title: "Products", url: "/stock", module: "inventory", iconName: "Boxes", primary: true },
+      { title: "Inventory Overview", url: "/inventory", module: "inventory", iconName: "LayoutDashboard", primary: true },
+      { title: "Transfers", url: "/inventory/transfers", module: "inventory", iconName: "ArrowLeftRight", primary: true },
+      { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true },
+      { title: "Warehouses", url: "/warehouses", module: "inventory", iconName: "Warehouse" },
+      { title: "Stock Adjustments", url: "/stock-adjustments", module: "inventory", iconName: "ClipboardEdit" },
+    ]},
+  ]},
+  { key: "retail-buy", label: "Purchasing", iconName: "ShoppingCart", purpose: "Suppliers, purchases and goods received.", groups: [
+    { label: "Buy", items: [
+      { title: "Purchase Orders", url: "/purchase-orders", module: "purchases", iconName: "ShoppingCart", primary: true },
+      { title: "Goods Receipts", url: "/goods-receipts", module: "purchases", iconName: "PackageCheck", primary: true },
+      { title: "Suppliers", url: "/suppliers", module: "purchases", iconName: "Truck", primary: true },
+      { title: "Bills", url: "/bills", module: "purchases", iconName: "FileBox", primary: true },
+    ]},
+  ]},
+  { key: "retail-customers", label: "Customers", iconName: "Users", purpose: "Customer accounts, sales and payments.", groups: [
+    { label: "Customers", items: [
+      { title: "Customers", url: "/customers", module: "sales", iconName: "Users", primary: true },
+      { title: "Invoices", url: "/invoices", module: "sales", iconName: "ReceiptText", primary: true },
+      { title: "Receive Payments", url: "/receipts", module: "sales", iconName: "CreditCard", primary: true },
+      { title: "Customer Statements", url: "/reports/customer-statement", module: "reports", iconName: "FileBarChart" },
+    ]},
+  ]},
+  { key: "retail-reports", label: "Reports", iconName: "BarChart3", purpose: "Sales, stock and management reports.", groups: [
+    { label: "Reporting", items: [
+      { title: "Reports Centre", url: "/reports", module: "reports", iconName: "BarChart3", primary: true },
+      { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3", primary: true },
+      { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Boxes", primary: true },
+      { title: "POS Integrity", url: "/reports/pos-integrity", module: "reports", iconName: "ShieldCheck" },
+    ]},
+  ]},
+  { key: "retail-settings", label: "Settings", iconName: "Settings2", purpose: "Company, staff and licensed features.", groups: [
+    { label: "Setup", items: [
+      { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
+      { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
+      { title: "POS Workers", url: "/pos-workers", module: "retail_pos", iconName: "Users" },
+      { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid" },
+    ]},
+  ]},
+];
+
+/** SifoRestaurant — focused restaurant operations workspace. */
+export const RESTAURANT_HUBS: HubDef[] = [
+  { key: "restaurant-home", label: "Restaurant", iconName: "Utensils", purpose: "Run today's restaurant operations from one place.", groups: [
+    { label: "Today", items: [
+      { title: "Restaurant Dashboard", url: "/restaurant", module: "restaurant", iconName: "LayoutDashboard", primary: true },
+      { title: "Restaurant POS", url: "/restaurant/pos", module: "restaurant", iconName: "ShoppingBag", primary: true },
+      { title: "Orders", url: "/restaurant/orders", module: "restaurant", iconName: "Receipt", primary: true },
+      { title: "Tables", url: "/restaurant/tables", module: "restaurant", iconName: "LayoutGrid", primary: true },
+    ]},
+  ]},
+  { key: "restaurant-kitchen", label: "Kitchen", iconName: "ChefHat", purpose: "Send orders to the kitchen and track preparation.", groups: [
+    { label: "Kitchen", items: [
+      { title: "Kitchen Display", url: "/restaurant/kitchen", module: "restaurant", iconName: "ChefHat", primary: true },
+      { title: "Menu", url: "/restaurant/menu", module: "restaurant", iconName: "Utensils", primary: true },
+      { title: "Combos", url: "/restaurant/combos", module: "restaurant", iconName: "Layers", primary: true },
+      { title: "Dispatch", url: "/restaurant/dispatch", module: "restaurant", iconName: "Send" },
+    ]},
+  ]},
+  { key: "restaurant-guests", label: "Guests", iconName: "Users", purpose: "Reservations, loyalty and guest service.", groups: [
+    { label: "Guest service", items: [
+      { title: "Reservations", url: "/restaurant/reservations", module: "restaurant", iconName: "CalendarCheck", primary: true },
+      { title: "Loyalty", url: "/restaurant/loyalty", module: "restaurant", iconName: "Heart", primary: true },
+      { title: "Call Centre", url: "/restaurant/call-center", module: "restaurant", iconName: "Phone", primary: true },
+    ]},
+  ]},
+  { key: "restaurant-stock", label: "Stock", iconName: "Boxes", purpose: "Ingredients, recipes and stock control.", groups: [
+    { label: "Control", items: [
+      { title: "Inventory", url: "/inventory", module: "inventory", iconName: "Boxes", primary: true },
+      { title: "Recipes", url: "/restaurant/menu", module: "restaurant", iconName: "BookOpen", primary: true },
+      { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true },
+      { title: "Purchasing", url: "/purchase-orders", module: "purchases", iconName: "ShoppingCart", primary: true },
+    ]},
+  ]},
+  { key: "restaurant-reports", label: "Reports", iconName: "BarChart3", purpose: "Sales, kitchen and restaurant performance.", groups: [
+    { label: "Reporting", items: [
+      { title: "Restaurant Reports", url: "/restaurant/reports", module: "restaurant", iconName: "BarChart3", primary: true },
+      { title: "End of Day", url: "/restaurant/end-of-day", module: "restaurant", iconName: "Moon", primary: true },
+      { title: "Cash & Shifts", url: "/restaurant/cash", module: "restaurant", iconName: "Wallet", primary: true },
+    ]},
+  ]},
+  { key: "restaurant-settings", label: "Settings", iconName: "Settings2", purpose: "Restaurant setup, staff and licensed features.", groups: [
+    { label: "Setup", items: [
+      { title: "Restaurant Settings", url: "/restaurant/settings", module: "restaurant", iconName: "Settings2", primary: true },
+      { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
+      { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
+      { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid" },
+    ]},
+  ]},
+];
+
+/** Which hub set to present for a company's workspace mode or edition. */
+export function hubsForMode(mode: string | null | undefined, edition?: string | null): HubDef[] {
   if (mode === "payroll_only") return PAYROLL_HUBS;
   if (mode === "hotel_only") return HOTEL_HUBS;
+  if (edition === "restaurant") return RESTAURANT_HUBS;
+  if (edition === "retail") return RETAIL_HUBS;
   return HUBS;
 }
