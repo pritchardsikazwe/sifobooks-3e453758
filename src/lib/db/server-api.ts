@@ -15,6 +15,7 @@ import { saveUnitConversion, listUnitConversions } from "@/lib/inventory/unit-co
 import { createPurchaseOrder, approvePurchaseOrder, createSupplierBillFromReceipt } from "@/lib/erp/purchasing";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
+import { loadDemoData } from "@/lib/demo-seed";
 
 // Resolve authentication from the explicit server-function payload first, then
 // from the Authorization header attached by the global client middleware.
@@ -445,6 +446,10 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
   const db = getDb();
   try {
     switch (name) {
+      case "load_demo_data": {
+        const uid = String(args._uid || "");
+        return { data: loadDemoData(uid), error: null };
+      }
       case "record_bill_payment": {
         return { data: executeBillPayment(args), error: null };
       }
