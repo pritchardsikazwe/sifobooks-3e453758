@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BarChart3, CheckCircle2, Database, FileText, Loader2, Package, Receipt, ShoppingCart, Utensils, Users, Wallet } from "lucide-react";
+import { BarChart3, CheckCircle2, Database, FileText, Loader2, Receipt, ShoppingCart, Utensils, Users, Wallet, Hotel, GraduationCap, ClipboardCheck, BookOpenCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,23 @@ export const Route = createFileRoute("/_authenticated/demo-centre")({
   }),
   component: DemoCentre,
 });
+
+const editions = [
+  { name: "Enterprise", icon: Database, company: "SifoDemo Enterprise Ltd", focus: "Full accounting, inventory, POS, payroll, banking, compliance and management reporting." },
+  { name: "Accounting", icon: BookOpenCheck, company: "SifoDemo Accounting Services", focus: "Double-entry journals, ledgers, trial balance, VAT, receivables, payables and financial statements." },
+  { name: "Retail", icon: ShoppingCart, company: "SifoRetail Demo Store", focus: "Products, stock, purchasing, sales, POS, cashier shifts, stock counts and retail reports." },
+  { name: "Restaurant", icon: Utensils, company: "SifoRestaurant Demo", focus: "Tables, menu, kitchen, orders, reservations, cash-up, food cost and restaurant reporting." },
+  { name: "Hotel", icon: Hotel, company: "SifoHotel Demo Lodge", focus: "Reservations, rooms, folios, housekeeping, maintenance, night audit and property reports." },
+  { name: "School", icon: GraduationCap, company: "SifoSchool Demo Academy", focus: "Admissions, students, classes, attendance, fees, payments, payroll and school reports." },
+];
+
+const workflowChecks = [
+  ["Create", "New customer/student/guest/item/document can be created and saved with validation."],
+  ["Post", "Approved/posted transactions create the correct accounting, tax, inventory or operational effect."],
+  ["Audit", "User, timestamp, reference, before/after or status history is retained for material changes."],
+  ["Report", "The transaction appears in the relevant ledger, register, dashboard and management/statutory report."],
+  ["Reverse", "Corrections use controlled reversal/credit/adjustment workflows rather than silent deletion."],
+];
 
 const sections = [
   { icon: Wallet, title: "Accounting & Posting", text: "Chart of accounts, journals, invoices, receipts, bills, expenses and balanced postings.", links: ["/journal-entries", "/invoices", "/bills", "/expenses", "/reports"] },
@@ -68,6 +85,30 @@ function DemoCentre() {
           <CardContent className="p-5 text-sm">
             <b>Safe demo dataset:</b> sample-only names, references and ZRA configuration are used. No production credentials or real customer records are created.
             The dataset is loaded once per company so repeated clicks do not duplicate the demo.
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {editions.map(({ name, icon: Icon, company, focus }) => (
+            <Card key={name} className="rounded-2xl border-primary/10">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
+                  <div><div className="text-xs font-bold uppercase tracking-widest text-primary">{name} Edition</div><div className="font-semibold">{company}</div></div>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{focus}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                  {["Create","Post","Audit","Reports"].map(x => <Badge key={x} variant="outline">{x}</Badge>)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="rounded-2xl">
+          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ClipboardCheck className="h-5 w-5 text-primary"/>Production workflow audit matrix</CardTitle></CardHeader>
+          <CardContent className="grid gap-2 md:grid-cols-2">
+            {workflowChecks.map(([stage, rule]) => <div key={stage} className="rounded-xl border p-4"><div className="font-semibold">{stage}</div><div className="mt-1 text-sm text-muted-foreground">{rule}</div></div>)}
           </CardContent>
         </Card>
 
