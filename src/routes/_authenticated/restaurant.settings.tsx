@@ -68,7 +68,7 @@ function RestaurantSettings() {
     const u = await uid();
     const existing = new Set(types.map((t) => t.key));
     const rows = ORDER_TYPES.filter((o) => !existing.has(o.key)).map((o) => ({
-      user_id: u, key: o.key, label: o.label, enabled: true,
+      user_id: u, key: o.key, label: o.label, active: true,
       requires_table: !!o.requiresTable, requires_customer: !!o.requiresCustomer,
       requires_address: !!o.requiresAddress,
     }));
@@ -79,9 +79,10 @@ function RestaurantSettings() {
     load();
   };
 
-  const toggleType = async (t: any, enabled: boolean) => {
-    await db.from("restaurant_order_types").update({ enabled }).eq("id", t.id);
-    setTypes((l) => l.map((x) => (x.id === t.id ? { ...x, enabled } : x)));
+  const toggleType = async (t: any, active: boolean) => {
+    const { error } = await db.from("restaurant_order_types").update({ active }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    setTypes((l) => l.map((x) => (x.id === t.id ? { ...x, active } : x)));
   };
 
   const addStation = async () => {
@@ -170,7 +171,7 @@ function RestaurantSettings() {
                       .filter(Boolean).join(" · ") || "no requirements"}
                   </div>
                 </div>
-                <Switch className="ml-auto" checked={!!t.enabled} onCheckedChange={(v) => toggleType(t, v)} />
+                <Switch className="ml-auto" checked={!!t.active} onCheckedChange={(v) => toggleType(t, v)} />
               </Card>
             ))}
             {types.length === 0 && <p className="text-sm text-muted-foreground">No order types configured yet.</p>}
