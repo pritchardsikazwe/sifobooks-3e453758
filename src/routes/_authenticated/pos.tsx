@@ -113,12 +113,13 @@ function RetailPos() {
 
   /* ------------------------------- bootstrap ------------------------------ */
   const refresh = useCallback(async () => {
-    const [p, c, f, s, r, m] = await Promise.all([
-      loadProducts(), loadCustomers(), loadFavorites().catch(() => []),
-      loadSettings().catch(() => DEFAULT_SETTINGS), ensureRegister().catch(() => null), todayMetrics().catch(() => ({ sales: 0, transactions: 0, average: 0 })),
+    const r = await ensureRegister().catch(() => null);
+    const [p, c, f, settings, m] = await Promise.all([
+      loadProducts(r?.location_id ?? null), loadCustomers(), loadFavorites().catch(() => []),
+      loadSettings().catch(() => DEFAULT_SETTINGS), todayMetrics().catch(() => ({ sales: 0, transactions: 0, average: 0 })),
     ]);
-    setProducts(p); setCustomers(c); setFavorites(f); setSettings(s); setRegister(r); setMetrics(m);
-    setPriceLevel(s.default_price_level);
+    setProducts(p); setCustomers(c); setFavorites(f); setSettings(settings); setRegister(r); setMetrics(m);
+    setPriceLevel(settings.default_price_level);
     const sh = await currentShift(r?.id).catch(() => null);
     setShift(sh);
   }, []);
@@ -300,7 +301,7 @@ function RetailPos() {
         {
           lines, totals, customer, customerName: customer?.name ?? settings.default_customer,
           priceLevel, saleDiscountPct, shiftId: shift.id, registerId: register?.id ?? null,
-          locationId: lines.length ? (products.find((p:any)=>p.id===lines[0].item_id)?.warehouse_id ?? null) : null,
+          locationId: register?.location_id ?? null,
           // Use the company's own VAT configuration — assuming 16% inclusive
           // rejects every sale for a till configured any other way.
           taxRate: settings.tax_rate, taxInclusive: settings.tax_inclusive,
@@ -383,7 +384,7 @@ function RetailPos() {
             <div className="min-w-0 leading-tight">
               <div className="truncate text-sm font-bold">SifoPOS · Retail</div>
               <div className="truncate text-[11px] text-muted-foreground">
-                {register?.branch ?? "Main"} · {register?.name ?? "Register 01"} · {shift?.cashier_name ?? "Cashier"}
+                {register?.branch ?? "Main"} · {register?.name ?? "Register 01"} · {register?.location_name ?? "No store assigned"} · {shift?.cashier_name ?? "Cashier"}
               </div>
             </div>
           </div>
