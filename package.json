@@ -23,7 +23,8 @@
     "qa:production": "bun run scripts/production-qa.ts",
     "test:business-qa": "vitest run src/lib/__tests__/business-workflow-qa.test.ts",
     "test:database-qa": "bun run scripts/database-workflow-qa.ts",
-    "test:backup-restore-qa": "bun run scripts/backup-restore-qa.ts"
+    "test:backup-restore-qa": "bun run scripts/backup-restore-qa.ts",
+    "build:installer": "powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
