@@ -97,7 +97,7 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
   "$desktop = [Environment]::GetFolderPath('Desktop')",
   "$startup = [Environment]::GetFolderPath('Startup')",
-  "$exePath = Join-Path $appDir '${exeName}'",
+  `"$exePath = Join-Path $appDir '${exeName}'",`,
   "$icon = Join-Path $appDir 'SifoBooks.ico'",
   "function New-SifoBooksShortcut([string]$path) {",
   "  $ws = New-Object -ComObject WScript.Shell",
@@ -142,7 +142,7 @@ writeFileSync(join(OUT_DIR, "config", "network.example.json"), JSON.stringify({
 writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "@echo off",
   "cd /d \"%~dp0\"",
-  "start \"\" \"%~dp0${exeName}\"",
+  `start "" "%~dp0${exeName}"`,
   "exit /b 0",
   "",
 ].join("\\n"));
