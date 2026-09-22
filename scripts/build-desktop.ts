@@ -5,6 +5,7 @@
  */
 import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, rmSync } from "fs";
 import { join } from "path";
+import { gzipSync } from "zlib";
 import { $ } from "bun";
 
 const OUT_DIR = "desktop-dist";
@@ -36,8 +37,15 @@ await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --out
 console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
 copyDir("dist/client", CLIENT_DIR);
-copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
-copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
+// Protected distribution: compile the server into the EXE and ship database metadata
+// in compressed binary form instead of exposing raw SQL/source files to customers.
+const protectedSchema = gzipSync(readFileSync("src/lib/db/schema.sql"));
+writeFileSync(join(OUT_DIR, ".sifobooks-schema.bin"), protectedSchema);
+const migrationFiles = existsSync("src/lib/db/migrations")
+  ? readdirSync("src/lib/db/migrations").filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort()
+  : [];
+const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
+writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
 mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
 if (existsSync("config/license-public-key.pem")) {
   mkdirSync(join(OUT_DIR, "config"), { recursive: true });
@@ -132,6 +140,19 @@ writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "",
 ].join("\\n"));
 
+writeFileSync(join(OUT_DIR, "PROTECTED-DISTRIBUTION.txt"), [
+  "SIFOBOOKS PROTECTED DISTRIBUTION",
+  "",
+  "This customer package intentionally does not contain SifoBooks TypeScript source, raw SQL schema, raw SQL migrations, or JavaScript source maps.",
+  "The application server is compiled into the Windows executable.",
+  "Database schema and migrations are shipped in compressed application-binary form and are not intended for editing or redistribution.",
+  "",
+  "UNAUTHORISED copying, reverse engineering, modification, redistribution, resale, or submission of SifoBooks source/code/assets to AI training, code-generation, code-analysis or other automated ingestion services is prohibited by the applicable Sifonet Technologies licence and commercial terms.",
+  "",
+  "Technical protection is not absolute: a determined administrator can inspect software running on a computer. The package therefore combines compiled binaries, source minimisation, licence enforcement, device binding and integrity-oriented packaging rather than claiming unbreakable DRM.",
+  "",
+].join("\\r\\n"));
+
 writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "SIFOBOOKS - STANDALONE WINDOWS EDITION",
   `EDITION: ${productName}`,
@@ -148,9 +169,11 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required for normal offline operation.",
   "11. Licensing is verified locally using the signed licence in data\\\\license.json.",
   "12. Keep config\\\\license-public-key.pem with the application; NEVER ship the private signing key.",
-  `13. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
+  "13. Protected distribution: do not redistribute application internals or submit them to AI ingestion/training services.",
+  `14. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
   "",
   "IMPORTANT: Keep the data folder when moving an existing installation.",
+  "PROTECTED FILES: .sifobooks-schema.bin and .sifobooks-migrations.bin are application internals. Do not edit, copy, redistribute or upload them to AI services.",
   "",
 ].join("\\r\\n"));
 
