@@ -1,0 +1,2 @@
+Protected commercial Windows release trigger.
+Use only artifacts from the successful CI run for this commit.
