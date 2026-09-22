@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { readdirSync } from "fs";
+import { gunzipSync } from "zlib";
 
 let db: Database | null = null;
 const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobooks.db");
@@ -24,7 +25,11 @@ function findSchemaSql(): string {
   const devPath = join(import.meta.dir, "schema.sql");
   if (existsSync(devPath)) return readFileSync(devPath, "utf8");
 
-  // Desktop mode: schema.sql in the working directory (next to the .exe)
+  // Protected desktop package: compressed schema is intentionally not exposed as raw SQL.
+  const protectedPath = join(process.cwd(), ".sifobooks-schema.bin");
+  if (existsSync(protectedPath)) return gunzipSync(readFileSync(protectedPath)).toString("utf8");
+
+  // Desktop development/fallback mode: schema.sql next to the executable.
   const desktopPath = join(process.cwd(), "schema.sql");
   if (existsSync(desktopPath)) return readFileSync(desktopPath, "utf8");
 
@@ -152,16 +157,22 @@ function runSqlMigrations(database: Database) {
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     );`,
   );
+  const protectedMigrations = join(process.cwd(), ".sifobooks-migrations.bin");
+  let bundled: { name: string; sql: string }[] = [];
+  if (existsSync(protectedMigrations)) {
+    try { bundled = JSON.parse(gunzipSync(readFileSync(protectedMigrations)).toString("utf8")); }
+    catch (error) { console.error("[db] Protected migration bundle could not be opened:", error); throw error; }
+  }
   const candidates = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")];
   const dir = candidates.find((candidate) => existsSync(candidate));
-  if (!dir) return;
+  if (!dir && bundled.length === 0) return;
   const applied = new Set(
     (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
   );
-  const files = readdirSync(dir).filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort();
+  const files = bundled.length ? bundled.map((entry) => entry.name).sort() : readdirSync(dir!).filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort();
   for (const file of files) {
     if (applied.has(file)) continue;
-    const sql = readFileSync(join(dir, file), "utf8");
+    const sql = bundled.length ? bundled.find((entry) => entry.name === file)?.sql || "" : readFileSync(join(dir!, file), "utf8");
     const tx = database.transaction(() => {
       const statements = sql.split(/;\\s*\\n/).map((s) => s.trim()).filter(Boolean);
       for (const statement of statements) database.exec(statement + ";");
