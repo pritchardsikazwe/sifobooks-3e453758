@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2 } from "lucide-react";
+import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +101,7 @@ function AdminPage() {
     { title: "Audit Logs", desc: "All system activity", icon: ShieldCheck, to: "/audit-logs" },
     { title: "Notifications", desc: "System notices", icon: Bell, to: "/notifications" },
     { title: "Compliance", desc: "ZRA, NAPSA, NHIMA obligations", icon: ShieldCheck, to: "/compliance" },
+    { title: "Network & POS Setup", desc: "Server, POS stations, cashiers and ZRA/VSDC device configuration", icon: Wifi, to: "/network-setup" },
   ];
 
   return (
