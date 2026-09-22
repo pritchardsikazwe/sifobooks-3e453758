@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
 
 $magick = Get-Command magick -ErrorAction SilentlyContinue
 if (!$magick) { throw "ImageMagick (magick.exe) is required to build the branded installer artwork." }
-& $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "420x520^" -gravity center -extent 420x520 (Join-Path $assetDir "SifoBooks-wizard.bmp")
+& $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "400x400" -gravity center -extent 420x520 (Join-Path $assetDir "SifoBooks-wizard.bmp")
 if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks installer artwork." }
 
 $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
