@@ -36,8 +36,8 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $outIss = Join-Path $PSScriptRoot "SifoBooks-$Edition.iss"
 Set-Content -Path $outIss -Value $template -Encoding UTF8
 
-$iscc = Join-Path \${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
-if (!(Test-Path $iscc)) { $iscc = Join-Path \${env:ProgramFiles} "Inno Setup 6\ISCC.exe" }
+$iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+if (!(Test-Path $iscc)) { $iscc = Join-Path ${env:ProgramFiles} "Inno Setup 6\ISCC.exe" }
 if (!(Test-Path $iscc)) { throw "Inno Setup 6 ISCC.exe not found." }
 
 & $iscc $outIss
