@@ -9,7 +9,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/sifobooks-logo.png";
+import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
 
 
@@ -164,15 +164,8 @@ export function AppSidebar() {
       className="border-r border-border bg-card text-card-foreground [&_[data-sidebar=sidebar]]:bg-card"
     >
       <SidebarHeader className="border-b border-border px-3 py-3 bg-card">
-        <div className="flex items-center gap-2.5">
-          <img src={logo} alt="SifoBooks" className="h-9 w-9 rounded-lg object-contain bg-primary/10 p-1 ring-1 ring-primary/15" width={36} height={36} />
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="text-[15px] font-bold tracking-tight text-primary leading-none">SifoBooks</div>
-              <div className="text-[10px] text-muted-foreground truncate mt-1">{subtitle}</div>
-            </div>
-          )}
-        </div>
+        <SifoBooksLogo showWordmark={!collapsed} className="w-full" markClassName="h-9 w-9" />
+        {!collapsed && <div className="mt-1 px-0.5 text-[10px] text-muted-foreground truncate">{subtitle}</div>}
         {!collapsed && (
           <div className="mt-3 rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-semibold text-foreground truncate">
             {companyName}
