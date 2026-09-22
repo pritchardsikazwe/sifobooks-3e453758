@@ -169,7 +169,7 @@ function runSqlMigrations(database: Database) {
   const applied = new Set(
     (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
   );
-  const files = bundled.length ? bundled.map((entry) => entry.name).sort() : readdirSync(dir!).filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort();
+  const files = bundled.length ? bundled.map((entry) => entry.name).sort() : readdirSync(dir!).filter((name) => /^\d+_.*\.sql$/.test(name)).sort();
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = bundled.length ? bundled.find((entry) => entry.name === file)?.sql || "" : readFileSync(join(dir!, file), "utf8");
