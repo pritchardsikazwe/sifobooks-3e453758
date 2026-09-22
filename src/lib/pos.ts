@@ -50,7 +50,7 @@ export async function loadFavorites():Promise<string[]> { const {data}=await sup
 export async function toggleFavorite(itemId:string,on:boolean){ if(on)await supabase.from("pos_favorites").insert({item_id:itemId} as any); else await supabase.from("pos_favorites").delete().eq("item_id",itemId); }
 export async function loadSettings():Promise<PosSettings>{ const {data}=await supabase.from("pos_settings").select("*").maybeSingle(); if(!data)return DEFAULT_SETTINGS; return {...DEFAULT_SETTINGS,...(data as any)} as PosSettings; }
 export async function saveSettings(patch:Partial<PosSettings>){ const {data:u}=await supabase.auth.getUser(); if(!u.user)return; await supabase.from("pos_settings").upsert({user_id:u.user.id,...patch} as any,{onConflict:"user_id"}); }
-export async function ensureRegister():Promise<{id:string;name:string;branch:string|null;location_id:string|null}|null>{
+export async function ensureRegister():Promise<{id:string;name:string;branch:string|null;location_id:string|null;location_name?:string|null}|null>{
   const {data}=await supabase.from("pos_registers").select("id,name,branch,location_id").eq("is_active",true).limit(1);
   if(data&&data.length){
     const register:any=data[0];
