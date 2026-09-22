@@ -61,3 +61,26 @@ jobs:
           path: SifoBooks-Windows-Portable.zip
           if-no-files-found: error
           retention-days: 30
+  vsdc-connector:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build VSDC connector
+        run: bun run build:vsdc-connector
+      - name: Create VSDC connector ZIP
+        shell: pwsh
+        run: Compress-Archive -Path vsdc-connector-dist\* -DestinationPath SifoBooks-VSDC-Connector-Windows.zip -Force
+      - name: Upload VSDC connector
+        uses: actions/upload-artifact@v4
+        with:
+          name: SifoBooks-VSDC-Connector-Windows
+          path: SifoBooks-VSDC-Connector-Windows.zip
+          if-no-files-found: error
+          retention-days: 30
