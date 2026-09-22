@@ -1,0 +1,166 @@
+; SifoBooks Windows Installer - branded commercial installer
+#define Edition "__EDITION__"
+#define ProductName "__PRODUCT_NAME__"
+#define ExeName "__EXE_NAME__"
+#define AppVersion "__APP_VERSION__"
+
+[Setup]
+AppId=__APP_ID__
+AppName={#ProductName}
+AppVersion={#AppVersion}
+AppPublisher=Sifonet Technologies
+AppPublisherURL=https://sifonet.com
+AppSupportURL=https://sifonet.com
+AppUpdatesURL=https://sifonet.com
+DefaultDirName={autopf}\SifoBooks\{#Edition}
+DefaultGroupName=SifoBooks
+DisableProgramGroupPage=yes
+WizardStyle=modern
+WizardSizePercent=110
+WizardImageFile=assets\SifoBooks-wizard.bmp
+WizardSmallImageFile=assets\SifoBooks-wizard.bmp
+SetupIconFile=..\desktop-dist\SifoBooks.ico
+UninstallDisplayIcon={app}\SifoBooks.ico
+ArchitecturesInstallIn64BitMode=x64compatible
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=dialog
+OutputDir=..\installer-dist
+OutputBaseFilename=SifoBooks-{#Edition}-Windows-Setup
+Compression=lzma2/max
+SolidCompression=yes
+VersionInfoCompany=Sifonet Technologies
+VersionInfoDescription={#ProductName} Windows Installer
+VersionInfoProductName={#ProductName}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoCopyright=Copyright © 2026 Sifonet Technologies
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
+Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
+Name: "startup"; Description: "Start SifoBooks automatically when Windows starts"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
+Name: "launch"; Description: "Launch SifoBooks after installation"; GroupDescription: "After installation:"; Flags: checkedonce
+
+[Files]
+Source: "..\desktop-dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "assets\SifoBooks-logo.svg"; DestDir: "{app}\branding"; Flags: ignoreversion
+Source: "assets\SifoBooks-wizard.bmp"; DestDir: "{app}\branding"; Flags: ignoreversion
+
+[Dirs]
+Name: "{app}\data"; Permissions: users-modify
+Name: "{app}\backups"; Permissions: users-modify
+Name: "{app}\config"; Permissions: users-modify
+Name: "{app}\logs"; Permissions: users-modify
+
+[Icons]
+Name: "{group}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
+Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userstartup}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
+
+[Run]
+Filename: "{app}\Start-SifoBooks.vbs"; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\branding"
+
+[Code]
+var
+  EditionPage: TWizardPage;
+  EditionInfo: TNewStaticText;
+  OptionsPage: TInputOptionWizardPage;
+  TrialPage: TWizardPage;
+  TrialInfo: TNewStaticText;
+
+function EditionDisplayName(): String;
+begin
+  if '{#Edition}' = 'enterprise' then Result := 'Enterprise'
+  else if '{#Edition}' = 'accounting' then Result := 'Accounting'
+  else if '{#Edition}' = 'retail' then Result := 'Retail'
+  else if '{#Edition}' = 'restaurant' then Result := 'Restaurant'
+  else if '{#Edition}' = 'hotel' then Result := 'Hotel'
+  else if '{#Edition}' = 'school' then Result := 'School'
+  else Result := '{#Edition}';
+end;
+
+procedure InitializeWizard;
+begin
+  EditionPage := CreateCustomPage(wpSelectDir, 'Select SifoBooks Edition', 'Confirm the edition included with this installer.');
+  EditionInfo := TNewStaticText.Create(EditionPage);
+  EditionInfo.Parent := EditionPage.Surface;
+  EditionInfo.Left := ScaleX(18);
+  EditionInfo.Top := ScaleY(30);
+  EditionInfo.Width := EditionPage.SurfaceWidth - ScaleX(36);
+  EditionInfo.Height := ScaleY(150);
+  EditionInfo.AutoSize := False;
+  EditionInfo.WordWrap := True;
+  EditionInfo.Font.Size := 14;
+  EditionInfo.Font.Style := [fsBold];
+  EditionInfo.Caption := 'SifoBooks ' + EditionDisplayName() + #13#10#13#10 +
+    'This professional Windows build is configured for the ' + EditionDisplayName() +
+    ' edition. Other editions are distributed as separate licensed installers.'#13#10#13#10 +
+    'Business. Accounting. Growth.';
+
+  OptionsPage := CreateInputOptionPage(EditionPage.ID, 'Additional Configuration',
+    'Choose optional setup actions.', 'These options can be changed later.', True, False);
+  OptionsPage.Add('Create desktop shortcut');
+  OptionsPage.Add('Create Start Menu shortcut');
+  OptionsPage.Add('Launch SifoBooks after installation');
+  OptionsPage.Add('Configure for LAN / multiple computers');
+  OptionsPage.Add('Open Getting Started Guide');
+  OptionsPage.Values[0] := WizardIsTaskSelected('desktopicon');
+  OptionsPage.Values[1] := WizardIsTaskSelected('startmenu');
+  OptionsPage.Values[2] := WizardIsTaskSelected('launch');
+  OptionsPage.Values[3] := False;
+  OptionsPage.Values[4] := False;
+
+  TrialPage := CreateCustomPage(OptionsPage.ID, 'First Launch — 14-Day Trial',
+    'Every new installation starts with the SifoBooks first-install trial.');
+  TrialInfo := TNewStaticText.Create(TrialPage);
+  TrialInfo.Parent := TrialPage.Surface;
+  TrialInfo.Left := ScaleX(18);
+  TrialInfo.Top := ScaleY(30);
+  TrialInfo.Width := TrialPage.SurfaceWidth - ScaleX(36);
+  TrialInfo.Height := ScaleY(180);
+  TrialInfo.AutoSize := False;
+  TrialInfo.WordWrap := True;
+  TrialInfo.Font.Size := 12;
+  TrialInfo.Caption := '14 DAYS INCLUDED' + #13#10#13#10 +
+    'Your first installation will initialise the SifoBooks 14-day trial automatically.' + #13#10#13#10 +
+    'No internet connection is required for normal offline operation. A valid commercial licence can be activated from inside SifoBooks at any time.' + #13#10#13#10 +
+    'Built for today. Ready for tomorrow.';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+    WizardForm.StatusLabel.Caption := 'Installing SifoBooks ' + EditionDisplayName() + '...';
+  if CurStep = ssPostInstall then
+    WizardForm.StatusLabel.Caption := 'SifoBooks installation completed successfully.';
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpWelcome then
+    WizardForm.WelcomeLabel2.Caption := 'Manage your business with confidence.'#13#10#13#10 +
+      'Accounting, inventory, sales, POS, payroll, reporting and compliance — in one powerful solution.';
+  if CurPageID = wpInstalling then
+    WizardForm.StatusLabel.Caption := 'Installing SifoBooks ' + EditionDisplayName() + '...';
+  if CurPageID = wpFinished then begin
+    WizardForm.FinishedLabel.Caption := 'SifoBooks ' + EditionDisplayName() + ' has been installed successfully!';
+    WizardForm.FinishedHeadingLabel.Caption := 'Installation Complete';
+  end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = OptionsPage.ID then begin
+    if OptionsPage.Values[0] then WizardSelectTasks('desktopicon') else WizardDeselectTasks('desktopicon');
+    if OptionsPage.Values[1] then WizardSelectTasks('startmenu') else WizardDeselectTasks('startmenu');
+    if OptionsPage.Values[2] then WizardSelectTasks('launch') else WizardDeselectTasks('launch');
+    if OptionsPage.Values[4] then
+      MsgBox('The Getting Started Guide is included in the installed SifoBooks folder.', mbInformation, MB_OK);
+  end;
+end;
