@@ -36,75 +36,11 @@ const iconSource = "public/sifobooks-logo.svg";
 const iconOutput = join(OUT_DIR, "SifoBooks.ico");
 if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: public/sifobooks-logo.svg");
 try {
-  await /**
- * Build a standalone SifoBooks Windows edition.
- *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school
- */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
-import { join } from "path";
-import { gzipSync } from "zlib";
-import { $ } from "bun";
-
-const OUT_DIR = "desktop-dist";
-const CLIENT_DIR = join(OUT_DIR, "client");
-const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school"].includes(edition) ? edition : "enterprise";
-const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
-const exeName = `${productName}.exe`;
-
-function copyDir(src: string, dest: string) {
-  if (!existsSync(src)) return;
-  mkdirSync(dest, { recursive: true });
-  for (const entry of readdirSync(src)) {
-    const srcPath = join(src, entry);
-    const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
-    else copyFileSync(srcPath, destPath);
-  }
-}
-
-console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
-process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await $`bun run build`;
-
-magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
-} catch (error) {
+  await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
+} catch {
   throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-await /**
- * Build a standalone SifoBooks Windows edition.
- *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school
- */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
-import { join } from "path";
-import { gzipSync } from "zlib";
-import { $ } from "bun";
-
-const OUT_DIR = "desktop-dist";
-const CLIENT_DIR = join(OUT_DIR, "client");
-const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school"].includes(edition) ? edition : "enterprise";
-const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
-const exeName = `${productName}.exe`;
-
-function copyDir(src: string, dest: string) {
-  if (!existsSync(src)) return;
-  mkdirSync(dest, { recursive: true });
-  for (const entry of readdirSync(src)) {
-    const srcPath = join(src, entry);
-    const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
-    else copyFileSync(srcPath, destPath);
-  }
-}
-
-console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
-process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await $`bun run build`;
-
-bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
 
 console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
@@ -114,7 +50,7 @@ copyDir("dist/client", CLIENT_DIR);
 const protectedSchema = gzipSync(readFileSync("src/lib/db/schema.sql"));
 writeFileSync(join(OUT_DIR, ".sifobooks-schema.bin"), protectedSchema);
 const migrationFiles = existsSync("src/lib/db/migrations")
-  ? readdirSync("src/lib/db/migrations").filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
+  ? readdirSync("src/lib/db/migrations").filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort()
   : [];
 const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
 writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
@@ -123,7 +59,7 @@ if (existsSync("config/license-public-key.pem")) {
   mkdirSync(join(OUT_DIR, "config"), { recursive: true });
   copyFileSync("config/license-public-key.pem", join(OUT_DIR, "config/license-public-key.pem"));
 }
-if (existsSync("public/favicon.ico")) copyFileSync("public/favicon.ico", join(OUT_DIR, "SifoBooks.ico"));
+if (!existsSync(join(OUT_DIR, "SifoBooks.ico"))) throw new Error("Native SifoBooks.ico was not generated.");
 writeFileSync(join(OUT_DIR, "edition.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, productName }, null, 2));
 
 writeFileSync(join(OUT_DIR, ".env.example"), [
@@ -139,7 +75,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "SIFOBOOKS_PWA_ENABLED=true",
   "SIFOBOOKS_PRINTING=system",
   "",
-].join("\n"));
+].join("\\n"));
 
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
@@ -154,7 +90,7 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "End If",
   "Set fso = Nothing",
   "Set shell = Nothing",
-].join("\r\n"));
+].join("\\r\\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
