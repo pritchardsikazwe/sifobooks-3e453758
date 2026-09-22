@@ -1,0 +1,8 @@
+{
+  "cloudUrl": "https://app.sifobooks.com",
+  "connectorId": "replace-with-connector-id",
+  "credential": "paste-one-time-connector-credential-here",
+  "vsdcUrl": "http://127.0.0.1:PORT",
+  "pollSeconds": 10,
+  "environment": "test"
+}
