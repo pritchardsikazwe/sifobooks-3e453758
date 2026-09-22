@@ -51,6 +51,10 @@ export function useInstalledModules() {
       ["core_home", "sales", "purchases", "inventory", "retail_pos", "restaurant", "reports", "admin", "learning"].forEach(k => merged.add(k));
     } else if (SIFOBOOKS_EDITION === "retail") {
       ["core_home", "sales", "purchases", "inventory", "retail_pos", "reports", "admin", "learning"].forEach(k => merged.add(k));
+    } else if (SIFOBOOKS_EDITION === "hotel") {
+      ["core_home", "sales", "purchases", "inventory", "restaurant", "hotel_erp", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
+    } else if (SIFOBOOKS_EDITION === "school") {
+      ["core_home", "sales", "purchases", "inventory", "hr_payroll", "school_erp", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
     } else if (SIFOBOOKS_EDITION === "accounting") {
       ["core_home", "sales", "purchases", "inventory", "finance", "fixed_assets", "budgets", "multi_currency", "hr_payroll", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
     }
