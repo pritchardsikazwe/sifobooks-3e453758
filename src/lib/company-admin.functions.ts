@@ -22,7 +22,31 @@ async function assertCanManage(context: Ctx, companyId: string) {
     _user: context.userId,
   });
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden — only this company's owner or administrator may do this");
+  if (data) return;
+
+  // Some existing companies were created before the owner membership row was
+  // guaranteed. Treat the canonical companies.user_id owner identity as
+  // authoritative, while still requiring the database to expose the company
+  // to the authenticated caller.
+  const { data: company, error: companyError } = await context.supabase
+    .from("companies")
+    .select("id, user_id")
+    .eq("id", companyId)
+    .maybeSingle();
+  if (companyError) throw new Error(companyError.message);
+  if (company?.user_id === context.userId) return;
+
+  const { data: membership, error: membershipError } = await context.supabase
+    .from("company_members")
+    .select("company_id, user_id, role")
+    .eq("company_id", companyId)
+    .eq("user_id", context.userId)
+    .in("role", ["owner", "admin"])
+    .maybeSingle();
+  if (membershipError) throw new Error(membershipError.message);
+  if (membership) return;
+
+  throw new Error("Forbidden — only this company's owner or administrator may do this");
 }
 
 async function admin() {
