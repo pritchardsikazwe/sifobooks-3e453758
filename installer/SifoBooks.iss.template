@@ -1,4 +1,5 @@
 ; SifoBooks Windows Installer - branded commercial installer
+; Launches the compiled Windows executable directly; no WScript dependency.
 #define Edition "__EDITION__"
 #define ProductName "__PRODUCT_NAME__"
 #define ExeName "__EXE_NAME__"
@@ -60,7 +61,7 @@ Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; Ico
 Name: "{userstartup}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 
 [Run]
-Filename: "{app}\Start-SifoBooks.vbs"; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
+Filename: "{app}\{#ExeName}"; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\branding"
