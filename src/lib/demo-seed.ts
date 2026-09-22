@@ -70,7 +70,8 @@ export function loadDemoData(userId: string): DemoSeedResult {
       code: "KAB", address: "Kabulonga", city: "Lusaka", phone: "+260 211 000000", manager_name: "Demo Manager", active: 1,
     }, "branch");
     add("warehouses", {
-      id: generateUUID(), user_id: uid, code: "WH01", branch_id: ids.branch, manager: "Demo Storekeeper",
+      id: generateUUID(), user_id: uid, company_id: company.id, code: "WH01", name: "Main Warehouse",
+      branch_id: ids.branch, location: "Kabulonga", manager: "Demo Storekeeper", is_active: 1,
     }, "warehouse");
     add("inventory_locations", {
       id: generateUUID(), user_id: uid, company_id: company.id, name: "Main Warehouse", code: "WH01",
