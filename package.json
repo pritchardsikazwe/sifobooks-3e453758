@@ -22,7 +22,8 @@
     "build:vsdc-connector": "bun run scripts/build-vsdc-connector.ts",
     "qa:production": "bun run scripts/production-qa.ts",
     "test:business-qa": "vitest run src/lib/__tests__/business-workflow-qa.test.ts",
-    "test:database-qa": "bun run scripts/database-workflow-qa.ts"
+    "test:database-qa": "bun run scripts/database-workflow-qa.ts",
+    "test:backup-restore-qa": "bun run scripts/backup-restore-qa.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
