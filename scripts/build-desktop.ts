@@ -13,7 +13,7 @@ const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCas
 const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
 const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
 const exeName = `${productName}.exe`;
-const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
+// edition configuration declared above || "enterprise").toLowerCase();
 const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
 const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
 const exeName = `${productName}.exe`;
