@@ -39,6 +39,10 @@ copyDir("dist/client", CLIENT_DIR);
 copyFileSync("src/lib/db/schema.sql", join(OUT_DIR, "schema.sql"));
 copyDir("src/lib/db/migrations", join(OUT_DIR, "migrations"));
 mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
+if (existsSync("config/license-public-key.pem")) {
+  mkdirSync(join(OUT_DIR, "config"), { recursive: true });
+  copyFileSync("config/license-public-key.pem", join(OUT_DIR, "config/license-public-key.pem"));
+}
 if (existsSync("public/favicon.ico")) copyFileSync("public/favicon.ico", join(OUT_DIR, "SifoBooks.ico"));
 writeFileSync(join(OUT_DIR, "edition.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, productName }, null, 2));
 
@@ -47,6 +51,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "DATABASE_PATH=data/sifobooks.db",
   "PORT=3000",
   "SIFOBOOKS_MODE=offline",
+  "SIFOBOOKS_LICENSE_ENFORCEMENT=true",
   "SIFOBOOKS_DATABASE=sqlite",
   "SIFOBOOKS_HOST=127.0.0.1",
   "SIFOBOOKS_OFFLINE_ENABLED=true",
@@ -144,8 +149,10 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   `7. To move ${productName} to another PC, copy the entire folder including data.`,
   "8. Run Create-SifoBooks-Shortcut.bat once to create both a desktop shortcut and automatic startup shortcut.",
   "9. Backups are stored automatically in the backups\\\\ folder.",
-  "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required.",
-  `11. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
+  "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required for normal offline operation.",
+  "11. Licensing is verified locally using the signed licence in data\\\\license.json.",
+  "12. Keep config\\\\license-public-key.pem with the application; NEVER ship the private signing key.",
+  `13. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
   "",
   "IMPORTANT: Keep the data folder when moving an existing installation.",
   "",
