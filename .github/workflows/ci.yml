@@ -24,6 +24,9 @@ jobs:
       - name: Standalone dependency check
         run: bun run check:standalone
 
+      - name: Production readiness QA
+        run: bun run qa:production
+
       - name: Tests
         run: bun run test
 
