@@ -3,6 +3,7 @@ import { useState } from "react";
 import { BarChart3, CheckCircle2, Database, FileText, Loader2, Receipt, ShoppingCart, Utensils, Users, Wallet, Hotel, GraduationCap, ClipboardCheck, BookOpenCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
