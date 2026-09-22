@@ -28,7 +28,7 @@ for (const route of reports) requireFile("Reports", "src/routes/_authenticated/"
 const editionRoutes: Record<string,string[]> = {
  retail:["retail-control-center.tsx","retail-shift-control.tsx","pos.retail-command-center.tsx","inventory.reconciliation.tsx","stock-counts.tsx"],
  restaurant:["restaurant.tsx","restaurant.pos.tsx","restaurant.orders.tsx","restaurant.kitchen.tsx","restaurant.tables.tsx","restaurant.end-of-day.tsx","restaurant.reports.tsx"],
- hotel:["hotel.tsx","hotel/booking.tsx","hotel/front-desk.tsx","hotel/check-in.tsx","hotel/check-out.tsx","hotel/folios.tsx","hotel/housekeeping.tsx","hotel/night-audit.tsx","hotel/reports.tsx"],
+ hotel:["hotel.tsx","hotel/booking.tsx","hotel/front-desk.tsx","hotel/check-in-out.tsx","hotel/folios.tsx","hotel/housekeeping.tsx","hotel/night-audit.tsx","hotel/reports.tsx"],
  school:["school.tsx","school/students.tsx","school/admissions.tsx","school/attendance.tsx","school/fees.tsx","school/exams.tsx","school/report-cards.tsx","school/parent-portal.tsx"]
 };
 for (const entry of Object.entries(editionRoutes)) for (const route of entry[1]) requireFile("Edition: " + entry[0], "src/routes/_authenticated/" + route);
@@ -37,7 +37,7 @@ for (const path of ["src/lib/demo-seed.ts","src/lib/demo/index.ts","src/lib/demo
 requireText("Demo","src/routes/_authenticated/demo-centre.tsx",["SifoDemo Enterprise Ltd","SifoDemo Accounting Services","SifoRetail Demo Store","SifoRestaurant Demo","SifoHotel Demo Lodge","SifoSchool Demo Academy","workflowChecks"]);
 
 for (const path of ["src/lib/licensing.ts","src/routes/license.tsx","scripts/license-issue.ts","scripts/license-keygen.ts","docs/LICENSING-SELLING.md"]) requireFile("Licensing", path);
-requireText("Licensing","src/lib/licensing.ts",["verifyLicenseToken","getDeviceFingerprint","storeLicense","issueLicense","LicenseType"]);
+requireText("Licensing","src/lib/licensing.ts",["verifyLicenseToken","getDeviceFingerprint","storeLicense","issueLicense","SifoBooksLicense"]);
 
 for (const path of ["desktop/network.example.json","desktop/NETWORK-3-POS-GUIDE.txt","src/routes/_authenticated/network-setup.tsx"]) requireFile("LAN/ZRA", path);
 requireText("LAN/ZRA","src/desktop/server.ts",["/api/network/info","/api/network/config","SIFOBOOKS_MODE","network.json"]);
@@ -54,7 +54,7 @@ function walk(dir: string): string[] {
   return out;
 }
 for (const rootDir of ["src","scripts"]) for (const path of walk(file(rootDir))) {
-  if(path.endsWith("production-qa.ts") || !/\.(ts|tsx|js|mjs|cjs|json|yaml|yml)$/.test(path)) continue;
+  if(path.endsWith("production-qa.ts") || path.endsWith("standalone-check.ts") || !/\.(ts|tsx|js|mjs|cjs|json|yaml|yml)$/.test(path)) continue;
   const source=readFileSync(path,"utf8").toLowerCase(); for(const marker of forbidden) if(source.includes(marker.toLowerCase())) violations.push(path.replaceAll("\\","/")+": "+marker);
 }
 add("Standalone","No Base44 runtime markers",violations.length===0,violations.length?violations.join("; "):"clean");
