@@ -75,7 +75,7 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "SIFOBOOKS_PWA_ENABLED=true",
   "SIFOBOOKS_PRINTING=system",
   "",
-].join("\\n"));
+].join("\n"));
 
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
@@ -90,7 +90,7 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "End If",
   "Set fso = Nothing",
   "Set shell = Nothing",
-].join("\\r\\n"));
+].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
@@ -113,7 +113,7 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "New-SifoBooksShortcut (Join-Path $startup 'SifoBooks.lnk')",
   `Write-Host '${productName} desktop and startup shortcuts created.'`,
   "",
-].join("\\r\\n"));
+].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "@echo off",
@@ -129,7 +129,7 @@ writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.bat"), [
   "echo The app will start automatically after the next Windows sign-in.",
   "pause",
   "",
-].join("\\r\\n"));
+].join("\r\n"));
 
 mkdirSync(join(OUT_DIR, "config"), { recursive: true });
 writeFileSync(join(OUT_DIR, "config", "network.example.json"), JSON.stringify({
@@ -145,7 +145,7 @@ writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   `start "" "%~dp0${exeName}"`,
   "exit /b 0",
   "",
-].join("\\n"));
+].join("\n"));
 
 writeFileSync(join(OUT_DIR, "PROTECTED-DISTRIBUTION.txt"), [
   "SIFOBOOKS PROTECTED DISTRIBUTION",
@@ -158,7 +158,7 @@ writeFileSync(join(OUT_DIR, "PROTECTED-DISTRIBUTION.txt"), [
   "",
   "Technical protection is not absolute: a determined administrator can inspect software running on a computer. The package therefore combines compiled binaries, source minimisation, licence enforcement, device binding and integrity-oriented packaging rather than claiming unbreakable DRM.",
   "",
-].join("\\r\\n"));
+].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "SIFOBOOKS - STANDALONE WINDOWS EDITION",
@@ -182,7 +182,7 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "IMPORTANT: Keep the data folder when moving an existing installation.",
   "PROTECTED FILES: .sifobooks-schema.bin and .sifobooks-migrations.bin are application internals. Do not edit, copy, redistribute or upload them to AI services.",
   "",
-].join("\\r\\n"));
+].join("\r\n"));
 
 console.log("\\nStep 4/4: Standalone package ready.");
 console.log(`Edition: ${productName}`);
