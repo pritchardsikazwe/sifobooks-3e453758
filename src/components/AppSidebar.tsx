@@ -16,6 +16,7 @@ import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
 import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import { staffNav } from "@/lib/rbac";
+import { SIFOBOOKS_EDITION, SIFOBOOKS_PRODUCT_NAME } from "@/lib/edition";
 
 const LogOut = Icons.LogOut;
 const GraduationCap = Icons.GraduationCap;
@@ -97,7 +98,7 @@ export function AppSidebar() {
           setCompanyName(c.trading_name || c.name);
           const mode = (c as any).workspace_mode as string | null;
           setWorkspaceModeState(mode);
-          setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : "Accounting ERP"}`);
+          setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
         }
       }
     })();
@@ -129,7 +130,7 @@ export function AppSidebar() {
     }
     // Owners/admins: compact workflow hubs. Every other route stays reachable
     // inside the hub workspace, the command palette and its own deep link.
-    for (const hub of hubsForMode(workspaceMode)) {
+    for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
       const visible = visibleHubGroups(hub, installed, canView);
       const all = visible.flatMap(g => g.items).filter(i => !(i as any).superAdminOnly || isSuperAdmin);
       if (all.length === 0) continue;

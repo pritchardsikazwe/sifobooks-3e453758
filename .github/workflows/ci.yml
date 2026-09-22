@@ -31,7 +31,13 @@ jobs:
         run: bun run build
 
   desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [enterprise, accounting, retail, restaurant]
     runs-on: windows-latest
+    env:
+      SIFOBOOKS_EDITION: ${{ matrix.edition }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,13 +58,13 @@ jobs:
 
       - name: Create portable Windows ZIP
         shell: pwsh
-        run: Compress-Archive -Path desktop-dist\\* -DestinationPath SifoBooks-Windows-Portable.zip -Force
+        run: Compress-Archive -Path desktop-dist\\* -DestinationPath SifoBooks-${{ matrix.edition }}-Windows-Portable.zip -Force
 
       - name: Upload Windows portable package
         uses: actions/upload-artifact@v4
         with:
-          name: SifoBooks-Windows-Portable
-          path: SifoBooks-Windows-Portable.zip
+          name: SifoBooks-${{ matrix.edition }}-Windows-Portable
+          path: SifoBooks-${{ matrix.edition }}-Windows-Portable.zip
           if-no-files-found: error
           retention-days: 30
   vsdc-connector:
