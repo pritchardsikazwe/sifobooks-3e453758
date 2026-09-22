@@ -8,8 +8,8 @@ async function userTenant(companyId:string){
   if(!token) throw new Error("NOT_AUTHENTICATED");
   const user=await verifyToken(token); if(!user) throw new Error("NOT_AUTHENTICATED");
   const db=getCloudDb();
-  const rows=await db\`SELECT t.id FROM cloud_tenants t JOIN cloud_members m ON m.tenant_id=t.id
-    WHERE t.company_id=\${companyId} AND m.user_id=\${user.userId} AND m.status='active' LIMIT 1\`;
+  const rows=await db`SELECT t.id FROM cloud_tenants t JOIN cloud_members m ON m.tenant_id=t.id
+    WHERE t.company_id=${companyId} AND m.user_id=${user.userId} AND m.status='active' LIMIT 1`;
   if(!rows[0]) throw new Error("TENANT_ACCESS_DENIED");
   return {userId:user.userId,tenantId:String(rows[0].id)};
 }
@@ -23,9 +23,9 @@ export async function hashConnectorCredential(token:string){
 export async function authenticateConnector(connectorId:string,credential:string){
   const hash=await hashConnectorCredential(credential);
   const db=getCloudDb();
-  const rows=await db\`SELECT tenant_id FROM cloud_connector_credentials
-    WHERE connector_id=\${connectorId} AND credential_hash=\${hash} AND status='active'
-      AND (expires_at IS NULL OR expires_at>now()) LIMIT 1\`;
+  const rows=await db`SELECT tenant_id FROM cloud_connector_credentials
+    WHERE connector_id=${connectorId} AND credential_hash=${hash} AND status='active'
+      AND (expires_at IS NULL OR expires_at>now()) LIMIT 1`;
   if(!rows[0]) throw new Error("CONNECTOR_AUTH_FAILED");
   return String(rows[0].tenant_id);
 }
@@ -37,13 +37,13 @@ export const registerCloudConnectorFn=createServerFn({method:"POST"})
  .handler(async({data})=>{
    const {tenantId}=await userTenant(data.companyId); const db=getCloudDb(); const token=newToken();
    await db.begin(async(tx:any)=>{
-     await tx\`SELECT set_config('app.tenant_id',\${tenantId},true)\`;
-     await tx\`INSERT INTO cloud_connectors(tenant_id,connector_id,name,status,environment)
-       VALUES(\${tenantId},\${data.connectorId},\${data.name},'offline',\${data.environment||"test"})
-       ON CONFLICT(tenant_id,connector_id) DO UPDATE SET name=EXCLUDED.name,environment=EXCLUDED.environment,status='offline',updated_at=now()\`;
-     await tx\`INSERT INTO cloud_connector_credentials(tenant_id,connector_id,credential_hash)
-       VALUES(\${tenantId},\${data.connectorId},\${await hashConnectorCredential(token)})
-       ON CONFLICT(tenant_id,connector_id) DO UPDATE SET credential_hash=EXCLUDED.credential_hash,status='active',revoked_at=NULL,created_at=now()\`;
+     await tx`SELECT set_config('app.tenant_id',${tenantId},true)`;
+     await tx`INSERT INTO cloud_connectors(tenant_id,connector_id,name,status,environment)
+       VALUES(${tenantId},${data.connectorId},${data.name},'offline',${data.environment||"test"})
+       ON CONFLICT(tenant_id,connector_id) DO UPDATE SET name=EXCLUDED.name,environment=EXCLUDED.environment,status='offline',updated_at=now()`;
+     await tx`INSERT INTO cloud_connector_credentials(tenant_id,connector_id,credential_hash)
+       VALUES(${tenantId},${data.connectorId},${await hashConnectorCredential(token)})
+       ON CONFLICT(tenant_id,connector_id) DO UPDATE SET credential_hash=EXCLUDED.credential_hash,status='active',revoked_at=NULL,created_at=now()`;
    });
    return {connectorId:data.connectorId,credential:token,warning:"Store this credential securely. It is returned only during registration."};
  });
@@ -53,12 +53,12 @@ export const connectorHeartbeatFn=createServerFn({method:"POST"})
  .handler(async({data})=>{
    const tenantId=await authenticateConnector(data.connectorId,data.credential); const db=getCloudDb();
    await db.begin(async(tx:any)=>{
-     await tx\`SELECT set_config('app.tenant_id',\${tenantId},true)\`;
-     await tx\`UPDATE cloud_connector_credentials SET last_used_at=now() WHERE tenant_id=\${tenantId} AND connector_id=\${data.connectorId}\`;
-     await tx\`UPDATE cloud_connectors SET status='online',last_seen_at=now(),capabilities=\${JSON.stringify(data.capabilities||{})},updated_at=now()
-       WHERE tenant_id=\${tenantId} AND connector_id=\${data.connectorId}\`;
-     await tx\`INSERT INTO cloud_connector_events(tenant_id,connector_id,event_type,status,payload)
-       VALUES(\${tenantId},\${data.connectorId},'heartbeat','received',\${JSON.stringify(data.metadata||{})})\`;
+     await tx`SELECT set_config('app.tenant_id',${tenantId},true)`;
+     await tx`UPDATE cloud_connector_credentials SET last_used_at=now() WHERE tenant_id=${tenantId} AND connector_id=${data.connectorId}`;
+     await tx`UPDATE cloud_connectors SET status='online',last_seen_at=now(),capabilities=${JSON.stringify(data.capabilities||{})},updated_at=now()
+       WHERE tenant_id=${tenantId} AND connector_id=${data.connectorId}`;
+     await tx`INSERT INTO cloud_connector_events(tenant_id,connector_id,event_type,status,payload)
+       VALUES(${tenantId},${data.connectorId},'heartbeat','received',${JSON.stringify(data.metadata||{})})`;
    });
    return {ok:true,serverTime:new Date().toISOString()};
  });
@@ -69,10 +69,10 @@ export const connectorPollCommandsFn=createServerFn({method:"POST"})
    const tenantId=await authenticateConnector(data.connectorId,data.credential); const db=getCloudDb();
    const limit=Math.min(Math.max(Number(data.limit||20),1),100);
    const commands=await db.begin(async(tx:any)=>{
-     await tx\`SELECT set_config('app.tenant_id',\${tenantId},true)\`;
-     const items=await tx\`SELECT * FROM cloud_connector_commands WHERE tenant_id=\${tenantId} AND connector_id=\${data.connectorId}
-       AND status='queued' ORDER BY created_at ASC LIMIT \${limit} FOR UPDATE SKIP LOCKED\`;
-     for(const c of items) await tx\`UPDATE cloud_connector_commands SET status='delivered',delivered_at=now() WHERE id=\${c.id}\`;
+     await tx`SELECT set_config('app.tenant_id',${tenantId},true)`;
+     const items=await tx`SELECT * FROM cloud_connector_commands WHERE tenant_id=${tenantId} AND connector_id=${data.connectorId}
+       AND status='queued' ORDER BY created_at ASC LIMIT ${limit} FOR UPDATE SKIP LOCKED`;
+     for(const c of items) await tx`UPDATE cloud_connector_commands SET status='delivered',delivered_at=now() WHERE id=${c.id}`;
      return items;
    });
    return {commands};
