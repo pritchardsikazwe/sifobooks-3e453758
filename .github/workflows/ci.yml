@@ -30,6 +30,9 @@ jobs:
       - name: Tests
         run: bun run test
 
+      - name: Business workflow QA
+        run: bun run test:business-qa
+
       - name: Production build
         run: bun run build
 
