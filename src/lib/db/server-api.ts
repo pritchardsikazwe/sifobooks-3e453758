@@ -334,10 +334,77 @@ function executePosCheckout(args: Record<string, any>) {
   return {...transaction,duplicate:false};
 }
 
+function executeSalesInvoicePosting(args: Record<string, any>) {
+  const db = getDb();
+  const uid = String(args._uid || "");
+  const h = args._invoice || {};
+  const items = Array.isArray(args._items) ? args._items : [];
+  if (!uid) throw new Error("NOT_SIGNED_IN");
+  if (!h.number) throw new Error("INVOICE_NUMBER_REQUIRED");
+  if (!items.length) throw new Error("INVOICE_ITEMS_REQUIRED");
+  const existing = db.prepare("SELECT id,status FROM invoices WHERE user_id=? AND number=? LIMIT 1").get(uid,h.number) as any;
+  if (existing?.status === "sent" || existing?.status === "posted") return { invoice_id:existing.id, duplicate:true };
+  const company = db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId = company?.company_id ?? null;
+  assertPeriodOpen(uid,String(h.issue_date));
+  const resolved:any[]=[]; let subtotal=0, vat=0;
+  for(const x of items){
+    const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 0);
+    if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
+    const line=Math.round(qty*price*100)/100; const tax=Math.round(line*rate/100*100)/100;
+    subtotal+=line; vat+=tax; resolved.push({...x,qty,price,rate,line,tax});
+  }
+  subtotal=Math.round(subtotal*100)/100; vat=Math.round(vat*100)/100; const total=Math.round((subtotal+vat)*100)/100;
+  const ar=postingAccount(db,uid,companyId,"SALES_RECEIVABLE",["1100","1200"]);
+  const revenue=postingAccount(db,uid,companyId,"SALES_REVENUE",["4000","4100"]);
+  const vatAccount=vat>0?postingAccount(db,uid,companyId,"OUTPUT_VAT",["2200","2100"]):null;
+  const tx=db.transaction(()=>{
+    const invoiceId=existing?.id ?? generateUUID();
+    if(existing) db.prepare("UPDATE invoices SET customer_id=?,issue_date=?,due_date=?,status='sent',currency=?,subtotal=?,vat_amount=?,total=?,amount_paid=0,balance_due=?,seller_tpin=?,buyer_tpin=?,notes=?,updated_at=datetime('now') WHERE id=? AND user_id=?")
+      .run(h.customer_id??null,h.issue_date,h.due_date??null,h.currency??"ZMW",subtotal,vat,total,total,h.seller_tpin??null,h.buyer_tpin??null,h.notes??null,invoiceId,uid);
+    else db.prepare("INSERT INTO invoices(id,user_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .run(invoiceId,uid,h.customer_id??null,h.number,h.issue_date,h.due_date??null,"sent",h.currency??"ZMW",subtotal,vat,total,0,total,h.seller_tpin??null,h.buyer_tpin??null,h.notes??null);
+    if(!existing){
+      for(const x of resolved) db.prepare("INSERT INTO invoice_items(id,user_id,invoice_id,stock_item_id,description,quantity,unit_price,vat_rate,line_total) VALUES(?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,invoiceId,x.stock_item_id??null,x.description??"Item",x.qty,x.price,x.rate,x.line);
+    }
+    for(const x of resolved){
+      if(!x.stock_item_id) continue;
+      const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=? FOR UPDATE").get(x.stock_item_id,uid) as any;
+      if(!item) throw new Error("UNKNOWN_ITEM");
+      const available=Number(item.quantity_on_hand||0);
+      if(available<x.qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+      db.prepare("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(x.qty,x.stock_item_id,uid);
+      db.prepare("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES(?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,x.stock_item_id,"SALE",x.qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id??item.warehouse_id??null);
+    }
+    const prior=db.prepare("SELECT id FROM journal_entries WHERE user_id=? AND reference=? LIMIT 1").get(uid,"INV:"+h.number) as any;
+    let entryId=prior?.id;
+    if(!entryId){
+      entryId=generateUUID();
+      const entryNo=nextDocumentNumber({userId:uid,companyId,documentType:"JOURNAL",prefix:"JE",padding:6});
+      db.prepare("INSERT INTO journal_entries(id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+        .run(entryId,uid,entryNo,h.issue_date,"INV:"+h.number,"Sales invoice "+h.number,"posted",total,total,h.currency??"ZMW",1);
+      db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,ar,"Trade receivable",total,0);
+      db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,revenue,"Sales revenue",0,subtotal);
+      if(vatAccount) db.prepare("INSERT INTO journal_lines(id,user_id,entry_id,account_id,description,debit,credit) VALUES(?,?,?,?,?,?,?)").run(generateUUID(),uid,entryId,vatAccount,"Output VAT",0,vat);
+    }
+    const queued=db.prepare("SELECT id FROM zra_invoice_queue WHERE user_id=? AND invoice_number=? LIMIT 1").get(uid,h.number) as any;
+    if(!queued) db.prepare("INSERT INTO zra_invoice_queue(id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload) VALUES(?,?,?,?,?,?,?,?,?)")
+      .run(generateUUID(),uid,"invoice",invoiceId,h.number,total,vat,"pending",JSON.stringify({source:"sales_invoice",invoiceId,invoiceNumber:h.number,total,vat}));
+    return {invoice_id:invoiceId,journal_entry_id:entryId,total,vat,duplicate:false};
+  });
+  void recordAuditEvent({userId:uid,action:"SALES_INVOICE_POSTED",entityType:"invoice",entityId:tx.invoice_id,newValue:tx});
+  return tx;
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
     switch (name) {
+      case "post_sales_invoice": {
+        return { data: executeSalesInvoicePosting(args), error: null };
+      }
       case "create_purchase_order": {
         return { data: createPurchaseOrder({ ...args, userId: String(args._uid || "") }), error: null };
       }
