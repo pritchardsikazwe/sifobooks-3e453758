@@ -56,12 +56,12 @@ Name: "{app}\config"; Permissions: users-modify
 Name: "{app}\logs"; Permissions: users-modify
 
 [Icons]
-Name: "{group}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
-Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
-Name: "{userstartup}\{#ProductName}"; Filename: "{app}\Start-SifoBooks.vbs"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
+Name: "{group}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
+Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userstartup}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 
 [Run]
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
+Filename: "{app}\{#ExeName}"; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\branding"
