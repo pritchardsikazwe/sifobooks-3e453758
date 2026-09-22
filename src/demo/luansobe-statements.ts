@@ -1,4 +1,4 @@
-export type DemoStatementRow={period:"2026-07"|"2026-08";date:string;reference:string;description:string;payee:string;amount:number;balance:number;direction:"credit"|"debit"};
+export type DemoStatementRow={period:"2026-07"|"2026-08"|"2026-09";date:string;reference:string;description:string;payee:string;amount:number;balance:number;direction:"credit"|"debit"};
 export const LUANSOBE_JULY:DemoStatementRow[]=[
 {period:"2026-07",date:"2026-07-02",reference:"000ZEXA2618301B2",description:"Food for invigilator — TRIMURTI LIMITED",payee:"TRIMURTI LIMITED",amount:20,balance:48574.46,direction:"debit"},
 {period:"2026-07",date:"2026-07-02",reference:"000ZEXA2618301B2",description:"Food for invigilator — TRIMURTI LIMITED",payee:"TRIMURTI LIMITED",amount:1651,balance:46923.46,direction:"debit"},
@@ -76,4 +76,13 @@ export const LUANSOBE_AUGUST:DemoStatementRow[]=[
 {period:"2026-08",date:"2026-08-28",reference:"043ZEXA26240002M",description:"Internal Funds Transfer: WATER DRUMS",payee:"FIESTECH ENTERPRISE",amount:6600,balance:25897.62,direction:"debit"},
 {period:"2026-08",date:"2026-08-31",reference:"043ZEXA26243002N",description:"Internal Funds Transfer: Ocra SEEDs",payee:"KAPMAY APEX LIMITED",amount:10000,balance:15897.62,direction:"debit"}
 ];
-export const LUANSOBE_STATEMENTS=[...LUANSOBE_JULY,...LUANSOBE_AUGUST];
+export const LUANSOBE_SEPTEMBER:DemoStatementRow[]=[
+{period:"2026-09",date:"2026-09-01",reference:"043ZEXA26244000H",description:"Internal Funds Transfer: Tile Fixer",payee:"FIESTECH ENTERPRISE",amount:5200,balance:10697.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-08",reference:"043ZEXA262510004",description:"Internal Funds Transfer: Teacher day Sneaks",payee:"FIESTECH ENTERPRISE",amount:6100,balance:4597.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-11",reference:"043ZEXA262540005",description:"Internal Funds Transfer: DSA to Kitwe",payee:"JAMES SIMUMBWE",amount:750,balance:3847.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-15",reference:"043MNT7ZMW000001",description:"ACCOUNT MAINTENANCE",payee:"CASA BANK",amount:100,balance:3747.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-22",reference:"043ZEXA26265000I",description:"Internal Funds Transfer: GENERAL WORKER SEPTEMBER SALARY.",payee:"FAINESS KAKUMBI",amount:2200,balance:1547.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-22",reference:"043ZEXA26265000J",description:"Internal Funds Transfer: SOFT DRINKS",payee:"FIESTECH ENTERPRISE",amount:812,balance:735.62,direction:"debit"},
+{period:"2026-09",date:"2026-09-22",reference:"043ZEXA26265000K",description:"Internal Funds Transfer: INDEPENDENCE CELEBRATION",payee:"DISTRICT COMMISSIONERS OFFICE-EVENTS A/C",amount:700,balance:35.62,direction:"debit"}
+];
+export const LUANSOBE_STATEMENTS=[...LUANSOBE_JULY,...LUANSOBE_AUGUST,...LUANSOBE_SEPTEMBER];
