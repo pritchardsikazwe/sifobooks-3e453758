@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { SIFOBOOKS_PRODUCT_NAME } from "@/lib/edition";
 
 export function SifoBooksLogo({
   className,
@@ -16,8 +17,8 @@ export function SifoBooksLogo({
       </span>
       {showWordmark && (
         <span className="min-w-0 leading-none">
-          <span className="block font-bold tracking-tight text-primary">SifoBooks</span>
-          <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Accounting ERP</span>
+          <span className="block font-bold tracking-tight text-primary">{SIFOBOOKS_PRODUCT_NAME}</span>
+          <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{SIFOBOOKS_PRODUCT_NAME === "SifoBooks" ? "Accounting ERP" : "Business Edition"}</span>
         </span>
       )}
     </div>
