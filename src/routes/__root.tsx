@@ -106,7 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
       { rel: "icon", href: "/sifobooks-logo.svg", type: "image/svg+xml" },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", href: "/sifobooks-logo.svg" },
     ],
   }),
   shellComponent: RootShell,
