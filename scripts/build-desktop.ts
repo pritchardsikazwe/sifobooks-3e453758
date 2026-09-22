@@ -5,7 +5,7 @@ import { $ } from "bun";
 const OUT_DIR = "desktop-dist";
 const CLIENT_DIR = join(OUT_DIR, "client");
 const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant"].includes(edition) ? edition : "enterprise";
+const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school"].includes(edition) ? edition : "enterprise";
 const productName = editionSlug === "enterprise" ? "SifoBooks" : "SifoBooks-" + editionSlug[0].toUpperCase() + editionSlug.slice(1);
 const exeName = productName + ".exe";
 
