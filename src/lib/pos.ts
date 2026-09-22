@@ -30,13 +30,43 @@ export type CartLine = { key:string; item_id:string|null; name:string; sku:strin
 export type PosTotals = { gross:number; lineDiscount:number; saleDiscount:number; subtotal:number; tax:number; total:number; cost:number; items:number };
 const n = (v:any) => Number(v ?? 0);
 
-export async function loadProducts():Promise<PosProduct[]> { try { const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000); if(error)throw error; const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[]; void cacheRows("products",rows); return rows; } catch { return await readCached<PosProduct>("products"); } }
+export async function loadProducts(locationId?:string|null):Promise<PosProduct[]> {
+  try {
+    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
+    if(error)throw error;
+    const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[];
+    if(locationId){
+      const {data:balances,error:be}=await supabase.from("stock_balances").select("item_id,quantity").eq("location_id",locationId);
+      if(!be){
+        const by=new Map((balances??[]).map((b:any)=>[String(b.item_id),n(b.quantity)]));
+        for(const row of rows) row.stock=by.get(row.id)??0;
+      }
+    }
+    void cacheRows("products",rows); return rows;
+  } catch { return await readCached<PosProduct>("products"); }
+}
 export async function loadCustomers():Promise<PosCustomer[]> { try { const {data}=await supabase.from("customers").select("id,name,phone").order("name").limit(1000); const rows=(data??[]).map((c:any)=>({id:c.id,name:c.name,phone:c.phone??null,code:null})) as PosCustomer[]; void cacheRows("customers",rows); return rows; } catch { return await readCached<PosCustomer>("customers"); } }
 export async function loadFavorites():Promise<string[]> { const {data}=await supabase.from("pos_favorites").select("item_id").order("sort_order"); return (data??[]).map((r:any)=>r.item_id as string); }
 export async function toggleFavorite(itemId:string,on:boolean){ if(on)await supabase.from("pos_favorites").insert({item_id:itemId} as any); else await supabase.from("pos_favorites").delete().eq("item_id",itemId); }
 export async function loadSettings():Promise<PosSettings>{ const {data}=await supabase.from("pos_settings").select("*").maybeSingle(); if(!data)return DEFAULT_SETTINGS; return {...DEFAULT_SETTINGS,...(data as any)} as PosSettings; }
 export async function saveSettings(patch:Partial<PosSettings>){ const {data:u}=await supabase.auth.getUser(); if(!u.user)return; await supabase.from("pos_settings").upsert({user_id:u.user.id,...patch} as any,{onConflict:"user_id"}); }
-export async function ensureRegister():Promise<{id:string;name:string;branch:string|null}|null>{ const {data}=await supabase.from("pos_registers").select("id,name,branch").eq("is_active",true).limit(1); if(data&&data.length)return data[0] as any; const {data:created}=await supabase.from("pos_registers").insert({name:"Register 01",branch:"Main"} as any).select("id,name,branch").maybeSingle(); return (created as any)??null; }
+export async function ensureRegister():Promise<{id:string;name:string;branch:string|null;location_id:string|null}|null>{
+  const {data}=await supabase.from("pos_registers").select("id,name,branch,location_id").eq("is_active",true).limit(1);
+  if(data&&data.length){
+    const register:any=data[0];
+    if(!register.location_id){
+      const {data:loc}=await supabase.from("inventory_locations").select("id").eq("is_active",true).order("is_default",{ascending:false}).order("location_type").order("name").limit(1).maybeSingle();
+      if(loc?.id){
+        await supabase.from("pos_registers").update({location_id:loc.id} as any).eq("id",register.id);
+        register.location_id=loc.id;
+      }
+    }
+    return register;
+  }
+  const {data:loc}=await supabase.from("inventory_locations").select("id").eq("is_active",true).order("is_default",{ascending:false}).order("location_type").order("name").limit(1).maybeSingle();
+  const {data:created}=await supabase.from("pos_registers").insert({name:"Register 01",branch:"Main",location_id:loc?.id??null} as any).select("id,name,branch,location_id").maybeSingle();
+  return (created as any)??null;
+}
 export async function currentShift(registerId?:string|null){ const {data}=await supabase.from("pos_shifts").select("*").eq("status","open").order("opened_at",{ascending:false}).limit(1); const row=(data??[])[0] as any; if(row)return row; if(!registerId)return null; return null; }
 export async function openShift(registerId:string|null,cashier:string,float_:number){ const {data}=await supabase.from("pos_shifts").insert({register_id:registerId,cashier_name:cashier,opening_float:float_} as any).select("*").maybeSingle(); return data as any; }
 export async function shiftSummary(shiftId:string){ const {data:sales}=await supabase.from("pos_sales").select("id,total,status").eq("shift_id",shiftId); const ids=(sales??[]).map((s:any)=>s.id); let byMethod:Record<string,number>={}; if(ids.length){const {data:pays}=await supabase.from("pos_payments").select("method,amount").in("sale_id",ids);(pays??[]).forEach((p:any)=>{byMethod[p.method]=(byMethod[p.method]??0)+n(p.amount);});} const completed=(sales??[]).filter((s:any)=>s.status==="completed"); const voided=(sales??[]).filter((s:any)=>s.status==="voided"); const refunds=(sales??[]).filter((s:any)=>s.status==="refunded"); return {transactions:completed.length,salesTotal:completed.reduce((a:number,s:any)=>a+n(s.total),0),voids:voided.length,refunds:refunds.length,byMethod}; }
