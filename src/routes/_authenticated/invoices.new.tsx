@@ -195,11 +195,45 @@ function NewInvoicePage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return; }
 
+    if (targetStatus === "sent") {
+      const rpcItems = valid.map(i => ({
+        stock_item_id: i.stockItemId ?? null,
+        description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
+        quantity: i.qty,
+        unit_price: i.price,
+        vat_rate: i.vatRate,
+        location_id: i.warehouseId ?? null,
+      }));
+      const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
+        _invoice: {
+          customer_id: customerId,
+          number,
+          issue_date: issueDate,
+          due_date: dueDate,
+          currency,
+          seller_tpin: company?.tpin ?? null,
+          buyer_tpin: buyerTpin || null,
+          notes,
+          client_ref: `invoice:${number}`,
+        },
+        _items: rpcItems,
+      } as any);
+      if (postError || !posted) {
+        setSaving(false);
+        return toast.error(postError?.message ?? "Invoice could not be posted");
+      }
+      setSaving(false);
+      toast.success(`Invoice ${number} posted — journal, receivable, stock and ZRA queue updated`);
+      navigate({ to: "/invoices" });
+      return;
+    }
+
     const { data: inv, error } = await supabase.from("invoices").insert({
       user_id: u.user.id, customer_id: customerId, number,
-      issue_date: issueDate, due_date: dueDate, status: targetStatus, currency,
+      issue_date: issueDate, due_date: dueDate, status: "draft", currency,
       subtotal: totals.subtotal, vat_amount: totals.tax, total: totals.total, notes,
       seller_tpin: company?.tpin ?? null, buyer_tpin: buyerTpin || null,
+      amount_paid: 0, balance_due: 0,
     }).select().single();
     if (error || !inv) { setSaving(false); return toast.error(error?.message ?? "Failed"); }
 
@@ -214,23 +248,8 @@ function NewInvoicePage() {
         quantity: i.qty, unit_price: i.price, vat_rate: i.vatRate, line_total: line,
       };
     }));
-    for (const i of valid) {
-      if (i.stockItemId) {
-        await supabase.from("stock_movements").insert({
-          user_id: u.user.id, item_id: i.stockItemId, movement_type: "out",
-          quantity: i.qty, reference: number, note: `Invoice ${number}`,
-        });
-      }
-    }
-    if (targetStatus === "sent") {
-      const custName = customers.find(c => c.id === customerId)?.name;
-      const res = await postInvoiceLedger({
-        userId: u.user.id, invoiceId: inv.id, number,
-        issueDate: issueDate, subtotal: totals.subtotal, vat: totals.tax, total: totals.total,
-        customerName: custName,
-      });
-      if (!res.ok) toast.warning(`Invoice saved but ledger posting failed: ${res.error ?? "unknown"}`);
-    }
+    if (ie) { setSaving(false); return toast.error(ie.message); }
+
     setSaving(false);
     if (ie) return toast.error(ie.message);
     toast.success(targetStatus === "draft" ? "Saved as draft" : `Invoice ${number} posted — journal entry created, stock deducted, customer balance updated`);
