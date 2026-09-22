@@ -7,6 +7,8 @@ const dbPath = join(root, "data", "sifobooks.db");
 const backupPath = join(root, "backups", "qa-backup.db");
 const restoredPath = join(root, "restored.db");
 await Bun.write(join(root, "placeholder"), "qa");
+await Bun.write(dbPath, "");
+await Bun.write(join(root, "data", ".keep"), "");
 
 const run = async (args: string[], env: Record<string,string>) => {
   const proc = Bun.spawn(["bun", ...args], { cwd: process.cwd(), env: { ...process.env, ...env }, stdout:"pipe", stderr:"pipe" });
@@ -17,7 +19,6 @@ const run = async (args: string[], env: Record<string,string>) => {
 };
 
 try {
-  await Bun.write(dbPath, "");
   const db = new Database(dbPath);
   db.exec("PRAGMA foreign_keys=ON;");
   db.exec(Bun.file("src/lib/db/schema.sql").text ? await Bun.file("src/lib/db/schema.sql").text() : "");
