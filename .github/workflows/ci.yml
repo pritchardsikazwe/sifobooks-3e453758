@@ -36,6 +36,9 @@ jobs:
       - name: Database workflow QA
         run: bun run test:database-qa
 
+      - name: Backup and restore QA
+        run: bun run test:backup-restore-qa
+
       - name: Production build
         run: bun run build
 
