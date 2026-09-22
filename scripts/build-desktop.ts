@@ -42,7 +42,7 @@ copyDir("dist/client", CLIENT_DIR);
 const protectedSchema = gzipSync(readFileSync("src/lib/db/schema.sql"));
 writeFileSync(join(OUT_DIR, ".sifobooks-schema.bin"), protectedSchema);
 const migrationFiles = existsSync("src/lib/db/migrations")
-  ? readdirSync("src/lib/db/migrations").filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort()
+  ? readdirSync("src/lib/db/migrations").filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
   : [];
 const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
 writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
