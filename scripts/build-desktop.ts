@@ -3,7 +3,7 @@
  *
  * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school
  */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, rmSync } from "fs";
+import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import { gzipSync } from "zlib";
 import { $ } from "bun";
