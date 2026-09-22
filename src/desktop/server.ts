@@ -9,7 +9,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
-import { licenseStatus, storeLicense } from "../lib/licensing";
+import { licenseStatus, storeLicense, firstInstallTrialStatus } from "../lib/licensing";
 
 function findBaseDir(): string {
   const candidates = [
@@ -229,7 +229,7 @@ const server = Bun.serve({
     const isPublicStatic = url.pathname.startsWith("/assets/") || url.pathname === "/favicon.ico" || url.pathname === "/sifobooks-logo.svg" || url.pathname === "/manifest.webmanifest";
     if (LICENSE_ENFORCEMENT && !isLicenseRoute && !isPublicStatic) {
       const current = licenseStatus();
-      if (current.status !== "active") {
+      if (current.status !== "active" && current.status !== "trial") {
         return new Response("SifoBooks licence required. Open /license to activate.", {
           status: 402,
           headers: { "content-type": "text/plain; charset=utf-8" },
