@@ -9,7 +9,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
-import { licenseStatus, storeLicense, firstInstallTrialStatus } from "../lib/licensing";
+import { licenseStatus, storeLicense } from "../lib/licensing";
 
 function findBaseDir(): string {
   const candidates = [
