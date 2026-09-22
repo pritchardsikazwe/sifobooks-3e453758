@@ -44,6 +44,11 @@ requireText("LAN/ZRA","src/desktop/server.ts",["/api/network/info","/api/network
 requireText("LAN/ZRA","src/lib/db/migrations/20260922130000_network_pos_zra_stations.sql",["CREATE TABLE IF NOT EXISTS pos_stations","CREATE TABLE IF NOT EXISTS pos_station_events","CREATE TABLE IF NOT EXISTS fiscal_station_transactions"]);
 
 requireFile("Branding","public/favicon.ico");
+requireFile("Installer","installer/SifoBooks.iss.template");
+requireFile("Installer","installer/build-installer.ps1");
+requireFile("Installer","installer/assets/SifoBooks-logo.svg");
+requireText("Installer","installer/SifoBooks.iss.template",["WizardImageFile","SifoBooks-logo.svg","14-Day Trial","Business. Accounting. Growth."]);
+requireText("Installer","installer/build-installer.ps1",["ImageMagick","Inno Setup 6","SifoBooks-$Edition-Windows-Setup.exe"]);
 requireText("Branding","scripts/build-desktop.ts",["SifoBooks.ico","README-FIRST.txt","license-public-key.pem"]);
 
 const forbidden = ["base" + "44.app","@" + "base44/"];
