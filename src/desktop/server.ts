@@ -143,13 +143,35 @@ function openBrowser(url: string) {
   } catch {}
 }
 
-const PORT = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
+const configuredPort = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
+const STARTUP_LOG = join(dataDir, "desktop-startup.log");
+
+function writeStartupLog(message: string) {
+  try {
+    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\\r\\n`, { flag: "a" });
+  } catch {}
+}
+
+process.on("uncaughtException", (error) => {
+  writeStartupLog(`UNCAUGHT EXCEPTION: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+});
+process.on("unhandledRejection", (error) => {
+  writeStartupLog(`UNHANDLED REJECTION: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+});
 const HOST = process.env.SIFOBOOKS_HOST || (isNetworkServer ? String(networkConfig?.server?.host || "0.0.0.0") : "127.0.0.1");
 const LICENSE_ENFORCEMENT = String(process.env.SIFOBOOKS_LICENSE_ENFORCEMENT || "false").toLowerCase() === "true" || existsSync(join(baseDir, "config", "license-public-key.pem"));
 
-const server = Bun.serve({
-  port: PORT,
-  host: HOST,
+let PORT = configuredPort;
+let server: ReturnType<typeof Bun.serve>;
+
+function startServer() {
+  const attempts = isNetworkServer ? [configuredPort] : Array.from({ length: 11 }, (_, index) => configuredPort + index);
+  let lastError: unknown = null;
+  for (const candidatePort of attempts) {
+    try {
+      server = Bun.serve({
+        port: candidatePort,
+        host: HOST,
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -249,10 +271,29 @@ const server = Bun.serve({
       return response;
     } catch (error) {
       console.error("[desktop] Server error:", error);
+      writeStartupLog(`REQUEST ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
       return new Response("Internal Server Error", { status: 500 });
     }
   },
-});
+      });
+      PORT = candidatePort;
+      writeStartupLog(`SifoBooks server started at http://${HOST}:${PORT} (configured port ${configuredPort})`);
+      return server;
+    } catch (error) {
+      lastError = error;
+      writeStartupLog(`PORT ${candidatePort} FAILED: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Unable to start SifoBooks server");
+}
+
+let serverInstance: ReturnType<typeof Bun.serve>;
+try {
+  serverInstance = startServer();
+} catch (error) {
+  writeStartupLog(`FATAL STARTUP ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+  throw error;
+}
 
 console.log("");
 console.log("  ╔══════════════════════════════════════════╗");
@@ -266,12 +307,27 @@ console.log("");
 setTimeout(() => createStartupBackup(), 2500);
 
 if (HOST === "127.0.0.1" || HOST === "localhost") {
-  setTimeout(() => openBrowser(`http://localhost:${PORT}`), 1000);
+  const browserUrl = `http://localhost:${PORT}`;
+  setTimeout(async () => {
+    for (let attempt = 0; attempt < 15; attempt++) {
+      try {
+        const response = await fetch(browserUrl, { signal: AbortSignal.timeout(1000) });
+        if (response.ok || response.status < 500) {
+          openBrowser(browserUrl);
+          writeStartupLog(`Browser opened: ${browserUrl} (HTTP ${response.status})`);
+          return;
+        }
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    writeStartupLog(`Browser launch skipped: SifoBooks did not respond at ${browserUrl}`);
+    openBrowser(browserUrl);
+  }, 500);
 }
 
 process.on("SIGINT", () => {
   console.log("\n  Shutting down SifoBooks...");
-  server.stop();
+  serverInstance.stop();
   process.exit(0);
 });
 
