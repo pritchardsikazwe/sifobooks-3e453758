@@ -61,10 +61,10 @@ add("Standalone","No Base44 runtime markers",violations.length===0,violations.le
 
 const buildScript=readFileSync(file("scripts/build-desktop.ts"),"utf8");
 const networkWrites=(buildScript.match(/network\.example\.json/g)||[]).length;
-const launcherWrites=(buildScript.match(/start-sifobooks\.bat/g)||[]).length;
+const launcherWriters=(buildScript.match(/writeFileSync\(join\(OUT_DIR, "start-sifobooks\.bat"\)/g)||[]).length;
 add("Windows packaging","Single network template writer",networkWrites===1,String(networkWrites)+" occurrence(s)");
-add("Windows packaging","Launcher references are bounded",launcherWrites===2,String(launcherWrites)+" occurrence(s)");
-add("Windows packaging","No orphan launcher array",!/\}\);\s*\n\s*"@echo off"/.test(buildScript),"launcher block structure is valid");
+add("Windows packaging","Single launcher writer",launcherWriters===1,String(launcherWriters)+" writer(s)");
+add("Windows packaging","No orphan launcher array",! /\}\);\s*\n\s*"@echo off"/.test(buildScript),"launcher block structure is valid");
 
 const privateKeyFiles=existsSync(file("config"))?walk(file("config")).filter((p)=>/private.*key|license.*private/i.test(p)):[];
 add("Licensing security","No private signing key in repository config",privateKeyFiles.length===0,privateKeyFiles.length?privateKeyFiles.join(", "):"clean");
