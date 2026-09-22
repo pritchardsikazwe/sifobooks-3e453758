@@ -18,17 +18,24 @@ const db: any = supabase;
 
 export const SCHOOL_NAV: NavItem[] = [
   { label: "Dashboard", to: "/school", icon: LayoutDashboard },
+  { label: "Admissions & Enrolment", to: "/school/admissions", icon: Users },
   { label: "Students", to: "/school/students", icon: GraduationCap },
-  { label: "Classes", to: "/school/academics", icon: BookOpen },
-  { label: "Guardians", to: "/school/parents", icon: Users },
-  { label: "Fees", to: "/school/fees", icon: WalletCards },
-  { label: "Fee billing", to: "/school/fees-billing", icon: ReceiptText },
-  { label: "Payments", to: "/school/payments", icon: Wallet },
-  { label: "Staff", to: "/school/staff", icon: Users },
+  { label: "Parents & Guardians", to: "/school/parents", icon: Users },
+  { label: "Classes & Subjects", to: "/school/academics", icon: BookOpen },
+  { label: "Timetable", to: "/school/timetable", icon: CalendarCheck },
+  { label: "Attendance", to: "/school/attendance", icon: CalendarCheck },
+  { label: "Examinations & Results", to: "/school/exams", icon: BookOpen },
+  { label: "Report Cards", to: "/school/report-cards", icon: ReceiptText },
+  { label: "Fees & Billing", to: "/school/fees-billing", icon: ReceiptText },
+  { label: "Fee Collections", to: "/school/payments", icon: Wallet },
+  { label: "Scholarships & Discounts", to: "/school/scholarships", icon: WalletCards },
+  { label: "Hostel & Boarding", to: "/school/boarding", icon: BookOpen },
+  { label: "Transport", to: "/school/transport", icon: Users },
+  { label: "Staff & HR", to: "/school/staff", icon: Users },
+  { label: "Parent Portal", to: "/school/parent-portal", icon: Users },
+  { label: "Student Portal", to: "/school/student-portal", icon: GraduationCap },
   { label: "Reports", to: "/school/reports", icon: BarChart3 },
   { label: "Compliance", to: "/school/compliance", icon: ShieldCheck },
-  { label: "Attendance", to: "/school/attendance", icon: CalendarCheck, supported: false },
-  { label: "Exams", to: "/school/exams", icon: BookOpen, supported: false },
 ];
 
 const TITLES: Record<string, [string, string]> = {
