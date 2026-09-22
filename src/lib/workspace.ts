@@ -5,8 +5,9 @@
 // navigation is emphasised. It never enables or disables accounting logic.
 
 import { supabase } from "@/integrations/supabase/client";
+import { SIFOBOOKS_EDITION } from "@/lib/edition";
 
-export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only";
+export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only" | "school_only";
 
 export const WORKSPACE_MODES: {
   id: WorkspaceMode;
@@ -35,6 +36,13 @@ export const WORKSPACE_MODES: {
     description: "SifoHotel on its own — reservations, front desk, housekeeping and folios.",
     landing: "/hotel",
     emoji: "🏨",
+  },
+  {
+    id: "school_only",
+    label: "School only",
+    description: "SifoSchool on its own — admissions, learners, academics, fees and school operations.",
+    landing: "/school",
+    emoji: "🏫",
   },
   {
     id: "payroll_only",
@@ -94,7 +102,15 @@ export async function getWorkspaceMode(): Promise<{ companyId: string | null; mo
     .select("workspace_mode")
     .eq("id", companyId)
     .maybeSingle();
-  return { companyId, mode: (data?.workspace_mode as WorkspaceMode) ?? "accounting" };
+  const configured = data?.workspace_mode as WorkspaceMode | null | undefined;
+  if (configured) return { companyId, mode: configured };
+  const editionDefault: WorkspaceMode =
+    SIFOBOOKS_EDITION === "restaurant" ? "restaurant" :
+    SIFOBOOKS_EDITION === "hotel" ? "hotel_only" :
+    SIFOBOOKS_EDITION === "school" ? "school_only" :
+    SIFOBOOKS_EDITION === "retail" ? "general_pos" :
+    "accounting";
+  return { companyId, mode: editionDefault };
 }
 
 export async function setWorkspaceMode(mode: WorkspaceMode, companyId?: string) {
