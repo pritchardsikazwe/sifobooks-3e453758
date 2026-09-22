@@ -61,11 +61,15 @@ export async function ensureRegister():Promise<{id:string;name:string;branch:str
         register.location_id=loc.id;
       }
     }
+    const {data:location}=register.location_id ? await supabase.from("inventory_locations").select("name").eq("id",register.location_id).maybeSingle() : {data:null as any};
+    register.location_name=location?.name??null;
     return register;
   }
   const {data:loc}=await supabase.from("inventory_locations").select("id").eq("is_active",true).order("is_default",{ascending:false}).order("location_type").order("name").limit(1).maybeSingle();
   const {data:created}=await supabase.from("pos_registers").insert({name:"Register 01",branch:"Main",location_id:loc?.id??null} as any).select("id,name,branch,location_id").maybeSingle();
-  return (created as any)??null;
+  const result:any=(created as any)??null;
+  if(result?.location_id){ const {data:location}=await supabase.from("inventory_locations").select("name").eq("id",result.location_id).maybeSingle(); result.location_name=location?.name??null; }
+  return result;
 }
 export async function currentShift(registerId?:string|null){ const {data}=await supabase.from("pos_shifts").select("*").eq("status","open").order("opened_at",{ascending:false}).limit(1); const row=(data??[])[0] as any; if(row)return row; if(!registerId)return null; return null; }
 export async function openShift(registerId:string|null,cashier:string,float_:number){ const {data}=await supabase.from("pos_shifts").insert({register_id:registerId,cashier_name:cashier,opening_float:float_} as any).select("*").maybeSingle(); return data as any; }
