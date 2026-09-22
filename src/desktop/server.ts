@@ -9,6 +9,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
+import { licenseStatus, storeLicense } from "../lib/licensing";
 
 function findBaseDir(): string {
   const candidates = [
@@ -67,7 +68,7 @@ function createStartupBackup() {
     const destination = join(backupsDir, `sifobooks-${stamp}.db`);
     writeFileSync(destination, readFileSync(dbPath));
     const backups = readdirSync(backupsDir)
-      .filter((name) => /^sifobooks-.*\.db$/.test(name))
+      .filter((name) => /^sifobooks-.*\\.db$/.test(name))
       .sort()
       .reverse();
     for (const old of backups.slice(30)) {
@@ -117,7 +118,7 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 function serveStatic(pathname: string): Response | null {
-  const safePath = normalize(pathname).replace(/^(\.\.[/\\])+/, "");
+  const safePath = normalize(pathname).replace(/^(\\.\\.[/\\])+/, "");
   const filePath = join(clientDir, safePath);
   if (pathname === "/" || pathname.endsWith("/")) return null;
   if (!existsSync(filePath)) return null;
@@ -144,12 +145,29 @@ function openBrowser(url: string) {
 
 const PORT = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
 const HOST = process.env.SIFOBOOKS_HOST || (isNetworkServer ? String(networkConfig?.server?.host || "0.0.0.0") : "127.0.0.1");
+const LICENSE_ENFORCEMENT = String(process.env.SIFOBOOKS_LICENSE_ENFORCEMENT || "false").toLowerCase() === "true";
 
 const server = Bun.serve({
   port: PORT,
   host: HOST,
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/license/status" && request.method === "GET") {
+      return Response.json({ ...licenseStatus(), enforcement: LICENSE_ENFORCEMENT });
+    }
+
+    if (url.pathname === "/api/license/activate" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const token = String(body?.token || "").trim();
+        if (!token) return Response.json({ error: "Licence key is required" }, { status: 400 });
+        storeLicense(token);
+        return Response.json(licenseStatus());
+      } catch (error: any) {
+        return Response.json({ error: error?.message || "Licence activation failed" }, { status: 400 });
+      }
+    }
 
     if (url.pathname === "/api/network/info" && request.method === "GET") {
       const cfg = readNetworkConfig();
@@ -207,6 +225,18 @@ const server = Bun.serve({
       }
     }
 
+    const isLicenseRoute = url.pathname === "/license" || url.pathname.startsWith("/api/license/");
+    const isPublicStatic = url.pathname.startsWith("/assets/") || url.pathname === "/favicon.ico" || url.pathname === "/sifobooks-logo.svg" || url.pathname === "/manifest.webmanifest";
+    if (LICENSE_ENFORCEMENT && !isLicenseRoute && !isPublicStatic) {
+      const current = licenseStatus();
+      if (current.status !== "active") {
+        return new Response("SifoBooks licence required. Open /license to activate.", {
+          status: 402,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        });
+      }
+    }
+
     const staticResponse = serveStatic(url.pathname);
     if (staticResponse) return staticResponse;
 
@@ -229,6 +259,7 @@ console.log("  ╔════════════════════�
 console.log("  ║  SifoBooks Desktop / Network Server       ║");
 console.log(`  ║  Running at http://${HOST}:${PORT}       ║`);
 console.log(`  ║  Mode: ${isNetworkServer ? "NETWORK SERVER" : "STANDALONE"}              ║`);
+console.log(`  ║  Licence enforcement: ${LICENSE_ENFORCEMENT ? "ON" : "OFF"}          ║`);
 console.log("  ╚══════════════════════════════════════════╝");
 console.log("");
 
