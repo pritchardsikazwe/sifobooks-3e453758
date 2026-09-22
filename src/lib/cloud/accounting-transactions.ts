@@ -206,18 +206,15 @@ export async function cloudPostInvoice(uid: string, args: any) {
     let subtotal = 0, vat = 0;
     for (const x of items) {
       const line = money(Number(x.quantity) * Number(x.unit_price));
-      if (line < 0) throw new Error("INVALID_INVOICE_LINE");
-      subtotal += line; vat += money(line * Number(x.vat_rate ?? 16) / 100);
-    }
-    subtotal = money(subtotal); vat = money(vat); const total = money(subtotal + vat);
-    const invoiceId = id();
-    await tx.unsafe(
-      "INSERT INTO invoices(id,user_id,tenant_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,$9,$10,0,$10,$11,$12,$13,1)",
-      [invoiceId, uid, h.customer_id || null, h.number, dateOnly(h.issue_date), h.due_date || null, h.currency || "ZMW", subtotal, vat, total, h.seller_tpin || null, h.buyer_tpin || null, h.notes || null],
-    );
-    for (const x of items) {
-      const line = money(Number(x.quantity) * Number(x.unit_price));
-      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)", [id(), uid, invoiceId, x.stock_item_id || null, x.description || "Item", x.hs_code || null, Number(x.quantity), Number(x.unit_price), Number(x.vat_rate ?? 16), line]);
+      const stockItemId=x.stock_item_id || null;
+      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)", [id(), uid, invoiceId, stockItemId, x.description || "Item", x.hs_code || null, Number(x.quantity), Number(x.unit_price), Number(x.vat_rate ?? 16), line]);
+      if(stockItemId){
+        const item=await one(tx,"SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE",[stockItemId,uid]);
+        if(!item) throw new Error("UNKNOWN_ITEM");
+        if(Number(item.quantity_on_hand||0)<Number(x.quantity)) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3",[Number(x.quantity),stockItemId,uid]);
+        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",[id(),uid,stockItemId,Number(x.quantity),Number(item.cost_price||0),h.number,"Sales invoice",x.location_id||item.warehouse_id||null]);
+      }
     }
     const a = await accounts(tx, uid);
     const je = await journal(tx, uid, "INV:" + h.number, "Sales invoice " + h.number, dateOnly(h.issue_date), [
