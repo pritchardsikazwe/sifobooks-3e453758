@@ -145,7 +145,7 @@ function openBrowser(url: string) {
 
 const PORT = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
 const HOST = process.env.SIFOBOOKS_HOST || (isNetworkServer ? String(networkConfig?.server?.host || "0.0.0.0") : "127.0.0.1");
-const LICENSE_ENFORCEMENT = String(process.env.SIFOBOOKS_LICENSE_ENFORCEMENT || "false").toLowerCase() === "true";
+const LICENSE_ENFORCEMENT = String(process.env.SIFOBOOKS_LICENSE_ENFORCEMENT || "false").toLowerCase() === "true" || existsSync(join(baseDir, "config", "license-public-key.pem"));
 
 const server = Bun.serve({
   port: PORT,
