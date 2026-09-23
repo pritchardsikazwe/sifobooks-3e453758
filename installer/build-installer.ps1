@@ -2,7 +2,7 @@ param([string]$Edition = $env:SIFOBOOKS_EDITION)
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($Edition)) { $Edition = "enterprise" }
 $Edition = $Edition.ToLower()
-$allowed = @("enterprise","accounting","retail","restaurant","hotel","school")
+$allowed = @("enterprise","accounting","retail","restaurant","hotel","school","property")
 if ($allowed -notcontains $Edition) { throw "Unsupported SifoBooks edition: $Edition" }
 
 $root = Split-Path -Parent $PSScriptRoot
