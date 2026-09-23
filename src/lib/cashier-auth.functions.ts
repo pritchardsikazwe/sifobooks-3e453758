@@ -104,11 +104,11 @@ export const createCashier = createServerFn({ method: "POST" })
     const { data: member } = await supabaseAdmin.from("company_members").select("role").eq("company_id", companyId).eq("user_id", context.userId).maybeSingle();
     const allowed = company?.user_id === context.userId || ["owner","admin","administrator"].includes(String(member?.role ?? "").toLowerCase());
     if (!allowed) return { ok: false as const, error: "Only the company owner or administrator can create cashiers" };
-    let code = data.code || ("C" + Math.random().toString(36).slice(2, 7).toUpperCase());
+    let code = data.code || ("CASH-" + crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase());
     for (let i = 0; i < 8; i++) {
       const { data: existing } = await supabaseAdmin.from("employee_pos_permissions").select("id").eq("cashier_code", code).maybeSingle();
       if (!existing) break;
-      code = "C" + Math.random().toString(36).slice(2, 7).toUpperCase();
+      code = "CASH-" + crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
     }
     const email = `${code.toLowerCase()}@${companyId.slice(0, 8)}.cashier.sifobooks.local`;
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
