@@ -113,7 +113,7 @@ function Shell() {
 
   return (
     <SidebarProvider style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "3.25rem" } as React.CSSProperties}>
-      <div className="min-h-screen flex w-full bg-background text-foreground">
+      <div className="sifobooks-2026-app min-h-screen flex w-full bg-background text-foreground">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 w-full min-w-0 border-b border-border bg-card/90 backdrop-blur-xl flex items-center gap-1.5 sm:gap-3 px-2 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
