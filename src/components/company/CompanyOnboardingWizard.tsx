@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, CircleDollarSign, Clock3,
   Database, FileCheck2, Globe2, HardDrive, KeyRound, Landmark, LayoutGrid, MapPin,
-  Printer, ReceiptText, Restaurant, ShieldCheck, Store, UserRound, UsersRound,
+  Printer, ReceiptText, ShieldCheck, Store, UserRound, UsersRound, Utensils,
   Warehouse, WifiOff, Wrench, RefreshCw
 } from "lucide-react";
 
@@ -31,7 +31,7 @@ type Form = {
 
 const moduleIcons: Record<string, any> = {
   Accounting: CircleDollarSign, Invoicing: ReceiptText, Inventory: Warehouse, Purchasing: Store,
-  Sales: LayoutGrid, POS: ReceiptText, Restaurant: Restaurant, Payroll: UsersRound,
+  Sales: LayoutGrid, POS: ReceiptText, Restaurant: Utensils, Payroll: UsersRound,
   Banking: Landmark, Expenses: FileCheck2, "Customers & Suppliers": UsersRound, Reports: FileCheck2,
 };
 const baseModules = ["Accounting", "Invoicing", "Inventory", "Purchasing", "Sales", "POS", "Restaurant", "Payroll", "Banking", "Expenses", "Customers & Suppliers", "Reports"];
