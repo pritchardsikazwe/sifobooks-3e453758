@@ -1084,3 +1084,56 @@
 .school-empty{padding:40px 16px;text-align:center;color:var(--school-muted);font-size:13px;border:1px dashed var(--school-line);border-radius:13px;background:#FBFDFC}
 @media(max-width:900px){.school-feature-hero{align-items:flex-start;flex-direction:column}.school-page-actions{width:100%}.school-search{flex:1}.school-search input{width:100%}}
 @media(max-width:640px){.school-feature-hero{padding:14px}.school-page-actions{display:grid;grid-template-columns:1fr auto}.school-primary-btn{justify-content:center}.school-search{min-width:0}.school-search input{width:100%}.school-kpi-card{min-height:116px}.school-2026-page nav a{min-height:44px}}
+
+/* ── Lending / Microfinance 2026 — emerald + gold + white ───────────── */
+.lending-2026-page {
+  --lend-deep: #073B38;
+  --lend-emerald: #07834F;
+  --lend-gold: #E5B83F;
+  --lend-ink: #173B3A;
+  --lend-muted: #6C7F7D;
+  --lend-bg: #F4F7F6;
+  min-height: 100%;
+  background: var(--lend-bg);
+  color: var(--lend-ink);
+}
+.lending-2026-header {
+  display:flex; align-items:center; gap:1rem; min-height:72px;
+  padding:0.9rem 1.25rem; background:linear-gradient(120deg,#073B38 0%,#07554E 65%,#07834F 100%);
+  border-radius:0 0 16px 16px; box-shadow:0 8px 24px rgba(7,59,56,.16);
+}
+.lending-2026-logo {
+  display:grid; place-items:center; width:40px; height:40px; border-radius:12px;
+  color:#073B38; background:#E5B83F; box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+.lending-2026-nav {
+  display:flex; align-items:center; gap:.4rem; overflow-x:auto; padding:.65rem 1rem;
+  background:#fff; border-bottom:1px solid #D9E6E3; scrollbar-width:none;
+}
+.lending-2026-nav::-webkit-scrollbar { display:none; }
+.lending-nav-item {
+  display:inline-flex; align-items:center; gap:.45rem; flex-shrink:0; padding:.58rem .75rem;
+  border-radius:10px; color:#5D7470; font-size:.78rem; font-weight:700; white-space:nowrap;
+}
+.lending-nav-item:hover { background:#F0F6F4; color:#173B3A; }
+.lending-nav-item.active { background:#07834F; color:#fff; box-shadow:0 4px 12px rgba(7,131,79,.2); }
+.lending-2026-workspace { padding:1rem; max-width:1600px; margin:0 auto; }
+.lending-2026-footer {
+  display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; padding:1rem;
+  color:#6C7F7D; font-size:.72rem; border-top:1px solid #D9E6E3; background:#fff;
+}
+.lending-2026-footer span { display:inline-flex; align-items:center; gap:.35rem; }
+.lending-2026-page input, .lending-2026-page select {
+  min-height:42px; border-color:#D9E6E3; border-radius:12px; background:#fff;
+}
+.lending-2026-page button { min-height:42px; }
+@media (max-width: 900px) {
+  .lending-2026-header { border-radius:0; }
+  .lending-2026-workspace { padding:.75rem; }
+  .lending-2026-nav { padding:.55rem .7rem; }
+}
+@media (max-width: 640px) {
+  .lending-2026-header { padding:.75rem; }
+  .lending-2026-logo { width:36px; height:36px; }
+  .lending-2026-workspace { padding:.6rem; }
+}
