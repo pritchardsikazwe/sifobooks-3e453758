@@ -80,6 +80,14 @@ function RestaurantShell() {
             <Link to="/auth" className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white" title="Switch user">⌄</Link>
           </div>
         </div>
+        <div className="hidden gap-2 overflow-x-auto border-t border-white/10 bg-[#062f2d] px-4 py-2 lg:flex no-scrollbar">
+          {secondary.map(n => {
+            const active=n.exact?path===n.to:path.startsWith(n.to);
+            return <Link key={n.to} to={n.to as never} className={cn("shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold",active?"bg-[#e5b83f] text-[#173b3a] shadow-sm":"text-white/70 hover:bg-white/10 hover:text-white")}>
+              <span className="inline-flex items-center gap-1.5">{n.icon && <n.icon className="h-3.5 w-3.5" />}{n.label}</span>
+            </Link>;
+          })}
+        </div>
         <div className="flex gap-2 overflow-x-auto border-t border-white/10 px-4 py-2 xl:hidden">
           {primary.map(n => {
             const active=n.exact?path===n.to:path.startsWith(n.to);
