@@ -931,7 +931,7 @@ function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; du
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "C"].map(k => (
           <button key={k} onClick={() => push(k)} className="h-[52px] rounded-lg border-2 border-white/20 bg-[#315d5a] text-xl font-bold">{k}</button>
         ))}
-      </div>
+        </div>}
       <div className="mt-2 flex justify-between text-sm font-extrabold">
         <span>{isCash ? "Change" : "Amount to post"}</span><span>{isCash ? (change >= 0 ? fmtMoney(change) : "—") : fmtMoney(due)}</span>
       </div>
