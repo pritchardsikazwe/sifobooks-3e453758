@@ -681,7 +681,7 @@ function Page() {
           </div>
           <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
-              <button key={mi.id} onClick={() => { if (itemStock(mi) === 0) return toast.error("Out of stock at this POS location"); addToCart(mi); }}}
+              <button key={mi.id} onClick={() => { if (itemStock(mi) === 0) return toast.error("Out of stock at this POS location"); addToCart(mi); }}
                 className={cn("flex flex-col items-center justify-center gap-2 rounded-[14px] border border-[#d8e4e1] bg-white p-3 text-center text-[#173b3a] shadow-sm transition hover:-translate-y-[2px] hover:border-[#07834f] hover:shadow-[0_8px_24px_#174b4b18] active:scale-[.98]")}>
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5f0] text-2xl">🍽️</span><strong className="text-[12px] leading-tight">{mi.name}</strong>
                 <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>{itemStock(mi) !== null && <span className={cn("text-[9px] font-black", (itemStock(mi) ?? 0) <= 0 ? "text-red-600" : (itemStock(mi) ?? 0) <= 3 ? "text-amber-600" : "text-emerald-700")}>{itemStock(mi) === 0 ? "OUT OF STOCK" : String(itemStock(mi)) + " available"}</span>}
