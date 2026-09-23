@@ -75,7 +75,7 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
-      const [st, cl, fees, pays, staff, structures, boardingHouses, boardingBeds, boardingAllocations, discipline, health, libraryLoans, transport] = await Promise.all([
+      const [st, cl, fees, pays, staff, structures, boardingHouses, boardingBeds, boardingAllocations, discipline, health, libraryLoans, transport, boardingRooms, boardingLeave, boardingVisitors, boardingMealPlans, boardingMealAssignments, boardingAttendance, boardingMaintenance] = await Promise.all([
         db.from("students").select("id,student_no,first_name,last_name,class_id,status,guardian_name,guardian_phone,guardian_email,boarding").eq("user_id", uid).order("last_name").limit(500),
         db.from("school_classes").select("id,name,grade_level,stream,class_teacher,capacity,academic_year,status").eq("user_id", uid).order("name").limit(200),
         db.from("student_fees").select("id,student_id,term,academic_year,amount_due,amount_paid,balance,status,due_date,description").eq("user_id", uid).order("due_date", { ascending: false }).limit(500),
@@ -89,6 +89,13 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
         db.from("student_health").select("*").eq("user_id", uid).limit(300),
         db.from("library_loans").select("*").eq("user_id", uid).limit(500),
         db.from("school_transport").select("*").eq("user_id", uid).limit(300),
+        db.from("school_boarding_rooms").select("*").eq("user_id", uid).limit(500),
+        db.from("school_boarding_leave_requests").select("*").eq("user_id", uid).order("created_at",{ascending:false}).limit(300),
+        db.from("school_boarding_visitors").select("*").eq("user_id", uid).order("visit_date",{ascending:false}).limit(300),
+        db.from("school_boarding_meal_plans").select("*").eq("user_id", uid).limit(100),
+        db.from("school_boarding_meal_assignments").select("*").eq("user_id", uid).limit(500),
+        db.from("school_boarding_attendance").select("*").eq("user_id", uid).order("attendance_date",{ascending:false}).limit(1000),
+        db.from("school_boarding_maintenance").select("*").eq("user_id", uid).order("created_at",{ascending:false}).limit(300),
       ]);
       if (cancelled) return;
       setData({
@@ -96,6 +103,9 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
         payments: pays.data ?? [], staff: staff.data ?? [], structures: structures.data ?? [],
         boardingHouses: boardingHouses.data ?? [], boardingBeds: boardingBeds.data ?? [], boardingAllocations: boardingAllocations.data ?? [],
         discipline: discipline.data ?? [], health: health.data ?? [], libraryLoans: libraryLoans.data ?? [], transport: transport.data ?? [],
+        boardingRooms: boardingRooms.data ?? [], boardingLeave: boardingLeave.data ?? [], boardingVisitors: boardingVisitors.data ?? [],
+        boardingMealPlans: boardingMealPlans.data ?? [], boardingMealAssignments: boardingMealAssignments.data ?? [],
+        boardingAttendance: boardingAttendance.data ?? [], boardingMaintenance: boardingMaintenance.data ?? [],
       });
       setLoading(false);
     })();
@@ -115,6 +125,13 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   const health = data.health ?? [];
   const libraryLoans = data.libraryLoans ?? [];
   const transport = data.transport ?? [];
+  const boardingRooms = data.boardingRooms ?? [];
+  const boardingLeave = data.boardingLeave ?? [];
+  const boardingVisitors = data.boardingVisitors ?? [];
+  const boardingMealPlans = data.boardingMealPlans ?? [];
+  const boardingMealAssignments = data.boardingMealAssignments ?? [];
+  const boardingAttendance = data.boardingAttendance ?? [];
+  const boardingMaintenance = data.boardingMaintenance ?? [];
 
   const className = useMemo(() => new Map(classes.map((c: any) => [c.id, c.name])), [classes]);
   const studentName = useMemo(() => new Map(students.map((s: any) => [s.id, `${s.first_name} ${s.last_name}`])), [students]);
