@@ -635,3 +635,186 @@
     width: 100%;
   }
 }
+
+
+
+/* ── Hotel PMS 2026 master visual system ───────────────────────────
+   Mirrors the SifoBooks Restaurant 2026 language: deep emerald shell,
+   warm gold accent, light operational workspace, dense-but-clean PMS
+   cards, and clear room/status colours.
+*/
+@utility hotel-2026-page {
+  --hotel-emerald: #073B38;
+  --hotel-emerald-2: #0A514A;
+  --hotel-green: #07834F;
+  --hotel-gold: #E5B83F;
+  --hotel-ink: #173B3A;
+  --hotel-muted: #6C7F7D;
+  --hotel-surface: #F7FAF9;
+  --hotel-line: #D9E6E3;
+  animation: page-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--hotel-ink);
+  min-height: 100%;
+}
+
+.hotel-2026-page > div:first-child {
+  gap: 1rem;
+}
+
+.hotel-2026-page > div:first-child > div:first-child {
+  border: 0 !important;
+  border-radius: 18px !important;
+  padding: 18px 20px 14px !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, #073B38 0%, #0A514A 68%, #0B6658 100%) !important;
+  box-shadow: 0 14px 32px rgba(7, 59, 56, 0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+.hotel-2026-page > div:first-child > div:first-child::after {
+  content: "";
+  position: absolute;
+  inset: auto -10% -55% 35%;
+  height: 150px;
+  background: radial-gradient(circle, rgba(229,184,63,.16), transparent 62%);
+  pointer-events: none;
+}
+
+.hotel-2026-page > div:first-child > div:first-child h1 {
+  color: #fff !important;
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.hotel-2026-page > div:first-child > div:first-child p {
+  color: rgba(255,255,255,.72) !important;
+}
+
+.hotel-2026-page > div:first-child > div:first-child > div:first-child {
+  position: relative;
+  z-index: 1;
+}
+
+.hotel-2026-page > div:first-child > div:first-child .text-indigo-600,
+.hotel-2026-page > div:first-child > div:first-child .text-indigo-400 {
+  color: var(--hotel-gold) !important;
+}
+
+.hotel-2026-page > div:first-child > div:first-child nav {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid rgba(255,255,255,.10);
+  padding-top: 10px;
+}
+
+.hotel-2026-page > div:first-child > div:first-child nav a {
+  min-height: 38px;
+  border: 1px solid transparent;
+  color: rgba(255,255,255,.78) !important;
+  background: rgba(255,255,255,.055) !important;
+  border-radius: 10px;
+  font-weight: 650;
+}
+
+.hotel-2026-page > div:first-child > div:first-child nav a:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.11) !important;
+  border-color: rgba(229,184,63,.28);
+}
+
+.hotel-2026-page > div:first-child > div:first-child nav a.bg-primary {
+  color: #173B3A !important;
+  background: var(--hotel-gold) !important;
+  box-shadow: 0 6px 18px rgba(229,184,63,.22);
+}
+
+.hotel-2026-page .rounded-2xl {
+  border-color: var(--hotel-line);
+  box-shadow: 0 6px 20px rgba(23,59,58,.055);
+}
+
+.hotel-2026-page .rounded-2xl:hover {
+  border-color: #C5DAD5;
+}
+
+.hotel-2026-page h1,
+.hotel-2026-page h2,
+.hotel-2026-page h3 {
+  color: var(--hotel-ink);
+  font-weight: 750;
+}
+
+.hotel-2026-page .bg-primary {
+  background-color: var(--hotel-green) !important;
+}
+
+.hotel-2026-page .text-primary {
+  color: var(--hotel-green) !important;
+}
+
+.hotel-2026-page .border-primary\/50 {
+  border-color: rgba(7,131,79,.5) !important;
+}
+
+.hotel-2026-page table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.hotel-2026-page table thead {
+  background: #F0F5F3 !important;
+}
+
+.hotel-2026-page table thead th {
+  color: #58706D !important;
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+
+.hotel-2026-page table tbody tr:hover {
+  background: #F5F9F7 !important;
+}
+
+.hotel-2026-page input,
+.hotel-2026-page select,
+.hotel-2026-page textarea {
+  border-radius: 10px;
+}
+
+.hotel-2026-page button,
+.hotel-2026-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hotel-2026-page .hotel-status-available { background: #E9F7EF; border-color: #8FD0A8; color: #12683E; }
+.hotel-2026-page .hotel-status-occupied { background: #FCEBEC; border-color: #E7A0A5; color: #9E2831; }
+.hotel-2026-page .hotel-status-reserved { background: #EAF2FB; border-color: #9DBDE2; color: #275B8E; }
+.hotel-2026-page .hotel-status-cleaning { background: #F2F3F4; border-color: #C7CDD0; color: #58666B; }
+
+.hotel-2026-page .text-indigo-600,
+.hotel-2026-page .dark\:text-indigo-400 {
+  color: var(--hotel-green) !important;
+}
+
+.hotel-2026-page .bg-indigo-500\/15 {
+  background-color: rgba(7,131,79,.12) !important;
+}
+
+.hotel-2026-page .stroke-indigo-500 {
+  stroke: var(--hotel-green) !important;
+}
+
+@media (max-width: 768px) {
+  .hotel-2026-page > div:first-child > div:first-child {
+    padding: 15px !important;
+    border-radius: 14px !important;
+  }
+
+  .hotel-2026-page > div:first-child > div:first-child nav a {
+    min-height: 40px;
+  }
+}
