@@ -497,7 +497,8 @@ export function HotelWorkspace({ screen }: { screen: string }) {
   }, [hotelRole, screen]);
 
   return (
-    <IndustryShell accent="hotel" product="SifoBooks Hotel" title={title} subtitle={subtitle} nav={nav} active={screen}>
+    <div className="hotel-2026-page">
+      <IndustryShell accent="hotel" product="SifoBooks Hotel PMS" title={title} subtitle={subtitle} nav={nav} active={screen}>
       <div className="space-y-4">
         {hotelOnly ? (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
@@ -509,6 +510,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
         ) : null}
         {body()}
       </div>
-    </IndustryShell>
+      </IndustryShell>
+    </div>
   );
 }
