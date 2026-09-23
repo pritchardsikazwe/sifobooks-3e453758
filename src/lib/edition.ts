@@ -14,6 +14,7 @@ export const SIFOBOOKS_EDITION_LABEL: Record<SifoBooksEdition, string> = {
   restaurant: "Restaurant",
   hotel: "Hotel",
   school: "School",
+  property: "Property",
 };
 
 export const SIFOBOOKS_PRODUCT_NAME =
