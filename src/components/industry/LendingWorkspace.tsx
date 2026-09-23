@@ -26,8 +26,22 @@ export const LENDING_NAV: NavItem[] = [
   { label: "Disbursements", to: "/lending/disbursements", icon: Banknote },
   { label: "Repayments", to: "/lending/repayments", icon: HandCoins },
   { label: "Collections", to: "/lending/collections", icon: Activity },
+  { label: "Field Collections", to: "/lending/field-collections", icon: Smartphone },
   { label: "Arrears", to: "/lending/arrears", icon: AlertTriangle },
+  { label: "Promises to Pay", to: "/lending/promises", icon: MessageSquare },
+  { label: "Guarantors", to: "/lending/guarantors", icon: Users },
+  { label: "Collateral", to: "/lending/collateral", icon: LockKeyhole },
+  { label: "Group Lending", to: "/lending/group-lending", icon: Users },
+  { label: "Savings", to: "/lending/savings", icon: WalletCards },
+  { label: "Investors", to: "/lending/investors", icon: Landmark },
   { label: "Mobile Money", to: "/lending/mobile-money", icon: Smartphone },
+  { label: "Restructuring", to: "/lending/restructuring", icon: RefreshCw },
+  { label: "Write-offs", to: "/lending/writeoffs", icon: XCircle },
+  { label: "Risk & Fraud", to: "/lending/risk-fraud", icon: LockKeyhole },
+  { label: "Communications", to: "/lending/communications", icon: MessageSquare },
+  { label: "Documents / KYC", to: "/lending/documents", icon: FileCheck2 },
+  { label: "Borrower Portal", to: "/lending/customer-portal", icon: CreditCard },
+  { label: "Investor Portal", to: "/lending/investor-portal", icon: Landmark },
   { label: "Accounting", to: "/lending/accounting", icon: Landmark },
   { label: "Reports", to: "/lending/reports", icon: BarChart3 },
   { label: "ZRA / Compliance", to: "/lending/compliance", icon: ShieldCheck },
@@ -45,8 +59,22 @@ const TITLES: Record<string, [string, string]> = {
   "/lending/disbursements": ["Disbursements", "Approved loans ready for cash, bank or mobile-money disbursement."],
   "/lending/repayments": ["Repayments", "Record payments and allocate automatically to penalty, fees, interest and principal."],
   "/lending/collections": ["Collections Command Centre", "Today's due amounts, collector performance and promises to pay."],
+  "/lending/field-collections": ["Field Collections", "Offline-ready collector routes, visits, payments and promises to pay."],
   "/lending/arrears": ["Arrears Management", "Work overdue loans by ageing bucket and follow-up status."],
+  "/lending/promises": ["Promises to Pay", "Track commitments, broken promises and collection follow-up."],
+  "/lending/guarantors": ["Guarantors", "Verify guarantors and their supported loan exposure."],
+  "/lending/collateral": ["Collateral Register", "Track pledged security, values, documents and release status."],
+  "/lending/group-lending": ["Group Lending", "Manage groups, members, meetings and group loan exposure."],
+  "/lending/savings": ["Savings", "Borrower savings accounts and transaction history."],
+  "/lending/investors": ["Investors", "Capital, loan allocations, returns and investor statements."],
   "/lending/mobile-money": ["Mobile Money Reconciliation", "Import, match and clear MTN, Airtel and other mobile-money transactions."],
+  "/lending/restructuring": ["Loan Restructuring", "Preview new terms before approval and preserve the original loan history."],
+  "/lending/writeoffs": ["Write-offs & Recoveries", "Controlled write-off approvals and post-write-off recovery tracking."],
+  "/lending/risk-fraud": ["Risk & Fraud", "Duplicate, unusual activity and exception flags with audit history."],
+  "/lending/communications": ["Communications", "SMS, WhatsApp and email templates, queues and delivery history."],
+  "/lending/documents": ["Documents & KYC", "NRC, proof of address, payslips and loan documents."],
+  "/lending/customer-portal": ["Borrower Portal", "Customer-facing loans, payments, statements and applications."],
+  "/lending/investor-portal": ["Investor Portal", "Investor-facing portfolio, capital, returns and statements."],
   "/lending/accounting": ["Accounting Integration", "Lending transactions mapped into SifoBooks double-entry accounting."],
   "/lending/reports": ["Reports & Analytics", "Portfolio, PAR, collections, product, branch and investor reporting."],
   "/lending/compliance": ["Zambia Compliance", "KYC, audit trail, tax configuration and ZRA integration readiness."],
@@ -129,7 +157,10 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
     const names = [
       "lending_borrowers","lending_loan_products","lending_applications","lending_loans",
       "lending_loan_schedules","lending_repayments","lending_collateral","lending_promises",
-      "lending_mobile_money","lending_audit_log",
+      "lending_mobile_money","lending_audit_log","lending_guarantors","lending_groups",
+      "lending_savings_accounts","lending_savings_transactions","lending_investors",
+      "lending_restructures","lending_writeoffs","lending_field_visits","lending_communications",
+      "lending_risk_flags","lending_documents","lending_branches",
     ];
     const pairs = await Promise.all(names.map(async name => {
       const res = await db.from(name).select("*").eq("user_id", uid).order("created_at", { ascending:false }).limit(1000);
@@ -151,6 +182,17 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
   const promises = data.lending_promises ?? [];
   const momo = data.lending_mobile_money ?? [];
   const audit = data.lending_audit_log ?? [];
+  const guarantors = data.lending_guarantors ?? [];
+  const groups = data.lending_groups ?? [];
+  const savings = data.lending_savings_accounts ?? [];
+  const investors = data.lending_investors ?? [];
+  const restructures = data.lending_restructures ?? [];
+  const writeoffs = data.lending_writeoffs ?? [];
+  const fieldVisits = data.lending_field_visits ?? [];
+  const communications = data.lending_communications ?? [];
+  const riskFlags = data.lending_risk_flags ?? [];
+  const documents = data.lending_documents ?? [];
+  const branches = data.lending_branches ?? [];
 
   const borrowerName = useMemo(() => new Map(borrowers.map((b:any)=>[b.id,b.full_name])), [borrowers]);
   const productName = useMemo(() => new Map(products.map((p:any)=>[p.id,p.name])), [products]);
@@ -316,6 +358,64 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
     </div>
   );
 
+  const moduleView = (kind: string) => {
+    const map: Record<string, { title: string; hint: string; rows: any[]; cols: string[] }> = {
+      guarantors: { title: "Guarantor register", hint: "Verification status and supported exposure.", rows: guarantors, cols: ["Guarantor","Borrower","Relationship","Guarantee","Status"] },
+      collateral: { title: "Collateral register", hint: "Pledged security and valuation.", rows: collateral, cols: ["Type","Borrower","Description","Value","Status"] },
+      "group-lending": { title: "Group lending", hint: "Groups and shared lending operations.", rows: groups, cols: ["Group","Leader","Meeting day","Location","Status"] },
+      savings: { title: "Savings accounts", hint: "Borrower savings and balances.", rows: savings, cols: ["Account","Borrower","Product","Balance","Status"] },
+      investors: { title: "Investor register", hint: "Capital and realised returns.", rows: investors, cols: ["Investor","Capital","Return","Status","Created"] },
+      restructuring: { title: "Restructure queue", hint: "Requests awaiting controlled approval.", rows: restructures, cols: ["Loan","Old balance","New balance","New term","Status"] },
+      writeoffs: { title: "Write-off register", hint: "Approved and pending write-offs with recoveries.", rows: writeoffs, cols: ["Loan","Amount","Reason","Recovered","Status"] },
+      "field-collections": { title: "Field visits", hint: "Offline-capable collection visits and outcomes.", rows: fieldVisits, cols: ["Borrower","Visit","Outcome","Promise","Notes"] },
+      communications: { title: "Communication centre", hint: "Customer communication queue and delivery history.", rows: communications, cols: ["Channel","Recipient","Template","Status","Sent"] },
+      "risk-fraud": { title: "Risk & fraud flags", hint: "Exceptions requiring review.", rows: riskFlags, cols: ["Type","Borrower","Severity","Score","Status"] },
+      documents: { title: "KYC & loan documents", hint: "Verification queue for borrower documents.", rows: documents, cols: ["Document","Borrower","Type","Verification","Created"] },
+      branches: { title: "Branches & staff", hint: "Lending branch structure and operational control.", rows: branches, cols: ["Code","Branch","Location","Manager","Status"] },
+    };
+    const cfg = map[kind];
+    if (!cfg) return null;
+    const value = (r: any, col: string) => {
+      if (col === "Borrower" || col === "Leader") return borrowerName.get(r.borrower_id ?? r.leader_borrower_id) ?? "—";
+      if (col === "Guarantor" || col === "Investor") return r.full_name ?? "—";
+      if (col === "Group") return r.name ?? r.group_no ?? "—";
+      if (col === "Account") return r.account_no ?? "—";
+      if (col === "Loan") return r.loan_id ? (loans.find((l:any)=>l.id===r.loan_id)?.loan_no ?? r.loan_id) : "—";
+      if (col === "Capital") return money(r.capital_invested);
+      if (col === "Return") return money(r.return_earned);
+      if (["Guarantee","Value","Amount","Old balance","New balance","Recovered","Balance"].includes(col)) return money(r.guarantee_amount ?? r.estimated_value ?? r.amount ?? r.old_balance ?? r.new_balance ?? r.recovered_amount ?? r.balance);
+      if (col === "Promise") return r.promise_amount ? money(r.promise_amount) : (r.promise_date ?? "—");
+      if (col === "Visit") return r.visit_date ? new Date(r.visit_date).toLocaleDateString() : "—";
+      if (col === "Sent" || col === "Created") return r.sent_at || r.created_at ? new Date(r.sent_at ?? r.created_at).toLocaleDateString() : "—";
+      if (col === "Type") return r.collateral_type ?? r.document_type ?? r.flag_type ?? "—";
+      if (col === "Description") return r.description ?? "—";
+      if (col === "Reason") return r.reason ?? "—";
+      if (col === "Outcome") return r.outcome ?? "—";
+      if (col === "Notes") return r.notes ?? "—";
+      if (col === "Channel") return r.channel ?? "—";
+      if (col === "Recipient") return r.recipient ?? "—";
+      if (col === "Template") return r.template ?? "—";
+      if (col === "Severity") return r.severity ?? "—";
+      if (col === "Score") return r.score ?? "—";
+      if (col === "Verification") return r.verification_status ?? "—";
+      if (col === "Relationship") return r.relationship ?? "—";
+      if (col === "Meeting day") return r.meeting_day ?? "—";
+      if (col === "Location") return r.location ?? r.meeting_location ?? "—";
+      if (col === "Manager") return r.manager_name ?? "—";
+      if (col === "Code") return r.branch_code ?? "—";
+      if (col === "Status") return <Status value={r.status ?? r.verification_status}/>;
+      if (col === "New term") return r.new_term ?? "—";
+      if (col === "Document") return r.file_name ?? "—";
+      return r[col.toLowerCase().replaceAll(" ","_")] ?? "—";
+    };
+    return <div className="space-y-4"><Card title={cfg.title} hint={cfg.hint}>
+      {cfg.rows.length === 0 ? <Empty title={cfg.title} message="No records have been created yet. This screen will populate from live SifoBooks data."/> :
+      <div className="overflow-x-auto"><table className="w-full min-w-[780px] text-left text-sm"><thead className="bg-[#F4F7F6] text-[10px] uppercase tracking-wide text-[#6C7F7D]"><tr>{cfg.cols.map(col=><th key={col} className="px-4 py-3">{col}</th>)}</tr></thead><tbody>
+      {cfg.rows.filter((r:any)=>JSON.stringify(r).toLowerCase().includes(q.toLowerCase())).slice(0,200).map((r:any)=><tr key={r.id} className="border-t hover:bg-[#F8FBFA]">{cfg.cols.map(col=><td key={col} className="px-4 py-3">{value(r,col)}</td>)}</tr>)}
+      </tbody></table></div>}
+    </Card></div>;
+  };
+
   const listView = (kind:string) => {
     const cfg:any = {
       applications:{title:"Applications", rows:applications, empty:"No loan applications yet.", cols:["Application","Borrower","Requested","Term","Status"]},
@@ -425,6 +525,21 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
     screen === "/lending/collections" ? collectionsView :
     screen === "/lending/mobile-money" ? mobileView :
     screen === "/lending/accounting" ? accountingView :
+    screen === "/lending/field-collections" ? moduleView("field-collections") :
+    screen === "/lending/promises" ? moduleView("promises") ?? collectionsView :
+    screen === "/lending/guarantors" ? moduleView("guarantors") :
+    screen === "/lending/collateral" ? moduleView("collateral") :
+    screen === "/lending/group-lending" ? moduleView("group-lending") :
+    screen === "/lending/savings" ? moduleView("savings") :
+    screen === "/lending/investors" ? moduleView("investors") :
+    screen === "/lending/restructuring" ? moduleView("restructuring") :
+    screen === "/lending/writeoffs" ? moduleView("writeoffs") :
+    screen === "/lending/risk-fraud" ? moduleView("risk-fraud") :
+    screen === "/lending/communications" ? moduleView("communications") :
+    screen === "/lending/documents" ? moduleView("documents") :
+    screen === "/lending/branches" ? moduleView("branches") :
+    screen === "/lending/customer-portal" ? <div className="space-y-4"><Card title="Borrower Portal" hint="Customer self-service view for loans, payments, statements and applications."><div className="grid gap-3 p-4 md:grid-cols-3">{["My Loans","Make Payment","Statements","Apply for Loan","My Savings","Messages"].map(x=><div key={x} className="rounded-xl border p-4"><b>{x}</b><p className="mt-1 text-xs text-[#6C7F7D]">Portal module ready for customer authentication and live account data.</p></div>)}</div></Card></div> :
+    screen === "/lending/investor-portal" ? <div className="space-y-4"><Card title="Investor Portal" hint="Capital, allocations, returns and statements."><div className="grid gap-3 p-4 md:grid-cols-3">{["Portfolio","Capital & Allocations","Returns","Statements","Risk","Distributions"].map(x=><div key={x} className="rounded-xl border p-4"><b>{x}</b><p className="mt-1 text-xs text-[#6C7F7D]">Investor-facing module ready for role-based access.</p></div>)}</div></Card></div> :
     screen === "/lending/compliance" ? complianceView :
     screen === "/lending/reports" ? reportsView :
     screen === "/lending/settings" ? settingsView :
