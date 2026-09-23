@@ -14,7 +14,7 @@ type RosterEntry = { code: string; name: string };
 
 function readRoster(): RosterEntry[] {
   try {
-    return JSON.parse(localStorage.getItem(ROSTER_KEY) ?? "[]") as RosterEntry[];
+    return (JSON.parse(localStorage.getItem(ROSTER_KEY) ?? "[]") as RosterEntry[]).filter((r) => r?.code);
   } catch {
     return [];
   }
