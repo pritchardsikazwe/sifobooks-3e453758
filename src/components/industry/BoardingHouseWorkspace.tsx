@@ -1,3 +1,4 @@
+import "@/styles/boarding-house-2026.css";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
