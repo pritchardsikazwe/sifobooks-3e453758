@@ -80,10 +80,10 @@ function Orders() {
   ), [orders, status, q]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
-          <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+          <div className="text-[11px] font-black uppercase tracking-[.18em] text-[#087b4b]">Sales control</div><h1 className="text-2xl font-black tracking-tight text-[#173b3a]">Orders & History</h1>
           <p className="text-sm text-muted-foreground">{shown.length} checks · {fmtMoney(shown.filter((o) => o.status !== "void").reduce((s, o) => s + Number(o.total || 0), 0))}</p>
         </div>
         <Input type="date" className="w-40" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -110,8 +110,8 @@ function Orders() {
             const lines = items.filter((i) => i.order_id === o.id);
             const open = openId === o.id;
             return (
-              <Card key={o.id} className="rounded-2xl overflow-hidden">
-                <button className="w-full text-left p-3 flex flex-wrap items-center gap-3 hover:bg-muted/50"
+              <Card key={o.id} className="rounded-2xl overflow-hidden border-[#dbe5e2] bg-white shadow-sm">
+                <button className="w-full text-left p-4 flex flex-wrap items-center gap-3 hover:bg-[#f3f8f6]"
                   onClick={() => setOpenId(open ? null : o.id)}>
                   <span className="font-semibold">{o.order_no}</span>
                   <span className="text-sm text-muted-foreground">{o.order_type}</span>
