@@ -76,7 +76,6 @@ function Page() {
   const [server, setServer] = useState("");
   const [recalled, setRecalled] = useState<Order | null>(null);
   const [clock, setClock] = useState(new Date());
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [cashierCode, setCashierCode] = useState("");
   const [cashierName, setCashierName] = useState("");
@@ -89,8 +88,15 @@ function Page() {
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 30000);
     const onFs = () => setFullScreen(Boolean(document.fullscreenElement));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        void toggleFullscreen();
+      }
+    };
     document.addEventListener("fullscreenchange", onFs);
-    return () => { clearInterval(t); document.removeEventListener("fullscreenchange", onFs); };
+    window.addEventListener("keydown", onKey);
+    return () => { clearInterval(t); document.removeEventListener("fullscreenchange", onFs); window.removeEventListener("keydown", onKey); };
   }, []);
 
   useEffect(() => {
@@ -113,9 +119,9 @@ function Page() {
 
   const toggleFullscreen = async () => {
     try {
-      if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setIsFullscreen(true); }
-      else { await document.exitFullscreen(); setIsFullscreen(false); }
-    } catch { toast.error("Windows fullscreen is not available in this browser"); }
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch { setFullScreen(v => !v); }
   };
 
   const load = async () => {
@@ -390,16 +396,11 @@ function Page() {
       <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#164744] bg-[#073b38] p-[7px] text-white">
         <button
           type="button"
-          onClick={async () => {
-            try {
-              if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setFullScreen(true); }
-              else { await document.exitFullscreen(); setFullScreen(false); }
-            } catch { setFullScreen(v => !v); }
-          }}
-          className="ml-auto shrink-0 rounded-lg border border-white/30 bg-[#20504d] px-3 py-2 text-[10px] font-black"
+          onClick={() => void toggleFullscreen()}
+          className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/30 bg-[#20504d] px-3 py-2 text-[10px] font-black shadow-sm hover:bg-[#2a625e]"
           title="Full screen POS"
         >
-          {fullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          {fullScreen ? <><Minimize2 className="h-4 w-4" /><span> EXIT FULL</span></> : <><Maximize2 className="h-4 w-4" /><span> FULL SCREEN</span></>}
         </button>
         {typeLabels.map(t => (
           <button key={t} onClick={() => { setMode(t); setTableId(null); }}
