@@ -99,21 +99,21 @@ function Kitchen() {
             return (
               <Card key={t.order.id} className={cn("rounded-2xl overflow-hidden border-2 bg-[#073b38] text-white shadow-md", late ? "border-rose-500/50" : "border-border")}>
                 <div className={cn("px-3 py-2 flex items-center justify-between text-sm font-semibold",
-                  late ? "bg-rose-500/10 text-rose-600" : "bg-primary/10 text-primary")}>
+                  late ? "bg-rose-500/20 text-rose-200" : "bg-emerald-500/15 text-emerald-100")}>
                   <span>{t.order.order_no}</span>
                   <span className="inline-flex items-center gap-1"><Timer className="h-3.5 w-3.5" />{mins}m</span>
                 </div>
-                <div className="px-3 py-2 text-xs text-muted-foreground">
+                <div className="px-3 py-2 text-xs text-white/75">
                   {t.order.order_type}{t.order.table_id ? " · table check" : ""}{t.order.server_name ? ` · ${t.order.server_name}` : ""}
                 </div>
                 <ul className="px-3 pb-2 space-y-1.5">
                   {t.lines.map((l: any) => (
-                    <li key={l.id} className="rounded-lg border p-2">
+                    <li key={l.id} className="rounded-lg border border-white/15 bg-white/[0.04] p-2 text-white">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">{l.qty} × {l.item_name}</span>
-                        <span className={cn("text-[10px] uppercase rounded-full border px-2", toneClass[statusTone(l.kds_status)])}>{l.kds_status}</span>
+                        <span className={cn("text-[10px] uppercase rounded-full border px-2 font-bold", toneClass[statusTone(l.kds_status)], "bg-white/10 text-white border-white/25")}>{l.kds_status}</span>
                       </div>
-                      {l.notes && <p className="text-xs text-amber-600 mt-1">{l.notes}</p>}
+                      {l.notes && <p className="text-xs text-amber-200 mt-1">{l.notes}</p>}
                       <div className="flex gap-1 mt-2">
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bump(l, "cooking")}>Start</Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bump(l, "ready")}>Ready</Button>
@@ -122,7 +122,7 @@ function Kitchen() {
                     </li>
                   ))}
                 </ul>
-                <div className="border-t p-2 flex gap-2">
+                <div className="border-t border-white/15 p-2 flex gap-2 bg-black/10">
                   <Button size="sm" className="flex-1" onClick={() => bumpTicket(t, "ready")}>All ready</Button>
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => bumpTicket(t, "served")}>Bump</Button>
                 </div>
