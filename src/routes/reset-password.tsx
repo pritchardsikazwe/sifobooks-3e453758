@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: (s: Record<string, unknown>) => ({ forced: s.forced === true || s.forced === "true" }),
   head: () => ({
     meta: [
       { title: "Reset password — SifoBooks" },
@@ -30,7 +31,8 @@ function ResetPasswordPage() {
 
   useEffect(() => {
     // Supabase auto-parses the recovery token in the URL hash and fires PASSWORD_RECOVERY
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    const { forced } = Route.useSearch();
+  const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
     // If user already has a recovery session on mount
@@ -62,8 +64,8 @@ function ResetPasswordPage() {
         <Link to="/" className="mb-6 block text-center text-sm text-muted-foreground hover:text-foreground">← Back to SifoBooks</Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>Set a new password</CardTitle>
-            <CardDescription>Choose a strong password you haven't used before</CardDescription>
+            <CardTitle className="text-2xl" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{forced ? "Change your temporary password" : "Set a new password"}</CardTitle>
+            <CardDescription>{forced ? "Your administrator issued a temporary password. Choose your own password to continue." : "Choose a strong password you haven't used before"}</CardDescription>
           </CardHeader>
           <CardContent>
             {!ready ? (
