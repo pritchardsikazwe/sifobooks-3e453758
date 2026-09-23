@@ -78,7 +78,7 @@ function Combos() {
     components(comboId).reduce((s, l) => s + Number(byId.get(l.menu_item_id)?.price ?? 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <h1 className="text-xl font-semibold flex items-center gap-2"><Layers className="h-5 w-5 text-primary" /> Combos & meal deals</h1>
 
       <Card className="p-4 grid gap-2 sm:grid-cols-3">
