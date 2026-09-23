@@ -581,8 +581,8 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   const cogsAccount = ingredientCost > 0 ? postingAccount(db, uid, companyId, "COST_OF_SALES", ["5000","5100"]) : null;
 
   const transaction = db.transaction(() => {
-    const orderId = generateUUID();
-    const orderNo = String(sale.order_no || ("CHK-" + Date.now().toString().slice(-6)));
+    let orderId = generateUUID();
+    let orderNo = String(sale.order_no || ("CHK-" + Date.now().toString().slice(-6)));
 
     if (existingOrder) {
       db.prepare(
