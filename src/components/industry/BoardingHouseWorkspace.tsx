@@ -311,6 +311,65 @@ function Visitors({ rows, studentName, onAdd }: any) {
 }
 
 function Meals({ plans, assignments, students, studentName, onAdd }: any) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Panel
+        title="Meal Plans"
+        right={
+          <Button onClick={onAdd}>
+            <Plus size={15} /> Add Meal Plan
+          </Button>
+        }
+      >
+        <div className="space-y-2">
+          {plans.map((p: any) => (
+            <div key={p.id} className="mini-row">
+              <div>
+                <strong>{p.name}</strong>
+                <small>
+                  {p.breakfast ? "Breakfast " : ""}
+                  {p.lunch ? "Lunch " : ""}
+                  {p.dinner ? "Dinner" : ""}
+                </small>
+              </div>
+              <b>{fmtMoney(p.price)}</b>
+            </div>
+          ))}
+          {!plans.length && <Empty title="No meal plans" action={onAdd} />}
+        </div>
+      </Panel>
+
+      <Panel title="Active Meal Assignments">
+        <div className="table-wrap">
+          <table className="boarding-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Plan</th>
+                <th>Start</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assignments.map((a: any) => {
+                const plan = plans.find((p: any) => p.id === a.meal_plan_id);
+                return (
+                  <tr key={a.id}>
+                    <td>{studentName(a.student_id)}</td>
+                    <td>{plan?.name || "—"}</td>
+                    <td>{a.start_date}</td>
+                    <td><Status value={a.status} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {!assignments.length && <Empty title="No meal assignments" />}
+        </div>
+      </Panel>
+    </div>
+  );
+}
   return <div className="grid gap-4 lg:grid-cols-2"><Panel title="Meal Plans" right={<Button onClick={onAdd}><Plus size={15}/> Add Meal Plan</Button>}><div className="space-y-2">{plans.map((p:any)=><div key={p.id} className="mini-row"><div><strong>{p.name}</strong><small>{p.breakfast?"Breakfast ":""}{p.lunch?"Lunch ":""}{p.dinner?"Dinner":""}</small></div><b>{fmtMoney(p.price)}</b></div>)}{!plans.length&&<Empty title="No meal plans" action={onAdd}/>}</div></Panel><Panel title="Active Meal Assignments"><div className="table-wrap"><table className="boarding-table"><thead><tr><th>Student</th><th>Plan</th><th>Start</th><th>Status</th></tr></thead><tbody>{assignments.map((a:any)=><tr key={a.id}><td>{studentName(a.student_id)}</td><td>{plans.find((p:any)=>p.id===a.meal_plan_id)?.name||"—"}</td><td>{a.start_date}</td><td><Status value={a.status}/></td></tr>)}</tbody></table>{!assignments.length&&<Empty title="No meal assignments"/></div></Panel></div>;
 }
 
