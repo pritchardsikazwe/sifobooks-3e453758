@@ -15,7 +15,7 @@ function requireText(area: string, path: string, needles: string[]) {
   add(area, path, missing.length === 0, missing.length ? "missing: " + missing.join(", ") : "required markers present");
 }
 
-const editions = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school"];
+const editions = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property"];
 requireText("Build", "scripts/build-desktop.ts", editions);
 requireText("Build", ".github/workflows/ci.yml", editions);
 requireText("Build", "package.json", ["build:desktop", "test", "qa:production"]);
