@@ -77,7 +77,10 @@ function Tables() {
     const patch: any = { status };
     if (status === "available") { patch.occupied_since = null; patch.current_order_id = null; patch.server_name = null; }
     if (status === "occupied") patch.occupied_since = new Date().toISOString();
-    const { error } = await db.from("restaurant_tables").update(patch).eq("id", id);
+    const { data: current } = await db.from("restaurant_tables").select("user_id").eq("id", id).maybeSingle();
+    const { data: authUser } = await db.auth.getUser();
+    if (!authUser.user || !current || current.user_id !== authUser.user.id) return toast.error("Table access denied");
+    const { error } = await db.from("restaurant_tables").update(patch).eq("id", id).eq("user_id", authUser.user.id);
     if (error) return toast.error(error.message);
     setTables((l) => l.map((t) => (t.id === id ? { ...t, ...patch } : t)));
     setSelected((s: any) => (s && s.id === id ? { ...s, ...patch } : s));
