@@ -78,6 +78,8 @@ function Page() {
   const [clock, setClock] = useState(new Date());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
+  const [cashierCode, setCashierCode] = useState("");
+  const [cashierName, setCashierName] = useState("");
 
   const [modifying, setModifying] = useState<MenuItem | null>(null);
   const [tender, setTender] = useState<{ method: string; order?: Order; amount: number } | null>(null);
@@ -86,7 +88,27 @@ function Page() {
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 30000);
-    return () => clearInterval(t);
+    const onFs = () => setFullScreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => { clearInterval(t); document.removeEventListener("fullscreenchange", onFs); };
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: p } = await supabase
+        .from("employee_pos_permissions")
+        .select("cashier_code,display_name,full_name,pos_role")
+        .eq("user_id", u.user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (p) {
+        setCashierCode(p.cashier_code ?? "");
+        setCashierName(p.display_name ?? p.full_name ?? "");
+        if (p.display_name ?? p.full_name) setServer(p.display_name ?? p.full_name);
+      }
+    })();
   }, []);
 
   const toggleFullscreen = async () => {
@@ -387,7 +409,7 @@ function Page() {
           </button>
         ))}
         <div className="ml-auto shrink-0 pr-2 text-[11px] font-extrabold opacity-85">
-          STATION 01 • {clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {cashierCode ? "CASHIER " + cashierCode + (cashierName ? " • " + cashierName + " • " : " • ") : "STATION 01 • "}{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
       </div>
 
@@ -515,7 +537,7 @@ function Page() {
 
       {/* footer status */}
       <div className="flex shrink-0 items-center justify-between border-t border-[#799695] bg-[#315e64] px-4 py-1.5 text-[10px] opacity-85">
-        <span>SifoBooks Restaurant • {server || "Terminal"} • {openOrders.length} open checks</span>
+        <span>SifoBooks Restaurant • {cashierCode ? "Cashier " + cashierCode : (server || "Terminal")} • {openOrders.length} open checks</span>
         <span>Posted automatically to your books</span>
       </div>
 
