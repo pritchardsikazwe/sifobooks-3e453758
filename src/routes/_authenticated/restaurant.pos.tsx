@@ -76,6 +76,7 @@ function Page() {
   const [server, setServer] = useState("");
   const [recalled, setRecalled] = useState<Order | null>(null);
   const [clock, setClock] = useState(new Date());
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
 
   const [modifying, setModifying] = useState<MenuItem | null>(null);
@@ -87,6 +88,13 @@ function Page() {
     const t = setInterval(() => setClock(new Date()), 30000);
     return () => clearInterval(t);
   }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setIsFullscreen(true); }
+      else { await document.exitFullscreen(); setIsFullscreen(false); }
+    } catch { toast.error("Windows fullscreen is not available in this browser"); }
+  };
 
   const load = async () => {
     setLoading(true);
