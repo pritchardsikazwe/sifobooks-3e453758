@@ -115,6 +115,7 @@ export async function getWorkspaceMode(): Promise<{ companyId: string | null; mo
     SIFOBOOKS_EDITION === "restaurant" ? "restaurant" :
     SIFOBOOKS_EDITION === "hotel" ? "hotel_only" :
     SIFOBOOKS_EDITION === "school" ? "school_only" :
+    SIFOBOOKS_EDITION === "property" ? "property_only" :
     SIFOBOOKS_EDITION === "retail" ? "general_pos" :
     "accounting";
   return { companyId, mode: editionDefault };
