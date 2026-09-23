@@ -126,11 +126,11 @@ function PrintingSettings() {
   const pending = queue.filter((j) => j.status === "queued" || j.status === "retrying" || j.status === "failed");
 
   return (
-    <div className="space-y-5 p-4 md:p-6">
+    <div className="sifobooks-2026-page space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">SifoPrint</h1>
-          <p className="text-sm text-muted-foreground">Printers, routing and the print queue for this terminal.</p>
+          <p className="text-sm text-muted-foreground">Printers, routing and the print queue for this terminal — designed for standalone Windows, LAN POS and cloud-connected terminals.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={busy}>
