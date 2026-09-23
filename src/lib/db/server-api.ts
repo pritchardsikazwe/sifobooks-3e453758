@@ -476,9 +476,10 @@ function executeRestaurantCheckout(args: Record<string, any>) {
     };
   }
 
-  const shift = db.prepare(
-    "SELECT id FROM restaurant_shifts WHERE id=? AND user_id=? AND business_date=? AND clock_out IS NULL LIMIT 1",
-  ).get(String(sale.shift_id || ""), uid, String(sale.business_date || new Date().toISOString().slice(0,10))) as any;
+  const businessDate = String(sale.business_date || new Date().toISOString().slice(0,10));
+  const shift = sale.shift_id
+    ? db.prepare("SELECT id FROM restaurant_shifts WHERE id=? AND user_id=? AND business_date=? AND clock_out IS NULL LIMIT 1").get(String(sale.shift_id), uid, businessDate) as any
+    : db.prepare("SELECT id FROM restaurant_shifts WHERE user_id=? AND business_date=? AND clock_out IS NULL ORDER BY clock_in DESC LIMIT 1").get(uid, businessDate) as any;
   if (!shift) throw new Error("NO_ACTIVE_RESTAURANT_SHIFT");
 
   const needsCashDrawer = rawPayments.some((p: any) => String(p.method || "").toLowerCase() === "cash");
@@ -563,8 +564,6 @@ function executeRestaurantCheckout(args: Record<string, any>) {
 
   const company = db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
   const companyId = company?.company_id ?? null;
-  const businessDate = String(sale.business_date || new Date().toISOString().slice(0,10));
-
   const cashAccount = postingAccount(db, uid, companyId, "SALE_CASH", ["1000","1100"]);
   const cardAccount = postingAccount(db, uid, companyId, "SALE_CARD", ["1110","1200"]);
   const mobileAccount = postingAccount(db, uid, companyId, "SALE_MOBILE_MONEY", ["1120","1210"]);
