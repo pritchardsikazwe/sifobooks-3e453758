@@ -5,7 +5,7 @@ import { executeQuery, type QuerySpec } from "./query-executor";
 import { executeCloudQuery } from "./cloud-query-executor";
 import { isCloudDatabaseConfigured } from "@/lib/cloud/postgres";
 import { executeCloudRpc } from "./cloud-rpc";
-import { signUp, signInWithPassword, getUser, getSession, updateUser, verifyToken } from "./auth";
+import { signUp, signInWithPassword, getUser, getSession, updateUser, adminResetPassword, verifyToken } from "./auth";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";
 import { getDb, generateUUID } from "./database";
 import { runAccountingIntegrityReconciliation } from "@/lib/compliance/reconciliation";
@@ -76,6 +76,14 @@ export const updateUserFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { token: string; attrs: Record<string, any> })
   .handler(async ({ data }) => {
     return updateUser(data.token, data.attrs);
+  });
+
+export const adminResetPasswordFn = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => raw as { authToken?: string | null; targetUserId: string; newPassword: string; forceChange?: boolean; reason?: string })
+  .handler(async ({ data }) => {
+    const token = resolveAuthToken(data.authToken);
+    if (!token) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
+    return adminResetPassword(token, data.targetUserId, data.newPassword, data.forceChange ?? true, data.reason || "Administrator password reset");
   });
 
 // ── Storage ──
