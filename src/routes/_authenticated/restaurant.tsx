@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, UtensilsCrossed, LayoutGrid, CalendarClock, ListOrdered, ChefHat,
   BookOpen, PhoneCall, Banknote, MoonStar, BarChart3, Settings, Wallet,
-  Star, Clock, Layers, Bike, ShieldCheck,
+  Star, Clock, Layers, Bike, ShieldCheck, Boxes, Printer, Users2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant")({
@@ -34,6 +34,10 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant/reports", label: "Reports", icon: BarChart3 },
   { to: "/restaurant/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/restaurant/settings", label: "Settings", icon: Settings },
+  { to: "/stock", label: "Inventory", icon: Boxes },
+  { to: "/manager/cashiers", label: "Cashiers", icon: Users2 },
+  { to: "/printing-settings", label: "Printing", icon: Printer },
+  { to: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
 function RestaurantShell() {
