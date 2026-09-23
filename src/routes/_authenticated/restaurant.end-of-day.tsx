@@ -88,7 +88,7 @@ function EndOfDay() {
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Business day closed and posted");
+    toast.success("Business day closed");
     load();
   };
 
@@ -158,12 +158,12 @@ function EndOfDay() {
 
       <Card className="p-4 rounded-2xl flex flex-wrap items-center gap-2">
         {closed ? (
-          <div className="text-sm flex items-center gap-2"><Lock className="h-4 w-4" /> Day closed at {new Date(closed.closed_at).toLocaleString()} — historical checks remain available in Orders.</div>
+          <div className="text-sm flex items-center gap-2"><Lock className="h-4 w-4" /> Day closed at {Closed record for business date} — historical checks remain available in Orders.</div>
         ) : (
           <>
             <Input className="w-64" placeholder="Manager approval name" value={manager} onChange={(e) => setManager(e.target.value)} />
             <Button disabled={busy} onClick={close}>{busy ? "Closing…" : "Close business day"}</Button>
-            <span className="text-xs text-muted-foreground">Settled checks have already posted to the ledger; this archives the day and locks the Z-read.</span>
+            <span className="text-xs text-muted-foreground">This closes the restaurant business day after all checks and drawers are reconciled.</span>
           </>
         )}
       </Card>
