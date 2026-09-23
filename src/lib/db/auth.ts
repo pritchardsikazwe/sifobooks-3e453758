@@ -153,9 +153,9 @@ export async function signInWithPassword(email: string, password: string) {
   if (!valid) {
     return { data: null, error: { message: "Invalid login credentials" } };
   }
-  const token = await signJWT({ sub: user.id, email: user.email, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY });
+  const token = await signJWT({ sub: user.id, email: user.email, sv: Number(user.session_version ?? 0), mustChange: Boolean(user.must_change_password), iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY });
   return {
-    data: { user: { id: user.id, email: user.email }, session: { access_token: token, user: { id: user.id, email: user.email } } },
+    data: { user: { id: user.id, email: user.email, user_metadata: { must_change_password: Boolean(user.must_change_password) } }, session: { access_token: token, user: { id: user.id, email: user.email, user_metadata: { must_change_password: Boolean(user.must_change_password) } } } },
     error: null,
   };
 }
