@@ -134,7 +134,7 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     suites: ["Lending & Collections", "Mobile Money", "Finance & Accounting", "Reports", "Administration"],
     features: [
       F("lending.credit_scoring", "Explainable Credit Scoring"),
-      F("lending.kcy", "KYC & Borrower Verification"),
+      F("lending.kyc", "KYC & Borrower Verification"),
       F("lending.mobile_money", "Mobile Money Reconciliation"),
       F("lending.field_collections", "Field Collections"),
       F("lending.group_lending", "Group Lending", false),
