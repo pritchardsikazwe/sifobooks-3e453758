@@ -101,8 +101,7 @@ function Orders() {
     const terminal = getTerminalInfo();
     const { data: payments } = await db.from("restaurant_payments")
       .select("method,amount,tendered,change_given,reference")
-      .eq("order_id", o.id)
-      .order("created_at", { ascending: true });
+      .eq("order_id", o.id);
     const rows = payments ?? [];
     const paid = rows.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
     const tendered = rows.reduce((sum: number, p: any) => sum + Number(p.tendered || p.amount || 0), 0);
