@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi, UtensilsCrossed, Printer, Boxes, LayoutDashboard } from "lucide-react";
+import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi, UtensilsCrossed, Printer, Boxes, LayoutDashboard, KeyRound, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -26,6 +27,12 @@ function AdminPage() {
   const [userId, setUserId] = useState("");
   const [cashierCount, setCashierCount] = useState(0);
   const [inventoryCount, setInventoryCount] = useState(0);
+  const [resetTarget, setResetTarget] = useState<any | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [forceChange, setForceChange] = useState(true);
+  const [resetReason, setResetReason] = useState("Administrator password reset");
+  const [resetting, setResetting] = useState(false);
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -99,6 +106,31 @@ function AdminPage() {
     const { error } = await supabase.from("company_members").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
+  };
+
+  const generateTemporaryPassword = () => {
+    const bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    const generated = Array.from(bytes, b => chars[b % chars.length]).join("");
+    setResetPassword(generated);
+    setResetConfirm(generated);
+  };
+
+  const openReset = (member: any) => {
+    setResetTarget(member); setResetPassword(""); setResetConfirm(""); setForceChange(true); setResetReason("Administrator password reset");
+  };
+
+  const resetMemberPassword = async () => {
+    if (!resetTarget) return;
+    if (resetPassword.length < 8) return toast.error("Password must be at least 8 characters");
+    if (resetPassword !== resetConfirm) return toast.error("Passwords do not match");
+    setResetting(true);
+    const result = await supabase.auth.adminResetPassword(resetTarget.user_id, resetPassword, forceChange, resetReason);
+    setResetting(false);
+    if (result?.error) return toast.error(result.error.message || "Password reset failed");
+    toast.success(`Password reset for ${resetTarget.profiles?.full_name || resetTarget.profiles?.email || "user"}`);
+    setResetTarget(null); setResetPassword(""); setResetConfirm("");
   };
 
   const shortcuts = [
@@ -202,7 +234,7 @@ function AdminPage() {
                         </Select>
                       </td>
                       <td className="py-2 text-right">
-                        <Button size="icon" variant="ghost" onClick={() => remove(m.id)} disabled={m.role === "owner"}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Reset password" onClick={() => openReset(m)} disabled={m.role === "owner" && !members.some((x: any) => x.user_id === userId && x.role === "owner")}><KeyRound className="h-4 w-4 text-amber-600" /></Button><Button size="icon" variant="ghost" title="Remove member" onClick={() => remove(m.id)} disabled={m.role === "owner"}><Trash2 className="h-4 w-4" /></Button></div>
                       </td>
                     </tr>
                   ))}
@@ -212,6 +244,23 @@ function AdminPage() {
           </>
         )}
       </Card>
+
+      <Dialog open={!!resetTarget} onOpenChange={(open) => !open && setResetTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-amber-600" /> Reset user password</DialogTitle>
+            <DialogDescription>Set a new password for {resetTarget?.profiles?.full_name || resetTarget?.profiles?.email || "this user"}. Existing sessions are invalidated immediately.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-2"><Label>New password</Label><div className="flex gap-2"><Input type="password" value={resetPassword} onChange={e => setResetPassword(e.target.value)} autoComplete="new-password" /><Button type="button" variant="outline" onClick={generateTemporaryPassword}><RefreshCw className="mr-2 h-4 w-4" />Generate</Button></div></div>
+            <div className="grid gap-2"><Label>Confirm password</Label><Input type="password" value={resetConfirm} onChange={e => setResetConfirm(e.target.value)} autoComplete="new-password" /></div>
+            <label className="flex items-start gap-3 rounded-xl border p-3 cursor-pointer"><input type="checkbox" checked={forceChange} onChange={e => setForceChange(e.target.checked)} className="mt-1" /><span><span className="block text-sm font-semibold">Force password change at next sign-in</span><span className="block text-xs text-muted-foreground">The user must choose their own password after signing in with the temporary password.</span></span></label>
+            <div className="grid gap-2"><Label>Reason / audit note</Label><Input value={resetReason} onChange={e => setResetReason(e.target.value)} /></div>
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-900"><ShieldCheck className="inline h-4 w-4 mr-1" />Only company Owner/Admin can perform resets. Admins cannot reset the Owner account.</div>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setResetTarget(null)}>Cancel</Button><Button onClick={resetMemberPassword} disabled={resetting || resetPassword.length < 8 || resetPassword !== resetConfirm} className="bg-emerald-800 hover:bg-emerald-900">{resetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />} Reset password</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Admin shortcuts */}
       <div>
