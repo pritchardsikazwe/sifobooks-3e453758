@@ -34,7 +34,7 @@ function CashDrawers() {
     const u = await uid(); if (!u) return;
     const [d,p,c] = await Promise.all([
       supabase.from("restaurant_cash_drawers").select("*").eq("user_id",u).eq("business_date",today()).order("opened_at",{ascending:false}),
-      supabase.from("restaurant_payments").select("amount,method,order_id").eq("user_id",u),
+      supabase.from("restaurant_payments").select("amount,method,order_id,drawer_id").eq("user_id",u),
       supabase.from("restaurant_cash_transactions").select("*").eq("user_id",u).order("id",{ascending:false}).limit(200),
     ]);
     setDrawers(d.data ?? []); setPayments(p.data ?? []); setCashTxns(c.data ?? []);
@@ -58,7 +58,12 @@ function CashDrawers() {
   };
 
   const active = drawers.find(d=>d.status==="open");
-  const cashSales = useMemo(()=>payments.filter(p=>String(p.method).toLowerCase()==="cash").reduce((s,p)=>s+Number(p.amount||0),0),[payments]);
+  const cashSales = useMemo(() => {
+    if (!active) return 0;
+    return payments
+      .filter(p => p.drawer_id === active.id && String(p.method).toLowerCase() === "cash")
+      .reduce((s,p) => s + Number(p.amount || 0), 0);
+  }, [payments, active]);
   const drawerTxns = useMemo(()=>cashTxns.filter(t=>!active || t.drawer_id===active.id),[cashTxns,active]);
   const payouts = drawerTxns.filter(t=>t.txn_type==="payout").reduce((s,t)=>s+Number(t.amount||0),0);
   const drops = drawerTxns.filter(t=>t.txn_type==="drop").reduce((s,t)=>s+Number(t.amount||0),0);
