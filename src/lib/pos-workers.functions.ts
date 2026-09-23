@@ -78,3 +78,83 @@ export const invitePosWorker = createServerFn({ method: "POST" })
 
     return { ok: true, invited, email: loginEmail, cashier_code: normalizedCode };
   });
+
+
+type CashierInput = {
+  name: string;
+  code?: string;
+  pin: string;
+  role?: string;
+};
+
+/** Owner-only: create an internal POS cashier identity using cashier code + PIN. */
+export const createCashier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: CashierInput) => {
+    const name = String(input.name ?? "").trim();
+    const code = String(input.code ?? "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20);
+    const pin = String(input.pin ?? "").trim();
+    const role = String(input.role ?? "cashier").trim() || "cashier";
+    if (!name) throw new Error("Cashier name is required");
+    if (pin && !/^\d{4,8}$/.test(pin)) throw new Error("PIN must be 4-8 digits");
+    return { name, code, pin, role };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const cashierCode = data.code || "CASH-" + crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
+    const { data: existingCode } = await supabaseAdmin
+      .from("employee_pos_permissions")
+      .select("id")
+      .eq("cashier_code", cashierCode)
+      .maybeSingle();
+    if (existingCode) throw new Error("That cashier ID code is already in use");
+
+    const loginEmail = "cashier." + cashierCode.toLowerCase() + "@sifobooks.local";
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: loginEmail,
+      password: crypto.randomUUID() + "-Cashier!",
+      email_confirm: true,
+    });
+    if (createErr || !created?.user) {
+      throw new Error(createErr?.message ?? "Could not create cashier identity");
+    }
+
+    const { data: perm, error } = await supabaseAdmin
+      .from("employee_pos_permissions")
+      .insert({
+        user_id: context.userId,
+        worker_user_id: created.user.id,
+        email: loginEmail,
+        full_name: data.name,
+        display_name: data.name,
+        cashier_code: cashierCode,
+        pos_role: data.role,
+      })
+      .select("id,cashier_code,email,full_name,pos_role")
+      .single();
+
+    if (error) {
+      try { await supabaseAdmin.auth.admin.deleteUser(created.user.id); } catch {}
+      throw new Error(error.message);
+    }
+
+    const { data: pinRes, error: pinErr } = await supabaseAdmin.rpc("set_cashier_pin" as never, {
+      _permission_id: perm.id,
+      _pin: data.pin,
+    } as never);
+    if (pinErr) throw new Error(pinErr.message);
+    const ok = (pinRes as unknown as { ok?: boolean })?.ok;
+    if (!ok) throw new Error("Could not set the cashier PIN");
+
+    return {
+      ok: true,
+      cashier: {
+        id: perm.id,
+        cashier_code: cashierCode,
+        email: loginEmail,
+        name: data.name,
+        role: data.role,
+      },
+    };
+  });
