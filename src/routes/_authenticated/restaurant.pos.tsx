@@ -894,7 +894,8 @@ function ModifierDialog({ item, groups, mods, onCancel, onConfirm }: {
 }
 
 function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
-  const [cash, setCash] = useState("");
+  const isCash = method.toLowerCase() === "cash";
+  const [cash, setCash] = useState(isCash ? "" : due.toFixed(2));
   const received = Number(cash || 0);
   const change = received - due;
   const nextAmount = Math.ceil(due / 50) * 50;
@@ -903,24 +904,25 @@ function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; du
     <Overlay title={`${method} payment`} onCancel={onCancel} wide>
       <div className="mb-2 flex justify-between text-sm font-extrabold"><span>Amount due</span><span>{fmtMoney(due)}</span></div>
       <div className="mb-2 rounded-xl border-2 border-white/25 bg-white px-3 py-3 text-right text-[27px] font-black text-[#20504d]">{cash || "0.00"}</div>
-      <div className="mb-2 grid grid-cols-4 gap-1.5">
+      {isCash && <div className="mb-2 grid grid-cols-4 gap-1.5">
         {DENOMS.map(d => (
           <button key={d} onClick={() => setCash(String(received + d))} className="min-h-10 rounded-lg bg-[#71879a] text-[12px] font-bold">{fmtMoney(d)}</button>
         ))}
         <button onClick={() => setCash(String(due))} className="min-h-10 rounded-lg bg-[#4e89bc] text-[11px] font-bold">EXACT</button>
         <button onClick={() => setCash(String(nextAmount))} className="min-h-10 rounded-lg bg-[#4e89bc] text-[11px] font-bold">NEXT</button>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
+      </div>}
+      {!isCash && <div className="mb-2 rounded-lg bg-white/10 p-3 text-center text-xs font-bold">Confirm the {method} amount received from the customer.</div>}
+      {isCash && <div className="grid grid-cols-3 gap-2">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "C"].map(k => (
           <button key={k} onClick={() => push(k)} className="h-[52px] rounded-lg border-2 border-white/20 bg-[#315d5a] text-xl font-bold">{k}</button>
         ))}
       </div>
       <div className="mt-2 flex justify-between text-sm font-extrabold">
-        <span>Change</span><span>{change >= 0 ? fmtMoney(change) : "—"}</span>
+        <span>{isCash ? "Change" : "Amount to post"}</span><span>{isCash ? (change >= 0 ? fmtMoney(change) : "—") : fmtMoney(due)}</span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button onClick={onCancel} className="min-h-11 rounded-xl bg-[#71879a] font-extrabold">Cancel</button>
-        <button onClick={() => onConfirm(received, Math.max(0, change))} disabled={change < 0} className="min-h-11 rounded-xl bg-[#0b9d19] font-extrabold disabled:opacity-60">Complete payment</button>
+        <button onClick={() => onConfirm(isCash ? received : due, isCash ? Math.max(0, change) : 0)} disabled={isCash && change < 0} className="min-h-11 rounded-xl bg-[#0b9d19] font-extrabold disabled:opacity-60">Complete payment</button>
       </div>
     </Overlay>
   );
