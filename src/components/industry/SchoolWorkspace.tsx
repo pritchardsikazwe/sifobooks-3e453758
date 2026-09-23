@@ -153,7 +153,14 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
   const body = () => {
-    const featureKinds: Record<string, string> = {\n      "/school/preschool": "preschool", "/school/student-profile": "profile", "/school/library": "library",\n      "/school/meals": "meals", "/school/discipline": "discipline", "/school/health": "health",\n      "/school/communications": "communications", "/school/settings": "settings",\n    };\n    if (featureKinds[screen]) return <SchoolFeaturePage kind={featureKinds[screen]} />;\n\n    if (["/school/admissions","/school/attendance","/school/exams","/school/report-cards","/school/scholarships","/school/boarding","/school/transport","/school/parent-portal","/school/student-portal"].includes(screen)) {
+    const featureKinds: Record<string, string> = {
+      "/school/preschool": "preschool", "/school/student-profile": "profile", "/school/library": "library",
+      "/school/meals": "meals", "/school/discipline": "discipline", "/school/health": "health",
+      "/school/communications": "communications", "/school/settings": "settings",
+    };
+    if (featureKinds[screen]) return <SchoolFeaturePage kind={featureKinds[screen]} />;
+
+    if (["/school/admissions","/school/attendance","/school/exams","/school/report-cards","/school/scholarships","/school/boarding","/school/transport","/school/parent-portal","/school/student-portal"].includes(screen)) {
       return <SchoolOperationsPanel screen={screen} data={data} />;
     }
     if (UNAVAILABLE[screen]) {
