@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  BarChart3, Boxes, CalendarDays, Download, FileSpreadsheet, FileText,
-  Printer, RefreshCw, Search, Package, AlertTriangle, XCircle,
-  ArrowDownToLine, ArrowUpFromLine, Trash2, ChefHat, ClipboardList,
+  BarChart3, Boxes, Download, FileText, Printer, RefreshCw, Search,
+  ArrowDownToLine,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -336,6 +335,7 @@ function RestaurantStockReports() {
           <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Warehouse<select value={warehouse} onChange={e=>setWarehouse(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white"><option value="all" className="text-black">All warehouses</option>{warehouses.map(w=><option key={w.id} value={w.id} className="text-black">{w.name}</option>)}</select></label>
           <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Category<select value={category} onChange={e=>setCategory(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white">{categories.map(c=><option key={c} value={c} className="text-black">{c==="all"?"All categories":c}</option>)}</select></label>
           <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Search<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="SKU, item, category" className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white placeholder:text-white/40" /></label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Status<select value={status} onChange={e=>setStatus(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white"><option value="all" className="text-black">All statuses</option><option value="in_stock" className="text-black">In stock</option><option value="low" className="text-black">Low stock</option><option value="critical" className="text-black">Critical</option><option value="out" className="text-black">Out of stock</option><option value="overstock" className="text-black">Overstock</option></select></label>
         </div>
       </div>
 
@@ -395,7 +395,7 @@ function RestaurantStockReports() {
   );
 }
 
-function ChartCard({title,icon,children}:{title:string;icon?:React.ReactNode;children:React.ReactNode}) {
+function ChartCard({title,icon,children}:{title:string;icon?:ReactNode;children:ReactNode}) {
   return <div className="rounded-2xl border bg-white p-4 shadow-sm"><div className="mb-3 flex items-center gap-2 text-sm font-black text-[#173b3a]">{icon}{title}</div>{children}</div>;
 }
 function Summary({label,value}:{label:string;value:any}) {
@@ -419,11 +419,11 @@ function ReportTable({tab,items,movementRows,recipeRows,warehouseMap}:{tab:Repor
   return <TableWrap><thead><tr>{headers.map(h=><Th key={h}>{h}</Th>)}</tr></thead><tbody>{rows.map((x,i)=>{const s=statusFor(x);return <tr key={x.id}><Td>{i+1}</Td><Td mono>{x.sku||"—"}</Td><Td strong>{x.name}</Td><Td>{x.category||"Other"}</Td><Td>{warehouseMap.get(x.warehouse_id)||"Unassigned"}</Td><Td>{x.unit||"—"}</Td><Td right strong>{n(x.quantity_on_hand).toLocaleString()}</Td><Td right>{n(x.reorder_level).toLocaleString()}</Td><Td right>{money(x.cost_price)}</Td><Td right strong>{money(n(x.quantity_on_hand)*n(x.cost_price))}</Td><Td><Badge className={`border ${statusBadge(s)}`}>{s.replace("_"," ")}</Badge></Td><Td>{isoDay(x.updated_at||x.created_at)}</Td></tr>})}{!rows.length&&<Empty colSpan={12}/>}</tbody></TableWrap>;
 }
 
-function TableWrap({children}:{children:React.ReactNode}) {
+function TableWrap({children}:{children:ReactNode}) {
   return <div className="overflow-x-auto"><table className="w-full min-w-[1150px] text-xs">{children}</table></div>;
 }
-function Th({children}:{children:React.ReactNode}) { return <th className="bg-[#073b38] px-3 py-3 text-left text-[10px] font-black uppercase tracking-wide text-white">{children}</th>; }
-function Td({children,right,strong,mono}:{children:React.ReactNode;right?:boolean;strong?:boolean;mono?:boolean}) { return <td className={cn("border-t px-3 py-2.5",right&&"text-right",strong&&"font-bold text-[#173b3a]",mono&&"font-mono text-[10px]")}>{children}</td>; }
+function Th({children}:{children:ReactNode}) { return <th className="bg-[#073b38] px-3 py-3 text-left text-[10px] font-black uppercase tracking-wide text-white">{children}</th>; }
+function Td({children,right,strong,mono}:{children:ReactNode;right?:boolean;strong?:boolean;mono?:boolean}) { return <td className={cn("border-t px-3 py-2.5",right&&"text-right",strong&&"font-bold text-[#173b3a]",mono&&"font-mono text-[10px]")}>{children}</td>; }
 function Empty({colSpan}:{colSpan:number}) { return <tr><td colSpan={colSpan} className="p-10 text-center text-slate-400">No records match the selected filters.</td></tr>; }
 
 function PrintHeader({title,from,to,warehouse,category}:{title:string;from:string;to:string;warehouse:string;category:string}) {
