@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { CheckOperations } from "@/components/restaurant/CheckOperations";
 import { checkCost, linesMissingCost } from "@/lib/restaurant-checks";
-import { Printer } from "lucide-react";
+import { Printer, ChefHat, Wine } from "lucide-react";
+import { loadPosContext, canFully, type PosContext } from "@/lib/pos-permissions";
+import { getTerminalInfo } from "@/services/printTerminal";
+import { printReceipt, printKitchenOrder, printBarOrder } from "@/services/universalPrintService";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
@@ -39,7 +42,8 @@ function Orders() {
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const printReceipt = (o:any) => { window.print(); toast.info(`Print dialog opened for ${o.order_no || o.id}`); };
+  const [posContext, setPosContext] = useState<PosContext | null>(null);
+  const [printingId, setPrintingId] = useState<string | null>(null);
 
   const load = async () => {
     const u = await uid();
@@ -54,26 +58,139 @@ function Orders() {
     } else setItems([]);
   };
   useEffect(() => { load(); }, [from, to]);
+  useEffect(() => {
+    void loadPosContext().then(setPosContext);
+  }, []);
 
   const settle = async (o: any, method: string) => {
-    await recordPayments(o.id, [{ method, amount: Number(o.total) }]);
+    const amount = Number(o.total || 0);
+    if (amount <= 0) return toast.error("This check has no payable total.");
+    const { error: paymentError } = await db.from("restaurant_payments").insert({
+      user_id: (await uid()),
+      order_id: o.id,
+      method,
+      amount,
+      tendered: amount,
+      change_given: 0,
+      reference: o.order_no ?? null,
+    } as any);
+    if (paymentError) return toast.error(paymentError.message);
     const { error } = await db.from("restaurant_orders")
-      .update({ status: "paid", payment_method: method, amount_paid: Number(o.total), closed_at: new Date().toISOString() })
-      .eq("id", o.id);
+      .update({ status: "paid", payment_method: method, amount_paid: amount, closed_at: new Date().toISOString() })
+      .eq("id", o.id)
+      .in("status", ["open", "held"]);
     if (error) return toast.error(error.message);
     if (o.table_id) await db.from("restaurant_tables").update({ status: "dirty", occupied_since: null, current_order_id: null }).eq("id", o.table_id);
-    toast.success(`Settled ${fmtMoney(Number(o.total))} by ${method} — posted to the ledger`);
+    toast.success(`Settled ${fmtMoney(amount)} by ${method}`);
     load();
   };
 
   const voidOrder = async (o: any) => {
+    if (!canFully(posContext, "void_item")) {
+      return toast.error("Manager or supervisor permission is required to void a restaurant check.");
+    }
     const reason = window.prompt("Reason for voiding this check?");
     if (!reason) return;
-    const { error } = await db.from("restaurant_orders").update({ status: "void", void_reason: reason, closed_at: new Date().toISOString() }).eq("id", o.id);
+    const { error } = await db.from("restaurant_orders").update({ status: "void", void_reason: reason, closed_at: new Date().toISOString() }).eq("id", o.id).in("status", ["open", "held"]);
     if (error) return toast.error(error.message);
     if (o.table_id) await db.from("restaurant_tables").update({ status: "available", occupied_since: null }).eq("id", o.table_id);
     toast.success("Check voided");
     load();
+  };
+
+  const buildReceipt = async (o: any, lines: any[]) => {
+    const terminal = getTerminalInfo();
+    const { data: payments } = await db.from("restaurant_payments")
+      .select("method,amount,tendered,change_given,reference")
+      .eq("order_id", o.id)
+      .order("created_at", { ascending: true });
+    const rows = payments ?? [];
+    const paid = rows.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const tendered = rows.reduce((sum: number, p: any) => sum + Number(p.tendered || p.amount || 0), 0);
+    const change = rows.reduce((sum: number, p: any) => sum + Number(p.change_given || 0), 0);
+    const methods = rows.map((p: any) => `${p.method}: ${fmtMoney(Number(p.amount || 0))}`).join(" + ");
+    return {
+      businessName: terminal.company_name || "SifoBooks",
+      branchName: terminal.branch_name,
+      receiptNumber: o.receipt_number ?? o.order_no ?? o.id,
+      date: o.closed_at ?? o.opened_at ?? new Date().toISOString(),
+      cashier: o.server_name ?? undefined,
+      items: lines.map((l: any) => ({
+        name: l.item_name ?? l.name ?? "Item",
+        quantity: Number(l.qty ?? l.quantity ?? 1),
+        price: Number(l.price || 0),
+        total: Number(l.price || 0) * Number(l.qty ?? l.quantity ?? 1),
+        modifiers: l.notes ? [String(l.notes)] : undefined,
+      })),
+      subtotal: Number(o.subtotal || 0),
+      discount: Number(o.discount || 0),
+      tax: Number(o.tax || 0),
+      total: Number(o.total || 0),
+      paymentMethod: methods || o.payment_method || undefined,
+      amountPaid: paid || Number(o.amount_paid || 0),
+      change,
+      footer: "SifoBooks Restaurant — customer copy",
+    };
+  };
+
+  const reprintReceipt = async (o: any, lines: any[]) => {
+    if (!canFully(posContext, "reports")) {
+      return toast.error("Manager or supervisor permission is required for historical receipt reprints.");
+    }
+    if (printingId) return;
+    setPrintingId(o.id);
+    try {
+      const receipt = await buildReceipt(o, lines);
+      const result = await printReceipt(receipt, undefined, 1, {
+        jobId: `reprint:receipt:${o.id}:${Date.now()}`,
+        reference: o.order_no ?? o.id,
+        openCashDrawer: false,
+      });
+      if (!result.ok) toast.warning(`Receipt queued: ${result.error ?? "printer unavailable"}`);
+      else toast.success(`Receipt reprint sent for ${o.order_no ?? o.id}`);
+    } finally {
+      setPrintingId(null);
+    }
+  };
+
+  const reprintKitchen = async (o: any, lines: any[]) => {
+    if (!canFully(posContext, "reports")) return toast.error("Manager or supervisor permission is required for kitchen reprints.");
+    const items = lines.map((l: any) => ({
+      name: l.item_name ?? l.name ?? "Item",
+      quantity: Number(l.qty ?? l.quantity ?? 1),
+      modifiers: l.notes ? [String(l.notes)] : undefined,
+      notes: l.notes ? String(l.notes) : undefined,
+    }));
+    const result = await printKitchenOrder({
+      orderNumber: o.order_no ?? o.id,
+      tableNumber: o.table_name ?? undefined,
+      waiter: o.server_name ?? undefined,
+      orderType: o.order_type ?? undefined,
+      items,
+      notes: "REPRINT — kitchen copy",
+    }, undefined, { jobId: `reprint:kitchen:${o.id}:${Date.now()}`, reference: o.order_no ?? o.id });
+    if (!result.ok) toast.warning(`Kitchen ticket queued: ${result.error ?? "printer unavailable"}`);
+    else toast.success(`Kitchen reprint sent for ${o.order_no ?? o.id}`);
+  };
+
+  const reprintBar = async (o: any, lines: any[]) => {
+    if (!canFully(posContext, "reports")) return toast.error("Manager or supervisor permission is required for bar reprints.");
+    const items = lines.map((l: any) => ({
+      name: l.item_name ?? l.name ?? "Item",
+      quantity: Number(l.qty ?? l.quantity ?? 1),
+      modifiers: l.notes ? [String(l.notes)] : undefined,
+      notes: l.notes ? String(l.notes) : undefined,
+    }));
+    const result = await printBarOrder({
+      orderNumber: o.order_no ?? o.id,
+      tableNumber: o.table_name ?? undefined,
+      waiter: o.server_name ?? undefined,
+      orderType: o.order_type ?? undefined,
+      items,
+      notes: "REPRINT — bar copy",
+    }, undefined, { jobId: `reprint:bar:${o.id}:${Date.now()}`, reference: o.order_no ?? o.id });
+    if (!result.ok) toast.warning(`Bar ticket queued: ${result.error ?? "printer unavailable"}`);
+    else toast.success(`Bar reprint sent for ${o.order_no ?? o.id}`);
   };
 
   const shown = useMemo(() => orders.filter((o) =>
@@ -173,7 +290,17 @@ function Orders() {
                       </div>
                     )}
                     {o.status !== "void" && (
-                      <Button size="sm" variant="outline" onClick={() => printReceipt(o)}><Printer className="mr-1 h-4 w-4" /> Reprint receipt</Button>
+                      <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" disabled={printingId === o.id} onClick={() => reprintReceipt(o, lines)}>
+                        <Printer className="mr-1 h-4 w-4" /> {printingId === o.id ? "Printing…" : "Reprint receipt"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => reprintKitchen(o, lines)}>
+                        <ChefHat className="mr-1 h-4 w-4" /> Kitchen reprint
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => reprintBar(o, lines)}>
+                        <Wine className="mr-1 h-4 w-4" /> Bar reprint
+                      </Button>
+                    </div>
                     )}
                     {o.status !== "void" && (
                       <div className="rounded-xl border bg-muted/30 p-3">
