@@ -7,7 +7,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SIFOBOOKS_EDITION } from "@/lib/edition";
 
-export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only" | "school_only";
+export type WorkspaceMode = "general_pos" | "restaurant" | "accounting" | "pos_accounting" | "payroll_only" | "hotel_only" | "school_only" | "property_only";
 
 export const WORKSPACE_MODES: {
   id: WorkspaceMode;
@@ -43,6 +43,13 @@ export const WORKSPACE_MODES: {
     description: "SifoSchool on its own — admissions, learners, academics, fees and school operations.",
     landing: "/school",
     emoji: "🏫",
+  },
+  {
+    id: "property_only",
+    label: "Property & Tenancy",
+    description: "SifoProperty — apartments, complexes, boarding houses, monthly/daily rentals, BnB and collections.",
+    landing: "/property",
+    emoji: "🏠",
   },
   {
     id: "payroll_only",
