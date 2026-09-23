@@ -1,7 +1,7 @@
 // Zambia statutory reference — configurable rates & rules used across SifoBooks.
 // These are indicative and should be verified against current ZRA/NAPSA/NHIMA guidance.
 
-export const ZAMBIA_TAX_YEAR = 2026;
+export const ZAMBIA_TAX_YEAR = 2026;\nexport const ZAMBIA_TAX_SOURCE_NOTE = "Rates and thresholds are configurable and should be refreshed against current official authority guidance before production filing.";
 
 /** PAYE monthly bands (ZMW). Configurable in Payroll settings. */
 export const PAYE_BANDS_MONTHLY = [
@@ -11,13 +11,13 @@ export const PAYE_BANDS_MONTHLY = [
   { upTo: Infinity, rate: 0.37, label: "Above K9,200" },
 ];
 
-export const NAPSA = { employeeRate: 0.05, employerRate: 0.05, monthlyCeiling: 32438.40 };
+export const NAPSA = { employeeRate: 0.05, employerRate: 0.05, monthlyCeiling: 28920.30, maxMonthlyEmployee: 1446.015, maxMonthlyEmployer: 1446.015, sourceYear: 2026 };
 export const NHIMA = { employeeRate: 0.01, employerRate: 0.01 };
 export const SDL   = { rate: 0.005, base: "gross payroll" };
 export const WCF   = { rateDefault: 0.015, base: "gross payroll", note: "Sector-specific; verify with WCFCB." };
 
 export const VAT = { standard: 0.16, zeroRated: 0.00, exempt: null as null | number };
-export const TURNOVER_TAX = { rate: 0.05, thresholdAnnual: 800000, note: "Businesses not registered for VAT." };
+export const TURNOVER_TAX = { rate: 0.05, thresholdAnnual: 5000000, note: "ZRA current public guidance states businesses with annual sales of K5,000,000 or less are required to register for Turnover Tax; applicability and rates should be verified against current ZRA guidance." };
 export const WHT = {
   rent: 0.10, dividends: 0.15, interest: 0.15, management: 0.15,
   royalties: 0.15, commissions: 0.15, publicEnt: 0.15,
