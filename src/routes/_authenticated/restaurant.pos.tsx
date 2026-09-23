@@ -443,7 +443,7 @@ function Page() {
     }
     if (pay) await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }]);
 
-    if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
+    if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "payment pending" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
     // Kitchen / bar tickets and customer receipt — never block the order.
     if (!hold) void printOrderTickets(ord as any, cart, pay, total, tendered, change);
@@ -756,8 +756,8 @@ function Page() {
             <BottomBtn onClick={clearCheck} className="bg-[#bd1111]">CANCEL</BottomBtn>
             <BottomBtn onClick={() => (cart.length ? setTender({ method: "Cash", amount: total }) : toast.error("Check is empty"))} className="bg-[#6f7d80]">CASH</BottomBtn>
             <BottomBtn onClick={() => (cart.length ? setTender({ method: "Card", amount: total }) : toast.error("Check is empty"))} className="bg-[#315f91]">CARD</BottomBtn>
-            <BottomBtn onClick={() => (cart.length ? setTender({ method: "Mobile Money", amount: total }) : toast.error("Check is empty"))} className="bg-[#7616b9]">MTN MOMO</BottomBtn>
-            <BottomBtn onClick={() => (cart.length ? setTender({ method: "Airtel Money", amount: total }) : toast.error("Check is empty"))} className="bg-[#b3122c]">AIRTEL</BottomBtn>
+            <BottomBtn onClick={() => (cart.length ? setTender({ method: "momo", amount: total }) : toast.error("Check is empty"))} className="bg-[#7616b9]">MTN MOMO</BottomBtn>
+            <BottomBtn onClick={() => (cart.length ? setTender({ method: "airtel", amount: total }) : toast.error("Check is empty"))} className="bg-[#b3122c]">AIRTEL</BottomBtn>
             <BottomBtn onClick={() => sendOrder(undefined, true)} className="bg-[#d76c09]">HOLD CHECK</BottomBtn>
             <BottomBtn onClick={clearCheck} className="bg-[#ed0b0b]">CLEAR CHECK</BottomBtn>
             <BottomBtn onClick={() => (cart.length ? setTender({ method: "Cash", amount: total }) : toast.error("Check is empty"))} className="bg-[#0b913f] text-[12px]">PAY {fmtMoney(total)} ›</BottomBtn>
