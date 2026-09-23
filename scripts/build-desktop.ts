@@ -1,7 +1,7 @@
 /**
  * Build a standalone SifoBooks Windows edition.
  *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school
+ * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school | property | lending
  */
 import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
@@ -11,8 +11,8 @@ import { $ } from "bun";
 const OUT_DIR = "desktop-dist";
 const CLIENT_DIR = join(OUT_DIR, "client");
 const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property"].includes(edition) ? edition : "enterprise";
-const productName = editionSlug === "enterprise" ? "SifoBooks" : `SifoBooks-${editionSlug[0].toUpperCase()}${editionSlug.slice(1)}`;
+const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending"].includes(edition) ? edition : "enterprise";
+const editionDisplayNames: Record<string, string> = { enterprise: "SifoBooks", accounting: "SifoBooks-Accounting", retail: "SifoBooks-Retail", restaurant: "SifoBooks-Restaurant", hotel: "SifoBooks-Hotel", school: "SifoBooks-School", property: "SifoBooks-RealEstate", lending: "SifoBooks-Microfinance" };\nconst productName = editionDisplayNames[editionSlug] || "SifoBooks";
 const exeName = `${productName}.exe`;
 
 function copyDir(src: string, dest: string) {
