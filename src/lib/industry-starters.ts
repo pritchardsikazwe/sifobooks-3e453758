@@ -110,7 +110,7 @@ const editions: IndustryStarter[] = [
     edition: "retail", industry: "Retail",
     tagline: "Point-of-sale, stock, purchasing and accounting for Zambian shops.",
     about: "SifoBooks Retail connects every till sale to stock, payments, cash-up and accounting. The starter pack includes barcode-friendly items, warehouses, suppliers, customer balances and cashier controls.",
-    modules: [...baseAccountingModules, M("pos", "Retail POS", "Barcode checkout, cash drawer, returns and cashier shifts.", ["ZRA", "SMART_INVOICE"]), M("cashiers", "Cashiers & Till Control", "Cashier users, shifts, cash-up and audit trail.", [])],
+    modules: [...baseAccountingModules, M("pos", "Retail POS", "Barcode checkout, cash drawer, returns and cashier shifts.", ["ZRA", "SMART_INVOICE"]), M("cashiers", "Cashiers & Till Control", "Cashier users, shifts, cash-up and audit trail.", []), M("butchery", "Butchery", "Weighted meat sales, cuts, carcass yield, cold-room stock and labels.", ["ZRA", "SMART_INVOICE"])],
     compliance: [...commonCompliance],
     roles: [...roles, R("manager", "Retail Manager", "Manage stock, purchasing, POS and reports.", ["retail", "inventory", "sales", "purchasing", "reports"], "manager"), R("cashier", "Cashier", "Till sales and cash-up.", ["pos", "payments", "cash_drawer"], "cashier1")],
     coaAccounts: [{ code: "4000", name: "Retail Sales", type: "revenue" }, { code: "5000", name: "Retail Cost of Goods Sold", type: "expense" }],
