@@ -442,6 +442,253 @@ function executeBillPayment(args: Record<string, any>) {
   return tx;
 }
 
+
+function executeRestaurantCheckout(args: Record<string, any>) {
+  const db = getDb();
+  const uid = String(args._uid || "");
+  if (!uid) throw new Error("NOT_SIGNED_IN");
+
+  const sale = args._sale || {};
+  const rawItems = Array.isArray(args._items) ? args._items : [];
+  const rawPayments = Array.isArray(args._payments) ? args._payments : [];
+  if (!rawItems.length) throw new Error("EMPTY_RESTAURANT_CHECK");
+  if (!rawPayments.length) throw new Error("RESTAURANT_PAYMENT_REQUIRED");
+
+  const clientRef = String(sale.client_ref || "");
+  if (!clientRef) throw new Error("CLIENT_REF_REQUIRED");
+
+  const duplicate = db.prepare(
+    "SELECT id,order_no,status,journal_entry_id FROM restaurant_orders WHERE user_id=? AND client_ref=? LIMIT 1",
+  ).get(uid, clientRef) as any;
+  if (duplicate) {
+    return {
+      order_id: duplicate.id,
+      order_no: duplicate.order_no,
+      journal_entry_id: duplicate.journal_entry_id ?? null,
+      duplicate: true,
+      status: duplicate.status,
+    };
+  }
+
+  const shift = db.prepare(
+    "SELECT id FROM restaurant_shifts WHERE id=? AND user_id=? AND business_date=? AND clock_out IS NULL LIMIT 1",
+  ).get(String(sale.shift_id || ""), uid, String(sale.business_date || new Date().toISOString().slice(0,10))) as any;
+  if (!shift) throw new Error("NO_ACTIVE_RESTAURANT_SHIFT");
+
+  const needsCashDrawer = rawPayments.some((p: any) => String(p.method || "").toLowerCase() === "cash");
+  const drawer = needsCashDrawer
+    ? db.prepare("SELECT * FROM restaurant_cash_drawers WHERE user_id=? AND business_date=? AND status='open' ORDER BY opened_at DESC LIMIT 1")
+      .get(uid, String(sale.business_date || new Date().toISOString().slice(0,10))) as any
+    : null;
+  if (needsCashDrawer && !drawer) throw new Error("NO_OPEN_CASH_DRAWER");
+
+  const menuRows = db.prepare(
+    "SELECT id,name,category,price,cost,station FROM restaurant_menu_items WHERE user_id=?",
+  ).all(uid) as any[];
+  const menuByName = new Map(menuRows.map((m: any) => [String(m.name), m]));
+
+  const lines: any[] = [];
+  const ingredientTotals = new Map<string, { qty: number; unit: string | null; item: any }>();
+
+  for (const raw of rawItems) {
+    const name = String(raw.name || raw.item_name || "").trim();
+    const qty = Number(raw.qty || raw.quantity || 0);
+    const price = Number(raw.price || 0);
+    if (!name || !(qty > 0) || !(price >= 0)) throw new Error("INVALID_RESTAURANT_LINE");
+
+    const menu = menuByName.get(name);
+    if (!menu) throw new Error("MENU_ITEM_NOT_FOUND:" + name);
+
+    const modifiers = Array.isArray(raw.modifiers) ? raw.modifiers : [];
+    const modifierTotal = modifiers.reduce((s: number, m: any) => s + Number(m.price || 0), 0);
+    const lineTotal = (price + modifierTotal) * qty;
+    const recipeRows = db.prepare(
+      "SELECT stock_item_id,quantity,unit FROM restaurant_recipes WHERE user_id=? AND menu_item_id=?",
+    ).all(uid, menu.id) as any[];
+
+    for (const recipe of recipeRows) {
+      const stock = db.prepare(
+        "SELECT id,name,quantity_on_hand,cost_price,unit,warehouse_id FROM stock_items WHERE id=? AND user_id=?",
+      ).get(recipe.stock_item_id, uid) as any;
+      if (!stock) throw new Error("RECIPE_STOCK_ITEM_NOT_FOUND:" + String(recipe.stock_item_id));
+      const required = Number(recipe.quantity || 0) * qty;
+      const current = ingredientTotals.get(stock.id) ?? { qty: 0, unit: recipe.unit ?? stock.unit ?? null, item: stock };
+      current.qty += required;
+      ingredientTotals.set(stock.id, current);
+    }
+
+    lines.push({
+      id: generateUUID(),
+      name,
+      station: raw.station ?? menu.station ?? null,
+      qty,
+      price,
+      unitCost: Number(menu.cost || 0),
+      discount: Number(raw.discount || 0),
+      modifiers,
+      notes: raw.notes ?? raw.note ?? null,
+      total: lineTotal,
+    });
+  }
+
+  const subtotal = Number(sale.subtotal || 0);
+  const discount = Number(sale.discount || 0);
+  const tax = Number(sale.tax || 0);
+  const serviceCharge = Number(sale.service_charge || 0);
+  const gratuity = Number(sale.gratuity || 0);
+  const deliveryFee = Number(sale.delivery_fee || 0);
+  const total = Math.round(Number(sale.total || 0) * 100) / 100;
+  if (!(total >= 0)) throw new Error("INVALID_RESTAURANT_TOTAL");
+
+  const paymentRows = rawPayments.map((p: any) => ({
+    method: String(p.method || "cash"),
+    amount: Math.round(Number(p.amount || 0) * 100) / 100,
+    tendered: Math.round(Number(p.tendered ?? p.amount ?? 0) * 100) / 100,
+    change: Math.max(0, Math.round(Number(p.change ?? p.change_given ?? 0) * 100) / 100),
+    reference: p.reference ?? null,
+  })).filter((p: any) => p.amount > 0);
+
+  const paidAmount = Math.round(paymentRows.reduce((s: number, p: any) => s + p.amount, 0) * 100) / 100;
+  if (paidAmount + 0.005 < total) throw new Error("PAYMENT_SHORT");
+  const computedChange = Math.max(0, Math.round((paidAmount - total) * 100) / 100);
+  if (computedChange > 0 && !paymentRows.some((p: any) => p.method.toLowerCase() === "cash")) {
+    throw new Error("CHANGE_REQUIRES_CASH_TENDER");
+  }
+
+  const company = db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(uid) as any;
+  const companyId = company?.company_id ?? null;
+  const businessDate = String(sale.business_date || new Date().toISOString().slice(0,10));
+
+  const cashAccount = postingAccount(db, uid, companyId, "SALE_CASH", ["1000","1100"]);
+  const cardAccount = postingAccount(db, uid, companyId, "SALE_CARD", ["1110","1200"]);
+  const mobileAccount = postingAccount(db, uid, companyId, "SALE_MOBILE_MONEY", ["1120","1210"]);
+  const revenueAccount = postingAccount(db, uid, companyId, "SALES_REVENUE", ["4000","4100"]);
+  const vatAccount = tax > 0 ? postingAccount(db, uid, companyId, "OUTPUT_VAT", ["2100","2200"]) : null;
+
+  let ingredientCost = 0;
+  for (const d of ingredientTotals.values()) {
+    const available = Number(d.item.quantity_on_hand || 0);
+    if (available + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + String(d.item.name));
+    ingredientCost += d.qty * Number(d.item.cost_price || 0);
+  }
+  ingredientCost = Math.round(ingredientCost * 100) / 100;
+  const inventoryAccount = ingredientCost > 0 ? postingAccount(db, uid, companyId, "INVENTORY_ASSET", ["1300","1400"]) : null;
+  const cogsAccount = ingredientCost > 0 ? postingAccount(db, uid, companyId, "COST_OF_SALES", ["5000","5100"]) : null;
+
+  const transaction = db.transaction(() => {
+    const orderId = generateUUID();
+    const orderNo = String(sale.order_no || ("CHK-" + Date.now().toString().slice(-6)));
+
+    db.prepare(
+      "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    ).run(
+      orderId, uid, orderNo, clientRef, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
+      Number(sale.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
+      sale.server_name ?? null, sale.customer_name ?? null, "paid",
+      paymentRows.length === 1 ? paymentRows[0].method : "split", total,
+      new Date().toISOString(), null,
+    );
+
+    for (const line of lines) {
+      db.prepare(
+        "INSERT INTO restaurant_order_items (id,user_id,order_id,item_name,station,qty,price,unit_cost,discount,modifiers,notes,kds_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      ).run(
+        line.id, uid, orderId, line.name, line.station, line.qty, line.price, line.unitCost,
+        line.discount, JSON.stringify(line.modifiers ?? []), line.notes, "served",
+      );
+    }
+
+    for (const d of ingredientTotals.values()) {
+      const next = Number(d.item.quantity_on_hand || 0) - d.qty;
+      db.prepare(
+        "UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?",
+      ).run(next, d.item.id, uid);
+      db.prepare(
+        "INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)",
+      ).run(
+        generateUUID(), uid, d.item.id, "sale", -d.qty, Number(d.item.cost_price || 0),
+        orderNo, "Restaurant recipe consumption", d.item.warehouse_id ?? null,
+      );
+    }
+
+    for (const p of paymentRows) {
+      db.prepare(
+        "INSERT INTO restaurant_payments (id,user_id,order_id,method,amount,tendered,change_given,reference) VALUES (?,?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, orderId, p.method, p.amount, p.tendered, p.change, p.reference);
+    }
+
+    if (needsCashDrawer) {
+      const cashAmount = Math.round(paymentRows.filter((p: any) => p.method.toLowerCase() === "cash").reduce((s: number, p: any) => s + p.amount, 0) * 100) / 100;
+      const nextCashSales = Number(drawer.cash_sales || 0) + cashAmount;
+      const expected = Number(drawer.opening_float || 0) + nextCashSales + Number(drawer.cash_payouts || 0) * 0 - Number(drawer.cash_payouts || 0) - Number(drawer.cash_drops || 0);
+      db.prepare(
+        "UPDATE restaurant_cash_drawers SET cash_sales=?,expected_cash=?,updated_at=datetime('now') WHERE id=? AND user_id=? AND status='open'",
+      ).run(nextCashSales, expected, drawer.id, uid);
+    }
+
+    const entryId = generateUUID();
+    const entryNo = nextDocumentNumber({ userId: uid, companyId, documentType: "JOURNAL", prefix: "JE", padding: 6 });
+    db.prepare(
+      "INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+    ).run(
+      entryId, uid, entryNo, businessDate, "RPOS:" + orderId, "Restaurant sale " + orderNo,
+      "posted", Math.round((total + ingredientCost) * 100) / 100, Math.round((total + ingredientCost) * 100) / 100, "ZMW", 1,
+    );
+
+    for (const p of paymentRows) {
+      const method = p.method.toLowerCase();
+      const account = method === "card" ? cardAccount : (method === "momo" || method.includes("mobile")) ? mobileAccount : cashAccount;
+      db.prepare(
+        "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, entryId, account, "Restaurant payment " + p.method, p.amount, 0);
+    }
+    if (computedChange > 0) {
+      db.prepare(
+        "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, entryId, cashAccount, "Restaurant change given", 0, computedChange);
+    }
+    const netSales = Math.max(0, total - tax);
+    db.prepare(
+      "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+    ).run(generateUUID(), uid, entryId, revenueAccount, "Restaurant sales revenue", 0, netSales);
+    if (vatAccount && tax > 0) {
+      db.prepare(
+        "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, entryId, vatAccount, "Restaurant output VAT", 0, tax);
+    }
+    if (cogsAccount && inventoryAccount && ingredientCost > 0) {
+      db.prepare(
+        "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, entryId, cogsAccount, "Restaurant cost of sales", ingredientCost, 0);
+      db.prepare(
+        "INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, entryId, inventoryAccount, "Restaurant inventory consumed", 0, ingredientCost);
+    }
+
+    db.prepare("UPDATE restaurant_orders SET journal_entry_id=? WHERE id=? AND user_id=?").run(entryId, orderId, uid);
+
+    if (sale.table_id) {
+      db.prepare("UPDATE restaurant_tables SET status='dirty',occupied_since=NULL,current_order_id=NULL WHERE id=? AND user_id=?").run(sale.table_id, uid);
+    }
+
+    return {
+      orderId, orderNo, journalEntryId: entryId, total,
+      ingredientCost, change: computedChange,
+      duplicate: false,
+    };
+  });
+
+  void recordAuditEvent({
+    userId: uid,
+    action: "RESTAURANT_SALE_POSTED",
+    entityType: "restaurant_order",
+    entityId: transaction.orderId,
+    newValue: { orderNo: transaction.orderNo, total: transaction.total, journalEntryId: transaction.journalEntryId },
+  });
+
+  return transaction;
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
@@ -522,6 +769,10 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
       }
       case "pos_checkout": {
         const result=executePosCheckout(args);
+        return { data: result, error: null };
+      }
+      case "restaurant_checkout": {
+        const result=executeRestaurantCheckout(args);
         return { data: result, error: null };
       }
       case "reverse_pos_sale": {
