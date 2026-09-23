@@ -67,6 +67,8 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
   "DATABASE_PATH=data/sifobooks.db",
   "PORT=3000",
   "SIFOBOOKS_MODE=offline",
+  "# LAN server: SIFOBOOKS_MODE=server and SIFOBOOKS_HOST=0.0.0.0",
+  "# LAN POS client: SIFOBOOKS_MODE=pos and SIFOBOOKS_SERVER_URL=http://192.168.1.100:3000",
   "SIFOBOOKS_LICENSE_ENFORCEMENT=true",
   "SIFOBOOKS_DATABASE=sqlite",
   "SIFOBOOKS_HOST=127.0.0.1",
