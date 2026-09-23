@@ -44,6 +44,8 @@ function readNetworkConfig(): any | null {
 const networkConfig = readNetworkConfig();
 const configuredMode = String(process.env.SIFOBOOKS_MODE || networkConfig?.mode || "offline").toLowerCase();
 const isNetworkServer = configuredMode === "network" || configuredMode === "server";
+const isPosClient = configuredMode === "pos";
+const configuredServerUrl = String(process.env.SIFOBOOKS_SERVER_URL || networkConfig?.client?.server_url || "").trim().replace(/\/$/, "");
 
 mkdirSync(dataDir, { recursive: true });
 mkdirSync(backupsDir, { recursive: true });
@@ -135,6 +137,46 @@ function serveStatic(pathname: string): Response | null {
   });
 }
 
+async function proxyToNetworkServer(request: Request): Promise<Response> {
+  if (!configuredServerUrl) {
+    return Response.json({
+      error: "SifoBooks POS client is not configured.",
+      message: "Set client.server_url in config/network.json or SIFOBOOKS_SERVER_URL.",
+    }, { status: 503 });
+  }
+
+  try {
+    const incoming = new URL(request.url);
+    const target = new URL(incoming.pathname + incoming.search, configuredServerUrl);
+    const headers = new Headers(request.headers);
+    headers.set("x-sifobooks-client", "lan-pos");
+    headers.set("x-forwarded-host", incoming.host);
+    headers.set("x-forwarded-proto", incoming.protocol.replace(":", ""));
+    headers.delete("host");
+
+    const method = request.method.toUpperCase();
+    const response = await fetch(target, {
+      method,
+      headers,
+      body: method === "GET" || method === "HEAD" ? undefined : request.body,
+      redirect: "manual",
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  } catch (error) {
+    writeStartupLog(`LAN CLIENT PROXY ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+    return Response.json({
+      error: "SifoBooks LAN server unavailable.",
+      serverUrl: configuredServerUrl,
+      message: "Check that the SifoBooks server PC is running and reachable on the local network.",
+    }, { status: 503 });
+  }
+}
+
 function openBrowser(url: string) {
   try {
     if (process.platform === "win32") Bun.spawn(["cmd", "/c", "start", "", url], { stdio: ["ignore", "ignore", "ignore"] });
@@ -175,6 +217,12 @@ function startServer() {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
+    if (isPosClient) {
+      const staticResponse = serveStatic(url.pathname);
+      if (staticResponse) return staticResponse;
+      return proxyToNetworkServer(request);
+    }
+
     if (url.pathname === "/api/license/status" && request.method === "GET") {
       return Response.json({ ...licenseStatus(), enforcement: LICENSE_ENFORCEMENT });
     }
@@ -194,10 +242,11 @@ function startServer() {
     if (url.pathname === "/api/network/info" && request.method === "GET") {
       const cfg = readNetworkConfig();
       return Response.json({
-        mode: isNetworkServer ? "server" : "standalone",
+        mode: isNetworkServer ? "server" : isPosClient ? "pos" : "standalone",
         serverName: cfg?.server?.display_name || "SifoBooks Server",
         host: HOST,
         port: PORT,
+        upstreamServerUrl: isPosClient ? configuredServerUrl : null,
         client: cfg?.client || null,
         zra: cfg?.zra ? {
           environment: cfg.zra.environment || "production",
