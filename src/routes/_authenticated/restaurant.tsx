@@ -45,6 +45,18 @@ function RestaurantShell() {
           <span className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-semibold">
             <UtensilsCrossed className="h-4 w-4" /> Restaurant
           </span>
+          <Link
+            to="/restaurant/pos"
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white shadow-md hover:bg-emerald-700"
+          >
+            <UtensilsCrossed className="h-4 w-4" /> OPEN FULL POS
+          </Link>
+          <Link
+            to="/auth"
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-3 py-1.5 text-sm font-semibold hover:bg-muted"
+          >
+            CASHIER LOGIN
+          </Link>
           {NAV.map((n) => {
             const active = n.exact ? path === n.to : path.startsWith(n.to);
             return (
