@@ -36,8 +36,8 @@ const TABS = [
   ["settings", "Settings", MoreHorizontal],
 ] as const;
 
-export function BoardingHouseWorkspace() {
-  const [tab, setTab] = useState("dashboard");
+export function BoardingHouseWorkspace({ initialTab = "dashboard" }: { initialTab?: string }) {
+  const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [uid, setUid] = useState("");
   const [companyId, setCompanyId] = useState("");
