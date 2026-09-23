@@ -206,10 +206,20 @@ function runSqlMigrations(database: Database) {
   const applied = new Set(
     (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
   );
-  const files = bundled.length ? bundled.map((entry) => entry.name).sort() : readdirSync(dir!).filter((name) => /^\d+_.*\.sql$/.test(name)).sort();
+  // A protected migration bundle may predate source migrations added later.
+  // Always merge both sources so an existing portable database receives newly
+  // added compatibility columns instead of remaining on the old bundle.
+  const sourceEntries = dir
+    ? readdirSync(dir).filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
+      .map((name) => ({ name, sql: readFileSync(join(dir!, name), "utf8") }))
+    : [];
+  const bundledEntries = bundled.map((entry) => ({ name: entry.name, sql: entry.sql }));
+  const migrationMap = new Map<string, string>();
+  for (const entry of [...bundledEntries, ...sourceEntries]) migrationMap.set(entry.name, entry.sql);
+  const files = [...migrationMap.keys()].sort();
   for (const file of files) {
     if (applied.has(file)) continue;
-    const sql = bundled.length ? bundled.find((entry) => entry.name === file)?.sql || "" : readFileSync(join(dir!, file), "utf8");
+    const sql = migrationMap.get(file) || "";
     const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
     try {
       // Migrations must be safe against databases whose schema already contains
