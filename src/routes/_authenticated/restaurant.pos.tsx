@@ -383,6 +383,7 @@ function Page() {
           return toast.error(restaurantCheckoutErrorMessage(error));
         }
         try { await accrueLoyaltyForOrder(result.orderId); } catch { /* loyalty is best-effort */ }
+        void attachPaymentToOpenDrawer(result.orderId);
         void printOrderTickets(
           { ...(result as any), order_no: result.orderNo, id: result.orderId, table_id: tableId },
           cart, pay, total, tendered, change,
@@ -441,7 +442,10 @@ function Page() {
       try { await commitStockConsumption(uid, (ord as any).order_no ?? (ord as any).id, stockPlan.deductions); }
       catch (e) { console.error("[POS] stock deduction failed", e); setBusy(false); return toast.error("Sale posted but stock update failed — review Inventory immediately."); }
     }
-    if (pay) await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }]);
+    if (pay) {
+      await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }]);
+      await attachPaymentToOpenDrawer((ord as any).id);
+    }
 
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "payment pending" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
@@ -491,6 +495,17 @@ function Page() {
     } catch (error: any) {
       console.error("Receipt printing failed:", error);
       try { await savePrintQueueJob({ type: "receipt", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) }); } catch (queueError) { console.error("Receipt print queue recovery failed:", queueError); }
+    }
+  };
+
+  const attachPaymentToOpenDrawer = async (orderId: string) => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const { data: drawer } = await supabase.from("restaurant_cash_drawers")
+      .select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).eq("status", "open")
+      .order("opened_at", { ascending: false }).limit(1).maybeSingle();
+    if (drawer?.id) {
+      await supabase.from("restaurant_payments").update({ drawer_id: drawer.id }).eq("order_id", orderId).eq("user_id", u.user.id);
     }
   };
 
