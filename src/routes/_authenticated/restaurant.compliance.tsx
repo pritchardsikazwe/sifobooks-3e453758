@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/restaurant/compliance")({
 
 function RestaurantCompliance() {
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Licences & tax compliance</h1>
         <p className="text-sm text-muted-foreground">
