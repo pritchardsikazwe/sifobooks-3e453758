@@ -571,7 +571,10 @@ function executeRestaurantCheckout(args: Record<string, any>) {
     const availableRow = locationId ? db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid, d.item.id, locationId) as any : null;
     const available = locationId ? Number(availableRow?.quantity ?? 0) : Number(d.item.quantity_on_hand || 0);
     if (available + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + String(d.item.name));
-    if (locationId) locationBalances.set(d.item.id, { id: String(availableRow.id), quantity: available });
+    if (locationId) {
+      if (!availableRow) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + String(d.item.name));
+      locationBalances.set(d.item.id, { id: String(availableRow.id), quantity: available });
+    }
     ingredientCost += d.qty * Number(d.item.cost_price || 0);
   }
   ingredientCost = Math.round(ingredientCost * 100) / 100;
