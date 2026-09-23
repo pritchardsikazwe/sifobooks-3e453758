@@ -25,7 +25,7 @@ export const RESERVATION_STATUSES = [
   "pending", "confirmed", "arrived", "seated", "completed", "cancelled", "no show",
 ] as const;
 
-export const PAYMENT_METHODS = ["cash", "card", "momo", "bank", "gift card", "loyalty"] as const;
+export const PAYMENT_METHODS = ["cash", "card", "momo", "airtel", "bank", "gift card", "loyalty"] as const;
 
 export const KDS_FLOW = ["queued", "cooking", "ready", "served"] as const;
 
