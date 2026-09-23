@@ -133,7 +133,7 @@ function Menu() {
     }, 0);
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight">Menu management</h1>
