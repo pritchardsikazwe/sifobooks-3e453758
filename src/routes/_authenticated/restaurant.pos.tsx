@@ -271,6 +271,20 @@ function Page() {
   };
 
   const addToCart = (mi: MenuItem) => {
+    const available = itemStock(mi);
+    const hasRecipe = recipes.some(r => r.menu_item_id === mi.id && Number(r.quantity) > 0);
+    if (hasRecipe && !posStockLocation) {
+      toast.warning("Select a POS stock location first.", {
+        description: "Choose the stock location in the POS toolbar before selling recipe-controlled items.",
+      });
+      return;
+    }
+    if (available === 0) {
+      toast.error("Out of stock at this POS location", {
+        description: posStockLocation ? "Transfer or replenish stock before selling this item." : "Select the POS stock location to check availability.",
+      });
+      return;
+    }
     const gs = groupsFor(mi).filter(g => mods.some(m => m.group_id === g.id && m.active));
     if (gs.length) setModifying(mi);
     else pushLine(mi);
@@ -725,10 +739,15 @@ function Page() {
           </div>
           <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
-              <button key={mi.id} onClick={() => { if (itemStock(mi) === 0) return toast.error("Out of stock at this POS location"); addToCart(mi); }}
-                className={cn("flex flex-col items-center justify-center gap-2 rounded-[14px] border border-[#d8e4e1] bg-white p-3 text-center text-[#173b3a] shadow-sm transition hover:-translate-y-[2px] hover:border-[#07834f] hover:shadow-[0_8px_24px_#174b4b18] active:scale-[.98]")}>
-                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5f0] text-2xl">🍽️</span><strong className="text-[12px] leading-tight">{mi.name}</strong>
-                <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>{itemStock(mi) !== null && <span className={cn("text-[9px] font-black", (itemStock(mi) ?? 0) <= 0 ? "text-red-600" : (itemStock(mi) ?? 0) <= 3 ? "text-amber-600" : "text-emerald-700")}>{itemStock(mi) === 0 ? "OUT OF STOCK" : String(itemStock(mi)) + " available"}</span>}
+              <button key={mi.id} onClick={() => addToCart(mi)}
+                disabled={itemStock(mi) === 0}
+                className={cn("relative flex flex-col items-center justify-center gap-2 rounded-[14px] border border-[#d8e4e1] bg-white p-3 text-center text-[#173b3a] shadow-sm transition hover:-translate-y-[2px] hover:border-[#07834f] hover:shadow-[0_8px_24px_#174b4b18] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:border-[#d8e4e1] disabled:hover:shadow-sm")}>
+                {itemStock(mi) === 0 && <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-[8px] font-black text-white">SOLD OUT</span>}
+                <span className={cn("flex h-12 w-12 items-center justify-center rounded-xl text-2xl", itemStock(mi) === 0 ? "bg-red-50 grayscale" : "bg-[#eaf5f0]")}>🍽️</span>
+                <strong className="text-[12px] leading-tight">{mi.name}</strong>
+                <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>
+                {itemStock(mi) !== null && <span className={cn("rounded-full border px-2 py-0.5 text-[9px] font-black", (itemStock(mi) ?? 0) <= 0 ? "border-red-200 bg-red-50 text-red-600" : (itemStock(mi) ?? 0) <= 3 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>{itemStock(mi) === 0 ? "OUT OF STOCK" : String(itemStock(mi)) + " available"}</span>}
+                {itemStock(mi) === null && recipes.some(r => r.menu_item_id === mi.id) && <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-black text-slate-600">SELECT STOCK LOCATION</span>}
               </button>
             ))}
             {!shown.length && <div className="col-span-full py-10 text-center text-[12px] opacity-70">No items match.</div>}
