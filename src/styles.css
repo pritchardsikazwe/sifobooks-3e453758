@@ -1137,3 +1137,168 @@
   .lending-2026-logo { width:36px; height:36px; }
   .lending-2026-workspace { padding:.6rem; }
 }
+
+
+/* ── SifoBooks 2026 unified application UI ─────────────────────────
+   One shared visual language for Accounting, Retail, Restaurant, Hotel,
+   School, Real Estate, Microfinance and core ERP pages. Module-specific
+   workflows may add identity accents, but page geometry and controls stay
+   consistent.
+*/
+.sifobooks-2026-page {
+  --ui-ink: #173B3A;
+  --ui-deep: #073B38;
+  --ui-green: #07834F;
+  --ui-gold: #E5B83F;
+  --ui-muted: #667A77;
+  --ui-line: #D9E6E3;
+  --ui-surface: #FFFFFF;
+  --ui-bg: #F4F7F6;
+  color: var(--ui-ink);
+  min-height: 100%;
+  background: var(--ui-bg);
+  animation: page-in 220ms cubic-bezier(.16,1,.3,1);
+}
+.sifobooks-2026-page > :first-child {
+  max-width: 1600px;
+  margin-inline: auto;
+}
+.sifobooks-2026-page h1 {
+  color: var(--ui-deep);
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+.sifobooks-2026-page h2,
+.sifobooks-2026-page h3,
+.sifobooks-2026-page h4 {
+  color: var(--ui-ink);
+  font-weight: 750;
+}
+.sifobooks-2026-page [class*="rounded-2xl"],
+.sifobooks-2026-page [class*="rounded-3xl"] {
+  border-color: var(--ui-line);
+}
+.sifobooks-2026-page [class*="rounded-2xl"][class*="border"],
+.sifobooks-2026-page [class*="rounded-3xl"][class*="border"] {
+  box-shadow: 0 4px 16px rgba(7,59,56,.045);
+}
+.sifobooks-2026-page input,
+.sifobooks-2026-page textarea,
+.sifobooks-2026-page select,
+.sifobooks-2026-page [role="combobox"] {
+  border-color: #CBDCD8;
+  background: #fff;
+  color: var(--ui-ink);
+  border-radius: 12px;
+  min-height: 40px;
+}
+.sifobooks-2026-page input:focus,
+.sifobooks-2026-page textarea:focus,
+.sifobooks-2026-page select:focus,
+.sifobooks-2026-page [role="combobox"]:focus {
+  border-color: var(--ui-green);
+  box-shadow: 0 0 0 3px rgba(7,131,79,.11);
+}
+.sifobooks-2026-page table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+.sifobooks-2026-page thead th {
+  background: #F0F5F3;
+  color: #526966;
+  font-size: .70rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ui-line);
+  white-space: nowrap;
+}
+.sifobooks-2026-page tbody td {
+  border-bottom: 1px solid #E8EFED;
+}
+.sifobooks-2026-page tbody tr:last-child td {
+  border-bottom: 0;
+}
+.sifobooks-2026-page tbody tr:hover {
+  background: #F8FBFA;
+}
+.sifobooks-2026-page [role="tablist"] {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  background: #EAF2EF;
+}
+.sifobooks-2026-page [role="tab"] {
+  min-height: 36px;
+  border-radius: 10px;
+  font-weight: 750;
+}
+.sifobooks-2026-page [role="tab"][data-state="active"] {
+  background: #fff;
+  color: var(--ui-green);
+  box-shadow: 0 2px 8px rgba(7,59,56,.08);
+}
+.sifobooks-2026-page .text-muted-foreground {
+  color: var(--ui-muted);
+}
+.sifobooks-2026-page .text-primary {
+  color: var(--ui-green);
+}
+.sifobooks-2026-page .bg-primary {
+  background-color: var(--ui-green);
+}
+.sifobooks-2026-page .border-primary {
+  border-color: var(--ui-green);
+}
+.sifobooks-2026-page button:not([data-state]),
+.sifobooks-2026-page [role="button"] {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.sifobooks-2026-page button:not([data-state]):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.sifobooks-2026-page .sifobooks-legacy-surface {
+  box-shadow: none;
+}
+.sifobooks-2026-page .surface-card,
+.sifobooks-2026-page .glass-panel {
+  border-color: var(--ui-line);
+}
+@media (min-width: 1024px) {
+  .sifobooks-2026-page {
+    padding: 22px 24px 34px;
+  }
+}
+@media (max-width: 1023px) {
+  .sifobooks-2026-page {
+    padding: 14px;
+  }
+}
+@media (max-width: 640px) {
+  .sifobooks-2026-page {
+    padding: 10px;
+  }
+  .sifobooks-2026-page input,
+  .sifobooks-2026-page select,
+  .sifobooks-2026-page [role="combobox"] {
+    min-height: 44px;
+  }
+  .sifobooks-2026-page button:not([data-state]) {
+    min-height: 42px;
+  }
+}
+
+/* Shared 2026 shell: all editions use the same chrome. */
+.sifobooks-2026-app {
+  --shell-bg: #F4F7F6;
+  --shell-line: #D9E6E3;
+}
+.sifobooks-2026-app > div {
+  background: var(--shell-bg);
+}
