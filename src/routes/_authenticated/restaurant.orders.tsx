@@ -202,14 +202,14 @@ function Orders() {
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <div className="text-[11px] font-black uppercase tracking-[.18em] text-[#087b4b]">Sales control</div><h1 className="text-2xl font-black tracking-tight text-[#173b3a]">Orders & History</h1>
-          <p className="text-sm text-muted-foreground">{shown.length} checks · {fmtMoney(shown.filter((o) => o.status !== "void").reduce((s, o) => s + Number(o.total || 0), 0))}</p>
+          <p className="text-sm text-muted-foreground">{shown.length} checks · net {fmtMoney(shown.filter((o) => o.status === "paid").reduce((s, o) => s + Number(o.total || 0), 0))} · refunds {fmtMoney(shown.filter((o) => o.status === "refunded").reduce((s, o) => s + Number(o.total || 0), 0))}</p>
         </div>
         <Input type="date" className="w-40" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input type="date" className="w-40" value={to} onChange={(e) => setTo(e.target.value)} />
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {["all", "open", "held", "paid", "void"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {["all", "open", "held", "paid", "refunded", "void"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
         <Input placeholder="Search check / server / customer" className="w-64" value={q} onChange={(e) => setQ(e.target.value)} />
