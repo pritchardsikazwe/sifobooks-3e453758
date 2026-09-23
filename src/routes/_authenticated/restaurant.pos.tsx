@@ -12,7 +12,7 @@ import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
-import { recordPayments } from "@/lib/restaurant";
+import { recordPayments, today } from "@/lib/restaurant";
 
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
@@ -135,20 +135,23 @@ function Page() {
     if (!u.user) return setLoading(false);
     const uid = u.user.id;
     const [m, t, o, g, md, ot, loc, rec, bal] = await Promise.all([
-      supabase.from("restaurant_menu_items").select("*").eq("user_id", uid).order("category"),
+      supabase.from("restaurant_menu_items").select("*").eq("user_id", uid).eq("active", true).order("category").order("name"),
       supabase.from("restaurant_tables").select("*").eq("user_id", uid).order("name"),
       supabase.from("restaurant_orders").select("*").eq("user_id", uid).order("opened_at", { ascending: false }).limit(200),
       supabase.from("restaurant_modifier_groups").select("*").eq("user_id", uid).order("sort_order"),
       supabase.from("restaurant_modifiers").select("*").eq("user_id", uid).order("sort_order"),
       supabase.from("restaurant_order_types").select("*").eq("user_id", uid).order("sort_order"),
+      supabase.from("inventory_locations").select("id,name,location_type").eq("user_id", uid).eq("is_active", true).order("name"),
+      supabase.from("restaurant_recipes").select("menu_item_id,stock_item_id,quantity,unit").eq("user_id", uid),
+      supabase.from("stock_balances").select("item_id,location_id,quantity").eq("user_id", uid),
     ]);
     setMenu((m.data ?? []) as any);
-    const locations = (loc.data ?? []) as any[];
+    const locations = (loc?.data ?? []) as any[];
     setStockLocations(locations);
     const savedLocation = window.localStorage.getItem("sifobooks.restaurant.pos.location") ?? "";
     const preferred = locations.find(x => x.id === savedLocation) ?? locations.find(x => ["outlet","branch","store","kitchen","bar"].includes(String(x.location_type))) ?? locations[0];
     if (preferred) setPosStockLocation(preferred.id);
-    setRecipes((rec.data ?? []) as any); setStockBalances((bal.data ?? []) as any);
+    setRecipes((rec?.data ?? []) as any); setStockBalances((bal?.data ?? []) as any);
     setTables((t.data ?? []) as any);
     setGroups((g.data ?? []) as any);
     setMods((md.data ?? []) as any);
@@ -324,7 +327,8 @@ function Page() {
         } as any);
         if (error || !result) {
           setBusy(false);
-          return toast.error(error?.message ?? "Restaurant checkout failed");
+          console.error("[POS] restaurant checkout failed", error);
+          return toast.error(error?.message ?? "Restaurant checkout failed. Check cashier shift, drawer and stock.");
         }
         try { await accrueLoyaltyForOrder(result.orderId); } catch { /* loyalty is best-effort */ }
         void printOrderTickets(
