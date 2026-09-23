@@ -297,6 +297,26 @@
   font-feature-settings: "tnum";
 }
 
+/* Restaurant 2026 readability pass — keep secondary copy readable on bright
+   cards and in dark-mode workspaces. Avoid relying on opacity for operational data. */
+.restaurant-2026-page .text-muted-foreground {
+  color: #52636f;
+}
+.restaurant-2026-page input,
+.restaurant-2026-page select,
+.restaurant-2026-page textarea {
+  color: #17212b;
+}
+.dark .restaurant-2026-page .text-muted-foreground {
+  color: #b9c8d2;
+}
+.dark .restaurant-2026-page input,
+.dark .restaurant-2026-page select,
+.dark .restaurant-2026-page textarea {
+  color: #f4f7f8;
+  background-color: #1d3345;
+}
+
 /* --- Shared surface + interaction utilities used across every module --- */
 
 @utility surface-card {
