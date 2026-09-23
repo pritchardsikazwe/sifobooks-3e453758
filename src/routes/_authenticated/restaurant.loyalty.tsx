@@ -100,7 +100,7 @@ function Loyalty() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <h1 className="text-xl font-semibold flex items-center gap-2"><Star className="h-5 w-5 text-primary" /> Loyalty & gift cards</h1>
 
       <Tabs defaultValue="members">
