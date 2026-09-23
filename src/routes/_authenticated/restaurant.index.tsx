@@ -44,6 +44,8 @@ const QUICK = [
 
 function Dashboard() {
   const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [balances, setBalances] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [tables, setTables] = useState<any[]>([]);
@@ -62,6 +64,8 @@ function Dashboard() {
         db.from("restaurant_reservations").select("*").eq("user_id", uid).eq("reserved_date", today()).order("reserved_time"),
         db.from("restaurant_cash_drawers").select("*").eq("user_id", uid).eq("status", "open"),
         db.from("stock_items").select("*").eq("user_id", uid),
+        db.from("inventory_locations").select("id,name,location_type").eq("user_id", uid).eq("is_active", true).order("name"),
+        db.from("stock_balances").select("item_id,location_id,quantity").eq("user_id", uid),
       ]);
       const os = o.data ?? [];
       setOrders(os);
@@ -69,6 +73,7 @@ function Dashboard() {
       setReservations(r.data ?? []);
       setDrawers(d.data ?? []);
       setLowStock((s.data ?? []).filter((x: any) => Number(x.quantity_on_hand) <= Number(x.reorder_level ?? 0)));
+      setLocations(l.data ?? []); setBalances(b.data ?? []);
       if (os.length) {
         const { data: oi } = await db.from("restaurant_order_items").select("*").in("order_id", os.map((x: any) => x.id));
         setItems(oi ?? []);
@@ -162,6 +167,8 @@ function Dashboard() {
           ))}
         </div>
       </Card>
+
+      <Card className="rounded-2xl border-[#cfe0db] bg-white p-4 shadow-sm"><div className="flex flex-wrap items-center gap-2"><div className="mr-auto"><div className="text-sm font-semibold">Restaurant stock network</div><div className="text-xs text-muted-foreground">Warehouse → stores → kitchen/bar/branch POS. Quantities are location-specific.</div></div><Link to="/inventory/locations" className="rounded-lg border px-3 py-2 text-xs font-bold">Locations</Link><Link to="/inventory/transfers" className="rounded-lg border px-3 py-2 text-xs font-bold">Transfers</Link><Link to="/stock" className="rounded-lg border px-3 py-2 text-xs font-bold">Item master</Link></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{locations.map((l:any) => { const mine=balances.filter((b:any)=>b.location_id===l.id); const units=mine.reduce((n:number,b:any)=>n+Number(b.quantity||0),0); const skus=mine.filter((b:any)=>Number(b.quantity||0)>0).length; return <div key={l.id} className="rounded-xl border bg-[#f7faf8] p-3"><div className="text-xs font-black uppercase text-[#07834f]">{l.location_type}</div><div className="font-semibold">{l.name}</div><div className="mt-1 text-xs text-muted-foreground">{skus} items · {units} units</div></div>; })}{!locations.length && <div className="text-xs text-muted-foreground">Create warehouse/POS/kitchen locations in Inventory → Locations.</div>}</div></Card>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
