@@ -385,9 +385,9 @@ function Page() {
   }
 
   return (
-    <div className={cn("flex flex-col overflow-hidden border border-[#6f9694] bg-[#174b4b] text-white shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
+    <div className={cn("flex flex-col overflow-hidden border border-[#dbe5e2] bg-[#f4f7f6] text-[#173b3a] shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
       {/* top bar — order types */}
-      <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#87a7a6] bg-[#315e64] p-[7px]">
+      <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#164744] bg-[#073b38] p-[7px] text-white">
         <button
           type="button"
           onClick={async () => {
@@ -516,10 +516,9 @@ function Page() {
           <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
               <button key={mi.id} onClick={() => addToCart(mi)}
-                className={cn("flex flex-col items-center justify-center gap-2 rounded-[12px] border-2 border-[#879c9b] p-2 text-center text-white shadow-[inset_0_-18px_30px_#00000014] transition hover:-translate-y-[2px] hover:shadow-[0_7px_18px_#0005] active:scale-[.98]",
-                  TILE_COLOURS[i % TILE_COLOURS.length])}>
-                <strong className="text-[12px] leading-tight">{mi.name}</strong>
-                <span className="text-[11px] font-black">{fmtMoney(Number(mi.price))}</span>
+                className={cn("flex flex-col items-center justify-center gap-2 rounded-[14px] border border-[#d8e4e1] bg-white p-3 text-center text-[#173b3a] shadow-sm transition hover:-translate-y-[2px] hover:border-[#07834f] hover:shadow-[0_8px_24px_#174b4b18] active:scale-[.98]")}>
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5f0] text-2xl">🍽️</span><strong className="text-[12px] leading-tight">{mi.name}</strong>
+                <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>
               </button>
             ))}
             {!shown.length && <div className="col-span-full py-10 text-center text-[12px] opacity-70">No items match.</div>}
