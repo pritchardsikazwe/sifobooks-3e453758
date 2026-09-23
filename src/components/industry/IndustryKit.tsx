@@ -7,16 +7,16 @@ import { Info, Search } from "lucide-react";
 export type IndustryAccent = "hotel" | "school" | "restaurant" | "lending";
 
 export const accentRing: Record<IndustryAccent, string> = {
-  hotel: "from-indigo-500/10 via-sky-500/5 to-background",
+  hotel: "from-emerald-500/10 via-teal-500/5 to-background",
   school: "from-emerald-500/10 via-teal-500/5 to-background",
-  restaurant: "from-amber-500/10 via-orange-500/5 to-background",
+  restaurant: "from-amber-500/10 via-yellow-500/5 to-background",
   lending: "from-emerald-500/10 via-amber-500/5 to-background",
 };
 
 export const accentText: Record<IndustryAccent, string> = {
-  hotel: "text-indigo-600 dark:text-indigo-400",
-  school: "text-emerald-600 dark:text-emerald-400",
-  restaurant: "text-amber-600 dark:text-amber-400",
+  hotel: "text-emerald-700 dark:text-emerald-400",
+  school: "text-emerald-700 dark:text-emerald-400",
+  restaurant: "text-amber-700 dark:text-amber-400",
   lending: "text-emerald-700 dark:text-emerald-400",
 };
 
@@ -191,7 +191,7 @@ export function MetricTile({
 /** Circular percentage gauge — occupancy, collection rate, settlement. */
 export function Donut({ value, label, caption, accent = "hotel" }: { value: number; label: string; caption?: string; accent?: IndustryAccent }) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
-  const stroke = accent === "hotel" ? "stroke-indigo-500" : accent === "school" ? "stroke-emerald-500" : accent === "lending" ? "stroke-emerald-600" : "stroke-amber-500";
+  const stroke = accent === "hotel" ? "stroke-emerald-600" : accent === "school" ? "stroke-emerald-600" : accent === "lending" ? "stroke-emerald-600" : "stroke-amber-500";
   const c = 2 * Math.PI * 42;
   return (
     <Card className="flex items-center gap-4 rounded-2xl p-4">
@@ -337,8 +337,8 @@ export function Timeline({ items, empty = "No activity recorded." }: { items: { 
 /** Circle with initials — guests, learners, staff. */
 export function Avatar({ name, accent = "hotel" }: { name: string; accent?: IndustryAccent }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
-  const bg = accent === "hotel" ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"
-    : accent === "school" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+  const bg = accent === "hotel" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+    : accent === "school" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
     : accent === "lending" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
     : "bg-amber-500/15 text-amber-600 dark:text-amber-300";
   return <span className={cn("inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold", bg)}>{initials}</span>;
