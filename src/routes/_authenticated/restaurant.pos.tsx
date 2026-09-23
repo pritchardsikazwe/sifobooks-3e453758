@@ -10,7 +10,7 @@ import { savePrintQueueJob } from "@/services/printQueue";
 import { accrueLoyaltyForOrder } from "@/lib/restaurant-rewards";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
-import { Loader2, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
 import { recordPayments } from "@/lib/restaurant";
 
@@ -168,6 +168,10 @@ function Page() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const timer = window.setInterval(() => { void load(); }, 15000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const seed = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -678,13 +682,13 @@ function Page() {
         {/* menu + bottom actions */}
         <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:h-full md:min-h-0">
           <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[7px]">
-            <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div><select value={posStockLocation} onChange={e => { setPosStockLocation(e.target.value); window.localStorage.setItem("sifobooks.restaurant.pos.location", e.target.value); }} className="h-[30px] max-w-[180px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white"><option value="">Stock location</option>{stockLocations.map(l => <option key={l.id} value={l.id}>{l.name} · {l.location_type}</option>)}</select>
+            <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div><button type="button" onClick={() => void load()} disabled={loading} className="ml-auto inline-flex h-[30px] items-center gap-1 rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white disabled:opacity-50"><RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> REFRESH</button><select value={posStockLocation} onChange={e => { setPosStockLocation(e.target.value); window.localStorage.setItem("sifobooks.restaurant.pos.location", e.target.value); }} className="h-[30px] max-w-[180px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white"><option value="">Stock location</option>{stockLocations.map(l => <option key={l.id} value={l.id}>{l.name} · {l.location_type}</option>)}</select>
             <select value={cat} onChange={e => setCat(e.target.value)}
               className="h-[30px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold lg:hidden">
               {cats.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
             </select>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="SEARCH MENU..."
-              className="ml-auto h-[34px] w-[min(220px,45%)] rounded-[17px] border-2 border-[#789998] bg-[#f5f7f5] px-3 text-[12px] text-[#20504d] outline-none" />
+              className="h-[34px] w-[min(220px,45%)] rounded-[17px] border-2 border-[#789998] bg-[#f5f7f5] px-3 text-[12px] text-[#20504d] outline-none" />
           </div>
           <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
