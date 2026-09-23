@@ -19,7 +19,8 @@ if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks wizard artwork." }
 if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks small installer artwork." }
 
 $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
-$displayNameMap = @{ enterprise="SifoBooks"; accounting="SifoBooks-Accounting"; retail="SifoBooks-Retail"; restaurant="SifoBooks-Restaurant"; hotel="SifoBooks-Hotel"; school="SifoBooks-School"; property="SifoBooks-RealEstate"; lending="SifoBooks-Microfinance" }\n$product = $displayNameMap[$Edition]
+$displayNameMap = @{ enterprise="SifoBooks"; accounting="SifoBooks-Accounting"; retail="SifoBooks-Retail"; restaurant="SifoBooks-Restaurant"; hotel="SifoBooks-Hotel"; school="SifoBooks-School"; property="SifoBooks-RealEstate"; lending="SifoBooks-Microfinance" }
+$product = $displayNameMap[$Edition]
 $exe = "$product.exe"
 $guidMap = @{
   enterprise="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE001"
