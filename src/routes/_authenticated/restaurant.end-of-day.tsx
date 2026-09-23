@@ -90,7 +90,7 @@ function EndOfDay() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><CalendarCheck className="h-5 w-5" /> End of day</h1>
