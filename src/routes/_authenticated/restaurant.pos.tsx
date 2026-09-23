@@ -458,7 +458,7 @@ function Page() {
       if (bar.length) await printBarOrder({ ...base, items: bar.map(map) }, getPrinterForType("bar"));
     } catch (error: any) {
       console.error("Kitchen printing failed:", error);
-      await savePrintQueueJob({ type: "kitchen", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) });
+      try { await savePrintQueueJob({ type: "kitchen", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) }); } catch (queueError) { console.error("Kitchen print queue recovery failed:", queueError); }
     }
     if (!pay) return;
     try {
@@ -476,7 +476,7 @@ function Page() {
       }, getPrinterForType("receipt"));
     } catch (error: any) {
       console.error("Receipt printing failed:", error);
-      await savePrintQueueJob({ type: "receipt", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) });
+      try { await savePrintQueueJob({ type: "receipt", orderId: ord.id, title: base.orderNumber, status: "queued", error: String(error?.message ?? error) }); } catch (queueError) { console.error("Receipt print queue recovery failed:", queueError); }
     }
   };
 
@@ -533,7 +533,7 @@ function Page() {
         _items: savedLines,
         _payments: [{ method, amount: Number(o.total || 0), tendered: tendered ?? Number(o.total || 0), change: change ?? 0 }],
       } as any);
-      if (error || !result) return toast.error(error?.message ?? "Restaurant checkout failed");
+      if (error || !result) return toast.error(restaurantCheckoutErrorMessage(error));
       try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
       toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
       load();
