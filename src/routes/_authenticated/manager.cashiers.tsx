@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { kw, monthlyHistory } from "@/lib/cashier-workspace";
+import { createCashier } from "@/lib/cashier-auth.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/manager/cashiers")({
   head: () => ({
@@ -33,6 +35,9 @@ function ManagerCashiers() {
   const [pinFor, setPinFor] = useState<any | null>(null);
   const [pin, setPin] = useState("");
   const [history, setHistory] = useState<{ name: string; rows: Awaited<ReturnType<typeof monthlyHistory>>; records: any[] } | null>(null);
+  const create = useServerFn(createCashier);
+  const [newCashier, setNewCashier] = useState({ name: "", code: "", pin: "", role: "cashier" });
+  const [showCreate, setShowCreate] = useState(false);
 
   const load = async () => {
     const [p, b, l, r] = await Promise.all([
@@ -96,11 +101,15 @@ function ManagerCashiers() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between rounded-2xl border bg-card p-4 shadow-sm">
+        <div><div className="font-semibold">Cashier ID access</div><div className="text-sm text-muted-foreground">Create cashiers here. They sign in at the till with ID code + PIN — no email or name is required.</div></div>
+        <Button onClick={() => { setNewCashier({ name: "", code: "", pin: "", role: "cashier" }); setShowCreate(true); }}>+ Create cashier</Button>
+      </div>
       <div className="overflow-auto rounded-2xl border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="p-2">Cashier</th><th className="p-2">Role</th><th className="p-2">Branch</th>
+              <th className="p-2">Cashier / ID</th><th className="p-2">Role</th><th className="p-2">Branch</th>
               <th className="p-2">Store</th><th className="p-2">Station / drawer</th><th className="p-2">PIN</th><th className="p-2">Actions</th>
             </tr>
           </thead>
@@ -108,7 +117,7 @@ function ManagerCashiers() {
             {rows.map((r) => (
               <tr key={r.id} className="border-t">
                 <td className="p-2">
-                  <div className="font-medium">{r.full_name ?? r.email}</div>
+                  <div className="font-medium">{r.display_name ?? r.full_name ?? r.email}</div><div className="text-xs font-mono text-primary">{r.cashier_code ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{r.email}</div>
                 </td>
                 <td className="p-2 capitalize">{r.pos_role}</td>
@@ -142,6 +151,22 @@ function ManagerCashiers() {
         </table>
       </div>
 
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create cashier</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1"><Label>Cashier name (admin record)</Label><Input value={newCashier.name} onChange={e => setNewCashier({...newCashier,name:e.target.value})} placeholder="Front Counter Cashier" /></div>
+            <div className="space-y-1"><Label>Cashier ID code</Label><Input value={newCashier.code} onChange={e => setNewCashier({...newCashier,code:e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,20)})} placeholder="CASH-001 (blank = auto)" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1"><Label>PIN</Label><Input type="password" inputMode="numeric" value={newCashier.pin} onChange={e => setNewCashier({...newCashier,pin:e.target.value.replace(/\D/g,"").slice(0,8)})} placeholder="4-8 digits" /></div>
+              <div className="space-y-1"><Label>POS role</Label><Select value={newCashier.role} onValueChange={v => setNewCashier({...newCashier,role:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="cashier">Cashier</SelectItem><SelectItem value="supervisor">Supervisor</SelectItem><SelectItem value="manager">Manager</SelectItem></SelectContent></Select></div>
+            </div>
+            <Button className="w-full" onClick={async () => { try { const r:any = await create({data:newCashier}); if(!r?.ok) return toast.error(r?.error ?? "Could not create cashier"); toast.success(`Cashier created: ${r.cashier.cashier_code}`); setShowCreate(false); await load(); } catch(e:any) { toast.error(e?.message ?? "Could not create cashier"); } }}>Create cashier & set PIN</Button>
+            <p className="text-xs text-muted-foreground">The ID code is the only identifier the cashier types at the till. The admin can still see the name and history.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Assign {edit?.full_name ?? edit?.email}</DialogTitle></DialogHeader>
