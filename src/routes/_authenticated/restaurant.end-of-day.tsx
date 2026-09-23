@@ -35,6 +35,7 @@ function EndOfDay() {
   const [manager, setManager] = useState("");
   const [busy, setBusy] = useState(false);
   const [lines, setLines] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
 
   const load = async () => {
     const u = await uid();
@@ -48,13 +49,28 @@ function EndOfDay() {
     setOrders(os); setDrawers(d.data ?? []); setClosed(e.data ?? null);
     const paid = os.filter((x: any) => x.status === "paid").map((x: any) => x.id);
     if (paid.length) {
-      const { data: li } = await db.from("restaurant_order_items").select("order_id,qty,unit_cost").in("order_id", paid);
+      const [{ data: li }, { data: ps }] = await Promise.all([
+        db.from("restaurant_order_items").select("order_id,qty,unit_cost").in("order_id", paid),
+        db.from("restaurant_payments").select("order_id,method,amount,tendered,change_given").in("order_id", paid),
+      ]);
       setLines(li ?? []);
-    } else setLines([]);
+      setPayments(ps ?? []);
+    } else {
+      setLines([]);
+      setPayments([]);
+    }
   };
   useEffect(() => { load(); }, [date]);
 
   const t = useMemo(() => summarise(orders), [orders]);
+  const byPayment = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const p of payments) {
+      const method = String(p.method || "other").toLowerCase();
+      totals[method] = (totals[method] ?? 0) + Number(p.amount || 0);
+    }
+    return totals;
+  }, [payments]);
   const openChecks = orders.filter((o) => o.status === "open" || o.status === "held");
   const voids = orders.filter((o) => o.status === "void");
   const variance = drawers.reduce((s, d) => s + Number(d.variance || 0), 0);
@@ -79,9 +95,9 @@ function EndOfDay() {
     const { error } = await db.from("restaurant_end_of_day").insert({
       id: crypto.randomUUID(), user_id: u, business_date: date, orders_count: t.orders, gross_sales: t.gross,
       discounts: t.discounts, tax: t.tax, service_charge: t.service, gratuity: t.gratuity,
-      delivery_fees: t.delivery, cash_sales: Number(t.byMethod.cash || 0),
-      card_sales: Number(t.byMethod.card || 0), momo_sales: Number(t.byMethod.momo || 0),
-      other_sales: Object.entries(t.byMethod).filter(([k]) => !["cash","card","momo"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
+      delivery_fees: t.delivery, cash_sales: Number(byPayment.cash || 0),
+      card_sales: Number(byPayment.card || 0), momo_sales: Number(byPayment.momo || 0),
+      other_sales: Object.entries(byPayment).filter(([k]) => !["cash","card","momo"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
       cash_payouts: drawers.reduce((s,d) => s + Number(d.cash_payouts || 0), 0),
       cash_variance: variance, net_total: t.net, status: "closed",
       approved_by: manager, notes: `Z-read ${date}; voids=${voids.length}; cost_of_sales=${cogs.toFixed(2)}`,
@@ -112,7 +128,7 @@ function EndOfDay() {
           { Metric: "Cost of sales", Value: cogs },
           { Metric: "Gross margin", Value: t.net - t.tax - cogs },
           { Metric: "Cash variance", Value: variance },
-          ...Object.entries(t.byMethod).map(([k, v]) => ({ Metric: `Payment — ${k}`, Value: v })),
+          ...Object.entries(byPayment).map(([k, v]) => ({ Metric: `Payment — ${k}`, Value: v })),
           ...Object.entries(t.byType).map(([k, v]) => ({ Metric: `Order type — ${k}`, Value: v })),
           ...Object.entries(byServer).map(([k, v]) => ({ Metric: `Server — ${k}`, Value: v })),
         ]} />
@@ -142,7 +158,7 @@ function EndOfDay() {
 
         <Card className="p-4 rounded-2xl space-y-1">
           <div className="text-sm font-semibold mb-1">By payment method</div>
-          {Object.entries(t.byMethod).map(([k, v]) => <Row key={k} label={k} v={v} />)}
+          {Object.entries(byPayment).map(([k, v]) => <Row key={k} label={k} v={v} />)}
           <div className="text-sm font-semibold pt-3">By order type</div>
           {Object.entries(t.byType).map(([k, v]) => <Row key={k} label={k} v={v} />)}
         </Card>
