@@ -103,13 +103,77 @@ export function SchoolFeaturePage({kind}:{kind:string}) {
       </CardContent></Card>
     </div>}
 
-    {cfg.table && <Card><CardHeader><div className="flex items-center justify-between gap-3"><div><CardTitle>Live {cfg.title.replace("Management","").replace("School ","")} records</CardTitle><p className="mt-1 text-xs text-muted-foreground">No demo records are inserted. This list reflects the school's connected data.</p></div><span className="school-status good">{records.length} records</span></div></CardHeader><CardContent>
-      {!filtered.length ? <div className="school-empty">No matching records are available yet.</div> :
-      <div className="overflow-x-auto"><table className="school-data-table"><thead><tr><th>Date / ID</th><th>Primary details</th><th>Status</th><th>Reference</th></tr></thead><tbody>{filtered.map((r,i)=>{
-        const vals=Object.entries(r).filter(([k,v])=>k!=="id"&&v!==null&&v!==undefined&&typeof v!=="object").slice(0,7);
-        return <tr key={r.id??i}><td>{String(r.created_at??r.date??r.incident_date??r.visit_date??r.id??"—").slice(0,22)}</td><td>{vals.slice(0,3).map(([k,v])=><span key={k} className="block"><b>{k.replaceAll("_"," ")}</b>: {String(v).slice(0,70)}</span>)}</td><td><span className={`school-status ${String(r.status??"active").toLowerCase().includes("paid")||String(r.status??"").toLowerCase()==="active"?"good":String(r.status??"").toLowerCase().includes("pending")?"warn":"info"`}>{r.status??"active"}</span></td><td className="text-xs text-muted-foreground">{String(r.reference??r.student_id??r.code??"—").slice(0,28)}</td></tr>
-      })}</tbody></table></div>}
-    </CardContent></Card>}
+    {cfg.table && (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle>
+                Live {cfg.title.replace("Management", "").replace("School ", "")} records
+              </CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                No demo records are inserted. This list reflects the school's connected data.
+              </p>
+            </div>
+            <span className="school-status good">{records.length} records</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!filtered.length ? (
+            <div className="school-empty">No matching records are available yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="school-data-table">
+                <thead>
+                  <tr>
+                    <th>Date / ID</th>
+                    <th>Primary details</th>
+                    <th>Status</th>
+                    <th>Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r, i) => {
+                    const vals = Object.entries(r)
+                      .filter(([k, v]) => k !== "id" && v !== null && v !== undefined && typeof v !== "object")
+                      .slice(0, 7);
+                    const rawStatus = String(r.status ?? "active");
+                    const statusTone = rawStatus.toLowerCase().includes("paid")
+                      || rawStatus.toLowerCase() === "active"
+                      ? "good"
+                      : rawStatus.toLowerCase().includes("pending")
+                        ? "warn"
+                        : "info";
+                    const dateValue =
+                      r.created_at ?? r.date ?? r.incident_date ?? r.visit_date ?? r.id ?? "—";
+                    const reference =
+                      r.reference ?? r.student_id ?? r.code ?? "—";
+                    return (
+                      <tr key={r.id ?? i}>
+                        <td>{String(dateValue).slice(0, 22)}</td>
+                        <td>
+                          {vals.slice(0, 3).map(([k, v]) => (
+                            <span key={k} className="block">
+                              <b>{k.replaceAll("_", " ")}</b>: {String(v).slice(0, 70)}
+                            </span>
+                          ))}
+                        </td>
+                        <td>
+                          <span className={`school-status ${statusTone}`}>{rawStatus}</span>
+                        </td>
+                        <td className="text-xs text-muted-foreground">
+                          {String(reference).slice(0, 28)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
 
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2"><CardHeader><CardTitle>School module map</CardTitle></CardHeader><CardContent><div className="grid gap-2 sm:grid-cols-2">
