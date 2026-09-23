@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 const ROSTER_KEY = "sifobooks.terminal.roster";
 
-type RosterEntry = { email: string; name: string };
+type RosterEntry = { code: string; name: string };
 
 function readRoster(): RosterEntry[] {
   try {
@@ -21,7 +21,7 @@ function readRoster(): RosterEntry[] {
 }
 
 function rememberCashier(entry: RosterEntry) {
-  const list = readRoster().filter((r) => r.email !== entry.email);
+  const list = readRoster().filter((r) => r.code !== entry.code);
   localStorage.setItem(ROSTER_KEY, JSON.stringify([entry, ...list].slice(0, 8)));
 }
 
@@ -33,7 +33,7 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const login = useServerFn(cashierPinLogin);
   const [roster, setRoster] = useState<RosterEntry[]>([]);
-  const [email, setEmail] = useState("");
+  const [cashierCode, setCashierCode] = useState("");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +42,11 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
 
   const submit = async () => {
     setError(null);
-    if (!email.trim()) return setError("Choose or type the cashier's email");
+    if (!cashierCode.trim()) return setError("Enter the cashier ID code");
     if (pin.length < 4) return setError("Enter your PIN");
     setBusy(true);
     try {
-      const res = await login({ data: { email: email.trim().toLowerCase(), pin } });
+      const res = await login({ data: { cashier_code: cashierCode.trim().toUpperCase(), pin } });
       if (!res.ok) {
         setPin("");
         setBusy(false);
@@ -58,7 +58,7 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
         setPin("");
         return setError("Could not start your session. Ask your manager.");
       }
-      rememberCashier({ email: email.trim().toLowerCase(), name: res.full_name || email });
+      rememberCashier({ code: cashierCode.trim().toUpperCase(), name: res.full_name || cashierCode });
       // Let the central resolver decide the workspace (company + product +
       // role + assigned till) — a PIN sign-in is not a product choice.
       navigate({ to: "/launch" });
@@ -88,14 +88,14 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
           <div className="grid grid-cols-2 gap-2">
             {roster.map((r) => (
               <button
-                key={r.email}
-                onClick={() => { setEmail(r.email); setPin(""); setError(null); }}
+                key={r.code}
+                onClick={() => { setCashierCode(r.code); setPin(""); setError(null); }}
                 className={`flex items-center gap-2 rounded-xl border px-3 py-3 text-left text-sm font-medium transition ${
-                  email === r.email ? "border-primary bg-primary/10" : "hover:bg-muted"
+                  cashierCode === r.code ? "border-primary bg-primary/10" : "hover:bg-muted"
                 }`}
               >
                 <UserRound className="h-4 w-4 shrink-0" />
-                <span className="truncate">{r.name}</span>
+                <span className="truncate">{r.name}<span className="block text-xs text-muted-foreground">{r.code}</span></span>
               </button>
             ))}
           </div>
@@ -103,16 +103,10 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="cashier-email">Cashier email</Label>
-        <Input
-          id="cashier-email"
-          type="email"
-          inputMode="email"
-          autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="cashier@business.co.zm"
-        />
+        <Label htmlFor="cashier-code">Cashier ID Code</Label>
+        <Input id="cashier-code" autoComplete="off" value={cashierCode}
+          onChange={(e) => setCashierCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))}
+          placeholder="CASH-001" className="text-center text-xl font-semibold tracking-wider" />
       </div>
 
       <div className="space-y-2">
