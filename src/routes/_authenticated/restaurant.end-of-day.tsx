@@ -9,7 +9,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { summarise, today, uid } from "@/lib/restaurant";
 import { checkCost } from "@/lib/restaurant-checks";
-import { CalendarCheck, Lock } from "lucide-react";
+import { CalendarCheck, Lock, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/end-of-day")({
   head: () => ({
@@ -100,7 +100,7 @@ function EndOfDay() {
           <p className="text-sm text-muted-foreground">{closed ? `Closed by ${closed.approved_by}` : "Day still trading"}</p>
         </div>
         <Input type="date" className="w-44" value={date} onChange={(e) => setDate(e.target.value)} />
-        <ExportMenu filename={`z-read-${date}`} title={`Z-Read ${date}`} rows={[
+        <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print Z-Read</Button>\n        <ExportMenu filename={`z-read-${date}`} title={`Z-Read ${date}`} rows={[
           { Metric: "Orders", Value: t.orders },
           { Metric: "Gross sales", Value: t.gross },
           { Metric: "Discounts", Value: t.discounts },
