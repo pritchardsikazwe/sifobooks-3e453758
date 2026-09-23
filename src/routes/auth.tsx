@@ -74,6 +74,7 @@ function AuthPage() {
   const routeAfterAuth = async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
+    if ((userData.user.user_metadata as any)?.must_change_password) { navigate({ to: "/reset-password", search: { forced: true } as any }); return; }
     if (next) { window.location.href = next; return; }
     // One universal entry point: /launch resolves company + product + role +
     // operational context before deciding where to go.
