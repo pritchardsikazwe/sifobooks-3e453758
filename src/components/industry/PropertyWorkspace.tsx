@@ -23,7 +23,7 @@ export function PropertyWorkspace(){
  const [properties,setProperties]=useState<Property[]>([]); const [units,setUnits]=useState<Unit[]>([]);
  const [tenants,setTenants]=useState<Tenant[]>([]); const [leases,setLeases]=useState<Lease[]>([]);
  const [charges,setCharges]=useState<Charge[]>([]); const [payments,setPayments]=useState<Payment[]>([]); const [maintenance,setMaintenance]=useState<any[]>([]); const [meters,setMeters]=useState<any[]>([]);
- const [form,setForm]=useState<any>({}); const [show,setShow]=useState<string|null>(null);
+ const [form,setForm]=useState<any>({}); const [show,setShow]=useState<string|null>(null); const [billing,setBilling]=useState(false);
  const load=async()=>{
   setLoading(true); const {data:u}=await supabase.auth.getUser(); if(!u.user){setLoading(false);return} setUid(u.user.id);
   const {data:p}=await supabase.from("profiles").select("active_company_id").eq("id",u.user.id).maybeSingle(); const cid=p?.active_company_id; setCompanyId(cid||"");
@@ -44,6 +44,28 @@ export function PropertyWorkspace(){
  const occupied=units.filter(x=>x.status==="occupied").length;
  const outstanding=charges.reduce((s,x)=>s+Math.max(0,Number(x.amount)-Number(x.paid_amount)),0);
  const received=payments.reduce((s,x)=>s+Number(x.amount),0);
+ const arrearsRows=charges.filter(x=>Math.max(0,Number(x.amount)-Number(x.paid_amount))>0).sort((a,b)=>new Date(a.due_date).getTime()-new Date(b.due_date).getTime());
+ const currentPeriod=new Date().toISOString().slice(0,7);
+ const generateMonthlyRent=async()=>{
+  if(!companyId||!uid)return;
+  setBilling(true);
+  try{
+   const active=leases.filter(x=>x.status==="active" && ["monthly","boarding"].includes(String(x.lease_type).toLowerCase()));
+   let created=0;
+   for(const l of active){
+    const {error}=await supabase.from("property_charges").insert({
+      company_id:companyId,user_id:uid,lease_id:l.id,charge_date:new Date().toISOString().slice(0,10),
+      due_date:new Date().toISOString().slice(0,10),charge_type:"rent",
+      description:"Rent - "+currentPeriod,amount:Number(l.rent_amount||0),paid_amount:0,status:"open",
+      billing_period:currentPeriod,charge_source:"recurring"
+    });
+    if(!error)created++;
+   }
+   toast.success(created+" rental charge(s) generated for "+currentPeriod);
+   await load();
+  }catch(e:any){toast.error(e?.message??"Could not generate rent")}
+  finally{setBilling(false)}
+ };
 
  const save=async(kind:string)=>{
   try{
@@ -65,18 +87,23 @@ export function PropertyWorkspace(){
  if(loading)return <div className="p-8 text-muted-foreground">Loading property management…</div>;
  return <RequireModule moduleKey="property_management"><div className="space-y-5">
   <div className="rounded-3xl border bg-gradient-to-r from-primary/10 via-background to-emerald-500/10 p-6">
-   <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-2xl font-bold">SifoProperty</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button></div>
+   <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-2xl font-bold">SifoProperty</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><div className="flex flex-wrap gap-2">
+ <Button variant="outline" disabled={billing} onClick={generateMonthlyRent}>{billing?"Generating…":"Generate monthly rent"}</Button>
+ <Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>
+</div></div>
   </div>
   <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
    <Metric icon={Building2} label="Properties" value={properties.length}/><Metric icon={Home} label="Units / rooms" value={units.length}/><Metric icon={Users} label="Tenants" value={tenants.length}/><Metric icon={Wallet} label="Outstanding" value={fmtMoney(outstanding)}/><Metric icon={Wallet} label="Collected" value={fmtMoney(received)}/>
   </div>
-  <Tabs value={tab} onValueChange={setTab}><TabsList className="grid w-full grid-cols-3 lg:grid-cols-9"><TabsTrigger value="dashboard">Dashboard</TabsTrigger><TabsTrigger value="properties">Properties</TabsTrigger><TabsTrigger value="units">Units</TabsTrigger><TabsTrigger value="tenants">Tenants</TabsTrigger><TabsTrigger value="leases">Leases</TabsTrigger><TabsTrigger value="collections">Collections</TabsTrigger><TabsTrigger value="bnb">Daily / BnB</TabsTrigger><TabsTrigger value="maintenance">Maintenance</TabsTrigger><TabsTrigger value="utilities">Utilities</TabsTrigger></TabsList>
+  <Tabs value={tab} onValueChange={setTab}><TabsList className="grid w-full grid-cols-3 lg:grid-cols-11"><TabsTrigger value="dashboard">Dashboard</TabsTrigger><TabsTrigger value="properties">Properties</TabsTrigger><TabsTrigger value="units">Units</TabsTrigger><TabsTrigger value="tenants">Tenants</TabsTrigger><TabsTrigger value="leases">Leases</TabsTrigger><TabsTrigger value="collections">Collections</TabsTrigger><TabsTrigger value="bnb">Daily / BnB</TabsTrigger><TabsTrigger value="maintenance">Maintenance</TabsTrigger><TabsTrigger value="utilities">Utilities</TabsTrigger><TabsTrigger value="arrears">Arrears</TabsTrigger><TabsTrigger value="statements">Statements</TabsTrigger></TabsList>
    <TabsContent value="dashboard"><div className="grid gap-4 md:grid-cols-2"><Card><CardHeader><CardTitle>Occupancy</CardTitle></CardHeader><CardContent><div className="text-4xl font-bold">{occupied}/{units.length}</div><p className="text-sm text-muted-foreground">occupied units / rooms</p></CardContent></Card><Card><CardHeader><CardTitle>Rent roll</CardTitle></CardHeader><CardContent>{leases.filter(x=>x.status==="active").slice(0,8).map(x=><div key={x.id} className="flex justify-between border-b py-2"><span>{tenantName(x.tenant_id)} · {unitName(x.unit_id)}</span><b>{fmtMoney(x.rent_amount)}</b></div>)}</CardContent></Card></div></TabsContent>
    <TabsContent value="properties"><List title="Properties" rows={properties.map(x=>[x.code,x.name,x.property_type,x.city??"—"])} action={()=>{setForm({});setShow("property")}}/></TabsContent>
    <TabsContent value="units"><List title="Units / rooms / beds" rows={units.map(x=>[propertyName(x.property_id),x.unit_code,x.unit_type,x.status,fmtMoney(x.monthly_rent),fmtMoney(x.daily_rate)])} action={()=>setShow("unit")}/></TabsContent>
    <TabsContent value="tenants"><List title="Tenants" rows={tenants.map(x=>[x.tenant_no,x.full_name,x.phone??"—"])} action={()=>setShow("tenant")}/></TabsContent>
    <TabsContent value="leases"><List title="Leases & occupancy" rows={leases.map(x=>[x.lease_no,tenantName(x.tenant_id),unitName(x.unit_id),x.lease_type,fmtMoney(x.rent_amount),x.status])} action={()=>setShow("lease")}/></TabsContent>
    <TabsContent value="collections"><div className="grid gap-4 lg:grid-cols-2"><List title="Charges / rent roll" rows={charges.map(x=>[x.description,x.due_date,fmtMoney(x.amount),fmtMoney(x.paid_amount),x.status])} action={()=>setShow("charge")}/><List title="Payments" rows={payments.map(x=>[x.payment_no,tenantName(x.tenant_id),x.payment_date,fmtMoney(x.amount),x.method])} action={()=>setShow("payment")}/></div></TabsContent>
+   <TabsContent value="arrears"><Card><CardHeader><CardTitle>Rent arrears & ageing</CardTitle></CardHeader><CardContent><div className="space-y-2">{arrearsRows.map(x=><div key={x.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3"><div className="min-w-0 flex-1"><div className="font-medium">{tenantName(leases.find(l=>l.id===x.lease_id)?.tenant_id??null)}</div><div className="text-xs text-muted-foreground">{x.description} · due {x.due_date}</div></div><b className="text-amber-600">{fmtMoney(Math.max(0,Number(x.amount)-Number(x.paid_amount)))}</b></div>)}{!arrearsRows.length&&<div className="p-6 text-center text-muted-foreground">No rent arrears.</div>}</div></CardContent></Card></TabsContent>
+   <TabsContent value="statements"><Card><CardHeader><CardTitle>Tenant statements</CardTitle></CardHeader><CardContent><div className="space-y-2">{tenants.map(t=>{const ls=leases.filter(l=>l.tenant_id===t.id);const billed=charges.filter(c=>ls.some(l=>l.id===c.lease_id)).reduce((n,c)=>n+Number(c.amount||0),0);const paid=payments.filter(p=>p.tenant_id===t.id).reduce((n,p)=>n+Number(p.amount||0),0);return <div key={t.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3"><div className="min-w-0 flex-1"><div className="font-medium">{t.full_name}</div><div className="text-xs text-muted-foreground">{t.tenant_no} · {t.phone??"—"}</div></div><span>Billed {fmtMoney(billed)}</span><span>Paid {fmtMoney(paid)}</span><b>Balance {fmtMoney(Math.max(0,billed-paid))}</b></div>})}{!tenants.length&&<div className="p-6 text-center text-muted-foreground">No tenants yet.</div>}</div></CardContent></Card></TabsContent>
    <TabsContent value="maintenance"><List title="Maintenance & repairs" rows={maintenance.map(x=>[x.title,unitName(x.unit_id),x.priority,x.status,fmtMoney(x.actual_cost)])} action={()=>setShow("maintenance")}/></TabsContent><TabsContent value="utilities"><List title="Meter readings" rows={meters.map(x=>[unitName(x.unit_id),x.meter_type,x.reading_date,x.reading])} action={()=>setShow("meter")}/></TabsContent><TabsContent value="bnb"><Card><CardHeader><CardTitle>Daily & BnB operations</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground mb-4">Use unit type BnB and lease type daily/BnB for short stays. Daily rates, booking dates, guest details, deposits and checkout can be tracked here.</p><Button onClick={()=>setShow("booking")}>Create daily booking</Button></CardContent></Card></TabsContent>
   </Tabs>
   {show&&<Editor kind={show} form={form} setForm={setForm} properties={properties} units={units} tenants={tenants} onClose={()=>setShow(null)} onSave={save}/>}
