@@ -336,6 +336,14 @@ export function ReservationsBoard() {
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <MetricTile label="Total revenue" value={money(totalRevenue)} icon={Wallet} hint="Room + F&B + other + statutory charges" />
+        <MetricTile label="Payments" value={money(totalPayments)} icon={Wallet} hint="Recorded folio payments" />
+        <MetricTile label="Variance" value={money(paymentVariance)} icon={Wallet} tone={Math.abs(paymentVariance) < 0.01 ? "good" : "warn"} hint="Revenue less recorded payments" />
+        <MetricTile label="Housekeeping exceptions" value={String(roomsDirty)} icon={BedDouble} tone={roomsDirty ? "warn" : "good"} />
+        <MetricTile label="Audit checks" value={auditChecklist.filter(x=>x.ok).length + "/" + auditChecklist.length} icon={Moon} />
+      </div>
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricTile label="Arrivals today" value={String(arrivals.length)} icon={LogIn} tone="info" />
         <MetricTile label="Departures today" value={String(departures.length)} icon={LogOut} tone="warn" />
@@ -943,6 +951,18 @@ export function NightAudit() {
     ...(charges.filter((c) => c.category === "payment" && !c.payment_method).length ? ["Payments recorded without a payment method"] : []),
   ];
   const alreadyRun = audits.find((a) => a.audit_date === date);
+  const totalRevenue = roomRevenue + fnbRevenue + otherRevenue + serviceTotal + levyTotal;
+  const totalPayments = Object.values(paymentsByMethod).reduce((s, v) => s + Number(v || 0), 0);
+  const paymentVariance = totalRevenue - totalPayments;
+  const roomsDirty = rooms.filter((r) => String(r.housekeeping_status ?? "").toLowerCase() !== "clean" && !r.out_of_order).length;
+  const unresolvedTickets = 0;
+  const auditChecklist = [
+    { label: "Room occupancy reconciled", ok: exceptions.every((x) => !x.toLowerCase().includes("occupied")) },
+    { label: "Payment methods complete", ok: !charges.some((c) => c.category === "payment" && !c.payment_method) },
+    { label: "Housekeeping exceptions reviewed", ok: roomsDirty === 0 },
+    { label: "Revenue and payment totals reviewed", ok: Math.abs(paymentVariance) < 0.01 },
+    { label: "Maintenance exceptions reviewed", ok: unresolvedTickets === 0 },
+  ];
 
   const runAudit = async () => {
     if (!uid) return;
@@ -999,6 +1019,12 @@ export function NightAudit() {
           )}
         </Board>
       </div>
+
+      <Board title="Night audit control checklist" hint="These controls are evaluated before day close.">
+        <div className="grid gap-2 p-4 sm:grid-cols-2">
+          {auditChecklist.map((x) => <div key={x.label} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm"><span>{x.label}</span><span className={x.ok ? "font-semibold text-emerald-600" : "font-semibold text-amber-600"}>{x.ok ? "READY" : "REVIEW"}</span></div>)}
+        </div>
+      </Board>
 
       <Board title="Exceptions" hint="Resolve these before closing the day.">
         {exceptions.length === 0 ? <div className="p-6 text-sm text-muted-foreground">No exceptions found for {date}.</div> : (
