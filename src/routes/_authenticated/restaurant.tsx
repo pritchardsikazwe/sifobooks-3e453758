@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, UtensilsCrossed, LayoutGrid, CalendarClock, ListOrdered, ChefHat,
   BookOpen, PhoneCall, Banknote, MoonStar, BarChart3, Settings, Wallet,
@@ -37,51 +38,65 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
 
 function RestaurantShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const primary = NAV.slice(0, 7);
+  const secondary = NAV.slice(7);
 
   return (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-30 -mx-2 px-2 py-2 backdrop-blur bg-background/80 border-b">
-        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-          <span className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-semibold">
-            <UtensilsCrossed className="h-4 w-4" /> Restaurant
-          </span>
-          <Link
-            to="/restaurant/pos"
-            className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white shadow-md hover:bg-emerald-700"
-          >
-            <UtensilsCrossed className="h-4 w-4" /> OPEN FULL POS
+    <div className="min-h-[calc(100dvh-2rem)] bg-[#f4f7f6] text-[#173b3a] -mx-2 -mt-2">
+      <header className="sticky top-0 z-40 border-b border-[#164744] bg-[#073b38] text-white shadow-lg">
+        <div className="flex min-h-[72px] items-center gap-5 px-4 lg:px-7">
+          <Link to="/restaurant" className="flex shrink-0 items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#e5b83f] bg-[#0c514b] text-[#e5b83f] shadow-inner">
+              <UtensilsCrossed className="h-6 w-6" />
+            </div>
+            <div className="leading-none">
+              <div className="text-[23px] font-black tracking-tight">SifoBooks</div>
+              <div className="mt-1 text-[11px] font-medium tracking-[.22em] text-[#d7e6e3]">RESTAURANT POS</div>
+            </div>
           </Link>
-          <Link
-            to="/auth"
-            className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-3 py-1.5 text-sm font-semibold hover:bg-muted"
-          >
-            CASHIER LOGIN
-          </Link>
-          {NAV.map((n) => {
-            const active = n.exact ? path === n.to : path.startsWith(n.to);
-            return (
-              <Link
-                key={n.to}
-                to={n.to as never}
-                className={cn(
-                  "shrink-0 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm transition-colors",
-                  active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted",
-                )}
-              >
-                <n.icon className="h-4 w-4" />
-                {n.label}
-              </Link>
-            );
-          })}
-          <Link
-            to="/dashboard"
-            className="shrink-0 ml-auto inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm hover:bg-muted"
-          >
-            <Wallet className="h-4 w-4" /> Accounting
-          </Link>
+
+          <div className="hidden flex-1 items-center justify-center gap-6 xl:flex">
+            {[
+              ["/restaurant/pos","Dine-In"],
+              ["/restaurant/tables","Tables"],
+              ["/restaurant/orders","Orders"],
+              ["/restaurant/kitchen","Kitchen"],
+              ["/restaurant/menu","Menu"],
+              ["/restaurant/reports","Reports"],
+            ].map(([to,label]) => (
+              <Link key={to} to={to as never} className={cn("text-sm font-semibold transition", path===to || path.startsWith(to+"/") ? "text-[#e5b83f]" : "text-white/75 hover:text-white")}>{label}</Link>
+            ))}
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <Link to="/restaurant/pos" className="hidden rounded-xl bg-[#07834f] px-4 py-2.5 text-sm font-black shadow-md hover:bg-[#07965a] sm:inline-flex">
+              OPEN POS
+            </Link>
+            <Avatar className="h-9 w-9 border border-white/20"><AvatarFallback className="bg-[#e5b83f] text-[#173b3a] font-black">C</AvatarFallback></Avatar>
+            <div className="hidden text-left sm:block">
+              <div className="text-xs font-bold">C001</div>
+              <div className="text-[10px] text-white/65">Cashier</div>
+            </div>
+            <Link to="/auth" className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white" title="Switch user">⌄</Link>
+          </div>
         </div>
-      </div>
-      <Outlet />
+        <div className="flex gap-2 overflow-x-auto border-t border-white/10 px-4 py-2 xl:hidden">
+          {primary.map(n => {
+            const active=n.exact?path===n.to:path.startsWith(n.to);
+            return <Link key={n.to} to={n.to as never} className={cn("shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold",active?"bg-[#07834f] text-white":"text-white/70 hover:bg-white/10")}>{n.label}</Link>;
+          })}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1600px] p-3 sm:p-5 lg:p-6">
+        {path === "/restaurant" && (
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[#e5b83f]/15 px-3 py-1.5 text-xs font-black text-[#866611]">RESTAURANT MANAGEMENT</span>
+            <span className="text-sm text-[#6c7f7d]">Serve better. Grow faster.</span>
+          </div>
+        )}
+        <Outlet />
+      </main>
     </div>
   );
 }
