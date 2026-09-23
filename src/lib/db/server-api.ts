@@ -471,6 +471,7 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   if (existingOrder && !["open", "held"].includes(String(existingOrder.status))) throw new Error("RESTAURANT_ORDER_NOT_SETTLEABLE");
 
   const businessDate = String(sale.business_date || new Date().toISOString().slice(0,10));
+  const locationId = sale.location_id ? String(sale.location_id) : null;
   const shift = sale.shift_id
     ? db.prepare("SELECT id FROM restaurant_shifts WHERE id=? AND user_id=? AND business_date=? AND clock_out IS NULL LIMIT 1").get(String(sale.shift_id), uid, businessDate) as any
     : db.prepare("SELECT id FROM restaurant_shifts WHERE user_id=? AND business_date=? AND clock_out IS NULL ORDER BY clock_in DESC LIMIT 1").get(uid, businessDate) as any;
@@ -565,9 +566,12 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   const vatAccount = tax > 0 ? postingAccount(db, uid, companyId, "OUTPUT_VAT", ["2100","2200"]) : null;
 
   let ingredientCost = 0;
+  const locationBalances = new Map<string, { id: string; quantity: number }>();
   for (const d of ingredientTotals.values()) {
-    const available = Number(d.item.quantity_on_hand || 0);
+    const availableRow = locationId ? db.prepare("SELECT id,quantity FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(uid, d.item.id, locationId) as any : null;
+    const available = locationId ? Number(availableRow?.quantity ?? 0) : Number(d.item.quantity_on_hand || 0);
     if (available + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + String(d.item.name));
+    if (locationId) locationBalances.set(d.item.id, { id: String(availableRow.id), quantity: available });
     ingredientCost += d.qty * Number(d.item.cost_price || 0);
   }
   ingredientCost = Math.round(ingredientCost * 100) / 100;
@@ -617,18 +621,19 @@ function executeRestaurantCheckout(args: Record<string, any>) {
       db.prepare(
         "UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?",
       ).run(next, d.item.id, uid);
+      if (locationId) { const bal = locationBalances.get(d.item.id)!; db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(bal.quantity - d.qty, bal.id, uid); }
       db.prepare(
         "INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)",
       ).run(
         generateUUID(), uid, d.item.id, "sale", -d.qty, Number(d.item.cost_price || 0),
-        orderNo, "Restaurant recipe consumption", d.item.warehouse_id ?? null,
+        orderNo, "Restaurant recipe consumption", locationId ?? d.item.warehouse_id ?? null,
       );
     }
 
     for (const p of paymentRows) {
       db.prepare(
-        "INSERT INTO restaurant_payments (id,user_id,order_id,method,amount,tendered,change_given,reference) VALUES (?,?,?,?,?,?,?,?)",
-      ).run(generateUUID(), uid, orderId, p.method, p.amount, p.tendered, p.change, p.reference);
+        "INSERT INTO restaurant_payments (id,user_id,order_id,method,amount,tendered,change_given,reference,drawer_id) VALUES (?,?,?,?,?,?,?,?,?)",
+      ).run(generateUUID(), uid, orderId, p.method, p.amount, p.tendered, p.change, p.reference, needsCashDrawer ? drawer?.id ?? null : null);
     }
 
     if (needsCashDrawer) {
