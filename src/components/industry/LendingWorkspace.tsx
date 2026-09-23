@@ -237,23 +237,50 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
 
   const saveRepayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setSaving(true);
-    const f=new FormData(e.currentTarget); const {data:u}=await supabase.auth.getUser(); const uid=u.user?.id;
-    if (!uid) return setSaving(false);
-    const loanId=String(f.get("loan_id")||""); const amount=Number(f.get("amount")||0);
-    const loan=loans.find((x:any)=>x.id===loanId);
-    if (!loan || !amount) return setSaving(false);
-    const receipt=`RCP-${Date.now()}`;
-    await db.from("lending_repayments").insert({
-      user_id:uid, receipt_no:receipt, loan_id:loan.id, borrower_id:loan.borrower_id,
-      amount, principal_amount:Math.min(amount, Number(loan.balance||amount)), interest_amount:0, fees_amount:0, penalty_amount:0,
-      method:String(f.get("method")||"cash"), reference:String(f.get("reference")||"").trim()||null, status:"posted"
-    });
-    const newBalance=Math.max(0,Number(loan.balance||0)-amount);
-    await db.from("lending_loans").update({
-      principal_paid:Number(loan.principal_paid||0)+Math.min(amount,Number(loan.balance||amount)),
-      balance:newBalance, status:newBalance<=0?"settled":"active"
-    }).eq("id",loan.id).eq("user_id",uid);
-    setShowPayment(false); await load(); setSaving(false);
+    try {
+      const f=new FormData(e.currentTarget);
+      const loanId=String(f.get("loan_id")||""); const amount=Number(f.get("amount")||0);
+      if (!loanId || !amount) throw new Error("Select a loan and enter a valid amount.");
+      const { error } = await db.rpc("lending_post_repayment", {
+        _loan_id: loanId, _amount: amount, _method: String(f.get("method")||"cash"),
+        _reference: String(f.get("reference")||"").trim() || null, _payment_date: new Date().toISOString().slice(0,10),
+        _client_ref: String(f.get("reference")||"").trim() || null,
+      });
+      if (error) throw error;
+      setShowPayment(false); await load();
+    } catch (err:any) {
+      window.alert(err?.message ?? "Unable to post repayment.");
+    } finally { setSaving(false); }
+  };
+
+  const approveApplication = async (id: string) => {
+    setSaving(true);
+    try {
+      const { error } = await db.rpc("lending_approve_application", {_application_id:id});
+      if (error) throw error;
+      await load();
+    } catch (err:any) { window.alert(err?.message ?? "Unable to approve application."); }
+    finally { setSaving(false); }
+  };
+
+  const disburseApplication = async (id: string, method = "cash") => {
+    setSaving(true);
+    try {
+      const { error } = await db.rpc("lending_disburse_application", {_application_id:id,_method:method,_disbursement_date:new Date().toISOString().slice(0,10)});
+      if (error) throw error;
+      await load();
+    } catch (err:any) { window.alert(err?.message ?? "Unable to disburse application."); }
+    finally { setSaving(false); }
+  };
+
+  const verifyBorrower = async (id: string) => {
+    setSaving(true);
+    try {
+      const { error } = await db.from("lending_borrowers").update({kyc_status:"verified",updated_at:new Date().toISOString()}).eq("id",id);
+      if (error) throw error;
+      await load();
+    } catch (err:any) { window.alert(err?.message ?? "Unable to verify borrower."); }
+    finally { setSaving(false); }
   };
 
   const title = TITLES[screen] ?? TITLES["/lending"];
@@ -353,6 +380,7 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
           <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">{borrowers.filter((b:any)=>`${b.full_name} ${b.phone??""} ${b.borrower_no} ${b.national_id??""}`.toLowerCase().includes(q.toLowerCase())).map((b:any)=><div key={b.id} className="rounded-2xl border p-4 hover:border-[#07834F]">
             <div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EAF5F1] font-bold text-[#087A4B]">{b.full_name.split(" ").slice(0,2).map((x:string)=>x[0]).join("").toUpperCase()}</div><div className="min-w-0 flex-1"><b className="block truncate">{b.full_name}</b><span className="text-xs text-[#6C7F7D]">{b.borrower_no} · {b.phone??"No phone"}</span></div><Status value={b.kyc_status}/></div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs"><span>Income <b>{money(b.monthly_income)}</b></span><span>Score <b>{b.credit_score??"—"}</b></span><span className="col-span-2">ID <b>{b.national_id??"Not captured"}</b></span></div>
+            <div className="mt-3 flex gap-2">{b.kyc_status!=="verified" ? <button disabled={saving} onClick={()=>void verifyBorrower(b.id)} className="rounded-lg bg-[#07834F] px-3 py-2 text-xs font-bold text-white">Verify KYC</button> : <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">KYC verified</span>}<Link to="/lending/applications" className="rounded-lg border px-3 py-2 text-xs font-semibold">Applications</Link></div>
           </div>)}</div>}
       </Card>
     </div>
@@ -432,7 +460,7 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
       <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 w-fit"><Search className="h-4 w-4 text-[#6C7F7D]"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search records…" className="w-56 bg-transparent text-sm outline-none"/></div>
       <Card title={cfg.title} hint={cfg.empty}>
         {cfg.rows.length===0 ? <Empty title={cfg.title==="Branches & staff"?"Connect staff to lending roles":"Nothing recorded yet"} message={cfg.empty}/> :
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-[#F4F7F6] text-[10px] uppercase tracking-wide text-[#6C7F7D]"><tr>{cfg.cols.map((c:string)=><th key={c} className="px-4 py-3">{c}</th>)}</tr></thead><tbody>
+          <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-[#F4F7F6] text-[10px] uppercase tracking-wide text-[#6C7F7D]"><tr>{cfg.cols.map((c:string)=><th key={c} className="px-4 py-3">{c}</th>)}{kind==="applications" ? <th className="px-4 py-3">Action</th> : null}</tr></thead><tbody>
             {cfg.rows.filter((r:any)=>JSON.stringify(r).toLowerCase().includes(q.toLowerCase())).slice(0,200).map((r:any)=> {
               const borrower = borrowerName.get(r.borrower_id) ?? "—";
               const product = productName.get(r.product_id) ?? "—";
@@ -442,6 +470,7 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
                 <td className="px-4 py-3 tabular-nums">{money(r.amount_requested??r.principal??r.amount??r.max_amount??0)}</td>
                 <td className="px-4 py-3">{r.term??r.interest_rate??r.method??r.disbursement_method??"—"}</td>
                 <td className="px-4 py-3"><Status value={r.status}/></td>
+                {kind==="applications" ? <td className="px-4 py-3"><div className="flex gap-2">{r.status==="pending" ? <button disabled={saving} onClick={()=>void approveApplication(r.id)} className="rounded-lg border px-2.5 py-1.5 text-[11px] font-bold">Approve</button> : null}{r.status==="approved" ? <button disabled={saving} onClick={()=>void disburseApplication(r.id)} className="rounded-lg bg-[#07834F] px-2.5 py-1.5 text-[11px] font-bold text-white">Disburse</button> : null}</div></td> : null}
               </tr>;
             })}
           </tbody></table></div>}
