@@ -28,7 +28,7 @@ export function loadDemoData(userId: string): DemoSeedResult {
   if (!uid) throw new Error("NOT_SIGNED_IN");
 
   const company = db.prepare(
-    "SELECT c.id,c.name FROM companies c WHERE c.user_id=? ORDER BY c.is_primary DESC,c.updated_at DESC LIMIT 1"
+    "SELECT c.id,c.name,c.industry FROM companies c WHERE c.user_id=? ORDER BY c.is_primary DESC,c.updated_at DESC LIMIT 1"
   ).get(uid) as any;
   if (!company) throw new Error("COMPANY_REQUIRED: Complete company setup before loading SifoDemo.");
 
@@ -53,7 +53,7 @@ export function loadDemoData(userId: string): DemoSeedResult {
   const result = db.transaction(() => {
     // Company/demo profile context
     db.prepare("UPDATE companies SET trading_name=?,industry=?,workspace_mode=?,vat_registered=1,base_currency='ZMW',country='Zambia',updated_at=datetime('now') WHERE id=? AND user_id=?")
-      .run("SifoDemo", company.name, "accounting", company.id, uid);
+      .run("SifoDemo", company.industry || "enterprise", "accounting", company.id, uid);
 
     db.prepare("UPDATE profiles SET business_name=?,country='Zambia',currency='ZMW',vat_registered=1,onboarded=1,active_company_id=?,updated_at=datetime('now') WHERE id=?")
       .run("SifoDemo", company.id, uid);
