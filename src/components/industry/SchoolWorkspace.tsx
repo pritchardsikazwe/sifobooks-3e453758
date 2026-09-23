@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, ReceiptText,
   Users, Wallet, WalletCards,
-  ShieldCheck,
+  ShieldCheck, Baby, Library, Utensils, ShieldAlert, Megaphone, Settings2, HeartPulse, UserRound,
 } from "lucide-react";
 
 const db: any = supabase;
