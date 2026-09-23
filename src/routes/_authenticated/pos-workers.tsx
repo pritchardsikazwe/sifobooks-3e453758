@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { invitePosWorker } from "@/lib/pos-workers.functions";
+import { createCashier, invitePosWorker } from "@/lib/pos-workers.functions";
 import { POS_ROLES, POS_FEATURES, POS_MATRIX, type PosRole } from "@/lib/pos-permissions";
 
 export const Route = createFileRoute("/_authenticated/pos-workers")({
@@ -30,10 +30,12 @@ function PosWorkers() {
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [form, setForm] = useState({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier" as PosRole, pin: "" });
   const invite = useServerFn(invitePosWorker);
+  const createCashierFn = useServerFn(createCashier);
+  const [cashierForm, setCashierForm] = useState({ name: "", code: "", pin: "", role: "cashier" });
 
   const load = async () => {
     const [{ data }, { data: rs }] = await Promise.all([
-      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("created_at", { ascending: false }),
+      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,display_name,cashier_code,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("created_at", { ascending: false }),
       supabase.from("pos_pin_resets").select("*").in("status", ["pending", "approved"]).order("created_at", { ascending: false }),
     ]);
     setRows(data ?? []);
@@ -59,6 +61,21 @@ function PosWorkers() {
 
 
   const reset = () => setForm({ full_name: "", email: "", worker_user_id: "", pos_role: "cashier", pin: "" });
+
+  const createNewCashier = async () => {
+    if (!cashierForm.name.trim()) return toast.error("Cashier name is required for the admin record");
+    if (!/^\\d{4,8}$/.test(cashierForm.pin)) return toast.error("PIN must be 4-8 digits");
+    setBusy(true);
+    try {
+      const res = await createCashierFn({ data: cashierForm });
+      if (!res.ok) throw new Error(res.error);
+      toast.success(`Cashier created. ID code: ${res.cashier.cashier_code}`);
+      window.prompt("Give this cashier their ID code. It is not shown during login.", res.cashier.cashier_code);
+      setCashierForm({ name: "", code: "", pin: "", role: "cashier" });
+      load();
+    } catch (e: any) { toast.error(e?.message ?? "Could not create cashier"); }
+    finally { setBusy(false); }
+  };
 
   const add = async () => {
     if (form.pin && !/^\d{4,8}$/.test(form.pin)) return toast.error("PIN must be 4-8 digits");
@@ -138,6 +155,20 @@ function PosWorkers() {
         <p className="text-muted-foreground text-sm mt-1">
           Workers sign in to the separate POS shell at <code>/w</code> — they never see the accounting sidebar. Permissions are enforced by database rules.
         </p>
+      </div>
+
+      <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-5 space-y-4">
+        <div>
+          <div className="text-lg font-semibold">Create cashier</div>
+          <p className="text-sm text-muted-foreground">Admin creates the cashier once. The cashier uses only an ID code + PIN at the POS — no email or name is requested.</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-4">
+          <input className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="Admin record name" value={cashierForm.name} onChange={e=>setCashierForm({...cashierForm,name:e.target.value})}/>
+          <input className="rounded-lg border bg-background px-3 py-2 text-sm uppercase" placeholder="ID code e.g. CASH-001" value={cashierForm.code} onChange={e=>setCashierForm({...cashierForm,code:e.target.value.toUpperCase()})}/>
+          <input inputMode="numeric" type="password" className="rounded-lg border bg-background px-3 py-2 text-sm" placeholder="PIN 4-8 digits" value={cashierForm.pin} onChange={e=>setCashierForm({...cashierForm,pin:e.target.value.replace(/\\D/g,"").slice(0,8)})}/>
+          <select className="rounded-lg border bg-background px-3 py-2 text-sm" value={cashierForm.role} onChange={e=>setCashierForm({...cashierForm,role:e.target.value})}><option value="cashier">Cashier</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option></select>
+        </div>
+        <Button onClick={createNewCashier} disabled={busy}>Create cashier & generate secure login</Button>
       </div>
 
       <div className="rounded-2xl border bg-card p-5 space-y-3">
@@ -233,7 +264,7 @@ function PosWorkers() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
-              <tr>{["Name", "Email", "Role", "PIN", "Status", "Last till sign-in", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">{h}</th>)}</tr>
+              <tr>{["Name", "Cashier ID", "Email", "Role", "PIN", "Status", "Last till sign-in", ""].map((h) => <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">{h}</th>)}</tr>
             </thead>
             <tbody>
               {visible.map((r) => {
@@ -245,7 +276,7 @@ function PosWorkers() {
                       <div className="font-medium">{r.full_name ?? r.worker_user_id ?? "—"}</div>
                       {duplicate && <div className="text-xs text-amber-600">Duplicate entry for this email</div>}
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{r.email ?? "—"}</td>
+                    <td className="px-3 py-2 font-mono font-semibold">{r.cashier_code ?? "—"}</td><td className="px-3 py-2 text-muted-foreground">{r.email?.endsWith("@sifobooks.local") ? "Internal POS identity" : (r.email ?? "—")}</td>
                     <td className="px-3 py-2">
                       <select value={r.pos_role} onChange={(e) => setRole(r.id, e.target.value)} className="rounded border bg-background px-2 py-1">
                         {POS_ROLES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
@@ -276,7 +307,7 @@ function PosWorkers() {
                 );
               })}
               {!visible.length && (
-                <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
+                <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
                   {rows.length ? "No workers match that search." : "No POS workers yet."}
                 </td></tr>
               )}
