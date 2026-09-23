@@ -351,11 +351,10 @@ export function hubItems(hub: HubDef): HubItem[] {
 }
 
 /** Which hub a route belongs to (first match wins). Used for breadcrumbs. */
-export const ALL_HUB_SETS: HubDef[] = [HUBS, RESTAURANT_HUBS, RETAIL_HUBS, HOTEL_HUBS, PAYROLL_HUBS].flat();
-
 export function hubForRoute(pathname: string): HubDef | undefined {
   let best: { hub: HubDef; len: number } | undefined;
-  for (const hub of ALL_HUB_SETS) {
+  const allHubSets = [HUBS, RESTAURANT_HUBS, RETAIL_HUBS, HOTEL_HUBS, PAYROLL_HUBS].flat();
+  for (const hub of allHubSets) {
     for (const item of hubItems(hub)) {
       if (pathname === item.url || pathname.startsWith(item.url + "/")) {
         if (!best || item.url.length > best.len) best = { hub, len: item.url.length };
