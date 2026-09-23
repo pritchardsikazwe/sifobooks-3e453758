@@ -152,7 +152,7 @@ create or replace function public.lending_post_repayment(
 language plpgsql security definer set search_path=public
 as $$
 declare l record; r_id uuid; receipt text; remaining numeric; pp numeric:=0; ii numeric:=0; ff numeric:=0; pen numeric:=0;
-  entry_id uuid; sched record; alloc numeric; total_balance numeric;
+  entry_id uuid; sched record; alloc numeric; schedule_alloc numeric; paid_penalty numeric; paid_fees numeric; paid_interest numeric; paid_principal numeric; total_balance numeric;
 begin
   if _amount <= 0 then raise exception 'Repayment amount must be greater than zero'; end if;
   select * into l from lending_loans where id=_loan_id and user_id=auth.uid() for update;
@@ -165,15 +165,23 @@ begin
   end if;
   remaining := _amount;
   for sched in select * from lending_loan_schedules where loan_id=l.id and user_id=auth.uid() and amount_due>amount_paid order by due_date,installment_no for update loop
-    alloc := least(remaining,greatest(0,sched.penalty_due-sched.amount_paid));
-    pen := pen+alloc; remaining:=remaining-alloc;
-    alloc := least(remaining,greatest(0,sched.fees_due-greatest(0,sched.amount_paid-sched.penalty_due)));
-    ff := ff+alloc; remaining:=remaining-alloc;
-    alloc := least(remaining,greatest(0,sched.interest_due-greatest(0,sched.amount_paid-sched.penalty_due-sched.fees_due)));
-    ii := ii+alloc; remaining:=remaining-alloc;
-    alloc := least(remaining,greatest(0,sched.principal_due-greatest(0,sched.amount_paid-sched.penalty_due-sched.fees_due-sched.interest_due)));
-    pp := pp+alloc; remaining:=remaining-alloc;
-    update lending_loan_schedules set amount_paid=least(amount_due,amount_paid+(_amount-remaining)), status=case when amount_paid+(_amount-remaining)>=amount_due then 'paid' else 'partial' end where id=sched.id;
+    schedule_alloc := 0;
+    paid_penalty := least(sched.amount_paid, sched.penalty_due);
+    paid_fees := least(greatest(0,sched.amount_paid-paid_penalty), sched.fees_due);
+    paid_interest := least(greatest(0,sched.amount_paid-paid_penalty-paid_fees), sched.interest_due);
+    paid_principal := greatest(0,sched.amount_paid-paid_penalty-paid_fees-paid_interest);
+    alloc := least(remaining,greatest(0,sched.penalty_due-paid_penalty));
+    pen := pen+alloc; remaining:=remaining-alloc; schedule_alloc:=schedule_alloc+alloc;
+    alloc := least(remaining,greatest(0,sched.fees_due-paid_fees));
+    ff := ff+alloc; remaining:=remaining-alloc; schedule_alloc:=schedule_alloc+alloc;
+    alloc := least(remaining,greatest(0,sched.interest_due-paid_interest));
+    ii := ii+alloc; remaining:=remaining-alloc; schedule_alloc:=schedule_alloc+alloc;
+    alloc := least(remaining,greatest(0,sched.principal_due-paid_principal));
+    pp := pp+alloc; remaining:=remaining-alloc; schedule_alloc:=schedule_alloc+alloc;
+    update lending_loan_schedules
+       set amount_paid=least(amount_due,amount_paid+schedule_alloc),
+           status=case when amount_paid+schedule_alloc>=amount_due then 'paid' else 'partial' end
+     where id=sched.id;
     exit when remaining<=0;
   end loop;
   if remaining>0.01 then raise exception 'Payment allocation could not be completed'; end if;
