@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi } from "lucide-react";
+import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi, UtensilsCrossed, Printer, Boxes, LayoutDashboard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,8 @@ function AdminPage() {
   const [role, setRole] = useState<string>("staff");
   const [inviting, setInviting] = useState(false);
   const [userId, setUserId] = useState("");
+  const [cashierCount, setCashierCount] = useState(0);
+  const [inventoryCount, setInventoryCount] = useState(0);
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -45,6 +47,12 @@ function AdminPage() {
         .select("*, profiles:user_id(email, full_name)")
         .eq("company_id", c.id).order("created_at");
       setMembers(m ?? []);
+      const [cashiers, stock] = await Promise.all([
+        supabase.from("employee_pos_permissions").select("id", { count: "exact", head: true }).eq("user_id", u.user.id).eq("is_active", true),
+        supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("user_id", u.user.id),
+      ]);
+      setCashierCount(cashiers.count ?? 0);
+      setInventoryCount(stock.count ?? 0);
       // Ensure owner row exists
       if (!(m ?? []).some((row: any) => row.user_id === u.user.id)) {
         await supabase.from("company_members").insert({
@@ -105,7 +113,7 @@ function AdminPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
+    <div className="sifobooks-2026-page max-w-7xl space-y-6">
       <div className="flex items-center gap-3">
         <UserCog className="h-6 w-6 text-[#0f4c5c]" />
         <div>
@@ -113,6 +121,34 @@ function AdminPage() {
           <p className="text-sm text-muted-foreground">Full control over {company?.name ?? "your company"} — members, roles, and modules.</p>
         </div>
       </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["Team members", members.length, Users2, "/admin"],
+          ["POS cashiers", cashierCount, UtensilsCrossed, "/manager/cashiers"],
+          ["Stock items", inventoryCount, Boxes, "/stock"],
+          ["Printing", "Ready", Printer, "/printing-settings"],
+        ].map(([label, value, Icon, to]: any) => (
+          <Link key={String(label)} to={to as never} className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {label}<Icon className="h-4 w-4 text-primary" />
+            </div>
+            <div className="mt-2 text-2xl font-black tabular-nums">{value}</div>
+          </Link>
+        ))}
+      </div>
+
+      <Card className="rounded-2xl border-[#cfe0db] bg-gradient-to-r from-[#f7fbf9] to-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="mr-auto">
+            <div className="flex items-center gap-2 font-bold"><LayoutDashboard className="h-4 w-4 text-primary" /> Operations command centre</div>
+            <p className="mt-1 text-sm text-muted-foreground">Restaurant administration, cashier access, inventory, printing and daily close are available directly from this screen.</p>
+          </div>
+          <Link to="/restaurant" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground"><UtensilsCrossed className="h-4 w-4" /> Restaurant</Link>
+          <Link to="/manager/cashiers" className="inline-flex min-h-10 items-center gap-2 rounded-xl border px-4 text-sm font-bold"><UserPlus className="h-4 w-4" /> Add cashier</Link>
+          <Link to="/printing-settings" className="inline-flex min-h-10 items-center gap-2 rounded-xl border px-4 text-sm font-bold"><Printer className="h-4 w-4" /> Printers</Link>
+        </div>
+      </Card>
 
       {/* Members */}
       <Card className="p-5">
