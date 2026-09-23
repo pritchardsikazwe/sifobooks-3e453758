@@ -60,11 +60,26 @@ function Menu() {
   const addItem = async () => {
     if (!item.name.trim()) return toast.error("Item name is required");
     const u = await uid();
-    const { error } = await db.from("restaurant_menu_items").insert({ user_id: u, ...item, active: true });
+    if (!u) return toast.error("You are not signed in.");
+    const id = crypto.randomUUID();
+    const row = {
+      id,
+      user_id: u,
+      ...item,
+      active: true,
+      is_86: false,
+      prices: {},
+    };
+    const { error } = await db.from("restaurant_menu_items").insert(row);
     if (error) return toast.error(error.message);
+    // Update the local menu immediately. This keeps the manager screen in sync
+    // even when a legacy/local database returns no inserted row payload.
+    setItems((current) => [...current, row].sort((a, b) =>
+      String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name))
+    ));
     setItem({ ...item, name: "", price: 0, cost: 0 });
-    toast.success("Menu item added");
-    load();
+    toast.success("Menu item added — available on POS after refresh.");
+    void load();
   };
 
   const patchItem = async (id: string, patch: any) => {
