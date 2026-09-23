@@ -115,16 +115,16 @@ function Kitchen() {
                       </div>
                       {l.notes && <p className="text-xs text-amber-200 mt-1">{l.notes}</p>}
                       <div className="flex gap-1 mt-2">
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bump(l, "cooking")}>Start</Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bump(l, "ready")}>Ready</Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bump(l, "served")}>Served</Button>
+                        <Button size="sm" variant="outline" className="h-7 border-white/50 bg-white text-[#173b3a] text-xs hover:bg-white/90" onClick={() => bump(l, "cooking")}>Start</Button>
+                        <Button size="sm" variant="outline" className="h-7 border-white/50 bg-white text-[#173b3a] text-xs hover:bg-white/90" onClick={() => bump(l, "ready")}>Ready</Button>
+                        <Button size="sm" variant="outline" className="h-7 border-white/50 bg-white text-[#173b3a] text-xs hover:bg-white/90" onClick={() => bump(l, "served")}>Served</Button>
                       </div>
                     </li>
                   ))}
                 </ul>
                 <div className="border-t border-white/15 p-2 flex gap-2 bg-black/10">
                   <Button size="sm" className="flex-1" onClick={() => bumpTicket(t, "ready")}>All ready</Button>
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => bumpTicket(t, "served")}>Bump</Button>
+                  <Button size="sm" variant="outline" className="flex-1 border-white/50 bg-white text-[#173b3a] hover:bg-white/90" onClick={() => bumpTicket(t, "served")}>Bump</Button>
                 </div>
               </Card>
             );
