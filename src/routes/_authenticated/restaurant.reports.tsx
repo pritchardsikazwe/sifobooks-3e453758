@@ -36,6 +36,7 @@ function Reports() {
   const [payments, setPayments] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
   const [drawers, setDrawers] = useState<any[]>([]);
+  const [saleSearch, setSaleSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = async () => {
@@ -99,7 +100,19 @@ const settled = orders.filter((o) => o.status === "paid");
   const netSales = Math.max(0, grossSales - refundAmount);
   const saleRows = orders
     .filter((o) => o.status === "paid" || o.status === "refunded")
+    .filter((o) => {
+      const needle = saleSearch.trim().toLowerCase();
+      if (!needle) return true;
+      const hay = `${o.order_no ?? o.id} ${o.server_name ?? ""} ${o.order_type ?? ""} ${o.payment_method ?? ""}`.toLowerCase();
+      return hay.includes(needle);
+    })
     .sort((x, y) => new Date(y.opened_at || y.created_at || 0).getTime() - new Date(x.opened_at || x.created_at || 0).getTime());
+
+  const paymentFor = (orderId: string) => {
+    const rows = payments.filter((p) => p.order_id === orderId);
+    if (!rows.length) return "—";
+    return [...new Set(rows.map((p) => String(p.method || "other").toUpperCase()))].join(" + ");
+  };
   const uncosted = lines.filter((l) => paidIds.has(l.order_id) && !Number(l.unit_cost || 0)).length;
   const grossProfit = netSales - foodCost;
 
@@ -146,8 +159,9 @@ const settled = orders.filter((o) => o.status === "paid");
         <div className="flex flex-wrap items-center gap-2 border-b p-4">
           <div className="mr-auto">
             <div className="font-semibold">Sales register</div>
-            <div className="text-xs text-muted-foreground">Every completed restaurant sale in the selected period.</div>
+            <div className="text-xs text-muted-foreground">Completed sales in the selected period. Search by check, cashier, type or payment.</div>
           </div>
+          <Input value={saleSearch} onChange={(e) => setSaleSearch(e.target.value)} placeholder="Search sales…" className="w-52" />
           <ExportMenu filename={`restaurant-sales-register-${from}-${to}`} title="Restaurant sales register" rows={saleRows.map((o) => ({
             Check: o.order_no ?? o.id,
             Date: o.business_date,
@@ -166,7 +180,7 @@ const settled = orders.filter((o) => o.status === "paid");
               <thead className="sticky top-0 bg-muted/90">
                 <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="p-3">Check</th><th className="p-3">Time</th><th className="p-3">Cashier</th>
-                  <th className="p-3">Type</th><th className="p-3">Status</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Net</th>
+                  <th className="p-3">Type</th><th className="p-3">Payment</th><th className="p-3">Status</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Net</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,6 +190,7 @@ const settled = orders.filter((o) => o.status === "paid");
                     <td className="p-3">{new Date(o.opened_at || o.created_at || Date.now()).toLocaleString()}</td>
                     <td className="p-3">{o.server_name ?? "Unassigned"}</td>
                     <td className="p-3">{o.order_type ?? "—"}</td>
+                    <td className="p-3">{paymentFor(o.id)}</td>
                     <td className="p-3 uppercase">{o.status}</td>
                     <td className="p-3 text-right tabular-nums">{fmtMoney(Number(o.total || 0))}</td>
                     <td className="p-3 text-right tabular-nums">{fmtMoney(o.status === "refunded" ? 0 : Number(o.total || 0))}</td>
