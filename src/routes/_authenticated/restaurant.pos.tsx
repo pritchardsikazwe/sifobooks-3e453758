@@ -53,6 +53,20 @@ const VAT_RATE = 0.16;
 const DENOMS = [1, 5, 10, 20, 50, 100];
 const restaurantBusinessDate = () => new Date().toISOString().slice(0, 10);
 
+function restaurantCheckoutErrorMessage(error: any) {
+  const raw = String(error?.message ?? error ?? "").replace(/^Error:\s*/i, "").trim();
+  const code = raw.toUpperCase();
+  if (code.includes("NO_ACTIVE_RESTAURANT_SHIFT")) return "Start your cashier shift before taking a paid sale.";
+  if (code.includes("NO_OPEN_CASH_DRAWER")) return "Open the cashier cash drawer before taking a cash payment.";
+  if (code.includes("MENU_ITEM_NOT_FOUND")) return raw.split(":").slice(1).join(":").trim() ? `Menu item is not available to this POS: ${raw.split(":").slice(1).join(":").trim()}` : "Menu item is not available to this POS.";
+  if (code.includes("INSUFFICIENT_STOCK")) return "Not enough ingredient stock at the selected POS location.";
+  if (code.includes("LOCATION_STOCK_NOT_INITIALIZED")) return "This ingredient has no stock balance at the selected POS location. Transfer stock to the POS first.";
+  if (code.includes("PAYMENT_SHORT")) return "Payment received is less than the amount due.";
+  if (code.includes("ACCOUNTING_POSTING_RULE_MISSING")) return raw;
+  if (code.includes("RPC \"RESTAURANT_CHECKOUT\"")) return "Restaurant checkout service is not available in this database mode yet.";
+  return raw || "Restaurant sale could not be posted. Please retry.";
+}
+
 /* ---------------- page ---------------- */
 function Page() {
   const navigate = useNavigate();
@@ -146,12 +160,24 @@ function Page() {
       supabase.from("restaurant_recipes").select("menu_item_id,stock_item_id,quantity,unit").eq("user_id", uid),
       supabase.from("stock_balances").select("item_id,location_id,quantity").eq("user_id", uid),
     ]);
-    const queryError = [m, t, o, g, md, ot, loc, rec, bal].find((r: any) => r?.error);
-    if (queryError?.error) {
-      console.error("[Restaurant POS] load failed", queryError.error);
-      toast.error("Restaurant POS could not load its setup data.", { description: String(queryError.error.message ?? queryError.error) });
+    // Menu, tables, orders and modifier/order-type data are the POS core.
+    // Stock-location data is auxiliary: an old database must not hide the
+    // entire selling screen just because its location balances are incomplete.
+    const coreError = [m, t, o, g, md, ot].find((r: any) => r?.error);
+    if (coreError?.error) {
+      console.error("[Restaurant POS] core load failed", coreError.error);
+      toast.error("Restaurant POS could not load its setup data.", {
+        description: String(coreError.error.message ?? coreError.error),
+      });
       setLoading(false);
       return;
+    }
+    const optionalErrors = [loc, rec, bal].filter((r: any) => r?.error);
+    if (optionalErrors.length) {
+      console.warn("[Restaurant POS] optional stock data unavailable", optionalErrors.map((r: any) => r.error));
+      toast.warning("POS loaded without complete stock-location data.", {
+        description: "You can still view and sell menu items; refresh after stock setup is repaired.",
+      });
     }
     setMenu((m.data ?? []) as any);
     const locations = (loc?.data ?? []) as any[];
@@ -340,7 +366,7 @@ function Page() {
         if (error || !result) {
           setBusy(false);
           console.error("[POS] restaurant checkout failed", error);
-          return toast.error(error?.message ?? "Restaurant checkout failed. Check cashier shift, drawer and stock.");
+          return toast.error(restaurantCheckoutErrorMessage(error));
         }
         try { await accrueLoyaltyForOrder(result.orderId); } catch { /* loyalty is best-effort */ }
         void printOrderTickets(
@@ -354,7 +380,7 @@ function Page() {
         return;
       } catch (e: any) {
         setBusy(false);
-        return toast.error(e?.message ?? "Restaurant checkout failed");
+        return toast.error(restaurantCheckoutErrorMessage(e));
       }
     }
 
