@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getIndustry, type CoASeed } from "@/lib/industries";
 import { getIndustryStarter } from "@/lib/industry-starters";
 import { getZambiaCoreCoa } from "@/lib/zambia-coa";
+import { getModuleCompliance } from "@/lib/industry-compliance";
 
 export type SolutionStatus = "available" | "coming_soon";
 
@@ -345,6 +346,10 @@ export async function applyIndustrySolution(params: {
     about: starter.about,
     compliance: starter.compliance,
     roles: starter.roles,
+    modules: starter.modules,
+    complianceByModule: Object.fromEntries(
+      starter.modules.map((module) => [module.key, getModuleCompliance(starter.edition, module.key)]),
+    ),
   };
   const { error: moduleError } = await supabase.from("company_modules").upsert({
     user_id: params.userId,
