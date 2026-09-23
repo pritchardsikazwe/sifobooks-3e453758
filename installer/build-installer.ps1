@@ -2,7 +2,7 @@ param([string]$Edition = $env:SIFOBOOKS_EDITION)
 $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($Edition)) { $Edition = "enterprise" }
 $Edition = $Edition.ToLower()
-$allowed = @("enterprise","accounting","retail","restaurant","hotel","school","property")
+$allowed = @("enterprise","accounting","retail","restaurant","hotel","school","property","lending")
 if ($allowed -notcontains $Edition) { throw "Unsupported SifoBooks edition: $Edition" }
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -19,7 +19,7 @@ if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks wizard artwork." }
 if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks small installer artwork." }
 
 $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
-$product = if ($Edition -eq "enterprise") { "SifoBooks" } else { "SifoBooks-$display" }
+$displayNameMap = @{ enterprise="SifoBooks"; accounting="SifoBooks-Accounting"; retail="SifoBooks-Retail"; restaurant="SifoBooks-Restaurant"; hotel="SifoBooks-Hotel"; school="SifoBooks-School"; property="SifoBooks-RealEstate"; lending="SifoBooks-Microfinance" }\n$product = $displayNameMap[$Edition]
 $exe = "$product.exe"
 $guidMap = @{
   enterprise="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE001"
@@ -29,6 +29,7 @@ $guidMap = @{
   hotel="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE005"
   school="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE006"
   property="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE007"
+  lending="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE008"
 }
 $template = Get-Content (Join-Path $PSScriptRoot "SifoBooks.iss.template") -Raw
 $template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__","2026.09.22")
