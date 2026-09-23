@@ -142,7 +142,7 @@ writeFileSync(join(OUT_DIR, "config", "network.example.json"), JSON.stringify({
 writeFileSync(join(OUT_DIR, "start-sifobooks.bat"), [
   "@echo off",
   "cd /d \"%~dp0\"",
-  `start "" "%~dp0${exeName}"`,
+  `start "" "%WINDIR%\\System32\\wscript.exe" "%~dp0Start-SifoBooks.vbs"`,
   "exit /b 0",
   "",
 ].join("\n"));
@@ -167,7 +167,7 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "1. Keep this entire folder together.",
   "2. Double-click the SifoBooks Windows executable to launch, or start-sifobooks.bat for troubleshooting.",
   `3. ${productName} starts a local server and opens your browser.`,
-  "4. The application runs at http://localhost:3000.",
+  "4. The application runs locally at http://localhost:3000 and does not require internet access for normal offline operation.",
   "5. Your SQLite database is created at data\\\\sifobooks.db.",
   "6. Do not delete the data folder - it contains company data.",
   `7. To move ${productName} to another PC, copy the entire folder including data.`,
