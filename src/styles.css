@@ -299,6 +299,30 @@
 
 /* Restaurant 2026 readability pass — keep secondary copy readable on bright
    cards and in dark-mode workspaces. Avoid relying on opacity for operational data. */
+/* Restaurant readability: never allow inherited theme opacity/foreground
+   to make operational labels, table data or form controls disappear. */
+.restaurant-2026-page { color: #173b3a; }
+.restaurant-2026-page .text-muted-foreground { color: #52636f !important; opacity: 1 !important; }
+.restaurant-2026-page label,
+.restaurant-2026-page th,
+.restaurant-2026-page td,
+.restaurant-2026-page .font-medium,
+.restaurant-2026-page .font-semibold { color: #243b3a; }
+.restaurant-2026-page input,
+.restaurant-2026-page select,
+.restaurant-2026-page textarea { color: #17212b !important; background-color: #ffffff; }
+.restaurant-2026-page input::placeholder,
+.restaurant-2026-page textarea::placeholder { color: #687b80 !important; opacity: 1; }
+.dark .restaurant-2026-page { color: #f4f7f8; }
+.dark .restaurant-2026-page .text-muted-foreground { color: #c7d3da !important; }
+.dark .restaurant-2026-page label,
+.dark .restaurant-2026-page th,
+.dark .restaurant-2026-page td,
+.dark .restaurant-2026-page .font-medium,
+.dark .restaurant-2026-page .font-semibold { color: #eef4f6; }
+.dark .restaurant-2026-page input,
+.dark .restaurant-2026-page select,
+.dark .restaurant-2026-page textarea { color: #f4f7f8 !important; background-color: #1d3345; }
 .restaurant-2026-page .text-muted-foreground {
   color: #52636f;
 }
