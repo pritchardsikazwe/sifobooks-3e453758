@@ -34,6 +34,7 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant/end-of-day", label: "End of day", icon: MoonStar },
   { to: "/restaurant/cash-drawers", label: "Cash drawers", icon: WalletCards },
   { to: "/restaurant/reports", label: "Reports", icon: BarChart3 },
+  { to: "/restaurant/stock-reports", label: "Stock Reports", icon: Boxes },
   { to: "/restaurant/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/restaurant/settings", label: "Settings", icon: Settings },
   { to: "/stock", label: "Inventory", icon: Boxes },
@@ -69,6 +70,7 @@ function RestaurantShell() {
               ["/restaurant/kitchen","Kitchen"],
               ["/restaurant/menu","Menu"],
               ["/restaurant/reports","Reports"],
+              ["/restaurant/stock-reports","Stock Reports"],
             ].map(([to,label]) => (
               <Link key={to} to={to as never} className={cn("text-sm font-semibold transition", path===to || path.startsWith(to+"/") ? "text-[#e5b83f]" : "text-white/75 hover:text-white")}>{label}</Link>
             ))}
