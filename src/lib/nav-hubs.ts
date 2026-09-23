@@ -338,7 +338,11 @@ export const HUBS: HubDef[] = [
 ];
 
 export function getHub(key: string): HubDef | undefined {
-  return HUBS.find((h) => h.key === key);
+  // Hub workspace routes are shared by the generic sidebar and focused
+  // industry editions. Include every registered hub so /hub/restaurant-*
+  // and /hub/retail-* deep links resolve instead of falling through to 404.
+  return [...HUBS, ...RESTAURANT_HUBS, ...RETAIL_HUBS, ...HOTEL_HUBS, ...PAYROLL_HUBS]
+    .find((h) => h.key === key);
 }
 
 /** Every item in a hub, flattened. */
