@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { fmtMoney } from "@/lib/format";
 import { today, uid } from "@/lib/restaurant";
 import { toast } from "sonner";
-import { WalletCards } from "lucide-react";
+import { WalletCards, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/cash-drawers")({
   head: () => ({ meta: [
@@ -105,6 +105,7 @@ function CashDrawers() {
       <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Drawer name"/>
       <Input value={station} onChange={e=>setStation(e.target.value)} placeholder="POS station"/>
       <Input value={float} onChange={e=>setFloat(e.target.value)} type="number" min="0" placeholder="Opening float"/>
+      <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print drawer report</Button>
       <Button disabled={busy} onClick={openDrawer}>Open drawer</Button>
     </Card>}
 
