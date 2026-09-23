@@ -218,6 +218,7 @@ export const supabase = {
   rpc(name: string, args: Record<string, any> = {}) {
     return new RpcBuilder(name, args);
   },
-  // Remove all channels (stub)
+  // Channel cleanup stubs for local SQLite mode.
+  removeChannel(_channel: any) {},
   removeAllChannels() {},
 };
