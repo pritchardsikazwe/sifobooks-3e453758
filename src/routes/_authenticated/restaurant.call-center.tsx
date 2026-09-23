@@ -79,7 +79,7 @@ function CallCentre() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Phone className="h-5 w-5" /> Call centre</h1>
         <p className="text-sm text-muted-foreground">Answer the phone, find the caller, repeat their usual.</p>
