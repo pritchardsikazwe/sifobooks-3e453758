@@ -87,7 +87,7 @@ export type EodTotals = {
 };
 
 export function summarise(orders: any[]): EodTotals {
-  const live = orders.filter((o) => o.status !== "void");
+  const live = orders.filter((o) => o.status !== "void" && o.status !== "refunded");
   const t: EodTotals = {
     orders: live.length, gross: 0, discounts: 0, tax: 0, service: 0,
     gratuity: 0, delivery: 0, net: 0, byMethod: {}, byType: {},
