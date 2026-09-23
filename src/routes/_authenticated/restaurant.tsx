@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard, UtensilsCrossed, LayoutGrid, CalendarClock, ListOrdered, ChefHat,
   BookOpen, PhoneCall, Banknote, MoonStar, BarChart3, Settings, Wallet,
-  Star, Clock, Layers, Bike, ShieldCheck, Boxes, Printer, Users2,
+  Star, Clock, Layers, Bike, ShieldCheck, Boxes, Printer, Users2, WalletCards,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant")({
