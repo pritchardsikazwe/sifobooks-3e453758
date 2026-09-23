@@ -818,3 +818,49 @@
     min-height: 40px;
   }
 }
+
+
+/* ── School ERP 2026 master visual system ───────────────────────── */
+@utility school-2026-page {
+  --school-emerald: #073B38;
+  --school-emerald-2: #0A514A;
+  --school-green: #07834F;
+  --school-gold: #E5B83F;
+  --school-ink: #173B3A;
+  --school-muted: #6C7F7D;
+  --school-line: #D9E6E3;
+  color: var(--school-ink);
+  animation: page-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.school-2026-page > div:first-child > div:first-child {
+  border: 0 !important;
+  border-radius: 18px !important;
+  padding: 18px 20px 14px !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, #073B38 0%, #0A514A 68%, #0B6658 100%) !important;
+  box-shadow: 0 14px 32px rgba(7,59,56,.18);
+}
+.school-2026-page > div:first-child > div:first-child h1 { color:#fff !important; font-weight:800; letter-spacing:-.035em; }
+.school-2026-page > div:first-child > div:first-child p { color:rgba(255,255,255,.72) !important; }
+.school-2026-page > div:first-child > div:first-child nav { border-top:1px solid rgba(255,255,255,.1); padding-top:10px; }
+.school-2026-page > div:first-child > div:first-child nav a {
+  min-height:38px; border:1px solid transparent; border-radius:10px;
+  color:rgba(255,255,255,.78) !important; background:rgba(255,255,255,.055) !important;
+  font-weight:650;
+}
+.school-2026-page > div:first-child > div:first-child nav a:hover { color:#fff !important; background:rgba(255,255,255,.11) !important; border-color:rgba(229,184,63,.28); }
+.school-2026-page > div:first-child > div:first-child nav a.bg-primary { color:#173B3A !important; background:#E5B83F !important; }
+.school-2026-page .rounded-2xl { border-color:#D9E6E3; box-shadow:0 6px 20px rgba(23,59,58,.055); }
+.school-2026-page .rounded-2xl:hover { border-color:#C5DAD5; }
+.school-2026-page h1,.school-2026-page h2,.school-2026-page h3 { color:#173B3A; font-weight:750; }
+.school-2026-page .bg-primary { background:#07834F !important; }
+.school-2026-page .text-primary { color:#07834F !important; }
+.school-2026-page table thead { background:#F0F5F3 !important; }
+.school-2026-page table thead th { color:#58706D !important; font-size:.68rem; font-weight:750; letter-spacing:.08em; }
+.school-2026-page table tbody tr:hover { background:#F5F9F7 !important; }
+.school-2026-page input,.school-2026-page select,.school-2026-page textarea { border-radius:10px; border-color:#CFDFDB; }
+.school-2026-page .text-muted-foreground { color:#6C7F7D; }
+@media(max-width:768px){
+  .school-2026-page > div:first-child > div:first-child { padding:15px !important; border-radius:14px !important; }
+  .school-2026-page > div:first-child > div:first-child nav a { min-height:40px; }
+}
