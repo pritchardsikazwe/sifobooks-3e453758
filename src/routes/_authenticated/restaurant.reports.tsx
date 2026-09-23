@@ -60,24 +60,6 @@ function Reports() {
     refresh();
   }, [from, to]);
 
-  /* old loader */
-  useEffect(() => {
-      const u = await uid();
-      if (!u) return;
-      const { data: o } = await db.from("restaurant_orders").select("*").eq("user_id", u)
-        .gte("business_date", from).lte("business_date", to);
-      const ids = (o ?? []).map((x: any) => x.id);
-      const [li, mi, pa, sh, dr] = await Promise.all([
-        ids.length ? db.from("restaurant_order_items").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
-        db.from("restaurant_menu_items").select("*").eq("user_id", u),
-        ids.length ? db.from("restaurant_payments").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
-        db.from("restaurant_shifts").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
-        db.from("restaurant_cash_drawers").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
-      ]);
-      setOrders(o ?? []); setLines(li.data ?? []); setItems(mi.data ?? []); setPayments(pa.data ?? []); setShifts(sh.data ?? []); setDrawers(dr.data ?? []);
-    })();
-  }, [from, to]);
-
 const settled = orders.filter((o) => o.status === "paid");
   const refunded = orders.filter((o) => o.status === "refunded");
   const t = useMemo(() => summarise(settled), [settled]);
