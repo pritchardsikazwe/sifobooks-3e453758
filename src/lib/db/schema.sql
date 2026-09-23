@@ -2,6 +2,9 @@ CREATE TABLE IF NOT EXISTS "auth_users" (
   "id" TEXT PRIMARY KEY,
   "email" TEXT NOT NULL UNIQUE,
   "password_hash" TEXT NOT NULL,
+  "session_version" INTEGER NOT NULL DEFAULT 0,
+  "must_change_password" INTEGER NOT NULL DEFAULT 0,
+  "password_changed_at" TEXT,
   "created_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
