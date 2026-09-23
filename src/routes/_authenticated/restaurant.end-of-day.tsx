@@ -77,11 +77,14 @@ function EndOfDay() {
     setBusy(true);
     const u = await uid();
     const { error } = await db.from("restaurant_end_of_day").insert({
-      user_id: u, business_date: date, orders_count: t.orders, gross_sales: t.gross,
+      id: crypto.randomUUID(), user_id: u, business_date: date, orders_count: t.orders, gross_sales: t.gross,
       discounts: t.discounts, tax: t.tax, service_charge: t.service, gratuity: t.gratuity,
-      delivery_fees: t.delivery, net_sales: t.net, cash_variance: variance,
-      by_method: t.byMethod, by_type: t.byType, voids: voids.length,
-      approved_by: manager, closed_at: new Date().toISOString(), status: "closed",
+      delivery_fees: t.delivery, cash_sales: Number(t.byMethod.cash || 0),
+      card_sales: Number(t.byMethod.card || 0), momo_sales: Number(t.byMethod.momo || 0),
+      other_sales: Object.entries(t.byMethod).filter(([k]) => !["cash","card","momo"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
+      cash_payouts: drawers.reduce((s,d) => s + Number(d.cash_payouts || 0), 0),
+      cash_variance: variance, net_total: t.net, status: "closed",
+      approved_by: manager, notes: `Z-read ${date}; voids=${voids.length}; cost_of_sales=${cogs.toFixed(2)}`,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
