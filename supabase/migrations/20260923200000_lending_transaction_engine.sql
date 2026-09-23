@@ -83,7 +83,7 @@ declare
   a record; p record; existing uuid; loan_id uuid; loan_no text;
   principal numeric(18,2); rate numeric(12,4); total_interest numeric(18,2);
   fee numeric(18,2); total_payable numeric(18,2); inst numeric(18,2);
-  i integer; due date; prev date; pp numeric(18,2); ip numeric(18,2); amt numeric(18,2);
+  i integer; due date; pp numeric(18,2); ip numeric(18,2); amt numeric(18,2); allocated_p numeric(18,2):=0; allocated_i numeric(18,2):=0;
   entry_id uuid;
 begin
   select * into a from lending_applications where id=_application_id and user_id=auth.uid() for update;
@@ -117,19 +117,14 @@ begin
       when 'daily' then _disbursement_date + make_interval(days=>i)
       else _disbursement_date + make_interval(months=>i)
     end;
-    if lower(coalesce(p.interest_method,'reducing_balance'))='flat' then
-      pp := round(principal/a.term,2);
-      ip := round(total_interest/a.term,2);
-    else
-      ip := case when i=a.term then greatest(0,total_interest-(select coalesce(sum(interest_due),0) from lending_loan_schedules where loan_id=loan_id)) else round(greatest(0,total_interest)*0.0,2) end;
-      -- use a stable straight-line allocation of total interest for the schedule;
-      ip := round(total_interest/a.term,2);
-      pp := round(principal/a.term,2);
-    end if;
+    pp := round(principal/a.term,2);
+    ip := round(total_interest/a.term,2);
     if i=a.term then
-      pp := principal-(select coalesce(sum(principal_due),0) from lending_loan_schedules where loan_id=loan_id);
-      ip := total_interest-(select coalesce(sum(interest_due),0) from lending_loan_schedules where loan_id=loan_id);
+      pp := principal-allocated_p;
+      ip := total_interest-allocated_i;
     end if;
+    allocated_p := allocated_p + pp;
+    allocated_i := allocated_i + ip;
     amt := pp+ip+(case when i=1 then fee else 0 end);
     insert into lending_loan_schedules(user_id,loan_id,installment_no,due_date,principal_due,interest_due,fees_due,amount_due)
     values(auth.uid(),loan_id,i,due,pp,ip,case when i=1 then fee else 0 end,amt);
@@ -192,14 +187,11 @@ begin
   values(auth.uid(),l.company_id,'repayment',r_id,receipt,'Loan repayment',_amount,_amount) returning id into entry_id;
   insert into lending_accounting_lines(entry_id,user_id,account_code,account_name,debit,credit) values
     (entry_id,auth.uid(),case when lower(_method) in ('bank','bank_transfer') or lower(_method) like '%money%' then '1100' else '1000' end,case when lower(_method) in ('bank','bank_transfer') or lower(_method) like '%money%' then 'Bank / Mobile Money' else 'Cash' end,_amount,0),
-    (entry_id,auth.uid(),'1300','Loans Receivable',pp,0),
+    (entry_id,auth.uid(),'1300','Loans Receivable',0,pp),
     (entry_id,auth.uid(),'4100','Interest Income',0,ii),
     (entry_id,auth.uid(),'4200','Lending Fee Income',0,ff),
     (entry_id,auth.uid(),'4300','Penalty Income',0,pen);
-  -- balance the operational lending bridge when interest/fees are non-zero
-  if pp < _amount then
-    update lending_accounting_entries set total_debit=_amount,total_credit=ii+ff+pen+pp where id=entry_id;
-  end if;
+  update lending_accounting_entries set total_debit=_amount,total_credit=pp+ii+ff+pen where id=entry_id;
   insert into lending_audit_log(user_id,company_id,entity_type,entity_id,action,new_value)
   values(auth.uid(),l.company_id,'repayment',r_id,'posted',jsonb_build_object('amount',_amount,'principal',pp,'interest',ii,'fees',ff,'penalty',pen));
   insert into lending_sync_queue(user_id,entity_type,entity_id,operation,client_ref,payload)
