@@ -8,6 +8,7 @@ import {
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
 import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
+import { SchoolFeaturePage } from "@/components/industry/SchoolFeaturePage";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, ReceiptText,
@@ -19,8 +20,10 @@ const db: any = supabase;
 
 export const SCHOOL_NAV: NavItem[] = [
   { label: "Dashboard", to: "/school", icon: LayoutDashboard },
+  { label: "Pre-School", to: "/school/preschool", icon: Baby },
   { label: "Admissions & Enrolment", to: "/school/admissions", icon: Users },
   { label: "Students", to: "/school/students", icon: GraduationCap },
+  { label: "Student Profile", to: "/school/student-profile", icon: UserRound },
   { label: "Parents & Guardians", to: "/school/parents", icon: Users },
   { label: "Classes & Subjects", to: "/school/academics", icon: BookOpen },
   { label: "Timetable", to: "/school/timetable", icon: CalendarCheck },
@@ -32,11 +35,17 @@ export const SCHOOL_NAV: NavItem[] = [
   { label: "Scholarships & Discounts", to: "/school/scholarships", icon: WalletCards },
   { label: "Hostel & Boarding", to: "/school/boarding", icon: BookOpen },
   { label: "Transport", to: "/school/transport", icon: Users },
+  { label: "Library", to: "/school/library", icon: Library },
+  { label: "Meals & Nutrition", to: "/school/meals", icon: Utensils },
+  { label: "Discipline", to: "/school/discipline", icon: ShieldAlert },
+  { label: "Health & Welfare", to: "/school/health", icon: HeartPulse },
+  { label: "Communication", to: "/school/communications", icon: Megaphone },
   { label: "Staff & HR", to: "/school/staff", icon: Users },
   { label: "Parent Portal", to: "/school/parent-portal", icon: Users },
   { label: "Student Portal", to: "/school/student-portal", icon: GraduationCap },
   { label: "Reports", to: "/school/reports", icon: BarChart3 },
   { label: "Compliance", to: "/school/compliance", icon: ShieldCheck },
+  { label: "Settings", to: "/school/settings", icon: Settings2 },
 ];
 
 const TITLES: Record<string, [string, string]> = {
@@ -144,7 +153,7 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
   const body = () => {
-    if (["/school/admissions","/school/attendance","/school/exams","/school/report-cards","/school/scholarships","/school/boarding","/school/transport","/school/parent-portal","/school/student-portal"].includes(screen)) {
+    const featureKinds: Record<string, string> = {\n      "/school/preschool": "preschool", "/school/student-profile": "profile", "/school/library": "library",\n      "/school/meals": "meals", "/school/discipline": "discipline", "/school/health": "health",\n      "/school/communications": "communications", "/school/settings": "settings",\n    };\n    if (featureKinds[screen]) return <SchoolFeaturePage kind={featureKinds[screen]} />;\n\n    if (["/school/admissions","/school/attendance","/school/exams","/school/report-cards","/school/scholarships","/school/boarding","/school/transport","/school/parent-portal","/school/student-portal"].includes(screen)) {
       return <SchoolOperationsPanel screen={screen} data={data} />;
     }
     if (UNAVAILABLE[screen]) {
