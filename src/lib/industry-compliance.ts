@@ -16,6 +16,8 @@ export const ZAMBIA_MODULE_COMPLIANCE: Record<IndustryEdition, ComplianceRule[]>
     { code: "PACRA", moduleKeys: ["company"], why: "Company master data should preserve registration and ownership records.", setupFields: ["PACRA number", "annual return status"] },
   ],
   retail: [
+    { code: "ZRA", moduleKeys: ["butchery"], why: "Weighted meat sales and stock movements must use the configured applicable tax treatment.", setupFields: ["TPIN", "VAT status", "tax types"] },
+    { code: "SMART_INVOICE", moduleKeys: ["butchery"], why: "Applicable fiscalised weighted sales require controlled item, unit and tax mapping.", setupFields: ["item mapping", "unit code", "device/connector"] },
     { code: "ZRA", moduleKeys: ["sales", "pos", "inventory", "purchasing", "accounting"], why: "Retail transactions need consistent tax and accounting treatment.", setupFields: ["TPIN", "tax types", "VAT status"] },
     { code: "SMART_INVOICE", moduleKeys: ["pos", "sales", "inventory"], why: "POS item and tax mapping must support the applicable Smart Invoice workflow.", setupFields: ["item mapping", "device", "VSDC status"] },
     { code: "PACRA", moduleKeys: ["company"], why: "Company registration records belong in the company compliance profile.", setupFields: ["PACRA number", "annual return status"] },
