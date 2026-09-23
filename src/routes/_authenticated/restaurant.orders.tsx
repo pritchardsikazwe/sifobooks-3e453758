@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { CheckOperations } from "@/components/restaurant/CheckOperations";
 import { checkCost, linesMissingCost } from "@/lib/restaurant-checks";
+import { Printer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
@@ -38,6 +39,7 @@ function Orders() {
   const [status, setStatus] = useState("all");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const printReceipt = (o:any) => { window.print(); toast.info(`Print dialog opened for ${o.order_no || o.id}`); };
 
   const load = async () => {
     const u = await uid();
@@ -169,6 +171,9 @@ function Orders() {
                         ))}
                         <Button size="sm" variant="destructive" onClick={() => voidOrder(o)}>Void</Button>
                       </div>
+                    )}
+                    {o.status !== "void" && (
+                      <Button size="sm" variant="outline" onClick={() => printReceipt(o)}><Printer className="mr-1 h-4 w-4" /> Reprint receipt</Button>
                     )}
                     {o.status !== "void" && (
                       <div className="rounded-xl border bg-muted/30 p-3">
