@@ -60,18 +60,17 @@ const settled = orders.filter((o) => o.status === "paid");
   const t = useMemo(() => summarise(settled), [settled]);
   const live = settled;
 
-  const group =
+  const group = (rows: any[], key: (r: any) => string, val: (r: any) => number) => {
     const m: Record<string, number> = {};
     rows.forEach((r) => { const k = key(r) || "—"; m[k] = (m[k] ?? 0) + val(r); });
-    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+    return Object.entries(m).sort((x, y) => y[1] - x[1]);
   };
 
-const byHour = group(live, (o) => {
+  const byHour = group(live, (o) => {
     const dt = new Date(o.opened_at || o.created_at || Date.now());
     return `${String(dt.getHours()).padStart(2, "0")}:00`;
-  }, (o) => Number(o.total || 0))
-    .sort((a, b) => a[0].localeCompare(b[0]));
-  const paidIds =
+  }, (o) => Number(o.total || 0)).sort((x, y) => x[0].localeCompare(y[0]));
+  const paidIds = new Set(live.map((o) => o.id));
   const soldLines = lines.filter((l) => paidIds.has(l.order_id));
   const byItem = group(soldLines, (l) => l.item_name || l.name || "Unnamed item", (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.qty || 0)));
   const byCategory = group(soldLines, (l) => items.find((i) => i.id === l.menu_item_id)?.category ?? l.category ?? "Other",
@@ -82,17 +81,19 @@ const byHour = group(live, (o) => {
   const discounts = group(live.filter((o) => Number(o.discount || 0) > 0), (o) => `#${o.order_no || o.id}`, (o) => Number(o.discount));
   const voids = orders.filter((o) => o.status === "void").map((o) => [`#${o.order_no || o.id} ${o.server_name ?? ""}`, Number(o.total || 0)] as [string, number]);
 
-  /* Cost comes from the line cost the server calculated from recipes — never a client figure. */
   const foodCost = soldLines.reduce((s, l) => s + Number(l.unit_cost || 0) * Number(l.qty || 0), 0);
-  const paymentMap: Record<string,number> = {};
-  payments.forEach((p) => { const k=String(p.method||"other").toLowerCase(); paymentMap[k]=(paymentMap[k]||0)+Number(p.amount||0); });
-  const byPayment = Object.entries(paymentMap).sort((a,b)=>b[1]-a[1]);
-const byCashier = group(live, o => o.server_name || "Unassigned", o => Number(o.total || 0));
+  const paymentMap: Record<string, number> = {};
+  payments.forEach((p) => {
+    const k = String(p.method || "other").toLowerCase();
+    paymentMap[k] = (paymentMap[k] || 0) + Number(p.amount || 0);
+  });
+  const byPayment = Object.entries(paymentMap).sort((x, y) => y[1] - x[1]);
+  const byCashier = group(live, (o) => o.server_name || "Unassigned", (o) => Number(o.total || 0));
   const refundAmount = refunded.reduce((s, o) => s + Number(o.total || 0), 0);
   const saleRows = orders
     .filter((o) => o.status === "paid" || o.status === "refunded")
-    .sort((a, b) => new Date(b.opened_at || b.created_at || 0).getTime() - new Date(a.opened_at || a.created_at || 0).getTime());
-  const uncosted =
+    .sort((x, y) => new Date(y.opened_at || y.created_at || 0).getTime() - new Date(x.opened_at || x.created_at || 0).getTime());
+  const uncosted = lines.filter((l) => paidIds.has(l.order_id) && !Number(l.unit_cost || 0)).length;
   const grossProfit = t.gross - foodCost;
 
   const reports: { key: string; label: string; rows: [string, number][]; unit?: string }[] = [
