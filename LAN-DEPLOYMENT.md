@@ -98,3 +98,54 @@ Then open `http://192.168.1.100:3000`.
 If the central server is down, POS client requests return a clear `503 SifoBooks LAN server unavailable` response rather than silently writing to a second company database.
 
 True offline selling on a POS terminal is a separate sync workflow and should only be enabled once the offline queue/conflict/reconciliation process is validated.
+## Remote users over the Internet
+
+For remote browser access, keep SifoBooks bound to the local machine/LAN and use a Cloudflare Tunnel. Cloudflare Tunnel makes an outbound connection from the SifoBooks server, so the SifoBooks TCP port does not need to be exposed directly to the Internet. citeturn0view0
+
+Recommended architecture:
+
+    Remote user
+        |
+    https://sifobooks.example.com
+        |
+    Cloudflare Tunnel + Access
+        |
+    SifoBooks Server PC
+    127.0.0.1:3000
+        |
+    SQLite: data/sifobooks.db
+
+### Server configuration
+
+Keep the SifoBooks server in server mode. The tunnel should target:
+
+    http://127.0.0.1:3000
+
+Do not publish the SQLite database, Windows file share, or port 3000 directly to the Internet.
+
+### Cloudflare setup
+
+1. Add the SifoBooks hostname to a Cloudflare-managed domain.
+2. In Cloudflare Zero Trust, create a Cloudflare Tunnel.
+3. Publish the hostname, for example `sifobooks.example.com`, to `http://127.0.0.1:3000`.
+4. Configure Cloudflare Access authentication for the SifoBooks hostname before giving the URL to remote users.
+5. Install `cloudflared` on the SifoBooks Windows server.
+6. Install the Windows tunnel service with:
+
+    .\scripts\install-sifobooks-cloudflare-tunnel.ps1 -TunnelToken "YOUR_CLOUDFLARE_TUNNEL_TOKEN"
+
+Never commit the tunnel token to GitHub or put it in `config/network.json`.
+
+### Remote test
+
+After DNS, Tunnel, Access, and the SifoBooks server are configured:
+
+    .\scripts\test-sifobooks-remote.ps1 -Url "https://sifobooks.example.com"
+
+A successful response should come from SifoBooks' `/api/network/info` endpoint. The remote user still uses the same central company database as LAN users.
+
+### Security model
+
+Remote access should be treated as an authenticated application, not as an exposed Windows service. Cloudflare documents Tunnel as an outbound connector and provides Access controls for self-hosted applications. citeturn0view0
+
+The SifoBooks application authentication/roles remain required in addition to the network access layer.
