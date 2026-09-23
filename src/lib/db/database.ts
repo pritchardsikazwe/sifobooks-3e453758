@@ -126,6 +126,43 @@ function runCompatibilityMigrations(database: Database) {
       "is_active INTEGER NOT NULL DEFAULT 1",
       "created_at TEXT NOT NULL DEFAULT (datetime('now'))",
     ],
+    // Restaurant/purchasing compatibility for older desktop databases. The
+    // SQL migration files cover normal startup; this belt-and-braces layer also
+    // repairs a database when an older protected schema is already in use.
+    suppliers: [
+      "email TEXT",
+      "phone TEXT",
+      "vat_number TEXT",
+      "address TEXT",
+    ],
+    restaurant_menu_items: [
+      "is_86 INTEGER NOT NULL DEFAULT 0",
+      "prices TEXT NOT NULL DEFAULT '{}'",
+    ],
+    restaurant_order_items: [
+      "unit_cost REAL NOT NULL DEFAULT 0",
+      "discount REAL NOT NULL DEFAULT 0",
+      "modifiers TEXT NOT NULL DEFAULT '[]'",
+    ],
+    restaurant_orders: [
+      "customer_name TEXT",
+      "notes TEXT",
+      "service_charge REAL NOT NULL DEFAULT 0",
+      "gratuity REAL NOT NULL DEFAULT 0",
+      "delivery_fee REAL NOT NULL DEFAULT 0",
+      "amount_paid REAL NOT NULL DEFAULT 0",
+      "journal_entry_id TEXT",
+      "void_reason TEXT",
+    ],
+    restaurant_tables: [
+      "shape TEXT NOT NULL DEFAULT 'square'",
+      "occupied_since TEXT",
+      "current_order_id TEXT",
+      "server_name TEXT",
+    ],
+    restaurant_order_types: [
+      "delivery_fee REAL NOT NULL DEFAULT 0",
+    ],
   };
 
   for (const [table, columns] of Object.entries(migrations)) {
