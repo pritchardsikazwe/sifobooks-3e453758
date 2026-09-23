@@ -47,7 +47,7 @@ function EndOfDay() {
     ]);
     const os = o.data ?? [];
     setOrders(os); setDrawers(d.data ?? []); setClosed(e.data ?? null);
-    const paid = os.filter((x: any) => x.status === "paid").map((x: any) => x.id);
+    const paid = os.filter((x: any) => x.status === "paid" || x.status === "refunded").map((x: any) => x.id);
     if (paid.length) {
       const [{ data: li }, { data: ps }] = await Promise.all([
         db.from("restaurant_order_items").select("order_id,qty,unit_cost").in("order_id", paid),
@@ -73,6 +73,7 @@ function EndOfDay() {
   }, [payments]);
   const openChecks = orders.filter((o) => o.status === "open" || o.status === "held");
   const voids = orders.filter((o) => o.status === "void");
+  const refunds = orders.filter((o) => o.status === "refunded");
   const variance = drawers.reduce((s, d) => s + Number(d.variance || 0), 0);
   const openDrawers = drawers.filter((d) => d.status === "open");
   /* Cost of sales for the day, from the server-calculated recipe cost on each line. */
@@ -100,7 +101,7 @@ function EndOfDay() {
       other_sales: Object.entries(byPayment).filter(([k]) => !["cash","card","momo"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
       cash_payouts: drawers.reduce((s,d) => s + Number(d.cash_payouts || 0), 0),
       cash_variance: variance, net_total: t.net, status: "closed",
-      approved_by: manager, notes: `Z-read ${date}; voids=${voids.length}; cost_of_sales=${cogs.toFixed(2)}`,
+      approved_by: manager, notes: `Z-read ${date}; voids=${voids.length}; refunds=${refunds.length}; cost_of_sales=${cogs.toFixed(2)}`,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -153,7 +154,7 @@ function EndOfDay() {
           <Row label="Gratuity" v={t.gratuity} />
           <Row label="Delivery fees" v={t.delivery} />
           <Row label="Net takings" v={t.net} bold />
-          <div className="text-xs text-muted-foreground pt-1">{voids.length} voided check(s) excluded.</div>
+          <div className="text-xs text-muted-foreground pt-1">{voids.length} voided check(s) excluded; {refunds.length} refunded check(s) are represented by reversal tenders and reversal journals.</div>
         </Card>
 
         <Card className="p-4 rounded-2xl space-y-1">
