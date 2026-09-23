@@ -496,3 +496,142 @@
   .sifo-reveal { animation: none !important; }
   .sifo-btn:hover, .sifo-btn:active { transform: none !important; }
 }
+
+
+/* ── Restaurant 2026 unified operations UI ───────────────────────── */
+@utility restaurant-2026-page {
+  --restaurant-emerald: #073B38;
+  --restaurant-green: #07834F;
+  --restaurant-gold: #E5B83F;
+  --restaurant-ink: #173B3A;
+  --restaurant-muted: #6C7F7D;
+  animation: page-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--restaurant-ink);
+}
+
+.restaurant-2026-page h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--restaurant-ink);
+}
+
+.restaurant-2026-page h2,
+.restaurant-2026-page h3 {
+  color: var(--restaurant-ink);
+  font-weight: 750;
+}
+
+.restaurant-2026-page > div:first-child,
+.restaurant-2026-page > section:first-child {
+  scroll-margin-top: 120px;
+}
+
+.restaurant-2026-page .rounded-2xl {
+  border-color: #D9E6E3;
+  box-shadow: 0 6px 20px rgba(23, 59, 58, 0.055);
+}
+
+.restaurant-2026-page .rounded-2xl:hover {
+  border-color: #C5DAD5;
+}
+
+.restaurant-2026-page table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.restaurant-2026-page thead th {
+  background: #F0F5F3;
+  color: #506763;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #D9E6E3;
+}
+
+.restaurant-2026-page tbody tr:hover {
+  background: #F8FBFA;
+}
+
+.restaurant-2026-page input,
+.restaurant-2026-page textarea,
+.restaurant-2026-page [role="combobox"] {
+  border-radius: 0.7rem;
+  border-color: #CFDFDB;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(23, 59, 58, 0.025);
+}
+
+.restaurant-2026-page input:focus,
+.restaurant-2026-page textarea:focus,
+.restaurant-2026-page [role="combobox"]:focus {
+  border-color: var(--restaurant-green);
+  box-shadow: 0 0 0 3px rgba(7, 131, 79, 0.12);
+}
+
+.restaurant-2026-page button:not([data-state]),
+.restaurant-2026-page [role="button"] {
+  font-weight: 650;
+}
+
+.restaurant-2026-page [role="tablist"] {
+  display: flex;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.3rem;
+  border: 1px solid #D9E6E3;
+  border-radius: 0.85rem;
+  background: #EEF4F2;
+}
+
+.restaurant-2026-page [role="tab"] {
+  border-radius: 0.65rem;
+  color: #5C706C;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.restaurant-2026-page [role="tab"][data-state="active"] {
+  background: #FFFFFF;
+  color: var(--restaurant-green);
+  box-shadow: 0 2px 8px rgba(23, 59, 58, 0.08);
+}
+
+.restaurant-2026-page .text-muted-foreground {
+  color: var(--restaurant-muted);
+}
+
+.restaurant-2026-page .bg-primary,
+.restaurant-2026-page .bg-\[\#07834f\] {
+  background-color: var(--restaurant-green);
+}
+
+.restaurant-2026-page .text-primary {
+  color: var(--restaurant-green);
+}
+
+.restaurant-2026-page .restaurant-kpi {
+  border-top: 3px solid var(--restaurant-green);
+}
+
+@media (min-width: 1280px) {
+  .restaurant-2026-page {
+    min-height: calc(100dvh - 170px);
+  }
+}
+
+@media (max-width: 767px) {
+  .restaurant-2026-page {
+    padding-bottom: 1.25rem;
+  }
+  .restaurant-2026-page [role="tablist"] {
+    width: 100%;
+  }
+}
