@@ -1,14 +1,15 @@
+import type { ComponentType } from "react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fmtMoney } from "@/lib/format";
 import {
   ArrowRight, BarChart3, BedDouble, BookOpen, Bus, CalendarCheck, CheckCircle2,
   ClipboardCheck, FileBarChart, GraduationCap, HeartPulse, Megaphone, ReceiptText,
-  ShieldAlert, Sparkles, Users, Wallet, UserPlus, Trophy, Clock3,
+  Users, Wallet, Trophy, Clock3,
 } from "lucide-react";
 
 type Props={screen:string;data:Record<string,any[]>};
-type IconType=React.ComponentType<{className?:string}>;
+type IconType=ComponentType<{className?:string}>;
 
 const TITLES:Record<string,[string,string,string]>={
  "/school/admissions":["Admissions & Enrolment","Turn enquiries into enrolled learners with a clear application-to-class workflow.","Admissions"],
