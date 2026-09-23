@@ -12,7 +12,7 @@ import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
-import { recordPayments, today } from "@/lib/restaurant";
+import { recordPayments } from "@/lib/restaurant";
 
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
@@ -51,6 +51,7 @@ const TILE_COLOURS = ["bg-[#a72d2d]", "bg-[#6b168f]", "bg-[#bd5524]", "bg-[#2f71
 
 const VAT_RATE = 0.16;
 const DENOMS = [1, 5, 10, 20, 50, 100];
+const restaurantBusinessDate = () => new Date().toISOString().slice(0, 10);
 
 /* ---------------- page ---------------- */
 function Page() {
@@ -302,7 +303,7 @@ function Page() {
             order_id: recalled?.id ?? null,
             client_ref: recalled?.id ? `restaurant-settle:${recalled.id}` : `restaurant-sale:${uid}:${Date.now()}:${crypto.randomUUID()}`,
             order_no: recalled?.order_no ?? undefined,
-            business_date: today(),
+            business_date: restaurantBusinessDate(),
             table_id: needsTable ? tableId : null,
             order_type: mode,
             guests,
@@ -350,7 +351,7 @@ function Page() {
     const status = hold ? "held" : "open";
     if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
     const payload: any = {
-      user_id: uid, business_date: today(), table_id: needsTable ? tableId : null,
+      user_id: uid, business_date: restaurantBusinessDate(), table_id: needsTable ? tableId : null,
       order_type: mode, guests, subtotal, tax, total, discount,
       service_charge: serviceCharge, gratuity, delivery_fee: Number(activeType?.delivery_fee ?? 0),
       server_name: server || null,
@@ -448,8 +449,8 @@ function Page() {
     const cashier = String(server || "").trim();
     if (!cashier) { toast.error("Cashier is not assigned. Sign in with a POS cashier account."); return false; }
     const [shift, drawer] = await Promise.all([
-      supabase.from("restaurant_shifts").select("id").eq("user_id", u.user.id).eq("business_date", today()).is("clock_out", null).limit(1).maybeSingle(),
-      supabase.from("restaurant_cash_drawers").select("id").eq("user_id", u.user.id).eq("business_date", today()).eq("status", "open").limit(1).maybeSingle(),
+      supabase.from("restaurant_shifts").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).is("clock_out", null).limit(1).maybeSingle(),
+      supabase.from("restaurant_cash_drawers").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).eq("status", "open").limit(1).maybeSingle(),
     ]);
     if (shift.error || !shift.data) {
       toast.error("Start your cashier shift before taking sales.", { description: "Restaurant → Shifts" });
@@ -477,7 +478,7 @@ function Page() {
           order_id: o.id,
           client_ref: `restaurant-settle:${o.id}`,
           order_no: o.order_no,
-          business_date: today(),
+          business_date: restaurantBusinessDate(),
           table_id: o.table_id,
           order_type: o.order_type,
           guests: o.guests,
