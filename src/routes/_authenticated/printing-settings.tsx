@@ -326,6 +326,10 @@ function PrintingSettings() {
 
         {/* ---------------- Queue ---------------- */}
         <TabsContent value="queue" className="space-y-3 pt-4">
+          <Card className="rounded-xl p-4">
+            <div className="font-medium">Restaurant print recovery</div>
+            <p className="mt-1 text-xs text-muted-foreground">Kitchen, bar and receipt jobs remain in the local queue when a printer or agent is unavailable. Retry after reconnecting the terminal.</p>
+          </Card>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={async () => { const r = await flushPrintQueue(); toast.success(`${r.printed} printed, ${r.failed} still pending`); }}>
               <RotateCw className="mr-2 h-4 w-4" /> Retry all
