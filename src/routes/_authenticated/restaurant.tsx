@@ -31,6 +31,7 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant/shifts", label: "Shifts", icon: Clock },
   { to: "/restaurant/cash", label: "Cash", icon: Banknote },
   { to: "/restaurant/end-of-day", label: "End of day", icon: MoonStar },
+  { to: "/restaurant/cash-drawers", label: "Cash drawers", icon: WalletCards },
   { to: "/restaurant/reports", label: "Reports", icon: BarChart3 },
   { to: "/restaurant/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/restaurant/settings", label: "Settings", icon: Settings },
