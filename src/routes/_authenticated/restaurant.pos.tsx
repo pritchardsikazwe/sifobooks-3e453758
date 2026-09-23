@@ -10,7 +10,7 @@ import { savePrintQueueJob } from "@/services/printQueue";
 import { accrueLoyaltyForOrder } from "@/lib/restaurant-rewards";
 import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
 
 
@@ -76,6 +76,7 @@ function Page() {
   const [server, setServer] = useState("");
   const [recalled, setRecalled] = useState<Order | null>(null);
   const [clock, setClock] = useState(new Date());
+  const [fullScreen, setFullScreen] = useState(false);
 
   const [modifying, setModifying] = useState<MenuItem | null>(null);
   const [tender, setTender] = useState<{ method: string; order?: Order; amount: number } | null>(null);
@@ -354,9 +355,22 @@ function Page() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-9.5rem)] min-h-[620px] flex-col overflow-hidden rounded-[10px] border border-[#6f9694] bg-[#174b4b] text-white shadow-[0_12px_30px_#173c4030]">
+    <div className={cn("flex flex-col overflow-hidden border border-[#6f9694] bg-[#174b4b] text-white shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
       {/* top bar — order types */}
       <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#87a7a6] bg-[#315e64] p-[7px]">
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); setFullScreen(true); }
+              else { await document.exitFullscreen(); setFullScreen(false); }
+            } catch { setFullScreen(v => !v); }
+          }}
+          className="ml-auto shrink-0 rounded-lg border border-white/30 bg-[#20504d] px-3 py-2 text-[10px] font-black"
+          title="Full screen POS"
+        >
+          {fullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
         {typeLabels.map(t => (
           <button key={t} onClick={() => { setMode(t); setTableId(null); }}
             className={cn("h-[39px] shrink-0 rounded-[21px] border-2 px-[17px] text-[11px] font-extrabold tracking-wide transition active:scale-[.97]",
