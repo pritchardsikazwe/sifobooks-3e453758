@@ -115,7 +115,7 @@ function RestaurantSettings() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><Cog className="h-5 w-5" /> Restaurant settings</h1>
         <p className="text-sm text-muted-foreground">Tax, tips, order types, kitchen routing and delivery.</p>
