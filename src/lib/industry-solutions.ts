@@ -11,6 +11,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getIndustry, type CoASeed } from "@/lib/industries";
+import { getIndustryStarter } from "@/lib/industry-starters";
+import { getZambiaCoreCoa } from "@/lib/zambia-coa";
 
 export type SolutionStatus = "available" | "coming_soon";
 
@@ -303,11 +305,24 @@ export async function applyIndustrySolution(params: {
 
   let coaAdded = 0;
   const preset = sol.presetId ? getIndustry(sol.presetId) : undefined;
-  const coa: CoASeed[] = preset?.coa ?? [];
-  if (coa.length > 0) {
+  const starter = getIndustryStarter(sol.id);
+  const legacyCoa: CoASeed[] = preset?.coa ?? [];
+
+  // Every SifoBooks Zambia company starts from the same disciplined core COA.
+  // The industry starter then adds specialist accounts without deleting existing accounts.
+  const coreCoa = getZambiaCoreCoa().map((a) => ({
+    account_code: a.code,
+    account_name: a.name,
+    account_type: a.type,
+  }));
+  const starterCoa = starter.coaAccounts;
+  const combined = [...coreCoa, ...starterCoa, ...legacyCoa];
+  const deduped = Array.from(new Map(combined.map((a) => [a.account_code, a])).values());
+
+  if (deduped.length > 0) {
     const { data: existing } = await supabase.from("chart_of_accounts").select("account_code").eq("user_id", params.userId);
     const have = new Set((existing ?? []).map(r => r.account_code));
-    const toInsert = coa.filter(a => !have.has(a.account_code)).map(a => ({
+    const toInsert = deduped.filter(a => !have.has(a.account_code)).map(a => ({
       user_id: params.userId,
       account_code: a.account_code,
       account_name: a.account_name,
@@ -320,5 +335,23 @@ export async function applyIndustrySolution(params: {
       coaAdded = toInsert.length;
     }
   }
+
+  // Persist the industry starter metadata as configuration so onboarding,
+  // compliance and future setup screens can consume the same definition.
+  const starterConfig = {
+    edition: starter.edition,
+    industry: starter.industry,
+    tagline: starter.tagline,
+    about: starter.about,
+    compliance: starter.compliance,
+    roles: starter.roles,
+  };
+  const { error: moduleError } = await supabase.from("company_modules").upsert({
+    user_id: params.userId,
+    company_id: params.companyId,
+    module_key: "industry_starter",
+    config: starterConfig,
+  }, { onConflict: "company_id,module_key" });
+  if (moduleError) throw moduleError;
   return { coa_added: coaAdded };
 }
