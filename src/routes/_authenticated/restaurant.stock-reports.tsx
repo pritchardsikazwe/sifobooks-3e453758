@@ -290,7 +290,9 @@ function RestaurantStockReports() {
 
   const exportRows = useMemo(() => {
     if (tab === "stock-list" || tab === "value" || tab === "low" || tab === "out" || tab === "stock-take") {
-      return filteredItems.map(x => ({
+      const source = tab === "low" ? filteredItems.filter(x => ["low","critical"].includes(statusFor(x)))
+        : tab === "out" ? filteredItems.filter(x => statusFor(x) === "out") : filteredItems;
+      return source.map(x => ({
         "Item Code": x.sku || "", "Item Name": x.name, Category: x.category || "",
         Warehouse: warehouseMap.get(x.warehouse_id) || "Unassigned", Unit: x.unit || "",
         "On Hand": n(x.quantity_on_hand), "Reorder Level": n(x.reorder_level),
@@ -414,9 +416,15 @@ function ReportTable({tab,items,movementRows,recipeRows,warehouseMap}:{tab:Repor
     return <TableWrap><thead><tr>{["Date","Item Code","Item Name","Warehouse","Type","Reference","Direction","Quantity","Unit Cost","Value","Note"].map(h=><Th key={h}>{h}</Th>)}</tr></thead><tbody>{rows.map((x,i)=><tr key={x.date+x.sku+i}><Td>{x.date}</Td><Td mono>{x.sku}</Td><Td strong>{x.item}</Td><Td>{x.warehouse}</Td><Td><Badge variant="outline">{x.type}</Badge></Td><Td>{x.reference}</Td><Td><span className={x.direction==="OUT"?"text-red-600":"text-emerald-700"}>{x.direction}</span></Td><Td right>{x.qty.toLocaleString()}</Td><Td right>{money(x.unitCost)}</Td><Td right strong>{money(x.value)}</Td><Td>{x.note}</Td></tr>)}{!rows.length&&<Empty colSpan={11}/>}</tbody></TableWrap>;
   }
 
-  const rows=items;
-  const headers=["#","Item Code","Item Name","Category","Warehouse","Unit","On Hand","Reorder Level","Unit Cost (ZMW)","Stock Value (ZMW)","Status","Last Updated"];
-  return <TableWrap><thead><tr>{headers.map(h=><Th key={h}>{h}</Th>)}</tr></thead><tbody>{rows.map((x,i)=>{const s=statusFor(x);return <tr key={x.id}><Td>{i+1}</Td><Td mono>{x.sku||"—"}</Td><Td strong>{x.name}</Td><Td>{x.category||"Other"}</Td><Td>{warehouseMap.get(x.warehouse_id)||"Unassigned"}</Td><Td>{x.unit||"—"}</Td><Td right strong>{n(x.quantity_on_hand).toLocaleString()}</Td><Td right>{n(x.reorder_level).toLocaleString()}</Td><Td right>{money(x.cost_price)}</Td><Td right strong>{money(n(x.quantity_on_hand)*n(x.cost_price))}</Td><Td><Badge className={`border ${statusBadge(s)}`}>{s.replace("_"," ")}</Badge></Td><Td>{isoDay(x.updated_at||x.created_at)}</Td></tr>})}{!rows.length&&<Empty colSpan={12}/>}</tbody></TableWrap>;
+  let rows=items;
+  if(tab==="low") rows=rows.filter(x=>["low","critical"].includes(statusFor(x)));
+  if(tab==="out") rows=rows.filter(x=>statusFor(x)==="out");
+  const headers=tab==="stock-take"
+    ? ["#","Item Code","Item Name","Category","Warehouse","Unit","Book Qty","Counted Qty","Variance","Status"]
+    : ["#","Item Code","Item Name","Category","Warehouse","Unit","On Hand","Reorder Level","Unit Cost (ZMW)","Stock Value (ZMW)","Status","Last Updated"];
+  return <TableWrap><thead><tr>{headers.map(h=><Th key={h}>{h}</Th>)}</tr></thead><tbody>{rows.map((x,i)=>{const s=statusFor(x);return tab==="stock-take"
+    ? <tr key={x.id}><Td>{i+1}</Td><Td mono>{x.sku||"—"}</Td><Td strong>{x.name}</Td><Td>{x.category||"Other"}</Td><Td>{warehouseMap.get(x.warehouse_id)||"Unassigned"}</Td><Td>{x.unit||"—"}</Td><Td right strong>{n(x.quantity_on_hand).toLocaleString()}</Td><Td right>________</Td><Td right>________</Td><Td><Badge className={`border ${statusBadge(s)}`}>{s.replace("_"," ")}</Badge></Td></tr>
+    : <tr key={x.id}><Td>{i+1}</Td><Td mono>{x.sku||"—"}</Td><Td strong>{x.name}</Td><Td>{x.category||"Other"}</Td><Td>{warehouseMap.get(x.warehouse_id)||"Unassigned"}</Td><Td>{x.unit||"—"}</Td><Td right strong>{n(x.quantity_on_hand).toLocaleString()}</Td><Td right>{n(x.reorder_level).toLocaleString()}</Td><Td right>{money(x.cost_price)}</Td><Td right strong>{money(n(x.quantity_on_hand)*n(x.cost_price))}</Td><Td><Badge className={`border ${statusBadge(s)}`}>{s.replace("_"," ")}</Badge></Td><Td>{isoDay(x.updated_at||x.created_at)}</Td></tr>})}{!rows.length&&<Empty colSpan={headers.length}/>}</tbody></TableWrap>;
 }
 
 function TableWrap({children}:{children:ReactNode}) {
