@@ -90,6 +90,7 @@ function EndOfDay() {
   const close = async () => {
     if (openChecks.length) return toast.error(`${openChecks.length} check(s) still open — settle or void them first.`);
     if (openDrawers.length) return toast.error("Close and count every cash drawer first.");
+    if (closed) return toast.error("This business day is already closed.");
     if (!manager.trim()) return toast.error("Manager approval name is required");
     setBusy(true);
     const u = await uid();
@@ -98,7 +99,8 @@ function EndOfDay() {
       discounts: t.discounts, tax: t.tax, service_charge: t.service, gratuity: t.gratuity,
       delivery_fees: t.delivery, cash_sales: Number(byPayment.cash || 0),
       card_sales: Number(byPayment.card || 0), momo_sales: Number(byPayment.momo || 0),
-      other_sales: Object.entries(byPayment).filter(([k]) => !["cash","card","momo"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
+      airtel_sales: Number(byPayment.airtel || 0),
+      other_sales: Object.entries(byPayment).filter(([k]) => !["cash","card","momo","airtel"].includes(k)).reduce((s,[,v]) => s + Number(v), 0),
       cash_payouts: drawers.reduce((s,d) => s + Number(d.cash_payouts || 0), 0),
       cash_variance: variance, net_total: t.net, status: "closed",
       approved_by: manager, notes: `Z-read ${date}; voids=${voids.length}; refunds=${refunds.length}; cost_of_sales=${cogs.toFixed(2)}`,
