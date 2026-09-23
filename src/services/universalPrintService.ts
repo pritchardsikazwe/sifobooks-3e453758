@@ -406,7 +406,12 @@ export async function printPdf(pdfBase64: string, printer?: string, copies = 1, 
   return res;
 }
 
-export async function printReceipt(receipt: ReceiptData, printer?: string, copies = 1) {
+export async function printReceipt(
+  receipt: ReceiptData,
+  printer?: string,
+  copies = 1,
+  options?: { jobId?: string; reference?: string; openCashDrawer?: boolean },
+) {
   const printable = { ...receipt, zra: receipt.zra ? { ...receipt.zra } : receipt.zra };
   if ((printable.zra?.status === "fiscalized" || printable.zra?.status === "submitted") && printable.zra.qrCodeUrl && !printable.zra.qrDataUrl) {
     try { printable.zra.qrDataUrl = await QRCode.toDataURL(printable.zra.qrCodeUrl, { margin: 1, width: 240 }); } catch { /* URL is still printed as verification text. */ }
@@ -419,26 +424,46 @@ export async function printReceipt(receipt: ReceiptData, printer?: string, copie
       copies,
       jobType: "pos_receipt",
       title: `Receipt ${receipt.receiptNumber}`,
-      reference: receipt.receiptNumber,
-      jobId: `receipt:${receipt.receiptNumber}`,
-      openCashDrawer: true,
+      reference: options?.reference ?? receipt.receiptNumber,
+      jobId: options?.jobId ?? `receipt:${receipt.receiptNumber}`,
+      openCashDrawer: options?.openCashDrawer ?? true,
     },
   );
 }
 
-export async function printKitchenOrder(order: KitchenOrder, printer?: string) {
+export async function printKitchenOrder(
+  order: KitchenOrder,
+  printer?: string,
+  options?: { jobId?: string; reference?: string },
+) {
   return dispatch(
     "kitchen",
     { kitchenOrder: order },
-    { printer, jobType: "kitchen", title: `Kitchen ${order.orderNumber}`, reference: order.orderNumber, jobId: `kitchen:${order.orderNumber}:${ticketRevision(order)}` },
+    {
+      printer,
+      jobType: "kitchen",
+      title: `Kitchen ${order.orderNumber}`,
+      reference: options?.reference ?? order.orderNumber,
+      jobId: options?.jobId ?? `kitchen:${order.orderNumber}:${ticketRevision(order)}`,
+    },
   );
 }
 
-export async function printBarOrder(order: KitchenOrder, printer?: string) {
+export async function printBarOrder(
+  order: KitchenOrder,
+  printer?: string,
+  options?: { jobId?: string; reference?: string },
+) {
   return dispatch(
     "bar",
     { kitchenOrder: order },
-    { printer, jobType: "bar", title: `Bar ${order.orderNumber}`, reference: order.orderNumber, jobId: `bar:${order.orderNumber}:${ticketRevision(order)}` },
+    {
+      printer,
+      jobType: "bar",
+      title: `Bar ${order.orderNumber}`,
+      reference: options?.reference ?? order.orderNumber,
+      jobId: options?.jobId ?? `bar:${order.orderNumber}:${ticketRevision(order)}`,
+    },
   );
 }
 
