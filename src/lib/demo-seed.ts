@@ -53,7 +53,7 @@ export function loadDemoData(userId: string): DemoSeedResult {
   const result = db.transaction(() => {
     // Company/demo profile context
     db.prepare("UPDATE companies SET trading_name=?,industry=?,workspace_mode=?,vat_registered=1,base_currency='ZMW',country='Zambia',updated_at=datetime('now') WHERE id=? AND user_id=?")
-      .run("SifoDemo", "Retail & Restaurant", "accounting", company.id, uid);
+      .run("SifoDemo", company.name, "accounting", company.id, uid);
 
     db.prepare("UPDATE profiles SET business_name=?,country='Zambia',currency='ZMW',vat_registered=1,onboarded=1,active_company_id=?,updated_at=datetime('now') WHERE id=?")
       .run("SifoDemo", company.id, uid);
@@ -98,6 +98,11 @@ export function loadDemoData(userId: string): DemoSeedResult {
     ];
     const acct: Record<string,string> = {};
     for (const [code,name,type] of accounts) {
+      const existing = db.prepare("SELECT id FROM chart_of_accounts WHERE user_id=? AND account_code=? LIMIT 1").get(uid, code) as any;
+      if (existing?.id) {
+        acct[code] = existing.id;
+        continue;
+      }
       const id = add("chart_of_accounts", {
         id: generateUUID(), user_id: uid, account_code: code, account_name: name, account_type: type,
         is_active: 1, purpose: code === "1000" ? "SALE_CASH" : code === "1010" ? "PAYMENT_CASH" :
