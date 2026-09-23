@@ -350,11 +350,13 @@ function Page() {
     const status = hold ? "held" : "open";
     if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
     const payload: any = {
-      user_id: uid, table_id: needsTable ? tableId : null,
+      user_id: uid, business_date: today(), table_id: needsTable ? tableId : null,
       order_type: mode, guests, subtotal, tax, total, discount,
+      service_charge: serviceCharge, gratuity, delivery_fee: Number(activeType?.delivery_fee ?? 0),
       server_name: server || null,
       customer_name: customer || null,
-      status, payment_method: pay ?? null, closed_at: pay ? new Date().toISOString() : null,
+      status, payment_method: pay ?? null, amount_paid: pay ? total : 0,
+      closed_at: pay ? new Date().toISOString() : null,
     };
     const q = recalled
       ? supabase.from("restaurant_orders").update(payload).eq("id", recalled.id).select("*").single()
