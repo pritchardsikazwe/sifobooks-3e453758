@@ -26,7 +26,7 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: perms } = await supabaseAdmin
       .from("employee_pos_permissions")
-      .select("id, full_name, pos_role, email, cashier_code, pin_set_at, pin_disabled")
+      .select("id, full_name, display_name, pos_role, email, cashier_code, pin_set_at, pin_disabled")
       .eq("cashier_code", data.cashier_code)
       .eq("is_active", true)
       .order("pin_set_at", { ascending: false, nullsFirst: false });
@@ -50,7 +50,7 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
     const tokenHash = link?.properties?.hashed_token;
     if (linkErr || !tokenHash) return { ok: false as const, error: "Cashier login is not available. Ask your manager." };
     return {
-      ok: true as const, token_hash: tokenHash, full_name: perm.full_name as string | null,
+      ok: true as const, token_hash: tokenHash, full_name: (perm.display_name ?? perm.full_name ?? perm.cashier_code) as string | null,
       cashier_code: perm.cashier_code as string | null, pos_role: (perm.pos_role as string | null) ?? "cashier",
     };
   });
