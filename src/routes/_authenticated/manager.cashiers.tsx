@@ -41,7 +41,7 @@ function ManagerCashiers() {
 
   const load = async () => {
     const [p, b, l, r] = await Promise.all([
-      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("full_name"),
+      supabase.from("employee_pos_permissions").select("id,user_id,worker_user_id,employee_id,company_id,full_name,display_name,cashier_code,pos_role,allow,deny,is_active,created_at,updated_at,email,pin_locked,pin_set_at,branch_id,location_id,register_id,drawer_name,failed_pin_attempts,pin_locked_until,last_pin_login_at,pin_disabled").order("full_name"),
       supabase.from("branches").select("id,name").eq("active", true).order("name"),
       supabase.from("inventory_locations").select("id,name").eq("is_active", true).order("name"),
       supabase.from("pos_registers").select("id,name").eq("is_active", true).order("name"),
