@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   UtensilsCrossed, LayoutGrid, CalendarClock, ChefHat, BookOpen, Boxes, Users,
-  Banknote, BarChart3, Wallet, TrendingUp, Receipt, AlertTriangle, Timer,
+  Banknote, BarChart3, Wallet, TrendingUp, Receipt, AlertTriangle, Timer, Settings, ShieldCheck, Printer,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/")({
@@ -37,6 +37,9 @@ const QUICK = [
   { to: "/restaurant/cash", label: "Cash", icon: Banknote },
   { to: "/restaurant/reports", label: "Reports", icon: BarChart3 },
   { to: "/dashboard", label: "Accounting", icon: Wallet },
+  { to: "/manager/cashiers", label: "Cashiers", icon: Users },
+  { to: "/printing-settings", label: "Printing", icon: Receipt },
+  { to: "/restaurant/settings", label: "Restaurant settings", icon: Settings },
 ] as { to: string; label: string; icon: any }[];
 
 function Dashboard() {
@@ -80,6 +83,7 @@ function Dashboard() {
   const kitchenQueue = items.filter((i) => i.kds_status === "queued" || i.kds_status === "cooking");
   const delivery = orders.filter((o) => o.order_type === "DELIVERY");
   const avgTicket = t.orders ? t.net / t.orders : 0;
+  const stockValue = lowStock.reduce((s, x) => s + Number(x.quantity_on_hand || 0) * Number(x.cost_price || 0), 0);
   const cashPosition = drawers.reduce(
     (s, d) => s + Number(d.opening_float || 0) + Number(d.cash_sales || 0) - Number(d.cash_payouts || 0) - Number(d.cash_drops || 0),
     0,
@@ -128,6 +132,7 @@ function Dashboard() {
     { label: "Kitchen queue", value: String(kitchenQueue.length), icon: ChefHat },
     { label: "Delivery orders", value: String(delivery.length), icon: Timer },
     { label: "Cash position", value: fmtMoney(cashPosition), icon: Banknote },
+    { label: "Low-stock value", value: fmtMoney(stockValue), icon: Boxes },
   ];
 
   return (
@@ -136,6 +141,27 @@ function Dashboard() {
         <h1 className="text-2xl font-semibold tracking-tight">Restaurant command centre</h1>
         <p className="text-sm text-muted-foreground">Live service today — every settled check posts to your ledger automatically.</p>
       </div>
+
+      <Card className="rounded-2xl border-[#cfe0db] bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="mr-auto">
+            <div className="text-xs font-black uppercase tracking-[.16em] text-[#07834f]">Manager controls</div>
+            <div className="text-sm text-muted-foreground">Run the restaurant from one place — people, stock, tills, printing and close-of-day.</div>
+          </div>
+          {[
+            ["/manager/cashiers", "Cashiers", Users],
+            ["/stock", "Stock", Boxes],
+            ["/printing-settings", "Printing", Printer],
+            ["/restaurant/end-of-day", "Close day", ShieldCheck],
+            ["/restaurant/settings", "Settings", Settings],
+            ["/admin", "Administration", ShieldCheck],
+          ].map(([to, label, Icon]: any) => (
+            <Link key={String(to)} to={to as never} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d7e4e0] bg-[#f7faf8] px-3 text-xs font-bold text-[#173b3a] hover:border-[#07834f] hover:bg-[#edf7f2]">
+              <Icon className="h-4 w-4 text-[#07834f]" /> {label}
+            </Link>
+          ))}
+        </div>
+      </Card>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
