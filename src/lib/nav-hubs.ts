@@ -307,6 +307,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "School Management", url: "/school", module: "school_erp", iconName: "School" },
           { title: "Hotel Management", url: "/hotel", module: "hotel_erp", iconName: "Hotel" },
+          { title: "Property & Tenancy", url: "/property", module: "property_management", iconName: "Building2", primary: true, hint: "Apartments, complexes, boarding houses, monthly rent, daily/BnB stays, collections and maintenance." },
           { title: "Public Services", url: "/public-services", module: "public_services", iconName: "Globe2" },
         ],
       },
