@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Boxes, ChevronRight, Edit3, Eye, MoreHorizontal, PackageCheck, Plus, RefreshCw, SlidersHorizontal, Trash2, UtensilsCrossed, Warehouse as WarehouseIcon } from "lucide-react";
+import { Archive, Boxes, ChevronRight, Edit3, Eye, MoreHorizontal, PackageCheck, Plus, RefreshCw, SlidersHorizontal, Trash2, UtensilsCrossed, Warehouse as WarehouseIcon, FileBarChart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uid } from "@/lib/restaurant";
 import { fmtMoney } from "@/lib/format";
@@ -177,6 +177,7 @@ function RestaurantItemsStock() {
           <h1 className="mt-1 text-2xl font-black tracking-tight text-[#173b3a]">Items & Stock</h1>
           <p className="text-sm text-muted-foreground">Manage menu items, ingredients, warehouse quantities and POS availability.</p>
         </div>
+        <Button variant="outline" onClick={() => window.location.assign("/restaurant/stock-reports")}><FileBarChart className="mr-2 h-4 w-4" /> Stock Reports</Button>
         <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
         <Button onClick={() => { setTab("items"); setSelected(null); setEditForm({ name: "", category: "Mains", station: "Kitchen", price: "0", cost: "0", active: true }); setEditOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add Item</Button>
       </div>
