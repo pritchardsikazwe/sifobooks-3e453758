@@ -42,8 +42,8 @@ function RestaurantShell() {
   const secondary = NAV.slice(7);
 
   return (
-    <div className="min-h-[calc(100dvh-2rem)] bg-[#f4f7f6] text-[#173b3a] -mx-2 -mt-2">
-      <header className="sticky top-0 z-40 border-b border-[#164744] bg-[#073b38] text-white shadow-lg">
+    <div className="restaurant-2026-shell min-h-[calc(100dvh-2rem)] bg-[#f4f7f6] text-[#173b3a] -mx-2 -mt-2">
+      <header className="restaurant-2026-header sticky top-0 z-40 border-b border-[#164744] bg-[#073b38] text-white shadow-lg">
         <div className="flex min-h-[72px] items-center gap-5 px-4 lg:px-7">
           <Link to="/restaurant" className="flex shrink-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#e5b83f] bg-[#0c514b] text-[#e5b83f] shadow-inner">
