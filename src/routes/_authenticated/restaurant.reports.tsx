@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { ExportMenu } from "@/lib/exports";
 import {
   BarChart3, CalendarDays, Download, FileBarChart, FileSpreadsheet, Printer,
-  RefreshCw, TrendingUp, UtensilsCrossed, WalletCards, Users2, Clock3,
+  RefreshCw, TrendingUp, UtensilsCrossed, WalletCards, Users2, Clock3, Boxes,
 } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
@@ -40,6 +40,7 @@ const REPORTS = [
   { id: "cashier", title: "Cashier / Server Sales", group: "Staff", icon: Users2, description: "Sales by server or cashier for accountability." },
   { id: "food-cost", title: "Food Cost & Profitability", group: "Inventory", icon: TrendingUp, description: "Recipe and line cost against selling value." },
   { id: "end-of-day", title: "End of Day / Z-Report", group: "Compliance", icon: FileBarChart, description: "Close-of-day totals, tenders, refunds and exceptions." },
+  { id: "stock-reports", title: "Stock & Inventory Reports", group: "Inventory", icon: Boxes, description: "Stock list, movement, usage, valuation, low stock, wastage and recipe costing." },
 ] as const;
 
 type ReportId = typeof REPORTS[number]["id"];
