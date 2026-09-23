@@ -1,4 +1,4 @@
-export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school";
+export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property;
 
 const raw = String((import.meta as any).env?.VITE_SIFOBOOKS_EDITION || "enterprise").toLowerCase();
 
