@@ -75,10 +75,10 @@ function Kitchen() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><ChefHat className="h-5 w-5" /> Kitchen display</h1>
+          <div className="text-[11px] font-black uppercase tracking-[.18em] text-[#087b4b]">Live production</div><h1 className="text-2xl font-black tracking-tight flex items-center gap-2 text-[#173b3a]"><ChefHat className="h-5 w-5" /> Kitchen display</h1>
           <p className="text-sm text-muted-foreground">{tickets.length} active tickets · updates live</p>
         </div>
         {stations.map((s) => (
@@ -97,7 +97,7 @@ function Kitchen() {
             const mins = Math.round((Date.now() - new Date(t.order.opened_at).getTime()) / 60000);
             const late = mins > 20;
             return (
-              <Card key={t.order.id} className={cn("rounded-2xl overflow-hidden border-2", late ? "border-rose-500/50" : "border-border")}>
+              <Card key={t.order.id} className={cn("rounded-2xl overflow-hidden border-2 bg-[#073b38] text-white shadow-md", late ? "border-rose-500/50" : "border-border")}>
                 <div className={cn("px-3 py-2 flex items-center justify-between text-sm font-semibold",
                   late ? "bg-rose-500/10 text-rose-600" : "bg-primary/10 text-primary")}>
                   <span>{t.order.order_no}</span>
