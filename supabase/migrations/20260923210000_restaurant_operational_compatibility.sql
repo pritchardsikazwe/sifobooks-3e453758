@@ -1,0 +1,26 @@
+-- Cloud/Postgres compatibility for the restaurant and purchasing screens.
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS vat_number TEXT;
+ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS address TEXT;
+
+ALTER TABLE restaurant_menu_items ADD COLUMN IF NOT EXISTS is_86 INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_menu_items ADD COLUMN IF NOT EXISTS prices JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+ALTER TABLE restaurant_order_items ADD COLUMN IF NOT EXISTS unit_cost DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_order_items ADD COLUMN IF NOT EXISTS discount DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_order_items ADD COLUMN IF NOT EXISTS modifiers JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS customer_name TEXT;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS service_charge DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS gratuity DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS delivery_fee DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS amount_paid DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS journal_entry_id TEXT;
+ALTER TABLE restaurant_orders ADD COLUMN IF NOT EXISTS void_reason TEXT;
+
+ALTER TABLE restaurant_tables ADD COLUMN IF NOT EXISTS shape TEXT NOT NULL DEFAULT 'square';
+ALTER TABLE restaurant_tables ADD COLUMN IF NOT EXISTS occupied_since TIMESTAMPTZ;
+ALTER TABLE restaurant_tables ADD COLUMN IF NOT EXISTS current_order_id TEXT;
+ALTER TABLE restaurant_tables ADD COLUMN IF NOT EXISTS server_name TEXT;
