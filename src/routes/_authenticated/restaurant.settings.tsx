@@ -47,15 +47,32 @@ function RestaurantSettings() {
       db.from("restaurant_kitchen_stations").select("*").eq("user_id", u).order("name"),
       db.from("restaurant_delivery_zones").select("*").eq("user_id", u).order("name"),
     ]);
-    if (s.data) setSettings(s.data);
+    if (s.data) {
+      const raw = s.data as any;
+      setSettings({
+        ...raw,
+        tax_rate: Number(raw.vat_rate ?? VAT_RATE),
+        service_charge_rate: Number(raw.service_charge_pct ?? 0),
+        default_gratuity_rate: Number(raw.gratuity_options ?? 0),
+      });
+    }
     setTypes(t.data ?? []); setStations(k.data ?? []); setZones(z.data ?? []);
   };
   useEffect(() => { load(); }, []);
 
   const saveSettings = async () => {
     const u = await uid();
-    const payload = { user_id: u, ...settings };
-    delete payload.id; delete payload.created_at; delete payload.updated_at;
+    const payload: any = {
+      user_id: u,
+      business_name: settings.business_name ?? null,
+      vat_rate: Number(settings.tax_rate ?? VAT_RATE),
+      service_charge_pct: Number(settings.service_charge_rate ?? 0),
+      gratuity_options: String(Number(settings.default_gratuity_rate ?? 0)),
+      packaging_fee: Number(settings.packaging_fee ?? 0),
+      auto_post_sales: !!settings.auto_post_sales,
+      deplete_ingredients: !!settings.deplete_ingredients,
+      receipt_footer: settings.receipt_footer ?? "",
+    };
     const { error } = settings.id
       ? await db.from("restaurant_settings").update(payload).eq("id", settings.id)
       : await db.from("restaurant_settings").insert(payload);
