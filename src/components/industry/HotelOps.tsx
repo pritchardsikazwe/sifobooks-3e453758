@@ -957,11 +957,12 @@ export function NightAudit() {
   const roomsDirty = rooms.filter((r) => String(r.housekeeping_status ?? "").toLowerCase() !== "clean" && !r.out_of_order).length;
   const unresolvedTickets = 0;
   const auditChecklist = [
-    { label: "Room occupancy reconciled", ok: exceptions.every((x) => !x.toLowerCase().includes("occupied")) },
+    { label: "Room occupancy reconciled", ok: !auditFlags.some((x) => x.toLowerCase().includes("occupied")) },
     { label: "Payment methods complete", ok: !charges.some((c) => c.category === "payment" && !c.payment_method) },
     { label: "Housekeeping exceptions reviewed", ok: roomsDirty === 0 },
     { label: "Revenue and payment totals reviewed", ok: Math.abs(paymentVariance) < 0.01 },
     { label: "Maintenance exceptions reviewed", ok: unresolvedTickets === 0 },
+    { label: "POS checks closed", ok: openOrders === 0 },
   ];
 
   const runAudit = async () => {
@@ -972,7 +973,7 @@ export function NightAudit() {
       user_id: uid, audit_date: date, rooms_available: available, rooms_occupied: occupied,
       room_revenue: roomRevenue, fnb_revenue: fnbRevenue, other_revenue: otherRevenue,
       vat_total: vatTotal, levy_total: levyTotal, service_charge_total: serviceTotal,
-      payments: paymentsByMethod, exceptions, status: exceptions.length ? "review" : "closed", run_by: uid,
+      payments: paymentsByMethod, exceptions, status: auditChecklist.every((x) => x.ok) ? "closed" : "review", run_by: uid,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -996,6 +997,8 @@ export function NightAudit() {
         <MetricTile label="ADR" value={money(adr)} icon={Wallet} hint="Average daily rate" />
         <MetricTile label="RevPAR" value={money(revpar)} icon={Wallet} hint="Revenue per available room" />
         <MetricTile label="Food & beverage" value={money(fnbRevenue)} icon={Wallet} tone="info" />
+        <MetricTile label="Open POS checks" value={String(openOrders)} icon={Moon} tone={openOrders ? "warn" : "good"} />
+        <MetricTile label="Maintenance open" value={String(unresolvedTickets)} icon={Moon} tone={unresolvedTickets ? "warn" : "good"} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -1027,9 +1030,9 @@ export function NightAudit() {
       </Board>
 
       <Board title="Exceptions" hint="Resolve these before closing the day.">
-        {exceptions.length === 0 ? <div className="p-6 text-sm text-muted-foreground">No exceptions found for {date}.</div> : (
+        {auditFlags.length === 0 ? <div className="p-6 text-sm text-muted-foreground">No exceptions found for {date}.</div> : (
           <ul className="space-y-2 p-4 text-sm">
-            {exceptions.map((e) => <li key={e} className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2">{e}</li>)}
+            {auditFlags.map((e) => <li key={e} className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2">{e}</li>)}
           </ul>
         )}
       </Board>
