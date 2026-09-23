@@ -254,7 +254,7 @@ function RestaurantReports() {
             {REPORTS.map((r) => {
               const Icon = r.icon;
               return (
-                <button key={r.id} onClick={() => setReport(r.id)}
+                <button key={r.id} onClick={() => r.id === "stock-reports" ? window.location.assign("/restaurant/stock-reports") : setReport(r.id)}
                   className={cn("w-full rounded-xl p-3 text-left transition", report === r.id ? "bg-[#073b38] text-white shadow-md" : "hover:bg-[#f1f6f4] text-[#173b3a]")}>
                   <div className="flex items-center gap-3">
                     <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", report === r.id ? "bg-[#e5b83f] text-[#173b3a]" : "bg-[#e5b83f]/15 text-[#087b4b]")}><Icon className="h-4 w-4" /></span>
