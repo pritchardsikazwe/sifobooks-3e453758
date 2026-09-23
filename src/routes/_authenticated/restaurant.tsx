@@ -24,6 +24,7 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant/orders", label: "Orders", icon: ListOrdered },
   { to: "/restaurant/kitchen", label: "Kitchen", icon: ChefHat },
   { to: "/restaurant/menu", label: "Menu", icon: BookOpen },
+  { to: "/restaurant/items-stock", label: "Items & Stock", icon: Boxes },
   { to: "/restaurant/combos", label: "Combos", icon: Layers },
   { to: "/restaurant/call-center", label: "Call centre", icon: PhoneCall },
   { to: "/restaurant/dispatch", label: "Dispatch", icon: Bike },
