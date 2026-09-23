@@ -1,7 +1,8 @@
 // Zambia statutory reference — configurable rates & rules used across SifoBooks.
 // These are indicative and should be verified against current ZRA/NAPSA/NHIMA guidance.
 
-export const ZAMBIA_TAX_YEAR = 2026;\nexport const ZAMBIA_TAX_SOURCE_NOTE = "Rates and thresholds are configurable and should be refreshed against current official authority guidance before production filing.";
+export const ZAMBIA_TAX_YEAR = 2026;
+export const ZAMBIA_TAX_SOURCE_NOTE = "Rates and thresholds are configurable and should be refreshed against current official authority guidance before production filing.";
 
 /** PAYE monthly bands (ZMW). Configurable in Payroll settings. */
 export const PAYE_BANDS_MONTHLY = [
