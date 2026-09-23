@@ -17,6 +17,7 @@ import { Printer, ChefHat, Wine } from "lucide-react";
 import { loadPosContext, canFully, type PosContext } from "@/lib/pos-permissions";
 import { getTerminalInfo } from "@/services/printTerminal";
 import { printReceipt, printKitchenOrder, printBarOrder } from "@/services/universalPrintService";
+import { reverseRestaurantSaleFn } from "@/lib/restaurant/reversal";
 
 export const Route = createFileRoute("/_authenticated/restaurant/orders")({
   head: () => ({
@@ -62,28 +63,26 @@ function Orders() {
     void loadPosContext().then(setPosContext);
   }, []);
 
-  const settle = async (o: any, method: string) => {
-    const amount = Number(o.total || 0);
-    if (amount <= 0) return toast.error("This check has no payable total.");
-    const { error: paymentError } = await db.from("restaurant_payments").insert({
-      user_id: (await uid()),
-      order_id: o.id,
-      method,
-      amount,
-      tendered: amount,
-      change_given: 0,
-      reference: o.order_no ?? null,
-    } as any);
-    if (paymentError) return toast.error(paymentError.message);
-    const { error } = await db.from("restaurant_orders")
-      .update({ status: "paid", payment_method: method, amount_paid: amount, closed_at: new Date().toISOString() })
-      .eq("id", o.id)
-      .in("status", ["open", "held"]);
-    if (error) return toast.error(error.message);
-    if (o.table_id) await db.from("restaurant_tables").update({ status: "dirty", occupied_since: null, current_order_id: null }).eq("id", o.table_id);
-    toast.success(`Settled ${fmtMoney(amount)} by ${method}`);
-    load();
+  const refundOrder = async (o: any) => {
+    if (!canFully(posContext, "void_item")) {
+      return toast.error("Manager or supervisor permission is required to refund a restaurant check.");
+    }
+    const reason = window.prompt("Reason for refunding this posted check?");
+    if (!reason?.trim()) return;
+    try {
+      const result = await reverseRestaurantSaleFn({ data: {
+        orderId: o.id,
+        action: "refund",
+        reason: reason.trim(),
+      }});
+      if (result.error) return toast.error(result.error.message);
+      toast.success(`Refund posted: ${result.data?.reversalNo ?? "complete"}`);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Refund failed");
+    }
   };
+
 
   const voidOrder = async (o: any) => {
     if (!canFully(posContext, "void_item")) {
@@ -281,12 +280,16 @@ function Orders() {
                         </p>
                       )}
                     </div>
-                    {o.status !== "paid" && o.status !== "void" && (
+                    {(o.status === "open" || o.status === "held") && (
                       <div className="flex flex-wrap gap-2">
-                        {PAYMENT_METHODS.slice(0, 4).map((m) => (
-                          <Button key={m} size="sm" variant="outline" onClick={() => settle(o, m)}>Settle · {m}</Button>
-                        ))}
                         <Button size="sm" variant="destructive" onClick={() => voidOrder(o)}>Void</Button>
+                        <span className="self-center text-xs text-muted-foreground">Open/held checks must be settled from the POS so stock, drawer and accounting post atomically.</span>
+                      </div>
+                    )}
+                    {o.status === "paid" && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="destructive" onClick={() => refundOrder(o)}>Refund posted check</Button>
+                        <span className="self-center text-xs text-muted-foreground">Manager approval reverses stock, payment, cash drawer and journal impact together.</span>
                       </div>
                     )}
                     {o.status !== "void" && (
