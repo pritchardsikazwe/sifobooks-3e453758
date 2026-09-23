@@ -109,7 +109,7 @@ function Reservations() {
   const peak = Math.max(1, ...slots.map((h) => (byHour.get(h) ?? []).reduce((s, r) => s + Number(r.guests || 0), 0)));
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight">Reservations</h1>
