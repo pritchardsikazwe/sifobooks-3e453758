@@ -234,158 +234,66 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
   setGlobalNotice: (v: string | null) => void;
   setTab: (v: "signin" | "signup" | "reset") => void;
 }) {
-  const [step, setStep] = useState(0);
   const [showPw, setShowPw] = useState(false);
   const { next: signupNext } = Route.useSearch();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [f, setF] = useState({
-    name: "", email: "", password: "",
-    business_name: "", country: "Zambia",
-    tpin: "", vat_registered: false,
-  });
+  const [f, setF] = useState({ name: "", email: "", password: "" });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF(p => ({ ...p, [k]: v }));
-
-  const steps = [
-    { title: "Create your account", desc: "Your login details", icon: User },
-    { title: "Your business", desc: "So invoices carry your name", icon: Building2 },
-    { title: "ZRA compliance", desc: "TPIN and VAT status (optional)", icon: ShieldCheck },
-  ];
-
-  const canNext =
-    (step === 0 && nameSchema.safeParse(f.name).success && emailSchema.safeParse(f.email).success && passwordSchema.safeParse(f.password).success) ||
-    (step === 1 && f.business_name.trim().length > 0 && f.country.length > 0) ||
-    step === 2;
+  const valid = nameSchema.safeParse(f.name).success && emailSchema.safeParse(f.email).success && passwordSchema.safeParse(f.password).success;
 
   const finish = async () => {
-    setErr(null); setGlobalError(null); setGlobalNotice(null);
-    setSaving(true);
+    setErr(null); setGlobalError(null); setGlobalNotice(null); setSaving(true);
     const { data, error } = await supabase.auth.signUp({
       email: f.email.trim(), password: f.password,
       options: {
-        emailRedirectTo: signupNext ? `${window.location.origin}${signupNext}` : `${window.location.origin}/dashboard`,
+        emailRedirectTo: signupNext ? `${window.location.origin}${signupNext}` : `${window.location.origin}/launch`,
         data: { full_name: f.name.trim() },
       },
     });
     if (error) { setSaving(false); return setErr(error.message); }
     if (!data.session) {
-      // Email confirmation required — store business fields locally for onboarding after sign-in.
       setSaving(false);
-      setGlobalNotice("Check your email to confirm your account, then sign in.");
+      setGlobalNotice("Check your email to confirm your account, then sign in. Your company setup starts after registration.");
       setTab("signin");
       return;
     }
-    // Session available — write business + ZRA details into profile immediately.
     const uid = data.user?.id;
     if (uid) {
-      await supabase.from("profiles").update({
-        full_name: f.name.trim(),
-        business_name: f.business_name.trim(),
-        country: f.country,
-        tpin: f.tpin.trim() || null,
-        vat_registered: f.vat_registered,
-      }).eq("id", uid);
+      await supabase.from("profiles").update({ full_name: f.name.trim(), email: f.email.trim() }).eq("id", uid);
     }
     setSaving(false);
     await onDone();
   };
 
   const pw = pwStrength(f.password);
-
   return (
     <div className="pt-4">
-      <div className="mb-4 flex items-center justify-center gap-2">
-        {steps.map((s, i) => {
-          const Icon = s.icon;
-          const active = i === step;
-          const done = i < step;
-          return (
-            <div key={i} className="flex items-center gap-2">
-              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${done ? "bg-primary text-primary-foreground" : active ? "bg-primary/15 text-primary ring-2 ring-primary" : "bg-muted text-muted-foreground"}`}>
-                {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
-              </div>
-              {i < steps.length - 1 && <div className={`h-0.5 w-6 ${done ? "bg-primary" : "bg-muted"}`} />}
-            </div>
-          );
-        })}
+      <div className="mb-5 flex items-center justify-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"><User className="h-4 w-4" /></div>
+        <div className="h-0.5 w-10 bg-muted" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="h-4 w-4" /></div>
       </div>
-
-      <div className="mb-4 text-center">
-        <div className="text-sm font-semibold">{steps[step].title}</div>
-        <div className="text-xs text-muted-foreground">{steps[step].desc}</div>
+      <div className="mb-5 text-center">
+        <div className="text-base font-semibold">Register your SifoBooks account</div>
+        <div className="text-xs text-muted-foreground">After registration, SifoBooks will take you directly into the company setup screens.</div>
       </div>
-
-      {step === 0 && (
-        <div className="space-y-3">
-          <div className="space-y-2"><Label>Full name</Label><Input value={f.name} onChange={e => set("name", e.target.value)} placeholder="Chanda Mwansa" autoComplete="name" /></div>
-          <div className="space-y-2"><Label>Email</Label><Input type="email" value={f.email} onChange={e => set("email", e.target.value)} placeholder="you@company.co.zm" autoComplete="email" /></div>
-          <div className="space-y-2">
-            <Label>Password</Label>
-            <div className="relative">
-              <Input type={showPw ? "text" : "password"} value={f.password} onChange={e => set("password", e.target.value)} placeholder="Min 8 characters" autoComplete="new-password" minLength={8} className="pr-10" />
-              <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPw ? "Hide password" : "Show password"}>
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {f.password && (
-              <div className="space-y-1">
-                <div className="flex gap-1">
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className={`h-1 flex-1 rounded ${i < pw.score ? pw.color : "bg-muted"}`} />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">Strength: <span className="font-medium">{pw.label}</span></p>
-              </div>
-            )}
-          </div>
+      <div className="space-y-3">
+        <div className="space-y-2"><Label>Full name</Label><Input value={f.name} onChange={e => set("name", e.target.value)} placeholder="Pritchard Sikazwe" autoComplete="name" /></div>
+        <div className="space-y-2"><Label>Email</Label><Input type="email" value={f.email} onChange={e => set("email", e.target.value)} placeholder="you@company.co.zm" autoComplete="email" /></div>
+        <div className="space-y-2">
+          <Label>Password</Label>
+          <div className="relative"><Input type={showPw ? "text" : "password"} value={f.password} onChange={e => set("password", e.target.value)} placeholder="Minimum 8 characters" autoComplete="new-password" minLength={8} className="pr-10" /><button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={showPw ? "Hide password" : "Show password"}>{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
+          {f.password && <div className="space-y-1"><div className="flex gap-1">{[0,1,2,3].map(i => <div key={i} className={`h-1 flex-1 rounded ${i < pw.score ? pw.color : "bg-muted"}`} />)}</div><p className="text-xs text-muted-foreground">Strength: <span className="font-medium">{pw.label}</span></p></div>}
         </div>
-      )}
-
-      {step === 1 && (
-        <div className="space-y-3">
-          <div className="space-y-2"><Label>Business name</Label><Input value={f.business_name} onChange={e => set("business_name", e.target.value)} placeholder="SifoBooks Trading Ltd" /></div>
-          <div className="space-y-2">
-            <Label>Country</Label>
-            <Select value={f.country} onValueChange={v => set("country", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">You'll finish setup (currency, team, industry) after signup.</p>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-900">
+          <Building2 className="mr-2 inline h-4 w-4" />Business name, tax, modules, branches, accounting, backup and devices are configured in the next setup wizard — only once.
         </div>
-      )}
-
-      {step === 2 && (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label>ZRA TPIN <span className="text-xs text-muted-foreground">(optional)</span></Label>
-            <Input value={f.tpin} onChange={e => set("tpin", e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit taxpayer number" inputMode="numeric" />
-            <p className="text-xs text-muted-foreground">Pre-fills as seller TPIN on ZRA Smart Invoices.</p>
-          </div>
-          <label className="flex items-start gap-3 rounded-lg border bg-emerald-50/40 p-3 cursor-pointer">
-            <input type="checkbox" checked={f.vat_registered} onChange={e => set("vat_registered", e.target.checked)} className="mt-1 h-4 w-4" />
-            <div>
-              <div className="text-sm font-medium">I am VAT-registered</div>
-              <div className="text-xs text-muted-foreground">Enables standard 16% VAT by default on new invoices and stock items.</div>
-            </div>
-          </label>
-        </div>
-      )}
-
+      </div>
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
-
-      <div className="mt-5 flex justify-between">
-        <Button variant="ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0 || saving}>
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
-        {step < steps.length - 1 ? (
-          <Button onClick={() => setStep(s => s + 1)} disabled={!canNext}>Next <ArrowRight className="h-4 w-4" /></Button>
-        ) : (
-          <Button onClick={finish} disabled={saving || !canNext}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Create account
-          </Button>
-        )}
-      </div>
+      <Button onClick={finish} disabled={saving || !valid} className="mt-5 w-full">
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Register & Continue
+      </Button>
     </div>
   );
 }
