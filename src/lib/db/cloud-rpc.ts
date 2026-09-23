@@ -6,6 +6,7 @@ import {
   cloudPostCreditNote,
   cloudRecordBillPayment,
   cloudReversePosSale,
+  cloudRestaurantCheckout,
 } from "@/lib/cloud/accounting-transactions";
 
 export async function executeCloudRpc(name: string, args: Record<string, any>) {
@@ -15,6 +16,7 @@ export async function executeCloudRpc(name: string, args: Record<string, any>) {
   try {
     switch (name) {
       case "pos_checkout": return { data: await cloudPosCheckout(uid, args), error: null };
+      case "restaurant_checkout": return { data: await cloudRestaurantCheckout(uid, args), error: null };
       case "post_sales_invoice": return { data: await cloudPostInvoice(uid, args), error: null };
       case "post_purchase_bill": return { data: await cloudPostPurchaseBill(uid, args), error: null };
       case "post_credit_note": return { data: await cloudPostCreditNote(uid, args), error: null };
