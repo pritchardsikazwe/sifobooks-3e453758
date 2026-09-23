@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
+import { getIndustryStarter } from "@/lib/industry-starters";
 import { SIFOBOOKS_EDITION, SIFOBOOKS_EDITION_LABEL, SIFOBOOKS_PRODUCT_NAME } from "@/lib/edition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,9 +61,10 @@ const steps = [
 ] as const;
 
 const defaultForm = (): Form => {
-  const mods = editionModules[SIFOBOOKS_EDITION] ?? baseModules;
+  const starter = getIndustryStarter(SIFOBOOKS_EDITION);
+  const mods = starter.modules.filter((module) => module.defaultOn).map((module) => module.label);
   return {
-    name: "", tradingName: "", businessType: "Limited Company", industry: SIFOBOOKS_EDITION === "restaurant" ? "Restaurant" : SIFOBOOKS_EDITION_LABEL[SIFOBOOKS_EDITION],
+    name: "", tradingName: "", businessType: "Limited Company", industry: starter.industry,
     country: "Zambia", province: "Copperbelt", city: "", address: "", phone: "", email: "", logoUrl: "",
     pacra: "", tpin: "", vatRegistered: false, vatNumber: "", zra: "not_configured", financialYear: "January – December",
     currency: "ZMW", taxInclusive: false, modules: mods, branchName: "Main Branch", branchCity: "", branchAddress: "", branchPhone: "",
@@ -285,13 +287,20 @@ export function CompanyOnboardingWizard() {
           </div>
         </div>
       );
-      case 3: return (
+      case 3: {
+        const starter = getIndustryStarter(SIFOBOOKS_EDITION);
+        return (
         <div className="space-y-5">
+          <div><h2 className="text-2xl font-black text-slate-900">What do you want to manage?</h2><p className="text-sm text-slate-500">SifoBooks has prepared the starting modules for your industry. You can enable or disable optional features without deleting business data.</p></div>
+          <Card className="border-emerald-200 bg-emerald-50/70 p-5">
+            <div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-800 px-3 py-2 text-xl text-white">{starter.edition === "restaurant" ? "🍽️" : starter.edition === "hotel" ? "🏨" : starter.edition === "retail" ? "🛍️" : starter.edition === "school" ? "🎓" : starter.edition === "property" ? "🏘️" : starter.edition === "lending" ? "💰" : starter.edition === "accounting" ? "📚" : "🏢"}</div><div><div className="font-black text-emerald-950">{starter.industry}</div><p className="mt-1 text-sm text-emerald-900/80">{starter.tagline}</p><p className="mt-2 text-xs leading-5 text-emerald-900/70">{starter.about}</p></div></div>
+          </Card>
           <div><h2 className="text-2xl font-black text-slate-900">What do you want to manage?</h2><p className="text-sm text-slate-500">Select the modules you want to use. You can change them later.</p></div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{baseModules.map(m => <IconTile key={m} icon={moduleIcons[m] || Wrench} label={m} checked={selectedModules.includes(m)} onClick={() => toggleModule(m)} />)}</div>
           {form.industry === "Restaurant" && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div className="font-semibold text-emerald-900">Restaurant module includes</div><div className="mt-2 grid grid-cols-2 gap-2 text-xs text-emerald-800"><span>✓ Restaurant POS</span><span>✓ Stock Integration</span><span>✓ Tables Management</span><span>✓ Cash Integration & End of Day</span><span>✓ Kitchen Display (KDS)</span><span>✓ Restaurant Reports</span></div></div>}
         </div>
-      );
+        );
+      }
       case 4: return (
         <div className="space-y-5">
           <div><h2 className="text-2xl font-black text-slate-900">Where does your business operate?</h2><p className="text-sm text-slate-500">Create your first branch and stock location.</p></div>
