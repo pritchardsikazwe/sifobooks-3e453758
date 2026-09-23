@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
@@ -72,7 +73,7 @@ const defaultForm = (): Form => {
   };
 };
 
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+function Field({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return <div className={`space-y-1.5 ${className}`}><Label className="text-xs font-semibold text-slate-600">{label}</Label>{children}</div>;
 }
 
