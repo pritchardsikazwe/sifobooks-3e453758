@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Home, Users, Wallet, Wrench, CalendarDays, Plus } from "lucide-react";
+import { Building2, Home, Users, Wallet, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type Property={id:string;code:string;name:string;property_type:string;address:string|null;city:string|null};
@@ -44,7 +44,7 @@ export function PropertyWorkspace(){
  const occupied=units.filter(x=>x.status==="occupied").length;
  const outstanding=charges.reduce((s,x)=>s+Math.max(0,Number(x.amount)-Number(x.paid_amount)),0);
  const received=payments.reduce((s,x)=>s+Number(x.amount),0);
- const openMaint=0;
+
  const save=async(kind:string)=>{
   try{
    if(kind==="property"){const {error}=await supabase.from("property_assets").insert({...form,user_id:uid,company_id:companyId});if(error)throw error}
