@@ -353,7 +353,7 @@ export function hubItems(hub: HubDef): HubItem[] {
 /** Which hub a route belongs to (first match wins). Used for breadcrumbs. */
 export function hubForRoute(pathname: string): HubDef | undefined {
   let best: { hub: HubDef; len: number } | undefined;
-  for (const hub of HUBS) {
+  for (const hub of ALL_HUB_SETS) {
     for (const item of hubItems(hub)) {
       if (pathname === item.url || pathname.startsWith(item.url + "/")) {
         if (!best || item.url.length > best.len) best = { hub, len: item.url.length };
