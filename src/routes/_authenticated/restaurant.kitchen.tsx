@@ -62,14 +62,27 @@ function Kitchen() {
     lines: items.filter((i) => i.order_id === o.id && (station === "All" || (i.station || "Kitchen") === station)),
   })).filter((t) => t.lines.length && t.lines.some((l) => l.kds_status !== "served")), [orders, items, station, tick]);
 
+  const syncTableAfterService = async (orderId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order?.table_id) return;
+    const { data: remaining } = await db.from("restaurant_order_items").select("kds_status").eq("order_id", orderId);
+    const allServed = (remaining ?? []).length > 0 && (remaining ?? []).every((x: any) => String(x.kds_status || "queued") === "served");
+    if (!allServed) return;
+    const nextStatus = order.status === "paid" ? "dirty" : "payment pending";
+    await db.from("restaurant_tables").update({ status: nextStatus, current_order_id: order.status === "paid" ? null : order.id, occupied_since: null }).eq("id", order.table_id);
+  };
+
   const bump = async (line: any, next: string) => {
     const { error } = await db.from("restaurant_order_items").update({ kds_status: next }).eq("id", line.id);
     if (error) return toast.error(error.message);
     setItems((l) => l.map((x) => (x.id === line.id ? { ...x, kds_status: next } : x)));
+    if (next === "served") void syncTableAfterService(line.order_id);
   };
 
   const bumpTicket = async (t: any, next: string) => {
-    await db.from("restaurant_order_items").update({ kds_status: next }).in("id", t.lines.map((l: any) => l.id));
+    const { error } = await db.from("restaurant_order_items").update({ kds_status: next }).in("id", t.lines.map((l: any) => l.id));
+    if (error) return toast.error(error.message);
+    if (next === "served") await syncTableAfterService(t.order.id);
     toast.success(`Ticket ${t.order.order_no} → ${next}`);
     load();
   };
