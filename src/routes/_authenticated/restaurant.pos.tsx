@@ -329,14 +329,14 @@ function Page() {
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
     // Kitchen / bar tickets and customer receipt — never block the order.
-    if (!hold) void printOrderTickets(ord as any, cart, pay, total);
+    if (!hold) void printOrderTickets(ord as any, cart, pay, total, tendered, change);
     setBusy(false);
     toast.success(pay ? `Paid ${fmtMoney(total)} by ${pay}` : hold ? "Check held — recall it from the RECALL key" : "Sent to kitchen");
     clearCheck(); load();
   };
 
   /** Silent kitchen/bar ticket + receipt routing. Failures are queued, never fatal. */
-  const printOrderTickets = async (ord: any, items: typeof cart, pay?: string, grand?: number) => {
+  const printOrderTickets = async (ord: any, items: typeof cart, pay?: string, grand?: number, tendered?: number, change?: number) => {
     const base = {
       orderNumber: ord.order_no ?? ord.id,
       tableNumber: tables.find(t => t.id === ord.table_id)?.name ?? undefined,
@@ -367,6 +367,8 @@ function Page() {
         items: items.map(l => ({ name: l.name, quantity: l.qty, price: l.price, total: l.qty * l.price, modifiers: (l.mods ?? []).map(m => m.name) })),
         total: Number(grand ?? 0),
         paymentMethod: pay,
+        amountPaid: tendered ?? Number(grand ?? 0),
+        change: Math.max(0, Number(change ?? 0)),
         footer: "Thank you for dining with us",
       }, getPrinterForType("receipt"));
     } catch (error: any) {
