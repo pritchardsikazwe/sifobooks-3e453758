@@ -454,8 +454,10 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   };
 
   return (
-    <IndustryShell accent="school" product="SifoBooks School" title={title} subtitle={subtitle} nav={SCHOOL_NAV} active={screen}>
-      {body()}
-    </IndustryShell>
+    <div className="school-2026-page">
+      <IndustryShell accent="school" product="SifoBooks School ERP" title={title} subtitle={subtitle} nav={SCHOOL_NAV} active={screen}>
+        {body()}
+      </IndustryShell>
+    </div>
   );
 }
