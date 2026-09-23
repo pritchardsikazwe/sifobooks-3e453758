@@ -274,7 +274,7 @@ function Page() {
   };
 
   /** Persist the current cart. `pay` settles it, `hold` parks it for later recall. */
-  const sendOrder = async (pay?: string, hold?: boolean) => {
+  const sendOrder = async (pay?: string, hold?: boolean, tendered?: number, change?: number) => {
     if (!cart.length) return toast.error("Add items to the check first");
     if (needsTable && !tableId) return toast.error("Select a table for this order type");
     if (activeType?.requires_customer && !customer.trim()) return toast.error("Customer details are required for this order type");
@@ -324,7 +324,7 @@ function Page() {
       try { await commitStockConsumption(uid, (ord as any).order_no ?? (ord as any).id, stockPlan.deductions); }
       catch (e) { console.error("[POS] stock deduction failed", e); setBusy(false); return toast.error("Sale posted but stock update failed — review Inventory immediately."); }
     }
-    if (pay) await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: total, change: 0 }]);
+    if (pay) await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }]);
 
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
@@ -375,7 +375,7 @@ function Page() {
     }
   };
 
-  const settle = async (o: Order, method: string) => {
+  const settle = async (o: Order, method: string, tendered?: number, change?: number) => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     const savedLines = items.filter(i => i.order_id === o.id).map(i => ({
@@ -389,7 +389,7 @@ function Page() {
       try { await commitStockConsumption(u.user.id, o.order_no ?? o.id, stockPlan.deductions); }
       catch (e) { console.error("[POS] held-check stock deduction failed", e); toast.error("Check paid, but stock update failed — review Inventory immediately."); }
     }
-    await recordPayments(o.id, [{ method, amount: Number(o.total), tendered: Number(o.total), change: 0 }]);
+    await recordPayments(o.id, [{ method, amount: Number(o.total), tendered: tendered ?? Number(o.total), change: change ?? 0 }]);
     if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
     try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
     toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
@@ -617,7 +617,7 @@ function Page() {
         <TenderDialog
           due={tender.amount}
           onCancel={() => setTender(null)}
-          onConfirm={() => { const t = tender; setTender(null); if (t.order) settle(t.order, t.method); else sendOrder(t.method); }}
+          onConfirm={(tendered, change) => { const t = tender; setTender(null); if (t.order) settle(t.order, t.method, tendered, change); else sendOrder(t.method, false, tendered, change); }}
         />
       )}
 
@@ -725,7 +725,7 @@ function ModifierDialog({ item, groups, mods, onCancel, onConfirm }: {
   );
 }
 
-function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () => void; onConfirm: () => void }) {
+function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
   const [cash, setCash] = useState("");
   const received = Number(cash || 0);
   const change = received - due;
@@ -752,7 +752,7 @@ function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () 
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button onClick={onCancel} className="min-h-11 rounded-xl bg-[#71879a] font-extrabold">Cancel</button>
-        <button onClick={onConfirm} disabled={change < 0} className="min-h-11 rounded-xl bg-[#0b9d19] font-extrabold disabled:opacity-60">Complete payment</button>
+        <button onClick={() => onConfirm(received, Math.max(0, change))} disabled={change < 0} className="min-h-11 rounded-xl bg-[#0b9d19] font-extrabold disabled:opacity-60">Complete payment</button>
       </div>
     </Overlay>
   );
