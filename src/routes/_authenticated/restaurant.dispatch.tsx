@@ -131,7 +131,7 @@ function Dispatch() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold flex items-center gap-2"><Bike className="h-5 w-5 text-primary" /> Delivery dispatch</h1>
         <ExportMenu filename={`delivery-dispatch-${today()}`} title="Delivery dispatch" rows={orders.map((o) => ({
