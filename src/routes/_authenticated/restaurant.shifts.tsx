@@ -34,6 +34,8 @@ function Shifts() {
   const [orders, setOrders] = useState<any[]>([]);
   const [form, setForm] = useState({ staff_name: "", role: "server" });
   const [tips, setTips] = useState<Record<string, number>>({});
+  const [myName, setMyName] = useState("");
+  const [myShift, setMyShift] = useState<any | null>(null);
 
   const load = async () => {
     const u = await uid();
@@ -43,6 +45,10 @@ function Shifts() {
       db.from("restaurant_orders").select("server_name,total,status,business_date").eq("user_id", u).eq("business_date", today()).eq("status", "paid"),
     ]);
     setShifts(s.data ?? []); setOrders(o.data ?? []);
+    const { data: p } = await db.from("employee_pos_permissions").select("display_name,full_name,pos_role").eq("user_id", u).eq("is_active", true).maybeSingle();
+    const name = p?.display_name ?? p?.full_name ?? "";
+    setMyName(name);
+    setMyShift((s.data ?? []).find((x:any) => x.staff_name === name && !x.clock_out) ?? null);
   };
   useEffect(() => { load(); }, []);
 
@@ -51,6 +57,19 @@ function Shifts() {
     orders.forEach((o) => m.set((o.server_name || "—").toLowerCase(), (m.get((o.server_name || "—").toLowerCase()) ?? 0) + Number(o.total || 0)));
     return m;
   }, [orders]);
+
+  const startMyShift = async () => {
+    const u = await uid();
+    if (!u || !myName) return toast.error("No active POS cashier profile found.");
+    if (myShift) return toast.info("Your shift is already active.");
+    const { error } = await db.from("restaurant_shifts").insert({
+      id: crypto.randomUUID(), user_id: u, employee_id: u, staff_name: myName,
+      role: "cashier", business_date: today(), clock_in: new Date().toISOString(),
+      declared_tips: 0, created_by: u,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Your cashier shift is active"); load();
+  };
 
   const clockIn = async () => {
     if (!form.staff_name.trim()) return toast.error("Enter the staff name");
@@ -81,7 +100,11 @@ function Shifts() {
 
   return (
     <div className="restaurant-2026-page space-y-4">
-      <h1 className="text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Staff shifts</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="mr-auto text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Staff shifts</h1>
+        {myName && <div className="text-xs text-muted-foreground">{myName} · {myShift ? "Shift active" : "Not clocked in"}</div>}
+        <Button onClick={startMyShift} disabled={!myName || !!myShift}>{myShift ? "My shift active" : "Start my cashier shift"}</Button>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-4"><div className="text-xs text-muted-foreground">On shift now</div><div className="text-2xl font-semibold">{openShifts.length}</div></Card>
