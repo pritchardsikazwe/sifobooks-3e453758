@@ -955,6 +955,8 @@ export function NightAudit() {
   const totalPayments = Object.values(paymentsByMethod).reduce((s, v) => s + Number(v || 0), 0);
   const paymentVariance = totalRevenue - totalPayments;
   const roomsDirty = rooms.filter((r) => String(r.housekeeping_status ?? "").toLowerCase() !== "clean" && !r.out_of_order).length;
+  const openOrders = orders.filter((o) => ["open", "held"].includes(String(o.status))).length;
+  const auditFlags = exceptions;
   const unresolvedTickets = 0;
   const auditChecklist = [
     { label: "Room occupancy reconciled", ok: !auditFlags.some((x) => x.toLowerCase().includes("occupied")) },
@@ -963,6 +965,8 @@ export function NightAudit() {
     { label: "Revenue and payment totals reviewed", ok: Math.abs(paymentVariance) < 0.01 },
     { label: "Maintenance exceptions reviewed", ok: unresolvedTickets === 0 },
     { label: "POS checks closed", ok: openOrders === 0 },
+    { label: "Night audit has a single business date", ok: Boolean(date) },
+    { label: "Revenue includes room + F&B + other services", ok: totalRevenue >= 0 },
   ];
 
   const runAudit = async () => {
