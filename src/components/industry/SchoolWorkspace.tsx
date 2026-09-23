@@ -7,6 +7,7 @@ import {
   RecordTable, SearchBox, StatusPill, Tile, TileGrid, Timeline, type NavItem,
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
+import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, ReceiptText,
@@ -126,6 +127,9 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
   const body = () => {
+    if (["/school/admissions","/school/attendance","/school/exams","/school/report-cards","/school/scholarships","/school/boarding","/school/transport","/school/parent-portal","/school/student-portal"].includes(screen)) {
+      return <SchoolOperationsPanel screen={screen} data={data} />;
+    }
     if (UNAVAILABLE[screen]) {
       return (
         <NotConnected
