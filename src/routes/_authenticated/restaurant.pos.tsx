@@ -755,7 +755,9 @@ function Page() {
           <div className="grid grid-cols-3 gap-[5px] border-t border-[#799695] bg-[#315f63] p-[7px] lg:grid-cols-[1fr_1fr_1.3fr_1.2fr_1.2fr_1.4fr]">
             <BottomBtn onClick={clearCheck} className="bg-[#bd1111]">CANCEL</BottomBtn>
             <BottomBtn onClick={() => (cart.length ? setTender({ method: "Cash", amount: total }) : toast.error("Check is empty"))} className="bg-[#6f7d80]">CASH</BottomBtn>
-            <BottomBtn onClick={() => sendOrder("Mobile Money")} className="bg-[#7616b9]">MOBILE MONEY</BottomBtn>
+            <BottomBtn onClick={() => (cart.length ? setTender({ method: "Card", amount: total }) : toast.error("Check is empty"))} className="bg-[#315f91]">CARD</BottomBtn>
+            <BottomBtn onClick={() => (cart.length ? setTender({ method: "Mobile Money", amount: total }) : toast.error("Check is empty"))} className="bg-[#7616b9]">MTN MOMO</BottomBtn>
+            <BottomBtn onClick={() => (cart.length ? setTender({ method: "Airtel Money", amount: total }) : toast.error("Check is empty"))} className="bg-[#b3122c]">AIRTEL</BottomBtn>
             <BottomBtn onClick={() => sendOrder(undefined, true)} className="bg-[#d76c09]">HOLD CHECK</BottomBtn>
             <BottomBtn onClick={clearCheck} className="bg-[#ed0b0b]">CLEAR CHECK</BottomBtn>
             <BottomBtn onClick={() => (cart.length ? setTender({ method: "Cash", amount: total }) : toast.error("Check is empty"))} className="bg-[#0b913f] text-[12px]">PAY {fmtMoney(total)} ›</BottomBtn>
@@ -891,14 +893,14 @@ function ModifierDialog({ item, groups, mods, onCancel, onConfirm }: {
   );
 }
 
-function TenderDialog({ due, onCancel, onConfirm }: { due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
+function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
   const [cash, setCash] = useState("");
   const received = Number(cash || 0);
   const change = received - due;
   const nextAmount = Math.ceil(due / 50) * 50;
   const push = (k: string) => setCash(c => (k === "C" ? "" : c + k));
   return (
-    <Overlay title="Cash transaction" onCancel={onCancel} wide>
+    <Overlay title={`${method} payment`} onCancel={onCancel} wide>
       <div className="mb-2 flex justify-between text-sm font-extrabold"><span>Amount due</span><span>{fmtMoney(due)}</span></div>
       <div className="mb-2 rounded-xl border-2 border-white/25 bg-white px-3 py-3 text-right text-[27px] font-black text-[#20504d]">{cash || "0.00"}</div>
       <div className="mb-2 grid grid-cols-4 gap-1.5">
