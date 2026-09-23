@@ -55,18 +55,23 @@ function Reports() {
     })();
   }, [from, to]);
 
-  const t = useMemo(() => summarise(orders), [orders]);
-  const live = orders.filter((o) => o.status !== "void");
+const settled = orders.filter((o) => o.status === "paid");
+  const refunded = orders.filter((o) => o.status === "refunded");
+  const t = useMemo(() => summarise(settled), [settled]);
+  const live = settled;
 
-  const group = (rows: any[], key: (r: any) => string, val: (r: any) => number) => {
+  const group =
     const m: Record<string, number> = {};
     rows.forEach((r) => { const k = key(r) || "—"; m[k] = (m[k] ?? 0) + val(r); });
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
   };
 
-  const byHour = group(live, (o) => `${String(new Date(o.created_at).getHours()).padStart(2, "0")}:00`, (o) => Number(o.total || 0))
+const byHour = group(live, (o) => {
+    const dt = new Date(o.opened_at || o.created_at || Date.now());
+    return `${String(dt.getHours()).padStart(2, "0")}:00`;
+  }, (o) => Number(o.total || 0))
     .sort((a, b) => a[0].localeCompare(b[0]));
-  const paidIds = new Set(live.filter((o) => o.status === "paid").map((o) => o.id));
+  const paidIds =
   const soldLines = lines.filter((l) => paidIds.has(l.order_id));
   const byItem = group(soldLines, (l) => l.item_name || l.name || "Unnamed item", (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.qty || 0)));
   const byCategory = group(soldLines, (l) => items.find((i) => i.id === l.menu_item_id)?.category ?? l.category ?? "Other",
@@ -82,8 +87,12 @@ function Reports() {
   const paymentMap: Record<string,number> = {};
   payments.forEach((p) => { const k=String(p.method||"other").toLowerCase(); paymentMap[k]=(paymentMap[k]||0)+Number(p.amount||0); });
   const byPayment = Object.entries(paymentMap).sort((a,b)=>b[1]-a[1]);
-  const byCashier = group(live.filter(o=>o.status==="paid"), o=>o.server_name||"Unassigned", o=>Number(o.total||0));
-  const uncosted = lines.filter((l) => !Number(l.unit_cost || 0)).length;
+const byCashier = group(live, o => o.server_name || "Unassigned", o => Number(o.total || 0));
+  const refundAmount = refunded.reduce((s, o) => s + Number(o.total || 0), 0);
+  const saleRows = orders
+    .filter((o) => o.status === "paid" || o.status === "refunded")
+    .sort((a, b) => new Date(b.opened_at || b.created_at || 0).getTime() - new Date(a.opened_at || a.created_at || 0).getTime());
+  const uncosted =
   const grossProfit = t.gross - foodCost;
 
   const reports: { key: string; label: string; rows: [string, number][]; unit?: string }[] = [
@@ -105,7 +114,7 @@ function Reports() {
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Restaurant reports</h1>
-          <p className="text-sm text-muted-foreground">{live.length} settled checks · net {fmtMoney(t.net)}</p>
+          <p className="text-sm text-muted-foreground">{settled.length} completed sales · {refunded.length} refunds · net {fmtMoney(t.net)}</p>
         </div>
         <Input type="date" className="w-40" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input type="date" className="w-40" value={to} onChange={(e) => setTo(e.target.value)} />
@@ -117,12 +126,57 @@ function Reports() {
         <Kpi label="Average ticket" value={fmtMoney(t.orders ? t.net / t.orders : 0)} />
         <Kpi label="Food cost" value={fmtMoney(foodCost)} />
         <Kpi label="Gross profit" value={fmtMoney(grossProfit)} />
+        <Kpi label="Refunds" value={fmtMoney(refundAmount)} />
       </div>
       {uncosted > 0 && (
         <p className="text-xs text-amber-600">
           {uncosted} sold line(s) have no recipe or item cost, so food cost and margin are understated. Add recipes on the Menu screen.
         </p>
       )}
+      <Card className="rounded-2xl">
+        <div className="flex flex-wrap items-center gap-2 border-b p-4">
+          <div className="mr-auto">
+            <div className="font-semibold">Sales register</div>
+            <div className="text-xs text-muted-foreground">Every completed restaurant sale in the selected period.</div>
+          </div>
+          <ExportMenu filename={`restaurant-sales-register-${from}-${to}`} title="Restaurant sales register" rows={saleRows.map((o) => ({
+            Check: o.order_no ?? o.id,
+            Date: o.business_date,
+            Status: o.status,
+            Cashier: o.server_name ?? "",
+            Type: o.order_type ?? "",
+            Total: Number(o.total || 0),
+            Net: o.status === "refunded" ? 0 : Number(o.total || 0),
+          }))} />
+        </div>
+        {saleRows.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">No completed sales in this period.</div>
+        ) : (
+          <div className="max-h-[420px] overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-muted/90">
+                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="p-3">Check</th><th className="p-3">Time</th><th className="p-3">Cashier</th>
+                  <th className="p-3">Type</th><th className="p-3">Status</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                {saleRows.map((o) => (
+                  <tr key={o.id} className="border-t">
+                    <td className="p-3 font-medium">{o.order_no ?? o.id}</td>
+                    <td className="p-3">{new Date(o.opened_at || o.created_at || Date.now()).toLocaleString()}</td>
+                    <td className="p-3">{o.server_name ?? "Unassigned"}</td>
+                    <td className="p-3">{o.order_type ?? "—"}</td>
+                    <td className="p-3 uppercase">{o.status}</td>
+                    <td className="p-3 text-right tabular-nums">{fmtMoney(Number(o.total || 0))}</td>
+                    <td className="p-3 text-right tabular-nums">{fmtMoney(o.status === "refunded" ? 0 : Number(o.total || 0))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
 
       <Tabs defaultValue="hour">
