@@ -460,6 +460,12 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   const duplicate = db.prepare(
     "SELECT id,order_no,status,journal_entry_id FROM restaurant_orders WHERE user_id=? AND client_ref=? LIMIT 1",
   ).get(uid, clientRef) as any;
+  const requestedOrderId = sale.order_id ? String(sale.order_id) : null;
+  const existingOrder = requestedOrderId
+    ? db.prepare("SELECT * FROM restaurant_orders WHERE id=? AND user_id=? LIMIT 1").get(requestedOrderId, uid) as any
+    : null;
+  if (requestedOrderId && !existingOrder) throw new Error("RESTAURANT_ORDER_NOT_FOUND");
+  if (existingOrder && !["open", "held"].includes(String(existingOrder.status))) throw new Error("RESTAURANT_ORDER_NOT_SETTLEABLE");
   if (duplicate) {
     return {
       order_id: duplicate.id,
@@ -579,15 +585,30 @@ function executeRestaurantCheckout(args: Record<string, any>) {
     const orderId = generateUUID();
     const orderNo = String(sale.order_no || ("CHK-" + Date.now().toString().slice(-6)));
 
-    db.prepare(
-      "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    ).run(
-      orderId, uid, orderNo, clientRef, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
-      Number(sale.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
-      sale.server_name ?? null, sale.customer_name ?? null, "paid",
-      paymentRows.length === 1 ? paymentRows[0].method : "split", total,
-      new Date().toISOString(), null,
-    );
+    if (existingOrder) {
+      db.prepare(
+        "UPDATE restaurant_orders SET client_ref=?,business_date=?,table_id=?,order_type=?,guests=?,subtotal=?,discount=?,tax=?,service_charge=?,gratuity=?,delivery_fee=?,total=?,server_name=?,customer_name=?,status='paid',payment_method=?,amount_paid=?,closed_at=?,journal_entry_id=NULL WHERE id=? AND user_id=?",
+      ).run(
+        clientRef, businessDate, sale.table_id ?? existingOrder.table_id ?? null, sale.order_type ?? existingOrder.order_type ?? "DINE-IN",
+        Number(sale.guests || existingOrder.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
+        sale.server_name ?? existingOrder.server_name ?? null, sale.customer_name ?? existingOrder.customer_name ?? null,
+        paymentRows.length === 1 ? paymentRows[0].method : "split", total, new Date().toISOString(), existingOrder.id, uid,
+      );
+      db.prepare("DELETE FROM restaurant_order_items WHERE order_id=? AND user_id=?").run(existingOrder.id, uid);
+      db.prepare("DELETE FROM restaurant_payments WHERE order_id=? AND user_id=?").run(existingOrder.id, uid);
+      orderId = existingOrder.id;
+      orderNo = existingOrder.order_no;
+    } else {
+      db.prepare(
+        "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      ).run(
+        orderId, uid, orderNo, clientRef, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
+        Number(sale.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
+        sale.server_name ?? null, sale.customer_name ?? null, "paid",
+        paymentRows.length === 1 ? paymentRows[0].method : "split", total,
+        new Date().toISOString(), null,
+      );
+    }
 
     for (const line of lines) {
       db.prepare(
