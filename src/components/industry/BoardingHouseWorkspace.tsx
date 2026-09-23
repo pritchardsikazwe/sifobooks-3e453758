@@ -371,8 +371,6 @@ function Meals({ plans, assignments, students, studentName, onAdd }: any) {
   );
 }
 
-}
-
 function Reports({ students, houses, beds, allocations, fees, attendance, leave, maintenance, discipline }: any) {
   const collection=fees.reduce((n:any,x:any)=>n+Number(x.amount_paid||0),0); const billed=fees.reduce((n:any,x:any)=>n+Number(x.amount_due||0),0);
   const stats=[["Occupancy",`${beds.length?Math.round(allocations.length/beds.length*100):0}%`],["Fee collection",`${billed?Math.round(collection/billed*100):0}%`],["Students",students.length],["Houses",houses.length],["Leave requests",leave.length],["Maintenance",maintenance.length],["Incidents",discipline.length]];
