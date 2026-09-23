@@ -143,7 +143,7 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
         {busy && <Loader2 className="h-4 w-4 animate-spin" />} Open my till
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Forgot your PIN? Ask your manager to reset it — it can never be read back.
+        Enter only the cashier ID code and PIN. No email or staff name is required at the till.
       </p>
     </div>
   );
