@@ -185,7 +185,7 @@ function Shell() {
 
           <OfflineBanner />
           <main className="flex-1 min-w-0 pb-24 md:pb-0">
-            <div key={pageKey} className="page-enter">
+            <div key={pageKey} className="page-enter sifobooks-2026-page">
               <Outlet />
             </div>
           </main>
