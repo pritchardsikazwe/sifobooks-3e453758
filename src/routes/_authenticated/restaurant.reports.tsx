@@ -36,9 +36,32 @@ function Reports() {
   const [payments, setPayments] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
   const [drawers, setDrawers] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      const u = await uid();
+      if (!u) return;
+      const { data: o } = await db.from("restaurant_orders").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to);
+      const ids = (o ?? []).map((x: any) => x.id);
+      const [li, mi, pa, sh, dr] = await Promise.all([
+        ids.length ? db.from("restaurant_order_items").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
+        db.from("restaurant_menu_items").select("*").eq("user_id", u),
+        ids.length ? db.from("restaurant_payments").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
+        db.from("restaurant_shifts").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
+        db.from("restaurant_cash_drawers").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
+      ]);
+      setOrders(o ?? []); setLines(li.data ?? []); setItems(mi.data ?? []); setPayments(pa.data ?? []); setShifts(sh.data ?? []); setDrawers(dr.data ?? []);
+    } finally { setRefreshing(false); }
+  };
 
   useEffect(() => {
-    (async () => {
+    refresh();
+  }, [from, to]);
+
+  /* old loader */
+  useEffect(() => {
       const u = await uid();
       if (!u) return;
       const { data: o } = await db.from("restaurant_orders").select("*").eq("user_id", u)
@@ -90,11 +113,13 @@ const settled = orders.filter((o) => o.status === "paid");
   const byPayment = Object.entries(paymentMap).sort((x, y) => y[1] - x[1]);
   const byCashier = group(live, (o) => o.server_name || "Unassigned", (o) => Number(o.total || 0));
   const refundAmount = refunded.reduce((s, o) => s + Number(o.total || 0), 0);
+  const grossSales = settled.reduce((s, o) => s + Number(o.total || 0), 0);
+  const netSales = Math.max(0, grossSales - refundAmount);
   const saleRows = orders
     .filter((o) => o.status === "paid" || o.status === "refunded")
     .sort((x, y) => new Date(y.opened_at || y.created_at || 0).getTime() - new Date(x.opened_at || x.created_at || 0).getTime());
   const uncosted = lines.filter((l) => paidIds.has(l.order_id) && !Number(l.unit_cost || 0)).length;
-  const grossProfit = t.gross - foodCost;
+  const grossProfit = netSales - foodCost;
 
   const reports: { key: string; label: string; rows: [string, number][]; unit?: string }[] = [
     { key: "hour", label: "Sales by hour", rows: byHour },
@@ -115,16 +140,17 @@ const settled = orders.filter((o) => o.status === "paid");
       <div className="flex flex-wrap items-end gap-2">
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Restaurant reports</h1>
-          <p className="text-sm text-muted-foreground">{settled.length} completed sales · {refunded.length} refunds · net {fmtMoney(t.net)}</p>
+          <p className="text-sm text-muted-foreground">{settled.length} completed sales · {refunded.length} refunds · net {fmtMoney(netSales)}</p>
         </div>
         <Input type="date" className="w-40" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input type="date" className="w-40" value={to} onChange={(e) => setTo(e.target.value)} />
+        <Button variant="outline" onClick={() => void refresh()} disabled={refreshing}><RefreshCw className={refreshing ? "h-4 w-4 mr-1 animate-spin" : "h-4 w-4 mr-1"} /> Refresh</Button>
         <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print</Button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <Kpi label="Net sales" value={fmtMoney(t.net)} />
-        <Kpi label="Average ticket" value={fmtMoney(t.orders ? t.net / t.orders : 0)} />
+        <Kpi label="Net sales" value={fmtMoney(netSales)} />
+        <Kpi label="Average ticket" value={fmtMoney(t.orders ? netSales / t.orders : 0)} />
         <Kpi label="Food cost" value={fmtMoney(foodCost)} />
         <Kpi label="Gross profit" value={fmtMoney(grossProfit)} />
         <Kpi label="Refunds" value={fmtMoney(refundAmount)} />
