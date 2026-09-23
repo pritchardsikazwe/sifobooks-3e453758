@@ -1,6 +1,6 @@
 // Client-side Supabase compatibility shim.
 // Mimics the Supabase JS client API but routes all calls to local SQLite via server functions.
-import { executeQueryFn, signUpFn, signInFn, getUserFn, getSessionFn, updateUserFn, uploadFileFn, getSignedUrlFn, removeFileFn, rpcFn } from "@/lib/db/server-api";
+import { executeQueryFn, signUpFn, signInFn, getUserFn, getSessionFn, updateUserFn, adminResetPasswordFn, uploadFileFn, getSignedUrlFn, removeFileFn, rpcFn } from "@/lib/db/server-api";
 import type { QuerySpec, FilterOp } from "@/lib/db/query-executor";
 
 const TOKEN_KEY = "sifobooks-auth-token";
@@ -180,7 +180,15 @@ const auth = {
   async updateUser(attrs: Record<string, any>) {
     const token = getToken();
     if (!token) return { data: null, error: { message: "Not authenticated" } };
-    return updateUserFn({ data: { token, attrs } } as any);
+    const result = await updateUserFn({ data: { token, attrs } } as any);
+    if (result?.data?.session?.access_token) setToken(result.data.session.access_token);
+    return result;
+  },
+
+  async adminResetPassword(targetUserId: string, newPassword: string, forceChange = true, reason = "Administrator password reset") {
+    const token = getToken();
+    if (!token) return { data: null, error: { message: "Not authenticated" } };
+    return adminResetPasswordFn({ data: { authToken: token, targetUserId, newPassword, forceChange, reason } } as any);
   },
 
   onAuthStateChange(callback: (event: string, session: any) => void) {
