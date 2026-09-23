@@ -81,6 +81,13 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
         db.from("fee_payments").select("id,student_id,amount,payment_date,method,receipt_no,reference").eq("user_id", uid).order("payment_date", { ascending: false }).limit(300),
         db.from("employees").select("id,employee_code,first_name,last_name,status,email,phone").eq("user_id", uid).order("last_name").limit(300),
         db.from("fee_structures").select("id,fee_name,term,academic_year,amount,class_id,is_mandatory").eq("user_id", uid).limit(200),
+        db.from("boarding_houses").select("*").eq("user_id", uid).limit(200),
+        db.from("boarding_beds").select("*").eq("user_id", uid).limit(500),
+        db.from("boarding_allocations").select("*").eq("user_id", uid).limit(500),
+        db.from("student_discipline").select("*").eq("user_id", uid).limit(300),
+        db.from("student_health").select("*").eq("user_id", uid).limit(300),
+        db.from("library_loans").select("*").eq("user_id", uid).limit(500),
+        db.from("school_transport").select("*").eq("user_id", uid).limit(300),
       ]);
       if (cancelled) return;
       setData({
