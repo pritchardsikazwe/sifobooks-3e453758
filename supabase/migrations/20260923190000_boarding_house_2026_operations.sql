@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS public.school_boarding_rooms (
   UNIQUE(company_id, house_id, room_code)
 );
 
+ALTER TABLE public.school_boarding_beds ADD COLUMN IF NOT EXISTS room_id uuid REFERENCES public.school_boarding_rooms(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_boarding_beds_room ON public.school_boarding_beds(room_id);
+
 CREATE TABLE IF NOT EXISTS public.school_boarding_leave_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
