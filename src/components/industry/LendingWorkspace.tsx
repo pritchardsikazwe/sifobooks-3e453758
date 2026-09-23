@@ -6,7 +6,7 @@ import {
   Activity, AlertTriangle, ArrowRight, BarChart3, Banknote, Building2, CalendarClock,
   CheckCircle2, ChevronRight, CircleDollarSign, ClipboardCheck, CreditCard, FileCheck2,
   FilePlus2, HandCoins, Landmark, LayoutDashboard, ListChecks, LockKeyhole, Menu,
-  MessageSquare, Mobile, Percent, PieChart, Plus, RefreshCw, Scale, Search, ShieldCheck,
+  MessageSquare, Percent, PieChart, Plus, RefreshCw, Scale, Search, ShieldCheck,
   Smartphone, Users, WalletCards, WifiOff, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
