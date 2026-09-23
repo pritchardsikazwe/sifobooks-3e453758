@@ -65,6 +65,10 @@ function Page() {
   const [groups, setGroups] = useState<ModGroup[]>([]);
   const [mods, setMods] = useState<Modifier[]>([]);
   const [types, setTypes] = useState<OrderTypeRow[]>([]);
+  const [stockLocations, setStockLocations] = useState<{ id: string; name: string; location_type: string }[]>([]);
+  const [posStockLocation, setPosStockLocation] = useState("");
+  const [recipes, setRecipes] = useState<{ menu_item_id: string; stock_item_id: string; quantity: number; unit: string | null }[]>([]);
+  const [stockBalances, setStockBalances] = useState<{ item_id: string; location_id: string; quantity: number }[]>([]);
 
   const [mode, setMode] = useState("DINE-IN");
   const [cat, setCat] = useState("ALL");
@@ -130,7 +134,7 @@ function Page() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return setLoading(false);
     const uid = u.user.id;
-    const [m, t, o, g, md, ot] = await Promise.all([
+    const [m, t, o, g, md, ot, loc, rec, bal] = await Promise.all([
       supabase.from("restaurant_menu_items").select("*").eq("user_id", uid).order("category"),
       supabase.from("restaurant_tables").select("*").eq("user_id", uid).order("name"),
       supabase.from("restaurant_orders").select("*").eq("user_id", uid).order("opened_at", { ascending: false }).limit(200),
@@ -139,6 +143,12 @@ function Page() {
       supabase.from("restaurant_order_types").select("*").eq("user_id", uid).order("sort_order"),
     ]);
     setMenu((m.data ?? []) as any);
+    const locations = (loc.data ?? []) as any[];
+    setStockLocations(locations);
+    const savedLocation = window.localStorage.getItem("sifobooks.restaurant.pos.location") ?? "";
+    const preferred = locations.find(x => x.id === savedLocation) ?? locations.find(x => ["outlet","branch","store","kitchen","bar"].includes(String(x.location_type))) ?? locations[0];
+    if (preferred) setPosStockLocation(preferred.id);
+    setRecipes((rec.data ?? []) as any); setStockBalances((bal.data ?? []) as any);
     setTables((t.data ?? []) as any);
     setGroups((g.data ?? []) as any);
     setMods((md.data ?? []) as any);
@@ -303,6 +313,7 @@ function Page() {
             server_name: server || null,
             customer_name: customer || null,
             shift_id: undefined,
+            location_id: posStockLocation || null,
           },
           _items: cart.map(l => ({
             name: l.name, station: l.station, qty: l.qty, price: l.price,
@@ -504,7 +515,8 @@ function Page() {
     load();
   };
 
-  const cats = useMemo(() => ["ALL", ...Array.from(new Set(menu.map(m => m.category)))], [menu]);
+  const cats = useMemo(() => ["ALL", ...Array.from(new Set(menu.map(m => m.category).filter(Boolean)))], [menu]);
+  const itemStock = (mi: MenuItem) => { const rr = recipes.filter(r => r.menu_item_id === mi.id && Number(r.quantity) > 0); if (!rr.length || !posStockLocation) return null; return Math.max(0, Math.min(...rr.map(r => Math.floor(Number(stockBalances.find(x => x.item_id === r.stock_item_id && x.location_id === posStockLocation)?.quantity ?? 0) / Number(r.quantity))))); };
   const shown = menu.filter(m =>
     m.active &&
     (cat === "ALL" || m.category === cat) &&
@@ -659,7 +671,7 @@ function Page() {
         {/* menu + bottom actions */}
         <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:h-full md:min-h-0">
           <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[7px]">
-            <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div>
+            <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div><select value={posStockLocation} onChange={e => { setPosStockLocation(e.target.value); window.localStorage.setItem("sifobooks.restaurant.pos.location", e.target.value); }} className="h-[30px] max-w-[180px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white"><option value="">Stock location</option>{stockLocations.map(l => <option key={l.id} value={l.id}>{l.name} · {l.location_type}</option>)}</select>
             <select value={cat} onChange={e => setCat(e.target.value)}
               className="h-[30px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold lg:hidden">
               {cats.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
@@ -669,10 +681,10 @@ function Page() {
           </div>
           <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
-              <button key={mi.id} onClick={() => addToCart(mi)}
+              <button key={mi.id} onClick={() => { if (itemStock(mi) === 0) return toast.error("Out of stock at this POS location"); addToCart(mi); }}}
                 className={cn("flex flex-col items-center justify-center gap-2 rounded-[14px] border border-[#d8e4e1] bg-white p-3 text-center text-[#173b3a] shadow-sm transition hover:-translate-y-[2px] hover:border-[#07834f] hover:shadow-[0_8px_24px_#174b4b18] active:scale-[.98]")}>
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5f0] text-2xl">🍽️</span><strong className="text-[12px] leading-tight">{mi.name}</strong>
-                <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>
+                <span className="rounded-full bg-[#07834f] px-3 py-1 text-[11px] font-black text-white">{fmtMoney(Number(mi.price))}</span>{itemStock(mi) !== null && <span className={cn("text-[9px] font-black", (itemStock(mi) ?? 0) <= 0 ? "text-red-600" : (itemStock(mi) ?? 0) <= 3 ? "text-amber-600" : "text-emerald-700")}>{itemStock(mi) === 0 ? "OUT OF STOCK" : String(itemStock(mi)) + " available"}</span>}
               </button>
             ))}
             {!shown.length && <div className="col-span-full py-10 text-center text-[12px] opacity-70">No items match.</div>}
