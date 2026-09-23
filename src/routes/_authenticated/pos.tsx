@@ -373,7 +373,7 @@ function RetailPos() {
   );
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col bg-muted/30">
+    <div className="sifobooks-2026-pos flex h-[calc(100dvh-4rem)] min-h-0 flex-col bg-muted/30">
       {/* ------------------------------- top bar ------------------------------ */}
       <header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b bg-card px-3 py-2 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
