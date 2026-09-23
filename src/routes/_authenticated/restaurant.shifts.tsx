@@ -80,7 +80,7 @@ function Shifts() {
   const openShifts = shifts.filter((s) => !s.clock_out);
 
   return (
-    <div className="space-y-4">
+    <div className="restaurant-2026-page space-y-4">
       <h1 className="text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Staff shifts</h1>
 
       <div className="grid gap-4 sm:grid-cols-3">
