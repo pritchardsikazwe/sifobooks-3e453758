@@ -368,6 +368,7 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
       restructuring: { title: "Restructure queue", hint: "Requests awaiting controlled approval.", rows: restructures, cols: ["Loan","Old balance","New balance","New term","Status"] },
       writeoffs: { title: "Write-off register", hint: "Approved and pending write-offs with recoveries.", rows: writeoffs, cols: ["Loan","Amount","Reason","Recovered","Status"] },
       "field-collections": { title: "Field visits", hint: "Offline-capable collection visits and outcomes.", rows: fieldVisits, cols: ["Borrower","Visit","Outcome","Promise","Notes"] },
+      promises: { title: "Promises to Pay", hint: "Commitments and collection follow-up.", rows: promises, cols: ["Loan","Borrower","Promise","Date","Status"] },
       communications: { title: "Communication centre", hint: "Customer communication queue and delivery history.", rows: communications, cols: ["Channel","Recipient","Template","Status","Sent"] },
       "risk-fraud": { title: "Risk & fraud flags", hint: "Exceptions requiring review.", rows: riskFlags, cols: ["Type","Borrower","Severity","Score","Status"] },
       documents: { title: "KYC & loan documents", hint: "Verification queue for borrower documents.", rows: documents, cols: ["Document","Borrower","Type","Verification","Created"] },
@@ -526,7 +527,7 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
     screen === "/lending/mobile-money" ? mobileView :
     screen === "/lending/accounting" ? accountingView :
     screen === "/lending/field-collections" ? moduleView("field-collections") :
-    screen === "/lending/promises" ? moduleView("promises") ?? collectionsView :
+    screen === "/lending/promises" ? moduleView("promises") :
     screen === "/lending/guarantors" ? moduleView("guarantors") :
     screen === "/lending/collateral" ? moduleView("collateral") :
     screen === "/lending/group-lending" ? moduleView("group-lending") :
