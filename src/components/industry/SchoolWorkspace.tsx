@@ -54,7 +54,7 @@ const UNAVAILABLE: Record<string, string> = {
   "/school/attendance": "Learner attendance",
   "/school/exams": "Examinations & marks",
   "/school/timetable": "Timetable",
-  "/school/boarding": "Boarding",
+
   "/school/transport": "Transport",
   "/school/scholarships": "Scholarships",
   "/school/report-cards": "Report cards",
@@ -74,7 +74,7 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
-      const [st, cl, fees, pays, staff, structures] = await Promise.all([
+      const [st, cl, fees, pays, staff, structures, boardingHouses, boardingBeds, boardingAllocations, discipline, health, libraryLoans, transport] = await Promise.all([
         db.from("students").select("id,student_no,first_name,last_name,class_id,status,guardian_name,guardian_phone,guardian_email,boarding").eq("user_id", uid).order("last_name").limit(500),
         db.from("school_classes").select("id,name,grade_level,stream,class_teacher,capacity,academic_year,status").eq("user_id", uid).order("name").limit(200),
         db.from("student_fees").select("id,student_id,term,academic_year,amount_due,amount_paid,balance,status,due_date,description").eq("user_id", uid).order("due_date", { ascending: false }).limit(500),
@@ -86,6 +86,8 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
       setData({
         students: st.data ?? [], classes: cl.data ?? [], fees: fees.data ?? [],
         payments: pays.data ?? [], staff: staff.data ?? [], structures: structures.data ?? [],
+        boardingHouses: boardingHouses.data ?? [], boardingBeds: boardingBeds.data ?? [], boardingAllocations: boardingAllocations.data ?? [],
+        discipline: discipline.data ?? [], health: health.data ?? [], libraryLoans: libraryLoans.data ?? [], transport: transport.data ?? [],
       });
       setLoading(false);
     })();
@@ -98,6 +100,13 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
   const payments = data.payments ?? [];
   const staff = data.staff ?? [];
   const structures = data.structures ?? [];
+  const boardingHouses = data.boardingHouses ?? [];
+  const boardingBeds = data.boardingBeds ?? [];
+  const boardingAllocations = data.boardingAllocations ?? [];
+  const discipline = data.discipline ?? [];
+  const health = data.health ?? [];
+  const libraryLoans = data.libraryLoans ?? [];
+  const transport = data.transport ?? [];
 
   const className = useMemo(() => new Map(classes.map((c: any) => [c.id, c.name])), [classes]);
   const studentName = useMemo(() => new Map(students.map((s: any) => [s.id, `${s.first_name} ${s.last_name}`])), [students]);
@@ -144,6 +153,9 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
               <MetricTile label="Classes" value={String(classes.length)} icon={BookOpen} />
               <MetricTile label="Fees collected" value={fmtMoney(collected)} icon={Wallet} hint={`of ${fmtMoney(billed)} billed`} progress={collectionRate} tone="good" />
               <MetricTile label="Arrears" value={fmtMoney(arrears)} icon={WalletCards} hint={`${withArrears.length} fee accounts`} tone={arrears > 0 ? "warn" : "good"} />
+              <MetricTile label="Boarding" value={`${boardingAllocations.length}/${boardingBeds.length}`} icon={GraduationCap} hint={`${boardingHouses.length} houses`} />
+              <MetricTile label="Open discipline" value={String(discipline.filter((x:any)=>x.status !== "resolved").length)} icon={ShieldCheck} tone={discipline.length ? "warn" : "good"} />
+              <MetricTile label="Library loans" value={String(libraryLoans.length)} icon={BookOpen} />
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
@@ -182,6 +194,9 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
             </Board>
           </div>
         );
+      }
+      case "/school/boarding": {
+        return <div className="space-y-4"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4"><MetricTile label="Boarding houses" value={String(boardingHouses.length)} icon={GraduationCap}/><MetricTile label="Beds" value={String(boardingBeds.length)} icon={BookOpen}/><MetricTile label="Occupied" value={String(boardingAllocations.length)} icon={Users}/><MetricTile label="Available" value={String(Math.max(0, boardingBeds.length-boardingAllocations.length))} icon={Wallet}/></div><Board title="Boarding houses" hint="Residential allocation, capacity and bed occupancy.">{boardingHouses.length===0?<EmptyState title="No boarding houses" message="Create boarding houses and beds to manage hostel allocation.":<div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">{boardingHouses.map((h:any)=>{const beds=boardingBeds.filter((b:any)=>b.house_id===h.id);const used=boardingAllocations.filter((a:any)=>beds.some((b:any)=>b.id===a.bed_id)).length;return <div key={h.id} className="rounded-2xl border p-4"><div className="font-semibold">{h.name}</div><div className="text-xs text-muted-foreground">{h.code} · {h.gender??"Mixed"} · House parent {h.house_parent??"—"}</div><div className="mt-3 text-sm">{used} occupied / {beds.length} beds</div></div>})}</div>}</Board><div className="grid gap-4 lg:grid-cols-2"><Board title="Student welfare" hint="Recent discipline and health activity."><Timeline empty="No welfare records." items={[...discipline.slice(0,4).map((x:any)=>({key:"d"+x.id,when:x.incident_date,title:studentName.get(x.student_id)??"Student",detail:`Discipline · ${x.category} · ${x.severity}`})),...health.slice(0,4).map((x:any)=>({key:"h"+x.id,when:x.visit_date,title:studentName.get(x.student_id)??"Student",detail:`Health visit${x.referred?" · referred":""}`}))]}/></Board><Board title="Transport & library" hint="Operational load today."><div className="space-y-3 p-4 text-sm"><div className="flex justify-between"><span>Active transport allocations</span><b>{transport.length}</b></div><div className="flex justify-between"><span>Books currently on loan</span><b>{libraryLoans.length}</b></div></div></Board></div></div>;
       }
       case "/school/students": {
         const rows = students.filter((s: any) => match(`${s.first_name} ${s.last_name} ${s.student_no} ${s.guardian_name ?? ""}`)).slice(0, 60);
