@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
-import { PAYMENT_METHODS, recordPayments, statusTone, toneClass, today, uid } from "@/lib/restaurant";
+import { PAYMENT_METHODS, statusTone, toneClass, today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
 import { DocumentImpact } from "@/components/accounting/LedgerImpactSheet";
 import { CheckOperations } from "@/components/restaurant/CheckOperations";
