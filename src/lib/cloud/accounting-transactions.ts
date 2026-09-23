@@ -194,6 +194,166 @@ export async function cloudPosCheckout(uid: string, args: any) {
   });
 }
 
+
+export async function cloudRestaurantCheckout(uid: string, args: any) {
+  const sale = args?._sale || {};
+  const rawItems = Array.isArray(args?._items) ? args._items : [];
+  const rawPayments = Array.isArray(args?._payments) ? args._payments : [];
+  if (!rawItems.length) throw new Error("EMPTY_RESTAURANT_CHECK");
+  if (!rawPayments.length) throw new Error("RESTAURANT_PAYMENT_REQUIRED");
+
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const businessDate = dateOnly(sale.business_date);
+    const clientRef = String(sale.client_ref || "");
+    const existing = sale.order_id
+      ? await one(tx, "SELECT * FROM restaurant_orders WHERE id=$1 AND user_id=$2 FOR UPDATE", [String(sale.order_id), uid])
+      : null;
+    if (sale.order_id && !existing) throw new Error("RESTAURANT_ORDER_NOT_FOUND");
+    if (existing && ["paid", "refunded", "void"].includes(String(existing.status))) {
+      if (existing.status === "paid") return { orderId: existing.id, orderNo: existing.order_no, journalEntryId: existing.journal_entry_id, duplicate: true, status: existing.status };
+      throw new Error("RESTAURANT_ORDER_NOT_SETTLEABLE");
+    }
+
+    const shift = sale.shift_id
+      ? await one(tx, "SELECT id FROM restaurant_shifts WHERE id=$1 AND user_id=$2 AND business_date=$3 AND clock_out IS NULL LIMIT 1", [String(sale.shift_id), uid, businessDate])
+      : await one(tx, "SELECT id FROM restaurant_shifts WHERE user_id=$1 AND business_date=$2 AND clock_out IS NULL ORDER BY clock_in DESC LIMIT 1", [uid, businessDate]);
+    if (!shift) throw new Error("NO_ACTIVE_RESTAURANT_SHIFT");
+
+    const payments = rawPayments.map((p: any) => ({
+      method: String(p.method || "cash"),
+      amount: money(p.amount),
+      tendered: money(p.tendered ?? p.amount ?? 0),
+      change: Math.max(0, money(p.change ?? p.change_given ?? 0)),
+      reference: p.reference || null,
+    })).filter((p: any) => p.amount > 0);
+    const total = money(sale.total);
+    const paid = money(payments.reduce((s: number, p: any) => s + p.amount, 0));
+    if (paid + 0.01 < total) throw new Error("PAYMENT_SHORT");
+
+    const needsCash = payments.some((p: any) => p.method.toLowerCase() === "cash");
+    const drawer = needsCash
+      ? await one(tx, "SELECT * FROM restaurant_cash_drawers WHERE user_id=$1 AND business_date=$2 AND status='open' ORDER BY opened_at DESC LIMIT 1 FOR UPDATE", [uid, businessDate])
+      : null;
+    if (needsCash && !drawer) throw new Error("NO_OPEN_CASH_DRAWER");
+
+    const menuByName = new Map<string, any>();
+    for (const row of await many(tx, "SELECT * FROM restaurant_menu_items WHERE user_id=$1 AND active=1", [uid])) {
+      menuByName.set(String(row.name), row);
+    }
+
+    const ingredientTotals = new Map<string, { qty: number; item: any; unit: string | null }>();
+    const lines: any[] = [];
+    for (const raw of rawItems) {
+      const name = String(raw.name || raw.item_name || "").trim();
+      const qty = Number(raw.qty || raw.quantity || 0);
+      const price = Number(raw.price || 0);
+      const menu = menuByName.get(name);
+      if (!menu) throw new Error("MENU_ITEM_NOT_FOUND:" + name);
+      if (!(qty > 0) || !(price >= 0)) throw new Error("INVALID_RESTAURANT_LINE");
+
+      const modifiers = Array.isArray(raw.modifiers) ? raw.modifiers : [];
+      const modifierTotal = modifiers.reduce((s: number, m: any) => s + Number(m.price || 0), 0);
+      const lineTotal = money((price + modifierTotal) * qty);
+      const recipes = await many(tx, "SELECT stock_item_id,quantity,unit FROM restaurant_recipes WHERE user_id=$1 AND menu_item_id=$2", [uid, menu.id]);
+      for (const recipe of recipes) {
+        const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [recipe.stock_item_id, uid]);
+        if (!item) throw new Error("RECIPE_STOCK_ITEM_NOT_FOUND:" + recipe.stock_item_id);
+        const required = Number(recipe.quantity || 0) * qty;
+        const cur = ingredientTotals.get(String(item.id)) || { qty: 0, item, unit: recipe.unit || item.unit || null };
+        cur.qty += required;
+        ingredientTotals.set(String(item.id), cur);
+      }
+      lines.push({ id: id(), name, station: raw.station || menu.station || "Kitchen", qty, price, unitCost: Number(menu.cost || 0), modifiers, notes: raw.notes || raw.note || null });
+    }
+
+    for (const d of ingredientTotals.values()) {
+      const available = sale.location_id
+        ? await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)])
+        : null;
+      const qtyAvailable = sale.location_id ? Number(available?.quantity || 0) : Number(d.item.quantity_on_hand || 0);
+      if (qtyAvailable + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
+      if (sale.location_id && !available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
+    }
+
+    const orderId = existing?.id || id();
+    const orderNo = String(existing?.order_no || sale.order_no || ("CHK-" + Date.now().toString().slice(-6)));
+    const journalIdPlaceholder = null;
+
+    if (existing) {
+      await tx.unsafe(
+        "UPDATE restaurant_orders SET business_date=$1,table_id=$2,order_type=$3,guests=$4,subtotal=$5,discount=$6,tax=$7,service_charge=$8,gratuity=$9,delivery_fee=$10,total=$11,server_name=$12,customer_name=$13,status='paid',payment_method=$14,amount_paid=$11,closed_at=now(),journal_entry_id=$15 WHERE id=$16 AND user_id=$17",
+        [businessDate, sale.table_id || existing.table_id || null, sale.order_type || existing.order_type || "DINE-IN", Number(sale.guests || existing.guests || 1), money(sale.subtotal), money(sale.discount), money(sale.tax), money(sale.service_charge), money(sale.gratuity), money(sale.delivery_fee), total, sale.server_name || existing.server_name || null, sale.customer_name || existing.customer_name || null, payments.length === 1 ? payments[0].method : "split", journalIdPlaceholder, orderId, uid],
+      );
+      await tx.unsafe("DELETE FROM restaurant_order_items WHERE order_id=$1 AND user_id=$2", [orderId, uid]);
+      await tx.unsafe("DELETE FROM restaurant_payments WHERE order_id=$1 AND user_id=$2", [orderId, uid]);
+    } else {
+      await tx.unsafe(
+        "INSERT INTO restaurant_orders(id,user_id,order_no,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'paid',$17,$14,now(),$18)",
+        [orderId, uid, orderNo, businessDate, sale.table_id || null, sale.order_type || "DINE-IN", Number(sale.guests || 1), money(sale.subtotal), money(sale.discount), money(sale.tax), money(sale.service_charge), money(sale.gratuity), money(sale.delivery_fee), total, sale.server_name || null, sale.customer_name || null, payments.length === 1 ? payments[0].method : "split", journalIdPlaceholder],
+      );
+    }
+
+    for (const line of lines) {
+      await tx.unsafe(
+        "INSERT INTO restaurant_order_items(id,user_id,order_id,item_name,station,qty,price,unit_cost,discount,modifiers,notes,kds_status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'served')",
+        [line.id, uid, orderId, line.name, line.station, line.qty, line.price, line.unitCost, 0, JSON.stringify(line.modifiers || []), line.notes],
+      );
+    }
+
+    let ingredientCost = 0;
+    for (const d of ingredientTotals.values()) {
+      const next = Number(d.item.quantity_on_hand || 0) - d.qty;
+      ingredientCost += d.qty * Number(d.item.cost_price || 0);
+      await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3", [next, d.item.id, uid]);
+      if (sale.location_id) {
+        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)]);
+        await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [money(Number(bal.quantity) - d.qty), bal.id]);
+      }
+      await tx.unsafe(
+        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
+        [id(), uid, d.item.id, -d.qty, Number(d.item.cost_price || 0), orderNo, "Restaurant recipe consumption", sale.location_id || d.item.warehouse_id || null],
+      );
+    }
+    ingredientCost = money(ingredientCost);
+
+    for (const p of payments) {
+      await tx.unsafe("INSERT INTO restaurant_payments(id,user_id,order_id,method,amount,tendered,change_given,reference,drawer_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)", [id(), uid, orderId, p.method, p.amount, p.tendered, p.change, p.reference, needsCash ? drawer?.id : null]);
+    }
+
+    if (needsCash) {
+      const cash = money(payments.filter((p: any) => p.method.toLowerCase() === "cash").reduce((s: number, p: any) => s + p.amount, 0));
+      const expected = money(Number(drawer.opening_float || 0) + Number(drawer.cash_sales || 0) + cash - Number(drawer.cash_payouts || 0) - Number(drawer.cash_drops || 0));
+      await tx.unsafe("UPDATE restaurant_cash_drawers SET cash_sales=$1,expected_cash=$2,updated_at=now() WHERE id=$3 AND user_id=$4 AND status='open'", [money(Number(drawer.cash_sales || 0) + cash), expected, drawer.id, uid]);
+    }
+
+    const a = await accounts(tx, uid);
+    const netSales = money(total - money(sale.tax));
+    const journalLines: any[] = payments.map((p: any) => ({ accountId: a.cash, debit: p.amount, credit: 0, description: "Restaurant payment " + p.method }));
+    journalLines.push({ accountId: a.revenue, debit: 0, credit: netSales, description: "Restaurant sales revenue" });
+    if (Number(sale.tax || 0) > 0) journalLines.push({ accountId: a.vat, debit: 0, credit: money(sale.tax), description: "Restaurant output VAT" });
+    if (ingredientCost > 0) {
+      journalLines.push({ accountId: a.cogs, debit: ingredientCost, credit: 0, description: "Restaurant cost of sales" });
+      journalLines.push({ accountId: a.inventory, debit: 0, credit: ingredientCost, description: "Restaurant inventory consumed" });
+    }
+    const je = await journal(tx, uid, "RPOS:" + orderNo, "Restaurant sale " + orderNo, businessDate, journalLines);
+    await tx.unsafe("UPDATE restaurant_orders SET journal_entry_id=$1 WHERE id=$2 AND user_id=$3", [je, orderId, uid]);
+
+    if (sale.table_id) {
+      await tx.unsafe("UPDATE restaurant_tables SET status='dirty',occupied_since=NULL,current_order_id=NULL WHERE id=$1 AND user_id=$2", [sale.table_id, uid]);
+    }
+
+    await tx.unsafe(
+      "INSERT INTO zra_invoice_queue(id,user_id,tenant_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,updated_at) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,'restaurant_sale',$3,$4,$5,$6,'pending',$7,0,now())",
+      [id(), uid, orderId, orderNo, total, money(sale.tax), JSON.stringify({ source: "cloud_restaurant", orderId, orderNo, total })],
+    );
+    const b = await batch(tx, uid, "RESTAURANT_CHECKOUT", "restaurant_order", orderId, clientRef || orderNo);
+    await tx.unsafe("UPDATE cloud_transaction_batches SET source_id=$1,total_debit=$2,total_credit=$2,metadata_json=$3,updated_at=now() WHERE id=$4", [orderId, money(total + ingredientCost), money(total + ingredientCost), JSON.stringify({ orderNo, total, ingredientCost, journalEntryId: je }), b.id]);
+    await event(tx, uid, b.id, "POSTED", "Restaurant sale posted atomically", { orderId, orderNo, total, ingredientCost, journalEntryId: je });
+    return { orderId, orderNo, journalEntryId: je, total, ingredientCost, duplicate: false };
+  });
+}
+
 export async function cloudPostInvoice(uid: string, args: any) {
   const h = args?._invoice || {};
   const items = Array.isArray(args?._items) ? args._items : [];
