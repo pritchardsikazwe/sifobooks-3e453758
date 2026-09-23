@@ -146,6 +146,13 @@ function Page() {
       supabase.from("restaurant_recipes").select("menu_item_id,stock_item_id,quantity,unit").eq("user_id", uid),
       supabase.from("stock_balances").select("item_id,location_id,quantity").eq("user_id", uid),
     ]);
+    const queryError = [m, t, o, g, md, ot, loc, rec, bal].find((r: any) => r?.error);
+    if (queryError?.error) {
+      console.error("[Restaurant POS] load failed", queryError.error);
+      toast.error("Restaurant POS could not load its setup data.", { description: String(queryError.error.message ?? queryError.error) });
+      setLoading(false);
+      return;
+    }
     setMenu((m.data ?? []) as any);
     const locations = (loc?.data ?? []) as any[];
     setStockLocations(locations);
