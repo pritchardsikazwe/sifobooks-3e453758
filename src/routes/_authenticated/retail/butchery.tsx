@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Beef, Scale, PackageCheck, Printer, RefreshCw, Wifi, WifiOff, Scissors, TrendingUp, AlertTriangle } from "lucide-react";
+import { Beef, Scale, PackageCheck, Printer, RefreshCw, Wifi, WifiOff, Scissors, TrendingUp, AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,23 @@ function ButcheryPage() {
     if (error) toast.error(error.message); else toast.success("Scale profile saved");
   };
 
+  const mapProduct = async (product: Product) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return;
+    const { error } = await supabase.from("butchery_products").upsert({
+      user_id: user.user.id,
+      item_id: product.id,
+      animal_type: /chicken|poultry/i.test(product.name) ? "chicken" : /goat/i.test(product.name) ? "goat" : /pork/i.test(product.name) ? "pork" : "beef",
+      cut_name: product.name,
+      price_per_kg: Number(product.sell_price || 0),
+      min_price_per_kg: 0,
+      scale_enabled: true,
+      label_enabled: true,
+      is_active: true,
+    } as any, { onConflict: "user_id,item_id" });
+    if (error) toast.error(error.message); else { toast.success(product.name + " added to Butchery"); await load(); }
+  };
+
   const printLabel = () => {
     if (!selected || !scale.weight) return toast.error("Select meat and capture a weight first");
     const label = window.open("", "_blank", "width=420,height=600");
@@ -170,8 +187,15 @@ function ButcheryPage() {
       <Card>
         <CardHeader><CardTitle>Butchery Product Master</CardTitle></CardHeader>
         <CardContent>
-          {loading ? <div className="py-8 text-center text-muted-foreground">Loading...</div> : meatProducts.length === 0 ? <div className="py-10 text-center text-muted-foreground">No butchery products mapped yet. Map existing Retail stock items to the Butchery extension before using the weighted POS.</div> :
-          <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b text-xs text-muted-foreground"><tr><th className="py-3 text-left">Product</th><th className="text-left">Animal</th><th className="text-left">Cut</th><th className="text-right">Price/kg</th><th className="text-right">Stock</th><th className="text-center">Scale</th><th className="text-center">Label</th></tr></thead><tbody className="divide-y">{meatProducts.map(p => { const m = mapped.get(p.id)!; return <tr key={p.id}><td className="py-3 font-medium">{p.name}</td><td>{m.animal_type}</td><td>{m.cut_name || "—"}</td><td className="text-right">K{(m.price_per_kg || p.sell_price).toFixed(2)}</td><td className="text-right tabular-nums">{Number(p.quantity_on_hand || 0).toFixed(3)} kg</td><td className="text-center">{m.scale_enabled ? "✓" : "—"}</td><td className="text-center">{m.label_enabled ? "✓" : "—"}</td></tr>; })}</tbody></table></div>}
+          {loading ? <div className="py-8 text-center text-muted-foreground">Loading...</div> :
+          <div className="space-y-4">
+            {meatProducts.length === 0 && <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">No butchery products mapped yet. Use <strong>Add to Butchery</strong> below to reuse existing Retail stock items — no second inventory is created.</div>}
+            <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b text-xs text-muted-foreground"><tr><th className="py-3 text-left">Product</th><th className="text-left">Animal</th><th className="text-left">Cut</th><th className="text-right">Price/kg</th><th className="text-right">Stock</th><th className="text-center">Scale</th><th className="text-center">Label</th></tr></thead><tbody className="divide-y">{meatProducts.map(p => { const m = mapped.get(p.id)!; return <tr key={p.id}><td className="py-3 font-medium">{p.name}</td><td>{m.animal_type}</td><td>{m.cut_name || "—"}</td><td className="text-right">K{(m.price_per_kg || p.sell_price).toFixed(2)}</td><td className="text-right tabular-nums">{Number(p.quantity_on_hand || 0).toFixed(3)} kg</td><td className="text-center">{m.scale_enabled ? "✓" : "—"}</td><td className="text-center">{m.label_enabled ? "✓" : "—"}</td></tr>; })}</tbody></table></div>
+            <div className="border-t pt-4">
+              <div className="mb-3 text-sm font-semibold">Retail stock items available to add</div>
+              <div className="grid gap-2 md:grid-cols-2">{products.filter(p => !mapped.has(p.id)).slice(0, 12).map(p => <div key={p.id} className="flex items-center justify-between rounded-xl border p-3"><div><div className="font-medium">{p.name}</div><div className="text-xs text-muted-foreground">Stock {Number(p.quantity_on_hand || 0).toFixed(3)} · K{Number(p.sell_price || 0).toFixed(2)}</div></div><Button size="sm" variant="outline" onClick={() => void mapProduct(p)}><Plus className="mr-1 h-3 w-3" />Add to Butchery</Button></div>)}</div>
+            </div>
+          </div>}
         </CardContent>
       </Card>
     </div>
