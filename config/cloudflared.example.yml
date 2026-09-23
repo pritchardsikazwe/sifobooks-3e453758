@@ -1,0 +1,11 @@
+# SifoBooks Cloudflare Tunnel example
+# Replace sifobooks.example.com with your real hostname.
+# This file contains no tunnel credentials or secrets.
+
+tunnel: REPLACE_WITH_CLOUDFLARE_TUNNEL_ID
+credentials-file: C:\\ProgramData\\cloudflared\\REPLACE_WITH_TUNNEL_ID.json
+
+ingress:
+  - hostname: sifobooks.example.com
+    service: http://127.0.0.1:3000
+  - service: http_status:404
