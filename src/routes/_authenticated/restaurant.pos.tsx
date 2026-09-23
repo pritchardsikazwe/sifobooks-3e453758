@@ -12,6 +12,7 @@ import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
+import { recordPayments } from "@/lib/restaurant";
 
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
@@ -232,6 +233,46 @@ function Page() {
 
   const clearCheck = () => { setCart([]); setDiscountPct(0); setTableId(null); setRecalled(null); setCustomer(""); setGuests(1); };
 
+  /** Recipe-driven inventory control. A paid menu item consumes its configured ingredients. */
+  const prepareStockConsumption = async (uid: string) => {
+    const menuByName = new Map(menu.map(m => [m.name, m]));
+    const menuIds = [...new Set(cart.map(l => menuByName.get(l.name)?.id).filter(Boolean) as string[])];
+    if (!menuIds.length) return { ok: true, deductions: [] as any[] };
+    const { data: recipes, error: re } = await supabase.from("restaurant_recipes").select("menu_item_id,stock_item_id,quantity,unit").eq("user_id", uid).in("menu_item_id", menuIds);
+    if (re) return { ok: false, error: re.message, deductions: [] as any[] };
+    const totals = new Map<string, { qty: number; unit?: string }>();
+    for (const line of cart) {
+      const mi = menuByName.get(line.name);
+      if (!mi) continue;
+      for (const rr of (recipes ?? []).filter((x: any) => x.menu_item_id === mi.id)) {
+        const cur = totals.get(rr.stock_item_id) ?? { qty: 0, unit: rr.unit };
+        cur.qty += Number(rr.quantity || 0) * Number(line.qty || 0);
+        totals.set(rr.stock_item_id, cur);
+      }
+    }
+    const ids = [...totals.keys()];
+    if (!ids.length) return { ok: true, deductions: [] as any[] };
+    const { data: stock, error: se } = await supabase.from("stock_items").select("id,name,quantity_on_hand,cost_price,unit").eq("user_id", uid).in("id", ids);
+    if (se) return { ok: false, error: se.message, deductions: [] as any[] };
+    const byId = new Map((stock ?? []).map((x: any) => [x.id, x]));
+    const deductions = ids.map(id => ({ id, ...(byId.get(id) ?? {}), ...totals.get(id) }));
+    const shortage = deductions.find(x => Number(x.quantity_on_hand ?? 0) < Number(x.qty ?? 0));
+    if (shortage) return { ok: false, error: "Insufficient stock: " + shortage.name + " (" + Number(shortage.quantity_on_hand ?? 0) + " " + (shortage.unit ?? "") + " available, " + Number(shortage.qty ?? 0) + " required)", deductions };
+    return { ok: true, deductions };
+  };
+
+  const commitStockConsumption = async (uid: string, orderNo: string, deductions: any[]) => {
+    for (const d of deductions) {
+      const next = Number(d.quantity_on_hand) - Number(d.qty);
+      const { error } = await supabase.from("stock_items").update({ quantity_on_hand: next, updated_at: new Date().toISOString() }).eq("id", d.id).eq("user_id", uid);
+      if (error) throw error;
+      await supabase.from("stock_movements").insert({
+        id: crypto.randomUUID(), user_id: uid, item_id: d.id, movement_type: "sale", quantity: -Number(d.qty),
+        unit_cost: Number(d.cost_price || 0), reference: orderNo, note: "Restaurant recipe consumption", location_id: null,
+      } as never);
+    }
+  };
+
   /** Persist the current cart. `pay` settles it, `hold` parks it for later recall. */
   const sendOrder = async (pay?: string, hold?: boolean) => {
     if (!cart.length) return toast.error("Add items to the check first");
@@ -241,6 +282,8 @@ function Page() {
     if (!u.user) return;
     setBusy(true);
     const uid = u.user.id;
+    const stockPlan = pay ? await prepareStockConsumption(uid) : { ok: true, deductions: [] as any[] };
+    if (!stockPlan.ok) { setBusy(false); return toast.error(stockPlan.error ?? "Stock validation failed"); }
     const status = pay ? "paid" : hold ? "held" : "open";
     if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
     const payload: any = {
@@ -276,6 +319,12 @@ function Page() {
       setBusy(false);
       return toast.error(posErrorMessage(ie));
     }
+
+    if (pay && stockPlan.deductions.length) {
+      try { await commitStockConsumption(uid, (ord as any).order_no ?? (ord as any).id, stockPlan.deductions); }
+      catch (e) { console.error("[POS] stock deduction failed", e); setBusy(false); return toast.error("Sale posted but stock update failed — review Inventory immediately."); }
+    }
+    if (pay) await recordPayments((ord as any).id, [{ method: pay, amount: total, tendered: total, change: 0 }]);
 
     if (tableId) await supabase.from("restaurant_tables").update({ status: pay ? "free" : "occupied" }).eq("id", tableId);
     if (pay) { try { await accrueLoyaltyForOrder((ord as any).id); } catch { /* best effort */ } }
