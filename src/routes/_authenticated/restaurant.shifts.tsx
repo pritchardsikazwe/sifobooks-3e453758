@@ -10,7 +10,7 @@ import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { statusTone, toneClass, today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
-import { Clock } from "lucide-react";
+import { Clock, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/shifts")({
   head: () => ({
@@ -103,7 +103,7 @@ function Shifts() {
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Staff shifts</h1>
         {myName && <div className="text-xs text-muted-foreground">{myName} · {myShift ? "Shift active" : "Not clocked in"}</div>}
-        <Button onClick={startMyShift} disabled={!myName || !!myShift}>{myShift ? "My shift active" : "Start my cashier shift"}</Button>
+        <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print shift report</Button>\n        <Button onClick={startMyShift} disabled={!myName || !!myShift}>{myShift ? "My shift active" : "Start my cashier shift"}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
