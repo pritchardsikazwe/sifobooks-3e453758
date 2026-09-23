@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { summarise, today, uid } from "@/lib/restaurant";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Printer, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/reports")({
   head: () => ({
@@ -32,6 +33,9 @@ function Reports() {
   const [orders, setOrders] = useState<any[]>([]);
   const [lines, setLines] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [drawers, setDrawers] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -40,11 +44,14 @@ function Reports() {
       const { data: o } = await db.from("restaurant_orders").select("*").eq("user_id", u)
         .gte("business_date", from).lte("business_date", to);
       const ids = (o ?? []).map((x: any) => x.id);
-      const [li, mi] = await Promise.all([
+      const [li, mi, pa, sh, dr] = await Promise.all([
         ids.length ? db.from("restaurant_order_items").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
         db.from("restaurant_menu_items").select("*").eq("user_id", u),
+        ids.length ? db.from("restaurant_payments").select("*").in("order_id", ids) : Promise.resolve({ data: [] }),
+        db.from("restaurant_shifts").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
+        db.from("restaurant_cash_drawers").select("*").eq("user_id", u).gte("business_date", from).lte("business_date", to),
       ]);
-      setOrders(o ?? []); setLines(li.data ?? []); setItems(mi.data ?? []);
+      setOrders(o ?? []); setLines(li.data ?? []); setItems(mi.data ?? []); setPayments(pa.data ?? []); setShifts(sh.data ?? []); setDrawers(dr.data ?? []);
     })();
   }, [from, to]);
 
@@ -59,17 +66,23 @@ function Reports() {
 
   const byHour = group(live, (o) => `${String(new Date(o.created_at).getHours()).padStart(2, "0")}:00`, (o) => Number(o.total || 0))
     .sort((a, b) => a[0].localeCompare(b[0]));
-  const byItem = group(lines, (l) => l.name, (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.quantity || 0)));
-  const byCategory = group(lines, (l) => items.find((i) => i.id === l.menu_item_id)?.category ?? "Other",
-    (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.quantity || 0)));
+  const paidIds = new Set(live.filter((o) => o.status === "paid").map((o) => o.id));
+  const soldLines = lines.filter((l) => paidIds.has(l.order_id));
+  const byItem = group(soldLines, (l) => l.item_name || l.name || "Unnamed item", (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.qty || 0)));
+  const byCategory = group(soldLines, (l) => items.find((i) => i.id === l.menu_item_id)?.category ?? l.category ?? "Other",
+    (l) => Number(l.line_total ?? Number(l.price || 0) * Number(l.qty || 0)));
   const byServer = group(live, (o) => o.server_name || "Unassigned", (o) => Number(o.total || 0));
   const byType = Object.entries(t.byType);
   const byMethod = Object.entries(t.byMethod);
-  const discounts = group(live.filter((o) => Number(o.discount || 0) > 0), (o) => `#${o.order_number}`, (o) => Number(o.discount));
-  const voids = orders.filter((o) => o.status === "void").map((o) => [`#${o.order_number} ${o.server_name ?? ""}`, Number(o.total || 0)] as [string, number]);
+  const discounts = group(live.filter((o) => Number(o.discount || 0) > 0), (o) => `#${o.order_no || o.id}`, (o) => Number(o.discount));
+  const voids = orders.filter((o) => o.status === "void").map((o) => [`#${o.order_no || o.id} ${o.server_name ?? ""}`, Number(o.total || 0)] as [string, number]);
 
   /* Cost comes from the line cost the server calculated from recipes — never a client figure. */
-  const foodCost = lines.reduce((s, l) => s + Number(l.unit_cost || 0) * Number(l.qty || 0), 0);
+  const foodCost = soldLines.reduce((s, l) => s + Number(l.unit_cost || 0) * Number(l.qty || 0), 0);
+  const paymentMap: Record<string,number> = {};
+  payments.forEach((p) => { const k=String(p.method||"other").toLowerCase(); paymentMap[k]=(paymentMap[k]||0)+Number(p.amount||0); });
+  const byPayment = Object.entries(paymentMap).sort((a,b)=>b[1]-a[1]);
+  const byCashier = group(live.filter(o=>o.status==="paid"), o=>o.server_name||"Unassigned", o=>Number(o.total||0));
   const uncosted = lines.filter((l) => !Number(l.unit_cost || 0)).length;
   const grossProfit = t.gross - foodCost;
 
@@ -79,7 +92,10 @@ function Reports() {
     { key: "category", label: "Sales by category", rows: byCategory },
     { key: "server", label: "Sales by server", rows: byServer },
     { key: "type", label: "Sales by order type", rows: byType as [string, number][] },
-    { key: "method", label: "Payment methods", rows: byMethod as [string, number][] },
+    { key: "method", label: "Payment methods", rows: byPayment as [string, number][] },
+    { key: "cashier", label: "Cashier / server sales", rows: byCashier },
+    { key: "shift", label: "Shift hours & tips", rows: shifts.map((s:any)=>[`${s.staff_name} · ${s.business_date}`, ((new Date(s.clock_out||Date.now()).getTime()-new Date(s.clock_in).getTime())/3600000)] as [string,number]) },
+    { key: "drawer", label: "Cash drawer variance", rows: drawers.map((d:any)=>[`${d.name} · ${d.business_date}`, Number(d.variance||0)] as [string,number]) },
     { key: "discount", label: "Discounts", rows: discounts },
     { key: "void", label: "Voids", rows: voids },
   ];
@@ -93,6 +109,7 @@ function Reports() {
         </div>
         <Input type="date" className="w-40" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input type="date" className="w-40" value={to} onChange={(e) => setTo(e.target.value)} />
+        <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-1" /> Print</Button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
