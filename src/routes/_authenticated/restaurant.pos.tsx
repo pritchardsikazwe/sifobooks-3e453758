@@ -234,14 +234,14 @@ function Page() {
   const clearCheck = () => { setCart([]); setDiscountPct(0); setTableId(null); setRecalled(null); setCustomer(""); setGuests(1); };
 
   /** Recipe-driven inventory control. A paid menu item consumes its configured ingredients. */
-  const prepareStockConsumption = async (uid: string) => {
+  const prepareStockConsumption = async (uid: string, sourceCart = cart) => {
     const menuByName = new Map(menu.map(m => [m.name, m]));
-    const menuIds = [...new Set(cart.map(l => menuByName.get(l.name)?.id).filter(Boolean) as string[])];
+    const menuIds = [...new Set(sourceCart.map(l => menuByName.get(l.name)?.id).filter(Boolean) as string[])];
     if (!menuIds.length) return { ok: true, deductions: [] as any[] };
     const { data: recipes, error: re } = await supabase.from("restaurant_recipes").select("menu_item_id,stock_item_id,quantity,unit").eq("user_id", uid).in("menu_item_id", menuIds);
     if (re) return { ok: false, error: re.message, deductions: [] as any[] };
     const totals = new Map<string, { qty: number; unit?: string }>();
-    for (const line of cart) {
+    for (const line of sourceCart) {
       const mi = menuByName.get(line.name);
       if (!mi) continue;
       for (const rr of (recipes ?? []).filter((x: any) => x.menu_item_id === mi.id)) {
@@ -376,7 +376,20 @@ function Page() {
   };
 
   const settle = async (o: Order, method: string) => {
-    await supabase.from("restaurant_orders").update({ status: "paid", payment_method: method, closed_at: new Date().toISOString() }).eq("id", o.id);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const savedLines = items.filter(i => i.order_id === o.id).map(i => ({
+      name: i.item_name, station: i.station, price: Number(i.price), qty: Number(i.qty), note: i.notes ?? undefined,
+    }));
+    const stockPlan = await prepareStockConsumption(u.user.id, savedLines);
+    if (!stockPlan.ok) return toast.error(stockPlan.error ?? "Stock validation failed");
+    const { error } = await supabase.from("restaurant_orders").update({ status: "paid", payment_method: method, closed_at: new Date().toISOString() }).eq("id", o.id);
+    if (error) return toast.error(posErrorMessage(error));
+    if (stockPlan.deductions.length) {
+      try { await commitStockConsumption(u.user.id, o.order_no ?? o.id, stockPlan.deductions); }
+      catch (e) { console.error("[POS] held-check stock deduction failed", e); toast.error("Check paid, but stock update failed — review Inventory immediately."); }
+    }
+    await recordPayments(o.id, [{ method, amount: Number(o.total), tendered: Number(o.total), change: 0 }]);
     if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
     try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
     toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
