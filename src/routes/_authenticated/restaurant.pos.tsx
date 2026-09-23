@@ -282,9 +282,57 @@ function Page() {
     if (!u.user) return;
     setBusy(true);
     const uid = u.user.id;
-    const stockPlan = pay ? await prepareStockConsumption(uid) : { ok: true, deductions: [] as any[] };
-    if (!stockPlan.ok) { setBusy(false); return toast.error(stockPlan.error ?? "Stock validation failed"); }
-    const status = pay ? "paid" : hold ? "held" : "open";
+    if (pay) {
+      try {
+        const { data: result, error } = await supabase.rpc("restaurant_checkout", {
+          _sale: {
+            order_id: recalled?.id ?? null,
+            client_ref: recalled?.id ? `restaurant-settle:${recalled.id}` : `restaurant-sale:${uid}:${Date.now()}:${crypto.randomUUID()}`,
+            order_no: recalled?.order_no ?? undefined,
+            business_date: today(),
+            table_id: needsTable ? tableId : null,
+            order_type: mode,
+            guests,
+            subtotal,
+            discount,
+            tax,
+            service_charge: serviceCharge,
+            gratuity,
+            delivery_fee: Number(activeType?.delivery_fee ?? 0),
+            total,
+            server_name: server || null,
+            customer_name: customer || null,
+            shift_id: undefined,
+          },
+          _items: cart.map(l => ({
+            name: l.name, station: l.station, qty: l.qty, price: l.price,
+            note: l.note ?? null,
+            modifiers: (l.mods ?? []).map(m => ({ name: m.name, price: Number(m.price || 0) })),
+          })),
+          _payments: [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }],
+        } as any);
+        if (error || !result) {
+          setBusy(false);
+          return toast.error(error?.message ?? "Restaurant checkout failed");
+        }
+        try { await accrueLoyaltyForOrder(result.orderId); } catch { /* loyalty is best-effort */ }
+        void printOrderTickets(
+          { ...(result as any), order_no: result.orderNo, id: result.orderId, table_id: tableId },
+          cart, pay, total, tendered, change,
+        );
+        setBusy(false);
+        toast.success(`Paid ${fmtMoney(total)} by ${pay}`);
+        clearCheck();
+        load();
+        return;
+      } catch (e: any) {
+        setBusy(false);
+        return toast.error(e?.message ?? "Restaurant checkout failed");
+      }
+    }
+
+    const stockPlan = { ok: true, deductions: [] as any[] };
+    const status = hold ? "held" : "open";
     if (recalled) await supabase.from("restaurant_order_items").delete().eq("order_id", recalled.id);
     const payload: any = {
       user_id: uid, table_id: needsTable ? tableId : null,
@@ -399,24 +447,44 @@ function Page() {
 
   const settle = async (o: Order, method: string, tendered?: number, change?: number) => {
     if (!(await requireActiveCashierSession())) return;
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const savedLines = items.filter(i => i.order_id === o.id).map(i => ({
-      name: i.item_name, station: i.station, price: Number(i.price), qty: Number(i.qty), note: i.notes ?? undefined,
-    }));
-    const stockPlan = await prepareStockConsumption(u.user.id, savedLines);
-    if (!stockPlan.ok) return toast.error(stockPlan.error ?? "Stock validation failed");
-    const { error } = await supabase.from("restaurant_orders").update({ status: "paid", payment_method: method, closed_at: new Date().toISOString() }).eq("id", o.id);
-    if (error) return toast.error(posErrorMessage(error));
-    if (stockPlan.deductions.length) {
-      try { await commitStockConsumption(u.user.id, o.order_no ?? o.id, stockPlan.deductions); }
-      catch (e) { console.error("[POS] held-check stock deduction failed", e); toast.error("Check paid, but stock update failed — review Inventory immediately."); }
+    setBusy(true);
+    try {
+      const savedLines = items.filter(i => i.order_id === o.id).map(i => ({
+        name: i.item_name, station: i.station, price: Number(i.price), qty: Number(i.qty),
+        note: i.notes ?? undefined, modifiers: (() => {
+          try { return Array.isArray(i.modifiers) ? i.modifiers : JSON.parse(i.modifiers || "[]"); } catch { return []; }
+        })(),
+      }));
+      const { data: result, error } = await supabase.rpc("restaurant_checkout", {
+        _sale: {
+          order_id: o.id,
+          client_ref: `restaurant-settle:${o.id}`,
+          order_no: o.order_no,
+          business_date: today(),
+          table_id: o.table_id,
+          order_type: o.order_type,
+          guests: o.guests,
+          subtotal: Number(o.subtotal || 0),
+          discount: Number(o.discount || 0),
+          tax: Number(o.tax || 0),
+          service_charge: Number(o.service_charge || 0),
+          gratuity: Number(o.gratuity || 0),
+          delivery_fee: Number(o.delivery_fee || 0),
+          total: Number(o.total || 0),
+          server_name: o.server_name || server || null,
+          customer_name: o.customer_name || customer || null,
+          shift_id: undefined,
+        },
+        _items: savedLines,
+        _payments: [{ method, amount: Number(o.total || 0), tendered: tendered ?? Number(o.total || 0), change: change ?? 0 }],
+      } as any);
+      if (error || !result) return toast.error(error?.message ?? "Restaurant checkout failed");
+      try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
+      toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
+      load();
+    } finally {
+      setBusy(false);
     }
-    await recordPayments(o.id, [{ method, amount: Number(o.total), tendered: tendered ?? Number(o.total), change: change ?? 0 }]);
-    if (o.table_id) await supabase.from("restaurant_tables").update({ status: "free" }).eq("id", o.table_id);
-    try { await accrueLoyaltyForOrder(o.id); } catch { /* loyalty is best-effort */ }
-    toast.success(`Check settled — ${fmtMoney(Number(o.total))}`);
-    load();
   };
 
   /** Load a held/open check back into the POS check panel. */
