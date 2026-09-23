@@ -119,13 +119,23 @@ function RestaurantItemsStock() {
   };
 
   const saveEdit = async () => {
-    if (!selected || !editForm.name.trim()) return toast.error("Item name is required");
+    if (!editForm.name.trim()) return toast.error("Item name is required");
+    const u = await uid();
+    if (!u) return toast.error("You are not signed in.");
     const patch = { name: editForm.name.trim(), category: editForm.category.trim() || "Mains", station: editForm.station.trim() || "Kitchen", price: num(editForm.price), cost: num(editForm.cost), active: editForm.active };
-    const { error } = await supabase.from("restaurant_menu_items").update(patch).eq("id", selected.id);
-    if (error) return toast.error(error.message);
-    setItems(v => v.map(x => x.id === selected.id ? { ...x, ...patch } : x));
+    if (selected) {
+      const { error } = await supabase.from("restaurant_menu_items").update(patch).eq("id", selected.id);
+      if (error) return toast.error(error.message);
+      setItems(v => v.map(x => x.id === selected.id ? { ...x, ...patch } : x));
+      toast.success("Menu item updated");
+    } else {
+      const row = { id: crypto.randomUUID(), user_id: u, ...patch, description: null };
+      const { error } = await supabase.from("restaurant_menu_items").insert(row);
+      if (error) return toast.error(error.message);
+      setItems(v => [...v, row].sort((a,b) => String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name))));
+      toast.success("Menu item added");
+    }
     setEditOpen(false);
-    toast.success("Menu item updated");
   };
 
   const deleteItem = async (item: MenuItem) => {
