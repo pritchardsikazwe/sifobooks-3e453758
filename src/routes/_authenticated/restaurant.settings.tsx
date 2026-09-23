@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ORDER_TYPES, uid, VAT_RATE } from "@/lib/restaurant";
-import { Plus, Settings as Cog, Trash2 } from "lucide-react";
+import { Plus, Settings as Cog, Trash2, Printer, Users, Boxes, BarChart3, CalendarCheck, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/restaurant/settings")({
   head: () => ({
@@ -121,12 +121,39 @@ function RestaurantSettings() {
         <p className="text-sm text-muted-foreground">Tax, tips, order types, kitchen routing and delivery.</p>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          ["/manager/cashiers", "Cashiers", "Create, assign and lock POS users", Users],
+          ["/stock", "Inventory", "Ingredients, stock counts and reorder", Boxes],
+          ["/printing-settings", "Printing", "Receipt, kitchen and bar printers", Printer],
+          ["/restaurant/reports", "Reports", "Sales, margins and controls", BarChart3],
+          ["/restaurant/end-of-day", "End of day", "Z-read and manager close", CalendarCheck],
+        ].map(([to, label, desc, Icon]: any) => (
+          <a key={String(to)} href={String(to)} className="rounded-2xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <Icon className="h-5 w-5 text-primary" />
+            <div className="mt-2 text-sm font-bold">{label}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{desc}</div>
+          </a>
+        ))}
+      </div>
+
+      <Card className="rounded-2xl border-[#cfe0db] bg-[#f7fbf9] p-4">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" />
+          <div>
+            <div className="text-sm font-bold">Standalone operating profile</div>
+            <p className="mt-1 text-xs text-muted-foreground">These settings are stored with the local business configuration. POS, cashier access, stock, reports and printing can continue on the Windows standalone installation without requiring a separate web dashboard.</p>
+          </div>
+        </div>
+      </Card>
+
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="types">Order types</TabsTrigger>
           <TabsTrigger value="kitchen">Kitchen stations</TabsTrigger>
           <TabsTrigger value="delivery">Delivery zones</TabsTrigger>
+          <TabsTrigger value="operations">Operations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -222,6 +249,34 @@ function RestaurantSettings() {
               </Card>
             ))}
             {zones.length === 0 && <p className="text-sm text-muted-foreground">No delivery zones yet.</p>}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="operations">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="rounded-2xl p-5">
+              <div className="text-sm font-bold">Cashier controls</div>
+              <p className="mt-1 text-xs text-muted-foreground">Create cashier IDs, set PINs, assign tills, branches and drawers, then review cashier history.</p>
+              <a href="/manager/cashiers" className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">Open cashier management</a>
+            </Card>
+            <Card className="rounded-2xl p-5">
+              <div className="text-sm font-bold">Printing controls</div>
+              <p className="mt-1 text-xs text-muted-foreground">Discover printers, configure receipt/kitchen/bar routing, test printers and clear queued jobs.</p>
+              <a href="/printing-settings" className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">Open SifoPrint</a>
+            </Card>
+            <Card className="rounded-2xl p-5">
+              <div className="text-sm font-bold">Stock & recipe controls</div>
+              <p className="mt-1 text-xs text-muted-foreground">Keep menu recipes tied to ingredients so sales can drive stock depletion and reliable food-cost reporting.</p>
+              <a href="/stock" className="mt-4 inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-bold">Open inventory</a>
+            </Card>
+            <Card className="rounded-2xl p-5">
+              <div className="text-sm font-bold">Close & reporting</div>
+              <p className="mt-1 text-xs text-muted-foreground">Review sales, payment methods, voids, discounts, food cost and cash variance before closing the business day.</p>
+              <div className="mt-4 flex gap-2">
+                <a href="/restaurant/reports" className="inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-bold">Reports</a>
+                <a href="/restaurant/end-of-day" className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">End of day</a>
+              </div>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
