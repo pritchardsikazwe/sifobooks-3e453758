@@ -463,9 +463,25 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   if (!rawPayments.length) throw new Error("RESTAURANT_PAYMENT_REQUIRED");
 
   const requestedOrderId = sale.order_id ? String(sale.order_id) : null;
+  const clientRef = String(sale.client_ref || "").trim();
   const existingOrder = requestedOrderId
     ? db.prepare("SELECT * FROM restaurant_orders WHERE id=? AND user_id=? LIMIT 1").get(requestedOrderId, uid) as any
     : null;
+  if (!clientRef) throw new Error("CLIENT_REF_REQUIRED");
+  // A retry after a successful close must return the original result rather
+  // than posting payment, stock or GL a second time.
+  const duplicateByRef = db.prepare(
+    "SELECT id,order_no,status,journal_entry_id FROM restaurant_orders WHERE user_id=? AND client_ref=? LIMIT 1",
+  ).get(uid, clientRef) as any;
+  if (duplicateByRef && (!existingOrder || duplicateByRef.id === existingOrder.id)) {
+    return {
+      order_id: duplicateByRef.id,
+      order_no: duplicateByRef.order_no,
+      journal_entry_id: duplicateByRef.journal_entry_id ?? null,
+      duplicate: true,
+      status: duplicateByRef.status,
+    };
+  }
   if (requestedOrderId && !existingOrder) throw new Error("RESTAURANT_ORDER_NOT_FOUND");
   if (existingOrder && existingOrder.status === "paid" && existingOrder.journal_entry_id) {
     return {
@@ -559,8 +575,11 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   })).filter((p: any) => p.amount > 0);
 
   const paidAmount = Math.round(paymentRows.reduce((s: number, p: any) => s + p.amount, 0) * 100) / 100;
+  if (!(paymentRows.length > 0) || paymentRows.some((p: any) => !(p.amount > 0))) throw new Error("INVALID_RESTAURANT_PAYMENT");
   if (paidAmount + 0.005 < total) throw new Error("PAYMENT_SHORT");
   const computedChange = Math.max(0, Math.round((paidAmount - total) * 100) / 100);
+  const suppliedTendered = Math.round(paymentRows.reduce((s: number, p: any) => s + p.tendered, 0) * 100) / 100;
+  if (computedChange > 0 && suppliedTendered + 0.005 < paidAmount + computedChange) throw new Error("INVALID_CASH_TENDER");
   if (computedChange > 0 && !paymentRows.some((p: any) => p.method.toLowerCase() === "cash")) {
     throw new Error("CHANGE_REQUIRES_CASH_TENDER");
   }
@@ -629,10 +648,16 @@ function executeRestaurantCheckout(args: Record<string, any>) {
 
     for (const d of ingredientTotals.values()) {
       const next = Number(d.item.quantity_on_hand || 0) - d.qty;
-      db.prepare(
-        "UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?",
-      ).run(next, d.item.id, uid);
-      if (locationId) { const bal = locationBalances.get(d.item.id)!; db.prepare("UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(bal.quantity - d.qty, bal.id, uid); }
+      if (locationId) {
+        const bal = locationBalances.get(d.item.id)!;
+        db.prepare(
+          "UPDATE stock_balances SET quantity=?,updated_at=datetime('now') WHERE id=? AND user_id=?",
+        ).run(bal.quantity - d.qty, bal.id, uid);
+      } else {
+        db.prepare(
+          "UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?",
+        ).run(next, d.item.id, uid);
+      }
       db.prepare(
         "INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)",
       ).run(
