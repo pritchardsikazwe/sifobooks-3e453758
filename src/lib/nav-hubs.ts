@@ -782,7 +782,7 @@ export const RESTAURANT_HUBS: HubDef[] = [
   ]},
   { key: "restaurant-stock", label: "Stock", iconName: "Boxes", purpose: "Ingredients, recipes and stock control.", groups: [
     { label: "Control", items: [
-      { title: "Inventory", url: "/inventory", module: "inventory", iconName: "Boxes", primary: true },
+      { title: "Items & Stock", url: "/restaurant/items-stock", module: "inventory", iconName: "Boxes", primary: true, hint: "Menu items, ingredients, warehouse quantities, recipes and POS availability." },
       { title: "Recipes", url: "/restaurant/menu", module: "restaurant", iconName: "BookOpen", primary: true },
       { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true },
       { title: "Purchasing", url: "/purchase-orders", module: "purchases", iconName: "ShoppingCart", primary: true },
