@@ -171,7 +171,20 @@ function StockPage() {
   );
 }
 
-function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {\n  return (\n    <div className="rounded-2xl border bg-card p-4 shadow-sm">\n      <div className="flex items-center justify-between gap-3">\n        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>\n        <span className={tone === "warning" ? "text-amber-600" : "text-primary"}>{icon}</span>\n      </div>\n      <div className="mt-2 truncate text-xl font-black tracking-tight sm:text-2xl">{value}</div>\n      <div className="mt-1 truncate text-[11px] text-muted-foreground">{caption}</div>\n    </div>\n  );\n}\n\nfunction GroupedStockTable({
+function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {
+  return (
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+        <span className={tone === "warning" ? "text-amber-600" : "text-primary"}>{icon}</span>
+      </div>
+      <div className="mt-2 truncate text-xl font-black tracking-tight sm:text-2xl">{value}</div>
+      <div className="mt-1 truncate text-[11px] text-muted-foreground">{caption}</div>
+    </div>
+  );
+}
+
+function GroupedStockTable({
   items, locationLabel, money, onMove, onDelete, loading,
 }: {
   items: Item[]; locationLabel: string; money: (n: number) => string;
@@ -447,7 +460,8 @@ Laptop - Dell Latitude,LAP-DL,8471.30,standard,16,each,14500,17900,6,2
 Consulting hours,SVC-PRO,SVC-PRO,standard,16,hour,0,850,0,0`;
 
 function parseCsv(text: string): ParsedRow[] {
-  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim().length > 0);
+  const lines = text.replace(/\r/g, "").split("
+").filter(l => l.trim().length > 0);
   if (lines.length === 0) return [];
   const splitLine = (l: string): string[] => {
     const out: string[] = []; let cur = ""; let inQ = false;
