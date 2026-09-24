@@ -697,7 +697,7 @@ export const RETAIL_HUBS: HubDef[] = [
     { label: "Inventory", items: [
       { title: "Products", url: "/stock", module: "inventory", iconName: "Boxes", primary: true },
       { title: "Inventory Overview", url: "/inventory", module: "inventory", iconName: "LayoutDashboard", primary: true },
-      { title: "Transfers", url: "/inventory/transfers", module: "inventory", iconName: "ArrowLeftRight", primary: true },
+      { title: "Stock Transfers", url: "/inventory/transfers", module: "inventory", iconName: "ArrowLeftRight", primary: true, hint: "Move stock between warehouses, branches and retail locations." },
       { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true },
       { title: "Warehouses", url: "/warehouses", module: "inventory", iconName: "Warehouse" },
       { title: "Stock Adjustments", url: "/stock-adjustments", module: "inventory", iconName: "ClipboardEdit" },
