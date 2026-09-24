@@ -795,6 +795,31 @@ export const RESTAURANT_HUBS: HubDef[] = [
       { title: "Cash & Shifts", url: "/restaurant/cash", module: "restaurant", iconName: "Wallet", primary: true },
     ]},
   ]},
+  { key: "restaurant-accounting", label: "Accounting", iconName: "Landmark", purpose: "Complete restaurant bookkeeping: accounts, cash, bank, journals, tax and financial statements.", groups: [
+    { label: "Accounting basics", items: [
+      { title: "Accounting Basics", url: "/learn/accounting-basics", module: "learning", iconName: "GraduationCap", primary: true, hint: "Learn how restaurant transactions flow through double-entry accounting." },
+      { title: "Chart of Accounts", url: "/chart-of-accounts", module: "finance", iconName: "BookOpen", primary: true, hint: "Restaurant income, food cost, expenses, assets and liabilities." },
+      { title: "Opening Balances", url: "/opening-balances", module: "finance", iconName: "Sparkles", primary: true },
+      { title: "Journal Entries", url: "/journal-entries", module: "finance", iconName: "BookText", primary: true },
+      { title: "Expenses", url: "/expenses", module: "purchases", iconName: "Receipt", primary: true },
+    ]},
+    { label: "Cash & banking", items: [
+      { title: "Banking", url: "/banking", module: "finance", iconName: "Landmark", primary: true },
+      { title: "Cashbook", url: "/cashbook", module: "finance", iconName: "BookText", primary: true },
+      { title: "Bank Reconciliation", url: "/reconciliation", module: "finance", iconName: "Scale", primary: true },
+      { title: "Cash & Shifts", url: "/restaurant/cash", module: "restaurant", iconName: "Wallet" },
+      { title: "Supplier Bills", url: "/bills", module: "purchases", iconName: "FileBox" },
+      { title: "Supplier Payments", url: "/bill-payments", module: "purchases", iconName: "Wallet" },
+    ]},
+    { label: "Financial reporting & tax", items: [
+      { title: "Trial Balance", url: "/reports/trial-balance", module: "reports", iconName: "Scale", primary: true },
+      { title: "Profit & Loss", url: "/reports/afs", module: "reports", iconName: "BarChart3", primary: true },
+      { title: "Balance Sheet", url: "/reports/afs", module: "reports", iconName: "Landmark", primary: true },
+      { title: "VAT Return", url: "/reports/vat-return", module: "reports", iconName: "Receipt" },
+      { title: "Financial Statements", url: "/reports/afs", module: "reports", iconName: "FileBarChart" },
+      { title: "Period Close", url: "/period-close", module: "finance", iconName: "CalendarClock" },
+    ]},
+  ]},
   { key: "restaurant-settings", label: "Settings", iconName: "Settings2", purpose: "Restaurant setup, staff and licensed features.", groups: [
     { label: "Setup", items: [
       { title: "Restaurant Settings", url: "/restaurant/settings", module: "restaurant", iconName: "Settings2", primary: true },
