@@ -107,6 +107,9 @@ function Page() {
   const [fullScreen, setFullScreen] = useState(false);
   const [cashierCode, setCashierCode] = useState("");
   const [cashierName, setCashierName] = useState("");
+  // Stable client reference for a checkout attempt. Keeping this reference
+  // across a retry makes Close Order idempotent when the response is lost.
+  const checkoutClientRef = useRef<string | null>(null);
 
   const [modifying, setModifying] = useState<MenuItem | null>(null);
   const [tender, setTender] = useState<{ method: string; order?: Order; amount: number } | null>(null);
@@ -305,7 +308,106 @@ function Page() {
   const setNote = (i: number, note: string) =>
     setCart(c => c.map((l, idx) => idx === i ? { ...l, note: note || undefined } : l));
 
-  const clearCheck = () => { setCart([]); setDiscountPct(0); setTableId(null); setRecalled(null); setCustomer(""); setGuests(1); };
+  const clearCheck = () => {
+    setCart([]);
+    setDiscountPct(0);
+    setTableId(null);
+    setRecalled(null);
+    setCustomer("");
+    setGuests(1);
+    checkoutClientRef.current = null;
+  };
+
+  const getCheckoutClientRef = (uid: string, existingOrder?: Order | null) => {
+    if (existingOrder?.id) return `restaurant-settle:${existingOrder.id}`;
+    if (!checkoutClientRef.current) checkoutClientRef.current = `restaurant-sale:${uid}:${crypto.randomUUID()}`;
+    return checkoutClientRef.current;
+  };
+
+  /** Finalize an order exactly once through the atomic restaurant checkout engine. */
+  const closeOrder = async (pay: string, tendered?: number, change?: number) => {
+    if (!cart.length || busy) return;
+    if (needsTable && !tableId) return toast.error("Select a table for this order type");
+    if (activeType?.requires_customer && !customer.trim()) return toast.error("Customer details are required for this order type");
+
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return toast.error("Please sign in again and retry.");
+    if (!(await requireActiveCashierSession())) return;
+
+    setBusy(true);
+    const uid = u.user.id;
+    const clientRef = getCheckoutClientRef(uid, recalled);
+
+    try {
+      const paymentAmount = Number(total.toFixed(2));
+      const tender = Number((tendered ?? paymentAmount).toFixed(2));
+      const cashChange = Math.max(0, Number((change ?? Math.max(0, tender - paymentAmount)).toFixed(2)));
+
+      const { data: result, error } = await supabase.rpc("restaurant_checkout", {
+        _sale: {
+          order_id: recalled?.id ?? null,
+          client_ref: clientRef,
+          order_no: recalled?.order_no ?? undefined,
+          business_date: restaurantBusinessDate(),
+          table_id: needsTable ? tableId : null,
+          order_type: mode,
+          guests,
+          subtotal,
+          discount,
+          tax,
+          service_charge: serviceCharge,
+          gratuity,
+          delivery_fee: Number(activeType?.delivery_fee ?? 0),
+          total: paymentAmount,
+          server_name: server || null,
+          customer_name: customer || null,
+          shift_id: undefined,
+          location_id: posStockLocation || null,
+        },
+        _items: cart.map(l => ({
+          name: l.name,
+          station: l.station,
+          qty: l.qty,
+          price: l.price,
+          note: l.note ?? null,
+          modifiers: (l.mods ?? []).map(m => ({ name: m.name, price: Number(m.price || 0) })),
+        })),
+        _payments: [{
+          method: pay,
+          amount: paymentAmount,
+          tendered: tender,
+          change: cashChange,
+        }],
+      } as any);
+
+      if (error || !result) {
+        console.error("[POS] close order failed", error);
+        toast.error(restaurantCheckoutErrorMessage(error));
+        return;
+      }
+
+      const alreadyClosed = Boolean((result as any).duplicate);
+      try { await accrueLoyaltyForOrder((result as any).orderId ?? (result as any).order_id); } catch { /* best effort */ }
+      void attachPaymentToOpenDrawer((result as any).orderId ?? (result as any).order_id);
+      void printOrderTickets(
+        { ...(result as any), order_no: (result as any).orderNo ?? (result as any).order_no, id: (result as any).orderId ?? (result as any).order_id, table_id: tableId },
+        cart, pay, paymentAmount, tender, cashChange,
+      );
+
+      toast.success(
+        alreadyClosed
+          ? `Order ${(result as any).orderNo ?? (result as any).order_no} was already closed — no duplicate posting created.`
+          : `Order ${(result as any).orderNo ?? (result as any).order_no} closed and paid ${fmtMoney(paymentAmount)} by ${pay}`
+      );
+      clearCheck();
+      await load();
+    } catch (e: any) {
+      console.error("[POS] close order exception", e);
+      toast.error(restaurantCheckoutErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   /** Recipe-driven inventory control. A paid menu item consumes its configured ingredients. */
   const prepareStockConsumption = async (uid: string, sourceCart = cart) => {
@@ -749,7 +851,12 @@ function Page() {
                 {customer ? ` • ${customer}` : ""} • {mode}
               </small>
             </div>
-            <button onClick={() => setPanel("recall")} className="h-[34px] w-[34px] rounded-[16px] bg-[#6e7b7e] text-white">⌕</button>
+            <button
+          onClick={() => setPanel("recall")}
+          disabled={busy}
+          className="h-[34px] w-[34px] rounded-[16px] bg-[#6e7b7e] text-white disabled:opacity-50"
+          aria-label="Recall or settle open check"
+        >⌕</button>
           </div>
           <div className="flex items-center justify-between bg-[#e7eceb] px-3 py-2 text-[10px] font-extrabold">
             <button onClick={() => setGuests(g => Math.max(1, g - 1))}>−</button>
@@ -879,7 +986,12 @@ function Page() {
           method={tender.method}
           due={tender.amount}
           onCancel={() => setTender(null)}
-          onConfirm={(tendered, change) => { const t = tender; setTender(null); if (t.order) settle(t.order, t.method, tendered, change); else sendOrder(t.method, false, tendered, change); }}
+          onConfirm={(tendered, change) => {
+            const t = tender;
+            setTender(null);
+            if (t.order) settle(t.order, t.method, tendered, change);
+            else void closeOrder(t.method, tendered, change);
+          }}
         />
       )}
 
