@@ -12,9 +12,13 @@ import { toast } from "sonner";
 type Cashier = { id:string; full_name:string|null; display_name?:string|null; email?:string|null; pos_role?:string|null; is_active:boolean };
 type Item = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; sell_price:number; cost_price:number; quantity_on_hand:number; is_active:boolean };
 
-export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: { edition?: string; restaurant?: boolean }) {\n  const [restaurantMode,setRestaurantMode]=useState(Boolean(restaurant));
+export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: { edition?: string; restaurant?: boolean }) {
+  const [restaurantMode,setRestaurantMode]=useState(Boolean(restaurant));
   const [cashiers,setCashiers]=useState<Cashier[]>([]);
-  const [items,setItems]=useState<Item[]>([]);\n  const [restaurantMenu,setRestaurantMenu]=useState<any[]>([]);\n  const [orderTypes,setOrderTypes]=useState<any[]>([]);\n  const [registers,setRegisters]=useState<any[]>([]);
+  const [items,setItems]=useState<Item[]>([]);
+  const [restaurantMenu,setRestaurantMenu]=useState<any[]>([]);
+  const [orderTypes,setOrderTypes]=useState<any[]>([]);
+  const [registers,setRegisters]=useState<any[]>([]);
   const [cashierSearch,setCashierSearch]=useState("");
   const [itemSearch,setItemSearch]=useState("");
   const [openCashier,setOpenCashier]=useState<string|null>(null);
@@ -26,14 +30,31 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
     const u=await supabase.auth.getUser();
     if(!u.data.user){setLoading(false);return;}
     const uid=u.data.user.id;
-    const [c,i]=await Promise.all([
+    const [c,i,rm,ot,rg]=await Promise.all([
       supabase.from("employee_pos_permissions").select("id,full_name,display_name,email,pos_role,is_active").eq("user_id",uid).order("full_name"),
       supabase.from("stock_items").select("id,name,sku,barcode,category,sell_price,cost_price,quantity_on_hand,is_active").eq("is_active",true).order("name").limit(2000),
+      supabase.from("restaurant_menu_items").select("id,name,category,station,price,active,is_86").eq("user_id",uid).order("category").order("name"),
+      supabase.from("restaurant_order_types").select("id,key,label,active,requires_table,requires_customer,requires_address,packaging_fee,service_charge_pct,default_gratuity_pct,sort_order").eq("user_id",uid).order("sort_order"),
+      supabase.from("pos_registers").select("*").eq("user_id",uid).order("name"),
     ]);
     if(c.error) toast.error(c.error.message); else setCashiers((c.data??[]) as Cashier[]);
-    if(i.error) toast.error(i.error.message); else setItems((i.data??[]) as Item[]);\n    if(rm.error) toast.error(`Restaurant menu: ${rm.error.message}`); else setRestaurantMenu(rm.data??[]);\n    if(ot.error) toast.error(`Order types: ${ot.error.message}`); else setOrderTypes(ot.data??[]);\n    if(rg.error) toast.error(`Registers: ${rg.error.message}`); else setRegisters(rg.data??[]);
+    if(i.error) toast.error(i.error.message); else setItems((i.data??[]) as Item[]);
+    if(rm.error) toast.error(`Restaurant menu: ${rm.error.message}`); else setRestaurantMenu(rm.data??[]);
+    if(ot.error) toast.error(`Order types: ${ot.error.message}`); else setOrderTypes(ot.data??[]);
+    if(rg.error) toast.error(`Registers: ${rg.error.message}`); else setRegisters(rg.data??[]);
     setLoading(false);
   };
+  useEffect(()=>{
+    if (restaurant !== undefined) { setRestaurantMode(Boolean(restaurant)); return; }
+    (async()=>{
+      const {data:u}=await supabase.auth.getUser();
+      if(!u.user) return;
+      const {data:p}=await supabase.from("profiles").select("active_company_id").eq("id",u.user.id).maybeSingle();
+      if(!p?.active_company_id) return;
+      const {data:co}=await supabase.from("companies").select("industry,workspace_mode").eq("id",p.active_company_id).maybeSingle();
+      setRestaurantMode(String(co?.industry||co?.workspace_mode||"").toLowerCase()==="restaurant");
+    })();
+  },[restaurant]);
   useEffect(()=>{void load()},[]);
 
   const cashiersFiltered=useMemo(()=>cashiers.filter(c=>(c.display_name||c.full_name||c.email||"").toLowerCase().includes(cashierSearch.toLowerCase())),[cashiers,cashierSearch]);
@@ -46,7 +67,9 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
     toast.success(c.is_active?"Cashier disabled":"Cashier enabled");
   };
 
-  const menuFiltered=useMemo(()=>restaurantMenu.filter(i=>[i.name,i.category,i.station].some(v=>String(v||"").toLowerCase().includes(itemSearch.toLowerCase()))),[restaurantMenu,itemSearch]);\n\n  return <div className="min-h-screen bg-[#F7FBF9] p-4 md:p-6">
+  const menuFiltered=useMemo(()=>restaurantMenu.filter(i=>[i.name,i.category,i.station].some(v=>String(v||"").toLowerCase().includes(itemSearch.toLowerCase()))),[restaurantMenu,itemSearch]);
+
+  return <div className="min-h-screen bg-[#F7FBF9] p-4 md:p-6">
     <div className="mx-auto max-w-7xl space-y-5">
       <header className="rounded-3xl border border-[#DDEBE6] bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -65,7 +88,8 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
       <Tabs defaultValue="cashiers" className="space-y-4">
         <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl bg-white p-1 shadow-sm">
           <TabsTrigger value="cashiers" className="rounded-xl">Cashiers</TabsTrigger>
-          <TabsTrigger value="items" className="rounded-xl">{restaurantMode?"Menu":"Items"}</TabsTrigger>\n          {restaurant&&<TabsTrigger value="restaurant" className="rounded-xl">Restaurant Operations</TabsTrigger>}
+          <TabsTrigger value="items" className="rounded-xl">{restaurantMode?"Menu":"Items"}</TabsTrigger>
+          {restaurant&&<TabsTrigger value="restaurant" className="rounded-xl">Restaurant Operations</TabsTrigger>}
           <TabsTrigger value="registers" className="rounded-xl">Registers</TabsTrigger>
           <TabsTrigger value="hardware" className="rounded-xl">Hardware & Printing</TabsTrigger>
           <TabsTrigger value="display" className="rounded-xl">Display & POS</TabsTrigger>
@@ -92,6 +116,16 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
             })}</CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="restaurant"><Card className="rounded-2xl border-[#DDEBE6]"><CardContent className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/settings">Restaurant settings</a></Button>
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/registers">Registers & tills</a></Button>
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/tables">Tables & floor plan</a></Button>
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/kitchen">Kitchen / KDS</a></Button>
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/menu">Menu & modifiers</a></Button>
+          <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/manager/shifts">Cash shifts & drawers</a></Button>
+          <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border bg-[#F7FBF9] p-4"><div className="mb-3 font-bold">Order types</div><div className="grid gap-2 md:grid-cols-2">{orderTypes.map((x:any)=><div key={x.id} className="flex items-center justify-between rounded-xl bg-white p-3 border"><span className="font-semibold">{x.label||x.key}</span><Badge variant={x.active?"default":"secondary"}>{x.active?"ACTIVE":"DISABLED"}</Badge></div>)}</div></div>
+        </CardContent></Card></TabsContent>
 
         <TabsContent value="registers"><Card className="rounded-2xl border-[#DDEBE6]"><CardContent className="grid gap-3 p-5 sm:grid-cols-3"><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/registers"><Store className="mr-2 h-5 w-5"/>Restaurant registers</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/retail-control-center">Retail control centre</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/manager/shifts">Cash shifts & drawers</a></Button></CardContent></Card></TabsContent>
         <TabsContent value="hardware"><Card className="rounded-2xl border-[#DDEBE6]"><CardContent className="grid gap-3 p-5 sm:grid-cols-2"><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/printing-settings"><Printer className="mr-2 h-5 w-5"/>Printer routing</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/network-setup"><Monitor className="mr-2 h-5 w-5"/>Network / terminals</a></Button></CardContent></Card></TabsContent>
