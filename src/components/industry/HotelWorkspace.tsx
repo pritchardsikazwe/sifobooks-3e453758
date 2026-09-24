@@ -21,6 +21,7 @@ import { HospitalityCompliance } from "@/components/compliance/HospitalityCompli
 import { filterHotelNav, hotelRoleFor, isHotelOnly } from "@/lib/hotel-product";
 import { usePermissions } from "@/hooks/usePermissions";
 import { getWorkspaceMode } from "@/lib/workspace";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 
 const db: any = supabase;
 
@@ -108,6 +109,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
+      void ensureStandaloneDemo("hotel").catch((e) => console.error("[standalone-demo:hotel]", e));
       const today = new Date().toISOString().slice(0, 10);
       const [cust, inv, rec, ord, tick, stock] = await Promise.all([
         db.from("customers").select("id,name,phone,email,active,city").eq("user_id", uid).order("name").limit(200),
