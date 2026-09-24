@@ -1,3 +1,36 @@
+async function cloudButcheryProcessing(tx: any, uid: string, args: Record<string, any>) {
+  const sourceItemId=String(args._source_item_id||"");
+  const inputQty=Number(args._input_qty||0);
+  const inputCost=Number(args._input_cost||0);
+  const inputUnit=String(args._input_unit||"kg");
+  const wasteQty=Number(args._waste_qty||0);
+  const outputs=Array.isArray(args._outputs)?args._outputs:[];
+  const reference=String(args._reference||"").trim() || "BUT-"+Date.now();
+  if(!sourceItemId||!(inputQty>0)||!(inputCost>=0)||!outputs.length) throw new Error("BUTCHERY_PROCESS_INPUT_INVALID");
+  const outputQty=outputs.reduce((n:any,x:any)=>n+Number(x.qty||0),0);
+  if(!(outputQty>0)||outputQty+wasteQty>inputQty+0.000001) throw new Error("BUTCHERY_YIELD_INVALID");
+  const sourceRows=await tx.unsafe("SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 LIMIT 1",[sourceItemId,uid]);
+  const source=sourceRows[0]; if(!source) throw new Error("BUTCHERY_SOURCE_ITEM_NOT_FOUND");
+  if(Number(source.quantity_on_hand||0)<inputQty) throw new Error("BUTCHERY_INSUFFICIENT_SOURCE_STOCK");
+  const batchId=crypto.randomUUID();
+  await tx.unsafe("INSERT INTO butchery_processing_batches(id,user_id,reference,source_item_id,input_qty,input_unit,input_cost,saleable_qty,waste_qty,status,processed_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'posted',now())",[batchId,uid,reference,sourceItemId,inputQty,inputUnit,inputCost,outputQty,wasteQty]);
+  const sourceAfter=Number(source.quantity_on_hand||0)-inputQty;
+  await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3",[sourceAfter,sourceItemId,uid]);
+  await tx.unsafe("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,$3,'BUTCHERY_PROCESS_OUT',$4,$5,$6,'Butchery processing input',$7)",[crypto.randomUUID(),uid,sourceItemId,-inputQty,Number(source.cost_price||0),reference,source.warehouse_id||null]);
+  for(const line of outputs){
+    const itemId=String(line.item_id||""); const qty=Number(line.qty||0);
+    if(!itemId||!(qty>0)) throw new Error("BUTCHERY_INVALID_OUTPUT");
+    const rows=await tx.unsafe("SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 LIMIT 1",[itemId,uid]);
+    const item=rows[0]; if(!item) throw new Error("BUTCHERY_OUTPUT_ITEM_NOT_FOUND");
+    const costPerUnit=inputCost/outputQty; const after=Number(item.quantity_on_hand||0)+qty;
+    await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,cost_price=$2,updated_at=now() WHERE id=$3 AND user_id=$4",[after,costPerUnit,itemId,uid]);
+    await tx.unsafe("INSERT INTO butchery_yield_lines(id,user_id,batch_id,output_item_id,output_name,output_qty,unit,yield_percent,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",[crypto.randomUUID(),uid,batchId,itemId,item.name,qty,String(line.unit||"kg"),inputQty?(qty/inputQty)*100:0,line.note||null]);
+    await tx.unsafe("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,$3,'BUTCHERY_PROCESS_IN',$4,$5,$6,'Butchery processing output',$7)",[crypto.randomUUID(),uid,itemId,qty,costPerUnit,reference,item.warehouse_id||null]);
+  }
+  if(wasteQty>0) await tx.unsafe("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,$3,'BUTCHERY_WASTE',$4,$5,$6,'Butchery processing waste',$7)",[crypto.randomUUID(),uid,sourceItemId,-wasteQty,Number(source.cost_price||0),reference,source.warehouse_id||null]);
+  return {batchId,reference,inputQty,outputQty,wasteQty,costPerKg:inputCost/outputQty};
+}
+
 import { getCloudDb } from "@/lib/cloud/postgres";
 import {
   cloudPosCheckout,
@@ -39,6 +72,8 @@ export async function executeCloudRpc(name: string, args: Record<string, any>) {
       if (tenantId) await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [tenantId]);
 
       switch (name) {
+      case "post_butchery_processing": return { data: await cloudButcheryProcessing(tx, uid, args), error: null };
+
       case "current_tenant": {
         const rows = await tx.unsafe("SELECT company_id FROM company_members WHERE user_id=$1 ORDER BY updated_at NULLS LAST LIMIT 1", [uid]);
         return { data: rows[0]?.company_id ?? null, error: null };
