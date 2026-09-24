@@ -145,6 +145,7 @@ function RestaurantSettings() {
           ["/printing-settings", "Printing", "Receipt, kitchen and bar printers", Printer],
           ["/restaurant/reports", "Reports", "Sales, margins and controls", BarChart3],
           ["/restaurant/end-of-day", "End of day", "Z-read and manager close", CalendarCheck],
+          ["/pos/settings", "POS Control Centre", "Cashiers, item catalogue, tills, hardware and touch settings", Cog],
         ].map(([to, label, desc, Icon]: any) => (
           <a key={String(to)} href={String(to)} className="rounded-2xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <Icon className="h-5 w-5 text-primary" />
