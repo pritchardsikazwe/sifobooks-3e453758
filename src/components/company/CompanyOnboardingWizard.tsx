@@ -116,7 +116,11 @@ export function CompanyOnboardingWizard() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       const { data: p } = await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle();
-      if (p?.onboarded) {\n        const landingByEdition: Record<string, string> = { restaurant: "/restaurant", hotel: "/hotel", school: "/school", property: "/property", retail: "/pos", accounting: "/dashboard", lending: "/lending", payroll: "/payroll-dashboard", enterprise: "/dashboard" };\n        navigate({ to: (landingByEdition[SIFOBOOKS_EDITION] ?? "/dashboard") as never });\n        return;\n      }
+      if (p?.onboarded) {
+        const landingByEdition: Record<string, string> = { restaurant: "/restaurant", hotel: "/hotel", school: "/school", property: "/property", retail: "/pos", accounting: "/dashboard", lending: "/lending", payroll: "/payroll-dashboard", enterprise: "/dashboard" };
+        navigate({ to: (landingByEdition[SIFOBOOKS_EDITION] ?? "/dashboard") as never });
+        return;
+      }
       if (p) setForm(prev => ({ ...prev, adminName: prev.adminName || p.full_name || "", email: prev.email || p.email || "", name: prev.name || p.business_name || "", tpin: prev.tpin || p.tpin || "" }));
     })();
   }, [navigate]);
@@ -225,7 +229,8 @@ export function CompanyOnboardingWizard() {
       await saveDesktopDevices();
       try { localStorage.removeItem("sifobooks-onboarding-draft"); } catch {}
       setSaving(false);
-      const landingByEdition: Record<string, string> = { restaurant: "/restaurant", hotel: "/hotel", school: "/school", property: "/property", retail: "/pos", accounting: "/dashboard", lending: "/lending", payroll: "/payroll-dashboard", enterprise: "/dashboard" };\n      navigate({ to: (landingByEdition[SIFOBOOKS_EDITION] ?? "/dashboard") as never });
+      const landingByEdition: Record<string, string> = { restaurant: "/restaurant", hotel: "/hotel", school: "/school", property: "/property", retail: "/pos", accounting: "/dashboard", lending: "/lending", payroll: "/payroll-dashboard", enterprise: "/dashboard" };
+      navigate({ to: (landingByEdition[SIFOBOOKS_EDITION] ?? "/dashboard") as never });
     } catch (e: any) {
       setSaving(false); setError(e?.message || "Could not finish SifoBooks setup.");
     }
