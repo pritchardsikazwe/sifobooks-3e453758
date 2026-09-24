@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fmtMoney } from "@/lib/format";
 import { SifoStandaloneFrame } from "@/components/sifo/SifoStandaloneFrame";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import {
   calcPaye, calcNapsa, calcNhima, calcWcf, calcSdl,
 } from "@/lib/payroll";
@@ -57,6 +58,7 @@ function PayrollDashboard() {
       setLoading(true);
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) { setLoading(false); return; }
+      void ensureStandaloneDemo("payroll").catch((e) => console.error("[standalone-demo:payroll]", e));
       const [rr, ee, dd, ap, al] = await Promise.all([
         supabase.from("payroll_runs")
           .select("id,run_number,period_year,period_month,pay_date,status,total_gross,total_paye,total_napsa,total_nhima,total_wcf,total_sdl,total_net,total_overtime,total_bonus,total_allowances,total_employer_cost,employees_paid")
