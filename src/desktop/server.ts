@@ -315,7 +315,7 @@ function startServer() {
         const printerInfo = hardware.printers.find((item: any) => String(item?.Name || "") === printer);
         if (!printerInfo) return Response.json({ error: "Selected Windows printer was not found." }, { status: 404 });
         const protocol = chooseLabelProtocol(printerInfo, requestedProtocol);
-        const label = { name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated").slice(0, 80) };
+        const label = { name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated").slice(0, 80) };\n        const copies = Math.min(20, Math.max(1, Number(body?.copies || 1)));
         const payload = protocol === "zpl" ? buildZplLabel(label) : protocol === "tspl" ? buildTsplLabel(label) : buildEscPosLabel(label);
         await printRawWindows(printer, payload);
         return Response.json({ ok: true, printer, protocol, transport: "windows-raw" });
