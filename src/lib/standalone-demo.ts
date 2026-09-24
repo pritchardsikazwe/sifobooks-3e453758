@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { completeSale } from "@/lib/pos";
 
 type Edition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending" | "payroll";
 
@@ -125,14 +126,31 @@ export async function ensureStandaloneDemo(edition: Edition) {
     await insert("pos_registers", [{ id: registerId, user_id: uid, name: `${prefix} Till 1`, branch: "Demo Branch", is_active: 1 }]);
     await insert("pos_shifts", [{ id: shiftId, user_id: uid, register_id: registerId, cashier_name: "Demo Cashier",
       opened_at: new Date().toISOString(), opening_float: 500, cash_in: 0, cash_out: 0,
-      expected_cash: 580, actual_cash: 580, variance: 0, status: "open", created_by: uid, cashier_user_id: uid }]);
-    await insert("pos_sales", [{ id: saleId, user_id: uid, sale_no: `${prefix}-POS-001`, client_ref: `${prefix}-CLIENT-001`,
-      shift_id: shiftId, register_id: registerId, customer_id: customerId, customer_name: `${prefix} Customer`,
-      status: "completed", subtotal: 500, discount: 0, tax: 80, total: 580, paid: 580, change_due: 0,
-      cost_total: 250, sold_at: new Date().toISOString(), created_by: uid }]);
-    await insert("pos_sale_items", [{ id: id(), user_id: uid, sale_id: saleId, item_id: stockId, name: `${prefix} Test Item`,
-      sku: `${prefix}-001`, qty: 10, price: 58, unit_cost: 25, discount: 0, tax_rate: 16, line_total: 580, unit: "each", base_qty: 10, base_unit: "each" }]);
-    await insert("pos_payments", [{ id: id(), user_id: uid, sale_id: saleId, method: "cash", amount: 580, reference: `${prefix}-CASH-001` }]);
+      expected_cash: 500, actual_cash: 500, variance: 0, status: "open", created_by: uid, cashier_user_id: uid }]);
+
+    // Use the real POS posting engine for the default transaction. The demo
+    // record is therefore subject to the same validation, server repricing,
+    // stock checks, payment checks and accounting/COGS posting as a real sale.
+    const { data: location } = await (supabase as any).from("inventory_locations")
+      .select("id").eq("is_active", true).order("is_default", { ascending: false }).limit(1).maybeSingle();
+    if (location?.id) {
+      const price = 15;
+      const qty = 2;
+      const total = price * qty;
+      const subtotal = total / 1.16;
+      const tax = total - subtotal;
+      const result = await completeSale({
+        lines: [{ key: stockId, item_id: stockId, name: `${prefix} Product`, sku: `${prefix}-001`, qty, unit: "bottle", price, unit_cost: 9, discount_pct: 0 }],
+        totals: { gross: total, lineDiscount: 0, saleDiscount: 0, subtotal, tax, total, cost: 18, items: qty },
+        customer: { id: customerId, name: `${prefix} Customer`, phone: null, code: null },
+        customerName: `${prefix} Customer`,
+        priceLevel: "normal", saleDiscountPct: 0, shiftId, registerId, locationId: location.id,
+        taxRate: 16, taxInclusive: true, allowNegativeStock: false,
+      }, [{ method: "cash", amount: total, reference: `${prefix}-CASH-001` }], 0);
+      if (!result.ok) throw new Error("Standalone POS posting did not complete");
+    } else {
+      console.warn("[standalone-demo] POS seed skipped: no active inventory location is configured");
+    }
   }
 
   if (edition === "restaurant") {
