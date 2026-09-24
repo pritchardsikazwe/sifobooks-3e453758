@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import { summarise, today } from "@/lib/restaurant";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
