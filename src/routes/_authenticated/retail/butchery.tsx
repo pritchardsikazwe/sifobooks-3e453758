@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Beef, Scale, PackageCheck, Printer, RefreshCw, Wifi, WifiOff, Scissors, TrendingUp, AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -152,7 +152,7 @@ function ButcheryPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge className={scaleConnected ? "bg-emerald-400 text-emerald-950" : "bg-white/10 text-white"}>{scaleConnected ? <Wifi className="mr-1 h-3 w-3" /> : <WifiOff className="mr-1 h-3 w-3" />} {scaleConnected ? "Scale connected" : "Scale offline"}</Badge>
-            <Button variant="secondary" size="sm" onClick={() => void load()}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
+            <div className="flex gap-2"><Button asChild size="sm" className="bg-amber-400 text-emerald-950 hover:bg-amber-300"><Link to="/retail/butchery-pos"><Scale className="mr-2 h-4 w-4" />Open Butchery POS</Link></Button><Button variant="secondary" size="sm" onClick={() => void load()}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button></div>
           </div>
         </div>
       </header>
