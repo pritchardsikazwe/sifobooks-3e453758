@@ -807,10 +807,10 @@ function Page() {
 
   return (
     <>
-    <style>{POS_SCROLL_STYLE}
+    <style>{`${POS_SCROLL_STYLE}
       .sifopos-touch button, .sifopos-touch select, .sifopos-touch input { min-height: 44px; }
       .sifopos-touch button { touch-action: manipulation; }
-    </style>
+    `}</style>
     <div className={cn("sifopos-touch flex flex-col overflow-hidden border border-[#dbe5e2] bg-[#f4f7f6] text-[#173b3a] shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
       {/* top bar — order types */}
       <div className="pos-scrollbar flex h-[50px] shrink-0 items-center gap-[5px] overflow-x-auto scroll-smooth border-b border-[#164744] bg-[#073b38] px-[6px] py-[5px] text-white">
