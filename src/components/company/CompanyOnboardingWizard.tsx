@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, CircleDollarSign, Clock3,
   Database, FileCheck2, Globe2, HardDrive, KeyRound, Landmark, LayoutGrid, MapPin,
-  Printer, ReceiptText, ShieldCheck, Store, UserRound, UsersRound, Utensils,
+  Printer, ReceiptText, ShieldCheck, Store, UserRound, UsersRound, Utensils, Plus,
   Warehouse, WifiOff, Wrench, RefreshCw
 } from "lucide-react";
 
@@ -61,7 +61,7 @@ const steps = [
 ] as const;
 
 const defaultForm = (): Form => {
-  const starter = getIndustryStarter(form.industry);
+  const starter = getIndustryStarter(SIFOBOOKS_EDITION);
   const mods = starter.modules.filter((module) => module.defaultOn).map((module) => module.label);
   return {
     name: "", tradingName: "", businessType: "Limited Company", industry: starter.edition,
@@ -309,7 +309,7 @@ export function CompanyOnboardingWizard() {
           <div><h2 className="text-2xl font-black text-slate-900">Where does your business operate?</h2><p className="text-sm text-slate-500">Create your first branch and stock location.</p></div>
           <div className="grid gap-5 md:grid-cols-2">
             <Card className="p-5 space-y-4 border-emerald-200"><div className="flex gap-2 font-bold"><MapPin className="h-5 w-5 text-emerald-700" /> Main Branch</div><Field label="Branch Name"><Input value={form.branchName} onChange={e => update("branchName", e.target.value)} /></Field><Field label="City / Town"><Input value={form.branchCity} onChange={e => update("branchCity", e.target.value)} placeholder={form.city || "Ndola"} /></Field><Field label="Address"><Input value={form.branchAddress} onChange={e => update("branchAddress", e.target.value)} placeholder={form.address || "Branch address"} /></Field><Field label="Phone"><Input value={form.branchPhone} onChange={e => update("branchPhone", e.target.value)} placeholder={form.phone || "+260"} /></Field></Card>
-            <Card className="p-5 space-y-4 border-amber-200"><div className="flex gap-2 font-bold"><Warehouse className="h-5 w-5 text-amber-600" /> Main Warehouse</div><Field label="Warehouse Name"><Input value={form.warehouseName} onChange={e => update("warehouseName", e.target.value)} /></Field><div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">This becomes the default inventory location for your first branch. Additional warehouses can be added from Setup Centre.</div><Button type="button" variant="outline" className="w-full" onClick={() => update("warehouseName", form.warehouseName || "Main Warehouse")}><PlusIcon /> Add Another Warehouse Later</Button></Card>
+            <Card className="p-5 space-y-4 border-amber-200"><div className="flex gap-2 font-bold"><Warehouse className="h-5 w-5 text-amber-600" /> Main Warehouse</div><Field label="Warehouse Name"><Input value={form.warehouseName} onChange={e => update("warehouseName", e.target.value)} /></Field><div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">This becomes the default inventory location for your first branch. Additional warehouses can be added from Setup Centre.</div><Button type="button" variant="outline" className="w-full" onClick={() => update("warehouseName", form.warehouseName || "Main Warehouse")}><Plus className="mr-2 h-4 w-4" /> Add Another Warehouse Later</Button></Card>
           </div>
         </div>
       );
