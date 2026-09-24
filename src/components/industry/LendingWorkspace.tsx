@@ -527,9 +527,41 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
   </div>;
 
   const reportsView = <div className="space-y-4">
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4"><KPI label="Portfolio" value={money(outstanding)} icon={PieChart}/><KPI label="PAR 30" value={`${par30.toFixed(1)}%`} icon={AlertTriangle} tone={par30>10?"bad":"good"}/><KPI label="Borrowers" value={String(borrowers.length)} icon={Users}/><KPI label="Recovery" value={`${collectionRate.toFixed(1)}%`} icon={BarChart3} tone="good"/></div>
-    <Card title="Management reports" hint="Open the report areas from the same SifoBooks reporting engine.">
-      <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">{["Portfolio Summary","PAR 1 / 7 / 30 / 60 / 90","Collections Performance","Loan Officer Performance","Product Performance","Branch Performance","Investor Report","Write-off & Recovery","Cash Flow from Lending"].map(x=><Link key={x} to="/reports" className="group rounded-xl border p-4 hover:border-[#07834F]"><b>{x}</b><ArrowRight className="mt-3 h-4 w-4 text-[#07834F] group-hover:translate-x-1"/></Link>)}</div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <KPI label="Portfolio outstanding" value={money(outstanding)} icon={PieChart} tone="info"/>
+      <KPI label="PAR 30" value={`${par30.toFixed(1)}%`} icon={AlertTriangle} tone={par30>10?"bad":"good"}/>
+      <KPI label="Borrowers" value={String(borrowers.length)} icon={Users}/>
+      <KPI label="Recovery rate" value={`${collectionRate.toFixed(1)}%`} icon={BarChart3} tone="good"/>
+    </div>
+
+    <Card title="Microfinance Management Reports" hint="Operational reports for lending managers — not a generic accounting report list.">
+      <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          ["Portfolio Overview","Active loans, principal outstanding and balances","/lending/portfolio"],
+          ["PAR 1 / 7 / 30 / 60 / 90","Arrears ageing and portfolio-at-risk","/lending/arrears"],
+          ["Collections Performance","Collections, due amounts and recovery rate","/lending/collections"],
+          ["Loan Officer Performance","Field visits, promises and collection activity","/lending/field-collections"],
+          ["Loan Product Performance","Products, pricing and active exposure","/lending/products"],
+          ["Branch Performance","Branch portfolio and operational activity","/lending/branches"],
+          ["Investor Report","Investor capital, allocations and returns","/lending/investors"],
+          ["Write-off & Recovery","Write-offs, recoveries and outstanding balances","/lending/writeoffs"],
+          ["Mobile Money Reconciliation","MTN/Airtel imports, matches and exceptions","/lending/mobile-money"],
+        ].map(([label,detail,to]) => (
+          <Link key={label} to={to as never} className="group rounded-2xl border border-[#D9E6E3] bg-white p-4 hover:border-[#07834F] hover:shadow-md">
+            <b className="block text-sm text-[#173B3A]">{label}</b>
+            <span className="mt-1 block text-xs leading-5 text-[#6C7F7D]">{detail}</span>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#07834F]">Open report <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1"/></span>
+          </Link>
+        ))}
+      </div>
+    </Card>
+
+    <Card title="Accounting & statutory reports" hint="The accounting engine remains available as a back-office layer for the lending business.">
+      <div className="flex flex-wrap gap-2 p-4">
+        <Link to="/lending/accounting" className="rounded-xl border px-4 py-2 text-sm font-bold">Lending accounting bridge</Link>
+        <Link to="/reports/trial-balance" className="rounded-xl border px-4 py-2 text-sm font-bold">Trial balance</Link>
+        <Link to="/reports/pnl" className="rounded-xl border px-4 py-2 text-sm font-bold">Profit & loss</Link>
+      </div>
     </Card>
   </div>;
 
