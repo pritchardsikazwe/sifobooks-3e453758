@@ -133,8 +133,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const standalone = /^(\/hotel|\/school|\/restaurant|\/lending|\/property|\/retail|\/pos)(\/|$)/.test(pathname);
-  const industry = pathname.startsWith("/hotel") ? "hotel" : pathname.startsWith("/school") ? "school" : pathname.startsWith("/restaurant") ? "restaurant" : pathname.startsWith("/lending") ? "lending" : pathname.startsWith("/property") ? "property" : pathname.startsWith("/retail") || pathname.startsWith("/pos") ? "retail" : "core";
+  const standalone = /^(\/hotel|\/school|\/restaurant|\/lending|\/property|\/retail|\/pos|\/payroll)(\/|$)/.test(pathname);
+  const industry = pathname.startsWith("/hotel") ? "hotel" : pathname.startsWith("/school") ? "school" : pathname.startsWith("/restaurant") ? "restaurant" : pathname.startsWith("/lending") ? "lending" : pathname.startsWith("/property") ? "property" : pathname.startsWith("/retail") || pathname.startsWith("/pos") ? "retail" : pathname.startsWith("/payroll") ? "payroll" : "core";
 
   useEffect(() => {
     installOfflineAutoDrain();
