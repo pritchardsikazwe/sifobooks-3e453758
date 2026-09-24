@@ -710,6 +710,7 @@ export const RETAIL_HUBS: HubDef[] = [
       { title: "Goods Receipts", url: "/goods-receipts", module: "purchases", iconName: "PackageCheck", primary: true },
       { title: "Suppliers", url: "/suppliers", module: "purchases", iconName: "Truck", primary: true },
       { title: "Bills", url: "/bills", module: "purchases", iconName: "FileBox", primary: true },
+      { title: "Expenses", url: "/expenses", module: "purchases", iconName: "Receipt", primary: true, hint: "Record day-to-day retail operating costs." },
     ]},
   ]},
   { key: "retail-customers", label: "Customers", iconName: "Users", purpose: "Customer accounts, sales and payments.", groups: [
@@ -734,6 +735,8 @@ export const RETAIL_HUBS: HubDef[] = [
       { title: "Banking", url: "/banking", module: "finance", iconName: "Landmark", primary: true, hint: "Cash and bank activity." },
       { title: "Chart of Accounts", url: "/chart-of-accounts", module: "finance", iconName: "BookOpen", primary: true, hint: "Your retail ledger structure." },
       { title: "Journal Entries", url: "/journal-entries", module: "finance", iconName: "BookText", primary: true, hint: "Double-entry postings." },
+      { title: "Cashbook", url: "/cashbook", module: "finance", iconName: "BookText", hint: "Daily cash movement and balances." },
+      { title: "Reconciliation", url: "/reconciliation", module: "finance", iconName: "Scale", hint: "Match bank activity to the books." },
     ]},
     { label: "Financial reporting", items: [
       { title: "Trial Balance", url: "/reports/trial-balance", module: "reports", iconName: "Scale", primary: true },
