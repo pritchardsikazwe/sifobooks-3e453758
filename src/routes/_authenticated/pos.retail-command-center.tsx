@@ -116,6 +116,9 @@ function RetailCommandCenter() {
 
   return (
     <div className="p-4 sm:p-6 space-y-5 max-w-7xl">
+      <div className="rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br from-white via-[#F6FBF9] to-[#EEF7F3] p-5 shadow-[0_12px_34px_rgba(23,59,58,.07)]">
+        <div className="flex flex-wrap items-center gap-3"><div className="mr-auto"><div className="text-[11px] font-black uppercase tracking-[.18em] text-[#07834f]">SifoBooks Retail · Standalone workspace</div><h1 className="mt-1 text-2xl font-black text-[#173b3a]">Retail Operations Centre</h1><p className="text-sm text-muted-foreground">POS, cashiers, stock, butchery and retail control in one dedicated workspace.</p></div><div className="flex flex-wrap gap-2"><Button asChild><Link to="/pos">Open Retail POS</Link></Button><Button asChild variant="outline"><Link to="/retail/butchery">Butchery Centre</Link></Button><Button asChild variant="outline"><Link to="/retail/butchery-pos">Butchery POS</Link></Button></div></div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Gauge className="h-6 w-6 text-primary" /> Retail Command Center</h1>
