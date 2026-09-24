@@ -291,5 +291,6 @@ function Dashboard() {
         </Card>
       </div>
     </div>
+    </SifoStandaloneFrame>
   );
 }
