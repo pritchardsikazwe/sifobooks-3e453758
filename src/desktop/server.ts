@@ -9,6 +9,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
+import os from "os";
 import { licenseStatus, storeLicense } from "../lib/licensing";
 
 function findBaseDir(): string {
@@ -30,6 +31,56 @@ const clientDir = join(baseDir, "client");
 const dataDir = join(baseDir, "data");
 const backupsDir = join(baseDir, "backups");
 const networkConfigPath = join(baseDir, "config", "network.json");
+const serverIdentityPath = join(baseDir, "config", "server-identity.json");
+const networkDevicesPath = join(baseDir, "config", "network-devices.json");
+
+function getOrCreateServerIdentity() {
+  try {
+    if (existsSync(serverIdentityPath)) {
+      const existing = JSON.parse(readFileSync(serverIdentityPath, "utf8"));
+      if (existing?.server_id) return existing;
+    }
+  } catch {}
+  const identity = {
+    server_id: crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+    hostname: os.hostname(),
+  };
+  try {
+    writeFileSync(serverIdentityPath, JSON.stringify(identity, null, 2));
+  } catch {}
+  return identity;
+}
+
+function getLanAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses: Array<{ address: string; family: string; interface: string }> = [];
+  for (const [name, entries] of Object.entries(interfaces)) {
+    for (const entry of entries || []) {
+      if (!entry.internal && entry.family === "IPv4") {
+        addresses.push({ address: entry.address, family: "IPv4", interface: name });
+      }
+    }
+  }
+  return addresses;
+}
+
+function readNetworkDevices(): Record<string, any> {
+  try {
+    if (!existsSync(networkDevicesPath)) return {};
+    const value = JSON.parse(readFileSync(networkDevicesPath, "utf8"));
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeNetworkDevices(devices: Record<string, any>) {
+  mkdirSync(dirname(networkDevicesPath), { recursive: true });
+  writeFileSync(networkDevicesPath, JSON.stringify(devices, null, 2));
+}
+
+const serverIdentity = getOrCreateServerIdentity();
 
 function readNetworkConfig(): any | null {
   try {
@@ -353,11 +404,21 @@ function startServer() {
 
     if (url.pathname === "/api/network/info" && request.method === "GET") {
       const cfg = readNetworkConfig();
+      const lanAddresses = getLanAddresses();
+      const serverAddress = lanAddresses.find((item) => item.address.startsWith("192.168."))?.address
+        || lanAddresses.find((item) => item.address.startsWith("10."))?.address
+        || lanAddresses[0]?.address
+        || null;
       return Response.json({
         mode: isNetworkServer ? "server" : isPosClient ? "pos" : "standalone",
+        serverId: serverIdentity.server_id,
         serverName: cfg?.server?.display_name || "SifoBooks Server",
+        hostname: os.hostname(),
         host: HOST,
         port: PORT,
+        lanAddresses,
+        serverAddress,
+        accessUrl: serverAddress ? `http://${serverAddress}:${PORT}` : `http://localhost:${PORT}`,
         upstreamServerUrl: isPosClient ? configuredServerUrl : null,
         client: cfg?.client || null,
         zra: cfg?.zra ? {
@@ -369,6 +430,88 @@ function startServer() {
           vsdcEndpoint: cfg.zra.vsdc_endpoint || ""
         } : null
       });
+    }
+
+    if (url.pathname === "/api/network/health" && request.method === "GET") {
+      const dbPath = process.env.DATABASE_PATH || join(dataDir, "sifobooks.db");
+      let database = { status: "missing", sizeBytes: 0 };
+      try {
+        const db = new Database(dbPath);
+        const row = db.query("PRAGMA quick_check").get() as { quick_check?: string } | null;
+        db.close();
+        database = {
+          status: row?.quick_check === "ok" ? "healthy" : "check_failed",
+          sizeBytes: existsSync(dbPath) ? statSync(dbPath).size : 0,
+        };
+      } catch {
+        database = { status: "error", sizeBytes: existsSync(dbPath) ? statSync(dbPath).size : 0 };
+      }
+      const devices = readNetworkDevices();
+      return Response.json({
+        ok: database.status === "healthy",
+        mode: isNetworkServer ? "server" : isPosClient ? "pos" : "standalone",
+        serverId: serverIdentity.server_id,
+        hostname: os.hostname(),
+        uptimeSeconds: Math.floor(process.uptime()),
+        database,
+        connectedDevices: Object.values(devices).filter((device: any) => {
+          const heartbeat = Date.parse(String(device.last_seen || ""));
+          return Number.isFinite(heartbeat) && Date.now() - heartbeat < 90_000;
+        }).length,
+        totalDevices: Object.keys(devices).length,
+      });
+    }
+
+    if (url.pathname === "/api/network/devices" && request.method === "GET") {
+      if (!isNetworkServer) return Response.json({ error: "Device registry is available on the SifoBooks network server." }, { status: 403 });
+      return Response.json({ ok: true, devices: Object.values(readNetworkDevices()) });
+    }
+
+    if (url.pathname === "/api/network/devices/register" && request.method === "POST") {
+      if (!isNetworkServer) return Response.json({ error: "Device registration is available on the SifoBooks network server." }, { status: 403 });
+      try {
+        const body = await request.json();
+        const deviceId = String(body?.device_id || "").trim().slice(0, 100);
+        if (!deviceId) return Response.json({ error: "device_id is required" }, { status: 400 });
+        const devices = readNetworkDevices();
+        const now = new Date().toISOString();
+        devices[deviceId] = {
+          ...(devices[deviceId] || {}),
+          device_id: deviceId,
+          name: String(body?.name || deviceId).trim().slice(0, 100),
+          type: String(body?.type || "workstation").trim().slice(0, 40),
+          branch: String(body?.branch || "").trim().slice(0, 100),
+          role: String(body?.role || "").trim().slice(0, 60),
+          ip: String(body?.ip || "").trim().slice(0, 64),
+          first_seen: devices[deviceId]?.first_seen || now,
+          last_seen: now,
+        };
+        writeNetworkDevices(devices);
+        return Response.json({ ok: true, serverId: serverIdentity.server_id, device: devices[deviceId] });
+      } catch (error: any) {
+        return Response.json({ error: error?.message || "Device registration failed" }, { status: 400 });
+      }
+    }
+
+    if (url.pathname === "/api/network/devices/heartbeat" && request.method === "POST") {
+      if (!isNetworkServer) return Response.json({ error: "Device heartbeat is available on the SifoBooks network server." }, { status: 403 });
+      try {
+        const body = await request.json();
+        const deviceId = String(body?.device_id || "").trim().slice(0, 100);
+        if (!deviceId) return Response.json({ error: "device_id is required" }, { status: 400 });
+        const devices = readNetworkDevices();
+        const now = new Date().toISOString();
+        devices[deviceId] = {
+          ...(devices[deviceId] || { device_id: deviceId, first_seen: now }),
+          last_seen: now,
+          ip: String(body?.ip || devices[deviceId]?.ip || "").trim().slice(0, 64),
+          status: "online",
+        };
+        writeNetworkDevices(devices);
+        return Response.json({ ok: true, serverId: serverIdentity.server_id, lastSeen: now });
+      } catch (error: any) {
+        return Response.json({ error: error?.message || "Device heartbeat failed" }, { status: 400 });
+      }
     }
 
     if (url.pathname === "/api/network/config" && request.method === "POST") {
