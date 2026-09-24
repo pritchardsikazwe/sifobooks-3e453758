@@ -11,6 +11,7 @@ import { completeSale, computeTotals, currentShift, ensureRegister, loadSettings
 import { openWebSerialScale, parseScaleReading, type ScaleReading } from "@/lib/butchery";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { printerForJob, copiesForJob } from "@/services/printRouting";
+import { POSFullscreenButton } from "@/components/pos/POSFullscreenButton";
 
 export const Route = createFileRoute("/_authenticated/retail/butchery-pos")({
   head: () => ({ meta: [
@@ -205,6 +206,7 @@ function ButcheryPos() {
         <div className="flex items-center gap-3"><div className="rounded-xl bg-amber-400 p-2 text-emerald-950"><Beef className="h-6 w-6"/></div><div><div className="text-lg font-black">SifoBooks Butchery POS</div><div className="hidden text-xs text-emerald-200 sm:block">{register?.name||"Counter"} · {shift?shift.cashier_name:"Till closed"}</div></div></div>
         <div className="flex items-center gap-2">
           <Badge className={net.state==="online"?"bg-emerald-400 text-emerald-950":"bg-amber-400 text-amber-950"}>{net.state==="online"?<Wifi className="mr-1 h-3 w-3"/>:<WifiOff className="mr-1 h-3 w-3"/>}{net.state==="online"?"ONLINE":"OFFLINE"}</Badge>
+          <POSFullscreenButton label="Full screen" />
           <Button variant="secondary" size="sm" onClick={()=>shift?toast.message("Till is already open"):setShiftDialog(true)}>{shift?"Till Open":"Open Till"}</Button>
         </div>
       </div>
