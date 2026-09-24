@@ -200,27 +200,7 @@ function PayrollDashboard() {
       actions={<Button variant="save" asChild><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>}
     >
       <div className="space-y-5">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-700 font-semibold">
-              <Sparkles className="h-3.5 w-3.5" /> HR & Payroll
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Payroll Dashboard</h1>
-            <p className="text-sm text-slate-500">
-              {latest
-                ? <>Current period: <b>{MONTHS[latest.period_month - 1]} {latest.period_year}</b> · Status <span className="uppercase text-emerald-700">{latest.status}</span></>
-                : <>No run yet — showing live estimate from {estimated.headcount} active employees.</>}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline"><Link to="/employees">Employees</Link></Button>
-            <Button asChild variant="outline"><Link to="/payroll-statutory">Statutory</Link></Button>
-            <Button variant="save" asChild ><Link to="/payroll">Run Payroll <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
-          </div>
-        </div>
-      </motion.div>
+      <div className="rounded-2xl border border-[#DCE9E5] bg-white p-4 shadow-sm"><div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#07834F]"><Sparkles className="h-3.5 w-3.5" /> HR & Payroll <span className="text-[#78908B]">·</span><span className="text-[#78908B]">{latest ? `Current period: ${MONTHS[latest.period_month - 1]} ${latest.period_year} · ${latest.status}` : `No run yet · live estimate from ${estimated.headcount} active employees`}</span></div></div>
 
       {/* What needs attention */}
       {(attention.length > 0 || movement) && (
