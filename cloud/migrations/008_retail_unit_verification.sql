@@ -1,0 +1,1 @@
+-- Retail stock compatibility for cloud PostgreSQL.\nALTER TABLE stock_items ADD COLUMN IF NOT EXISTS needs_unit_verification BOOLEAN NOT NULL DEFAULT FALSE;\n
