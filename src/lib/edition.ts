@@ -15,7 +15,8 @@ export const SIFOBOOKS_EDITION_LABEL: Record<SifoBooksEdition, string> = {
   hotel: "Hotel",
   school: "School",
   property: "Property",
-  lending: "Microfinance",\n  payroll: "Payroll",
+  lending: "Microfinance",
+  payroll: "Payroll",
 };
 
 export const SIFOBOOKS_PRODUCT_NAME =
