@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -131,6 +132,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const standalone = /^(\/hotel|\/school|\/restaurant|\/lending|\/property|\/retail|\/pos)(\/|$)/.test(pathname);
+  const industry = pathname.startsWith("/hotel") ? "hotel" : pathname.startsWith("/school") ? "school" : pathname.startsWith("/restaurant") ? "restaurant" : pathname.startsWith("/lending") ? "lending" : pathname.startsWith("/property") ? "property" : pathname.startsWith("/retail") || pathname.startsWith("/pos") ? "retail" : "core";
 
   useEffect(() => {
     installOfflineAutoDrain();
@@ -142,7 +146,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <div className={standalone ? `standalone-2026-shell standalone-2026-${industry}` : undefined}>
+          <Outlet />
+        </div>
         <InstallAppPrompt />
         <PwaUpdatePrompt />
         <Toaster position="top-right" richColors closeButton />
