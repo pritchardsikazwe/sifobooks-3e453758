@@ -226,6 +226,90 @@ export function CompanyOnboardingWizard() {
         if (sol) await applyIndustrySolution({ userId: u.user.id, companyId: company.id, solutionId: sol.id });
       } catch {}
 
+      // A fresh Restaurant edition should be sell-ready immediately after
+      // onboarding. Provision the first open cashier shift, cash drawer and
+      // standard order types so the first POS payment does not fail simply
+      // because operational defaults were never created.
+      if (String(form.industry).toLowerCase() === "restaurant") {
+        const businessDate = new Date().toISOString().slice(0, 10);
+
+        const { data: existingShift } = await supabase
+          .from("restaurant_shifts")
+          .select("id")
+          .eq("user_id", u.user.id)
+          .eq("business_date", businessDate)
+          .is("clock_out", null)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingShift?.id) {
+          await supabase.from("restaurant_shifts").insert({
+            id: crypto.randomUUID(),
+            user_id: u.user.id,
+            staff_name: form.adminName.trim() || "Owner / Administrator",
+            role: "owner",
+            business_date: businessDate,
+            created_by: u.user.id,
+          });
+        }
+
+        const { data: existingDrawer } = await supabase
+          .from("restaurant_cash_drawers")
+          .select("id")
+          .eq("user_id", u.user.id)
+          .eq("business_date", businessDate)
+          .eq("status", "open")
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingDrawer?.id) {
+          await supabase.from("restaurant_cash_drawers").insert({
+            id: crypto.randomUUID(),
+            user_id: u.user.id,
+            name: "Main Cash Drawer",
+            station: "Restaurant POS",
+            business_date: businessDate,
+            opening_float: 0,
+            expected_cash: 0,
+            status: "open",
+            opened_by: u.user.id,
+            created_by: u.user.id,
+          });
+        }
+
+        const { data: existingTypes } = await supabase
+          .from("restaurant_order_types")
+          .select("id")
+          .eq("user_id", u.user.id)
+          .limit(1);
+
+        if (!existingTypes?.length) {
+          const orderTypes = [
+            ["DINE-IN", "Dine-in", true, false, false],
+            ["COUNTER", "Counter", false, false, false],
+            ["TAKEAWAY", "Takeaway", false, true, false],
+            ["DELIVERY", "Delivery", false, true, true],
+            ["PICKUP", "Pickup", false, true, false],
+            ["BAR", "Bar", false, false, false],
+          ];
+          await supabase.from("restaurant_order_types").insert(orderTypes.map(([key, label, table, customer, address], index) => ({
+            id: crypto.randomUUID(),
+            user_id: u.user.id,
+            key,
+            label,
+            active: 1,
+            requires_table: table ? 1 : 0,
+            requires_customer: customer ? 1 : 0,
+            requires_address: address ? 1 : 0,
+            service_charge_pct: 0,
+            packaging_fee: 0,
+            default_gratuity_pct: 0,
+            sort_order: index,
+            settings: "{}",
+          })));
+        }
+      }
+
       await saveDesktopDevices();
       try { localStorage.removeItem("sifobooks-onboarding-draft"); } catch {}
       setSaving(false);
