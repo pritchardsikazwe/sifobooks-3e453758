@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Home, Users, Wallet, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 
 type Property={id:string;code:string;name:string;property_type:string;address:string|null;city:string|null};
 type Unit={id:string;property_id:string;unit_code:string;unit_type:string;monthly_rent:number;daily_rate:number;status:string};
