@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveAuthenticatedContext } from "@/lib/workspace-context";
+import { resolveAuthenticatedContext, loadAccess } from "@/lib/workspace-context";
 
 /**
  * Post-login entry point.
@@ -16,17 +16,24 @@ export const Route = createFileRoute("/_authenticated/launch")({
     let target = "/dashboard";
     try {
       const { data: u } = await supabase.auth.getUser();
-      if (u.user) {
-        const ctx = await resolveAuthenticatedContext();
-        const isStaff = Boolean(ctx?.access && !ctx.access.is_owner && !ctx.access.is_super_admin);
-        if (!isStaff) {
-          // Only the person who owns the books goes through company onboarding.
-          const { data: p } = await supabase
-            .from("profiles").select("onboarded").eq("id", u.user.id).maybeSingle();
-          if (p && p.onboarded === false) throw redirect({ to: "/onboarding" });
-        }
-        if (ctx) target = ctx.resolution.route;
+      if (!u.user) throw redirect({ to: "/auth" });
+
+      // Fresh accounts must enter company setup before the workspace resolver.
+      // This avoids trying to resolve a product for a user who has no company,
+      // and makes signup consistent across every standalone edition.
+      const access = await loadAccess(true);
+      const isStaff = Boolean(access && !access.is_owner && !access.is_super_admin);
+      if (!isStaff) {
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("onboarded")
+          .eq("id", u.user.id)
+          .maybeSingle();
+        if (p && p.onboarded === false) throw redirect({ to: "/onboarding" });
       }
+
+      const ctx = await resolveAuthenticatedContext();
+      if (ctx) target = ctx.resolution.route;
     } catch (e: any) {
       if (e?.isRedirect || e?.to) throw e;
     }
