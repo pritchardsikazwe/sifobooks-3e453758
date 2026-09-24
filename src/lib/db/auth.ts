@@ -132,6 +132,34 @@ export async function signUp(email: string, password: string, metadata?: Record<
   };
 }
 
+export async function createSessionTokenForUser(userId: string): Promise<string | null> {
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    await ensureCloudSecurityColumns();
+    const rows = await db`SELECT id,email,session_version,must_change_password FROM auth_users WHERE id=${userId} LIMIT 1`;
+    const user = rows[0] as any;
+    if (!user) return null;
+    return signJWT({
+      sub: user.id,
+      email: user.email,
+      sv: Number(user.session_version ?? 0),
+      mustChange: Boolean(user.must_change_password),
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY,
+    });
+  }
+  const user = getDb().prepare("SELECT id,email,session_version,must_change_password FROM auth_users WHERE id=? LIMIT 1").get(userId) as any;
+  if (!user) return null;
+  return signJWT({
+    sub: user.id,
+    email: user.email,
+    sv: Number(user.session_version ?? 0),
+    mustChange: Boolean(user.must_change_password),
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY,
+  });
+}
+
 export async function signInWithPassword(email: string, password: string) {
   if (isCloudDatabaseConfigured()) {
     const db = getCloudDb();
