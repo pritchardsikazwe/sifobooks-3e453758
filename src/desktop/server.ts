@@ -100,7 +100,7 @@ const tanstackServer = (await import("../../dist/server/server.js")).default as 
   fetch: (req: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-const MIME_TYPES: Record<string, string> = {
+type ScaleSession = { port: string; baudRate: number; latestRaw: string; openedAt: string; lastReadAt: string };\nconst scaleSessions = new Map<string, ScaleSession>();\nconst scaleSessionKey = (port: string, baudRate: number) => port + ":" + baudRate;\nconst MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".mjs": "application/javascript; charset=utf-8",
@@ -305,6 +305,13 @@ function startServer() {
         const result = await runPowerShell(script, 2500); if (result.code !== 0) throw new Error(result.stderr || "Scale read failed");
         return Response.json({ ok: true, raw: result.stdout.trim(), port, baudRate: baud });
       } catch (error: any) { return Response.json({ ok: false, error: error?.message || "Scale read failed" }, { status: 500 }); }
+    }
+    if (url.pathname === "/api/hardware/scale/disconnect" && request.method === "POST") {
+      try {
+        const body = await request.json(); const port = String(body?.port || "").trim().toUpperCase();
+        for (const [key, session] of scaleSessions) if (session.port === port) scaleSessions.delete(key);
+        return Response.json({ ok: true, port });
+      } catch (error: any) { return Response.json({ ok: false, error: error?.message || "Scale disconnect failed" }, { status: 500 }); }
     }
     if (url.pathname === "/api/hardware/label/print" && request.method === "POST") {
       try {
