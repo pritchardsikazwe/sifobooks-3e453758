@@ -145,7 +145,41 @@ function SystemHealthPage() {
         fixTo: "/chart-of-accounts", fixLabel: "Open COA",
       });
 
-      // 9 · Company configuration
+      // 9 · ZRA Smart Invoice / VSDC readiness
+      const { data: zraConfigs, error: zraConfigError } = await supabase
+        .from("zra_device_configs")
+        .select("id,mode,tpin,branch_code,device_serial,vsdc_endpoint,connector_endpoint,last_verified_at")
+        .limit(100);
+      const zraRows = (zraConfigs ?? []) as any[];
+      const zraConfigured = zraRows.filter((x) => x.tpin && x.branch_code && x.device_serial).length;
+      const zraUnverified = zraRows.filter((x) => x.tpin && x.branch_code && x.device_serial && !x.last_verified_at).length;
+      out.push({
+        key: "zra-health", title: "ZRA Smart Invoice / VSDC", icon: Activity,
+        description: "Checks whether Smart Invoice devices have the core taxpayer, branch and device configuration required for VSDC.",
+        severity: zraConfigError ? "warn" : zraRows.length === 0 ? "warn" : zraConfigured < zraRows.length || zraUnverified > 0 ? "warn" : "pass",
+        metric: zraConfigError ? "configuration check unavailable" : zraRows.length === 0 ? "not configured" : `${zraConfigured}/${zraRows.length} devices configured`,
+        detail: zraConfigError ? String(zraConfigError.message ?? zraConfigError) : zraUnverified ? `${zraUnverified} configured device(s) have not recorded a verification time.` : "Configuration fields are present.",
+        fixTo: "/zra-smart-invoice", fixLabel: "Open ZRA settings",
+      });
+
+      // 10 · ZRA submission queue
+      const { data: zraQueue, error: zraQueueError } = await supabase
+        .from("zra_invoice_queue")
+        .select("status")
+        .limit(5000);
+      const zq = (zraQueue ?? []) as any[];
+      const zraFailed = zq.filter((x) => x.status === "failed").length;
+      const zraPending = zq.filter((x) => ["pending","submitting"].includes(x.status)).length;
+      out.push({
+        key: "zra-queue", title: "ZRA fiscal queue", icon: Wifi,
+        description: "Pending and failed Smart Invoice submissions that need attention.",
+        severity: zraQueueError ? "warn" : zraFailed > 0 ? "fail" : zraPending > 0 ? "warn" : "pass",
+        metric: zraQueueError ? "queue check unavailable" : zraFailed ? `${zraFailed} failed` : zraPending ? `${zraPending} pending` : "clear",
+        detail: zraQueueError ? String(zraQueueError.message ?? zraQueueError) : "Fiscal transactions should be monitored before closing the day.",
+        fixTo: "/zra-smart-invoice", fixLabel: "Open fiscal queue",
+      });
+
+      // 11 · Company configuration
       const { data: comps } = await supabase.from("companies").select("id, name, base_currency, workspace_mode");
       const missing = (comps ?? []).filter((c: any) => !c.base_currency || !c.workspace_mode);
       out.push({
