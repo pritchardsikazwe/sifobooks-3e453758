@@ -15,7 +15,11 @@ export function parseScaleReading(raw: string, config: ScaleConfig = {}): ScaleR
   if (!text) return null;
   const match = text.match(/([+-]?\d+(?:[.,]\d+)?)\s*(kg|kgs|g|lb|lbs)?/i);
   if (!match) return null;
-  const rawNumber = Number(match[1].replace(",", "."));
+  const numericText = match[1];
+  const normalizedNumber = numericText.includes(",") && !numericText.includes(".") && /,\d{3}$/.test(numericText)
+    ? numericText.replace(/,/g, "")
+    : numericText.replace(/,/g, ".");
+  const rawNumber = Number(normalizedNumber);
   if (!Number.isFinite(rawNumber) || rawNumber < 0) return null;
   const unit = (match[2] || config.unit || "kg").toLowerCase();
   const stable = /stable|st|\bS\b/i.test(text);
