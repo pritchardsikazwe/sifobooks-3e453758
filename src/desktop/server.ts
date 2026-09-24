@@ -188,14 +188,54 @@ async function runPowerShell(script: string, timeoutMs = 8000): Promise<{ code: 
 function psQuote(value: string) { return "'" + String(value ?? "").replace(/'/g, "''") + "'"; }
 function escposText(value: string) { return new TextEncoder().encode(String(value ?? "").replace(/[^\\x20-\\x7E]/g, "?")); }
 function buildEscPosLabel(body: { name: string; weightKg: number; pricePerKg: number; total: number; barcode?: string; footer?: string }) {
-  const chunks: Uint8Array[] = []; const push = (...bytes: number[]) => chunks.push(new Uint8Array(bytes)); const text = (s: string) => chunks.push(escposText(s));
-  push(0x1b,0x40); push(0x1b,0x61,0x01); push(0x1b,0x45,0x01); text(body.name + "\n"); push(0x1b,0x45,0x00);
-  text("SifoBooks Butchery\n"); push(0x1b,0x61,0x00); text("--------------------------------\n");
-  text("Weight:    " + body.weightKg.toFixed(3) + " kg\n"); text("Price/kg:  K" + body.pricePerKg.toFixed(2) + "\n");
-  push(0x1b,0x45,0x01); text("TOTAL:     K" + body.total.toFixed(2) + "\n"); push(0x1b,0x45,0x00);
-  if (body.barcode) { push(0x1d,0x68,0x50); push(0x1d,0x77,0x02); push(0x1d,0x48,0x02); const b = body.barcode.replace(/[^0-9A-Za-z]/g,"").slice(0,24); if (b) { push(0x1d,0x6b,0x04,b.length); chunks.push(new TextEncoder().encode(b)); } text("\n"); }
-  text(body.footer || "Keep refrigerated\n"); push(0x0a,0x0a,0x0a,0x1d,0x56,0x00);
+  const chunks: Uint8Array[] = []; const push = (...bytes: number[]) => chunks.push(new Uint8Array(bytes)); const text = (value: string) => chunks.push(escposText(value));
+  push(0x1b,0x40); push(0x1b,0x61,0x01); push(0x1b,0x45,0x01); text(body.name + "\\n"); push(0x1b,0x45,0x00);
+  text("SifoBooks Butchery\\n"); push(0x1b,0x61,0x00); text("--------------------------------\\n");
+  text("Weight:    " + body.weightKg.toFixed(3) + " kg\\n"); text("Price/kg:  K" + body.pricePerKg.toFixed(2) + "\\n");
+  push(0x1b,0x45,0x01); text("TOTAL:     K" + body.total.toFixed(2) + "\\n"); push(0x1b,0x45,0x00);
+  if (body.barcode) { push(0x1d,0x68,0x50); push(0x1d,0x77,0x02); push(0x1d,0x48,0x02); const b = body.barcode.replace(/[^0-9A-Za-z]/g,"").slice(0,24); if (b) { push(0x1d,0x6b,0x04,b.length); chunks.push(new TextEncoder().encode(b)); } text("\\n"); }
+  text(body.footer || "Keep refrigerated\\n"); push(0x0a,0x0a,0x0a,0x1d,0x56,0x00);
   const len = chunks.reduce((n, x) => n + x.length, 0); const out = new Uint8Array(len); let offset = 0; for (const chunk of chunks) { out.set(chunk, offset); offset += chunk.length; } return Buffer.from(out).toString("base64");
+}
+function buildZplLabel(body: { name: string; weightKg: number; pricePerKg: number; total: number; barcode?: string; footer?: string }) {
+  const safe = (v: string) => String(v || "").replace(/[^\\x20-\\x7E]/g, "?").replace(/[\\^~]/g, " ");
+  const barcode = safe(body.barcode || "").slice(0,24);
+  const zpl = [
+    "^XA","^CI28","^PW640","^LL400","^LH20,20",
+    "^CF0,42","^FO20,20^FD" + safe(body.name).slice(0,32) + "^FS",
+    "^CF0,25","^FO20,75^FDSifoBooks Butchery^FS",
+    "^FO20,115^FDWeight: " + body.weightKg.toFixed(3) + " kg^FS",
+    "^FO20,150^FDPrice/kg: K" + body.pricePerKg.toFixed(2) + "^FS",
+    "^CF0,40","^FO20,195^FDTOTAL: K" + body.total.toFixed(2) + "^FS",
+    barcode ? "^BY2,3,70^FO20,250^BCN,70,Y,N,N^FD" + barcode + "^FS" : "",
+    "^CF0,20","^FO20,350^FD" + safe(body.footer || "Keep refrigerated").slice(0,50) + "^FS",
+    "^XZ"
+  ].filter(Boolean).join("\\n");
+  return Buffer.from(zpl, "ascii").toString("base64");
+}
+function buildTsplLabel(body: { name: string; weightKg: number; pricePerKg: number; total: number; barcode?: string; footer?: string }) {
+  const safe = (v: string) => String(v || "").replace(/[\\\r\\n"]/g, " ").slice(0,60);
+  const barcode = safe(body.barcode || "").replace(/[^0-9A-Za-z]/g, "").slice(0,24);
+  const lines = [
+    "SIZE 80 mm,50 mm","GAP 3 mm,0","DIRECTION 1","CLS",
+    "TEXT 30,30,0,3,1,1," + JSON.stringify(safe(body.name)),
+    "TEXT 30,85,0,2,1,1," + JSON.stringify("SifoBooks Butchery"),
+    "TEXT 30,125,0,2,1,1," + JSON.stringify("Weight: " + body.weightKg.toFixed(3) + " kg"),
+    "TEXT 30,160,0,2,1,1," + JSON.stringify("Price/kg: K" + body.pricePerKg.toFixed(2)),
+    "TEXT 30,200,0,3,1,1," + JSON.stringify("TOTAL: K" + body.total.toFixed(2)),
+    barcode ? "BARCODE 30,260,128,70,1,0,2,4," + JSON.stringify(barcode) : "",
+    "TEXT 30,410,0,1,1,1," + JSON.stringify(safe(body.footer || "Keep refrigerated")),
+    "PRINT 1,1"
+  ].filter(Boolean).join("\\r\\n");
+  return Buffer.from(lines, "ascii").toString("base64");
+}
+function chooseLabelProtocol(printer: any, requested?: string) {
+  const explicit = String(requested || "").toLowerCase();
+  if (["escpos","zpl","tspl"].includes(explicit)) return explicit;
+  const text = [printer?.Name, printer?.DriverName, printer?.PortName].filter(Boolean).join(" ").toLowerCase();
+  if (/zebra|zdesigner|zpl/.test(text)) return "zpl";
+  if (/tsc|tspl|te200|te210|tx200|tx210/.test(text)) return "tspl";
+  return "escpos";
 }
 async function printRawWindows(printerName: string, base64: string) {
   const prefix = "\n$ErrorActionPreference='Stop'\nAdd-Type @'\nusing System; using System.Runtime.InteropServices;\npublic class SifoRawPrinter {\n[StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] public class DOCINFO { public string pDocName; public string pOutputFile; public string pDataType; }\n[DllImport(\"winspool.drv\", CharSet=CharSet.Unicode, SetLastError=true)] public static extern bool OpenPrinter(string pPrinterName, out IntPtr hPrinter, IntPtr pDefault);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool ClosePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", CharSet=CharSet.Unicode, SetLastError=true)] public static extern int StartDocPrinter(IntPtr hPrinter, int level, DOCINFO di);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool EndDocPrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern int StartPagePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool EndPagePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool WritePrinter(IntPtr hPrinter, byte[] data, int count, out int written);\npublic static void Print(string name, byte[] data) { IntPtr h; if(!OpenPrinter(name,out h,IntPtr.Zero)) throw new Exception(\"OpenPrinter failed: \"+Marshal.GetLastWin32Error()); try { var di=new DOCINFO(); di.pDocName=\"SifoBooks Label\"; di.pDataType=\"RAW\"; if(StartDocPrinter(h,1,di)==0) throw new Exception(\"StartDocPrinter failed: \"+Marshal.GetLastWin32Error()); try { if(StartPagePrinter(h)==0) throw new Exception(\"StartPagePrinter failed: \"+Marshal.GetLastWin32Error()); try { int w; if(!WritePrinter(h,data,data.Length,out w) || w!=data.Length) throw new Exception(\"WritePrinter failed: \"+Marshal.GetLastWin32Error()); } finally { EndPagePrinter(h); } } finally { EndDocPrinter(h); } } finally { ClosePrinter(h); } }\n}\n'@\n$data=[Convert]::FromBase64String('__BASE64__')\n[SifoRawPrinter]::Print('__PRINTER__', $data)\nWrite-Output \"OK\"";
@@ -249,12 +289,8 @@ function startServer() {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
-    if (isPosClient) {
-      const staticResponse = serveStatic(url.pathname);
-      if (staticResponse) return staticResponse;
-      return proxyToNetworkServer(request);
-    }
-
+    const hardwareEndpoint = url.pathname.startsWith("/api/hardware/");
+    if (hardwareEndpoint && isNetworkServer) return Response.json({ error: "Direct hardware endpoints are available only on the local Windows Desktop/terminal." }, { status: 403 });
 
     if (url.pathname === "/api/hardware/info" && request.method === "GET") {
       try { return Response.json(await listWindowsHardware()); } catch (error: any) { return Response.json({ error: error?.message || "Hardware discovery failed" }, { status: 500 }); }
@@ -274,10 +310,24 @@ function startServer() {
       try {
         const body = await request.json(); const printer = String(body?.printer || "").trim();
         if (!printer) return Response.json({ error: "Label printer is required." }, { status: 400 });
-        const payload = buildEscPosLabel({ name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated\\n").slice(0, 80) });
-        await printRawWindows(printer, payload); return Response.json({ ok: true, printer, transport: "windows-raw-escpos" });
+        const requestedProtocol = String(body?.protocol || "").toLowerCase();
+        const hardware = await listWindowsHardware();
+        const printerInfo = hardware.printers.find((item: any) => String(item?.Name || "") === printer);
+        if (!printerInfo) return Response.json({ error: "Selected Windows printer was not found." }, { status: 404 });
+        const protocol = chooseLabelProtocol(printerInfo, requestedProtocol);
+        const label = { name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated").slice(0, 80) };
+        const payload = protocol === "zpl" ? buildZplLabel(label) : protocol === "tspl" ? buildTsplLabel(label) : buildEscPosLabel(label);
+        await printRawWindows(printer, payload);
+        return Response.json({ ok: true, printer, protocol, transport: "windows-raw" });
       } catch (error: any) { return Response.json({ ok: false, error: error?.message || "Label print failed" }, { status: 500 }); }
     }
+    if (isPosClient) {
+      const staticResponse = serveStatic(url.pathname);
+      if (staticResponse) return staticResponse;
+      return proxyToNetworkServer(request);
+    }
+
+
     if (url.pathname === "/api/license/status" && request.method === "GET") {
       return Response.json({ ...licenseStatus(), enforcement: LICENSE_ENFORCEMENT });
     }
