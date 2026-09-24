@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { NavItem } from "@/components/industry/IndustryKit";
 
 const db: any = supabase;
