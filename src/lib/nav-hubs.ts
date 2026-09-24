@@ -686,7 +686,7 @@ export const HOTEL_HUBS: HubDef[] = [
 export const RETAIL_HUBS: HubDef[] = [
   { key: "retail-home", label: "Retail", iconName: "Store", purpose: "Run the shop: sell, control stock and see today's numbers.", groups: [
     { label: "Today", items: [
-      { title: "Retail Dashboard", url: "/pos/retail-command-center", module: "retail_pos", iconName: "LayoutDashboard", primary: true, hint: "Sales, shifts, cash and alerts." },
+      { title: "Retail Dashboard", url: "/retail", module: "retail_pos", iconName: "LayoutDashboard", primary: true, hint: "Sales, expenses, cash, stock and core accounting." },
       { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
       { title: "Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
       { title: "Cashier & Shifts", url: "/pos/command-center", module: "retail_pos", iconName: "Users", primary: true },
@@ -726,6 +726,19 @@ export const RETAIL_HUBS: HubDef[] = [
       { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3", primary: true },
       { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Boxes", primary: true },
       { title: "POS Integrity", url: "/reports/pos-integrity", module: "reports", iconName: "ShieldCheck" },
+    ]},
+  ]},
+  { key: "retail-accounting", label: "Accounting", iconName: "Landmark", purpose: "The basic books behind the retail business: income, expenses, cash, bank and ledger.", groups: [
+    { label: "Everyday accounting", items: [
+      { title: "Expenses", url: "/expenses", module: "purchases", iconName: "Receipt", primary: true, hint: "Record operating expenses and post them to the ledger." },
+      { title: "Banking", url: "/banking", module: "finance", iconName: "Landmark", primary: true, hint: "Cash and bank activity." },
+      { title: "Chart of Accounts", url: "/chart-of-accounts", module: "finance", iconName: "BookOpen", primary: true, hint: "Your retail ledger structure." },
+      { title: "Journal Entries", url: "/journal-entries", module: "finance", iconName: "BookText", primary: true, hint: "Double-entry postings." },
+    ]},
+    { label: "Financial reporting", items: [
+      { title: "Trial Balance", url: "/reports/trial-balance", module: "reports", iconName: "Scale", primary: true },
+      { title: "Financial Statements", url: "/reports/afs", module: "reports", iconName: "BarChart3", primary: true },
+      { title: "Reports Centre", url: "/reports", module: "reports", iconName: "FileBarChart" },
     ]},
   ]},
   { key: "retail-settings", label: "Settings", iconName: "Settings2", purpose: "Company, staff and licensed features.", groups: [
