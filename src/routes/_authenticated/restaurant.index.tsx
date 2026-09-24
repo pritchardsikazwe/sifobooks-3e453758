@@ -268,7 +268,7 @@ function Dashboard() {
             </ul>
           )}
         </Card>
-      </div>\n    </SifoStandaloneFrame>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="p-4 rounded-2xl">
