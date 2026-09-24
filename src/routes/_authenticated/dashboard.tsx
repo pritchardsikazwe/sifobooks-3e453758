@@ -23,6 +23,7 @@ import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import type { Access } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -62,6 +63,7 @@ function DashboardPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
+      void ensureStandaloneDemo("accounting").catch((e) => console.error("[standalone-demo:accounting]", e));
       const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
              { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
