@@ -58,7 +58,7 @@ function Dashboard() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return setLoading(false);
       const uid = u.user.id;
-      const [o, t, r, d, s] = await Promise.all([
+      const [o, t, r, d, s, l, b] = await Promise.all([
         db.from("restaurant_orders").select("*").eq("user_id", uid).eq("business_date", today()),
         db.from("restaurant_tables").select("*").eq("user_id", uid).order("name"),
         db.from("restaurant_reservations").select("*").eq("user_id", uid).eq("reserved_date", today()).order("reserved_time"),
