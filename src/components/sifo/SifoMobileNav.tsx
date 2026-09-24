@@ -47,17 +47,17 @@ export function SifoMobileNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 shadow-[0_-4px_20px_rgba(20,50,40,0.06)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#DDEBE6] bg-white/95 shadow-[0_-8px_28px_rgba(23,59,58,.08)] backdrop-blur-xl md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Primary"
     >
-      <div className="grid grid-cols-5 items-center px-1">
+      <div className="grid grid-cols-5 items-center gap-0.5 px-2 py-1.5">
         {left.map(i => <NavItem key={i.to} {...i} pathname={pathname} />)}
         <div className="flex items-center justify-center">
           <Link
             to={fab.to as any}
             aria-label={fab.label}
-            className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(20,80,60,0.35)] ring-4 ring-card transition-transform active:scale-95"
+            className="-mt-6 grid h-14 w-14 place-items-center rounded-2xl bg-[#07834F] text-white shadow-[0_10px_24px_rgba(7,131,79,.28)] ring-4 ring-white transition-transform active:scale-95"
           >
             <Plus className="h-6 w-6" />
           </Link>
@@ -77,11 +77,11 @@ function NavItem({ to, label, icon: Icon, pathname }: {
       to={to as any}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition-colors",
-        active ? "text-primary" : "text-muted-foreground",
+        "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-bold transition-all duration-200",
+        active ? "bg-[#EEF8F4] text-[#07834F] shadow-sm" : "text-[#718680] hover:bg-[#F5FAF8]",
       )}
     >
-      <span className={cn("grid h-7 w-7 place-items-center rounded-lg transition-colors", active && "bg-primary/10")}>
+      <span className={cn("grid h-7 w-7 place-items-center rounded-xl transition-colors", active && "bg-white")}>
         <Icon className="h-[21px] w-[21px]" />
       </span>
       {label}
