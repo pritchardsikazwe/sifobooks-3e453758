@@ -1,0 +1,1 @@
+-- Retail database hardening for older local databases.\nALTER TABLE stock_items ADD COLUMN needs_unit_verification INTEGER NOT NULL DEFAULT 0;\n
