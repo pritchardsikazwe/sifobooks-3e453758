@@ -7,6 +7,7 @@ import {
   RecordTable, SearchBox, StatusPill, Tile, TileGrid, Timeline, type NavItem,
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
 import { SchoolFeaturePage } from "@/components/industry/SchoolFeaturePage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,6 +85,7 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
+      void ensureStandaloneDemo("school").catch((e) => console.error("[standalone-demo:school]", e));
       const [st, cl, fees, pays, staff, structures, boardingHouses, boardingBeds, boardingAllocations, discipline, health, libraryLoans, transport, boardingRooms, boardingLeave, boardingVisitors, boardingMealPlans, boardingMealAssignments, boardingAttendance, boardingMaintenance] = await Promise.all([
         db.from("students").select("id,student_no,first_name,last_name,class_id,status,guardian_name,guardian_phone,guardian_email,boarding").eq("user_id", uid).order("last_name").limit(500),
         db.from("school_classes").select("id,name,grade_level,stream,class_teacher,capacity,academic_year,status").eq("user_id", uid).order("name").limit(200),
