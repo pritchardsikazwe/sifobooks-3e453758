@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { completeSale, computeTotals, currentShift, ensureRegister, loadSettings, posErrorMessage, type CartLine, type PosSettings, type SalePayment, type PriceLevel } from "@/lib/pos";
-import { openWebSerialScale, type ScaleReading } from "@/lib/butchery";
+import { openWebSerialScale, parseScaleReading, type ScaleReading } from "@/lib/butchery";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export const Route = createFileRoute("/_authenticated/retail/butchery-pos")({
@@ -39,6 +39,12 @@ function ButcheryPos() {
   const [customerDialog,setCustomerDialog]=useState(false);
   const [orderDialog,setOrderDialog]=useState(false);
   const [orderNote,setOrderNote]=useState("");
+  const [desktopHardware,setDesktopHardware]=useState(false);
+  const [hardwarePrinters,setHardwarePrinters]=useState<any[]>([]);
+  const [scalePorts,setScalePorts]=useState<any[]>([]);
+  const [scalePort,setScalePort]=useState("");
+  const [scaleBaud,setScaleBaud]=useState("9600");
+  const desktopScaleTimer=useRef<number|null>(null);
   const [bp,setBp]=useState<ButcheryProduct[]>([]);
   const [selectedAnimal,setSelectedAnimal]=useState("all");
   const [search,setSearch]=useState("");
@@ -61,6 +67,8 @@ function ButcheryPos() {
   const [done,setDone]=useState<any>(null);
   const [autoAddStable,setAutoAddStable]=useState(true);
   const lastAutoWeight=useRef("");
+
+  useEffect(()=>{(async()=>{try{const r=await fetch("/api/hardware/info");if(!r.ok)return;const d=await r.json();if(d?.platform==="win32"){setDesktopHardware(true);setHardwarePrinters(d.printers||[]);setScalePorts(d.serialPorts||[]);if(!scalePort&&d.serialPorts?.length===1)setScalePort(d.serialPorts[0].DeviceID);}}catch{}})();},[scalePort]);
 
   const load=useCallback(async()=>{
     const [items,bps,reg,st,settingsData]=await Promise.all([
@@ -97,12 +105,17 @@ function ButcheryPos() {
   const selectedPrice=selectedMeta?.price_per_kg || chosen?.sell_price || 0;
 
   const connectScale=async()=>{
-    try{
-      const h=await openWebSerialScale(r=>setScale(r),9600);
-      setScaleHandle(h);setScaleConnected(true);toast.success("Scale connected");
-    }catch(e:any){toast.error(e?.message==="WEB_SERIAL_UNAVAILABLE"?"Use Chrome/Edge on Windows for direct USB/COM scale access.":"Scale connection cancelled");}
+    if(desktopHardware){
+      const port=scalePort || scalePorts[0]?.DeviceID;
+      if(!port)return toast.error("No COM scale detected. Connect the USB/COM scale first.");
+      setScaleConnected(true);
+      const poll=async()=>{try{const r=await fetch("/api/hardware/scale/read",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({port,baudRate:Number(scaleBaud)})});const d=await r.json();if(d?.raw){const parts=String(d.raw).split(/[\\r\\n]+/).map(x=>x.trim()).filter(Boolean);const parsed=parts.map(x=>parseScaleReading(x)).filter(Boolean).pop() as ScaleReading|undefined;if(parsed)setScale(parsed);}}catch{}};
+      await poll(); desktopScaleTimer.current=window.setInterval(poll,700); toast.success(`Windows scale connected on ${port}`); return;
+    }
+    try{const h=await openWebSerialScale(r=>setScale(r),9600);setScaleHandle(h);setScaleConnected(true);toast.success("Scale connected");}
+    catch(e:any){toast.error(e?.message==="WEB_SERIAL_UNAVAILABLE"?"Use the SifoBooks Windows Desktop build for direct USB/COM scale access.":"Scale connection cancelled");}
   };
-  const disconnectScale=async()=>{try{await scaleHandle?.stop?.()}catch{}setScaleHandle(null);setScaleConnected(false);setScale({weight:0,stable:false,raw:"",unit:"kg"});};
+  const disconnectScale=async()=>{if(desktopScaleTimer.current){window.clearInterval(desktopScaleTimer.current);desktopScaleTimer.current=null;}try{await scaleHandle?.stop?.()}catch{}setScaleHandle(null);setScaleConnected(false);setScale({weight:0,stable:false,raw:"",unit:"kg"});};
 
   const addWeighted=()=>{
     if(!chosen)return toast.error("Tap a meat cut first");
@@ -146,12 +159,16 @@ function ButcheryPos() {
   };
 
   const keypad=(key:string)=>{ if(key==="C") return setPayAmount(""); if(key==="⌫") return setPayAmount(v=>v.slice(0,-1)); setPayAmount(v=>v==="0"?key:v+key); };
-  const printLabel=()=>{
+  const printLabel=async()=>{
     if(!chosen && !cart.length)return toast.error("Select a cut or add a sale first");
-    const line=chosen?{name:chosen.name,price:selectedPrice,qty:weight}:{name:cart[cart.length-1].name,price:cart[cart.length-1].price,qty:cart[cart.length-1].qty};
-    const total=Number(line.price)*Number(line.qty); const w=window.open("","_blank","width=520,height=420");
-    if(!w)return toast.error("Allow pop-ups to print labels");
-    w.document.write(`<html><head><title>SifoBooks Meat Label</title><style>body{font-family:Arial;margin:18px}.label{width:80mm;border:1px solid #111;padding:12px}.name{font-size:22px;font-weight:800}.price{font-size:26px;font-weight:800}.barcode{font-family:monospace;font-size:18px;letter-spacing:2px;border-top:3px solid #111;border-bottom:3px solid #111;padding:8px 0;margin-top:10px}small{color:#555}</style></head><body><div class="label"><div class="name">${line.name}</div><small>SifoBooks Butchery</small><p>Weight: <b>${Number(line.qty).toFixed(3)} kg</b></p><p>Price/kg: <b>K${Number(line.price).toFixed(2)}</b></p><div class="price">K${total.toFixed(2)}</div><div class="barcode">${chosen?.barcode||chosen?.sku||"SIFOBOOKS"}</div><small>Keep refrigerated · Scale/price label</small></div></body></html>`); w.document.close();w.focus();w.print();w.close();
+    const line=chosen?{name:chosen.name,price:selectedPrice,qty:weight,barcode:chosen.barcode||chosen.sku||"SIFOBOOKS"}:{name:cart[cart.length-1].name,price:cart[cart.length-1].price,qty:cart[cart.length-1].qty,barcode:cart[cart.length-1].sku||"SIFOBOOKS"};
+    const total=Number(line.price)*Number(line.qty);
+    if(desktopHardware && hardwarePrinters.length){
+      const printer=hardwarePrinters.find(p=>String(p.Name||"").toLowerCase().includes("label"))?.Name || hardwarePrinters[0].Name;
+      try{const r=await fetch("/api/hardware/label/print",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({printer,name:line.name,weightKg:Number(line.qty),pricePerKg:Number(line.price),total,barcode:line.barcode,footer:"Keep refrigerated"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Direct label print failed");toast.success(`Label printed directly to ${printer}`);return;}catch(e:any){toast.error(e?.message||"Direct label print failed");return;}
+    }
+    const w=window.open("","_blank","width=520,height=420");if(!w)return toast.error("Allow pop-ups to print labels");
+    w.document.write(`<html><head><title>SifoBooks Meat Label</title><style>body{font-family:Arial;margin:18px}.label{width:80mm;border:1px solid #111;padding:12px}.name{font-size:22px;font-weight:800}.price{font-size:26px;font-weight:800}.barcode{font-family:monospace;font-size:18px;letter-spacing:2px;border-top:3px solid #111;border-bottom:3px solid #111;padding:8px 0;margin-top:10px}small{color:#555}</style></head><body><div class="label"><div class="name">${line.name}</div><small>SifoBooks Butchery</small><p>Weight: <b>${Number(line.qty).toFixed(3)} kg</b></p><p>Price/kg: <b>K${Number(line.price).toFixed(2)}</b></p><div class="price">K${total.toFixed(2)}</div><div class="barcode">${line.barcode}</div><small>Keep refrigerated · Scale/price label</small></div></body></html>`);w.document.close();w.focus();w.print();w.close();
   };
   const checkout=async()=>{
     if(!cart.length)return;
@@ -216,7 +233,7 @@ function ButcheryPos() {
           cart.map(l=><div key={l.key} className="mb-2 rounded-2xl border p-3"><div className="flex items-start justify-between gap-2"><div><div className="font-black">{l.name}</div><div className="text-xs text-slate-500">K{l.price.toFixed(2)}/kg · {l.qty.toFixed(3)} kg</div></div><button onClick={()=>remove(l.key)} className="rounded-lg p-2 text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4"/></button></div><div className="mt-2 flex items-center justify-between"><div className="flex items-center gap-1"><Button size="icon" variant="outline" className="h-9 w-9" onClick={()=>changeQty(l.key,-0.05)}><Minus className="h-4 w-4"/></Button><span className="w-20 text-center font-bold">{l.qty.toFixed(3)} kg</span><Button size="icon" variant="outline" className="h-9 w-9" onClick={()=>changeQty(l.key,0.05)}><Plus className="h-4 w-4"/></Button></div><strong>K{(l.qty*l.price).toFixed(2)}</strong></div></div>)}
         </div>
         <div className="border-t bg-slate-50 p-4">
-          {chosen&&<div className="mb-4 rounded-2xl bg-emerald-950 p-4 text-white"><div className="text-xs uppercase tracking-wider text-emerald-200">Weighing</div><div className="mt-1 text-xl font-black">{chosen.name}</div><div className="mt-3 flex items-center gap-2"><Input autoFocus type="number" min="0" step="0.001" value={manualWeight} onChange={e=>setManualWeight(e.target.value)} className="h-14 bg-white text-2xl font-black text-slate-900"/><span className="text-xl font-black">kg</span></div><div className="mt-2 flex items-center justify-between gap-2 text-xs text-emerald-200"><span>{scaleConnected?scale.stable?"Scale stable — ready":"Waiting for stable weight":"Manual weight mode"}</span>{scaleConnected&&<button type="button" onClick={()=>setAutoAddStable(v=>!v)} className={`rounded-full px-3 py-1 font-bold ${autoAddStable?"bg-amber-400 text-emerald-950":"bg-white/10 text-white"}`}>{autoAddStable?"AUTO-ADD ON":"AUTO-ADD OFF"}</button>}</div><Button className="mt-3 h-12 w-full bg-amber-400 font-black text-emerald-950 hover:bg-amber-300" onClick={addWeighted}><Plus className="mr-2 h-5 w-5"/>ADD WEIGHT TO SALE</Button></div>}
+          {chosen&&<div className="mb-4 rounded-2xl bg-emerald-950 p-4 text-white"><div className="text-xs uppercase tracking-wider text-emerald-200">Weighing</div><div className="mt-1 text-xl font-black">{chosen.name}</div><div className="mt-3 flex items-center gap-2"><Input autoFocus type="number" min="0" step="0.001" value={manualWeight} onChange={e=>setManualWeight(e.target.value)} className="h-14 bg-white text-2xl font-black text-slate-900"/><span className="text-xl font-black">kg</span></div><div className="mt-2 flex items-center justify-between gap-2 text-xs text-emerald-200"><span>{scaleConnected?scale.stable?"Scale stable — ready":"Waiting for stable weight":"Manual weight mode"}</span>{scaleConnected&&<button type="button" onClick={()=>setAutoAddStable(v=>!v)} className={`rounded-full px-3 py-1 font-bold ${autoAddStable?"bg-amber-400 text-emerald-950":"bg-white/10 text-white"}`}>{autoAddStable?"AUTO-ADD ON":"AUTO-ADD OFF"}</button>}</div>{desktopHardware&&<div className="mt-2 grid grid-cols-2 gap-2"><select value={scalePort} onChange={e=>setScalePort(e.target.value)} className="h-9 rounded-lg bg-white/10 px-2 text-xs text-white"><option value="">Auto COM port</option>{scalePorts.map(p=><option key={p.DeviceID} value={p.DeviceID} className="text-slate-900">{p.DeviceID} · {p.Name}</option>)}</select><select value={scaleBaud} onChange={e=>setScaleBaud(e.target.value)} className="h-9 rounded-lg bg-white/10 px-2 text-xs text-white"><option value="9600">9600 baud</option><option value="4800">4800 baud</option><option value="19200">19200 baud</option><option value="38400">38400 baud</option></select></div>}<Button className="mt-3 h-12 w-full bg-amber-400 font-black text-emerald-950 hover:bg-amber-300" onClick={addWeighted}><Plus className="mr-2 h-5 w-5"/>ADD WEIGHT TO SALE</Button></div>}
           <div className="flex items-center justify-between text-sm"><span>Subtotal</span><strong>K{totals.subtotal.toFixed(2)}</strong></div>
           <div className="flex items-center justify-between text-sm"><span>VAT</span><strong>K{totals.tax.toFixed(2)}</strong></div>
           <div className="mt-3 flex items-end justify-between border-t pt-3"><span className="text-lg font-black">TOTAL</span><span className="text-4xl font-black text-emerald-800">K{totals.total.toFixed(2)}</span></div>
