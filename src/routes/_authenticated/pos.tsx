@@ -543,7 +543,8 @@ function RetailPos() {
       </div>
 
       {/* --------------------------- bottom action bar ------------------------ */}
-      <footer className="flex shrink-0 gap-2 overflow-x-auto border-t bg-till-nav px-3 py-2">
+      <footer className="shrink-0 border-t bg-till-nav px-2 py-2">
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12">
         <Act label="+1" icon={Plus} className="bg-till-cash text-till-key-foreground border-transparent hover:brightness-110"
           onClick={() => selectedLine ? patchLine(selectedLine.key, { qty: selectedLine.qty + 1 }) : toast.info("Select a cart line")} />
         <Act label="−1" icon={Minus} className="bg-till-card text-till-key-foreground border-transparent hover:brightness-110"
@@ -568,7 +569,7 @@ function RetailPos() {
         <Act label="REFUND" icon={Undo2} className="bg-till-void text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
         <Act label="RECEIPTS" icon={Printer} className="bg-slate-600 text-till-key-foreground border-transparent hover:brightness-110" onClick={() => void openRecent()} />
         <Act label="CART" icon={ShoppingBag} onClick={() => setCartOpen(true)} className="bg-till-cash text-till-key-foreground border-transparent lg:hidden" />
-        <div className="ml-auto hidden lg:block" />
+        </div>
       </footer>
 
       {/* mobile/tablet cart drawer */}
@@ -724,7 +725,7 @@ function Stat({ label, value, className }: { label: string; value: number; class
 function Act({ label, icon: Icon, onClick, className }: { label: string; icon: any; onClick: () => void; className?: string }) {
   return (
     <button onClick={onClick}
-      className={cn("flex h-14 min-w-[5.5rem] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-muted/50 px-3 text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-muted active:scale-95", className)}>
+      className={cn("flex h-12 min-w-0 w-full flex-col items-center justify-center gap-0.5 rounded-lg border bg-muted/50 px-1.5 text-[9px] sm:text-[10px] font-extrabold uppercase leading-tight tracking-wide transition-colors hover:bg-muted active:scale-95", className)}>
       <Icon className="h-4 w-4" />
       {label}
     </button>
