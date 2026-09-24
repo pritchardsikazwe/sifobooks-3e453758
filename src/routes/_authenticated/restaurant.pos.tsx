@@ -62,7 +62,10 @@ function restaurantCheckoutErrorMessage(error: any) {
   if (code.includes("INSUFFICIENT_STOCK")) return "Not enough ingredient stock at the selected POS location.";
   if (code.includes("LOCATION_STOCK_NOT_INITIALIZED")) return "This ingredient has no stock balance at the selected POS location. Transfer stock to the POS first.";
   if (code.includes("PAYMENT_SHORT")) return "Payment received is less than the amount due.";
-  if (code.includes("ACCOUNTING_POSTING_RULE_MISSING")) return raw;
+  if (code.includes("INVALID_CASH_TENDER")) return "Cash tender does not cover the amount due. Use EXACT or enter the amount received.";
+  if (code.includes("INVALID_RESTAURANT_PAYMENT")) return "Invalid payment amount. Review the tender and retry.";
+  if (code.includes("RESTAURANT_ORDER_NOT_SETTLEABLE")) return "This check is no longer open for payment.";
+  if (code.includes("ACCOUNTING_POSTING_RULE_MISSING")) return "The accounting fallback could not find a sales account. Check your Chart of Accounts setup.";
   if (code.includes("RPC \"RESTAURANT_CHECKOUT\"")) return "Restaurant checkout service is not available in this database mode yet.";
   return raw || "Restaurant sale could not be posted. Please retry.";
 }
