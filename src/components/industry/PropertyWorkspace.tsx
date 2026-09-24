@@ -17,8 +17,8 @@ type Lease={id:string;lease_no:string;unit_id:string;tenant_id:string;lease_type
 type Charge={id:string;lease_id:string;description:string;amount:number;paid_amount:number;due_date:string;status:string};
 type Payment={id:string;payment_no:string;tenant_id:string|null;amount:number;method:string;payment_date:string};
 
-export function PropertyWorkspace(){
- const [tab,setTab]=useState("dashboard"); const [loading,setLoading]=useState(true);
+export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: string } = {}){
+ const [tab,setTab]=useState(initialTab); const [loading,setLoading]=useState(true);
  const [uid,setUid]=useState(""); const [companyId,setCompanyId]=useState("");
  const [properties,setProperties]=useState<Property[]>([]); const [units,setUnits]=useState<Unit[]>([]);
  const [tenants,setTenants]=useState<Tenant[]>([]); const [leases,setLeases]=useState<Lease[]>([]);
