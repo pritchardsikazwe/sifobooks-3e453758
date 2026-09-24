@@ -12,6 +12,7 @@ import { RequireModule } from "@/components/RequireModule";
 import { cn } from "@/lib/utils";
 import { Loader2, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { normalizeOrderItem, posErrorMessage } from "@/lib/worker-pos";
+import { can, loadPosContext, type PosContext } from "@/lib/pos-permissions";
 import { recordPayments } from "@/lib/restaurant";
 
 
@@ -110,6 +111,8 @@ function Page() {
   const [fullScreen, setFullScreen] = useState(false);
   const [cashierCode, setCashierCode] = useState("");
   const [cashierName, setCashierName] = useState("");
+  const [posContext, setPosContext] = useState<PosContext | null>(null);
+  const [textScale, setTextScale] = useState<"normal" | "large" | "xl">("normal");
   // Stable client reference for a checkout attempt. Keeping this reference
   // across a retry makes Close Order idempotent when the response is lost.
   const checkoutClientRef = useRef<string | null>(null);
@@ -769,19 +772,19 @@ function Page() {
     (!searchTerm || [m.name, m.barcode, m.sku, m.category].some(v => String(v ?? "").toLowerCase().includes(searchTerm))));
   const openOrders = orders.filter(o => o.status === "open" || o.status === "held");
 
-  const sideKeys: { label: string; icon: string; run: () => void; tone?: string }[] = [
+  const sideKeys: { label: string; icon: string; run: () => void; feature?: any; channel?: "retail" | "restaurant" }[] = [
     { label: "NEW", icon: "＋", run: clearCheck },
     { label: "MISC", icon: "▦", run: () => { const n = window.prompt("Misc item name"); const p = n ? window.prompt("Price") : null; if (n && p) setCart(c => [...c, { name: n, station: "Kitchen", price: Number(p) || 0, qty: 1 }]); } },
-    { label: "VOID", icon: "×", run: () => (openOrders.length ? setPanel("recall") : toast.error("No open checks to void")) },
+    { label: "VOID", icon: "×", run: () => (openOrders.length ? setPanel("recall") : toast.error("No open checks to void")), feature: "void_item" },
     { label: "DISCOUNT", icon: "%", run: () => { const p = window.prompt("Discount %", String(discountPct)); if (p !== null) setDiscountPct(Math.min(100, Math.max(0, Number(p) || 0))); } },
     { label: "GUESTS", icon: "♟", run: () => { const g = window.prompt("Number of guests", String(guests)); if (g) setGuests(Math.max(1, Number(g) || 1)); } },
     { label: "CUSTOMER", icon: "♙", run: () => setPanel("customer") },
     { label: "RECALL", icon: "↻", run: () => setPanel("recall") },
-    { label: "HOLD", icon: "Ⅱ", run: () => sendOrder(undefined, true) },
-    { label: "TABLES", icon: "⌑", run: () => setPanel("tables") },
+    { label: "HOLD", icon: "Ⅱ", run: () => sendOrder(undefined, true), feature: "hold_order" },
+    { label: "TABLES", icon: "⌑", run: () => setPanel("tables"), feature: "tables", channel: "restaurant" },
     { label: "RESERVATIONS", icon: "◷", run: () => navigate({ to: "/restaurant/reservations" }) },
-    { label: "KITCHEN", icon: "▤", run: () => navigate({ to: "/restaurant/kitchen" }) },
-    { label: "SETTINGS", icon: "⚙", run: () => navigate({ to: "/pos/settings" }) },
+    { label: "KITCHEN", icon: "▤", run: () => navigate({ to: "/restaurant/kitchen" }), feature: "kitchen_display", channel: "restaurant" },
+    { label: "SETTINGS", icon: "⚙", run: () => navigate({ to: "/pos/settings" }), feature: "settings" },
   ];
 
   if (loading) {
@@ -804,8 +807,8 @@ function Page() {
 
   return (
     <>
-    <style>{POS_SCROLL_STYLE}</style>
-    <div className={cn("flex flex-col overflow-hidden border border-[#dbe5e2] bg-[#f4f7f6] text-[#173b3a] shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
+    <style>{POS_SCROLL_STYLE}\n      .sifopos-touch button, .sifopos-touch select, .sifopos-touch input { min-height: 44px; }\n      .sifopos-touch button { touch-action: manipulation; }\n    </style>
+    <div className={cn("sifopos-touch flex flex-col overflow-hidden border border-[#dbe5e2] bg-[#f4f7f6] text-[#173b3a] shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
       {/* top bar — order types */}
       <div className="pos-scrollbar flex h-[50px] shrink-0 items-center gap-[5px] overflow-x-auto scroll-smooth border-b border-[#164744] bg-[#073b38] px-[6px] py-[5px] text-white">
         <button
@@ -832,9 +835,9 @@ function Page() {
       <div className="grid min-h-0 flex-1 gap-[6px] overflow-y-auto bg-[#1d5555] p-[6px] md:grid-cols-[66px_minmax(0,1fr)] md:grid-rows-[minmax(240px,40%)_minmax(0,1fr)] md:overflow-hidden lg:grid-cols-[82px_300px_105px_minmax(0,1fr)] lg:grid-rows-1">
         {/* action rail */}
         <aside className="flex min-h-0 flex-row gap-[5px] overflow-x-auto md:row-span-2 md:h-full lg:row-span-1 md:flex-col md:overflow-x-visible md:overflow-y-auto">
-          {sideKeys.map(k => (
+          {visibleSideKeys.map(k => (
             <button key={k.label} onClick={k.run}
-              className="flex min-h-[52px] w-[62px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] md:w-auto px-[2px] py-[5px] text-[9px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
+              className="flex min-h-[58px] w-[62px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-[13px] border border-[#789695] bg-[#315f63] md:w-auto px-[2px] py-[5px] text-[10px] font-extrabold transition hover:bg-[#487e7d] active:scale-[.97]">
               <span className="text-[19px] leading-[18px]">{k.icon}</span>{k.label}
             </button>
           ))}
@@ -930,7 +933,7 @@ function Page() {
               className="h-[30px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold lg:hidden">
               {cats.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
             </select>
-            <div className="relative ml-auto w-[min(260px,42%)] shrink-0">
+            <div className="ml-auto flex shrink-0 items-center gap-1 rounded-[16px] border border-[#789998] bg-[#264f54] p-1">\n              {(["normal","large","xl"] as const).map(s => <button key={s} type="button" onClick={() => setTextScale(s)} className={cn("rounded-full px-2 py-1 text-[10px] font-black text-white", textScale === s ? "bg-[#07913c]" : "bg-transparent")} aria-label={`Text size ${s}`}>{s === "normal" ? "A" : s === "large" ? "A+" : "A++"}</button>)}\n            </div>\n            <div className="relative w-[min(260px,42%)] shrink-0">
               <input ref={searchRef} value={search} onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === "Enter" && barcodeMatch) {
@@ -945,7 +948,7 @@ function Page() {
               {search && <button type="button" aria-label="Clear search" onClick={() => { setSearch(""); searchRef.current?.focus(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[14px] font-black text-[#58706f]">×</button>}
             </div>
           </div>
-          <div className="pos-scrollbar grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto scroll-smooth p-2 sm:grid-cols-3 xl:grid-cols-4">
+          <div className={cn("pos-scrollbar grid auto-rows-[minmax(100px,1fr)] grid-cols-2", textScale === "large" ? "text-[13px]" : textScale === "xl" ? "text-[15px]" : "text-[12px]" gap-2 overflow-auto scroll-smooth p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
               <button key={mi.id} onClick={() => addToCart(mi)}
                 disabled={itemStock(mi) === 0}
