@@ -4,13 +4,14 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Info, Search } from "lucide-react";
 
-export type IndustryAccent = "hotel" | "school" | "restaurant" | "lending";
+export type IndustryAccent = "hotel" | "school" | "restaurant" | "lending" | "property";
 
 export const accentRing: Record<IndustryAccent, string> = {
   hotel: "from-emerald-500/10 via-teal-500/5 to-background",
   school: "from-emerald-500/10 via-teal-500/5 to-background",
   restaurant: "from-amber-500/10 via-yellow-500/5 to-background",
   lending: "from-emerald-500/10 via-amber-500/5 to-background",
+  property: "from-emerald-500/10 via-amber-500/5 to-background",
 };
 
 export const accentText: Record<IndustryAccent, string> = {
@@ -18,6 +19,7 @@ export const accentText: Record<IndustryAccent, string> = {
   school: "text-emerald-700 dark:text-emerald-400",
   restaurant: "text-amber-700 dark:text-amber-400",
   lending: "text-emerald-700 dark:text-emerald-400",
+  property: "text-emerald-700 dark:text-emerald-400",
 };
 
 export type NavItem = { label: string; to: string; icon: React.ComponentType<{ className?: string }>; supported?: boolean };
@@ -35,13 +37,13 @@ export function IndustryShell({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-5">
-      <div className={cn("rounded-2xl border bg-gradient-to-br p-5", accentRing[accent])}>
+    <div className="space-y-5 rounded-[28px] bg-[#F5FAF8]/70 p-1">
+      <div className={cn("rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br p-5 shadow-[0_12px_34px_rgba(23,59,58,.07)]", accentRing[accent])}>
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0">
-            <div className={cn("text-[11px] font-bold uppercase tracking-[0.18em]", accentText[accent])}>{product}</div>
-            <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            <div className={cn("inline-flex items-center rounded-full border border-[#D8B45A]/50 bg-[#FFF9E8] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#8A6810]", accentText[accent])}>{product}</div>
+            <h1 className="mt-2 truncate text-2xl font-extrabold tracking-tight text-[#173B3A]">{title}</h1>
+            <p className="mt-1 max-w-3xl text-sm text-[#607572]">{subtitle}</p>
           </div>
           {actions ? <div className="ml-auto flex flex-wrap gap-2">{actions}</div> : null}
         </div>
@@ -53,8 +55,8 @@ export function IndustryShell({
                 key={n.to}
                 to={n.to as never}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
-                  isActive ? "bg-primary text-primary-foreground shadow-sm" : "bg-background/70 text-muted-foreground hover:bg-muted",
+                  "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all",
+                  isActive ? "border-[#07834F] bg-[#07834F] text-white shadow-[0_5px_14px_rgba(7,131,79,.18)]" : "border-[#D9E6E3] bg-white/90 text-[#526865] hover:-translate-y-0.5 hover:border-[#07834F] hover:text-[#07834F] hover:shadow-sm",
                 )}
               >
                 <n.icon className="h-4 w-4" />
@@ -86,7 +88,7 @@ export function StatGrid({ items }: { items: { label: string; value: string; hin
 
 export function Board({ title, hint, right, children }: { title: string; hint?: string; right?: ReactNode; children: ReactNode }) {
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-[22px] border-[#D9E6E3] bg-white shadow-[0_6px_20px_rgba(23,59,58,.055)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
         <div>
           <h2 className="font-semibold">{title}</h2>
@@ -172,7 +174,7 @@ export function MetricTile({
     tone === "good" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : tone === "bad" ? "bg-rose-500"
     : tone === "info" ? "bg-sky-500" : "bg-primary";
   return (
-    <Card className="rounded-2xl p-4 transition-shadow hover:shadow-md">
+    <Card className="rounded-[22px] border-[#D9E6E3] bg-white p-4 shadow-[0_5px_18px_rgba(23,59,58,.05)] transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground">
         <span className="truncate">{label}</span>
         {Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
