@@ -85,8 +85,8 @@ export function PropertyWorkspace(){
  const unitName=(id:string)=>units.find(x=>x.id===id)?.unit_code??"—";
  const tenantName=(id:string|null)=>tenants.find(x=>x.id===id)?.full_name??"—";
  if(loading)return <div className="p-8 text-muted-foreground">Loading property management…</div>;
- return <RequireModule moduleKey="property_management"><div className="sifobooks-2026-industry space-y-5">
-  <div className="rounded-3xl border bg-gradient-to-r from-primary/10 via-background to-emerald-500/10 p-6">
+ return <RequireModule moduleKey="property_management"><div className="sifobooks-2026-industry space-y-5 rounded-[28px] bg-[#F5FAF8]/70 p-1">
+  <div className="rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br from-white via-[#F6FBF9] to-[#EEF7F3] p-6 shadow-[0_12px_34px_rgba(23,59,58,.07)]">
    <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-2xl font-bold">SifoProperty</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><div className="flex flex-wrap gap-2">
  <Button variant="outline" disabled={billing} onClick={generateMonthlyRent}>{billing?"Generating…":"Generate monthly rent"}</Button>
  <Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>
