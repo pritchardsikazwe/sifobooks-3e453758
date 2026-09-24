@@ -31,6 +31,7 @@ import { printReceipt as sendReceiptToPrinter, type ReceiptData } from "@/servic
 import { getPrinterForType } from "@/services/printerConfiguration";
 import { savePrintQueueJob } from "@/services/printQueue";
 import { zraSubmitPosSaleFn } from "@/lib/zra/server";
+import { POSFullscreenButton } from "@/components/pos/POSFullscreenButton";
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
@@ -421,6 +422,7 @@ function RetailPos() {
           <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => setShiftOpen(true)} title="Shift & drawer">
             <Wallet className="h-4 w-4" />
           </Button>
+          <POSFullscreenButton label="Full screen" />
           <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => setSettingsOpen(true)} title="POS settings">
             <Settings2 className="h-4 w-4" />
           </Button>
@@ -1129,6 +1131,7 @@ function SettingsDialog({ open, onOpenChange, settings, onSave }: {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>POS settings</DialogTitle></DialogHeader>
+        <div className="mb-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 text-sm"><div className="font-bold text-emerald-950">POS Control Centre</div><p className="mt-1 text-xs text-emerald-900/70">Manage cashiers, the live item catalogue, registers, printers and POS behaviour from one interactive workspace.</p><Button asChild size="sm" className="mt-2 rounded-xl"><Link to="/pos/settings">Open full POS settings</Link></Button></div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div><Label>Default customer</Label><Input value={draft.default_customer} onChange={(e) => setDraft({ ...draft, default_customer: e.target.value })} /></div>
           <div><Label>VAT rate %</Label><Input value={String(draft.tax_rate)} inputMode="decimal" onChange={(e) => setDraft({ ...draft, tax_rate: Number(e.target.value || 0) })} /></div>
