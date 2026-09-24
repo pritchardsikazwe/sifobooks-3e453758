@@ -525,8 +525,7 @@ function Page() {
   const requireActiveCashierSession = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return false;
-    const cashier = String(server || "").trim();
-    if (!cashier) { toast.error("Cashier is not assigned. Sign in with a POS cashier account."); return false; }
+    const cashier = String(server || cashierName || "Owner / Administrator").trim();
     const [shift, drawer] = await Promise.all([
       supabase.from("restaurant_shifts").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).is("clock_out", null).limit(1).maybeSingle(),
       supabase.from("restaurant_cash_drawers").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).eq("status", "open").limit(1).maybeSingle(),
