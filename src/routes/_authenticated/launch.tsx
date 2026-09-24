@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveAuthenticatedContext, loadAccess } from "@/lib/workspace-context";
+import { resolveAuthenticatedContext } from "@/lib/workspace-context";
+import { loadAccess } from "@/lib/rbac";
 
 /**
  * Post-login entry point.
