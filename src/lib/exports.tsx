@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Download, FileSpreadsheet, FileText, FileType } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, FileType, MessageCircle } from "lucide-react";
 import { downloadBrandedDoc, type DocKpi, type DocSection, type DocSpec } from "@/lib/doc-engine";
 
 export function exportCSV(rows: Record<string, any>[], filename: string) {
@@ -52,6 +52,22 @@ export async function exportPDF(
   await downloadBrandedDoc(spec);
 }
 
+export function shareReportWhatsApp(title: string, subtitle?: string, rows?: Record<string, any>[]) {
+  const sample = (rows ?? []).slice(0, 8);
+  const lines = [
+    `*SifoBooks — ${title}*`,
+    subtitle ? subtitle : "",
+    sample.length ? "" : "",
+    ...sample.map((r, i) => {
+      const values = Object.values(r).slice(0, 3).map(v => String(v ?? "")).join(" · ");
+      return `${i + 1}. ${values}`;
+    }),
+    "",
+    "Generated from SifoBooks.",
+  ].filter(Boolean);
+  window.open(`https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
+}
+
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -97,6 +113,8 @@ export function ExportMenu({
         <DropdownMenuItem onClick={() => void pdf()}>
           <FileType className="h-4 w-4 mr-2" /> PDF (branded)
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => shareReportWhatsApp(title ?? filename, subtitle, rows)}>
+          <MessageCircle className="h-4 w-4 mr-2" /> Share to WhatsApp
       </DropdownMenuContent>
     </DropdownMenu>
   );
