@@ -132,17 +132,47 @@ export type PostedLine = {
 /** Chunked `.in()` so large tenants don't blow the URL length. */
 async function fetchLinesForEntries(entryIds: string[]) {
   const out: any[] = [];
+  const accountIds = new Set<string>();
   const size = 200;
+
+  // Keep the base journal_lines query flat. The local SQLite compatibility
+  // layer does not support Supabase/PostgREST nested relationship selects
+  // such as account:account_id(...); those can be interpreted as a physical
+  // journal_lines.account column and cause "no such column" errors.
   for (let i = 0; i < entryIds.length; i += size) {
     const slice = entryIds.slice(i, i + size);
     const { data, error } = await supabase
       .from("journal_lines")
-      .select("id,entry_id,account_id,description,debit,credit,account:account_id(account_code,account_name,account_type,reporting_class)")
+      .select("id,entry_id,account_id,description,debit,credit")
       .in("entry_id", slice);
     if (error) throw error;
-    out.push(...(data ?? []));
+    for (const row of data ?? []) {
+      out.push(row);
+      if (row.account_id) accountIds.add(String(row.account_id));
+    }
   }
-  return out;
+
+  if (!accountIds.size) return out;
+
+  // Resolve account metadata separately so the same report engine works on
+  // both local SQLite and cloud/Postgres without relying on relationship
+  // expansion syntax.
+  const ids = [...accountIds];
+  const accounts = new Map<string, any>();
+  for (let i = 0; i < ids.length; i += size) {
+    const slice = ids.slice(i, i + size);
+    const { data, error } = await supabase
+      .from("chart_of_accounts")
+      .select("id,account_code,account_name,account_type,reporting_class")
+      .in("id", slice);
+    if (error) throw error;
+    for (const account of data ?? []) accounts.set(String(account.id), account);
+  }
+
+  return out.map((row) => ({
+    ...row,
+    account: row.account_id ? accounts.get(String(row.account_id)) ?? null : null,
+  }));
 }
 
 /** All POSTED journal lines within an (optional) date window. */
