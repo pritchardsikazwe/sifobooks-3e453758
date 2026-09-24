@@ -876,6 +876,7 @@ function Page() {
 
       {tender && (
         <TenderDialog
+          method={tender.method}
           due={tender.amount}
           onCancel={() => setTender(null)}
           onConfirm={(tendered, change) => { const t = tender; setTender(null); if (t.order) settle(t.order, t.method, tendered, change); else sendOrder(t.method, false, tendered, change); }}
