@@ -263,6 +263,9 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
     if (uid) {
       await supabase.from("profiles").update({ full_name: f.name.trim(), email: f.email.trim() }).eq("id", uid);
     }
+    // A newly registered account has no company yet. Go directly to the
+    // company setup wizard instead of sending a fresh account through the
+    // product resolver (which is intended for existing companies).
     setSaving(false);
     await onDone();
   };
