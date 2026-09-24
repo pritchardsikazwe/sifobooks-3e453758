@@ -460,8 +460,7 @@ Laptop - Dell Latitude,LAP-DL,8471.30,standard,16,each,14500,17900,6,2
 Consulting hours,SVC-PRO,SVC-PRO,standard,16,hour,0,850,0,0`;
 
 function parseCsv(text: string): ParsedRow[] {
-  const lines = text.replace(/\r/g, "").split("
-").filter(l => l.trim().length > 0);
+  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim().length > 0);
   if (lines.length === 0) return [];
   const splitLine = (l: string): string[] => {
     const out: string[] = []; let cur = ""; let inQ = false;
