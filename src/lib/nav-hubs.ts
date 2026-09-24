@@ -671,7 +671,7 @@ export const HOTEL_HUBS: HubDef[] = [
       {
         label: "Setup",
         items: [
-          { title: "Company Settings", url: "/settings", module: "core_home", iconName: "Settings", primary: true },
+          { title: "Company Settings", url: "/setup", module: "core_home", iconName: "Settings", primary: true },
           { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Switch on the rest of SifoBooks when you are ready." },
           { title: "Subscription", url: "/subscription", module: "core_home", iconName: "Sparkles", primary: true },
         ],
