@@ -46,7 +46,12 @@ const REPORTS = [
 
 type ReportId = typeof REPORTS[number]["id"];
 
-function RestaurantReports() {\n  return <StandaloneReports edition="restaurant" />;\n}\n\n/* Legacy report implementation retained below for reference while the standalone workspace is active.\nfunction RestaurantReportsLegacy() {
+function RestaurantReports() {
+  return <StandaloneReports edition="restaurant" />;
+}
+
+/* Legacy report implementation retained below for reference while the standalone workspace is active.
+function RestaurantReportsLegacy() {
   const [from, setFrom] = useState(today());
   const [to, setTo] = useState(today());
   const [report, setReport] = useState<ReportId>("dashboard");
