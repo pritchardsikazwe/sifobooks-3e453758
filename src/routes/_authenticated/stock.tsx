@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
@@ -36,7 +37,7 @@ function StockPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("ZMW");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [openNew, setOpenNew] = useState(false);
@@ -157,7 +158,7 @@ function StockPage() {
   );
 }
 
-function GroupedStockTable({
+function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {\n  return (\n    <div className="rounded-2xl border bg-card p-4 shadow-sm">\n      <div className="flex items-center justify-between gap-3">\n        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>\n        <span className={tone === "warning" ? "text-amber-600" : "text-primary"}>{icon}</span>\n      </div>\n      <div className="mt-2 truncate text-xl font-black tracking-tight sm:text-2xl">{value}</div>\n      <div className="mt-1 truncate text-[11px] text-muted-foreground">{caption}</div>\n    </div>\n  );\n}\n\nfunction GroupedStockTable({
   items, locationLabel, money, onMove, onDelete, loading,
 }: {
   items: Item[]; locationLabel: string; money: (n: number) => string;
@@ -607,5 +608,77 @@ function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}  const categories = Array.from(new Set(items.map(i => i.tax_category || "OTHER"))).filter(Boolean).sort();
+  const outOfStock = items.filter(i => Number(i.quantity_on_hand) <= 0).length;
+  const categoryCount = categories.length;
+
+  return (
+    <SifoWorkspaceShell
+      title="Items / Products"
+      purpose="Manage products, services and inventory used across POS, sales, purchasing and stock control."
+      icon={Package}
+      breadcrumbs={[{ label: "Inventory" }, { label: "Items / Products" }]}
+      actions={
+        <>
+          <Button variant="outline" size="sm" className="h-10 gap-1.5" onClick={() => setOpenImport(true)}>
+            <Upload className="h-4 w-4" /> Import
+          </Button>
+          <Button variant="outline" size="sm" className="h-10 gap-1.5" onClick={() => toast.message("Use the inventory export menu to export the current item catalogue.")}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button size="sm" className="h-10 gap-1.5" variant="save" onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4" /> Add item
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <ItemKpi label="Total items" value={items.length.toLocaleString()} caption="Active product catalogue" icon={<Package className="h-5 w-5" />} />
+        <ItemKpi label="Stock value" value={money(stockValue)} caption="Current inventory at cost" icon={<ArrowUpRight className="h-5 w-5" />} />
+        <ItemKpi label="Low stock" value={low.length.toLocaleString()} caption="Items at or below reorder level" tone={low.length ? "warning" : "normal"} icon={<AlertTriangle className="h-5 w-5" />} />
+        <ItemKpi label="Categories" value={categoryCount.toLocaleString()} caption={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={<Sliders className="h-5 w-5" />} />
+      </div>
+
+      <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <CardHeader className="border-b bg-card/95 p-3 sm:p-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="relative min-w-0 flex-1 xl:max-w-xl">
+              <Package className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search items, SKU, barcode or description…" className="h-11 rounded-xl pl-9" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Category filter">
+                <option>All categories</option>
+                {categories.map(c => <option key={c}>{c}</option>)}
+              </select>
+              <select className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Stock status filter">
+                <option>All items</option><option>In stock</option><option>Low stock</option><option>Out of stock</option>
+              </select>
+              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
+                <Link to="/inventory">Inventory overview</Link>
+              </Button>
+              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
+                <Link to="/inventory/transfers">Stock transfers</Link>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span><strong className="text-foreground">{filtered.length}</strong> items shown</span>
+            <span>Click an item action to move stock, edit or remove it.</span>
+          </div>
+          <GroupedStockTable
+            items={filtered}
+            locationLabel={businessName || "Main Store"}
+            money={money}
+            onMove={setMoveFor}
+            onDelete={removeItem}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
+    </SifoWorkspaceShell>
   );
 }
