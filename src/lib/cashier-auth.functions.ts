@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createSessionTokenForUser } from "@/lib/db/auth";
 
 function normalizeCashierCode(value: string) {
   return String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
@@ -44,13 +45,10 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
       lastError = out?.error ?? null;
     }
     if (!perm) return { ok: false as const, error: lastError ?? "Incorrect cashier ID or PIN" };
-    const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink", email: perm.email,
-    });
-    const tokenHash = link?.properties?.hashed_token;
-    if (linkErr || !tokenHash) return { ok: false as const, error: "Cashier login is not available. Ask your manager." };
+    const accessToken = perm.worker_user_id ? await createSessionTokenForUser(String(perm.worker_user_id)) : null;
+    if (!accessToken) return { ok: false as const, error: "Cashier login is not available. Ask your manager." };
     return {
-      ok: true as const, token_hash: tokenHash, full_name: (perm.display_name ?? perm.full_name ?? perm.cashier_code) as string | null,
+      ok: true as const, access_token: accessToken, full_name: (perm.display_name ?? perm.full_name ?? perm.cashier_code) as string | null,
       cashier_code: perm.cashier_code as string | null, pos_role: (perm.pos_role as string | null) ?? "cashier",
     };
   });
