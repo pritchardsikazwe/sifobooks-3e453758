@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Beef, Scale, Search, ShoppingCart, Trash2, Plus, Minus, Banknote, Smartphone, CreditCard, User, Wifi, WifiOff, CheckCircle2, PauseCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,8 @@ function ButcheryPos() {
   const [payAmount,setPayAmount]=useState("");
   const [busy,setBusy]=useState(false);
   const [done,setDone]=useState<any>(null);
+  const [autoAddStable,setAutoAddStable]=useState(true);
+  const lastAutoWeight=useRef("");
 
   const load=useCallback(async()=>{
     const [items,bps,reg,st,settingsData]=await Promise.all([
@@ -103,6 +105,15 @@ function ButcheryPos() {
     const line:CartLine={key:`${chosen.id}-${Date.now()}`,item_id:chosen.id,name:chosen.name,sku:chosen.sku,qty:weight,unit:"kg",price:Number(selectedPrice),unit_cost:Number(chosen.cost_price||0),discount_pct:0};
     setCart(c=>[...c,line]);setChosen(null);setManualWeight("");setScale(s=>({...s,weight:0,stable:false}));toast.success(`${chosen.name} added`);
   };
+  useEffect(()=>{
+    if(!autoAddStable || !chosen || !scaleConnected || !scale.stable || scale.weight<=0) return;
+    const signature=`${chosen.id}:${scale.weight.toFixed(3)}`;
+    if(lastAutoWeight.current===signature) return;
+    lastAutoWeight.current=signature;
+    const timer=window.setTimeout(()=>addWeighted(),450);
+    return ()=>window.clearTimeout(timer);
+  },[autoAddStable,chosen,scaleConnected,scale.stable,scale.weight]);
+
   const addFixed=(p:Product)=>{
     const line:CartLine={key:`${p.id}-${Date.now()}`,item_id:p.id,name:p.name,sku:p.sku,qty:1,unit:p.category||"unit",price:Number(p.sell_price||0),unit_cost:Number(p.cost_price||0),discount_pct:0};
     setCart(c=>[...c,line]);
@@ -131,6 +142,7 @@ function ButcheryPos() {
     if(amount<totals.total)return toast.error("Payment is less than the total");
     setBusy(true);
     try{
+      const completedTotal=totals.total;
       const payments:SalePayment[]=[{method:payMethod,amount}];
       const res=await completeSale({
         lines:cart,totals,customer:null,customerName:"Walk-in Customer",
@@ -139,7 +151,7 @@ function ButcheryPos() {
         taxRate:settings?.tax_rate??16,taxInclusive:settings?.tax_inclusive??true,
         allowNegativeStock:settings?.allow_negative_stock??false,
       },payments,Math.max(0,amount-totals.total));
-      setPayDialog(false);setDone(res);setCart([]);await load();
+      setPayDialog(false);setDone({...res,total:completedTotal});setCart([]);await load();
       toast.success(res.offline?"Sale saved offline":"Sale completed");
     }catch(e:any){toast.error(posErrorMessage(e?.message||String(e)))}finally{setBusy(false)}
   };
@@ -182,7 +194,7 @@ function ButcheryPos() {
           cart.map(l=><div key={l.key} className="mb-2 rounded-2xl border p-3"><div className="flex items-start justify-between gap-2"><div><div className="font-black">{l.name}</div><div className="text-xs text-slate-500">K{l.price.toFixed(2)}/kg · {l.qty.toFixed(3)} kg</div></div><button onClick={()=>remove(l.key)} className="rounded-lg p-2 text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4"/></button></div><div className="mt-2 flex items-center justify-between"><div className="flex items-center gap-1"><Button size="icon" variant="outline" className="h-9 w-9" onClick={()=>changeQty(l.key,-0.05)}><Minus className="h-4 w-4"/></Button><span className="w-20 text-center font-bold">{l.qty.toFixed(3)} kg</span><Button size="icon" variant="outline" className="h-9 w-9" onClick={()=>changeQty(l.key,0.05)}><Plus className="h-4 w-4"/></Button></div><strong>K{(l.qty*l.price).toFixed(2)}</strong></div></div>)}
         </div>
         <div className="border-t bg-slate-50 p-4">
-          {chosen&&<div className="mb-4 rounded-2xl bg-emerald-950 p-4 text-white"><div className="text-xs uppercase tracking-wider text-emerald-200">Weighing</div><div className="mt-1 text-xl font-black">{chosen.name}</div><div className="mt-3 flex items-center gap-2"><Input autoFocus type="number" min="0" step="0.001" value={manualWeight} onChange={e=>setManualWeight(e.target.value)} className="h-14 bg-white text-2xl font-black text-slate-900"/><span className="text-xl font-black">kg</span></div><div className="mt-2 text-xs text-emerald-200">{scaleConnected?scale.stable?"Scale stable — ready":"Waiting for stable weight":"Manual weight mode"}</div><Button className="mt-3 h-12 w-full bg-amber-400 font-black text-emerald-950 hover:bg-amber-300" onClick={addWeighted}><Plus className="mr-2 h-5 w-5"/>ADD WEIGHT TO SALE</Button></div>}
+          {chosen&&<div className="mb-4 rounded-2xl bg-emerald-950 p-4 text-white"><div className="text-xs uppercase tracking-wider text-emerald-200">Weighing</div><div className="mt-1 text-xl font-black">{chosen.name}</div><div className="mt-3 flex items-center gap-2"><Input autoFocus type="number" min="0" step="0.001" value={manualWeight} onChange={e=>setManualWeight(e.target.value)} className="h-14 bg-white text-2xl font-black text-slate-900"/><span className="text-xl font-black">kg</span></div><div className="mt-2 flex items-center justify-between gap-2 text-xs text-emerald-200"><span>{scaleConnected?scale.stable?"Scale stable — ready":"Waiting for stable weight":"Manual weight mode"}</span>{scaleConnected&&<button type="button" onClick={()=>setAutoAddStable(v=>!v)} className={`rounded-full px-3 py-1 font-bold ${autoAddStable?"bg-amber-400 text-emerald-950":"bg-white/10 text-white"}`}>{autoAddStable?"AUTO-ADD ON":"AUTO-ADD OFF"}</button>}</div><Button className="mt-3 h-12 w-full bg-amber-400 font-black text-emerald-950 hover:bg-amber-300" onClick={addWeighted}><Plus className="mr-2 h-5 w-5"/>ADD WEIGHT TO SALE</Button></div>}
           <div className="flex items-center justify-between text-sm"><span>Subtotal</span><strong>K{totals.subtotal.toFixed(2)}</strong></div>
           <div className="flex items-center justify-between text-sm"><span>VAT</span><strong>K{totals.tax.toFixed(2)}</strong></div>
           <div className="mt-3 flex items-end justify-between border-t pt-3"><span className="text-lg font-black">TOTAL</span><span className="text-4xl font-black text-emerald-800">K{totals.total.toFixed(2)}</span></div>
@@ -197,6 +209,6 @@ function ButcheryPos() {
       ["cash","Cash",Banknote],["mobile money","MoMo / Airtel",Smartphone],["card","Card",CreditCard]
     ].map(([key,label,Icon]:any)=><Button key={key} variant={payMethod===key?"default":"outline"} className="h-16 font-black" onClick={()=>setPayMethod(key)}><Icon className="mr-2 h-5 w-5"/>{label}</Button>)}</div><Input autoFocus className="h-16 text-center text-3xl font-black" type="number" value={payAmount} onChange={e=>setPayAmount(e.target.value)}/><div className="grid grid-cols-4 gap-2">{[50,100,200,500].map(v=><Button key={v} variant="outline" className="h-12" onClick={()=>setPayAmount(String(v))}>K{v}</Button>)}</div><div className="rounded-xl bg-slate-100 p-3 text-center text-sm">Change: <strong>K{Math.max(0,Number(payAmount||0)-totals.total).toFixed(2)}</strong></div><DialogFooter><Button variant="outline" onClick={()=>setPayDialog(false)}>Back</Button><Button disabled={busy} className="h-14 bg-emerald-800 px-8 text-lg font-black" onClick={()=>void finishPayment()}><CheckCircle2 className="mr-2 h-5 w-5"/>{busy?"POSTING...":"COMPLETE SALE"}</Button></DialogFooter></DialogContent></Dialog>
 
-    <Dialog open={!!done} onOpenChange={()=>setDone(null)}><DialogContent><div className="py-5 text-center"><CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600"/><h2 className="mt-3 text-2xl font-black">Sale Complete</h2><p className="mt-1 text-slate-500">{done?.sale_no}</p><div className="my-5 text-4xl font-black text-emerald-800">K{totals.total.toFixed(2)}</div><Button className="h-14 w-full bg-emerald-800 text-lg font-black" onClick={()=>setDone(null)}>NEW SALE</Button></div></DialogContent></Dialog>
+    <Dialog open={!!done} onOpenChange={()=>setDone(null)}><DialogContent><div className="py-5 text-center"><CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600"/><h2 className="mt-3 text-2xl font-black">Sale Complete</h2><p className="mt-1 text-slate-500">{done?.sale_no}</p><div className="my-5 text-4xl font-black text-emerald-800">K{Number(done?.total||0).toFixed(2)}</div><Button className="h-14 w-full bg-emerald-800 text-lg font-black" onClick={()=>setDone(null)}>NEW SALE</Button></div></DialogContent></Dialog>
   </div>;
 }
