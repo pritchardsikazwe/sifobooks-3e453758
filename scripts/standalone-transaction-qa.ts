@@ -69,7 +69,7 @@ run("restaurant", () => {
   db.query("INSERT INTO restaurant_menu_items (id,user_id,name,price) VALUES (?,?,?,?)").run("qa-menu",uid,"QA Meal",50);
   db.query("INSERT INTO restaurant_orders (id,user_id,order_no,status,total,business_date) VALUES (?,?,?,?,?,?)").run(order,uid,"QA-R-001","COMPLETED",100,"2026-09-24");
   db.query("INSERT INTO restaurant_order_items (id,user_id,order_id,item_name,menu_item_id,qty,price) VALUES (?,?,?,?,?,?,?)")
-    .run("qa-rest-line",uid,order,"qa-menu",2,50);
+    .run("qa-rest-line",uid,order,"QA Meal","qa-menu",2,50);
   db.query("INSERT INTO restaurant_payments (id,user_id,order_id,amount,method) VALUES (?,?,?,?,?)")
     .run("qa-rest-pay",uid,order,100,"CASH");
   const p:any=db.query("SELECT SUM(amount) amount FROM restaurant_payments WHERE order_id=?").get(order);
