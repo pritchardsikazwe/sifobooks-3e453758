@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Beef, Scale, Search, ShoppingCart, Trash2, Plus, Minus, Banknote, Smartphone, CreditCard, User, Wifi, WifiOff, CheckCircle2, PauseCircle, RotateCcw, Barcode, Printer, Delete, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
@@ -207,6 +207,7 @@ function ButcheryPos() {
         <div className="flex items-center gap-2">
           <Badge className={net.state==="online"?"bg-emerald-400 text-emerald-950":"bg-amber-400 text-amber-950"}>{net.state==="online"?<Wifi className="mr-1 h-3 w-3"/>:<WifiOff className="mr-1 h-3 w-3"/>}{net.state==="online"?"ONLINE":"OFFLINE"}</Badge>
           <POSFullscreenButton label="Full screen" />
+          <Button asChild variant="secondary" size="sm"><Link to="/pos/settings">POS Settings</Link></Button>
           <Button variant="secondary" size="sm" onClick={()=>shift?toast.message("Till is already open"):setShiftDialog(true)}>{shift?"Till Open":"Open Till"}</Button>
         </div>
       </div>
