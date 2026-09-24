@@ -141,7 +141,7 @@ function RestaurantSettings() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           ["/manager/cashiers", "Cashiers", "Create, assign and lock POS users", Users],
-          ["/stock", "Inventory", "Ingredients, stock counts and reorder", Boxes],
+          ["/restaurant/items-stock", "Inventory", "Ingredients, stock counts and reorder", Boxes],
           ["/printing-settings", "Printing", "Receipt, kitchen and bar printers", Printer],
           ["/restaurant/reports", "Reports", "Sales, margins and controls", BarChart3],
           ["/restaurant/end-of-day", "End of day", "Z-read and manager close", CalendarCheck],
@@ -160,7 +160,7 @@ function RestaurantSettings() {
           <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" />
           <div>
             <div className="text-sm font-bold">Standalone operating profile</div>
-            <p className="mt-1 text-xs text-muted-foreground">These settings are stored with the local business configuration. POS, cashier access, stock, reports and printing can continue on the Windows standalone installation without requiring a separate web dashboard.</p>
+            <p className="mt-1 text-xs text-muted-foreground">These settings are stored with the local business configuration. POS, cashier access, stock, reports, printing, fiscal readiness and system health are available from the standalone administration centre without requiring a separate web dashboard.</p>
           </div>
         </div>
       </Card>
