@@ -43,8 +43,25 @@ async function pnlFor(from: string, to: string) {
   const ids = (entries ?? []).map((e: any) => e.id);
   if (!ids.length) return { revenue: 0, expense: 0, byAccount: [] as { code: string; name: string; type: string; amount: number }[] };
   const { data: jl } = await supabase.from("journal_lines")
-    .select("debit,credit,account:account_id(account_code,account_name,account_type)")
+    .select("debit,credit,account_id")
     .in("entry_id", ids);
+
+  const accountIds = [...new Set((jl ?? []).map((x: any) => x.account_id).filter(Boolean))];
+  const accountMap = new Map<string, any>();
+  for (let i = 0; i < accountIds.length; i += 200) {
+    const slice = accountIds.slice(i, i + 200);
+    const { data: accounts, error: accountError } = await supabase
+      .from("chart_of_accounts")
+      .select("id,account_code,account_name,account_type")
+      .in("id", slice);
+    if (accountError) throw accountError;
+    for (const a of accounts ?? []) accountMap.set(String(a.id), a);
+  }
+
+  const journalWithAccounts = (jl ?? []).map((x: any) => ({
+    ...x,
+    account: x.account_id ? accountMap.get(String(x.account_id)) ?? null : null,
+  }));
   const map = new Map<string, { code: string; name: string; type: string; amount: number }>();
   (jl ?? []).forEach((l: any) => {
     const a = l.account; if (!a) return;
