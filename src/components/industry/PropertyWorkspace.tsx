@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Home, Users, Wallet, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 
 type Property={id:string;code:string;name:string;property_type:string;address:string|null;city:string|null};
 type Unit={id:string;property_id:string;unit_code:string;unit_type:string;monthly_rent:number;daily_rate:number;status:string};
@@ -26,7 +27,7 @@ export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: s
  const [charges,setCharges]=useState<Charge[]>([]); const [payments,setPayments]=useState<Payment[]>([]); const [maintenance,setMaintenance]=useState<any[]>([]); const [meters,setMeters]=useState<any[]>([]);
  const [form,setForm]=useState<any>({}); const [show,setShow]=useState<string|null>(null); const [billing,setBilling]=useState(false);
  const load=async()=>{
-  setLoading(true); const {data:u}=await supabase.auth.getUser(); if(!u.user){setLoading(false);return} setUid(u.user.id);
+  setLoading(true); const {data:u}=await supabase.auth.getUser(); if(!u.user){setLoading(false);return} setUid(u.user.id); void ensureStandaloneDemo("property").catch((e) => console.error("[standalone-demo:property]", e));
   const {data:p}=await supabase.from("profiles").select("active_company_id").eq("id",u.user.id).maybeSingle(); const cid=p?.active_company_id; setCompanyId(cid||"");
   if(!cid){setLoading(false);return}
   const [a,b,c,d,e,f,g,h]=await Promise.all([
