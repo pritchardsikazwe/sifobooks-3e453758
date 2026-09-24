@@ -141,7 +141,8 @@ function Dashboard() {
   ];
 
   return (
-    <SifoStandaloneFrame product="Restaurant" title="Restaurant Operations Centre" subtitle="POS, tables, kitchen, reservations, cash, stock and service control in one dedicated workspace." nav={[{label:"Dashboard",to:"/restaurant",active:true},{label:"Restaurant POS",to:"/restaurant/pos"},{label:"Tables",to:"/restaurant/tables"},{label:"Kitchen",to:"/restaurant/kitchen"},{label:"Menu",to:"/restaurant/menu"},{label:"Reservations",to:"/restaurant/reservations"},{label:"Inventory",to:"/stock"},{label:"Stock Transfers",to:"/inventory/transfers"},{label:"Reports",to:"/restaurant/reports"}]} actions={<Link to="/restaurant/pos" className="inline-flex h-10 items-center rounded-xl bg-[#07834F] px-4 text-sm font-bold text-white">Open POS</Link>}>\n    <div className="space-y-5">
+    <SifoStandaloneFrame product="Restaurant" title="Restaurant Operations Centre" subtitle="POS, tables, kitchen, reservations, cash, stock and service control in one dedicated workspace." nav={[{label:"Dashboard",to:"/restaurant",active:true},{label:"Restaurant POS",to:"/restaurant/pos"},{label:"Tables",to:"/restaurant/tables"},{label:"Kitchen",to:"/restaurant/kitchen"},{label:"Menu",to:"/restaurant/menu"},{label:"Reservations",to:"/restaurant/reservations"},{label:"Inventory",to:"/stock"},{label:"Stock Transfers",to:"/inventory/transfers"},{label:"Reports",to:"/restaurant/reports"}]} actions={<Link to="/restaurant/pos" className="inline-flex h-10 items-center rounded-xl bg-[#07834F] px-4 text-sm font-bold text-white">Open POS</Link>}>
+    <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Restaurant command centre</h1>
         <p className="text-sm text-muted-foreground">Live service today — every settled check posts to your ledger automatically.</p>
