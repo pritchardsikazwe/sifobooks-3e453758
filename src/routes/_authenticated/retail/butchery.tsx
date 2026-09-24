@@ -113,6 +113,26 @@ function ButcheryPage() {
     if (error) toast.error(error.message); else { toast.success(product.name + " added to Butchery"); await load(); }
   };
 
+  const postProcessingBatch = async () => {
+    if (!selectedItem) return toast.error("Select the source carcass/primal item");
+    if (y.balanceKg < -0.001) return toast.error("Outputs plus waste cannot exceed input weight");
+    const outputItemId = meatProducts.find(p => p.id !== selectedItem)?.id;
+    if (!outputItemId) return toast.error("Map at least one output cut before posting a batch");
+    const outputName = meatProducts.find(p => p.id === outputItemId)?.name || "Processed cut";
+    const { data, error } = await supabase.rpc("post_butchery_processing", {
+      _source_item_id: selectedItem,
+      _input_qty: Number(yieldInput),
+      _input_unit: "kg",
+      _input_cost: Number(inputCost),
+      _waste_qty: Number(yieldWaste),
+      _reference: "BUT-" + Date.now(),
+      _outputs: [{ item_id: outputItemId, qty: Number(yieldSaleable), unit: "kg", note: outputName }],
+    } as any);
+    if (error) return toast.error(error.message);
+    toast.success(`Processing batch ${data?.reference || ""} posted to inventory`);
+    await load();
+  };
+
   const printLabel = () => {
     if (!selected || !scale.weight) return toast.error("Select meat and capture a weight first");
     const label = window.open("", "_blank", "width=420,height=600");
@@ -179,7 +199,7 @@ function ButcheryPage() {
             <div className="rounded-xl bg-slate-900 p-4 text-white"><div className="text-xs uppercase text-slate-400">Yield</div><div className="mt-2 text-3xl font-black">{y.saleablePercent.toFixed(1)}%</div><div className="mt-1 text-sm text-slate-300">Balance: {y.balanceKg.toFixed(2)} kg</div></div>
             <div><Label>Purchase / processing cost (ZMW)</Label><Input className="mt-1" value={inputCost} onChange={e => setInputCost(e.target.value)} type="number" min="0" /></div>
             <div className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Saleable cost / kg</div><div className="text-2xl font-black">K{(Number(inputCost || 0) / Math.max(Number(yieldSaleable || 0), 0.001)).toFixed(2)}</div></div>
-            <Button className="w-full" variant="outline" disabled={y.balanceKg < -0.001}>Create processing batch</Button>
+            <Button className="w-full" variant="outline" disabled={y.balanceKg < -0.001 || !selectedItem} onClick={() => void postProcessingBatch()}><PackageCheck className="mr-2 h-4 w-4" />Post processing batch</Button>
           </CardContent>
         </Card>
       </div>
