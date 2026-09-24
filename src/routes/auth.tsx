@@ -56,7 +56,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const { next, tab: initialTab } = Route.useSearch();
   const [mode, setMode] = useState<LoginMode | null>(initialTab ? "admin" : null);
-  const [tab, setTab] = useState<"signin" | "signup" | "reset">(initialTab ?? "signin");
+  const [tab, setTab] = useState<"signin" | "signup" | "reset">(initialTab ?? "signup");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -215,7 +215,7 @@ function AuthPage() {
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   {notice && <p className="text-sm text-emerald-700">{notice}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />} Send reset link</Button>
-                  <button type="button" onClick={() => { setTab("signin"); setError(null); setNotice(null); }} className="w-full text-center text-sm text-muted-foreground hover:text-foreground">Back to sign in</button>
+                  <button type="button" onClick={() => { setTab("signin"); setError(null); setNotice(null); navigate({ to: "/auth", search: (prev: any) => ({ ...prev, tab: "signin" }) }); }} className="w-full text-center text-sm text-muted-foreground hover:text-foreground">Back to sign in</button>
                 </form>
               </TabsContent>
             </Tabs>
