@@ -53,14 +53,46 @@ class ServerQueryBuilder {
 }
 
 // Simple RPC handler for admin client
-function executeAdminRpc(name: string, args: Record<string, any>): { data: any; error: any } {
+async function executeAdminRpc(name: string, args: Record<string, any>): Promise<{ data: any; error: any }> {
   const db = getDb();
   try {
     switch (name) {
       case "verify_cashier_pin": {
-        const row = db.prepare("SELECT id, pin_hash FROM cashier_records WHERE pin_code = ?").get(args._pin) as any;
-        if (!row) return { data: null, error: { message: "Invalid PIN" } };
-        return { data: { valid: true, cashier_id: row.id }, error: null };
+        const row = db.prepare(
+          "SELECT id,pin_hash,pin_disabled,pin_locked_until FROM employee_pos_permissions WHERE id=? AND is_active=1 LIMIT 1",
+        ).get(args._permission_id) as any;
+        if (!row || Number(row.pin_disabled || 0) === 1) return { data: { ok: false, error: "PIN disabled" }, error: null };
+        if (row.pin_locked_until && new Date(row.pin_locked_until).getTime() > Date.now()) {
+          return { data: { ok: false, error: "PIN temporarily locked" }, error: null };
+        }
+        const valid = row.pin_hash ? await Bun.password.verify(String(args._pin || ""), String(row.pin_hash)) : false;
+        if (!valid) {
+          db.prepare("UPDATE employee_pos_permissions SET failed_pin_attempts=COALESCE(failed_pin_attempts,0)+1 WHERE id=?").run(row.id);
+          return { data: { ok: false, error: "Incorrect PIN" }, error: null };
+        }
+        db.prepare("UPDATE employee_pos_permissions SET failed_pin_attempts=0,pin_locked_until=NULL,last_pin_login_at=datetime('now') WHERE id=?").run(row.id);
+        return { data: { ok: true }, error: null };
+      }
+      case "set_cashier_pin": {
+        const permissionId = String(args._permission_id || "");
+        const pin = String(args._pin || "");
+        if (!/^\\d{4,8}$/.test(pin)) return { data: { ok: false, error: "PIN must be 4-8 digits" }, error: null };
+        const hash = await Bun.password.hash(pin);
+        const result = db.prepare(
+          "UPDATE employee_pos_permissions SET pin_hash=?,pin_set_at=datetime('now'),pin_disabled=0,failed_pin_attempts=0,pin_locked_until=NULL WHERE id=? AND is_active=1",
+        ).run(hash, permissionId);
+        if (!result.changes) return { data: { ok: false, error: "Cashier profile not found" }, error: null };
+        return { data: { ok: true }, error: null };
+      }
+      case "set_cashier_pin_state": {
+        const permissionId = String(args._permission_id || "");
+        const disabled = Boolean(args._disabled);
+        const unlock = Boolean(args._unlock);
+        const result = db.prepare(
+          "UPDATE employee_pos_permissions SET pin_disabled=?,pin_locked_until=?,failed_pin_attempts=CASE WHEN ? THEN 0 ELSE COALESCE(failed_pin_attempts,0) END WHERE id=? AND is_active=1",
+        ).run(disabled ? 1 : 0, unlock ? null : undefined, unlock ? 1 : 0, permissionId);
+        if (!result.changes) return { data: { ok: false, error: "Cashier profile not found" }, error: null };
+        return { data: { ok: true }, error: null };
       }
       case "next_doc_number": {
         const prefix = args._prefix || "DOC";
@@ -108,7 +140,7 @@ class AdminRpcBuilder {
   constructor(name: string, args: Record<string, any>) { this.name = name; this.args = args; }
   then(onFulfilled?: (value: any) => any, onRejected?: (reason: any) => any) {
     const result = executeAdminRpc(this.name, this.args);
-    if (onFulfilled) return Promise.resolve(result).then(onFulfilled, onRejected);
+    if (onFulfilled) return result.then(onFulfilled, onRejected);
     return result;
   }
 }
