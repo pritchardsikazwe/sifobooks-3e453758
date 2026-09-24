@@ -1831,7 +1831,8 @@ CREATE TABLE IF NOT EXISTS "pos_sales" (
   "journal_entry_id" TEXT,
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "created_by" TEXT,
-  "location_id" TEXT
+  "location_id" TEXT,
+  "branch_id" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "pos_settings" (
@@ -2678,6 +2679,10 @@ CREATE TABLE IF NOT EXISTS "stock_items" (
   "name" TEXT NOT NULL,
   "sku" TEXT,
   "description" TEXT,
+  "barcode" TEXT,
+  "category" TEXT,
+  "item_type" TEXT,
+  "bin" TEXT,
   "hs_code" TEXT,
   "tax_category" TEXT NOT NULL DEFAULT 'standard',
   "vat_rate" REAL NOT NULL DEFAULT 16,
@@ -2685,7 +2690,13 @@ CREATE TABLE IF NOT EXISTS "stock_items" (
   "cost_price" REAL NOT NULL DEFAULT 0,
   "sell_price" REAL NOT NULL DEFAULT 0,
   "quantity_on_hand" REAL NOT NULL DEFAULT 0,
+  "reserved_qty" REAL NOT NULL DEFAULT 0,
+  "on_order_qty" REAL NOT NULL DEFAULT 0,
   "reorder_level" REAL NOT NULL DEFAULT 0,
+  "safety_stock" REAL NOT NULL DEFAULT 0,
+  "max_stock" REAL NOT NULL DEFAULT 0,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
+  "needs_cost_review" INTEGER NOT NULL DEFAULT 0,
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "warehouse_id" TEXT,
   "branch_id" TEXT,
@@ -2704,6 +2715,26 @@ CREATE TABLE IF NOT EXISTS "stock_items" (
   "zra_raw_data" TEXT
 );
 
+CREATE TABLE IF NOT EXISTS "goods_receipts" (
+  "id" TEXT PRIMARY KEY,
+  "user_id" TEXT NOT NULL,
+  "company_id" TEXT,
+  "receipt_number" TEXT NOT NULL,
+  "po_number" TEXT,
+  "receipt_date" TEXT NOT NULL DEFAULT (date('now')),
+  "warehouse_id" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'draft',
+  "currency" TEXT NOT NULL DEFAULT 'ZMW',
+  "total" REAL NOT NULL DEFAULT 0,
+  "reference" TEXT,
+  "notes" TEXT,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+  "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS "idx_goods_receipts_user_date" ON "goods_receipts"("user_id","receipt_date");
+CREATE INDEX IF NOT EXISTS "idx_goods_receipts_warehouse" ON "goods_receipts"("warehouse_id");
+
 CREATE TABLE IF NOT EXISTS "stock_movements" (
   "id" TEXT PRIMARY KEY,
   "user_id" TEXT NOT NULL,
@@ -2713,7 +2744,12 @@ CREATE TABLE IF NOT EXISTS "stock_movements" (
   "unit_cost" REAL,
   "reference" TEXT,
   "note" TEXT,
-  "location_id" TEXT
+  "location_id" TEXT,
+  "total_cost" REAL,
+  "transaction_date" TEXT,
+  "source_type" TEXT,
+  "source_id" TEXT,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS "stock_serials" (
