@@ -162,13 +162,13 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-[#D7E6E1] bg-white text-[#173B3A] [&_[data-sidebar=sidebar]]:bg-white"
+      className="border-r border-[#DDEBE6] bg-[#F7FBF9] text-[#173B3A] shadow-[4px_0_24px_rgba(23,59,58,.035)] [&_[data-sidebar=sidebar]]:bg-[#F7FBF9]"
     >
-      <SidebarHeader className="border-b border-[#D7E6E1] bg-gradient-to-b from-white to-[#F5FAF8] px-3 py-3">
+      <SidebarHeader className="border-b border-[#E3EEE9] bg-gradient-to-b from-white via-[#FAFCFB] to-[#F2F9F6] px-3 py-3">
         <SifoBooksLogo showWordmark={!collapsed} className="w-full" markClassName="h-9 w-9" />
         {!collapsed && <div className="mt-1 px-0.5 text-[10px] text-muted-foreground truncate">{subtitle}</div>}
         {!collapsed && (
-          <div className="mt-3 rounded-xl border border-[#D9E6E3] bg-white px-2.5 py-2 text-xs font-semibold text-[#173B3A] shadow-[0_3px_12px_rgba(23,59,58,.04)] truncate">
+          <div className="mt-3 rounded-2xl border border-[#DDEBE6] bg-white px-3 py-2.5 text-xs font-semibold text-[#173B3A] shadow-[0_4px_16px_rgba(23,59,58,.045)] truncate">
             {companyName}
             {isStaff && access?.role_name && (
               <div className="text-[10px] font-medium text-muted-foreground truncate">
@@ -179,13 +179,13 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="bg-white px-1 [&_[data-sidebar=content]]:bg-white">
+      <SidebarContent className="bg-[#F7FBF9] px-2 py-1 [&_[data-sidebar=content]]:bg-[#F7FBF9] scrollbar-thin">
         {sections.map(section => {
           const open = isOpen(section.label);
           if (collapsed) {
             // In collapsed mode, don't use Collapsible — just render items with tooltips
             return (
-              <SidebarGroup key={section.label} className="py-1">
+              <SidebarGroup key={section.label} className="py-1.5">
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {section.items.map(item => {
@@ -197,11 +197,11 @@ export function AppSidebar() {
                           <SidebarMenuButton
                             asChild
                             isActive={active}
-                            className={`text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text}`}
+                            className="mx-1 my-0.5 min-h-10 rounded-xl text-[#526B65] transition-all duration-200 hover:bg-white hover:text-[#07834F] data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#07834F] data-[active=true]:shadow-[0_4px_14px_rgba(7,131,79,.07)]"
                             tooltip={item.title}
                           >
                             <Link to={item.url}>
-                              <Icon className="h-4 w-4" />
+                              <Icon className="h-[17px] w-[17px] shrink-0 stroke-[1.8]" />
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
@@ -217,7 +217,7 @@ export function AppSidebar() {
             <Collapsible key={section.label} open={open} onOpenChange={() => toggle(section.label)}>
               <SidebarGroup className="py-1">
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="group/label flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-3 pt-2 pb-1 font-semibold cursor-pointer hover:text-foreground transition-colors select-none">
+                  <SidebarGroupLabel className="group/label mx-1 flex items-center justify-between rounded-lg px-2.5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.16em] text-[#78908B] font-extrabold cursor-pointer hover:text-[#07834F] transition-colors select-none">
                     <span className="flex items-center gap-1.5">
                       <span className={`h-1.5 w-1.5 rounded-full ${hueFor(section.label).dot}`} />
                       {section.label}
@@ -237,11 +237,11 @@ export function AppSidebar() {
                             <SidebarMenuButton
                               asChild
                               isActive={active}
-                              className={`relative text-muted-foreground transition-all hover:translate-x-0.5 hover:bg-muted hover:text-foreground data-[active=true]:font-semibold data-[active=true]:${hue.soft} data-[active=true]:${hue.text} data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r data-[active=true]:before:${hue.dot}`}
+                              className={`group relative mx-1 my-0.5 min-h-10 rounded-xl text-[#526B65] transition-all duration-200 hover:translate-x-0.5 hover:bg-white hover:text-[#07834F] hover:shadow-[0_3px_12px_rgba(23,59,58,.045)] data-[active=true]:font-bold data-[active=true]:bg-white data-[active=true]:text-[#07834F] data-[active=true]:shadow-[0_4px_14px_rgba(7,131,79,.07)] data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-2 data-[active=true]:before:bottom-2 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-[#07834F]`}
                               tooltip={item.title}
                             >
                               <Link to={item.url}>
-                                <Icon className="h-4 w-4" />
+                                <Icon className="h-[17px] w-[17px] shrink-0 stroke-[1.8]" />
                                 <span>{item.title}</span>
                               </Link>
                             </SidebarMenuButton>
@@ -257,7 +257,7 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[#D7E6E1] bg-white p-2.5 space-y-2">
+      <SidebarFooter className="border-t border-[#E3EEE9] bg-white/80 p-2.5 space-y-2 backdrop-blur-sm">
         <Link
           to="/learn"
           className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors ${
