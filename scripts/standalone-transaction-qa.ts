@@ -83,7 +83,7 @@ run("hotel", () => {
   db.query("INSERT INTO hotel_rooms (id,user_id,number,room_type_id) VALUES (?,?,?,?)").run("qa-room",uid,"101","qa-rt");
   db.query("INSERT INTO hotel_reservations (id,user_id,reference,room_id,status,guest_name) VALUES (?,?,?,?,?,?)").run("qa-res",uid,"QA-H-001","qa-room","CHECKED_IN","QA Guest");
   db.query("INSERT INTO hotel_folios (id,user_id,reservation_id,folio_number) VALUES (?,?,?,?)").run("qa-folio",uid,"qa-res","QA-F-001");
-  db.query("INSERT INTO hotel_folio_charges (id,user_id,folio_id,amount) VALUES (?,?,?,?)").run("qa-charge",uid,"qa-folio",300);
+  db.query("INSERT INTO hotel_folio_charges (id,user_id,folio_id,description,amount) VALUES (?,?,?,?,?)").run("qa-charge",uid,"qa-folio","Room charge",300);
   const x:any=db.query("SELECT SUM(amount) amount FROM hotel_folio_charges WHERE folio_id=?").get("qa-folio");
   ok(x.amount===300,"hotel folio revenue totals 300");
 });
@@ -94,7 +94,7 @@ run("school", () => {
   db.query("INSERT INTO school_classes (id,user_id,name,academic_year) VALUES (?,?,?,?)").run("qa-class",uid,"Grade 7",2026);
   db.query("INSERT INTO students (id,user_id,student_no,first_name,last_name,class_id) VALUES (?,?,?,?,?,?)").run("qa-student",uid,"QA-001","QA","Student","qa-class");
   db.query("INSERT INTO fee_structures (id,user_id,fee_name,academic_year,amount) VALUES (?,?,?,?,?)").run("qa-fee-structure",uid,"Tuition",2026,1000);
-  db.query("INSERT INTO student_fees (id,user_id,student_id,amount_due,balance) VALUES (?,?,?,?,?)").run("qa-student-fee",uid,"qa-student",1000,1000);
+  db.query("INSERT INTO student_fees (id,user_id,student_id,academic_year,amount_due,balance) VALUES (?,?,?,?,?,?)").run("qa-student-fee",uid,"qa-student",2026,1000,1000);
   db.query("INSERT INTO fee_payments (id,user_id,student_id,amount) VALUES (?,?,?,?)").run("qa-fee-payment",uid,"qa-student",600);
   db.query("UPDATE student_fees SET balance=balance-600 WHERE id=?").run("qa-student-fee");
   const x:any=db.query("SELECT balance FROM student_fees WHERE id=?").get("qa-student-fee");
