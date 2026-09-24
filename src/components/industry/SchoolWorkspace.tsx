@@ -155,7 +155,8 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
 
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
-  const body = () => {\n    if (screen === "/school/reports") return <StandaloneReports edition="school" />;
+  const body = () => {
+    if (screen === "/school/reports") return <StandaloneReports edition="school" />;
     const featureKinds: Record<string, string> = {
       "/school/preschool": "preschool", "/school/student-profile": "profile", "/school/library": "library",
       "/school/meals": "meals", "/school/discipline": "discipline", "/school/health": "health",
