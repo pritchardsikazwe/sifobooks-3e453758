@@ -25,7 +25,8 @@
     "test:database-qa": "bun run scripts/database-workflow-qa.ts",
     "test:backup-restore-qa": "bun run scripts/backup-restore-qa.ts",
     "build:installer": "powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1",
-    "seed:demo": "SIFOBOOKS_DEMO=true bun run scripts/seed-public-demo.ts"
+    "seed:demo": "SIFOBOOKS_DEMO=true bun run scripts/seed-public-demo.ts",
+    "test:standalone-workflows": "bun run scripts/standalone-workflow-qa.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
