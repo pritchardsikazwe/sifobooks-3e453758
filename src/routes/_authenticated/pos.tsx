@@ -497,6 +497,7 @@ function RetailPos() {
                   <button
                     key={p.id}
                     onClick={() => addProduct(p)}
+                    onDoubleClick={() => setQtyPad(p)}
                     onContextMenu={(e) => { e.preventDefault(); setQtyPad(p); }}
                     onPointerDown={() => { pressTimer.current = setTimeout(() => setQtyPad(p), 550); }}
                     onPointerUp={() => pressTimer.current && clearTimeout(pressTimer.current)}
@@ -523,6 +524,7 @@ function RetailPos() {
                       </div>
                     )}
                     <div className="line-clamp-2 text-sm font-bold uppercase leading-tight">{p.name}</div>
+                    <div className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-white/55">Double-click to expand · hold for qty</div>
                     {settings.show_sku && p.sku && <div className="mt-0.5 truncate text-[10px] text-white/70">{p.sku}</div>}
                     <div className="mt-auto flex items-end justify-between gap-2 pt-2">
                       <span className="text-lg font-black tabular-nums">{fmtMoney(price)}</span>
