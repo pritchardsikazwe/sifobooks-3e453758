@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Boxes, ChevronRight, Edit3, Eye, MoreHorizontal, PackageCheck, Plus, RefreshCw, SlidersHorizontal, Trash2, UtensilsCrossed, Warehouse as WarehouseIcon, FileBarChart } from "lucide-react";
+import { Archive, Boxes, ChevronRight, Edit3, Eye, MoreHorizontal, PackageCheck, Plus, RefreshCw, SlidersHorizontal, Trash2, UtensilsCrossed, Warehouse as WarehouseIcon, FileBarChart, ArrowLeftRight, ClipboardList, History, Layers, Barcode, Scale, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uid } from "@/lib/restaurant";
 import { fmtMoney } from "@/lib/format";
@@ -34,6 +34,7 @@ function statusFor(qty: number, reorder: number) {
 
 function RestaurantItemsStock() {
   const [tab, setTab] = useState<"items" | "warehouse" | "recipes">("items");
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [stock, setStock] = useState<StockItem[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -110,6 +111,9 @@ function RestaurantItemsStock() {
     low: stock.filter(s => num(s.reorder_level) > 0 && num(s.quantity_on_hand) <= num(s.reorder_level) && num(s.quantity_on_hand) > 0).length,
     out: stock.filter(s => num(s.quantity_on_hand) <= 0).length,
     value: stock.reduce((a, s) => a + num(s.quantity_on_hand) * num(s.cost_price), 0),
+    reserved: stock.reduce((a, s) => a + num(s.reserved_qty ?? s.reserved_stock), 0),
+    onOrder: stock.reduce((a, s) => a + num(s.on_order_qty), 0),
+    available: stock.reduce((a, s) => a + num(s.quantity_on_hand) - num(s.reserved_qty ?? s.reserved_stock), 0),
   }), [items, stock]);
 
   const openEdit = (item: MenuItem) => {
@@ -177,6 +181,7 @@ function RestaurantItemsStock() {
           <h1 className="mt-1 text-2xl font-black tracking-tight text-[#173b3a]">Items & Stock</h1>
           <p className="text-sm text-muted-foreground">Manage menu items, ingredients, warehouse quantities and POS availability.</p>
         </div>
+        <Button variant="outline" onClick={() => setShowAdvanced(v => !v)}><Boxes className="mr-2 h-4 w-4" /> {showAdvanced ? "Hide inventory tools" : "Inventory tools"}</Button>
         <Button variant="outline" onClick={() => window.location.assign("/restaurant/stock-reports")}><FileBarChart className="mr-2 h-4 w-4" /> Stock Reports</Button>
         <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
         <Button onClick={() => { setTab("items"); setSelected(null); setEditForm({ name: "", category: "Mains", station: "Kitchen", price: "0", cost: "0", active: true }); setEditOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add Item</Button>
@@ -185,9 +190,13 @@ function RestaurantItemsStock() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {[
           ["Menu Items", stats.menu, "text-[#173b3a]"], ["Active", stats.active, "text-emerald-700"], ["Ingredients", stats.ingredients, "text-[#173b3a]"],
-          ["Low Stock", stats.low, "text-amber-700"], ["Out of Stock", stats.out, "text-red-700"], ["Stock Value", money(stats.value), "text-[#173b3a]"],
+          ["Low Stock", stats.low, "text-amber-700"], ["Out of Stock", stats.out, "text-red-700"], ["Available", stats.available, "text-[#173b3a]"], ["Reserved", stats.reserved, "text-amber-700"], ["On Order", stats.onOrder, "text-blue-700"], ["Stock Value", money(stats.value), "text-[#173b3a]"],
         ].map(([label, value, cls]) => <div key={String(label)} className="rounded-2xl border bg-white p-4 shadow-sm"><div className="text-xs font-semibold text-muted-foreground">{label}</div><div className={`mt-1 text-xl font-black tabular-nums ${cls}`}>{value}</div></div>)}
       </div>
+
+      {showAdvanced && <div className="rounded-2xl border bg-[#f7faf9] p-3 shadow-sm"><div className="mb-2 text-xs font-black uppercase tracking-wider text-[#49605e]">Inventory controls</div><div className="flex flex-wrap gap-2">{[
+            ["/inventory", "Inventory overview", Boxes], ["/inventory/transfers", "Transfers", ArrowLeftRight], ["/stock-counts", "Stock counts", ClipboardList], ["/stock-adjustments", "Adjustments", SlidersHorizontal], ["/inventory/stock-card", "Stock card", History], ["/stock-batches", "Batches & expiry", Layers], ["/stock-serials", "Serial numbers", Barcode], ["/inventory/reconciliation", "Reconciliation", Scale], ["/reports/inventory-valuation", "Valuation", FileBarChart],
+          ].map(([url, label, Icon]) => <Button key={String(url)} size="sm" variant="outline" onClick={() => window.location.assign(String(url))}><Icon className="mr-2 h-4 w-4" />{String(label)}</Button>)}</div></div>}
 
       <div className="rounded-2xl border bg-white shadow-sm">
         <div className="flex flex-wrap items-center gap-2 border-b bg-[#f7faf9] p-3">
@@ -234,19 +243,19 @@ function RestaurantItemsStock() {
         {tab === "warehouse" && <div className="p-3">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Select value={warehouseFilter} onValueChange={setWarehouseFilter}><SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder="Warehouse" /></SelectTrigger><SelectContent><SelectItem value="All">All warehouses</SelectItem>{warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent></Select>
-            <Button size="sm" variant="outline" onClick={() => window.location.assign("/stock")}><Boxes className="mr-2 h-4 w-4" /> Full Inventory</Button>
+            <Button size="sm" variant="outline" onClick={() => window.location.assign("/inventory")}><Boxes className="mr-2 h-4 w-4" /> Inventory Overview</Button>
             <Badge variant="outline">{shownStock.length} ingredients</Badge>
           </div>
           <div className="overflow-x-auto rounded-xl border">
             <table className="w-full min-w-[1100px] text-sm">
-              <thead className="bg-[#073b38] text-white"><tr>{["Ingredient","SKU","Warehouse","Unit","On Hand","Reorder","Cost","Stock Value","Status","Actions"].map(h => <th key={h} className={`px-3 py-3 text-left text-xs font-bold ${["On Hand","Reorder","Cost","Stock Value","Actions"].includes(h) ? "text-right" : ""}`}>{h}</th>)}</tr></thead>
+              <thead className="bg-[#073b38] text-white"><tr>{["Ingredient","SKU","Warehouse","Unit","On Hand","Reserved","Available","On Order","Reorder","Cost","Stock Value","Status","Actions"].map(h => <th key={h} className={`px-3 py-3 text-left text-xs font-bold ${["On Hand","Reorder","Cost","Stock Value","Actions"].includes(h) ? "text-right" : ""}`}>{h}</th>)}</tr></thead>
               <tbody>
                 {shownStock.map((s, idx) => {
                   const st=statusFor(num(s.quantity_on_hand), num(s.reorder_level)); const wh=warehouses.find(w=>w.id===s.warehouse_id);
                   return <tr key={s.id} className={`border-t hover:bg-[#f7faf9] ${idx % 2 ? "bg-[#fcfdfd]" : "bg-white"}`}>
                     <td className="px-3 py-3"><div className="font-bold">{s.name}</div>{s.brand && <div className="text-[11px] text-muted-foreground">{s.brand}</div>}</td>
                     <td className="px-3 py-3 font-mono text-xs">{s.sku || "—"}</td><td className="px-3 py-3">{wh?.name || "Unassigned"}</td><td className="px-3 py-3">{s.unit}</td>
-                    <td className="px-3 py-3 text-right font-bold tabular-nums">{num(s.quantity_on_hand).toLocaleString()}</td><td className="px-3 py-3 text-right tabular-nums">{num(s.reorder_level).toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right font-bold tabular-nums">{num(s.quantity_on_hand).toLocaleString()}</td><td className="px-3 py-3 text-right tabular-nums">{num(s.reserved_qty ?? s.reserved_stock).toLocaleString()}</td><td className="px-3 py-3 text-right font-bold tabular-nums">{(num(s.quantity_on_hand)-num(s.reserved_qty ?? s.reserved_stock)).toLocaleString()}</td><td className="px-3 py-3 text-right tabular-nums">{num(s.on_order_qty).toLocaleString()}</td><td className="px-3 py-3 text-right tabular-nums">{num(s.reorder_level).toLocaleString()}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{money(s.cost_price)}</td><td className="px-3 py-3 text-right font-bold tabular-nums">{money(num(s.quantity_on_hand)*num(s.cost_price))}</td>
                     <td className="px-3 py-3"><Badge className={`border ${st.cls}`}>{st.label}</Badge></td>
                     <td className="px-3 py-3"><div className="flex justify-end gap-1">
