@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/restaurant")({
 
 const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/restaurant", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/restaurant/onboarding", label: "Onboarding", icon: ShieldCheck },
   { to: "/restaurant/pos", label: "POS", icon: UtensilsCrossed },
   { to: "/restaurant/tables", label: "Tables", icon: LayoutGrid },
   { to: "/restaurant/reservations", label: "Reservations", icon: CalendarClock },
