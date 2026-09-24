@@ -246,7 +246,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "SifoPOS Hub", url: "/sifopos", module: "retail_pos", iconName: "LayoutGrid" },
           { title: "Worker Command Center", url: "/pos/command-center", module: "retail_pos", iconName: "LayoutGrid" },
-          { title: "Worker Terminal", url: "/w", module: "retail_pos", iconName: "Monitor" },
+          { title: "Worker Terminal", url: "/pos/command-center", module: "retail_pos", iconName: "Monitor" },
           { title: "Worker Access & Roles", url: "/pos-workers", module: "retail_pos", iconName: "ShieldCheck" },
           { title: "Till & Stock Health Check", url: "/reports/pos-integrity", module: "reports", iconName: "ShieldCheck" },
         ],
@@ -559,7 +559,7 @@ export const PAYROLL_HUBS: HubDef[] = [
         label: "Setup",
         items: [
           { title: "Payroll Setup", url: "/payroll-setup", module: "hr_payroll", iconName: "Settings2", primary: true, hint: "Pay components, grades and payroll defaults." },
-          { title: "Company Settings", url: "/settings", module: "core_home", iconName: "Settings", primary: true },
+          { title: "Company Settings", url: "/setup", module: "core_home", iconName: "Settings", primary: true },
           { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Switch on the rest of SifoBooks when you are ready." },
           { title: "Subscription", url: "/subscription", module: "core_home", iconName: "Sparkles", primary: true },
         ],
