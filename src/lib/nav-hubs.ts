@@ -337,11 +337,107 @@ export const HUBS: HubDef[] = [
   },
 ];
 
+/** Focused standalone industry navigation — the same operational shape used by the industry mockups. */
+export const SCHOOL_HUBS: HubDef[] = [{
+  key: "school-main", label: "School", iconName: "School",
+  purpose: "Run the school day: learners, academics, fees, attendance and reporting.",
+  groups: [
+    { label: "Overview", items: [
+      { title: "Dashboard", url: "/school", module: "school_erp", iconName: "LayoutDashboard", primary: true },
+      { title: "Students", url: "/school/students", module: "school_erp", iconName: "GraduationCap", primary: true },
+      { title: "Admissions & Enrolment", url: "/school/admissions", module: "school_erp", iconName: "UserPlus", primary: true },
+      { title: "Parents & Guardians", url: "/school/parents", module: "school_erp", iconName: "Users", primary: true },
+    ]},
+    { label: "Academics", items: [
+      { title: "Classes & Subjects", url: "/school/academics", module: "school_erp", iconName: "BookOpen", primary: true },
+      { title: "Timetable", url: "/school/timetable", module: "school_erp", iconName: "CalendarCheck" },
+      { title: "Attendance", url: "/school/attendance", module: "school_erp", iconName: "CalendarCheck", primary: true },
+      { title: "Examinations & Results", url: "/school/exams", module: "school_erp", iconName: "BookOpen" },
+      { title: "Report Cards", url: "/school/report-cards", module: "school_erp", iconName: "ReceiptText" },
+    ]},
+    { label: "Finance & Operations", items: [
+      { title: "Fees & Billing", url: "/school/fees-billing", module: "school_erp", iconName: "ReceiptText", primary: true },
+      { title: "Fee Collections", url: "/school/payments", module: "school_erp", iconName: "Wallet", primary: true },
+      { title: "Hostel & Boarding", url: "/school/boarding", module: "school_erp", iconName: "BedDouble" },
+      { title: "Transport", url: "/school/transport", module: "school_erp", iconName: "Bus" },
+      { title: "Library", url: "/school/library", module: "school_erp", iconName: "Library" },
+      { title: "Meals & Nutrition", url: "/school/meals", module: "school_erp", iconName: "Utensils" },
+      { title: "Staff & HR", url: "/school/staff", module: "school_erp", iconName: "Users" },
+    ]},
+    { label: "Reports & Controls", items: [
+      { title: "School Reports", url: "/school/reports", module: "school_erp", iconName: "BarChart3", primary: true },
+      { title: "Compliance", url: "/school/compliance", module: "school_erp", iconName: "ShieldCheck" },
+      { title: "Settings", url: "/school/settings", module: "school_erp", iconName: "Settings2" },
+    ]},
+  ],
+}];
+
+export const PROPERTY_HUBS: HubDef[] = [{
+  key: "property-main", label: "Property", iconName: "Building2",
+  purpose: "Manage properties, units, tenants, leases, rent and maintenance.",
+  groups: [
+    { label: "Portfolio", items: [
+      { title: "Dashboard", url: "/property", module: "property_management", iconName: "LayoutDashboard", primary: true },
+      { title: "Properties & Units", url: "/property", module: "property_management", iconName: "Building2", primary: true },
+      { title: "Tenants", url: "/property", module: "property_management", iconName: "Users", primary: true },
+      { title: "Leases", url: "/property", module: "property_management", iconName: "FileText", primary: true },
+    ]},
+    { label: "Rent & Collections", items: [
+      { title: "Rent & Charges", url: "/property", module: "property_management", iconName: "ReceiptText", primary: true },
+      { title: "Payments", url: "/property", module: "property_management", iconName: "Wallet", primary: true },
+      { title: "Arrears", url: "/property", module: "property_management", iconName: "AlertTriangle" },
+    ]},
+    { label: "Operations", items: [
+      { title: "Maintenance", url: "/property", module: "property_management", iconName: "Wrench", primary: true },
+      { title: "Meter Readings", url: "/property", module: "property_management", iconName: "Gauge" },
+      { title: "Reports", url: "/property", module: "property_management", iconName: "BarChart3", primary: true },
+      { title: "Settings", url: "/property", module: "property_management", iconName: "Settings2" },
+    ]},
+  ],
+}];
+
+export const LENDING_HUBS: HubDef[] = [{
+  key: "lending-main", label: "Microfinance", iconName: "Banknote",
+  purpose: "Run borrowers, loans, repayments, collections and portfolio control.",
+  groups: [
+    { label: "Daily Operations", items: [
+      { title: "Dashboard", url: "/lending", module: "loans", iconName: "LayoutDashboard", primary: true },
+      { title: "Borrowers", url: "/lending/borrowers", module: "borrowers", iconName: "Users", primary: true },
+      { title: "Applications", url: "/lending/applications", module: "loans", iconName: "FilePlus2", primary: true },
+      { title: "Credit Assessment", url: "/lending/credit-assessment", module: "loans", iconName: "Scale" },
+      { title: "Loan Products", url: "/lending/products", module: "loans", iconName: "ListChecks" },
+      { title: "Disbursements", url: "/lending/disbursements", module: "loans", iconName: "Banknote" },
+    ]},
+    { label: "Repayments & Collections", items: [
+      { title: "Repayments", url: "/lending/repayments", module: "repayments", iconName: "HandCoins", primary: true },
+      { title: "Collections", url: "/lending/collections", module: "repayments", iconName: "Activity", primary: true },
+      { title: "Field Collections", url: "/lending/field-collections", module: "repayments", iconName: "Smartphone" },
+      { title: "Arrears", url: "/lending/arrears", module: "repayments", iconName: "AlertTriangle", primary: true },
+      { title: "Promises to Pay", url: "/lending/promises", module: "repayments", iconName: "MessageSquare" },
+    ]},
+    { label: "Portfolio & Controls", items: [
+      { title: "Portfolio", url: "/lending/portfolio", module: "portfolio", iconName: "PieChart", primary: true },
+      { title: "Guarantors", url: "/lending/guarantors", module: "loans", iconName: "Users" },
+      { title: "Collateral", url: "/lending/collateral", module: "loans", iconName: "LockKeyhole" },
+      { title: "Mobile Money", url: "/lending/mobile-money", module: "banking", iconName: "Smartphone" },
+      { title: "Risk & Fraud", url: "/lending/risk-fraud", module: "portfolio", iconName: "ShieldCheck" },
+      { title: "Write-offs", url: "/lending/writeoffs", module: "portfolio", iconName: "XCircle" },
+    ]},
+    { label: "Reporting & Administration", items: [
+      { title: "Reports", url: "/lending/reports", module: "reports", iconName: "BarChart3", primary: true },
+      { title: "Accounting", url: "/lending/accounting", module: "accounting", iconName: "Landmark" },
+      { title: "Compliance", url: "/lending/compliance", module: "reports", iconName: "ShieldCheck" },
+      { title: "Branches & Staff", url: "/lending/branches", module: "loans", iconName: "Building2" },
+      { title: "Settings", url: "/lending/settings", module: "loans", iconName: "Settings2" },
+    ]},
+  ],
+}];
+
 export function getHub(key: string): HubDef | undefined {
   // Hub workspace routes are shared by the generic sidebar and focused
   // industry editions. Include every registered hub so /hub/restaurant-*
   // and /hub/retail-* deep links resolve instead of falling through to 404.
-  return [...HUBS, ...RESTAURANT_HUBS, ...RETAIL_HUBS, ...HOTEL_HUBS, ...PAYROLL_HUBS]
+  return [...HUBS, ...RESTAURANT_HUBS, ...RETAIL_HUBS, ...HOTEL_HUBS, ...SCHOOL_HUBS, ...PROPERTY_HUBS, ...LENDING_HUBS, ...PAYROLL_HUBS]
     .find((h) => h.key === key);
 }
 
@@ -353,7 +449,7 @@ export function hubItems(hub: HubDef): HubItem[] {
 /** Which hub a route belongs to (first match wins). Used for breadcrumbs. */
 export function hubForRoute(pathname: string): HubDef | undefined {
   let best: { hub: HubDef; len: number } | undefined;
-  const allHubSets = [HUBS, RESTAURANT_HUBS, RETAIL_HUBS, HOTEL_HUBS, PAYROLL_HUBS].flat();
+  const allHubSets = [HUBS, RESTAURANT_HUBS, RETAIL_HUBS, HOTEL_HUBS, SCHOOL_HUBS, PROPERTY_HUBS, LENDING_HUBS, PAYROLL_HUBS].flat();
   for (const hub of allHubSets) {
     for (const item of hubItems(hub)) {
       if (pathname === item.url || pathname.startsWith(item.url + "/")) {
@@ -692,8 +788,11 @@ export const RESTAURANT_HUBS: HubDef[] = [
 /** Which hub set to present for a company's workspace mode or edition. */
 export function hubsForMode(mode: string | null | undefined, edition?: string | null): HubDef[] {
   if (mode === "payroll_only") return PAYROLL_HUBS;
-  if (mode === "hotel_only") return HOTEL_HUBS;
-  if (edition === "restaurant") return RESTAURANT_HUBS;
-  if (edition === "retail") return RETAIL_HUBS;
+  if (mode === "hotel_only" || edition === "hotel" || mode === "hotel") return HOTEL_HUBS;
+  if (edition === "restaurant" || mode === "restaurant") return RESTAURANT_HUBS;
+  if (edition === "retail" || mode === "retail") return RETAIL_HUBS;
+  if (edition === "school" || mode === "school") return SCHOOL_HUBS;
+  if (edition === "property" || mode === "property") return PROPERTY_HUBS;
+  if (edition === "lending" || mode === "lending") return LENDING_HUBS;
   return HUBS;
 }
