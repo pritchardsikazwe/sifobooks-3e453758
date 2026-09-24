@@ -6,6 +6,24 @@ const db = new Database(":memory:");
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec(readFileSync(join(process.cwd(), "src/lib/db/schema.sql"), "utf8"));
 
+// The property/school vertical tables are delivered through the local migration
+// pipeline rather than the base schema.sql. Apply that migration here so this
+// QA mirrors a fresh offline database startup. Duplicate-column statements are
+// safe to ignore because the base schema/compatibility layer may already have
+// introduced those columns.
+const verticalMigration = readFileSync(
+  join(process.cwd(), "src/lib/db/migrations/20260923120000_vertical_property_school.sql"),
+  "utf8",
+);
+for (const statement of verticalMigration.split(";").map((x) => x.trim()).filter(Boolean)) {
+  try {
+    db.exec(statement);
+  } catch (error) {
+    const message = String(error);
+    if (!/duplicate column name|already exists/i.test(message)) throw error;
+  }
+}
+
 const assert = (ok: unknown, message: string) => {
   if (!ok) throw new Error("FAIL: " + message);
 };
@@ -69,8 +87,9 @@ const editions: Record<string, Check[]> = {
     { table:"property_maintenance", columns:["id","user_id","unit_id","status"], flow:"maintenance" },
   ],
   lending: [
-    { table:"lending_borrowers", columns:["id","user_id","borrower_no","full_name"], flow:"borrower" },
-    { table:"lending_applications", columns:["id","user_id","application_no","borrower_id","amount_requested"], flow:"loan application" },
+    { table:"loans", columns:["id","user_id","loan_number","loan_type","principal","interest_rate","term_months","start_date","amount_repaid","outstanding_balance","status"], flow:"loan master" },
+    { table:"loan_schedule", columns:["id","user_id","loan_id","period_no","due_date","principal_due","interest_due","total_due","closing_balance"], flow:"amortisation schedule" },
+    { table:"loan_repayments", columns:["id","user_id","loan_id","payment_date","amount","principal_portion","interest_portion"], flow:"loan repayment" },
   ],
   payroll: [
     { table:"employees", columns:["id","user_id","employee_code","basic_salary"], flow:"employee" },
