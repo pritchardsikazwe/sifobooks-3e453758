@@ -107,6 +107,7 @@ function runCompatibilityMigrations(database: Database) {
       "max_stock REAL NOT NULL DEFAULT 0",
       "is_active INTEGER NOT NULL DEFAULT 1",
       "needs_cost_review INTEGER NOT NULL DEFAULT 0",
+      "needs_unit_verification INTEGER NOT NULL DEFAULT 0",
       "zra_item_code TEXT",
       "zra_item_class_code TEXT",
       "zra_item_type_code TEXT",
