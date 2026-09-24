@@ -41,6 +41,10 @@ const CATS: { key: string; label: string; accent: string }[] = [
   { key: "customers", label: "Customers", accent: "text-amber-700 bg-amber-50 border-amber-200" },
   { key: "suppliers", label: "Suppliers", accent: "text-teal-700 bg-teal-50 border-teal-200" },
   { key: "management", label: "Management", accent: "text-slate-700 bg-slate-50 border-slate-200" },
+  { key: "restaurant", label: "Restaurant & POS", accent: "text-emerald-800 bg-emerald-50 border-emerald-300" },
+  { key: "audit", label: "Audit & Security", accent: "text-slate-800 bg-slate-100 border-slate-300" },
+  { key: "assets", label: "Fixed Assets", accent: "text-lime-800 bg-lime-50 border-lime-300" },
+  { key: "operations", label: "Operations & Branches", accent: "text-violet-800 bg-violet-50 border-violet-300" },
 ];
 
 /** Task-oriented entry points: a plain question, mapped to the existing report route. */
@@ -111,6 +115,23 @@ const REPORTS: Report[] = [
   { id: "income-tax", name: "Income Tax", description: "Chargeable income and estimated tax.", to: "/reports/income-tax", icon: Calculator, category: "tax" },
   { id: "turnover-tax", name: "Turnover Tax", description: "Turnover-tax computation for small businesses.", to: "/reports/turnover-tax", icon: Calculator, category: "tax" },
   { id: "tax-summary", name: "Tax Summary", description: "Consolidated tax position.", to: "/reports/tax-summary", icon: Calculator, category: "tax" },
+
+
+  // Restaurant & POS
+  { id: "restaurant-reports", name: "Restaurant Intelligence", description: "Restaurant sales, menu performance, payment mix, cashier performance and end-of-day analysis.", to: "/restaurant/reports", icon: BarChart3, category: "restaurant" },
+  { id: "restaurant-stock-reports", name: "Restaurant Stock Reports", description: "Stock list, movement, usage, valuation, low stock, wastage, recipe costing and stock take.", to: "/restaurant/stock-reports", icon: Package, category: "restaurant" },
+  { id: "pos-integrity", name: "POS Integrity", description: "POS control checks, missing references and transaction integrity exceptions.", to: "/reports/pos-integrity", icon: Receipt, category: "restaurant" },
+  { id: "end-of-day", name: "Restaurant End of Day", description: "Daily takings, tender reconciliation and closing controls.", to: "/restaurant/end-of-day", icon: ClipboardList, category: "restaurant" },
+
+  // Audit & security
+  { id: "audit-log", name: "Audit & Security Log", description: "User actions, changes, approvals and security events.", to: "/audit-logs", icon: ClipboardList, category: "audit" },
+
+  // Fixed assets
+  { id: "fixed-assets", name: "Fixed Asset Register", description: "Asset register, acquisition, depreciation, movement and disposal.", to: "/fixed-assets", icon: Building2, category: "assets" },
+
+  // Operations & branches
+  { id: "inventory-flow-audit", name: "Inventory Flow Audit", description: "Trace stock movement from source transaction through warehouse and branch balances.", to: "/reports/inventory-flow-audit", icon: Package, category: "operations" },
+  { id: "branch-sales", name: "Branch Performance", description: "Compare posted sales by branch and selling location.", to: "/reports/sales-by-branch", icon: Building2, category: "operations" },
 
   // Management
   { id: "monthly-management", name: "Accountant Monthly Management Report", description: "Full monthly handover to management: income, expenses, invoices, payments, returns, ZRA compliance, outstanding items and accountant activity.", to: "/reports/monthly-management", icon: ClipboardList, category: "management" },
@@ -183,6 +204,9 @@ function ReportsCentre() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Reports Centre</h1>
               <p className="text-sm text-muted-foreground">Every report — one click away. Live figures from posted transactions.</p>
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                <Badge variant="outline">Accounting</Badge><Badge variant="outline">Sales</Badge><Badge variant="outline">Inventory</Badge><Badge variant="outline">POS</Badge><Badge variant="outline">Restaurant</Badge><Badge variant="outline">Tax</Badge><Badge variant="outline">Payroll</Badge><Badge variant="outline">Management</Badge>
+              </div>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
