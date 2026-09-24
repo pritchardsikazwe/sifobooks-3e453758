@@ -116,7 +116,7 @@ export const createCashier = createServerFn({ method: "POST" })
     if (authError || !authUser?.user) return { ok: false as const, error: authError?.message ?? "Could not create cashier login" };
     const { data: perm, error: permError } = await supabaseAdmin.from("employee_pos_permissions").insert({
       user_id: context.userId, worker_user_id: authUser.user.id, company_id: companyId,
-      full_name: data.name, display_name: data.name, pos_role: data.role, allow: true, is_active: true,
+      full_name: data.name, display_name: data.name, pos_role: data.role, allow: true, deny: false, is_active: true,
       email, cashier_code: code
     }).select("id,full_name,cashier_code,pos_role").single();
     if (permError) {
