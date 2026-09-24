@@ -102,6 +102,7 @@ function runCompatibilityMigrations(database: Database) {
       "item_type TEXT",
       "bin TEXT",
       "reserved_qty REAL NOT NULL DEFAULT 0",
+      "reserved_stock REAL NOT NULL DEFAULT 0",
       "on_order_qty REAL NOT NULL DEFAULT 0",
       "safety_stock REAL NOT NULL DEFAULT 0",
       "max_stock REAL NOT NULL DEFAULT 0",
