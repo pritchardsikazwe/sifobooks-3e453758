@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { fmtMoney } from "@/lib/format";
 import { SifoStandaloneFrame } from "@/components/sifo/SifoStandaloneFrame";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import {
   calcPaye, calcNapsa, calcNhima, calcWcf, calcSdl,
 } from "@/lib/payroll";
