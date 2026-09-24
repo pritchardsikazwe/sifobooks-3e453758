@@ -357,6 +357,10 @@ function Page() {
     setBusy(true);
     const uid = u.user.id;
     if (pay) {
+      if (!(await requireActiveCashierSession())) {
+        setBusy(false);
+        return;
+      }
       try {
         const { data: result, error } = await supabase.rpc("restaurant_checkout", {
           _sale: {
@@ -527,13 +531,62 @@ function Page() {
       supabase.from("restaurant_shifts").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).is("clock_out", null).limit(1).maybeSingle(),
       supabase.from("restaurant_cash_drawers").select("id").eq("user_id", u.user.id).eq("business_date", restaurantBusinessDate()).eq("status", "open").limit(1).maybeSingle(),
     ]);
-    if (shift.error || !shift.data) {
-      toast.error("Start your cashier shift before taking sales.", { description: "Restaurant → Shifts" });
+    if (shift.error) {
+      toast.error("Could not verify the restaurant cashier shift.", { description: String(shift.error.message ?? shift.error) });
       return false;
     }
-    if (drawer.error || !drawer.data) {
-      toast.error("No cash drawer is open for this restaurant.", { description: "Restaurant → Cash drawers" });
+    if (!shift.data) {
+      // First-run convenience: a brand-new restaurant account has no shift
+      // history yet, so create the initial owner shift. Existing restaurants
+      // must continue to use the normal Shifts workflow.
+      const { data: priorShift } = await supabase.from("restaurant_shifts")
+        .select("id").eq("user_id", u.user.id).limit(1).maybeSingle();
+      if (!priorShift?.id) {
+        const { error: createShiftError } = await supabase.from("restaurant_shifts").insert({
+          id: crypto.randomUUID(),
+          user_id: u.user.id,
+          staff_name: cashier || "Owner / Administrator",
+          role: "owner",
+          business_date: restaurantBusinessDate(),
+          created_by: u.user.id,
+        });
+        if (createShiftError) {
+          toast.error("Could not start the first cashier shift.", { description: createShiftError.message });
+          return false;
+        }
+      } else {
+        toast.error("Start your cashier shift before taking sales.", { description: "Restaurant → Shifts" });
+        return false;
+      }
+    }
+    if (drawer.error) {
+      toast.error("Could not verify the restaurant cash drawer.", { description: String(drawer.error.message ?? drawer.error) });
       return false;
+    }
+    if (!drawer.data) {
+      const { data: priorDrawer } = await supabase.from("restaurant_cash_drawers")
+        .select("id").eq("user_id", u.user.id).limit(1).maybeSingle();
+      if (!priorDrawer?.id) {
+        const { error: createDrawerError } = await supabase.from("restaurant_cash_drawers").insert({
+          id: crypto.randomUUID(),
+          user_id: u.user.id,
+          name: "Main Cash Drawer",
+          station: "Restaurant POS",
+          business_date: restaurantBusinessDate(),
+          opening_float: 0,
+          expected_cash: 0,
+          status: "open",
+          opened_by: u.user.id,
+          created_by: u.user.id,
+        });
+        if (createDrawerError) {
+          toast.error("Could not open the first restaurant cash drawer.", { description: createDrawerError.message });
+          return false;
+        }
+      } else {
+        toast.error("No cash drawer is open for this restaurant.", { description: "Restaurant → Cash drawers" });
+        return false;
+      }
     }
     return true;
   };
