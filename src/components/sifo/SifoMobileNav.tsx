@@ -28,7 +28,7 @@ export function SifoMobileNav() {
     items = [{ to: "/dashboard", label: "Home", icon: Home }];
     if (hasPerm(a, "pos.retail.access")) {
       items.push({ to: "/pos", label: "POS", icon: ShoppingCart }, { to: "/pos-sales", label: "My Sales", icon: ReceiptText });
-      items.push({ to: "/retail/butchery", label: "Butchery", icon: Beef });
+      items.push({ to: "/retail/butchery-pos", label: "Butchery POS", icon: Beef });
       fab = { to: "/pos", label: "New sale" };
     } else if (hasPerm(a, "pos.restaurant.access")) {
       items.push({ to: "/restaurant/pos", label: "POS", icon: UtensilsCrossed }, { to: "/restaurant/tables", label: "Tables", icon: LayoutGrid });
