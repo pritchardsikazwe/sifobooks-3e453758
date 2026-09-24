@@ -52,8 +52,8 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
         setBusy(false);
         return setError(res.error);
       }
-      const { error: otpErr } = await supabase.auth.verifyOtp({ type: "email", token_hash: res.token_hash });
-      if (otpErr) {
+      const { error: sessionErr } = await supabase.auth.setSession({ access_token: res.access_token });
+      if (sessionErr) {
         setBusy(false);
         setPin("");
         return setError("Could not start your session. Ask your manager.");
