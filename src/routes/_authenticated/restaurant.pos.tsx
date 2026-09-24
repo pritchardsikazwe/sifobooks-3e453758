@@ -988,15 +988,16 @@ function ModifierDialog({ item, groups, mods, onCancel, onConfirm }: {
   );
 }
 
-function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
-  const isCash = method.toLowerCase() === "cash";
+function TenderDialog({ method = "Cash", due, onCancel, onConfirm }: { method?: string; due: number; onCancel: () => void; onConfirm: (tendered: number, change: number) => void }) {
+  const safeMethod = method || "Cash";
+  const isCash = safeMethod.toLowerCase() === "cash";
   const [cash, setCash] = useState(isCash ? "" : due.toFixed(2));
   const received = Number(cash || 0);
   const change = received - due;
   const nextAmount = Math.ceil(due / 50) * 50;
   const push = (k: string) => setCash(c => (k === "C" ? "" : c + k));
   return (
-    <Overlay title={`${method} payment`} onCancel={onCancel} wide>
+    <Overlay title={`${safeMethod} payment`} onCancel={onCancel} wide>
       <div className="mb-2 flex justify-between text-sm font-extrabold"><span>Amount due</span><span>{fmtMoney(due)}</span></div>
       <div className="mb-2 rounded-xl border-2 border-white/25 bg-white px-3 py-3 text-right text-[27px] font-black text-[#20504d]">{cash || "0.00"}</div>
       {isCash && <div className="mb-2 grid grid-cols-4 gap-1.5">
@@ -1006,7 +1007,7 @@ function TenderDialog({ method, due, onCancel, onConfirm }: { method: string; du
         <button onClick={() => setCash(String(due))} className="min-h-10 rounded-lg bg-[#4e89bc] text-[11px] font-bold">EXACT</button>
         <button onClick={() => setCash(String(nextAmount))} className="min-h-10 rounded-lg bg-[#4e89bc] text-[11px] font-bold">NEXT</button>
       </div>}
-      {!isCash && <div className="mb-2 rounded-lg bg-white/10 p-3 text-center text-xs font-bold">Confirm the {method} amount received from the customer.</div>}
+      {!isCash && <div className="mb-2 rounded-lg bg-white/10 p-3 text-center text-xs font-bold">Confirm the {safeMethod} amount received from the customer.</div>}
       {isCash && <div className="grid grid-cols-3 gap-2">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "C"].map(k => (
           <button key={k} onClick={() => push(k)} className="h-[52px] rounded-lg border-2 border-white/20 bg-[#315d5a] text-xl font-bold">{k}</button>
