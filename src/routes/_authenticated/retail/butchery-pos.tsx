@@ -192,7 +192,7 @@ function ButcheryPos() {
         taxRate:settings?.tax_rate??16,taxInclusive:settings?.tax_inclusive??true,
         allowNegativeStock:settings?.allow_negative_stock??false,
       },payments,Math.max(0,amount-totals.total));
-      setPayDialog(false);setDone({...res,total:completedTotal});setCart([]);await load();
+      setPayDialog(false);setDone({...res,total:completedTotal});setCart([]);setChosen(null);setManualWeight("");setScale(s=>({...s,weight:0,stable:false}));await load();
       toast.success(res.offline?"Sale saved offline":"Sale completed");
     }catch(e:any){toast.error(posErrorMessage(e?.message||String(e)))}finally{setBusy(false)}
   };
