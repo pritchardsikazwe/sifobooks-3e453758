@@ -132,6 +132,42 @@ export async function signUp(email: string, password: string, metadata?: Record<
   };
 }
 
+export async function adminCreateLocalUser(email: string, metadata?: Record<string, any>) {
+  const normalized = String(email).trim().toLowerCase();
+  const password = crypto.randomUUID() + crypto.randomUUID();
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    await ensureCloudSecurityColumns();
+    const existing = await db`SELECT id FROM auth_users WHERE email=${normalized} LIMIT 1`;
+    if (existing[0]) return { data: null, error: { message: "User already registered" } };
+    const id = generateUUID();
+    const hash = await Bun.password.hash(password);
+    await db`INSERT INTO auth_users (id,email,password_hash) VALUES (${id},${normalized},${hash})`;
+    await db`INSERT INTO profiles (id,email,full_name,onboarded,created_at,updated_at) VALUES (${id},${normalized},${metadata?.full_name || normalized},false,now(),now())`;
+    return { data: { user: { id, email: normalized, user_metadata: metadata || {} } }, error: null };
+  }
+  const db = getDb();
+  const existing = db.prepare("SELECT id FROM auth_users WHERE email=? LIMIT 1").get(normalized) as any;
+  if (existing) return { data: null, error: { message: "User already registered" } };
+  const id = generateUUID();
+  const hash = await Bun.password.hash(password);
+  db.prepare("INSERT INTO auth_users (id,email,password_hash) VALUES (?,?,?)").run(id, normalized, hash);
+  db.prepare("INSERT INTO profiles (id,email,full_name,onboarded,created_at,updated_at) VALUES (?,?,?,0,datetime('now'),datetime('now'))")
+    .run(id, normalized, metadata?.full_name || normalized);
+  return { data: { user: { id, email: normalized, user_metadata: metadata || {} } }, error: null };
+}
+
+export async function adminDeleteUser(userId: string) {
+  if (isCloudDatabaseConfigured()) {
+    const db = getCloudDb();
+    await ensureCloudSecurityColumns();
+    await db`DELETE FROM auth_users WHERE id=${userId}`;
+    return { error: null };
+  }
+  getDb().prepare("DELETE FROM auth_users WHERE id=?").run(userId);
+  return { error: null };
+}
+
 export async function createSessionTokenForUser(userId: string): Promise<string | null> {
   if (isCloudDatabaseConfigured()) {
     const db = getCloudDb();
