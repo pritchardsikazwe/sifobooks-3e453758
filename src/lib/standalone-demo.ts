@@ -44,12 +44,22 @@ export async function ensureStandaloneDemo(edition: Edition) {
     id: supplierId, user_id: uid, supplier_code: `${prefix}-SUP`, name: `${prefix} Supplier`,
     contact_person: "Demo Supplier", phone: "+260 970 000102", currency: "ZMW", status: "active",
   }]);
-  await insert("stock_items", [{
-    id: stockId, user_id: uid, name: `${prefix} Test Item`, sku: `${prefix}-001`,
-    category: edition === "restaurant" || edition === "hotel" ? "Food & Beverage" : "General",
-    unit: "each", cost_price: 50, sell_price: 80, quantity_on_hand: 100,
-    reorder_level: 20, company_id: companyId, is_active: 1,
-  }]);
+  const catalog = edition === "retail" || edition === "enterprise" || edition === "accounting"
+    ? [["Coca-Cola 500ml","BEV-001","Beverages","bottle",9,15,80],["Mineral Water 500ml","BEV-002","Beverages","bottle",5,8,100],["Bread 500g","GRO-001","Groceries","each",12,18,60],["Sugar 2kg","GRO-002","Groceries","pack",24,32,50],["Cooking Oil 2L","GRO-003","Groceries","bottle",42,55,40],["Rice 5kg","GRO-004","Groceries","bag",65,82,35],["Bath Soap","HOU-001","Household","bar",7,12,100],["Milk 1L","DAI-001","Dairy","carton",15,22,60],["Eggs 30 Pack","DAI-002","Dairy","tray",70,90,30]]
+    : edition === "restaurant"
+      ? [["Chicken & Nshima","FOOD-001","Mains","plate",65,120,40],["Beef & Nshima","FOOD-002","Mains","plate",75,135,35],["Fish & Chips","FOOD-003","Mains","plate",80,145,30],["Burger & Chips","FOOD-004","Fast Food","plate",55,100,35],["Chips","FOOD-005","Sides","portion",20,40,60],["Soft Drink 500ml","BEV-003","Beverages","bottle",8,15,80],["Mineral Water","BEV-004","Beverages","bottle",5,10,80],["Tea","BEV-005","Hot Drinks","cup",6,15,50],["Coffee","BEV-006","Hot Drinks","cup",10,25,50]]
+      : edition === "hotel"
+        ? [["Room Service Breakfast","HOT-001","Food & Beverage","meal",55,100,40],["Soft Drink 500ml","HOT-002","Food & Beverage","bottle",8,15,60],["Mineral Water","HOT-003","Food & Beverage","bottle",5,10,80],["Laundry Service","HOT-004","Guest Services","service",25,50,30],["Airport Transfer","HOT-005","Guest Services","trip",120,200,20]]
+        : edition === "school"
+          ? [["School Uniform","SCH-001","Uniform","each",180,250,30],["Exercise Book","SCH-002","Stationery","each",8,12,200],["School T-Shirt","SCH-003","Uniform","each",90,130,50],["Pen","SCH-004","Stationery","each",3,5,300],["Textbook","SCH-005","Books","each",80,120,50]]
+          : [[prefix + " Test Item",prefix + "-001","General","each",50,80,100]];
+
+  await insert("stock_items", catalog.map(([name, sku, category, unit, cost_price, sell_price, quantity_on_hand], index) => ({
+    id: index === 0 ? stockId : id(), user_id: uid, name: String(name), sku: String(sku),
+    category: String(category), unit: String(unit), cost_price: Number(cost_price), sell_price: Number(sell_price),
+    quantity_on_hand: Number(quantity_on_hand), reorder_level: Math.max(5, Math.floor(Number(quantity_on_hand) * .2)),
+    company_id: companyId, is_active: 1,
+  })));
   await insert("bank_accounts", [{
     id: bankId, user_id: uid, company_id: companyId, name: `${prefix} Bank Account`,
     bank_name: "Demo Bank", account_number: "****0101", currency: "ZMW",
