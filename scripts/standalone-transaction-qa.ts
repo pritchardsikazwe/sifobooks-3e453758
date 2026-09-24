@@ -68,7 +68,7 @@ run("restaurant", () => {
   const uid="qa-user", order="qa-rest-order";
   db.query("INSERT INTO restaurant_menu_items (id,user_id,name,price) VALUES (?,?,?,?)").run("qa-menu",uid,"QA Meal",50);
   db.query("INSERT INTO restaurant_orders (id,user_id,order_no,status,total,business_date) VALUES (?,?,?,?,?,?)").run(order,uid,"QA-R-001","COMPLETED",100,"2026-09-24");
-  db.query("INSERT INTO restaurant_order_items (id,user_id,order_id,menu_item_id,qty,price) VALUES (?,?,?,?,?,?)")
+  db.query("INSERT INTO restaurant_order_items (id,user_id,order_id,item_name,menu_item_id,qty,price) VALUES (?,?,?,?,?,?,?)")
     .run("qa-rest-line",uid,order,"qa-menu",2,50);
   db.query("INSERT INTO restaurant_payments (id,user_id,order_id,amount,method) VALUES (?,?,?,?,?)")
     .run("qa-rest-pay",uid,order,100,"CASH");
@@ -82,7 +82,7 @@ run("hotel", () => {
   db.query("INSERT INTO hotel_room_types (id,user_id,code,name) VALUES (?,?,?,?)").run("qa-rt",uid,"STD","QA Room");
   db.query("INSERT INTO hotel_rooms (id,user_id,number,room_type_id) VALUES (?,?,?,?)").run("qa-room",uid,"101","qa-rt");
   db.query("INSERT INTO hotel_reservations (id,user_id,reference,room_id,status,guest_name) VALUES (?,?,?,?,?,?)").run("qa-res",uid,"QA-H-001","qa-room","CHECKED_IN","QA Guest");
-  db.query("INSERT INTO hotel_folios (id,user_id,reservation_id) VALUES (?,?,?)").run("qa-folio",uid,"qa-res");
+  db.query("INSERT INTO hotel_folios (id,user_id,reservation_id,folio_number) VALUES (?,?,?,?)").run("qa-folio",uid,"qa-res","QA-F-001");
   db.query("INSERT INTO hotel_folio_charges (id,user_id,folio_id,amount) VALUES (?,?,?,?)").run("qa-charge",uid,"qa-folio",300);
   const x:any=db.query("SELECT SUM(amount) amount FROM hotel_folio_charges WHERE folio_id=?").get("qa-folio");
   ok(x.amount===300,"hotel folio revenue totals 300");
@@ -93,7 +93,7 @@ run("school", () => {
   const uid="qa-user";
   db.query("INSERT INTO school_classes (id,user_id,name,academic_year) VALUES (?,?,?,?)").run("qa-class",uid,"Grade 7",2026);
   db.query("INSERT INTO students (id,user_id,student_no,first_name,last_name,class_id) VALUES (?,?,?,?,?,?)").run("qa-student",uid,"QA-001","QA","Student","qa-class");
-  db.query("INSERT INTO fee_structures (id,user_id,amount) VALUES (?,?,?)").run("qa-fee-structure",uid,1000);
+  db.query("INSERT INTO fee_structures (id,user_id,fee_name,academic_year,amount) VALUES (?,?,?,?,?)").run("qa-fee-structure",uid,"Tuition",2026,1000);
   db.query("INSERT INTO student_fees (id,user_id,student_id,amount_due,balance) VALUES (?,?,?,?,?)").run("qa-student-fee",uid,"qa-student",1000,1000);
   db.query("INSERT INTO fee_payments (id,user_id,student_id,amount) VALUES (?,?,?,?)").run("qa-fee-payment",uid,"qa-student",600);
   db.query("UPDATE student_fees SET balance=balance-600 WHERE id=?").run("qa-student-fee");
@@ -104,12 +104,12 @@ run("school", () => {
 // Property: charge -> payment -> balance
 run("property", () => {
   const uid="qa-user";
-  db.query("INSERT INTO property_assets (id,company_id,user_id,name) VALUES (?,?,?,?)").run("qa-property","qa-company",uid,"QA Property");
+  db.query("INSERT INTO property_assets (id,company_id,user_id,code,name) VALUES (?,?,?,?,?)").run("qa-property","qa-company",uid,"QA-PROP-001","QA Property");
   db.query("INSERT INTO property_units (id,company_id,user_id,property_id,unit_code,monthly_rent) VALUES (?,?,?,?,?,?)").run("qa-unit","qa-company",uid,"qa-property","A1",2500);
   db.query("INSERT INTO property_tenants (id,company_id,user_id,tenant_no,full_name) VALUES (?,?,?,?,?)").run("qa-tenant","qa-company",uid,"QA-T-001","QA Tenant");
-  db.query("INSERT INTO property_leases (id,company_id,user_id,lease_no,unit_id,tenant_id,rent_amount) VALUES (?,?,?,?,?,?,?)").run("qa-lease","qa-company",uid,"QA-L-001","qa-unit","qa-tenant",2500);
-  db.query("INSERT INTO property_charges (id,company_id,user_id,lease_id,amount) VALUES (?,?,?,?,?)").run("qa-charge","qa-company",uid,"qa-lease",2500);
-  db.query("INSERT INTO property_payments (id,company_id,user_id,tenant_id,amount) VALUES (?,?,?,?,?)").run("qa-payment","qa-company",uid,"qa-tenant",1500);
+  db.query("INSERT INTO property_leases (id,company_id,user_id,lease_no,unit_id,tenant_id,start_date,rent_amount) VALUES (?,?,?,?,?,?,?,?)").run("qa-lease","qa-company",uid,"QA-L-001","qa-unit","qa-tenant","2026-09-01",2500);
+  db.query("INSERT INTO property_charges (id,company_id,user_id,lease_id,description,amount) VALUES (?,?,?,?,?,?)").run("qa-charge","qa-company",uid,"qa-lease","September rent",2500);
+  db.query("INSERT INTO property_payments (id,company_id,user_id,lease_id,tenant_id,payment_no,amount) VALUES (?,?,?,?,?,?,?)").run("qa-payment","qa-company",uid,"qa-lease","qa-tenant","QA-PAY-001",1500);
   const x:any=db.query("SELECT (SELECT SUM(amount) FROM property_charges WHERE lease_id=?) - (SELECT SUM(amount) FROM property_payments WHERE tenant_id=?) balance").get("qa-lease","qa-tenant");
   ok(x.balance===1000,"property rent balance is 1000");
 });
@@ -131,7 +131,7 @@ run("payroll", () => {
   db.query("INSERT INTO employees (id,user_id,employee_code,first_name,basic_salary) VALUES (?,?,?,?,?)").run("qa-emp","qa-user","QA-E-001","QA Employee",8000);
   db.query("INSERT INTO attendance (id,user_id,employee_id,attendance_date) VALUES (?,?,?,?)").run("qa-att","qa-user","qa-emp","2026-09-24");
   db.query("INSERT INTO payroll_runs (id,user_id,run_number,period_month,period_year,total_gross,total_net) VALUES (?,?,?,?,?,?,?)").run("qa-payroll","qa-user","QA-P-001",9,2026,8000,7000);
-  db.query("INSERT INTO payslips (id,user_id,payroll_run_id,employee_id,net_pay) VALUES (?,?,?,?,?)").run("qa-slip","qa-user","qa-payroll","qa-emp",7000);
+  db.query("INSERT INTO payslips (id,user_id,payroll_run_id,employee_id,net_pay,earnings) VALUES (?,?,?,?,?,?)").run("qa-slip","qa-user","qa-payroll","qa-emp",7000,"{}");
   const x:any=db.query("SELECT total_gross,total_net FROM payroll_runs WHERE id=?").get("qa-payroll");
   ok(x.total_gross===8000 && x.total_net===7000,"payroll gross/net reconcile");
 });
