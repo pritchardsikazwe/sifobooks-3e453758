@@ -148,7 +148,8 @@ export function HotelWorkspace({ screen }: { screen: string }) {
 
   const [title, subtitle] = TITLES[screen] ?? ["Hotel", "Hotel operations workspace."];
 
-  const body = () => {\n    if (screen === "/hotel/reports") return <StandaloneReports edition="hotel" />;
+  const body = () => {
+    if (screen === "/hotel/reports") return <StandaloneReports edition="hotel" />;
     if (OPS.has(screen)) {
       switch (screen) {
         case "/hotel/rooms":
