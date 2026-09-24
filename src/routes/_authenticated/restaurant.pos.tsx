@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/restaurant/pos")({
 });
 
 /* ---------------- types ---------------- */
-type MenuItem = { id: string; name: string; category: string; price: number; cost: number; station: string; active: boolean };
+type MenuItem = { id: string; name: string; category: string; price: number; cost: number; station: string; active: boolean; barcode?: string | null; sku?: string | null };
 type RTable = { id: string; name: string; seats: number; area: string; status: string };
 type Order = { id: string; order_no: string | null; table_id: string | null; order_type: string; status: string; guests: number; subtotal: number; tax: number; total: number; payment_method: string | null; opened_at: string; server_name?: string | null };
 type OrderItem = { id: string; order_id: string; item_name: string; station: string; qty: number; price: number; kds_status: string; notes?: string | null };
@@ -68,6 +68,13 @@ function restaurantCheckoutErrorMessage(error: any) {
 }
 
 /* ---------------- page ---------------- */
+const POS_SCROLL_STYLE = `
+  .pos-scrollbar { scrollbar-width: thin; scrollbar-color: #6f9694 transparent; }
+  .pos-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .pos-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .pos-scrollbar::-webkit-scrollbar-thumb { background: #6f9694; border-radius: 999px; }
+`;
+
 function Page() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -88,6 +95,7 @@ function Page() {
   const [mode, setMode] = useState("DINE-IN");
   const [cat, setCat] = useState("ALL");
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [tableId, setTableId] = useState<string | null>(null);
   const [guests, setGuests] = useState(1);
@@ -201,6 +209,7 @@ function Page() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => { const timer = window.setTimeout(() => searchRef.current?.focus(), 250); return () => window.clearTimeout(timer); }, []);
   useEffect(() => {
     const timer = window.setInterval(() => { void load(); }, 15000);
     return () => window.clearInterval(timer);
@@ -590,10 +599,12 @@ function Page() {
 
   const cats = useMemo(() => ["ALL", ...Array.from(new Set(menu.map(m => m.category).filter(Boolean)))], [menu]);
   const itemStock = (mi: MenuItem) => { const rr = recipes.filter(r => r.menu_item_id === mi.id && Number(r.quantity) > 0); if (!rr.length || !posStockLocation) return null; return Math.max(0, Math.min(...rr.map(r => Math.floor(Number(stockBalances.find(x => x.item_id === r.stock_item_id && x.location_id === posStockLocation)?.quantity ?? 0) / Number(r.quantity))))); };
+  const searchTerm = search.trim().toLowerCase();
+  const barcodeMatch = searchTerm ? menu.find(m => String(m.barcode ?? "").toLowerCase() === searchTerm || String(m.sku ?? "").toLowerCase() === searchTerm) : undefined;
   const shown = menu.filter(m =>
     m.active &&
     (cat === "ALL" || m.category === cat) &&
-    (!search.trim() || m.name.toLowerCase().includes(search.trim().toLowerCase())));
+    (!searchTerm || [m.name, m.barcode, m.sku, m.category].some(v => String(v ?? "").toLowerCase().includes(searchTerm))));
   const openOrders = orders.filter(o => o.status === "open" || o.status === "held");
 
   const sideKeys: { label: string; icon: string; run: () => void; tone?: string }[] = [
@@ -629,25 +640,27 @@ function Page() {
   }
 
   return (
+    <>
+    <style>{POS_SCROLL_STYLE}</style>
     <div className={cn("flex flex-col overflow-hidden border border-[#dbe5e2] bg-[#f4f7f6] text-[#173b3a] shadow-[0_12px_30px_#173c4030]", fullScreen ? "fixed inset-0 z-[100] h-screen w-screen rounded-none" : "h-[calc(100dvh-9.5rem)] min-h-[620px] rounded-[10px]")}>
       {/* top bar — order types */}
-      <div className="flex h-[54px] shrink-0 items-center gap-[7px] overflow-x-auto border-b border-[#164744] bg-[#073b38] p-[7px] text-white">
+      <div className="pos-scrollbar flex h-[50px] shrink-0 items-center gap-[5px] overflow-x-auto scroll-smooth border-b border-[#164744] bg-[#073b38] px-[6px] py-[5px] text-white">
         <button
           type="button"
           onClick={() => void toggleFullscreen()}
-          className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/30 bg-[#20504d] px-3 py-2 text-[10px] font-black shadow-sm hover:bg-[#2a625e]"
+          className="inline-flex h-[38px] shrink-0 items-center gap-1 rounded-[19px] border border-white/30 bg-[#20504d] px-3 text-[9px] font-black shadow-sm transition hover:bg-[#2a625e] active:scale-[.97]"
           title="Full screen POS"
         >
           {fullScreen ? <><Minimize2 className="h-4 w-4" /><span> EXIT FULL</span></> : <><Maximize2 className="h-4 w-4" /><span> FULL SCREEN</span></>}
         </button>
         {typeLabels.map(t => (
           <button key={t} onClick={() => { setMode(t); setTableId(null); }}
-            className={cn("h-[39px] shrink-0 rounded-[21px] border-2 px-[17px] text-[11px] font-extrabold tracking-wide transition active:scale-[.97]",
+            className={cn("h-[36px] shrink-0 whitespace-nowrap rounded-[18px] border-2 px-[13px] text-[10px] font-extrabold tracking-[.02em] transition active:scale-[.97]",
               mode === t ? "border-[#9ac7bb] bg-[#0d7b4e]" : "border-[#88aaa9] bg-[#264f54]")}>
             {t}
           </button>
         ))}
-        <div className="ml-auto shrink-0 pr-2 text-[11px] font-extrabold opacity-85">
+        <div className="ml-auto shrink-0 whitespace-nowrap px-2 text-[10px] font-extrabold opacity-85">
           {cashierCode ? "CASHIER " + cashierCode + (cashierName ? " • " + cashierName + " • " : " • ") : "STATION 01 • "}{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
       </div>
@@ -743,16 +756,28 @@ function Page() {
 
         {/* menu + bottom actions */}
         <section className="grid min-h-[360px] min-w-0 grid-rows-[49px_1fr_auto] overflow-hidden rounded-[8px] bg-[#1b5051] md:h-full md:min-h-0">
-          <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[7px]">
+          <div className="flex items-center gap-2 border-b border-[#719493] bg-[#315f63] px-2 py-[6px]">
             <div className="whitespace-nowrap text-[11px] font-black">MENU • {cat.toUpperCase()}</div><button type="button" onClick={() => void load()} disabled={loading} className="ml-auto inline-flex h-[30px] items-center gap-1 rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white disabled:opacity-50"><RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> REFRESH</button><select value={posStockLocation} onChange={e => { setPosStockLocation(e.target.value); window.localStorage.setItem("sifobooks.restaurant.pos.location", e.target.value); }} className="h-[30px] max-w-[180px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold text-white"><option value="">Stock location</option>{stockLocations.map(l => <option key={l.id} value={l.id}>{l.name} · {l.location_type}</option>)}</select>
             <select value={cat} onChange={e => setCat(e.target.value)}
               className="h-[30px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold lg:hidden">
               {cats.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
             </select>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="SEARCH MENU..."
-              className="h-[34px] w-[min(220px,45%)] rounded-[17px] border-2 border-[#789998] bg-[#f5f7f5] px-3 text-[12px] text-[#20504d] outline-none" />
+            <div className="relative ml-auto w-[min(260px,42%)] shrink-0">
+              <input ref={searchRef} value={search} onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && barcodeMatch) {
+                    e.preventDefault();
+                    addToCart(barcodeMatch);
+                    setSearch("");
+                  }
+                }}
+                placeholder="SEARCH ITEM / BARCODE..."
+                aria-label="Search menu item or barcode"
+                className="h-[32px] w-full rounded-[16px] border-2 border-[#789998] bg-[#f5f7f5] px-3 pr-7 text-[11px] font-semibold text-[#20504d] outline-none transition focus:border-[#9de0c7] focus:ring-2 focus:ring-[#07913c55]" />
+              {search && <button type="button" aria-label="Clear search" onClick={() => { setSearch(""); searchRef.current?.focus(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[14px] font-black text-[#58706f]">×</button>}
+            </div>
           </div>
-          <div className="grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto p-2 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="pos-scrollbar grid auto-rows-[minmax(90px,1fr)] grid-cols-2 gap-2 overflow-auto scroll-smooth p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
               <button key={mi.id} onClick={() => addToCart(mi)}
                 disabled={itemStock(mi) === 0}
@@ -848,6 +873,7 @@ function Page() {
         </Overlay>
       )}
     </div>
+    </>
   );
 }
 
