@@ -8,6 +8,7 @@ import {
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
 import { SchoolFeaturePage } from "@/components/industry/SchoolFeaturePage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -154,7 +155,7 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
 
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
-  const body = () => {
+  const body = () => {\n    if (screen === "/school/reports") return <StandaloneReports edition="school" />;
     const featureKinds: Record<string, string> = {
       "/school/preschool": "preschool", "/school/student-profile": "profile", "/school/library": "library",
       "/school/meals": "meals", "/school/discipline": "discipline", "/school/health": "health",
