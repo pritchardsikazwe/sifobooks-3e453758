@@ -24,6 +24,7 @@ import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
