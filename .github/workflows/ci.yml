@@ -39,6 +39,9 @@ jobs:
       - name: Standalone edition workflow QA
         run: bun run test:standalone-workflows
 
+      - name: Standalone transaction and report QA
+        run: bun run test:standalone-transactions
+
       - name: Backup and restore QA
         run: bun run test:backup-restore-qa
 
