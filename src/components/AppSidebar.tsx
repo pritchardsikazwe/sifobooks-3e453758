@@ -162,13 +162,13 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-border bg-card text-card-foreground [&_[data-sidebar=sidebar]]:bg-card"
+      className="border-r border-[#D7E6E1] bg-white text-[#173B3A] [&_[data-sidebar=sidebar]]:bg-white"
     >
-      <SidebarHeader className="border-b border-border px-3 py-3 bg-card">
+      <SidebarHeader className="border-b border-[#D7E6E1] bg-gradient-to-b from-white to-[#F5FAF8] px-3 py-3">
         <SifoBooksLogo showWordmark={!collapsed} className="w-full" markClassName="h-9 w-9" />
         {!collapsed && <div className="mt-1 px-0.5 text-[10px] text-muted-foreground truncate">{subtitle}</div>}
         {!collapsed && (
-          <div className="mt-3 rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-semibold text-foreground truncate">
+          <div className="mt-3 rounded-xl border border-[#D9E6E3] bg-white px-2.5 py-2 text-xs font-semibold text-[#173B3A] shadow-[0_3px_12px_rgba(23,59,58,.04)] truncate">
             {companyName}
             {isStaff && access?.role_name && (
               <div className="text-[10px] font-medium text-muted-foreground truncate">
@@ -179,7 +179,7 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="bg-card px-1 [&_[data-sidebar=content]]:bg-card">
+      <SidebarContent className="bg-white px-1 [&_[data-sidebar=content]]:bg-white">
         {sections.map(section => {
           const open = isOpen(section.label);
           if (collapsed) {
@@ -257,7 +257,7 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border bg-card p-2.5 space-y-2">
+      <SidebarFooter className="border-t border-[#D7E6E1] bg-white p-2.5 space-y-2">
         <Link
           to="/learn"
           className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors ${
