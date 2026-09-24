@@ -177,6 +177,38 @@ async function proxyToNetworkServer(request: Request): Promise<Response> {
   }
 }
 
+
+async function runPowerShell(script: string, timeoutMs = 8000): Promise<{ code: number; stdout: string; stderr: string }> {
+  if (process.platform !== "win32") throw new Error("Windows hardware bridge is only available on Windows Desktop.");
+  const child = Bun.spawn(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script], { stdout: "pipe", stderr: "pipe" });
+  const timeout = setTimeout(() => { try { child.kill(); } catch {} }, timeoutMs);
+  try { const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]); return { code, stdout, stderr }; }
+  finally { clearTimeout(timeout); }
+}
+function psQuote(value: string) { return "'" + String(value ?? "").replace(/'/g, "''") + "'"; }
+function escposText(value: string) { return new TextEncoder().encode(String(value ?? "").replace(/[^\\x20-\\x7E]/g, "?")); }
+function buildEscPosLabel(body: { name: string; weightKg: number; pricePerKg: number; total: number; barcode?: string; footer?: string }) {
+  const chunks: Uint8Array[] = []; const push = (...bytes: number[]) => chunks.push(new Uint8Array(bytes)); const text = (s: string) => chunks.push(escposText(s));
+  push(0x1b,0x40); push(0x1b,0x61,0x01); push(0x1b,0x45,0x01); text(body.name + "\n"); push(0x1b,0x45,0x00);
+  text("SifoBooks Butchery\n"); push(0x1b,0x61,0x00); text("--------------------------------\n");
+  text("Weight:    " + body.weightKg.toFixed(3) + " kg\n"); text("Price/kg:  K" + body.pricePerKg.toFixed(2) + "\n");
+  push(0x1b,0x45,0x01); text("TOTAL:     K" + body.total.toFixed(2) + "\n"); push(0x1b,0x45,0x00);
+  if (body.barcode) { push(0x1d,0x68,0x50); push(0x1d,0x77,0x02); push(0x1d,0x48,0x02); const b = body.barcode.replace(/[^0-9A-Za-z]/g,"").slice(0,24); if (b) { push(0x1d,0x6b,0x04,b.length); chunks.push(new TextEncoder().encode(b)); } text("\n"); }
+  text(body.footer || "Keep refrigerated\n"); push(0x0a,0x0a,0x0a,0x1d,0x56,0x00);
+  const len = chunks.reduce((n, x) => n + x.length, 0); const out = new Uint8Array(len); let offset = 0; for (const chunk of chunks) { out.set(chunk, offset); offset += chunk.length; } return Buffer.from(out).toString("base64");
+}
+async function printRawWindows(printerName: string, base64: string) {
+  const prefix = "\n$ErrorActionPreference='Stop'\nAdd-Type @'\nusing System; using System.Runtime.InteropServices;\npublic class SifoRawPrinter {\n[StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] public class DOCINFO { public string pDocName; public string pOutputFile; public string pDataType; }\n[DllImport(\"winspool.drv\", CharSet=CharSet.Unicode, SetLastError=true)] public static extern bool OpenPrinter(string pPrinterName, out IntPtr hPrinter, IntPtr pDefault);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool ClosePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", CharSet=CharSet.Unicode, SetLastError=true)] public static extern int StartDocPrinter(IntPtr hPrinter, int level, DOCINFO di);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool EndDocPrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern int StartPagePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool EndPagePrinter(IntPtr hPrinter);\n[DllImport(\"winspool.drv\", SetLastError=true)] public static extern bool WritePrinter(IntPtr hPrinter, byte[] data, int count, out int written);\npublic static void Print(string name, byte[] data) { IntPtr h; if(!OpenPrinter(name,out h,IntPtr.Zero)) throw new Exception(\"OpenPrinter failed: \"+Marshal.GetLastWin32Error()); try { var di=new DOCINFO(); di.pDocName=\"SifoBooks Label\"; di.pDataType=\"RAW\"; if(StartDocPrinter(h,1,di)==0) throw new Exception(\"StartDocPrinter failed: \"+Marshal.GetLastWin32Error()); try { if(StartPagePrinter(h)==0) throw new Exception(\"StartPagePrinter failed: \"+Marshal.GetLastWin32Error()); try { int w; if(!WritePrinter(h,data,data.Length,out w) || w!=data.Length) throw new Exception(\"WritePrinter failed: \"+Marshal.GetLastWin32Error()); } finally { EndPagePrinter(h); } } finally { EndDocPrinter(h); } } finally { ClosePrinter(h); } }\n}\n'@\n$data=[Convert]::FromBase64String('__BASE64__')\n[SifoRawPrinter]::Print('__PRINTER__', $data)\nWrite-Output \"OK\"";
+  const script = prefix.replace("__BASE64__", base64).replace("__PRINTER__", printerName.replace(/'/g, "''"));
+  const result = await runPowerShell(script, 12000); if (result.code !== 0 || !result.stdout.includes("OK")) throw new Error(result.stderr || result.stdout || "Raw printer failed");
+}
+async function listWindowsHardware() {
+  if (process.platform !== "win32") return { platform: process.platform, printers: [], serialPorts: [] };
+  const printers = await runPowerShell("Get-Printer | Select-Object Name,PrinterStatus,PortName,DriverName | ConvertTo-Json -Compress");
+  const ports = await runPowerShell("Get-CimInstance Win32_SerialPort | Select-Object DeviceID,Name,Description,ProviderType | ConvertTo-Json -Compress");
+  const parse = (s: string) => { try { const v = JSON.parse(s || "[]"); return Array.isArray(v) ? v : [v]; } catch { return []; } };
+  return { platform: "win32", printers: parse(printers.stdout), serialPorts: parse(ports.stdout) };
+}
 function openBrowser(url: string) {
   try {
     if (process.platform === "win32") Bun.spawn(["cmd", "/c", "start", "", url], { stdio: ["ignore", "ignore", "ignore"] });
@@ -223,6 +255,29 @@ function startServer() {
       return proxyToNetworkServer(request);
     }
 
+
+    if (url.pathname === "/api/hardware/info" && request.method === "GET") {
+      try { return Response.json(await listWindowsHardware()); } catch (error: any) { return Response.json({ error: error?.message || "Hardware discovery failed" }, { status: 500 }); }
+    }
+    if (url.pathname === "/api/hardware/scale/read" && request.method === "POST") {
+      try {
+        const body = await request.json(); const port = String(body?.port || "").trim().toUpperCase(); const baud = Number(body?.baudRate || 9600);
+        if (!/^COM\d+$/.test(port)) return Response.json({ error: "A Windows COM port such as COM3 is required." }, { status: 400 });
+        if (![2400,4800,9600,19200,38400,57600,115200].includes(baud)) return Response.json({ error: "Unsupported baud rate." }, { status: 400 });
+        const prefix = "\n$ErrorActionPreference='Stop'\n$p=New-Object System.IO.Ports.SerialPort('__PORT__',__BAUD__,'None',8,'One')\n$p.ReadTimeout=500\n$p.Open()\ntry { $deadline=(Get-Date).AddMilliseconds(650); $all=''; while((Get-Date) -lt $deadline) { try { $all += $p.ReadExisting() } catch {}; Start-Sleep -Milliseconds 40 }; Write-Output $all } finally { $p.Close() }";
+        const script = prefix.replace("__PORT__", port).replace("__BAUD__", String(baud));
+        const result = await runPowerShell(script, 2500); if (result.code !== 0) throw new Error(result.stderr || "Scale read failed");
+        return Response.json({ ok: true, raw: result.stdout.trim(), port, baudRate: baud });
+      } catch (error: any) { return Response.json({ ok: false, error: error?.message || "Scale read failed" }, { status: 500 }); }
+    }
+    if (url.pathname === "/api/hardware/label/print" && request.method === "POST") {
+      try {
+        const body = await request.json(); const printer = String(body?.printer || "").trim();
+        if (!printer) return Response.json({ error: "Label printer is required." }, { status: 400 });
+        const payload = buildEscPosLabel({ name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated\\n").slice(0, 80) });
+        await printRawWindows(printer, payload); return Response.json({ ok: true, printer, transport: "windows-raw-escpos" });
+      } catch (error: any) { return Response.json({ ok: false, error: error?.message || "Label print failed" }, { status: 500 }); }
+    }
     if (url.pathname === "/api/license/status" && request.method === "GET") {
       return Response.json({ ...licenseStatus(), enforcement: LICENSE_ENFORCEMENT });
     }
