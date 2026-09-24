@@ -30,7 +30,8 @@ $guidMap = @{
   hotel="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE005"
   school="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE006"
   property="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE007"
-  lending="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE008"\n  payroll="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE009"
+  lending="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE008"
+  payroll="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE009"
 }
 $template = Get-Content (Join-Path $PSScriptRoot "SifoBooks.iss.template") -Raw
 $template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__","2026.09.22")
