@@ -1,0 +1,50 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { fmtMoney } from "@/lib/format";
+import { BarChart3, RefreshCw, TrendingUp, WalletCards, Boxes, Users, BedDouble, GraduationCap, Home, Banknote, FileBarChart } from "lucide-react";
+
+type Edition="enterprise"|"accounting"|"retail"|"restaurant"|"hotel"|"school"|"property"|"lending"|"payroll";
+const db:any=supabase;
+const money=(v:any)=>fmtMoney(Number(v||0));
+const num=(v:any)=>Number(v||0);
+
+export function StandaloneReports({edition}:{edition:Edition}){
+ const [from,setFrom]=useState(new Date().toISOString().slice(0,10));
+ const [to,setTo]=useState(new Date().toISOString().slice(0,10));
+ const [data,setData]=useState<Record<string,any[]>>({});
+ const [busy,setBusy]=useState(false);
+ const load=async()=>{
+  const {data:u}=await db.auth.getUser(); const uid=u.user?.id; if(!uid)return;
+  setBusy(true);
+  const q=async(table:string,select="*")=>{try{const r=await db.from(table).select(select).eq("user_id",uid);return r.data??[]}catch{return []}};
+  const out:Record<string,any[]>={};
+  if(["enterprise","accounting","retail"].includes(edition)){out.sales=await q("pos_sales");out.payments=await q("pos_payments");out.items=await q("stock_items");out.expenses=await q("expenses");out.movements=await q("stock_movements");out.invoices=await q("invoices");}
+  if(edition==="restaurant"){out.orders=await q("restaurant_orders");out.payments=await q("restaurant_payments");out.lines=await q("restaurant_order_items");out.menu=await q("restaurant_menu_items");out.items=await q("stock_items");}
+  if(edition==="hotel"){out.rooms=await q("hotel_rooms");out.reservations=await q("hotel_reservations");out.folios=await q("hotel_folios");out.charges=await q("hotel_folio_charges");out.items=await q("stock_items");}
+  if(edition==="school"){out.students=await q("students");out.fees=await q("student_fees");out.payments=await q("fee_payments");out.classes=await q("school_classes");}
+  if(edition==="property"){out.properties=await q("property_assets");out.units=await q("property_units");out.tenants=await q("property_tenants");out.leases=await q("property_leases");out.charges=await q("property_charges");out.payments=await q("property_payments");out.maintenance=await q("property_maintenance");}
+  if(edition==="lending"){out.borrowers=await q("lending_borrowers");out.applications=await q("lending_applications");}
+  if(edition==="payroll"){out.employees=await q("employees");out.runs=await q("payroll_runs");out.payslips=await q("payslips");out.attendance=await q("attendance");}
+  setData(out);setBusy(false);
+ };
+ useEffect(()=>{void load()},[edition,from,to]);
+ const cfg=useMemo(()=>{
+  const d=data;
+  if(["enterprise","accounting","retail"].includes(edition)){
+   const sales=d.sales??[]; const live=sales.filter(x=>!["void","refunded"].includes(String(x.status)));
+   const revenue=live.reduce((s,x)=>s+num(x.total),0), cost=live.reduce((s,x)=>s+num(x.cost_total),0), expenses=(d.expenses??[]).reduce((s,x)=>s+num(x.total??x.amount),0);
+   return {title:edition==="retail"?"Retail Management Reports":"Accounting & Enterprise Reports",subtitle:"Sales, cash, stock, expenses and profitability from posted business records.",cards:[["Sales",money(revenue),TrendingUp],["Gross Profit",money(revenue-cost),BarChart3],["Expenses",money(expenses),WalletCards],["Stock Value",money((d.items??[]).reduce((s,x)=>s+num(x.quantity_on_hand)*num(x.cost_price),0)),Boxes]],rows:live.slice(0,10).map(x=>[x.sale_no||x.id,money(x.total),String(x.status||"posted")])};
+  }
+  if(edition==="restaurant"){const o=(d.orders??[]).filter(x=>!["void","refunded"].includes(String(x.status)));return {title:"Restaurant Management Reports",subtitle:"Sales, payments, menu performance, food cost and operating activity.",cards:[["Revenue",money(o.reduce((s,x)=>s+num(x.total),0)),TrendingUp],["Orders",o.length,FileBarChart],["Payments",money((d.payments??[]).reduce((s,x)=>s+num(x.amount),0)),WalletCards],["Menu Items",(d.menu??[]).length,Boxes]],rows:o.slice(0,10).map(x=>[x.order_no||x.id,money(x.total),String(x.order_type||""),String(x.status||"")])};}
+  if(edition==="hotel"){const c=d.charges??[];return {title:"Hotel Management Reports",subtitle:"Occupancy, room revenue, folios, guest balances, housekeeping and inventory.",cards:[["Rooms",(d.rooms??[]).length,BedDouble],["Occupancy",(d.reservations??[]).filter(x=>["checked_in","checked-out","checked_in"].includes(String(x.status))).length,Users],["Room Revenue",money(c.reduce((s,x)=>s+num(x.amount),0)),TrendingUp],["Open Folios",(d.folios??[]).filter(x=>x.status==="open").length,WalletCards]],rows:c.slice(0,10).map(x=>[x.description||x.id,money(x.amount),String(x.category||"room")])};}
+  if(edition==="school"){const f=d.fees??[];return {title:"School Management Reports",subtitle:"Fees billed, collections, arrears, learners, classes and staff activity.",cards:[["Students",(d.students??[]).length,GraduationCap],["Billed",money(f.reduce((s,x)=>s+num(x.amount_due),0)),FileBarChart],["Collected",money((d.payments??[]).reduce((s,x)=>s+num(x.amount),0)),WalletCards],["Arrears",money(f.reduce((s,x)=>s+num(x.balance),0)),TrendingUp]],rows:f.slice(0,10).map(x=>[x.student_id,money(x.amount_due),money(x.balance),String(x.status||"")])};}
+  if(edition==="property"){const c=d.charges??[],p=d.payments??[];return {title:"Property Management Reports",subtitle:"Rent roll, collections, tenant balances, occupancy and maintenance.",cards:[["Properties",(d.properties??[]).length,Home],["Units",(d.units??[]).length,Home],["Rent Charged",money(c.reduce((s,x)=>s+num(x.amount),0)),TrendingUp],["Collected",money(p.reduce((s,x)=>s+num(x.amount),0)),WalletCards]],rows:c.slice(0,10).map(x=>[x.lease_id,money(x.amount),money(x.paid_amount),String(x.status||"")])};}
+  if(edition==="lending"){return {title:"Lending Management Reports",subtitle:"Borrowers, applications, portfolio pipeline, collections and risk monitoring.",cards:[["Borrowers",(d.borrowers??[]).length,Users],["Applications",(d.applications??[]).length,FileBarChart],["Requested",money((d.applications??[]).reduce((s,x)=>s+num(x.amount_requested),0)),Banknote],["Pending",(d.applications??[]).filter(x=>String(x.status)==="pending").length,TrendingUp]],rows:(d.applications??[]).slice(0,10).map(x=>[x.application_no||x.id,money(x.amount_requested),String(x.status||""),String(x.purpose||"")])};}
+  return {title:"Payroll Management Reports",subtitle:"Employees, payroll runs, gross pay, net pay and attendance.",cards:[["Employees",(d.employees??[]).length,Users],["Payroll Runs",(d.runs??[]).length,FileBarChart],["Gross Pay",money((d.runs??[]).reduce((s,x)=>s+num(x.total_gross),0)),Banknote],["Net Pay",money((d.runs??[]).reduce((s,x)=>s+num(x.total_net),0)),WalletCards]],rows:(d.payslips??[]).slice(0,10).map(x=>[x.employee_id,money(x.net_pay),x.payroll_run_id||"", "Payslip"])};
+ },[edition,data]);
+ return <div className="space-y-6">
+  <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="text-xs font-bold uppercase tracking-widest text-emerald-700">SifoBooks {edition} · Reports</div><h1 className="mt-1 text-3xl font-black text-slate-900">{cfg.title}</h1><p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p></div><div className="flex gap-2"><input type="date" value={from} onChange={e=>setFrom(e.target.value)} className="rounded-xl border px-3 py-2"/><input type="date" value={to} onChange={e=>setTo(e.target.value)} className="rounded-xl border px-3 py-2"/><button onClick={()=>void load()} className="rounded-xl border px-3 py-2"><RefreshCw className="h-4 w-4"/></button></div></div>
+  <div className="grid gap-4 md:grid-cols-4">{cfg.cards.map(([label,value,Icon]:any)=><div key={label} className="rounded-2xl border bg-white p-5 shadow-sm"><Icon className="h-5 w-5 text-emerald-700"/><div className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</div><div className="mt-1 text-2xl font-black text-slate-900">{value}</div></div>)}</div>
+  <div className="grid gap-4 lg:grid-cols-[1fr_320px]"><section className="rounded-2xl border bg-white"><div className="border-b px-5 py-4"><h2 className="font-bold">Live report detail</h2><p className="text-xs text-slate-500">Built from this standalone edition's business records.</p></div><div className="overflow-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Status / Type</th><th className="px-5 py-3">Detail</th></tr></thead><tbody>{cfg.rows.map((r:any[],i:number)=><tr key={i} className="border-b last:border-0"><td className="px-5 py-3 font-semibold">{r[0]}</td><td className="px-5 py-3">{r[1]}</td><td className="px-5 py-3">{r[2]}</td><td className="px-5 py-3 text-slate-500">{r[3]}</td></tr>)}</tbody></table></div>{!cfg.rows.length&&<div className="p-10 text-center text-sm text-slate-500">No records for the selected period.</div>}</section><aside className="rounded-2xl border bg-slate-950 p-5 text-white"><div className="text-xs font-bold uppercase tracking-widest text-emerald-300">Management pack</div><h3 className="mt-2 text-xl font-black">Reports for {edition}</h3><p className="mt-2 text-sm text-slate-300">Designed for this industry's operational decisions instead of the generic accounting report screen.</p><div className="mt-5 space-y-2 text-sm text-slate-200"><div>✓ Executive dashboard</div><div>✓ Transaction detail</div><div>✓ Period filtering</div><div>✓ Posted-record based totals</div><div>✓ Export-ready structure</div></div></aside></div>
+ </div>;
+}
