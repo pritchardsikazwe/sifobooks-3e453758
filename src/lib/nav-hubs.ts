@@ -379,18 +379,18 @@ export const PROPERTY_HUBS: HubDef[] = [{
     { label: "Portfolio", items: [
       { title: "Dashboard", url: "/property", module: "property_management", iconName: "LayoutDashboard", primary: true },
       { title: "Properties & Units", url: "/property", module: "property_management", iconName: "Building2", primary: true },
-      { title: "Tenants", url: "/property", module: "property_management", iconName: "Users", primary: true },
-      { title: "Leases", url: "/property", module: "property_management", iconName: "FileText", primary: true },
+      { title: "Tenants", url: "/property/tenants", module: "property_management", iconName: "Users", primary: true },
+      { title: "Leases", url: "/property/leases", module: "property_management", iconName: "FileText", primary: true },
     ]},
     { label: "Rent & Collections", items: [
-      { title: "Rent & Charges", url: "/property", module: "property_management", iconName: "ReceiptText", primary: true },
-      { title: "Payments", url: "/property", module: "property_management", iconName: "Wallet", primary: true },
+      { title: "Rent & Charges", url: "/property/collections", module: "property_management", iconName: "ReceiptText", primary: true },
+      { title: "Payments", url: "/property/collections", module: "property_management", iconName: "Wallet", primary: true },
       { title: "Arrears", url: "/property", module: "property_management", iconName: "AlertTriangle" },
     ]},
     { label: "Operations", items: [
-      { title: "Maintenance", url: "/property", module: "property_management", iconName: "Wrench", primary: true },
+      { title: "Maintenance", url: "/property/maintenance", module: "property_management", iconName: "Wrench", primary: true },
       { title: "Meter Readings", url: "/property", module: "property_management", iconName: "Gauge" },
-      { title: "Reports", url: "/property", module: "property_management", iconName: "BarChart3", primary: true },
+      { title: "Reports", url: "/property/reports", module: "property_management", iconName: "BarChart3", primary: true },
       { title: "Settings", url: "/property", module: "property_management", iconName: "Settings2" },
     ]},
   ],
@@ -689,6 +689,8 @@ export const RETAIL_HUBS: HubDef[] = [
       { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
       { title: "Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
       { title: "Cashier & Shifts", url: "/pos/command-center", module: "retail_pos", iconName: "Users", primary: true },
+      { title: "Butchery Centre", url: "/retail/butchery", module: "retail_pos", iconName: "Beef", primary: true, hint: "Weighed meat, cuts, yield, labels and scale control." },
+      { title: "Butchery POS", url: "/retail/butchery-pos", module: "retail_pos", iconName: "Scale", hint: "Fast weighed meat checkout." },
     ]},
   ]},
   { key: "retail-stock", label: "Stock", iconName: "Boxes", purpose: "Products, stock movement and replenishment.", groups: [
@@ -778,6 +780,7 @@ export const RESTAURANT_HUBS: HubDef[] = [
   { key: "restaurant-settings", label: "Settings", iconName: "Settings2", purpose: "Restaurant setup, staff and licensed features.", groups: [
     { label: "Setup", items: [
       { title: "Restaurant Settings", url: "/restaurant/settings", module: "restaurant", iconName: "Settings2", primary: true },
+      { title: "Registers", url: "/restaurant/registers", module: "restaurant", iconName: "Monitor", primary: true },
       { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
       { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
       { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid" },
