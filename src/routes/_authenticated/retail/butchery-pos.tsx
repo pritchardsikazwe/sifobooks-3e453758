@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { completeSale, computeTotals, currentShift, ensureRegister, loadSettings, posErrorMessage, type CartLine, type PosSettings, type SalePayment, type PriceLevel } from "@/lib/pos";
 import { openWebSerialScale, parseScaleReading, type ScaleReading } from "@/lib/butchery";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { printerForJob, copiesForJob } from "@/services/printRouting";
 
 export const Route = createFileRoute("/_authenticated/retail/butchery-pos")({
   head: () => ({ meta: [
@@ -164,11 +165,12 @@ function ButcheryPos() {
     const line=chosen?{name:chosen.name,price:selectedPrice,qty:weight,barcode:chosen.barcode||chosen.sku||"SIFOBOOKS"}:{name:cart[cart.length-1].name,price:cart[cart.length-1].price,qty:cart[cart.length-1].qty,barcode:cart[cart.length-1].sku||"SIFOBOOKS"};
     const total=Number(line.price)*Number(line.qty);
     if(desktopHardware && hardwarePrinters.length){
-      const labelPrinter=hardwarePrinters.find(p=>/label|zebra|zdesigner|tsc|te200|te210|tx200|tx210/i.test(String(p.Name||"") + " " + String(p.DriverName||"")));
+      const routedPrinter=printerForJob("label");
+      const labelPrinter=hardwarePrinters.find(p=>String(p.Name||"")===routedPrinter) || (routedPrinter ? null : hardwarePrinters.find(p=>/label|zebra|zdesigner|tsc|te200|te210|tx200|tx210/i.test(String(p.Name||"") + " " + String(p.DriverName||""))));
       if(!labelPrinter)return toast.error("No label printer is configured. Connect a Zebra/ZPL, TSC/TSPL, or ESC/POS label printer in Windows first.");
       const printer=labelPrinter.Name;
       const protocol=/zebra|zdesigner|zpl/i.test(String(labelPrinter.Name||"")+" "+String(labelPrinter.DriverName||""))?"zpl":/tsc|tspl|te200|te210|tx200|tx210/i.test(String(labelPrinter.Name||"")+" "+String(labelPrinter.DriverName||""))?"tspl":"escpos";
-      try{const r=await fetch("/api/hardware/label/print",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({printer,protocol,name:line.name,weightKg:Number(line.qty),pricePerKg:Number(line.price),total,barcode:line.barcode,footer:"Keep refrigerated"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Direct label print failed");toast.success(`Label printed directly to ${printer}`);return;}catch(e:any){toast.error(e?.message||"Direct label print failed");return;}
+      try{const r=await fetch("/api/hardware/label/print",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({printer,protocol,name:line.name,weightKg:Number(line.qty),pricePerKg:Number(line.price),total,barcode:line.barcode,footer:"Keep refrigerated",copies:copiesForJob("label")})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Direct label print failed");toast.success(`Label printed directly to ${printer}`);return;}catch(e:any){toast.error(e?.message||"Direct label print failed");return;}
     }
     const w=window.open("","_blank","width=520,height=420");if(!w)return toast.error("Allow pop-ups to print labels");
     w.document.write(`<html><head><title>SifoBooks Meat Label</title><style>body{font-family:Arial;margin:18px}.label{width:80mm;border:1px solid #111;padding:12px}.name{font-size:22px;font-weight:800}.price{font-size:26px;font-weight:800}.barcode{font-family:monospace;font-size:18px;letter-spacing:2px;border-top:3px solid #111;border-bottom:3px solid #111;padding:8px 0;margin-top:10px}small{color:#555}</style></head><body><div class="label"><div class="name">${line.name}</div><small>SifoBooks Butchery</small><p>Weight: <b>${Number(line.qty).toFixed(3)} kg</b></p><p>Price/kg: <b>K${Number(line.price).toFixed(2)}</b></p><div class="price">K${total.toFixed(2)}</div><div class="barcode">${line.barcode}</div><small>Keep refrigerated · Scale/price label</small></div></body></html>`);w.document.close();w.focus();w.print();w.close();
