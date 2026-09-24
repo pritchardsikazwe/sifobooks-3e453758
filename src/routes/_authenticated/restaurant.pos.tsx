@@ -933,7 +933,9 @@ function Page() {
               className="h-[30px] rounded-[15px] border-2 border-[#789998] bg-[#264f54] px-2 text-[10px] font-bold lg:hidden">
               {cats.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
             </select>
-            <div className="ml-auto flex shrink-0 items-center gap-1 rounded-[16px] border border-[#789998] bg-[#264f54] p-1">\n              {(["normal","large","xl"] as const).map(s => <button key={s} type="button" onClick={() => setTextScale(s)} className={cn("rounded-full px-2 py-1 text-[10px] font-black text-white", textScale === s ? "bg-[#07913c]" : "bg-transparent")} aria-label={`Text size ${s}`}>{s === "normal" ? "A" : s === "large" ? "A+" : "A++"}</button>)}\n            </div>\n            <div className="relative w-[min(260px,42%)] shrink-0">
+            <div className="ml-auto flex shrink-0 items-center gap-1 rounded-[16px] border border-[#789998] bg-[#264f54] p-1">
+              {(["normal","large","xl"] as const).map(s => <button key={s} type="button" onClick={() => setTextScale(s)} className={cn("rounded-full px-2 py-1 text-[10px] font-black text-white", textScale === s ? "bg-[#07913c]" : "bg-transparent")} aria-label={`Text size ${s}`}>{s === "normal" ? "A" : s === "large" ? "A+" : "A++"}</button>)}
+            </div>\n            <div className="relative w-[min(260px,42%)] shrink-0">
               <input ref={searchRef} value={search} onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === "Enter" && barcodeMatch) {
