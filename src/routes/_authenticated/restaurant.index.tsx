@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import { summarise, today } from "@/lib/restaurant";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ function Dashboard() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return setLoading(false);
       const uid = u.user.id;
+      void ensureStandaloneDemo("restaurant").catch((e) => console.error("[standalone-demo:restaurant]", e));
       const [o, t, r, d, s, l, b] = await Promise.all([
         db.from("restaurant_orders").select("*").eq("user_id", uid).eq("business_date", today()),
         db.from("restaurant_tables").select("*").eq("user_id", uid).order("name"),
