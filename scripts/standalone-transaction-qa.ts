@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// CI retrigger: transaction QA follows the runtime SQLite schema exactly.
 const db = new Database(":memory:");
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec(readFileSync(join(process.cwd(), "src/lib/db/schema.sql"), "utf8"));
