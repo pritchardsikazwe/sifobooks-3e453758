@@ -5,12 +5,12 @@ import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   // Published hosting loads dist/server/server.js as a self-contained module
   // with no node_modules resolution — every dependency must be bundled in.
   // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
   // runtime where the DB layer is actually used.)
-  ssr: { noExternal: true, external: ["bun"] },
+  ssr: command === "build" ? { noExternal: true, external: ["bun"] } : { external: ["bun"] },
   // Vite 8/Rolldown resolves build-time imports separately from SSR externals.
   // Bun is provided by the Bun runtime and must not be bundled/resolved by Rolldown.
   build: { rolldownOptions: { external: ["bun"] } },
@@ -94,4 +94,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));

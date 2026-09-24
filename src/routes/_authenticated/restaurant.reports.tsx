@@ -46,7 +46,12 @@ const REPORTS = [
 
 type ReportId = typeof REPORTS[number]["id"];
 
-function RestaurantReports() {\n  return <StandaloneReports edition="restaurant" />;\n}\n\n/* Legacy report implementation retained below for reference while the standalone workspace is active.\nfunction RestaurantReportsLegacy() {
+function RestaurantReports() {
+  return <StandaloneReports edition="restaurant" />;
+}
+
+/* Legacy report implementation retained below for reference while the standalone workspace is active.
+function RestaurantReportsLegacy() {
   const [from, setFrom] = useState(today());
   const [to, setTo] = useState(today());
   const [report, setReport] = useState<ReportId>("dashboard");
@@ -405,3 +410,5 @@ function FoodCostReport({ data, totals }: any) {
 function ZReport({ totals, paymentMix, exceptions, orders }: any) {
   return <div className="space-y-4"><ChartCard title="SifoBooks Z-Report / End of Day"><div className="grid gap-3 md:grid-cols-2"><div className="rounded-xl bg-[#073b38] p-5 text-white"><div className="text-xs uppercase tracking-wider text-white/60">Net takings</div><div className="mt-1 text-3xl font-black">{fmtMoney(totals.net)}</div><div className="mt-3 grid grid-cols-2 gap-2 text-sm"><span>Paid orders</span><b className="text-right">{orders}</b><span>VAT</span><b className="text-right">{fmtMoney(totals.tax)}</b><span>Cost of sales</span><b className="text-right">{fmtMoney(totals.cost)}</b><span>Gross profit</span><b className="text-right text-[#e5b83f]">{fmtMoney(totals.margin)}</b></div></div><div className="rounded-xl border p-5"><div className="text-sm font-black">Tender reconciliation</div>{paymentMix.map((x:any)=><div key={x.name} className="mt-2 flex justify-between text-sm"><span>{x.name}</span><b>{fmtMoney(x.value)}</b></div>)}</div></div></ChartCard><div className="grid gap-3 sm:grid-cols-3"><MiniReport title="Voids" value={String(exceptions.voids)} /><MiniReport title="Refunds" value={String(exceptions.refunds)} /><MiniReport title="Open Checks" value={String(exceptions.open)} /></div></div>;
 }
+
+*/
