@@ -97,6 +97,16 @@ function runCompatibilityMigrations(database: Database) {
       "role TEXT NOT NULL DEFAULT 'staff'",
     ],
     stock_items: [
+      "barcode TEXT",
+      "category TEXT",
+      "item_type TEXT",
+      "bin TEXT",
+      "reserved_qty REAL NOT NULL DEFAULT 0",
+      "on_order_qty REAL NOT NULL DEFAULT 0",
+      "safety_stock REAL NOT NULL DEFAULT 0",
+      "max_stock REAL NOT NULL DEFAULT 0",
+      "is_active INTEGER NOT NULL DEFAULT 1",
+      "needs_cost_review INTEGER NOT NULL DEFAULT 0",
       "zra_item_code TEXT",
       "zra_item_class_code TEXT",
       "zra_item_type_code TEXT",
@@ -162,6 +172,29 @@ function runCompatibilityMigrations(database: Database) {
     ],
     restaurant_order_types: [
       "delivery_fee REAL NOT NULL DEFAULT 0",
+    ],
+    stock_movements: [
+      "total_cost REAL",
+      "transaction_date TEXT",
+      "source_type TEXT",
+      "source_id TEXT",
+      "created_at TEXT NOT NULL DEFAULT (datetime('now'))",
+    ],
+    pos_sales: [
+      "branch_id TEXT",
+    ],
+    goods_receipts: [
+      "company_id TEXT",
+      "po_number TEXT",
+      "receipt_date TEXT NOT NULL DEFAULT (date('now'))",
+      "warehouse_id TEXT",
+      "status TEXT NOT NULL DEFAULT 'draft'",
+      "currency TEXT NOT NULL DEFAULT 'ZMW'",
+      "total REAL NOT NULL DEFAULT 0",
+      "reference TEXT",
+      "notes TEXT",
+      "created_at TEXT NOT NULL DEFAULT (datetime('now'))",
+      "updated_at TEXT NOT NULL DEFAULT (datetime('now'))",
     ],
   };
 
