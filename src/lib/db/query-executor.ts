@@ -181,7 +181,7 @@ function buildSelect(spec: QuerySpec): { sql: string; params: any[]; joins: Pars
   let sql = `SELECT ${selectParts.join(", ")} FROM "${table}"`;
   if (joinClauses.length) sql += " " + joinClauses.join(" ");
 
-  const { clause, params } = buildWhereClause(spec.filters);
+  const { clause, params } = buildWhereClause(spec.filters, table);
   sql += clause;
 
   if (spec.order.length) {
