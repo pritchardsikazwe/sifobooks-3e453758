@@ -108,67 +108,67 @@ function StockPage() {
     );
   }
 
+  const categories = Array.from(new Set(items.map(i => i.tax_category || "OTHER"))).filter(Boolean).sort();
+  const outOfStock = items.filter(i => Number(i.quantity_on_hand) <= 0).length;
+  const categoryCount = categories.length;
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
-                {businessName || "Stock"}
-              </h1>
-              <p className="text-xs text-muted-foreground">{email}</p>
+    <SifoWorkspaceShell
+      title="Items / Products"
+      purpose="Manage products, services and inventory used across POS, sales, purchasing and stock control."
+      icon={Package}
+      breadcrumbs={[{ label: "Inventory" }, { label: "Items / Products" }]}
+      actions={
+        <>
+          <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
+          <Button size="sm" className="h-10 gap-1.5" variant="save" onClick={() => setOpenNew(true)}>
+            <Plus className="h-4 w-4" /> Add item
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <ItemKpi label="Total items" value={items.length.toLocaleString()} caption="Active product catalogue" icon={<Package className="h-5 w-5" />} />
+        <ItemKpi label="Stock value" value={money(stockValue)} caption="Current inventory at cost" icon={<ArrowUpRight className="h-5 w-5" />} />
+        <ItemKpi label="Low stock" value={low.length.toLocaleString()} caption="Items at or below reorder level" tone={low.length ? "warning" : "normal"} icon={<AlertTriangle className="h-5 w-5" />} />
+        <ItemKpi label="Categories" value={categoryCount.toLocaleString()} caption={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={<Sliders className="h-5 w-5" />} />
+      </div>
+
+      <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <CardHeader className="border-b bg-card/95 p-3 sm:p-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="relative min-w-0 flex-1 xl:max-w-xl">
+              <Package className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search items, SKU, barcode or description…" className="h-11 rounded-xl pl-9" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Category filter">
+                <option value="all">All categories</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Stock status filter">
+                <option value="all">All items</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option>
+              </select>
+              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
+                <Link to="/inventory">Inventory overview</Link>
+              </Button>
+              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
+                <Link to="/inventory/transfers">Stock transfers</Link>
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
-            <Button size="sm" className="h-9" variant="save" onClick={() => setOpenNew(true)}><Plus className="h-4 w-4 mr-1" /> New item</Button>
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
+        </CardHeader>
+        <CardContent className="p-3 sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span><strong className="text-foreground">{filtered.length}</strong> items shown</span>
+            <span>Click an item action to move stock, edit or remove it.</span>
           </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card><CardContent className="p-5">
-            <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Items</span><Package className="h-4 w-4 text-primary" /></div>
-            <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{items.length}</div>
-            <div className="mt-1 text-xs text-muted-foreground">Tracked SKUs</div>
-          </CardContent></Card>
-          <Card><CardContent className="p-5">
-            <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Stock value (at cost)</span><ArrowUpRight className="h-4 w-4 text-emerald-600" /></div>
-            <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{money(stockValue)}</div>
-            <div className="mt-1 text-xs text-muted-foreground">On-hand × cost price</div>
-          </CardContent></Card>
-          <Card className={low.length ? "border-amber-300 bg-amber-50/40" : ""}><CardContent className="p-5">
-            <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Low stock</span><AlertTriangle className={`h-4 w-4 ${low.length ? "text-amber-700" : "text-muted-foreground"}`} /></div>
-            <div className="mt-3 text-2xl font-semibold" style={{ fontFamily: "Space Grotesk, sans-serif" }}>{low.length}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{low.length ? low.slice(0, 3).map(i => i.name).join(", ") + (low.length > 3 ? "…" : "") : "All items above reorder level"}</div>
-          </CardContent></Card>
-        </div>
-
-        <Card className="mt-8">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="flex items-center gap-2 text-base"><Package className="h-4 w-4" /> Items</CardTitle>
-            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name or SKU…" className="sm:w-72" />
-          </CardHeader>
-          <CardContent className="px-0">
-            <GroupedStockTable
-              items={filtered}
-              locationLabel={businessName || "Main Store"}
-              money={money}
-              onMove={setMoveFor}
-              onDelete={removeItem}
-              loading={loading}
-            />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+          <GroupedStockTable items={filtered} locationLabel={businessName || "Main Store"} money={money} onMove={setMoveFor} onDelete={removeItem} loading={loading} />
+        </CardContent>
+      </Card>
+    </SifoWorkspaceShell>
   );
+}
 }
 
 function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {
