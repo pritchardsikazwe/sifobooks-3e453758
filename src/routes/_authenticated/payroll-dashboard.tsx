@@ -183,6 +183,7 @@ function PayrollDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 p-6 space-y-6">
+      <div className="rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br from-white via-[#F6FBF9] to-[#EEF7F3] p-5 shadow-[0_12px_34px_rgba(23,59,58,.07)]"><div className="flex flex-wrap items-center gap-3"><div className="mr-auto"><div className="text-[11px] font-black uppercase tracking-[.18em] text-emerald-700">SifoBooks Payroll · Standalone workspace</div><h1 className="mt-1 text-2xl font-black text-slate-900">Payroll Operations Centre</h1><p className="text-sm text-slate-500">Employees, payroll runs, approvals, payments and statutory compliance in one dedicated workspace.</p></div><div className="flex flex-wrap gap-2"><Button asChild><Link to="/payroll">Run Payroll</Link></Button><Button asChild variant="outline"><Link to="/employees">Employees</Link></Button><Button asChild variant="outline"><Link to="/payroll-statutory">Statutory</Link></Button></div></div></div>
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex flex-wrap items-center justify-between gap-3">
