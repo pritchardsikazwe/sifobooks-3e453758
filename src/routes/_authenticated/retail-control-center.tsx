@@ -48,9 +48,10 @@ function RetailControlCenter() {
   if (!has("reports.view")) return <div className="p-6"><Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8" /><h2 className="text-lg font-semibold">Manager access required</h2><p className="mt-1 text-sm text-muted-foreground">You need the reports.view permission to open the Retail Control Center.</p></CardContent></Card></div>;
 
   return <SifoStandaloneFrame product="Retail" title="Retail Operations Centre" subtitle="Sales, cashiers, stock, refunds, discounts and POS control in one dedicated workspace." nav={[{label:"Dashboard",to:"/retail-control-center",active:true},{label:"Retail POS",to:"/pos"},{label:"Products / Items",to:"/stock"},{label:"Inventory",to:"/inventory"},{label:"Stock Transfers",to:"/inventory/transfers"},{label:"Sales History",to:"/pos-sales"},{label:"Cashier & Shifts",to:"/pos-workers"},{label:"Reports",to:"/reports"}]} actions={<Button variant="outline" onClick={() => void refresh()} disabled={loading}><RefreshCw className={loading ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />Refresh</Button>}><div className="space-y-5">
-    <div className="rounded-2xl border border-[#DCE9E5] bg-white p-4 shadow-sm">
-      <div><div className="flex items-center gap-2"><Activity className="h-6 w-6" /><h1 className="text-2xl font-semibold tracking-tight">Retail Control Center</h1><Badge variant="secondary">Manager</Badge></div><p className="mt-1 text-sm text-muted-foreground">Live control view for sales, shifts and POS exceptions.</p></div>
-      <div className="text-xs font-bold uppercase tracking-wide text-[#78908B]">Manager control</div>
+    <div className="flex items-center gap-2 rounded-2xl border border-[#DCE9E5] bg-white px-4 py-3 shadow-sm">
+      <Activity className="h-5 w-5 text-[#07834F]" />
+      <span className="text-sm font-bold">Manager control</span>
+      <Badge variant="secondary">Live POS exceptions</Badge>
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
