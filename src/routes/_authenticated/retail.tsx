@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 
 export const Route = createFileRoute("/_authenticated/retail")({
   head: () => ({
