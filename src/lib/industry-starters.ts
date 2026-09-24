@@ -70,6 +70,8 @@ const roles: StarterRole[] = [
   R("hr", "HR / Payroll", "Employees, payroll and statutory deductions.", ["employees", "payroll", "hr", "statutory"], "hr"),
 ];
 
+const retailRoles = [...roles, R("manager", "Retail Manager", "Manage stock, purchasing, POS and reports.", ["retail", "inventory", "sales", "purchasing", "reports"], "manager"), R("cashier", "Cashier", "Till sales and cash-up.", ["pos", "payments", "cash_drawer"], "cashier1"), R("pharmacist", "Responsible Pharmacist", "Pharmacy dispensing, medicine controls, batch/expiry and regulated-item approvals.", ["pharmacy", "dispensing", "prescriptions", "controlled_items", "inventory"], "pharmacist"), R("pharmacy_assistant", "Pharmacy Assistant", "Customer service, stock lookup and permitted sales under pharmacy controls.", ["pharmacy", "sales", "inventory"], "pharmacy1"), R("parts_sales", "Parts Sales Advisor", "Part lookup, vehicle compatibility, quotations and sales.", ["spare_parts", "sales", "inventory"], "parts1")];
+
 const restaurantRoles = [
   ...roles,
   R("manager", "Restaurant Manager", "Operations, approvals, reports and staff.", ["restaurant", "inventory", "sales", "purchasing", "reports"], "manager"),
@@ -110,9 +112,9 @@ const editions: IndustryStarter[] = [
     edition: "retail", industry: "Retail",
     tagline: "Point-of-sale, stock, purchasing and accounting for Zambian shops.",
     about: "SifoBooks Retail connects every till sale to stock, payments, cash-up and accounting. The starter pack includes barcode-friendly items, warehouses, suppliers, customer balances and cashier controls.",
-    modules: [...baseAccountingModules, M("pos", "Retail POS", "Barcode checkout, cash drawer, returns and cashier shifts.", ["ZRA", "SMART_INVOICE"]), M("cashiers", "Cashiers & Till Control", "Cashier users, shifts, cash-up and audit trail.", []), M("butchery", "Butchery", "Weighted meat sales, cuts, carcass yield, cold-room stock and labels.", ["ZRA", "SMART_INVOICE"])],
-    compliance: [...commonCompliance],
-    roles: [...roles, R("manager", "Retail Manager", "Manage stock, purchasing, POS and reports.", ["retail", "inventory", "sales", "purchasing", "reports"], "manager"), R("cashier", "Cashier", "Till sales and cash-up.", ["pos", "payments", "cash_drawer"], "cashier1")],
+    modules: [...baseAccountingModules, M("pos", "Retail POS", "Barcode checkout, cash drawer, returns and cashier shifts.", ["ZRA", "SMART_INVOICE"]), M("cashiers", "Cashiers & Till Control", "Cashier users, shifts, cash-up and audit trail.", []), M("butchery", "Butchery", "Weighted meat sales, cuts, carcass yield, cold-room stock and labels.", ["ZRA", "SMART_INVOICE"]), M("pharmacy", "Pharmacy & Medicines", "Medicine batches, expiry dates, FEFO stock control, prescription/dispensing workflow, controlled-item permissions and pharmacy reports.", ["ZAMRA", "ZRA", "SMART_INVOICE"]), M("spare_parts", "Automotive Spare Parts", "Part numbers, OEM references, vehicle compatibility, barcode stock, bin locations, alternatives and workshop/customer sales.", ["ZRA", "SMART_INVOICE"])],
+    compliance: [...commonCompliance, C("ZAMRA", "Zambia Medicines Regulatory Authority", "Pharmacy workflows must be configured for the applicable ZAMRA premises, product, dispensing and professional requirements. SifoBooks does not replace ZAMRA licensing.", "industry_specific", "industry")],
+    roles: retailRoles,
     coaAccounts: [{ code: "4000", name: "Retail Sales", type: "revenue" }, { code: "5000", name: "Retail Cost of Goods Sold", type: "expense" }],
     demoCompanyName: "SifoBooks Demo Retail",
     demoUsername: "SifoBooksdemo",
