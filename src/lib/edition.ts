@@ -1,4 +1,4 @@
-export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property";
+export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending";
 
 const raw = String((import.meta as any).env?.VITE_SIFOBOOKS_EDITION || "enterprise").toLowerCase();
 
@@ -15,6 +15,7 @@ export const SIFOBOOKS_EDITION_LABEL: Record<SifoBooksEdition, string> = {
   hotel: "Hotel",
   school: "School",
   property: "Property",
+  lending: "Microfinance",
 };
 
 export const SIFOBOOKS_PRODUCT_NAME =
