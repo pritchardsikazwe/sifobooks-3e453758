@@ -25,7 +25,7 @@ import { MODULES, isModuleInstalled } from "@/lib/modules";
 /* ------------------------------------------------------------------ */
 
 export type ProductKey =
-  | "accounting" | "retail_pos" | "restaurant" | "hotel" | "school" | "payroll" | "inventory";
+  | "accounting" | "retail_pos" | "restaurant" | "hotel" | "school" | "property" | "lending" | "payroll" | "inventory";
 
 export type ProductDef = {
   key: ProductKey;
@@ -44,6 +44,8 @@ export const PRODUCTS: ProductDef[] = [
   { key: "restaurant", label: "Restaurant", description: "Tables, kitchen, checks and restaurant cash-ups.", emoji: "🍽️", module: "restaurant", perms: ["pos.restaurant.access"], landing: "/restaurant" },
   { key: "hotel", label: "Hotel", description: "Front desk, reservations, housekeeping and folios.", emoji: "🏨", module: "hotel_erp", perms: ["accounting.view", "pos.retail.access", "pos.restaurant.access"], landing: "/hotel" },
   { key: "school", label: "School", description: "Learners, classes, fees and school reporting.", emoji: "🎓", module: "school_erp", perms: ["accounting.view"], landing: "/school" },
+  { key: "property", label: "Property", description: "Properties, units, tenants, leases, rent and maintenance.", emoji: "🏘️", module: "property_management", perms: ["accounting.view"], landing: "/property" },
+  { key: "lending", label: "Microfinance", description: "Borrowers, loans, repayments, collections and portfolio control.", emoji: "💰", module: "loans", perms: ["accounting.view"], landing: "/lending" },
   { key: "payroll", label: "Payroll", description: "Employees, payroll runs, payslips and statutory returns.", emoji: "🧾", module: "hr_payroll", perms: ["hr.manage"], landing: "/payroll-dashboard" },
   { key: "inventory", label: "Inventory", description: "Stock, locations, transfers and counts.", emoji: "📦", module: "inventory", perms: ["inventory.view"], landing: "/inventory" },
   { key: "accounting", label: "Accounting", description: "Ledgers, sales, purchases, banking and reporting.", emoji: "📊", module: "finance", perms: ["accounting.view", "financial_reports.view"], landing: "/dashboard" },
@@ -97,7 +99,12 @@ const SCHOOL_INDUSTRIES = /school|education/i;
 export function entitledProducts(e: Entitlement): ProductKey[] {
   const mode = e.workspaceMode ?? "accounting";
   if (mode === "payroll_only") return ["payroll"];
-  if (mode === "hotel_only") return ["hotel"];
+  if (mode === "hotel_only" || mode === "hotel") return ["hotel"];
+  if (mode === "lending") return ["lending"];
+  if (mode === "property") return ["property"];
+  if (mode === "school") return ["school"];
+  if (mode === "restaurant") return ["restaurant"];
+  if (mode === "retail") return ["retail_pos"];
 
   const m = e.modules;
   const industry = e.industry ?? "";
@@ -107,6 +114,8 @@ export function entitledProducts(e: Entitlement): ProductKey[] {
   if (m.has("restaurant") || mode === "restaurant" || RESTAURANT_INDUSTRIES.test(industry)) out.push("restaurant");
   if (m.has("hotel_erp") || HOTEL_INDUSTRIES.test(industry)) out.push("hotel");
   if (m.has("school_erp") || SCHOOL_INDUSTRIES.test(industry)) out.push("school");
+  if (m.has("property_management")) out.push("property");
+  if (m.has("loans") || m.has("portfolio") || /lending|microfinance|finance company|money lender/i.test(industry)) out.push("lending");
   if (m.has("hr_payroll")) out.push("payroll");
   if (m.has("inventory")) out.push("inventory");
   if (m.has("finance") || m.has("sales") || mode === "accounting" || mode === "pos_accounting") out.push("accounting");
