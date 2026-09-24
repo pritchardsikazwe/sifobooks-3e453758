@@ -44,6 +44,8 @@ function StockPage() {
   const [openImport, setOpenImport] = useState(false);
   const [moveFor, setMoveFor] = useState<Item | null>(null);
   const [q, setQ] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const load = async () => {
     setLoading(true);
@@ -66,7 +68,18 @@ function StockPage() {
   }, []);
 
   const money = (n: number) => `${currency} ${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const filtered = items.filter(i => !q || i.name.toLowerCase().includes(q.toLowerCase()) || (i.sku ?? "").toLowerCase().includes(q.toLowerCase()));
+  const filtered = items.filter(i => {
+    const matchesQ = !q || [i.name, i.sku ?? "", i.description ?? ""].join(" ").toLowerCase().includes(q.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || (i.tax_category || "OTHER") === categoryFilter;
+    const qty = Number(i.quantity_on_hand);
+    const reorder = Number(i.reorder_level);
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "in" && qty > 0 && (reorder <= 0 || qty > reorder)) ||
+      (statusFilter === "low" && reorder > 0 && qty > 0 && qty <= reorder) ||
+      (statusFilter === "out" && qty <= 0);
+    return matchesQ && matchesCategory && matchesStatus;
+  });
   const low = items.filter(i => i.reorder_level > 0 && Number(i.quantity_on_hand) <= Number(i.reorder_level));
   const stockValue = useMemo(() => items.reduce((s, i) => s + Number(i.cost_price) * Number(i.quantity_on_hand), 0), [items]);
 
