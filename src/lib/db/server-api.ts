@@ -719,6 +719,63 @@ function executeRestaurantCheckout(args: Record<string, any>) {
   return transaction;
 }
 
+function executeButcheryProcessing(args: Record<string, any>) {
+  const db = getDb();
+  const uid = String(args._uid || "");
+  const sourceItemId = String(args._source_item_id || "");
+  const inputQty = Number(args._input_qty || 0);
+  const inputCost = Number(args._input_cost || 0);
+  const inputUnit = String(args._input_unit || "kg");
+  const wasteQty = Number(args._waste_qty || 0);
+  const lines = Array.isArray(args._outputs) ? args._outputs : [];
+  const reference = String(args._reference || "").trim() || nextDocumentNumber({userId:uid,documentType:"BUTCHERY_PROCESS",prefix:"BUT",padding:6});
+  if (!uid) throw new Error("NOT_SIGNED_IN");
+  if (!sourceItemId || !(inputQty > 0)) throw new Error("BUTCHERY_INPUT_REQUIRED");
+  if (inputCost < 0 || wasteQty < 0 || !lines.length) throw new Error("BUTCHERY_OUTPUT_REQUIRED");
+  const outputTotal = lines.reduce((n:any, x:any) => n + Number(x.qty || 0), 0);
+  if (!(outputTotal > 0)) throw new Error("BUTCHERY_OUTPUT_QTY_REQUIRED");
+  if (outputTotal + wasteQty > inputQty + 0.000001) throw new Error("BUTCHERY_YIELD_EXCEEDS_INPUT");
+  const source = db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=? LIMIT 1").get(sourceItemId,uid) as any;
+  if (!source) throw new Error("BUTCHERY_SOURCE_ITEM_NOT_FOUND");
+  const sourceBase = Number(source.quantity_on_hand || 0);
+  if (sourceBase < inputQty) throw new Error("BUTCHERY_INSUFFICIENT_SOURCE_STOCK");
+  const transaction = db.transaction(() => {
+    const batchId = generateUUID();
+    db.prepare("INSERT INTO butchery_processing_batches (id,user_id,reference,source_item_id,input_qty,input_unit,input_cost,saleable_qty,waste_qty,status,processed_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))")
+      .run(batchId,uid,reference,sourceItemId,inputQty,inputUnit,inputCost,outputTotal,wasteQty,"posted");
+    const sourceAfter = sourceBase - inputQty;
+    db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(sourceAfter,sourceItemId,uid);
+    db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(generateUUID(),uid,sourceItemId,"BUTCHERY_PROCESS_OUT",-inputQty,source.cost_price,reference,"Butchery processing input",source.warehouse_id ?? null);
+    const sourceLedger = db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,reason,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    sourceLedger.run(generateUUID(),uid,sourceItemId,source.warehouse_id ?? null,source.warehouse_id ?? null,"BUTCHERY_PROCESS_OUT",0,inputQty,sourceAfter,Number(source.cost_price||0),inputQty*Number(source.cost_price||0),"butchery_process",batchId,reference,"Processing input",uid);
+    for (const line of lines) {
+      const itemId=String(line.item_id||"");
+      const qty=Number(line.qty||0);
+      if(!itemId||!(qty>0)) throw new Error("BUTCHERY_INVALID_OUTPUT");
+      const output=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=? LIMIT 1").get(itemId,uid) as any;
+      if(!output) throw new Error("BUTCHERY_OUTPUT_ITEM_NOT_FOUND");
+      const costPerUnit=outputTotal>0 ? inputCost/outputTotal : 0;
+      const before=Number(output.quantity_on_hand||0);
+      const after=before+qty;
+      db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(after,costPerUnit,itemId,uid);
+      db.prepare("INSERT INTO butchery_yield_lines (id,user_id,batch_id,output_item_id,output_name,output_qty,unit,yield_percent,note) VALUES (?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,batchId,itemId,output.name,qty,String(line.unit||"kg"),inputQty?(qty/inputQty)*100:0,line.note??null);
+      db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,itemId,"BUTCHERY_PROCESS_IN",qty,costPerUnit,reference,"Butchery processing output",output.warehouse_id ?? null);
+      sourceLedger.run(generateUUID(),uid,itemId,output.warehouse_id ?? null,output.warehouse_id ?? null,"BUTCHERY_PROCESS_IN",qty,0,after,costPerUnit,qty*costPerUnit,"butchery_process",batchId,reference,"Processing output",uid);
+    }
+    if (wasteQty > 0) {
+      db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,sourceItemId,"BUTCHERY_WASTE",-wasteQty,Number(source.cost_price||0),reference,"Butchery processing waste",source.warehouse_id ?? null);
+      sourceLedger.run(generateUUID(),uid,sourceItemId,source.warehouse_id ?? null,source.warehouse_id ?? null,"BUTCHERY_WASTE",0,wasteQty,sourceAfter,Number(source.cost_price||0),wasteQty*Number(source.cost_price||0),"butchery_process",batchId,reference,"Processing waste",uid);
+    }
+    return {batchId,reference,inputQty,outputQty:outputTotal,wasteQty,costPerKg:inputCost/outputTotal};
+  });
+  void recordAuditEvent({userId:uid,action:"BUTCHERY_PROCESS_POSTED",entityType:"butchery_processing_batch",entityId:transaction.batchId,newValue:transaction});
+  return transaction;
+}
+
 function executeRpc(name: string, args: Record<string, any>): { data: any; error: any } {
   const db = getDb();
   try {
@@ -796,6 +853,9 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
           .run(actual,expected,variance,shiftId,uid);
         void recordAuditEvent({userId:uid,terminalId:shift.register_id,action:"POS_SHIFT_CLOSED",entityType:"pos_shift",entityId:shiftId,newValue:{expectedCash:expected,actualCash:actual,variance}});
         return {data:{shiftId,expectedCash:expected,actualCash:actual,variance},error:null};
+      }
+      case "post_butchery_processing": {
+        return { data: executeButcheryProcessing(args), error: null };
       }
       case "pos_checkout": {
         const result=executePosCheckout(args);
