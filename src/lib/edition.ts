@@ -1,9 +1,9 @@
-export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending";
+export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending" | "payroll";
 
 const raw = String((import.meta as any).env?.VITE_SIFOBOOKS_EDITION || "enterprise").toLowerCase();
 
 export const SIFOBOOKS_EDITION: SifoBooksEdition =
-  (["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending"] as const).includes(raw as SifoBooksEdition)
+  (["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending", "payroll"] as const).includes(raw as SifoBooksEdition)
     ? raw as SifoBooksEdition
     : "enterprise";
 
@@ -15,7 +15,7 @@ export const SIFOBOOKS_EDITION_LABEL: Record<SifoBooksEdition, string> = {
   hotel: "Hotel",
   school: "School",
   property: "Property",
-  lending: "Microfinance",
+  lending: "Microfinance",\n  payroll: "Payroll",
 };
 
 export const SIFOBOOKS_PRODUCT_NAME =
