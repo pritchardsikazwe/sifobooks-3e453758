@@ -171,6 +171,15 @@ const auth = {
     return result;
   },
 
+  async setSession({ access_token }: { access_token: string }) {
+    if (!access_token) return { data: { session: null }, error: { message: "Missing access token" } };
+    const result = await getSessionFn({ data: { token: access_token } } as any);
+    if (!result?.data?.session) return { data: { session: null }, error: { message: "Invalid session" } };
+    setToken(access_token);
+    notifyAuthListeners("SIGNED_IN", result.data.session);
+    return { data: { session: result.data.session }, error: null };
+  },
+
   async signOut() {
     setToken(null);
     notifyAuthListeners("SIGNED_OUT", null);
