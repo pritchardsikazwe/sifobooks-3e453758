@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Edition = "enterprise" | "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending" | "payroll";
 
-const markerFor = (edition: Edition) => `standalone_demo_${edition}_v1`;
+const markerFor = (edition: Edition, version = 2) => `standalone_demo_${edition}_v${version}`;
 const id = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
 const days = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); };
@@ -25,6 +25,51 @@ export async function ensureStandaloneDemo(edition: Edition) {
   const { data: marker } = await (supabase as any).from("company_modules")
     .select("id").eq("user_id", uid).eq("module_key", markerFor(edition)).limit(1).maybeSingle();
   if (marker) return { seeded: false, already: true };
+
+  // v2 is a non-destructive catalogue upgrade. Existing v1 demo records are
+  // preserved; only missing sample products are added so an existing standalone
+  // workspace receives the same POS catalogue as a fresh installation.
+  const v1Marker = await (supabase as any).from("company_modules")
+    .select("id").eq("user_id", uid).eq("module_key", markerFor(edition, 1)).limit(1).maybeSingle();
+  const catalogueOnly = Boolean(v1Marker?.data);
+  if (catalogueOnly) {
+    const names = edition === "retail" || edition === "enterprise" || edition === "accounting"
+      ? ["Coca-Cola 500ml","Mineral Water 500ml","Bread 500g","Sugar 2kg","Cooking Oil 2L","Rice 5kg","Bath Soap","Milk 1L","Eggs 30 Pack"]
+      : edition === "restaurant"
+        ? ["Chicken & Nshima","Beef & Nshima","Fish & Chips","Burger & Chips","Chips","Soft Drink 500ml","Mineral Water","Tea","Coffee"]
+        : edition === "hotel"
+          ? ["Room Service Breakfast","Soft Drink 500ml","Mineral Water","Laundry Service","Airport Transfer"]
+          : edition === "school"
+            ? ["School Uniform","Exercise Book","School T-Shirt","Pen","Textbook"]
+            : [];
+    if (names.length) {
+      const { data: existing } = await (supabase as any).from("stock_items")
+        .select("name").eq("user_id", uid).in("name", names);
+      const existingNames = new Set((existing ?? []).map((x:any) => x.name));
+      const specs: Record<string, [string,string,string,number,number,number]> = {
+        "Coca-Cola 500ml":["BEV-001","Beverages","bottle",9,15,80],"Mineral Water 500ml":["BEV-002","Beverages","bottle",5,8,100],
+        "Bread 500g":["GRO-001","Groceries","each",12,18,60],"Sugar 2kg":["GRO-002","Groceries","pack",24,32,50],
+        "Cooking Oil 2L":["GRO-003","Groceries","bottle",42,55,40],"Rice 5kg":["GRO-004","Groceries","bag",65,82,35],
+        "Bath Soap":["HOU-001","Household","bar",7,12,100],"Milk 1L":["DAI-001","Dairy","carton",15,22,60],
+        "Eggs 30 Pack":["DAI-002","Dairy","tray",70,90,30],"Chicken & Nshima":["FOOD-001","Mains","plate",65,120,40],
+        "Beef & Nshima":["FOOD-002","Mains","plate",75,135,35],"Fish & Chips":["FOOD-003","Mains","plate",80,145,30],
+        "Burger & Chips":["FOOD-004","Fast Food","plate",55,100,35],"Chips":["FOOD-005","Sides","portion",20,40,60],
+        "Soft Drink 500ml":["BEV-003","Beverages","bottle",8,15,80],"Mineral Water":["BEV-004","Beverages","bottle",5,10,80],
+        "Tea":["BEV-005","Hot Drinks","cup",6,15,50],"Coffee":["BEV-006","Hot Drinks","cup",10,25,50],
+        "Room Service Breakfast":["HOT-001","Food & Beverage","meal",55,100,40],"Soft Drink 500ml":["HOT-002","Food & Beverage","bottle",8,15,60],
+        "Laundry Service":["HOT-004","Guest Services","service",25,50,30],"Airport Transfer":["HOT-005","Guest Services","trip",120,200,20],
+        "School Uniform":["SCH-001","Uniform","each",180,250,30],"Exercise Book":["SCH-002","Stationery","each",8,12,200],
+        "School T-Shirt":["SCH-003","Uniform","each",90,130,50],"Pen":["SCH-004","Stationery","each",3,5,300],"Textbook":["SCH-005","Books","each",80,120,50],
+      };
+      const rows = names.filter(n => !existingNames.has(n)).map((name) => {
+        const [sku,category,unit,cost,sell,qty] = specs[name];
+        return { id:id(), user_id:uid, company_id:companyId, name, sku, category, unit, cost_price:cost, sell_price:sell, quantity_on_hand:qty, reorder_level:Math.max(5,Math.floor(qty*.2)), is_active:1 };
+      });
+      await insert("stock_items", rows);
+    }
+    await insert("company_modules", [{ id:id(), user_id:uid, company_id:companyId, module_key:markerFor(edition), config: JSON.stringify({demo:true,edition,createdAt:new Date().toISOString(),deletable:true,upgrade:"v2 catalogue"}), enabled:1 }]);
+    return { seeded:true, upgraded:true, edition };
+  }
 
   const prefix = `DEMO-${edition.toUpperCase()}`;
   const customerId = id();
