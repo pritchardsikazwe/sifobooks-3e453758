@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { POSFullscreenButton } from "@/components/pos/POSFullscreenButton";
-import { ExternalLink, Search, UserRound, Package, Monitor, Printer, Store, ChevronDown, CheckCircle2, UserPlus } from "lucide-react";
+import { ExternalLink, Search, UserRound, Package, Monitor, Printer, Store, ChevronDown, CheckCircle2, UserPlus, Activity, ShieldCheck, Wifi, Database, ReceiptText, Settings2, HardDrive, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 type Cashier = { id:string; full_name:string|null; display_name?:string|null; email?:string|null; pos_role?:string|null; is_active:boolean };
@@ -24,6 +24,8 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
   const [openCashier,setOpenCashier]=useState<string|null>(null);
   const [openItem,setOpenItem]=useState<string|null>(null);
   const [loading,setLoading]=useState(true);
+  const [health,setHealth]=useState<{key:string;label:string;status:"ready"|"warning"|"unavailable";detail:string}[]>([]);
+  const [healthLoading,setHealthLoading]=useState(false);
 
   const load=async()=>{
     setLoading(true);
@@ -56,6 +58,25 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
     })();
   },[restaurant]);
   useEffect(()=>{void load()},[]);
+
+  const runStandaloneHealth=async()=>{
+    setHealthLoading(true);
+    const checks:{key:string;label:string;status:"ready"|"warning"|"unavailable";detail:string}[]=[];
+    const probe=async(key:string,label:string,table:string,detail:string)=>{
+      const {error}=await supabase.from(table).select("id",{count:"exact",head:true});
+      if(error) checks.push({key,label,status:"unavailable",detail:`${detail}: ${error.message}`});
+      else checks.push({key,label,status:"ready",detail});
+    };
+    await probe("cashiers","Cashier & PIN access","employee_pos_permissions","Cashier assignments are reachable.");
+    await probe("registers","POS registers / terminals","pos_registers","Register configuration is reachable.");
+    await probe("printing","Printing configuration","print_jobs","Print queue is reachable.");
+    await probe("zra-device","ZRA Smart Invoice / VSDC","zra_device_configs","Device configuration is available.");
+    await probe("zra-queue","ZRA fiscal queue","zra_invoice_queue","Fiscal submission queue is available.");
+    await probe("audit","Audit trail","audit_logs","Audit log storage is reachable.");
+    await probe("backup","Backup / local data","companies","Core company data is reachable; Windows backup remains a local deployment responsibility.");
+    setHealth(checks);
+    setHealthLoading(false);
+  };
 
   const cashiersFiltered=useMemo(()=>cashiers.filter(c=>(c.display_name||c.full_name||c.email||"").toLowerCase().includes(cashierSearch.toLowerCase())),[cashiers,cashierSearch]);
   const itemsFiltered=useMemo(()=>items.filter(i=>[i.name,i.sku,i.barcode,i.category].some(v=>String(v||"").toLowerCase().includes(itemSearch.toLowerCase()))),[items,itemSearch]);
@@ -93,6 +114,8 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
           <TabsTrigger value="registers" className="rounded-xl">Registers</TabsTrigger>
           <TabsTrigger value="hardware" className="rounded-xl">Hardware & Printing</TabsTrigger>
           <TabsTrigger value="display" className="rounded-xl">Display & POS</TabsTrigger>
+          <TabsTrigger value="administration" className="rounded-xl">Administration</TabsTrigger>
+          <TabsTrigger value="health" className="rounded-xl">System Health</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cashiers">
@@ -107,7 +130,7 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
         </TabsContent>
 
         <TabsContent value="items">
-          <Card className="rounded-2xl border-[#DDEBE6] shadow-sm"><CardHeader className="flex flex-col gap-3 border-b sm:flex-row sm:items-center sm:justify-between"><CardTitle>{restaurantMode?"Restaurant menu catalogue":"POS item catalogue"}</CardTitle><div className="flex gap-2"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground"/><Input value={itemSearch} onChange={e=>setItemSearch(e.target.value)} placeholder="Search name, SKU or barcode…" className="h-10 w-72 rounded-xl pl-9"/></div><Button asChild variant="outline" className="rounded-xl"><a href="/stock">Open item master</a></Button></div></CardHeader>
+          <Card className="rounded-2xl border-[#DDEBE6] shadow-sm"><CardHeader className="flex flex-col gap-3 border-b sm:flex-row sm:items-center sm:justify-between"><CardTitle>{restaurantMode?"Restaurant menu catalogue":"POS item catalogue"}</CardTitle><div className="flex gap-2"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground"/><Input value={itemSearch} onChange={e=>setItemSearch(e.target.value)} placeholder="Search name, SKU or barcode…" className="h-10 w-72 rounded-xl pl-9"/></div><Button asChild variant="outline" className="rounded-xl"><a href="/restaurant/items-stock">Open item master</a></Button></div></CardHeader>
             <CardContent className="grid gap-2 p-3">{restaurantMode ? menuFiltered.map((i:any)=><div key={i.id} className="flex items-center gap-3 rounded-2xl border border-[#DDEBE6] bg-white p-4"><div className="flex-1"><div className="font-bold">{i.name}</div><div className="text-xs text-muted-foreground">{i.category||"General"} · {i.station||"Kitchen"}</div></div><Badge variant={i.active&&!i.is_86?"default":"secondary"}>{i.is_86?"86":i.active?"ACTIVE":"DISABLED"}</Badge><div className="font-black">K{Number(i.price||0).toFixed(2)}</div></div>) : itemsFiltered.map(i=>{
               const open=openItem===i.id; return <div key={i.id} className="overflow-hidden rounded-2xl border border-[#DDEBE6] bg-white transition-all hover:shadow-sm">
                 <button type="button" onClick={()=>setOpenItem(open?null:i.id)} className="flex min-h-16 w-full items-center gap-3 px-4 text-left"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Package className="h-5 w-5"/></div><div className="min-w-0 flex-1"><div className="truncate font-bold">{i.name}</div><div className="text-xs text-muted-foreground">{i.sku||"No SKU"} · {i.category||"General"}</div></div><div className="hidden text-right sm:block"><div className="font-black">K{Number(i.sell_price||0).toFixed(2)}</div><div className="text-xs text-muted-foreground">{Number(i.quantity_on_hand||0)} in stock</div></div><ChevronDown className={`h-4 w-4 transition-transform ${open?"rotate-180":""}`}/></button>
@@ -126,6 +149,50 @@ export function POSSettingsWorkspace({ edition = "SifoBooks POS", restaurant }: 
           <Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/manager/shifts">Cash shifts & drawers</a></Button>
           <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border bg-[#F7FBF9] p-4"><div className="mb-3 font-bold">Order types</div><div className="grid gap-2 md:grid-cols-2">{orderTypes.map((x:any)=><div key={x.id} className="flex items-center justify-between rounded-xl bg-white p-3 border"><span className="font-semibold">{x.label||x.key}</span><Badge variant={x.active?"default":"secondary"}>{x.active?"ACTIVE":"DISABLED"}</Badge></div>)}</div></div>
         </CardContent></Card></TabsContent>
+
+        <TabsContent value="administration">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              ["/manager/cashiers","Cashiers & permissions","Create PIN users, assign roles, branches, registers and drawers.",UserRound],
+              ["/printing-settings","Printers & devices","Receipt, kitchen, bar and network printer routing.",Printer],
+              ["/pos/settings","POS control centre","Till behaviour, catalogue, registers and touch settings.",Settings2],
+              ["/system-health","System health","Accounting, POS, inventory, ZRA and connector readiness.",Activity],
+              ["/zra-smart-invoice","ZRA Smart Invoice","VSDC device configuration, fiscal queue and submission status.",ShieldCheck],
+              ["/audit-logs","Audit & security","Review controlled changes and operational audit history.",ReceiptText],
+              ["/restaurant/items-stock","Stock & inventory","Use the current standalone stock screen, not the legacy /stock route.",Package],
+              ["/restaurant/end-of-day","End of day","Cash-up, reconciliation and manager close.",Database],
+              ["/network-setup","Network & terminals","LAN, terminal and local service configuration.",Wifi],
+            ].map(([to,label,desc,Icon]:any)=><a key={String(to)} href={String(to)} className="group rounded-2xl border border-[#DDEBE6] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-start gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Icon className="h-5 w-5"/></div><div><div className="font-bold">{label}</div><div className="mt-1 text-xs leading-5 text-muted-foreground">{desc}</div></div></div>
+            </a>)}
+          </div>
+          <Card className="mt-4 rounded-2xl border-[#DDEBE6]">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3"><HardDrive className="mt-0.5 h-5 w-5 text-emerald-700"/><div><div className="font-bold">Standalone / offline rule</div><p className="mt-1 text-sm text-muted-foreground">The Windows standalone installation should keep terminal, printer, cashier, stock and fiscal configuration locally available. Cloud services can synchronize when connectivity returns; secrets and ZRA credentials must not be exposed in the browser.</p></div></div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="health">
+          <Card className="rounded-2xl border-[#DDEBE6]">
+            <CardHeader className="flex flex-col gap-3 border-b sm:flex-row sm:items-center sm:justify-between">
+              <div><CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5 text-emerald-700"/>Standalone System Health</CardTitle><p className="mt-1 text-sm text-muted-foreground">Safe capability checks for the local/online standalone configuration. A missing table is reported as unavailable instead of breaking the settings screen.</p></div>
+              <Button onClick={()=>void runStandaloneHealth()} disabled={healthLoading} className="rounded-xl"><Activity className="mr-2 h-4 w-4"/>{healthLoading?"Checking…":"Run health check"}</Button>
+            </CardHeader>
+            <CardContent className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+              {!health.length&&!healthLoading&&<div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">Run the health check to verify cashier access, registers, printing, ZRA/VSDC, audit and core data.</div>}
+              {health.map(h=><div key={h.key} className="rounded-2xl border border-[#DDEBE6] bg-white p-4">
+                <div className="flex items-center justify-between gap-2"><div className="font-bold">{h.label}</div>{h.status==="ready"?<Badge className="bg-emerald-600">READY</Badge>:h.status==="warning"?<Badge variant="outline" className="border-amber-400 text-amber-700">WARNING</Badge>:<Badge variant="outline" className="border-rose-400 text-rose-700"><CircleAlert className="mr-1 h-3 w-3"/>UNAVAILABLE</Badge>}</div>
+                <div className="mt-2 text-xs text-muted-foreground">{h.detail}</div>
+              </div>)}
+            </CardContent>
+          </Card>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <a href="/system-health" className="rounded-2xl border bg-white p-4"><div className="font-bold">Full accounting health</div><div className="mt-1 text-xs text-muted-foreground">GL, POS posting, inventory, banking and company checks.</div></a>
+            <a href="/zra-smart-invoice" className="rounded-2xl border bg-white p-4"><div className="font-bold">Fiscal readiness</div><div className="mt-1 text-xs text-muted-foreground">Open the Smart Invoice / VSDC configuration and queue.</div></a>
+            <a href="/printing-settings" className="rounded-2xl border bg-white p-4"><div className="font-bold">Printer readiness</div><div className="mt-1 text-xs text-muted-foreground">Check receipt and kitchen routing before service.</div></a>
+          </div>
+        </TabsContent>
 
         <TabsContent value="registers"><Card className="rounded-2xl border-[#DDEBE6]"><CardContent className="grid gap-3 p-5 sm:grid-cols-3"><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/restaurant/registers"><Store className="mr-2 h-5 w-5"/>Restaurant registers</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/retail-control-center">Retail control centre</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/manager/shifts">Cash shifts & drawers</a></Button></CardContent></Card></TabsContent>
         <TabsContent value="hardware"><Card className="rounded-2xl border-[#DDEBE6]"><CardContent className="grid gap-3 p-5 sm:grid-cols-2"><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/printing-settings"><Printer className="mr-2 h-5 w-5"/>Printer routing</a></Button><Button asChild variant="outline" className="h-20 rounded-2xl"><a href="/network-setup"><Monitor className="mr-2 h-5 w-5"/>Network / terminals</a></Button></CardContent></Card></TabsContent>
