@@ -953,7 +953,7 @@ function Page() {
               {search && <button type="button" aria-label="Clear search" onClick={() => { setSearch(""); searchRef.current?.focus(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[14px] font-black text-[#58706f]">×</button>}
             </div>
           </div>
-          <div className={cn("pos-scrollbar grid auto-rows-[minmax(100px,1fr)] grid-cols-2", textScale === "large" ? "text-[13px]" : textScale === "xl" ? "text-[15px]" : "text-[12px]" gap-2 overflow-auto scroll-smooth p-2 sm:grid-cols-3 xl:grid-cols-4">
+          <div className={cn("pos-scrollbar grid auto-rows-[minmax(100px,1fr)] grid-cols-2", textScale === "large" ? "text-[13px]" : textScale === "xl" ? "text-[15px]" : "text-[12px]") + " gap-2 overflow-auto scroll-smooth p-2 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((mi, i) => (
               <button key={mi.id} onClick={() => addToCart(mi)}
                 disabled={itemStock(mi) === 0}
