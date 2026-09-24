@@ -490,7 +490,12 @@ function Page() {
             note: l.note ?? null,
             modifiers: (l.mods ?? []).map(m => ({ name: m.name, price: Number(m.price || 0) })),
           })),
-          _payments: [{ method: pay, amount: total, tendered: tendered ?? total, change: change ?? 0 }],
+          _payments: [{
+          method: pay,
+          amount: total,
+          tendered: tendered ?? total,
+          change: change ?? 0,
+        }],
         } as any);
         if (error || !result) {
           setBusy(false);
