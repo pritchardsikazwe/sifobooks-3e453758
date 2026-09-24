@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createSessionTokenForUser } from "@/lib/db/auth";
+import { createSessionTokenForUser, adminCreateLocalUser, adminDeleteUser } from "@/lib/db/auth";
 
 function normalizeCashierCode(value: string) {
   return String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
@@ -109,17 +109,18 @@ export const createCashier = createServerFn({ method: "POST" })
       code = "CASH-" + crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
     }
     const email = `${code.toLowerCase()}@${companyId.slice(0, 8)}.cashier.sifobooks.local`;
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email, email_confirm: true, user_metadata: { full_name: data.name, sifobooks_cashier: true }
+    const { data: authUser, error: authError } = await adminCreateLocalUser(email, {
+      full_name: data.name,
+      sifobooks_cashier: true,
     });
-    if (authError || !authUser.user) return { ok: false as const, error: authError?.message ?? "Could not create cashier login" };
+    if (authError || !authUser?.user) return { ok: false as const, error: authError?.message ?? "Could not create cashier login" };
     const { data: perm, error: permError } = await supabaseAdmin.from("employee_pos_permissions").insert({
       user_id: context.userId, worker_user_id: authUser.user.id, company_id: companyId,
       full_name: data.name, display_name: data.name, pos_role: data.role, allow: true, is_active: true,
       email, cashier_code: code
     }).select("id,full_name,cashier_code,pos_role").single();
     if (permError) {
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+      await adminDeleteUser(authUser.user.id);
       return { ok: false as const, error: permError.message };
     }
     const { data: pinRes, error: pinError } = await supabaseAdmin.rpc("set_cashier_pin" as never, { _permission_id: perm.id, _pin: data.pin } as never);
