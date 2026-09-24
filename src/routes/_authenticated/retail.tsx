@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 
 export const Route = createFileRoute("/_authenticated/retail")({
   head: () => ({
@@ -52,7 +53,7 @@ function RetailDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { void load(); }, [refresh]);
+  useEffect(() => { void load(); void ensureStandaloneDemo("retail").catch((e) => console.error("[standalone-demo:retail]", e)); }, [refresh]);
 
   const metrics = useMemo(() => {
     const completed = sales.filter(x => x.status === "completed" && !x.refund_of);
