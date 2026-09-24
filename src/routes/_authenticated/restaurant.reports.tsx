@@ -8,6 +8,7 @@ import { fmtMoney } from "@/lib/format";
 import { today, uid } from "@/lib/restaurant";
 import { cn } from "@/lib/utils";
 import { ExportMenu } from "@/lib/exports";
+import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import {
   BarChart3, CalendarDays, Download, FileBarChart, FileSpreadsheet, Printer,
   RefreshCw, TrendingUp, UtensilsCrossed, WalletCards, Users2, Clock3, Boxes,
@@ -45,7 +46,7 @@ const REPORTS = [
 
 type ReportId = typeof REPORTS[number]["id"];
 
-function RestaurantReports() {
+function RestaurantReports() {\n  return <StandaloneReports edition="restaurant" />;\n}\n\n/* Legacy report implementation retained below for reference while the standalone workspace is active.\nfunction RestaurantReportsLegacy() {
   const [from, setFrom] = useState(today());
   const [to, setTo] = useState(today());
   const [report, setReport] = useState<ReportId>("dashboard");
