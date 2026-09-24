@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { RequireModule } from "@/components/RequireModule";
+import { SifoStandaloneFrame } from "@/components/sifo/SifoStandaloneFrame";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,9 +86,9 @@ export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: s
  const unitName=(id:string)=>units.find(x=>x.id===id)?.unit_code??"—";
  const tenantName=(id:string|null)=>tenants.find(x=>x.id===id)?.full_name??"—";
  if(loading)return <div className="p-8 text-muted-foreground">Loading property management…</div>;
- return <RequireModule moduleKey="property_management"><div className="sifobooks-2026-industry space-y-5 rounded-[28px] bg-[#F5FAF8]/70 p-1">
+ return <RequireModule moduleKey="property_management"><SifoStandaloneFrame product="Property" title="Property Operations Centre" subtitle="Properties, units, tenants, leases, rent, collections, maintenance and statements in one dedicated workspace." nav={[{label:"Dashboard",to:"/property"},{label:"Properties",to:"/property"},{label:"Tenants",to:"/property/tenants"},{label:"Leases",to:"/property/leases"},{label:"Rent & Charges",to:"/property/collections"},{label:"Maintenance",to:"/property/maintenance"},{label:"Statements",to:"/property/reports"},{label:"Settings",to:"/property"}]} actions={<Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>}>\n<div className="space-y-5">
   <div className="rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br from-white via-[#F6FBF9] to-[#EEF7F3] p-6 shadow-[0_12px_34px_rgba(23,59,58,.07)]">
-   <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-2xl font-bold">SifoProperty</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><div className="flex flex-wrap gap-2">
+   <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-sm font-black uppercase tracking-[.16em] text-[#07834F]">Property Management</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><div className="flex flex-wrap gap-2">
  <Button variant="outline" disabled={billing} onClick={generateMonthlyRent}>{billing?"Generating…":"Generate monthly rent"}</Button>
  <Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>
 </div></div>
@@ -107,7 +108,7 @@ export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: s
    <TabsContent value="maintenance"><List title="Maintenance & repairs" rows={maintenance.map(x=>[x.title,unitName(x.unit_id),x.priority,x.status,fmtMoney(x.actual_cost)])} action={()=>setShow("maintenance")}/></TabsContent><TabsContent value="utilities"><List title="Meter readings" rows={meters.map(x=>[unitName(x.unit_id),x.meter_type,x.reading_date,x.reading])} action={()=>setShow("meter")}/></TabsContent><TabsContent value="bnb"><Card><CardHeader><CardTitle>Daily & BnB operations</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground mb-4">Use unit type BnB and lease type daily/BnB for short stays. Daily rates, booking dates, guest details, deposits and checkout can be tracked here.</p><Button onClick={()=>setShow("booking")}>Create daily booking</Button></CardContent></Card></TabsContent>
   </Tabs>
   {show&&<Editor kind={show} form={form} setForm={setForm} properties={properties} units={units} tenants={tenants} onClose={()=>setShow(null)} onSave={save}/>}
- </div></RequireModule>
+ </div>\n</SifoStandaloneFrame></RequireModule>
 }
 function Metric({icon:Icon,label,value}:{icon:any;label:string;value:any}){return <Card><CardContent className="p-4"><Icon className="h-5 w-5 text-primary"/><div className="mt-2 text-xl font-bold">{value}</div><div className="text-xs text-muted-foreground">{label}</div></CardContent></Card>}
 function List({title,rows,action}:{title:string;rows:any[][];action:()=>void}){return <Card><CardHeader className="flex flex-row items-center justify-between"><CardTitle>{title}</CardTitle><Button size="sm" onClick={action}>+ Add</Button></CardHeader><CardContent><div className="overflow-auto"><table className="w-full text-sm"><tbody>{rows.slice(0,100).map((r,i)=><tr key={i} className="border-b">{r.map((v,j)=><td key={j} className="p-2">{v}</td>)}</tr>)}{!rows.length&&<tr><td className="p-6 text-muted-foreground">No records yet.</td></tr>}</tbody></table></div></CardContent></Card>}
