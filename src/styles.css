@@ -1403,3 +1403,56 @@
 .sifobooks-2026-pos .bg-till-nav .text-till-nav-foreground {
   color: #fff !important;
 }
+
+
+/* ------------------------------------------------------------------
+   SifoBooks 2026 standalone industry shell
+   Shared visual language for Hotel, Restaurant, School, Property,
+   Microfinance and Retail/pos screens. Operational controls keep their
+   existing specialised layouts; this layer standardises the page canvas.
+   ------------------------------------------------------------------ */
+.standalone-2026-shell {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(216,180,90,.07), transparent 28rem),
+    linear-gradient(180deg, #f8fcfa 0%, #f4f7f8 100%);
+  color: #173b3a;
+}
+.standalone-2026-shell .text-muted-foreground {
+  color: #607572;
+}
+.standalone-2026-shell .border-border {
+  border-color: #d9e6e3;
+}
+.standalone-2026-shell .standalone-2026-page,
+.standalone-2026-shell .sifobooks-2026-industry {
+  animation: page-in 220ms ease-out;
+}
+.standalone-2026-shell .standalone-2026-page > header,
+.standalone-2026-shell .standalone-2026-page > .page-header {
+  border-color: #d7e6e1;
+}
+.standalone-2026-shell table thead {
+  background: #f3f8f6;
+}
+.standalone-2026-shell table tbody tr:hover {
+  background: #f7fbf9;
+}
+.standalone-2026-shell input,
+.standalone-2026-shell select,
+.standalone-2026-shell textarea {
+  border-color: #d5e3df;
+}
+.standalone-2026-shell input:focus,
+.standalone-2026-shell select:focus,
+.standalone-2026-shell textarea:focus {
+  border-color: #07834f;
+  box-shadow: 0 0 0 3px rgba(7,131,79,.10);
+}
+.standalone-2026-shell .standalone-action-primary {
+  background: #07834f;
+  color: white;
+}
+.standalone-2026-shell .standalone-action-primary:hover {
+  background: #066b40;
+}
