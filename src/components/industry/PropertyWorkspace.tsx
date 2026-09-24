@@ -87,12 +87,6 @@ export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: s
  const tenantName=(id:string|null)=>tenants.find(x=>x.id===id)?.full_name??"—";
  if(loading)return <div className="p-8 text-muted-foreground">Loading property management…</div>;
  return <RequireModule moduleKey="property_management"><SifoStandaloneFrame product="Property" title="Property Operations Centre" subtitle="Properties, units, tenants, leases, rent, collections, maintenance and statements in one dedicated workspace." nav={[{label:"Dashboard",to:"/property"},{label:"Properties",to:"/property"},{label:"Tenants",to:"/property/tenants"},{label:"Leases",to:"/property/leases"},{label:"Rent & Charges",to:"/property/collections"},{label:"Maintenance",to:"/property/maintenance"},{label:"Statements",to:"/property/reports"},{label:"Settings",to:"/property"}]} actions={<Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>}>\n<div className="space-y-5">
-  <div className="rounded-[26px] border border-[#D7E6E1] bg-gradient-to-br from-white via-[#F6FBF9] to-[#EEF7F3] p-6 shadow-[0_12px_34px_rgba(23,59,58,.07)]">
-   <div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-sm font-black uppercase tracking-[.16em] text-[#07834F]">Property Management</div><div className="text-muted-foreground">Apartments · houses · complexes · boarding houses · monthly rentals · daily rentals · BnB</div></div><div className="flex flex-wrap gap-2">
- <Button variant="outline" disabled={billing} onClick={generateMonthlyRent}>{billing?"Generating…":"Generate monthly rent"}</Button>
- <Button onClick={()=>{setForm({});setShow("property")}}><Plus className="mr-2 h-4 w-4"/>Add property</Button>
-</div></div>
-  </div>
   <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
    <Metric icon={Building2} label="Properties" value={properties.length}/><Metric icon={Home} label="Units / rooms" value={units.length}/><Metric icon={Users} label="Tenants" value={tenants.length}/><Metric icon={Wallet} label="Outstanding" value={fmtMoney(outstanding)}/><Metric icon={Wallet} label="Collected" value={fmtMoney(received)}/>
   </div>
