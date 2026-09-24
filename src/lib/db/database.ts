@@ -194,6 +194,19 @@ function runCompatibilityMigrations(database: Database) {
     restaurant_order_types: [
       "delivery_fee REAL NOT NULL DEFAULT 0",
     ],
+    employee_pos_permissions: [
+      "cashier_code TEXT",
+      "display_name TEXT",
+      "pin_set_at TEXT",
+      "pin_disabled INTEGER NOT NULL DEFAULT 0",
+      "branch_id TEXT",
+      "location_id TEXT",
+      "register_id TEXT",
+      "drawer_name TEXT",
+      "failed_pin_attempts INTEGER NOT NULL DEFAULT 0",
+      "pin_locked_until TEXT",
+      "last_pin_login_at TEXT",
+    ],
     stock_movements: [
       "total_cost REAL",
       "transaction_date TEXT",
