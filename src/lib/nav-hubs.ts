@@ -248,6 +248,7 @@ export const HUBS: HubDef[] = [
           { title: "Worker Command Center", url: "/pos/command-center", module: "retail_pos", iconName: "LayoutGrid" },
           { title: "Worker Terminal", url: "/pos/command-center", module: "retail_pos", iconName: "Monitor" },
           { title: "Worker Access & Roles", url: "/pos-workers", module: "retail_pos", iconName: "ShieldCheck" },
+          { title: "POS Control Centre", url: "/pos/settings", module: "retail_pos", iconName: "Settings2", hint: "Cashiers, items, registers, hardware and POS behaviour." },
           { title: "Till & Stock Health Check", url: "/reports/pos-integrity", module: "reports", iconName: "ShieldCheck" },
         ],
       },
@@ -743,6 +744,7 @@ export const RESTAURANT_HUBS: HubDef[] = [
     { label: "Today", items: [
       { title: "Restaurant Dashboard", url: "/restaurant", module: "restaurant", iconName: "LayoutDashboard", primary: true },
       { title: "Restaurant POS", url: "/restaurant/pos", module: "restaurant", iconName: "ShoppingBag", primary: true },
+      { title: "POS Control Centre", url: "/pos/settings", module: "restaurant", iconName: "Settings2" },
       { title: "Orders", url: "/restaurant/orders", module: "restaurant", iconName: "Receipt", primary: true },
       { title: "Tables", url: "/restaurant/tables", module: "restaurant", iconName: "LayoutGrid", primary: true },
     ]},
