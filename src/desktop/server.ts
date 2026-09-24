@@ -151,7 +151,10 @@ const tanstackServer = (await import("../../dist/server/server.js")).default as 
   fetch: (req: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-type ScaleSession = { port: string; baudRate: number; latestRaw: string; openedAt: string; lastReadAt: string };\nconst scaleSessions = new Map<string, ScaleSession>();\nconst scaleSessionKey = (port: string, baudRate: number) => port + ":" + baudRate;\nconst MIME_TYPES: Record<string, string> = {
+type ScaleSession = { port: string; baudRate: number; latestRaw: string; openedAt: string; lastReadAt: string };
+const scaleSessions = new Map<string, ScaleSession>();
+const scaleSessionKey = (port: string, baudRate: number) => port + ":" + baudRate;
+const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".mjs": "application/javascript; charset=utf-8",
@@ -373,7 +376,8 @@ function startServer() {
         const printerInfo = hardware.printers.find((item: any) => String(item?.Name || "") === printer);
         if (!printerInfo) return Response.json({ error: "Selected Windows printer was not found." }, { status: 404 });
         const protocol = chooseLabelProtocol(printerInfo, requestedProtocol);
-        const label = { name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated").slice(0, 80) };\n        const copies = Math.min(20, Math.max(1, Number(body?.copies || 1)));
+        const label = { name: String(body?.name || "Butchery Item").slice(0, 60), weightKg: Math.max(0, Number(body?.weightKg || 0)), pricePerKg: Math.max(0, Number(body?.pricePerKg || 0)), total: Math.max(0, Number(body?.total || 0)), barcode: String(body?.barcode || "").slice(0, 40), footer: String(body?.footer || "Keep refrigerated").slice(0, 80) };
+        const copies = Math.min(20, Math.max(1, Number(body?.copies || 1)));
         const payload = protocol === "zpl" ? buildZplLabel(label) : protocol === "tspl" ? buildTsplLabel(label) : buildEscPosLabel(label);
         await printRawWindows(printer, payload);
         return Response.json({ ok: true, printer, protocol, transport: "windows-raw" });
