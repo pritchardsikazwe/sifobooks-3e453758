@@ -12,6 +12,9 @@ import { fmtMoney } from "@/lib/format";
 import { today, uid } from "@/lib/restaurant";
 import { deriveStatus } from "@/lib/inventory";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/_authenticated/restaurant/stock-reports")({
   head: () => ({
@@ -109,6 +112,74 @@ function downloadCsv(name: string, rows: Record<string, any>[]) {
   const a = document.createElement("a");
   a.href = url; a.download = name; a.click();
   URL.revokeObjectURL(url);
+}
+
+function downloadExcel(name: string, rows: Record<string, any>[], title: string) {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const headers = rows.length ? Object.keys(rows[0]) : ["Report"];
+  ws["!cols"] = headers.map((h) => ({ wch: Math.min(32, Math.max(12, h.length + 3)) }));
+  XLSX.utils.book_append_sheet(wb, ws, title.slice(0, 31));
+  XLSX.writeFile(wb, name);
+}
+
+function downloadPdf(title: string, rows: Record<string, any>[], from: string, to: string) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  doc.setFillColor(7, 59, 56);
+  doc.rect(0, 0, 297, 24, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text("SifoBooks", 14, 10);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("RESTAURANT INVENTORY • 2026", 14, 17);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, 283, 11, { align: "right" });
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${from} → ${to}`, 283, 17, { align: "right" });
+
+  const headers = rows.length ? Object.keys(rows[0]) : ["Report"];
+  const body = rows.length ? rows.map((row) => headers.map((h) => String(row[h] ?? ""))) : [["No records match the selected filters."]];
+  autoTable(doc, {
+    startY: 30,
+    head: [headers],
+    body,
+    theme: "grid",
+    styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
+    headStyles: { fillColor: [7, 59, 56], textColor: 255, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: [247, 250, 249] },
+    margin: { left: 10, right: 10 },
+  });
+  const pages = doc.getNumberOfPages();
+  for (let page = 1; page <= pages; page++) {
+    doc.setPage(page);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`SifoBooks Restaurant Inventory • Generated ${new Date().toLocaleString()} • Page ${page} of ${pages}`, 14, 203);
+  }
+  doc.save(`sifobooks-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${from}-to-${to}.pdf`);
+}
+
+function shareWhatsApp(title: string, stats: { stockValue: number; totalItems: number; low: number; out: number; used: number; waste: number }, from: string, to: string) {
+  const message = [
+    "📊 *SifoBooks Restaurant Stock Report*",
+    `*Report:* ${title}`,
+    `*Period:* ${from} → ${to}`,
+    `*Stock value:* ZMW ${stats.stockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+    `*Items:* ${stats.totalItems}`,
+    `*Low stock:* ${stats.low}`,
+    `*Out of stock:* ${stats.out}`,
+    `*Usage:* ZMW ${stats.used.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+    `*Wastage:* ZMW ${stats.waste.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+    "",
+    "Generated from SifoBooks Restaurant Inventory.",
+  ].join("\n");
+  const encoded = encodeURIComponent(message);
+  const url = `https://wa.me/?text=${encoded}`;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 function RestaurantStockReports() {
@@ -327,8 +398,10 @@ function RestaurantStockReports() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => void load()} disabled={loading}><RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} /> Refresh</Button>
-            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => downloadCsv(`sifobooks-${tab}-${from}-to-${to}.csv`, exportRows)}><Download className="mr-2 h-4 w-4" /> CSV</Button>
-            <Button className="bg-[#e5b83f] text-[#173b3a] hover:bg-[#f0c957]" onClick={printReport}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => downloadPdf(reportTitle, exportRows, from, to)}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => downloadExcel(`sifobooks-${tab}-${from}-to-${to}.xlsx`, exportRows, reportTitle)}><Download className="mr-2 h-4 w-4" /> Excel</Button>
+            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => shareWhatsApp(reportTitle, stats, from, to)}>WhatsApp</Button>
+            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={printReport}><Printer className="mr-2 h-4 w-4" /> Print</Button>
           </div>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
