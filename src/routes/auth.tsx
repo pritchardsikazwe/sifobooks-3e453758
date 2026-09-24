@@ -236,6 +236,7 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
   setTab: (v: "signin" | "signup" | "reset") => void;
 }) {
   const [showPw, setShowPw] = useState(false);
+  const navigate = useNavigate();
   const { next: signupNext } = Route.useSearch();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -263,11 +264,10 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
     if (uid) {
       await supabase.from("profiles").update({ full_name: f.name.trim(), email: f.email.trim() }).eq("id", uid);
     }
-    // A newly registered account has no company yet. Go directly to the
-    // company setup wizard instead of sending a fresh account through the
-    // product resolver (which is intended for existing companies).
+    // A newly registered account has no company yet. Go directly to company
+    // setup instead of sending a fresh account through /launch.
     setSaving(false);
-    await onDone();
+    navigate({ to: "/setup" });
   };
 
   const pw = pwStrength(f.password);
