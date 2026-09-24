@@ -3,7 +3,7 @@ export type SifoBooksEdition = "enterprise" | "accounting" | "retail" | "restaur
 const raw = String((import.meta as any).env?.VITE_SIFOBOOKS_EDITION || "enterprise").toLowerCase();
 
 export const SIFOBOOKS_EDITION: SifoBooksEdition =
-  (["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property"] as const).includes(raw as SifoBooksEdition)
+  (["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending"] as const).includes(raw as SifoBooksEdition)
     ? raw as SifoBooksEdition
     : "enterprise";
 
