@@ -169,7 +169,6 @@ function StockPage() {
     </SifoWorkspaceShell>
   );
 }
-}
 
 function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {
   return (
