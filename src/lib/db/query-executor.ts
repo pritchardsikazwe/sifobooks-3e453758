@@ -57,7 +57,7 @@ function parseColumns(colSpec: string): ParsedColumns {
   return { columns, joins };
 }
 
-function buildWhereClause(filters: Filter[]): { clause: string; params: any[] } {
+function buildWhereClause(filters: Filter[], table?: string): { clause: string; params: any[] } {
   const parts: string[] = [];
   const params: any[] = [];
   for (const f of filters) {
@@ -249,7 +249,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       }
     }
     if (["update", "delete"].includes(spec.operation)) {
-      const { clause, params } = buildWhereClause(secured.filters);
+      const { clause, params } = buildWhereClause(secured.filters, secured.table);
       const targeted = database.prepare(`SELECT status FROM pos_sales${clause}`).all(...params) as any[];
       if (targeted.some((row) => !["held", "draft"].includes(String(row.status ?? "").toLowerCase()))) {
         return { data: null, error: { message: "POSTED_POS_SALE_IMMUTABLE: use the reversal/correction workflow." } };
@@ -314,7 +314,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
         return v;
       });
       const setClause = setCols.map(c => `"${c}" = ?`).join(",");
-      const { clause, params } = buildWhereClause(secured.filters);
+      const { clause, params } = buildWhereClause(secured.filters, secured.table);
       const sql = `UPDATE "${secured.table}" SET ${setClause}${clause}`;
       database.prepare(sql).run(...setVals, ...params);
       const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
