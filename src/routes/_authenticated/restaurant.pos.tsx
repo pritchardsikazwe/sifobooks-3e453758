@@ -619,6 +619,7 @@ function Page() {
     { label: "TABLES", icon: "⌑", run: () => setPanel("tables") },
     { label: "RESERVATIONS", icon: "◷", run: () => navigate({ to: "/restaurant/reservations" }) },
     { label: "KITCHEN", icon: "▤", run: () => navigate({ to: "/restaurant/kitchen" }) },
+    { label: "SETTINGS", icon: "⚙", run: () => navigate({ to: "/pos/settings" }) },
   ];
 
   if (loading) {
