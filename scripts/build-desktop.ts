@@ -47,10 +47,14 @@ await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput
 console.log("\nStep 2b/4: Building native Windows WebView2 host...\n");
 if (process.platform !== "win32") throw new Error("The Windows desktop build must run on a Windows build runner for the native WebView2 host.");
 await $`dotnet publish desktop/native/SifoBooksDesktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ${join(OUT_DIR, "native-host")}`;
-const nativeExe = join(OUT_DIR, "native-host", "SifoBooksDesktop.exe");
+const nativeHostDir = join(OUT_DIR, "native-host");
+const nativeExe = join(nativeHostDir, "SifoBooksDesktop.exe");
+const webviewLoader = join(nativeHostDir, "WebView2Loader.dll");
 if (!existsSync(nativeExe)) throw new Error("Native WebView2 host was not produced.");
+if (!existsSync(webviewLoader)) throw new Error("WebView2Loader.dll was not produced by the WebView2 native host publish.");
 copyFileSync(nativeExe, join(OUT_DIR, exeName));
-rmSync(join(OUT_DIR, "native-host"), { recursive: true, force: true });
+copyFileSync(webviewLoader, join(OUT_DIR, "WebView2Loader.dll"));
+rmSync(nativeHostDir, { recursive: true, force: true });
 
 console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
