@@ -90,21 +90,15 @@ jobs:
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1
 
-      - name: Upload Windows portable package
-        uses: actions/upload-artifact@v4
-        with:
-          name: SifoBooks-${{ matrix.edition }}-Windows-Portable
-          path: SifoBooks-${{ matrix.edition }}-Windows-Portable.zip
-          if-no-files-found: error
-          retention-days: 30
-
+      # The branded installer is the supported customer distribution.
+      # Do not upload a duplicate portable ZIP to Actions artifacts.
       - name: Upload branded Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: SifoBooks-${{ matrix.edition }}-Windows-Setup
           path: installer-dist/SifoBooks-${{ matrix.edition }}-Windows-Setup.exe
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7
   vsdc-connector:
     runs-on: windows-latest
     steps:
@@ -127,4 +121,4 @@ jobs:
           name: SifoBooks-VSDC-Connector-Windows
           path: SifoBooks-VSDC-Connector-Windows.zip
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7
