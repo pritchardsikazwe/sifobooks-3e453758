@@ -43,6 +43,8 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 Name: "startup"; Description: "Start SifoBooks automatically when Windows starts"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 Name: "launch"; Description: "Launch SifoBooks after installation"; GroupDescription: "After installation:"; Flags: unchecked
+Name: "servermode"; Description: "Configure this PC as the SifoBooks Server"; GroupDescription: "Installation mode:"; Flags: exclusive
+Name: "clientmode"; Description: "Configure this PC as a Client / POS Station"; GroupDescription: "Installation mode:"; Flags: exclusive
 
 [Files]
 Source: "..\desktop-dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -158,10 +160,22 @@ begin
   end;
 end;
 
+function ShouldRunServerMode(): Boolean;
+begin
+  Result := WizardIsTaskSelected('servermode');
+end;
+
+function ShouldRunClientMode(): Boolean;
+begin
+  Result := WizardIsTaskSelected('clientmode');
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
   if CurPageID = OptionsPage.ID then begin
+    WizardSelectTasks('servermode');
+    WizardSelectTasks('clientmode');
     if OptionsPage.Values[0] then WizardSelectTasks('desktopicon');
     if OptionsPage.Values[1] then WizardSelectTasks('startmenu');
     if OptionsPage.Values[2] then WizardSelectTasks('launch');
