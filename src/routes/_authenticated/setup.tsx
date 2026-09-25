@@ -16,9 +16,20 @@ import { monthName } from "@/lib/format";
 import { AdministratorEmailCard } from "@/components/company/AdministratorEmailCard";
 
 export const Route = createFileRoute("/_authenticated/setup")({
+  // Company setup uses browser/local-auth state and must not be rendered on the server.
+  ssr: false,
   head: () => ({ meta: [{ title: "Company Setup — SifoBooks" }, { name: "robots", content: "noindex" }] }),
-  component: SetupPage,
+  component: SetupClientGate,
 });
+
+function SetupClientGate() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Starting company setup…</div>;
+  }
+  return <SetupPage />;
+}
 
 type Company = { id: string; user_id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string; payslip_header: string | null; payslip_footer: string | null };
 
