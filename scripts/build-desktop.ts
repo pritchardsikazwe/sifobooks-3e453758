@@ -39,7 +39,7 @@ if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: p
 try {
   await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
 } catch {
-  throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
+  throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
 }
 const serverExeName = exeName.replace(/\.exe$/i, "-server.exe");
 await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, serverExeName)}`;
@@ -63,7 +63,7 @@ if (existsSync("config/license-public-key.pem")) {
   mkdirSync(join(OUT_DIR, "config"), { recursive: true });
   copyFileSync("config/license-public-key.pem", join(OUT_DIR, "config/license-public-key.pem"));
 }
-if (!existsSync(join(OUT_DIR, "SifoBooks.ico"))) throw new Error("Native SifoBooks.ico was not generated.");
+if (!existsSync(join(OUT_DIR, "SifoBooks.ico"))) throw new Error("SifoBooks.ico was not generated.");
 writeFileSync(join(OUT_DIR, "edition.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, productName }, null, 2));
 
 writeFileSync(join(OUT_DIR, ".env.example"), [
@@ -86,22 +86,11 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
   "On Error Resume Next",
-  "Dim shell, fso, appDir, exePath, runtimePath, runtimeVersion, regPath",
+  "Dim shell, fso, appDir, exePath",
   "Set shell = CreateObject(\"WScript.Shell\")",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
-  `exePath = fso.BuildPath(appDir, "${exeName}")`,
-  "runtimePath = fso.BuildPath(appDir, \"WebView2Runtime\\MicrosoftEdgeWebView2RuntimeInstallerX64.exe\")",
-  "regPath = \"HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}\\pv\"",
-  "runtimeVersion = shell.RegRead(regPath)",
-  "If Err.Number <> 0 Then",
-  "  Err.Clear",
-  "  regPath = \"HKCU\\Software\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}\\pv\"",
-  "  runtimeVersion = shell.RegRead(regPath)",
-  "End If",
-  "If runtimeVersion = \"\" And fso.FileExists(runtimePath) Then",
-  "  shell.Run Chr(34) & runtimePath & Chr(34) & \" /silent /install /norestart\", 1, True",
-  "End If",
+  "exePath = fso.BuildPath(appDir, \"" + exeName + "\")",
   "If fso.FileExists(exePath) Then",
   "  shell.CurrentDirectory = appDir",
   "  shell.Run Chr(34) & exePath & Chr(34), 0, False",
@@ -109,7 +98,6 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Set fso = Nothing",
   "Set shell = Nothing",
 ].join("\r\n"));
-
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
   "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
@@ -179,29 +167,25 @@ writeFileSync(join(OUT_DIR, "PROTECTED-DISTRIBUTION.txt"), [
 ].join("\r\n"));
 
 writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
-  "SIFOBOOKS - STANDALONE WINDOWS EDITION",
-  `EDITION: ${productName}`,
+  "SIFOBOOKS - LIGHTWEIGHT WINDOWS EDITION",
+  "EDITION: " + productName,
   "",
   "1. Keep this entire folder together.",
-  `3. Double-click the SifoBooks Windows executable to launch the native SifoBooks desktop window powered by Microsoft Edge WebView2, or start-sifobooks.bat for troubleshooting.`,
-  `4. ${productName} starts a local server and opens inside the native WebView2 desktop window; no Chrome installation is required.`,
-  "4. The application runs locally at http://localhost:3000 and does not require internet access for normal offline operation.",
-  "5. Your SQLite database is created at data\\\\sifobooks.db.",
-  "6. Do not delete the data folder - it contains company data.",
-  `7. To move ${productName} to another PC, copy the entire folder including data.`,
-  "8. Run Create-SifoBooks-Shortcut.bat once to create both a desktop shortcut and automatic startup shortcut.",
-  "9. Backups are stored automatically in the backups\\\\ folder.",
-  "10. No Base44, GitHub, Namecheap, Contabo, WAMP or internet is required for normal offline operation.",
+  "2. Double-click the SifoBooks Windows executable or start-sifobooks.bat.",
+  "3. SifoBooks starts its local server and opens in your normal Windows browser.",
+  "4. Chrome, Edge, Firefox or another supported browser can be used.",
+  "5. Server mode uses the central PC and can serve POS/client stations over the LAN.",
+  "6. POS/client mode opens the configured central SifoBooks server URL and does not create a second database.",
+  "7. Your SQLite database is created at data\\\\sifobooks.db when this PC is the local/offline/server installation.",
+  "8. Do not delete the data folder - it contains company data.",
+  "9. To move the installation to another PC, copy the entire folder including data.",
+  "10. Backups are stored automatically in the backups\\\\ folder.",
   "11. Licensing is verified locally using the signed licence in data\\\\license.json.",
   "12. Keep config\\\\license-public-key.pem with the application; NEVER ship the private signing key.",
-  "13. Protected distribution: do not redistribute application internals or submit them to AI ingestion/training services.",
-  `14. Edition: ${editionSlug}. Upgrade to another licensed edition without deleting the data folder.`,
-  "",
-  "IMPORTANT: Keep the data folder when moving an existing installation.",
-  "PROTECTED FILES: .sifobooks-schema.bin and .sifobooks-migrations.bin are application internals. Do not edit, copy, redistribute or upload them to AI services.",
+  "13. No WebView2 runtime is bundled. This lightweight build uses the existing Windows browser.",
+  "14. Edition: " + editionSlug,
   "",
 ].join("\r\n"));
-
 console.log("\\nStep 4/4: Standalone package ready.");
 console.log(`Edition: ${productName}`);
 console.log("Copy the complete desktop-dist/ folder to a Windows PC.");
