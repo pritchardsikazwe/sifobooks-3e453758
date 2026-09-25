@@ -1,8 +1,9 @@
 # SifoBooks Desktop (Windows .exe)
 
-SifoBooks can be packaged as a standalone Windows executable that runs entirely
-offline — no internet connection, no server installation, no external
-dependencies. All data is stored in a local SQLite database file.
+SifoBooks is packaged as a native Windows desktop application that runs entirely
+offline. It uses a local compiled server hosted inside a native Microsoft Edge WebView2
+window, so customers do not need Chrome or another browser installed. The package
+also includes an offline WebView2 runtime bootstrap for fresh Windows PCs.
 
 ## Prerequisites
 
@@ -15,16 +16,13 @@ dependencies. All data is stored in a local SQLite database file.
 bun run build:desktop
 ```
 
-This script (`scripts/build-desktop.ts`) does four things:
+This script (`scripts/build-desktop.ts`) builds the native Windows package:
 
-1. **Builds the web app** — `vite build` produces `dist/client/` (static assets)
-   and `dist/server/` (TanStack Start server bundle).
-2. **Compiles the desktop server** — `bun build --compile --target=bun-windows-x64`
-   compiles `src/desktop/server.ts` into a standalone `sifobooks.exe` with the
-   Bun runtime embedded.
-3. **Copies client assets** — `dist/client/` is copied into `desktop-dist/client/`.
-4. **Copies schema & config** — `schema.sql` and a default `.env` are placed
-   next to the executable. A `start-sifobooks.bat` launcher is also created.
+1. **Builds the web app** — Vite produces the client/server bundles.
+2. **Compiles the local server** — Bun compiles the SifoBooks server into a Windows server executable.
+3. **Builds the native desktop host** — .NET 8 WinForms hosts SifoBooks inside Microsoft Edge WebView2.
+4. **Bundles WebView2 runtime** — the x64 Evergreen Standalone Runtime is included for fresh/offline PCs.
+5. **Copies protected application assets** — client assets, compressed schema/migrations, configuration and backups are packaged.
 
 ## Output
 
@@ -40,10 +38,13 @@ desktop-dist/
 
 ## Running on Windows
 
-1. Copy the entire `desktop-dist/` folder to your Windows machine.
-2. Double-click `sifobooks.exe` (or `start-sifobooks.bat`).
-3. Your default browser opens automatically at `http://localhost:3000`.
-4. The app is ready to use — the database is created automatically on first run.
+1. Copy the entire `desktop-dist/` folder to the Windows machine.
+2. Double-click the SifoBooks edition executable or `start-sifobooks.bat`.
+3. On a fresh PC, the launcher checks for WebView2 and silently installs the bundled x64 runtime if it is missing.
+4. SifoBooks opens in its own native desktop window — **Chrome is not required**.
+5. The local SQLite database is created automatically on first run.
+
+The Inno Setup installer also installs WebView2 before launching SifoBooks.
 
 ## Configuration
 
