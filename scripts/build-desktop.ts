@@ -41,7 +41,16 @@ try {
 } catch {
   throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+const serverExeName = exeName.replace(/\.exe$/i, "-server.exe");
+await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, serverExeName)}`;
+
+console.log("\nStep 2b/4: Building native Windows WebView2 host...\n");
+if (process.platform !== "win32") throw new Error("The Windows desktop build must run on a Windows build runner for the native WebView2 host.");
+await $`dotnet publish desktop/native/SifoBooksDesktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ${join(OUT_DIR, "native-host")}`;
+const nativeExe = join(OUT_DIR, "native-host", "SifoBooksDesktop.exe");
+if (!existsSync(nativeExe)) throw new Error("Native WebView2 host was not produced.");
+copyFileSync(nativeExe, join(OUT_DIR, exeName));
+rmSync(join(OUT_DIR, "native-host"), { recursive: true, force: true });
 
 console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
@@ -168,8 +177,8 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   `EDITION: ${productName}`,
   "",
   "1. Keep this entire folder together.",
-  "2. Double-click the SifoBooks Windows executable to launch, or start-sifobooks.bat for troubleshooting.",
-  `3. ${productName} starts a local server and opens your browser.`,
+  `3. Double-click the SifoBooks Windows executable to launch the native SifoBooks desktop window powered by Microsoft Edge WebView2, or start-sifobooks.bat for troubleshooting.`,
+  `4. ${productName} starts a local server and opens inside the native WebView2 desktop window; no Chrome installation is required.`,
   "4. The application runs locally at http://localhost:3000 and does not require internet access for normal offline operation.",
   "5. Your SQLite database is created at data\\\\sifobooks.db.",
   "6. Do not delete the data folder - it contains company data.",
