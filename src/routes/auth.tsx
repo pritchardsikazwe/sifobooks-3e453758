@@ -279,10 +279,8 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
       setTab("signin");
       return;
     }
-    const uid = data.user?.id;
-    if (uid) {
-      await supabase.from("profiles").update({ full_name: f.name.trim(), email: f.email.trim() }).eq("id", uid);
-    }
+    // signUp already creates the local/cloud profile with full_name.
+    // Avoid a second profile update round-trip on first registration.
     // A newly registered account has no company yet. Go directly to company
     // setup instead of sending a fresh account through /launch.
     setSaving(false);
