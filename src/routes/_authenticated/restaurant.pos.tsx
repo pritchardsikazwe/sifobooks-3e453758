@@ -27,7 +27,8 @@ export const Route = createFileRoute("/_authenticated/restaurant/pos")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <RequireModule moduleKey="restaurant"><Page /></RequireModule>,
+  component: () => <RestaurantPOSClientGate />,
+
 });
 
 /* ---------------- types ---------------- */
@@ -78,6 +79,21 @@ const POS_SCROLL_STYLE = `
   .pos-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .pos-scrollbar::-webkit-scrollbar-thumb { background: #6f9694; border-radius: 999px; }
 `;
+
+function RestaurantPOSClientGate() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#f5f8f7] p-6">
+        <div className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center rounded-2xl border border-[#dcebe6] bg-white text-sm font-semibold text-[#315f5b] shadow-sm">
+          Starting SifoBooks Restaurant POS…
+        </div>
+      </div>
+    );
+  }
+  return <RequireModule moduleKey="restaurant"><Page /></RequireModule>;
+}
 
 function Page() {
   const navigate = useNavigate();
