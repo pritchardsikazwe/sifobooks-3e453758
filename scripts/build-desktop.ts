@@ -37,9 +37,7 @@ const iconSource = "public/sifobooks-logo.svg";
 const iconOutput = join(OUT_DIR, "SifoBooks.ico");
 if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: public/sifobooks-logo.svg");
 try {
-  const webviewDownload = Bun.spawn(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", `Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '${webviewInstaller}'`], { stdout: "inherit", stderr: "inherit" });
-  const webviewDownloadExit = await webviewDownload.exited;
-  if (webviewDownloadExit !== 0) throw new Error("Failed to download WebView2 Runtime installer.");
+  await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
 } catch {
   throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
 }
