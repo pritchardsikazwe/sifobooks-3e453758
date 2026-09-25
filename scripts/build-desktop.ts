@@ -37,7 +37,9 @@ const iconSource = "public/sifobooks-logo.svg";
 const iconOutput = join(OUT_DIR, "SifoBooks.ico");
 if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: public/sifobooks-logo.svg");
 try {
-  await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
+  const webviewDownload = Bun.spawn(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", `Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '${webviewInstaller}'`], { stdout: "inherit", stderr: "inherit" });
+  const webviewDownloadExit = await webviewDownload.exited;
+  if (webviewDownloadExit !== 0) throw new Error("Failed to download WebView2 Runtime installer.");
 } catch {
   throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
 }
@@ -73,82 +75,7 @@ const webviewInstaller = join(webviewDir, "MicrosoftEdgeWebView2RuntimeInstaller
 mkdirSync(webviewDir, { recursive: true });
 if (!existsSync(webviewInstaller)) {
   console.log("Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)...");
-  await /**
- * Build a standalone SifoBooks Windows edition.
- *
- * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school | property | lending | payroll
- */
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
-import { join } from "path";
-import { gzipSync } from "zlib";
-import { $ } from "bun";
-
-const OUT_DIR = "desktop-dist";
-const CLIENT_DIR = join(OUT_DIR, "client");
-const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
-const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending", "payroll"].includes(edition) ? edition : "enterprise";
-const editionDisplayNames: Record<string, string> = { enterprise: "SifoBooks", accounting: "SifoBooks-Accounting", retail: "SifoBooks-Retail", restaurant: "SifoBooks-Restaurant", hotel: "SifoBooks-Hotel", school: "SifoBooks-School", property: "SifoBooks-RealEstate", lending: "SifoBooks-Microfinance", payroll: "SifoBooks-Payroll" };
-const productName = editionDisplayNames[editionSlug] || "SifoBooks";
-const exeName = `${productName}.exe`;
-
-function copyDir(src: string, dest: string) {
-  if (!existsSync(src)) return;
-  mkdirSync(dest, { recursive: true });
-  for (const entry of readdirSync(src)) {
-    const srcPath = join(src, entry);
-    const destPath = join(dest, entry);
-    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
-    else copyFileSync(srcPath, destPath);
-  }
-}
-
-console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
-process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
-await $`bun run build`;
-
-console.log("\\nStep 2/4: Preparing native SifoBooks Windows icon and compiling executable...\\n");
-mkdirSync(OUT_DIR, { recursive: true });
-const iconSource = "public/sifobooks-logo.svg";
-const iconOutput = join(OUT_DIR, "SifoBooks.ico");
-if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: public/sifobooks-logo.svg");
-try {
-  await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
-} catch {
-  throw new Error("ImageMagick is required to create the native SifoBooks Windows icon. Install ImageMagick and retry.");
-}
-const serverExeName = exeName.replace(/\.exe$/i, "-server.exe");
-await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, serverExeName)}`;
-
-console.log("\nStep 2b/4: Building native Windows WebView2 host...\n");
-if (process.platform !== "win32") throw new Error("The Windows desktop build must run on a Windows build runner for the native WebView2 host.");
-await $`dotnet publish desktop/native/SifoBooksDesktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ${join(OUT_DIR, "native-host")}`;
-const nativeExe = join(OUT_DIR, "native-host", "SifoBooksDesktop.exe");
-if (!existsSync(nativeExe)) throw new Error("Native WebView2 host was not produced.");
-copyFileSync(nativeExe, join(OUT_DIR, exeName));
-rmSync(join(OUT_DIR, "native-host"), { recursive: true, force: true });
-
-console.log("\\nStep 3/4: Copying application files...\\n");
-if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
-copyDir("dist/client", CLIENT_DIR);
-// Protected distribution: compile the server into the EXE and ship database metadata
-// in compressed binary form instead of exposing raw SQL/source files to customers.
-const protectedSchema = gzipSync(readFileSync("src/lib/db/schema.sql"));
-writeFileSync(join(OUT_DIR, ".sifobooks-schema.bin"), protectedSchema);
-const migrationFiles = existsSync("src/lib/db/migrations")
-  ? readdirSync("src/lib/db/migrations").filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort()
-  : [];
-const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
-writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
-mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
-
-// Bundle the Microsoft Edge WebView2 Evergreen Standalone Runtime so the
-// portable package can bootstrap a fresh Windows PC without Chrome/Edge.
-const webviewDir = join(OUT_DIR, "WebView2Runtime");
-const webviewInstaller = join(webviewDir, "MicrosoftEdgeWebView2RuntimeInstallerX64.exe");
-mkdirSync(webviewDir, { recursive: true });
-if (!existsSync(webviewInstaller)) {
-  console.log("Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)...");
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile \"${webviewInstaller}\"" `;
+  await $\`powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '$\{webviewInstaller}'"\`;
 }
 if (!existsSync(webviewInstaller)) throw new Error("WebView2 Runtime installer was not downloaded.");
 if (existsSync("config/license-public-key.pem")) {
