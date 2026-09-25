@@ -61,6 +61,7 @@ Name: "{userdesktop}\{#ProductName}"; Filename: "{sys}\wscript.exe"; Parameters:
 Name: "{userstartup}\{#ProductName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 
 [Run]
+Filename: "{app}\WebView2Runtime\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Parameters: "/silent /install"; Description: "Install Microsoft Edge WebView2 Runtime"; Flags: waituntilterminated skipifsilent
 Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
 
 [UninstallDelete]
@@ -99,7 +100,7 @@ begin
   EditionInfo.Font.Size := 14;
   EditionInfo.Font.Style := [fsBold];
   EditionInfo.Caption := 'SifoBooks ' + EditionDisplayName() + #13#10#13#10 +
-    'This professional Windows build is configured for the ' + EditionDisplayName() +
+    'This professional Windows build uses a native Microsoft Edge WebView2 desktop window and is configured for the ' + EditionDisplayName() +
     ' edition. Other editions are distributed as separate licensed installers.'#13#10#13#10 +
     'Business. Accounting. Growth.';
 
