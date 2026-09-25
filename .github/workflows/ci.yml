@@ -78,9 +78,39 @@ jobs:
       - name: Build Windows desktop package
         run: bun run build:desktop
 
-      - name: Create portable Windows ZIP
+      - name: Create small portable Windows ZIP
         shell: pwsh
-        run: Compress-Archive -Path desktop-dist\\* -DestinationPath SifoBooks-${{ matrix.edition }}-Windows-Portable.zip -Force
+        run: |
+          $portable = "portable-dist"
+          if (Test-Path $portable) { Remove-Item $portable -Recurse -Force }
+          New-Item -ItemType Directory -Path $portable | Out-Null
+          Copy-Item -Path "desktop-dist\\*" -Destination $portable -Recurse -Force
+          # Keep the portable package small by using the WebView2 Runtime already
+          # installed on most supported Windows 10/11 machines. The full offline
+          # WebView2 runtime remains bundled in the branded installer.
+          $runtime = Join-Path $portable "WebView2Runtime"
+          if (Test-Path $runtime) { Remove-Item $runtime -Recurse -Force }
+          Compress-Archive -Path "$portable\\*" -DestinationPath "SifoBooks-${{ matrix.edition }}-Windows-Portable-Small.zip" -CompressionLevel Optimal -Force
+
+      - name: Upload small portable Windows package
+        id: upload-portable
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: SifoBooks-${{ matrix.edition }}-Windows-Portable-Small
+          path: SifoBooks-${{ matrix.edition }}-Windows-Portable-Small.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Report portable upload status
+        if: always()
+        shell: pwsh
+        run: |
+          if ("${{ steps.upload-portable.outcome }}" -eq "success") {
+            Write-Host "Small portable Windows package uploaded successfully."
+          } else {
+            Write-Warning "Small portable package was built, but GitHub artifact upload was unavailable."
+          }
 
       - name: Install Inno Setup
         shell: pwsh
