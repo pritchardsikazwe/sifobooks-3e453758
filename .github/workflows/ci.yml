@@ -93,12 +93,24 @@ jobs:
       # The branded installer is the supported customer distribution.
       # Do not upload a duplicate portable ZIP to Actions artifacts.
       - name: Upload branded Windows installer
+        id: upload-installer
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: SifoBooks-${{ matrix.edition }}-Windows-Setup
           path: installer-dist/SifoBooks-${{ matrix.edition }}-Windows-Setup.exe
           if-no-files-found: error
           retention-days: 7
+
+      - name: Report artifact upload status
+        if: always()
+        shell: pwsh
+        run: |
+          if ("${{ steps.upload-installer.outcome }}" -eq "success") {
+            Write-Host "Windows installer uploaded successfully."
+          } else {
+            Write-Warning "Windows installer build completed, but GitHub artifact upload was unavailable."
+          }
   vsdc-connector:
     runs-on: windows-latest
     steps:
@@ -116,9 +128,21 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path vsdc-connector-dist\* -DestinationPath SifoBooks-VSDC-Connector-Windows.zip -Force
       - name: Upload VSDC connector
+        id: upload-vsdc
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: SifoBooks-VSDC-Connector-Windows
           path: SifoBooks-VSDC-Connector-Windows.zip
           if-no-files-found: error
           retention-days: 7
+
+      - name: Report VSDC artifact upload status
+        if: always()
+        shell: pwsh
+        run: |
+          if ("${{ steps.upload-vsdc.outcome }}" -eq "success") {
+            Write-Host "VSDC connector uploaded successfully."
+          } else {
+            Write-Warning "VSDC connector built successfully, but GitHub artifact upload was unavailable."
+          }
