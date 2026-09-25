@@ -179,6 +179,7 @@ function Page() {
 
   const load = async () => {
     setLoading(true);
+    try {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return setLoading(false);
     const uid = u.user.id;
@@ -232,6 +233,13 @@ function Page() {
       setItems((oi ?? []) as any);
     } else setItems([]);
     setLoading(false);
+    } catch (error: any) {
+      console.error("[Restaurant POS] load failed", error);
+      toast.error("Restaurant POS could not open.", {
+        description: String(error?.message || "The POS setup could not be loaded."),
+      });
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
   useEffect(() => { const timer = window.setTimeout(() => searchRef.current?.focus(), 250); return () => window.clearTimeout(timer); }, []);
