@@ -51,13 +51,23 @@ export const executeQueryFn = createServerFn({ method: "POST" })
 export const signUpFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { email: string; password: string; metadata?: Record<string, any> })
   .handler(async ({ data }) => {
-    return signUp(data.email, data.password, data.metadata);
+    try {
+      return await signUp(data.email, data.password, data.metadata);
+    } catch (error: any) {
+      console.error("[auth] signUp failed:", error);
+      return { data: null, error: { message: String(error?.message || "Registration failed on the SifoBooks server.") } };
+    }
   });
 
 export const signInFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { email: string; password: string })
   .handler(async ({ data }) => {
-    return signInWithPassword(data.email, data.password);
+    try {
+      return await signInWithPassword(data.email, data.password);
+    } catch (error: any) {
+      console.error("[auth] signIn failed:", error);
+      return { data: null, error: { message: String(error?.message || "Sign-in failed on the SifoBooks server.") } };
+    }
   });
 
 export const getUserFn = createServerFn({ method: "POST" })
