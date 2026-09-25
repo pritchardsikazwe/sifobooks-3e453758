@@ -65,6 +65,17 @@ const migrationFiles = existsSync("src/lib/db/migrations")
 const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
 writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
 mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
+
+// Bundle the Microsoft Edge WebView2 Evergreen Standalone Runtime so the
+// portable package can bootstrap a fresh Windows PC without Chrome/Edge.
+const webviewDir = join(OUT_DIR, "WebView2Runtime");
+const webviewInstaller = join(webviewDir, "MicrosoftEdgeWebView2RuntimeInstallerX64.exe");
+mkdirSync(webviewDir, { recursive: true });
+if (!existsSync(webviewInstaller)) {
+  console.log("Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)...");
+  await $\`powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '$\{webviewInstaller}'"\`;
+}
+if (!existsSync(webviewInstaller)) throw new Error("WebView2 Runtime installer was not downloaded.");
 if (existsSync("config/license-public-key.pem")) {
   mkdirSync(join(OUT_DIR, "config"), { recursive: true });
   copyFileSync("config/license-public-key.pem", join(OUT_DIR, "config/license-public-key.pem"));
@@ -91,11 +102,23 @@ writeFileSync(join(OUT_DIR, ".env.example"), [
 
 writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Option Explicit",
-  "Dim shell, fso, appDir, exePath",
+  "On Error Resume Next",
+  "Dim shell, fso, appDir, exePath, runtimePath, runtimeVersion, regPath",
   "Set shell = CreateObject(\"WScript.Shell\")",
   "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
   "appDir = fso.GetParentFolderName(WScript.ScriptFullName)",
   `exePath = fso.BuildPath(appDir, "${exeName}")`,
+  "runtimePath = fso.BuildPath(appDir, \"WebView2Runtime\\MicrosoftEdgeWebView2RuntimeInstallerX64.exe\")",
+  "regPath = \"HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}\\pv\"",
+  "runtimeVersion = shell.RegRead(regPath)",
+  "If Err.Number <> 0 Then",
+  "  Err.Clear",
+  "  regPath = \"HKCU\\Software\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}\\pv\"",
+  "  runtimeVersion = shell.RegRead(regPath)",
+  "End If",
+  "If runtimeVersion = \"\" And fso.FileExists(runtimePath) Then",
+  "  shell.Run Chr(34) & runtimePath & Chr(34) & \" /silent /install /norestart\", 1, True",
+  "End If",
   "If fso.FileExists(exePath) Then",
   "  shell.CurrentDirectory = appDir",
   "  shell.Run Chr(34) & exePath & Chr(34), 0, False",
