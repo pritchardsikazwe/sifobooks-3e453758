@@ -24,10 +24,12 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
+  const error = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  const diagnosticId = `SSR-${Date.now().toString(36).toUpperCase()}`;
+  console.error(`[${diagnosticId}]`, error);
+  return new Response(renderErrorPage(error, diagnosticId), {
     status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+    headers: { "content-type": "text/html; charset=utf-8", "x-sifobooks-diagnostic-id": diagnosticId },
   });
 }
 
@@ -46,10 +48,11 @@ export default {
       const response = await serverEntry.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
-      console.error(error);
-      return new Response(renderErrorPage(), {
+      const diagnosticId = `SSR-${Date.now().toString(36).toUpperCase()}`;
+      console.error(`[${diagnosticId}]`, error);
+      return new Response(renderErrorPage(error, diagnosticId), {
         status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
+        headers: { "content-type": "text/html; charset=utf-8", "x-sifobooks-diagnostic-id": diagnosticId },
       });
     }
   },
