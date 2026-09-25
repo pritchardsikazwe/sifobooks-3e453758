@@ -18,15 +18,6 @@ if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks wizard artwork." }
 & $magick.Source (Join-Path $assetDir "SifoBooks-logo.svg") -background "#013b2b" -resize "110x110" -gravity center -extent 147x147 (Join-Path $assetDir "SifoBooks-small.bmp")
 if ($LASTEXITCODE -ne 0) { throw "Failed to render SifoBooks small installer artwork." }
 
-$webviewDir = Join-Path $desktop "WebView2Runtime";
-New-Item -ItemType Directory -Force -Path $webviewDir | Out-Null
-$webviewInstaller = Join-Path $webviewDir "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
-if (!(Test-Path $webviewInstaller)) {
-  Write-Host "Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)..."
-  Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2124701" -OutFile $webviewInstaller
-}
-if (!(Test-Path $webviewInstaller)) { throw "WebView2 Runtime installer was not downloaded." }
-
 $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
 $displayNameMap = @{ enterprise="SifoBooks"; accounting="SifoBooks-Accounting"; retail="SifoBooks-Retail"; restaurant="SifoBooks-Restaurant"; hotel="SifoBooks-Hotel"; school="SifoBooks-School"; property="SifoBooks-RealEstate"; lending="SifoBooks-Microfinance"; payroll="SifoBooks-Payroll" }
 $product = $displayNameMap[$Edition]
