@@ -41,8 +41,50 @@ try {
 } catch {
   throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-const serverExeName = exeName.replace(/\.exe$/i, "-server.exe");
-await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, serverExeName)}`;
+await /**
+ * Build a standalone SifoBooks Windows edition.
+ *
+ * SIFOBOOKS_EDITION: enterprise | accounting | retail | restaurant | hotel | school | property | lending | payroll
+ */
+import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, writeFileSync, readFileSync, rmSync } from "fs";
+import { join } from "path";
+import { gzipSync } from "zlib";
+import { $ } from "bun";
+
+const OUT_DIR = "desktop-dist";
+const CLIENT_DIR = join(OUT_DIR, "client");
+const edition = String(process.env.SIFOBOOKS_EDITION || "enterprise").toLowerCase();
+const editionSlug = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "lending", "payroll"].includes(edition) ? edition : "enterprise";
+const editionDisplayNames: Record<string, string> = { enterprise: "SifoBooks", accounting: "SifoBooks-Accounting", retail: "SifoBooks-Retail", restaurant: "SifoBooks-Restaurant", hotel: "SifoBooks-Hotel", school: "SifoBooks-School", property: "SifoBooks-RealEstate", lending: "SifoBooks-Microfinance", payroll: "SifoBooks-Payroll" };
+const productName = editionDisplayNames[editionSlug] || "SifoBooks";
+const exeName = `${productName}.exe`;
+
+function copyDir(src: string, dest: string) {
+  if (!existsSync(src)) return;
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src)) {
+    const srcPath = join(src, entry);
+    const destPath = join(dest, entry);
+    if (statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
+    else copyFileSync(srcPath, destPath);
+  }
+}
+
+console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
+process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
+await $`bun run build`;
+
+console.log("\\nStep 2/4: Preparing native SifoBooks Windows icon and compiling executable...\\n");
+mkdirSync(OUT_DIR, { recursive: true });
+const iconSource = "public/sifobooks-logo.svg";
+const iconOutput = join(OUT_DIR, "SifoBooks.ico");
+if (!existsSync(iconSource)) throw new Error("SifoBooks logo source not found: public/sifobooks-logo.svg");
+try {
+  await $`magick ${iconSource} -background none -define icon:auto-resize=16,24,32,48,64,128,256 ${iconOutput}`;
+} catch {
+  throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
+}
+bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
 
 console.log("\nStep 2b/4: Preparing lightweight browser-based Windows launcher...\n");
 console.log("\\nStep 3/4: Copying application files...\\n");
