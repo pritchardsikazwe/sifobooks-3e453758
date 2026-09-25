@@ -644,6 +644,12 @@ try {
   throw error;
 }
 
+if (isPosClient && configuredServerUrl) {
+  writeStartupLog("POS client mode: opening central server " + configuredServerUrl);
+  openBrowser(configuredServerUrl);
+  setTimeout(() => process.exit(0), 250);
+} else {
+
 console.log("");
 console.log("  ╔══════════════════════════════════════════╗");
 console.log("  ║  SifoBooks Desktop / Network Server       ║");
@@ -655,7 +661,7 @@ console.log("");
 
 setTimeout(() => createStartupBackup(), 2500);
 
-if (HOST === "127.0.0.1" || HOST === "localhost") {
+if (HOST === "127.0.0.1" || HOST === "localhost" || isNetworkServer) {
   const browserUrl = `http://localhost:${PORT}`;
   setTimeout(async () => {
     for (let attempt = 0; attempt < 15; attempt++) {
@@ -672,6 +678,8 @@ if (HOST === "127.0.0.1" || HOST === "localhost") {
     writeStartupLog(`Browser launch skipped: SifoBooks did not respond at ${browserUrl}; check ${STARTUP_LOG}`);
     openBrowser(browserUrl);
   }, 500);
+}
+
 }
 
 process.on("SIGINT", () => {
