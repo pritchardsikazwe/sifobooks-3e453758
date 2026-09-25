@@ -17,6 +17,10 @@ import { recordPayments } from "@/lib/restaurant";
 
 
 export const Route = createFileRoute("/_authenticated/restaurant/pos")({
+  // POS is a browser-first operational screen: printing, local terminal
+  // storage and touch/fullscreen behavior should never be rendered by the
+  // Windows server during the initial request.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Restaurant POS Terminal — SifoBooks" },
