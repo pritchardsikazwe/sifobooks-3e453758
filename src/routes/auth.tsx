@@ -265,26 +265,35 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
 
   const finish = async () => {
     setErr(null); setGlobalError(null); setGlobalNotice(null); setSaving(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: f.email.trim(), password: f.password,
-      options: {
-        emailRedirectTo: signupNext ? `${window.location.origin}${signupNext}` : `${window.location.origin}/launch`,
-        data: { full_name: f.name.trim() },
-      },
-    });
-    if (error) { setSaving(false); return setErr(error.message); }
-    if (!data.session) {
+    try {
+      const result = await Promise.race([
+        supabase.auth.signUp({
+          email: f.email.trim(), password: f.password,
+          options: {
+            emailRedirectTo: signupNext ? window.location.origin + signupNext : window.location.origin + "/launch",
+            data: { full_name: f.name.trim() },
+          },
+        }),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Registration is taking too long. Please check that SifoBooks is still running, then try again.")), 30000)),
+      ]);
+      const { data, error } = result;
+      if (error) { setSaving(false); return setErr(error.message); }
+      if (!data?.session) {
+        setSaving(false);
+        setGlobalNotice("Check your email to confirm your account, then sign in. Your company setup starts after registration.");
+        setTab("signin");
+        return;
+      }
+      // signUp already creates the local/cloud profile with full_name.
+      // Avoid a second profile update round-trip on first registration.
+      // A newly registered account has no company yet. Go directly to company
+      // setup instead of sending a fresh account through /launch.
       setSaving(false);
-      setGlobalNotice("Check your email to confirm your account, then sign in. Your company setup starts after registration.");
-      setTab("signin");
-      return;
+      navigate({ to: "/setup" });
+    } catch (e: any) {
+      setSaving(false);
+      setErr(String(e?.message || "Registration failed. Please retry."));
     }
-    // signUp already creates the local/cloud profile with full_name.
-    // Avoid a second profile update round-trip on first registration.
-    // A newly registered account has no company yet. Go directly to company
-    // setup instead of sending a fresh account through /launch.
-    setSaving(false);
-    navigate({ to: "/setup" });
   };
 
   const pw = pwStrength(f.password);
