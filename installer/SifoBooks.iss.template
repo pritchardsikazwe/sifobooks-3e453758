@@ -1,5 +1,5 @@
 ; SifoBooks Windows Installer - branded commercial installer
-; Launches the compiled Windows executable directly; no WScript dependency.
+; Launches the compiled SifoBooks server and uses the customer's existing browser.
 #define Edition "__EDITION__"
 #define ProductName "__PRODUCT_NAME__"
 #define ExeName "__EXE_NAME__"
@@ -102,7 +102,7 @@ begin
   EditionInfo.Font.Size := 14;
   EditionInfo.Font.Style := [fsBold];
   EditionInfo.Caption := 'SifoBooks ' + EditionDisplayName() + #13#10#13#10 +
-    'This professional Windows build uses a native Microsoft Edge WebView2 desktop window and is configured for the ' + EditionDisplayName() +
+    'This professional Windows build uses the Windows default browser and is configured for the ' + EditionDisplayName() +
     ' edition. Other editions are distributed as separate licensed installers.'#13#10#13#10 +
     'Business. Accounting. Growth.';
 
