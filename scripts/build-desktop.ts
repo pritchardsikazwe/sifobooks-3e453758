@@ -44,18 +44,7 @@ try {
 const serverExeName = exeName.replace(/\.exe$/i, "-server.exe");
 await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, serverExeName)}`;
 
-console.log("\nStep 2b/4: Building native Windows WebView2 host...\n");
-if (process.platform !== "win32") throw new Error("The Windows desktop build must run on a Windows build runner for the native WebView2 host.");
-await $`dotnet publish desktop/native/SifoBooksDesktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ${join(OUT_DIR, "native-host")}`;
-const nativeHostDir = join(OUT_DIR, "native-host");
-const nativeExe = join(nativeHostDir, "SifoBooksDesktop.exe");
-const webviewLoader = join(nativeHostDir, "WebView2Loader.dll");
-if (!existsSync(nativeExe)) throw new Error("Native WebView2 host was not produced.");
-if (!existsSync(webviewLoader)) throw new Error("WebView2Loader.dll was not produced by the WebView2 native host publish.");
-copyFileSync(nativeExe, join(OUT_DIR, exeName));
-copyFileSync(webviewLoader, join(OUT_DIR, "WebView2Loader.dll"));
-rmSync(nativeHostDir, { recursive: true, force: true });
-
+console.log("\nStep 2b/4: Preparing lightweight browser-based Windows launcher...\n");
 console.log("\\nStep 3/4: Copying application files...\\n");
 if (existsSync(CLIENT_DIR)) rmSync(CLIENT_DIR, { recursive: true, force: true });
 copyDir("dist/client", CLIENT_DIR);
@@ -70,17 +59,6 @@ const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(
 writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
 mkdirSync(join(OUT_DIR, "backups"), { recursive: true });
 
-// Bundle the Microsoft Edge WebView2 Evergreen Standalone Runtime so the
-// portable package can bootstrap a fresh Windows PC without Chrome/Edge.
-const webviewDir = join(OUT_DIR, "WebView2Runtime");
-const webviewInstaller = join(webviewDir, "MicrosoftEdgeWebView2RuntimeInstallerX64.exe");
-mkdirSync(webviewDir, { recursive: true });
-if (!existsSync(webviewInstaller)) {
-  console.log("Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)...");
-  const webviewDownload = Bun.spawnSync(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '" + webviewInstaller + "'"], { stdout: "inherit", stderr: "inherit" });
-  if (webviewDownload.exitCode !== 0) throw new Error("Failed to download WebView2 Runtime installer.");
-}
-if (!existsSync(webviewInstaller)) throw new Error("WebView2 Runtime installer was not downloaded.");
 if (existsSync("config/license-public-key.pem")) {
   mkdirSync(join(OUT_DIR, "config"), { recursive: true });
   copyFileSync("config/license-public-key.pem", join(OUT_DIR, "config/license-public-key.pem"));
