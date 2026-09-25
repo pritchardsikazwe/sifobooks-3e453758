@@ -87,9 +87,6 @@ jobs:
           Copy-Item -Path "desktop-dist\\*" -Destination $portable -Recurse -Force
           # Keep the portable package small by using the WebView2 Runtime already
           # installed on most supported Windows 10/11 machines. The full offline
-          # WebView2 runtime remains bundled in the branded installer.
-          $runtime = Join-Path $portable "WebView2Runtime"
-          if (Test-Path $runtime) { Remove-Item $runtime -Recurse -Force }
           Compress-Archive -Path "$portable\\*" -DestinationPath "SifoBooks-${{ matrix.edition }}-Windows-Portable-Small.zip" -CompressionLevel Optimal -Force
 
       - name: Upload small portable Windows package
