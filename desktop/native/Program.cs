@@ -116,6 +116,8 @@ sealed class MainForm : Form
                 "SifoBooks", "WebView2");
             Directory.CreateDirectory(userData);
 
+            EnsureWebView2Runtime();
+
             environment = await CoreWebView2Environment.CreateAsync(null, userData);
             await webView.EnsureCoreWebView2Async(environment);
 
@@ -139,6 +141,45 @@ sealed class MainForm : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
             Close();
+        }
+    }
+
+    static void EnsureWebView2Runtime()
+    {
+        try
+        {
+            var installedVersion = CoreWebView2Environment.GetAvailableBrowserVersionString();
+            if (!string.IsNullOrWhiteSpace(installedVersion))
+                return;
+        }
+        catch
+        {
+            // Runtime is not available yet; try the bundled installer below.
+        }
+
+        var runtimeInstaller = Path.Combine(
+            AppContext.BaseDirectory,
+            "WebView2Runtime",
+            "MicrosoftEdgeWebView2RuntimeInstallerX64.exe");
+
+        if (!File.Exists(runtimeInstaller))
+            return;
+
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = runtimeInstaller,
+                Arguments = "/silent /install /norestart",
+                WorkingDirectory = Path.GetDirectoryName(runtimeInstaller)!,
+                UseShellExecute = true
+            });
+
+            process?.WaitForExit(120000);
+        }
+        catch
+        {
+            // WebView2 initialization below will show the diagnostic message.
         }
     }
 
