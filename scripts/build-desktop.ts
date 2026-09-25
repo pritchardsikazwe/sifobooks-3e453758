@@ -75,7 +75,8 @@ const webviewInstaller = join(webviewDir, "MicrosoftEdgeWebView2RuntimeInstaller
 mkdirSync(webviewDir, { recursive: true });
 if (!existsSync(webviewInstaller)) {
   console.log("Downloading Microsoft Edge WebView2 Evergreen Standalone Runtime (x64)...");
-  await $\`powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '$\{webviewInstaller}'"\`;
+  const webviewDownload = Bun.spawnSync(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile '" + webviewInstaller + "'"], { stdout: "inherit", stderr: "inherit" });
+  if (webviewDownload.exitCode !== 0) throw new Error("Failed to download WebView2 Runtime installer.");
 }
 if (!existsSync(webviewInstaller)) throw new Error("WebView2 Runtime installer was not downloaded.");
 if (existsSync("config/license-public-key.pem")) {
