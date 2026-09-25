@@ -11,6 +11,8 @@ import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSy
 import { join, dirname, extname, normalize } from "path";
 import os from "os";
 import { licenseStatus, storeLicense } from "../lib/licensing";
+import { getDb } from "../lib/db/database";
+import { isCloudDatabaseConfigured } from "../lib/cloud/postgres";
 
 function findBaseDir(): string {
   const candidates = [
@@ -146,6 +148,18 @@ if (!process.env.JWT_SECRET) {
 }
 
 process.chdir(baseDir);
+
+// Warm the local SQLite database before the browser is opened. This moves
+// first-run schema/migration work to server startup instead of making the
+// first registration or POS screen wait on database initialization.
+if (!isCloudDatabaseConfigured()) {
+  try {
+    getDb();
+    console.log("[db] Local SQLite database ready before browser launch.");
+  } catch (error) {
+    console.error("[db] Local SQLite warm-up failed:", error);
+  }
+}
 
 const tanstackServer = (await import("../../dist/server/server.js")).default as {
   fetch: (req: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
