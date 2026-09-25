@@ -25,7 +25,7 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AuthPage,
+  component: AuthClientGate,
 });
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
@@ -51,6 +51,25 @@ function pwStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; label: string; colo
 }
 
 type LoginMode = "cashier" | "manager" | "admin";
+
+function AuthClientGate() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center px-4 py-10">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">SifoBooks</CardTitle>
+            <CardDescription>Starting local sign-in…</CardDescription>
+          </CardHeader>
+          <CardContent><div className="flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></CardContent>
+        </Card>
+      </div>
+    );
+  }
+  return <AuthPage />;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
