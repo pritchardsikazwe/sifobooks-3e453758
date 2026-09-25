@@ -406,6 +406,46 @@ function startServer() {
       }
     }
 
+    if (url.pathname === "/api/desktop/diagnostics" && request.method === "GET") {
+      const dbPath = process.env.DATABASE_PATH || join(dataDir, "sifobooks.db");
+      let database = { status: "missing", path: dbPath, sizeBytes: 0 };
+      try {
+        if (existsSync(dbPath)) {
+          const db = new Database(dbPath);
+          const row = db.query("PRAGMA quick_check").get() as { quick_check?: string } | null;
+          db.close();
+          database = {
+            status: row?.quick_check === "ok" ? "healthy" : "check_failed",
+            path: dbPath,
+            sizeBytes: statSync(dbPath).size,
+          };
+        }
+      } catch (error) {
+        database = { status: "error", path: dbPath, sizeBytes: existsSync(dbPath) ? statSync(dbPath).size : 0 };
+        writeStartupLog(`DIAGNOSTIC DATABASE ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+      }
+      return Response.json({
+        ok: database.status === "healthy",
+        product: "SifoBooks",
+        edition: process.env.VITE_SIFOBOOKS_EDITION || null,
+        mode: isNetworkServer ? "server" : isPosClient ? "pos" : "standalone",
+        host: HOST,
+        port: PORT,
+        accessUrl: `http://localhost:${PORT}`,
+        lanAddresses: getLanAddresses(),
+        configuredPort,
+        configuredServerUrl: configuredServerUrl || null,
+        baseDir,
+        clientDirExists: existsSync(clientDir),
+        serverBundleEmbedded: true,
+        database,
+        licenseEnforcement: LICENSE_ENFORCEMENT,
+        logFile: STARTUP_LOG,
+        nodePlatform: process.platform,
+        bunVersion: Bun.version,
+      });
+    }
+
     if (url.pathname === "/api/network/info" && request.method === "GET") {
       const cfg = readNetworkConfig();
       const lanAddresses = getLanAddresses();
@@ -585,7 +625,7 @@ function startServer() {
   },
       });
       PORT = candidatePort;
-      writeStartupLog(`SifoBooks server started at http://${HOST}:${PORT} (configured port ${configuredPort})`);
+      writeStartupLog(`SifoBooks server started at http://${HOST}:${PORT} (configured port ${configuredPort}, mode ${isNetworkServer ? "server" : isPosClient ? "pos" : "standalone"})`);
       return server;
     } catch (error) {
       lastError = error;
@@ -622,13 +662,13 @@ if (HOST === "127.0.0.1" || HOST === "localhost") {
         const response = await fetch(browserUrl, { signal: AbortSignal.timeout(1000) });
         if (response.ok || response.status < 500) {
           openBrowser(browserUrl);
-          writeStartupLog(`Browser opened: ${browserUrl} (HTTP ${response.status})`);
+          writeStartupLog(`Browser opened: ${browserUrl} (HTTP ${response.status}); diagnostics: ${browserUrl}/api/desktop/diagnostics`);
           return;
         }
       } catch {}
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    writeStartupLog(`Browser launch skipped: SifoBooks did not respond at ${browserUrl}`);
+    writeStartupLog(`Browser launch skipped: SifoBooks did not respond at ${browserUrl}; check ${STARTUP_LOG}`);
     openBrowser(browserUrl);
   }, 500);
 }
