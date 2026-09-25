@@ -626,6 +626,7 @@ function startServer() {
       });
       PORT = candidatePort;
       writeStartupLog(`SifoBooks server started at http://${HOST}:${PORT} (configured port ${configuredPort}, mode ${isNetworkServer ? "server" : isPosClient ? "pos" : "standalone"})`);
+try { writeFileSync(join(dataDir, "desktop-port.txt"), String(PORT), "utf8"); } catch (error) { writeStartupLog(`PORT FILE ERROR: ${error instanceof Error ? error.message : String(error)}`); }
       return server;
     } catch (error) {
       lastError = error;
