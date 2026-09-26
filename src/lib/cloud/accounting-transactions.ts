@@ -1,5 +1,6 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getCloudDb } from "@/lib/cloud/postgres";
+import { prepareJournalPosting } from "@/core/accounting/journal-plan";
 
 type Tx = any;
 const money = (v: unknown) => Math.round((Number(v ?? 0) + Number.EPSILON) * 100) / 100;
@@ -36,20 +37,18 @@ async function accounts(tx: Tx, uid: string) {
   };
 }
 async function journal(tx: Tx, uid: string, reference: string, description: string, entryDate: string, lines: any[]) {
-  const debit = money(lines.reduce((s, l) => s + money(l.debit), 0));
-  const credit = money(lines.reduce((s, l) => s + money(l.credit), 0));
-  if (debit <= 0 || Math.abs(debit - credit) > 0.01) throw new Error("UNBALANCED_JOURNAL");
+  const plan = prepareJournalPosting(lines);
   const prior = await one(tx, "SELECT id FROM journal_entries WHERE user_id=$1 AND reference=$2 LIMIT 1", [uid, reference]);
   if (prior?.id) return String(prior.id);
   const entryId = id();
   await tx.unsafe(
-    "INSERT INTO journal_entries(id,user_id,tenant_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$7,'ZMW',1)",
-    [entryId, uid, "JE-" + reference, entryDate, reference, description, debit],
+    "INSERT INTO journal_entries(id,user_id,tenant_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,'ZMW',1)",
+    [entryId, uid, "JE-" + reference, entryDate, reference, description, plan.totalDebit, plan.totalCredit],
   );
-  for (const line of lines) {
+  for (const line of plan.lines) {
     await tx.unsafe(
       "INSERT INTO journal_lines(id,user_id,tenant_id,entry_id,account_id,description,debit,credit) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7)",
-      [id(), uid, entryId, line.accountId, line.description || description, money(line.debit), money(line.credit)],
+      [id(), uid, entryId, line.accountId, line.description || description, line.debit, line.credit],
     );
   }
   return entryId;
