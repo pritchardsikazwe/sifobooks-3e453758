@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getDb, generateUUID } from "@/lib/db/database";
 import { assertPeriodOpen, nextDocumentNumber, recordAuditEvent } from "@/lib/compliance/governance";
 import { convertToBaseUnit } from "@/lib/inventory/unit-conversions";

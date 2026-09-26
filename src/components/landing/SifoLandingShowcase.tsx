@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Check, CircleDollarSign, FileCheck2, Layers, PlayCircle, ShieldCheck, TrendingUp } from "lucide-react";

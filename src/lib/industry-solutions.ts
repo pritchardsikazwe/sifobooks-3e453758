@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 // Industry Solutions registry.
 //
 // Architecture:

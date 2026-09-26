@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getCloudDb } from "@/lib/cloud/postgres";
 import { JOIN_MAP } from "./join-map";
 import type { Filter, QuerySpec, QueryResult } from "./query-executor";

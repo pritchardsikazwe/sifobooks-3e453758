@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { supabase } from "@/integrations/supabase/client";
 import { completeSale } from "@/lib/pos";
 

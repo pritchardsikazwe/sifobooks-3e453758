@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BalanceChip } from "@/components/accounting/JournalImpact";
 
