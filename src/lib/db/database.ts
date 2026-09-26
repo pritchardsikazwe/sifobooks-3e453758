@@ -132,6 +132,27 @@ function runCompatibilityMigrations(database: Database) {
   );
   `);
 
+  database.exec(`CREATE TABLE IF NOT EXISTS inventory_locations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    company_id TEXT,
+    warehouse_id TEXT,
+    branch_id TEXT,
+    code TEXT,
+    name TEXT NOT NULL,
+    location_type TEXT NOT NULL DEFAULT 'store',
+    address TEXT,
+    notes TEXT,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_user ON inventory_locations(user_id);
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_warehouse ON inventory_locations(user_id,warehouse_id);
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_branch ON inventory_locations(user_id,branch_id);
+  `);
+
   database.exec(`CREATE TABLE IF NOT EXISTS warehouses (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
