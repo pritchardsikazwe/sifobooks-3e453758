@@ -11,7 +11,8 @@ mkdirSync(join(process.cwd(), "data"), { recursive: true });
 const { getDb, getColumns } = await import("../src/lib/db/database");
 const db = getDb();
 
-const requiredTables = ["stock_items", "stock_movements", "stock_balances", "goods_receipts", "warehouses"];
+const requiredTables = [
+  "inventory_locations","stock_items", "stock_movements", "stock_balances", "goods_receipts", "warehouses"];
 const tables = new Set(
   (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>)
     .map((row) => row.name),
