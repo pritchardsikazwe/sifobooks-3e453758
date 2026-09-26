@@ -1,7 +1,7 @@
 import { getDb, getColumns, generateUUID } from "./database";
 import { JOIN_MAP } from "./join-map";
 
-export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "is" | "like" | "ilike" | "not.in" | "not.eq" | "not.like";
+export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "is" | "like" | "ilike" | "not.in" | "not.eq" | "not.like" | "or";
 export type Filter = { column: string; op: FilterOp; value: any };
 export type OrderClause = { column: string; ascending: boolean; nullsFirst?: boolean };
 
@@ -113,8 +113,9 @@ function buildWhereClause(filters: Filter[], table?: string): { clause: string; 
         params.push(val);
         break;
       case "ilike":
+        // SQLite LIKE is already case-insensitive for ASCII; pass the pattern through unchanged.
         parts.push(`${col} LIKE ?`);
-        params.push(val.replace(/%/g, "%%"));
+        params.push(String(val));
         break;
       case "not.eq":
         parts.push(`${col} != ?`);
@@ -124,6 +125,22 @@ function buildWhereClause(filters: Filter[], table?: string): { clause: string; 
         parts.push(`${col} NOT LIKE ?`);
         params.push(val);
         break;
+      case "or": {
+        // PostgREST-style "col.op.value,col.op.value" expression.
+        const sub: Filter[] = [];
+        for (const piece of String(val).split(",")) {
+          const m = piece.trim().match(/^([A-Za-z_][A-Za-z0-9_]*)\.(eq|neq|gt|gte|lt|lte|like|ilike|is)\.(.*)$/);
+          if (!m) continue;
+          const v = m[2] === "is" ? (m[3] === "null" ? null : m[3]) : m[3].replace(/\*/g, "%");
+          sub.push({ column: m[1], op: m[2] as FilterOp, value: v });
+        }
+        if (sub.length) {
+          const inner = sub.map((s) => buildWhereClause([s], table));
+          parts.push("(" + inner.map((i) => i.clause.replace(/^ WHERE /, "")).join(" OR ") + ")");
+          inner.forEach((i) => params.push(...i.params));
+        }
+        break;
+      }
       default:
         parts.push(`${col} = ?`);
         params.push(val);

@@ -47,6 +47,7 @@ class QueryBuilder {
   is(col: string, val: any) { this.spec.filters.push({ column: col, op: "is", value: val }); return this; }
   like(col: string, val: string) { this.spec.filters.push({ column: col, op: "like", value: val }); return this; }
   ilike(col: string, val: string) { this.spec.filters.push({ column: col, op: "ilike", value: val }); return this; }
+  or(expr: string) { this.spec.filters.push({ column: "__or__", op: "or", value: expr }); return this; }
   contains(col: string, val: any) { this.spec.filters.push({ column: col, op: "like", value: `%${JSON.stringify(val)}%` }); return this; }
   overlaps(col: string, val: any[]) { this.spec.filters.push({ column: col, op: "like", value: `%${val.join(",")}%` }); return this; }
 
