@@ -17,6 +17,13 @@ async function cloudButcheryProcessing(tx: any, uid: string, args: Record<string
   await tx.unsafe("INSERT INTO butchery_processing_batches(id,user_id,reference,source_item_id,input_qty,input_unit,input_cost,saleable_qty,waste_qty,status,processed_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'posted',now())",[batchId,uid,reference,sourceItemId,inputQty,inputUnit,inputCost,outputQty,wasteQty]);
   const sourceAfter=Number(source.quantity_on_hand||0)-inputQty;
   await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3",[sourceAfter,sourceItemId,uid]);
+  await tx.unsafe("SELECT 1");
+  const sourceBal=await tx.unsafe("SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE",[uid,sourceItemId,String(source.warehouse_id||"")]);
+  if(source.warehouse_id){
+    const next=Number(sourceBal[0]?.quantity||0)-inputQty;
+    if(sourceBal[0]) await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2",[next,sourceBal[0].id]);
+    else await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)",[crypto.randomUUID(),uid,sourceItemId,String(source.warehouse_id),next]);
+  }
   await tx.unsafe("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,$3,'BUTCHERY_PROCESS_OUT',$4,$5,$6,'Butchery processing input',$7)",[crypto.randomUUID(),uid,sourceItemId,-inputQty,Number(source.cost_price||0),reference,source.warehouse_id||null]);
   for(const line of outputs){
     const itemId=String(line.item_id||""); const qty=Number(line.qty||0);
@@ -25,6 +32,12 @@ async function cloudButcheryProcessing(tx: any, uid: string, args: Record<string
     const item=rows[0]; if(!item) throw new Error("BUTCHERY_OUTPUT_ITEM_NOT_FOUND");
     const costPerUnit=inputCost/outputQty; const after=Number(item.quantity_on_hand||0)+qty;
     await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,cost_price=$2,updated_at=now() WHERE id=$3 AND user_id=$4",[after,costPerUnit,itemId,uid]);
+    if(item.warehouse_id){
+      const out=await tx.unsafe("SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE",[uid,itemId,String(item.warehouse_id)]);
+      const next=Number(out[0]?.quantity||0)+qty;
+      if(out[0]) await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2",[next,out[0].id]);
+      else await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)",[crypto.randomUUID(),uid,itemId,String(item.warehouse_id),next]);
+    }
     await tx.unsafe("INSERT INTO butchery_yield_lines(id,user_id,batch_id,output_item_id,output_name,output_qty,unit,yield_percent,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",[crypto.randomUUID(),uid,batchId,itemId,item.name,qty,String(line.unit||"kg"),inputQty?(qty/inputQty)*100:0,line.note||null]);
     await tx.unsafe("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,$3,'BUTCHERY_PROCESS_IN',$4,$5,$6,'Butchery processing output',$7)",[crypto.randomUUID(),uid,itemId,qty,costPerUnit,reference,item.warehouse_id||null]);
   }
