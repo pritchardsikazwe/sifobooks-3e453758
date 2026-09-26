@@ -38,6 +38,9 @@ jobs:
 
       - name: Windows schema QA
         run: bun run test:windows-schema-qa
+      - name: Inventory synchronization QA
+        run: bun run test:inventory-sync-qa
+
 
       - name: Standalone edition workflow QA
         run: bun run test:standalone-workflows
