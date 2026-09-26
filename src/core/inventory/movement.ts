@@ -201,3 +201,32 @@ export function prepareInventoryProduction(input: {
     note: input.note,
   };
 }
+
+
+import type { InventoryMovementRepository } from "@/core/contracts/database";
+
+export interface InventoryMovementIdFactory { nextId(): string; }
+
+export async function postInventoryMovement(
+  repository: InventoryMovementRepository,
+  ids: InventoryMovementIdFactory,
+  userId: string,
+  movement: PreparedInventoryMovement,
+  locationId?: string | null,
+): Promise<string> {
+  if (!userId) throw new Error("INVENTORY_USER_REQUIRED");
+  const movementId = ids.nextId();
+  await repository.insertMovement({
+    id: movementId,
+    userId,
+    itemId: movement.itemId,
+    movementType: movement.movementType,
+    quantity: movement.quantityDelta,
+    unitCost: movement.unitCost,
+    totalCost: movement.totalCost,
+    reference: movement.reference,
+    note: movement.note,
+    locationId,
+  });
+  return movementId;
+}
