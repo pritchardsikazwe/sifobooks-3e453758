@@ -1,25 +1,20 @@
-// SQLite is runtime-specific:
-// - Bun/Windows production uses Bun's native bun:sqlite driver.
+// SQLite is runtime-specific and server-only:
+// - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
-// Keep the driver selection in a server-only dynamic loader so browser bundles
-// never evaluate Bun globals or the Bun-only module namespace.
+// This loader is synchronous because the existing SQLite API is synchronous.
+// The database module is already server-only (it also uses fs/path), so the
+// browser bundle must never import this module.
+import { createRequire } from "module";
+
 type Database = any;
 
-async function loadDatabaseConstructor(): Promise<any> {
-  if (typeof process !== "undefined" && process.versions?.bun) {
-    const sqliteModule = await import("bun:sqlite");
-    return sqliteModule.Database;
-  }
-  const sqliteModule = await import("node:sqlite");
-  return sqliteModule.DatabaseSync;
-}
+const runtimeRequire = createRequire(import.meta.url);
 
-let DatabaseConstructorPromise: Promise<any> | null = null;
-function getDatabaseConstructor(): Promise<any> {
-  if (!DatabaseConstructorPromise) {
-    DatabaseConstructorPromise = loadDatabaseConstructor();
+function getDatabaseConstructor(): any {
+  if (process.versions?.bun) {
+    return runtimeRequire("bun:sqlite").Database;
   }
-  return DatabaseConstructorPromise;
+  return runtimeRequire("node:sqlite").DatabaseSync;
 }
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -33,7 +28,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
-    const DatabaseConstructor = await getDatabaseConstructor();
+    const DatabaseConstructor = getDatabaseConstructor();
     db = new DatabaseConstructor(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
