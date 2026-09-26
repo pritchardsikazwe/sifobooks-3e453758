@@ -28,3 +28,67 @@ export function prepareInventoryMovement(input: InventoryMovementInput): Prepare
     totalCost: plan.totalCost,
   };
 }
+
+
+export interface InventoryTransferPlan {
+  itemId: string;
+  sourceLocationId: string;
+  destinationLocationId: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+  reference?: string;
+  note?: string;
+}
+
+/** Prepare the two-sided inventory movement for a warehouse/location transfer.
+ * Persistence is deliberately left to the runtime adapter so both sides can
+ * remain inside the caller's existing transaction. */
+export function prepareInventoryTransfer(input: {
+  itemId: string;
+  sourceLocationId: string;
+  destinationLocationId: string;
+  quantity: number;
+  unitCost: number;
+  reference?: string;
+  note?: string;
+}): { out: PreparedInventoryMovement; in: PreparedInventoryMovement; transfer: InventoryTransferPlan } {
+  if (!input.itemId) throw new Error("STOCK_ITEM_REQUIRED");
+  if (!input.sourceLocationId || !input.destinationLocationId) throw new Error("TRANSFER_LOCATION_REQUIRED");
+  if (input.sourceLocationId === input.destinationLocationId) throw new Error("TRANSFER_SAME_LOCATION");
+
+  const quantity = stockNumber(input.quantity);
+  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error("INVALID_TRANSFER_QUANTITY");
+
+  const out = prepareInventoryMovement({
+    itemId: input.itemId,
+    movementType: "TRANSFER_OUT",
+    quantityDelta: -quantity,
+    unitCost: input.unitCost,
+    reference: input.reference,
+    note: input.note ?? "Warehouse transfer out",
+  });
+  const incoming = prepareInventoryMovement({
+    itemId: input.itemId,
+    movementType: "TRANSFER_IN",
+    quantityDelta: quantity,
+    unitCost: input.unitCost,
+    reference: input.reference,
+    note: input.note ?? "Warehouse transfer in",
+  });
+
+  return {
+    out,
+    in: incoming,
+    transfer: {
+      itemId: input.itemId,
+      sourceLocationId: input.sourceLocationId,
+      destinationLocationId: input.destinationLocationId,
+      quantity,
+      unitCost: out.unitCost,
+      totalCost: out.totalCost,
+      reference: input.reference,
+      note: input.note,
+    },
+  };
+}
