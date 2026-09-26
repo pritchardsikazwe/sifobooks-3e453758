@@ -2,6 +2,7 @@
 import { getCloudDb } from "@/lib/cloud/postgres";
 import { prepareJournalPosting } from "@/core/accounting/journal-plan";
 import { prepareInventoryMovement } from "@/core/inventory/movement";
+import { cloudInventoryMovementRepository } from "@/platform/cloud/database";
 
 type Tx = any;
 const money = (v: unknown) => Math.round((Number(v ?? 0) + Number.EPSILON) * 100) / 100;
@@ -335,10 +336,18 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
         reference: orderNo,
         note: "Restaurant recipe consumption",
       });
-      await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",
-        [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, sale.location_id || d.item.warehouse_id || null, movement.totalCost],
-      );
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(),
+        userId: uid,
+        itemId: movement.itemId,
+        movementType: movement.movementType,
+        quantity: movement.quantityDelta,
+        unitCost: movement.unitCost,
+        totalCost: movement.totalCost,
+        reference: movement.reference,
+        note: movement.note,
+        locationId: sale.location_id || d.item.warehouse_id || null,
+      });
     }
     ingredientCost = money(ingredientCost);
 
