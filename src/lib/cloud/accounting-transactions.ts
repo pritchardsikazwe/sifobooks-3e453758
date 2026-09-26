@@ -540,7 +540,12 @@ export async function cloudPostCreditNote(uid: string, args: any) {
             note: "Credit note return",
           });
           await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.stock_item_id, uid]);
-          await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8,$9)", [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, h.location_id || item.warehouse_id || null, movement.totalCost]);
+          await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+            id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+            quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+            reference: movement.reference, note: movement.note,
+            locationId: h.location_id || item.warehouse_id || null,
+          });
         }
       }
     }
@@ -575,7 +580,16 @@ export async function cloudReversePosSale(uid: string, args: any) {
       const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [line.item_id, uid]);
       if (!item) continue;
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(line.qty), line.item_id, uid]);
-      await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, line.item_id, Number(line.qty), Number(line.unit_cost || item.cost_price || 0), sale.sale_no, reason, sale.location_id || item.warehouse_id || null]);
+      const movement = prepareInventoryMovement({
+        itemId: String(line.item_id), movementType: "RETURN", quantityDelta: Number(line.qty),
+        unitCost: Number(line.unit_cost || item.cost_price || 0), reference: sale.sale_no, note: reason,
+      });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+        quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+        reference: movement.reference, note: movement.note,
+        locationId: sale.location_id || item.warehouse_id || null,
+      });
     }
     if (sale.journal_entry_id) {
       const old = await one(tx, "SELECT * FROM journal_entries WHERE id=$1 AND user_id=$2", [sale.journal_entry_id, uid]);
