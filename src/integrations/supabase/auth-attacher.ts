@@ -1,6 +1,6 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { IS_LOCAL_BACKEND } from '@/lib/platform/backend-mode'
-import { supabase } from './client'
+import { cloudSupabase } from './cloud-client'
 
 const TOKEN_KEY = "sifobooks-auth-token"
 
@@ -12,7 +12,7 @@ export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
       if (IS_LOCAL_BACKEND) {
         token = localStorage.getItem(TOKEN_KEY)
       } else {
-        const { data } = await supabase.auth.getSession()
+        const { data } = await cloudSupabase.auth.getSession()
         token = data.session?.access_token ?? null
       }
     }
