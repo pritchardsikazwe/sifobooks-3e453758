@@ -29,7 +29,7 @@ try {
     .sort();
 
   for (const file of files) {
-    const version = file.split("_", 1)[0];
+    const version = file;
     const existing = await sql`
       SELECT 1 FROM sifobooks_schema_migrations WHERE version = ${version}
     `;
