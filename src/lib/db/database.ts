@@ -1,19 +1,26 @@
 // SQLite is runtime-specific:
 // - Bun/Windows production uses Bun's native bun:sqlite driver.
-// - Node/Vite development uses node:sqlite so Vite SSR can execute cleanly.
-// The dynamic import prevents the unused runtime driver from entering the active
-// module loader path.
-const sqliteModule =
-  typeof globalThis.Bun !== "undefined"
-    ? await import("bun:sqlite")
-    : await import("node:sqlite");
-
+// - Node/Vite development uses node:sqlite.
+// Keep the driver selection in a server-only dynamic loader so browser bundles
+// never evaluate Bun globals or the Bun-only module namespace.
 type Database = any;
 
-const DatabaseConstructor =
-  "Database" in sqliteModule
-    ? sqliteModule.Database
-    : sqliteModule.DatabaseSync;
+async function loadDatabaseConstructor(): Promise<any> {
+  if (typeof process !== "undefined" && process.versions?.bun) {
+    const sqliteModule = await import("bun:sqlite");
+    return sqliteModule.Database;
+  }
+  const sqliteModule = await import("node:sqlite");
+  return sqliteModule.DatabaseSync;
+}
+
+let DatabaseConstructorPromise: Promise<any> | null = null;
+function getDatabaseConstructor(): Promise<any> {
+  if (!DatabaseConstructorPromise) {
+    DatabaseConstructorPromise = loadDatabaseConstructor();
+  }
+  return DatabaseConstructorPromise;
+}
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -26,6 +33,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
+    const DatabaseConstructor = await getDatabaseConstructor();
     db = new DatabaseConstructor(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
