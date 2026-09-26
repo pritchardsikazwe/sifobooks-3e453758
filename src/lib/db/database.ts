@@ -1,14 +1,9 @@
-import { createRequire } from "node:module";
+import { DatabaseSync } from "node:sqlite";
 
-// Keep the Bun-only SQLite module out of the Vite/Node SSR import graph.
-// Windows/desktop runtime loads it lazily when the local database is actually used.
-const require = createRequire(import.meta.url);
-type Database = any;
-let BunDatabase: any;
-function getBunDatabaseConstructor() {
-  if (!BunDatabase) BunDatabase = require("bun:sqlite").Database;
-  return BunDatabase;
-}
+// Use the synchronous SQLite API that is available in both Node SSR and Bun.
+// This keeps local SQLite out of the Bun-only "bun:sqlite" module namespace,
+// which Vite's Node-style SSR loader cannot resolve during development.
+type Database = DatabaseSync;
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { readdirSync } from "fs";
@@ -20,7 +15,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
-    db = new (getBunDatabaseConstructor())(DB_PATH, { create: true });
+    db = new Database(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
