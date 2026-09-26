@@ -398,8 +398,16 @@ export async function cloudPostInvoice(uid: string, args: any) {
         const item=await one(tx,"SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE",[stockItemId,uid]);
         if(!item) throw new Error("UNKNOWN_ITEM");
         if(Number(item.quantity_on_hand||0)<qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+        const movement = prepareInventoryMovement({
+          itemId: String(stockItemId),
+          movementType: "SALE",
+          quantityDelta: -qty,
+          unitCost: Number(item.cost_price || 0),
+          reference: h.number,
+          note: "Sales invoice",
+        });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3",[qty,stockItemId,uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",[id(),uid,stockItemId,qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id||item.warehouse_id||null]);
+        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",[id(),uid,movement.itemId,movement.quantityDelta,movement.unitCost,movement.reference,movement.note,x.location_id||item.warehouse_id||null,movement.totalCost]);
       }
     }
     const a=await accounts(tx,uid);
