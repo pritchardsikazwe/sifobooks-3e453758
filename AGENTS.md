@@ -35,3 +35,4 @@ See `.env` for required variables. Key variables:
 - `AI_MODEL` — model name for the AI API
 
 - Files ported to the local SQLite layer carry `// @ts-nocheck` and tsconfig uses strict:false + strictNullChecks; the Supabase-compat client is exported as `any`. Why: the external port left ~250 type-only errors; remove per-file as each is typed.
+- Backend boundary: hosted builds use Lovable Cloud via src/integrations/supabase/{cloud-client,cloud-client.server}.ts; Windows build sets VITE_SIFOBOOKS_BACKEND=local to use local-client*.ts (SQLite). Why: browser/hosted must never depend on bun:sqlite or Bun globals.
