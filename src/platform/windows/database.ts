@@ -23,3 +23,15 @@ export function getWindowsDatabase(): DatabasePort {
 export const windowsDatabaseProvider: DatabaseProvider = {
   getDatabase: getWindowsDatabase,
 };
+
+
+import type { InventoryMovementRepository } from "@/core/contracts/database";
+
+export const windowsInventoryMovementRepository: InventoryMovementRepository = {
+  async insertMovement(movement) {
+    await getWindowsDatabase().execute(
+      "INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,total_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      [movement.id, movement.userId, movement.itemId, movement.movementType, movement.quantity, movement.unitCost, movement.totalCost, movement.reference ?? null, movement.note ?? null, movement.locationId ?? null],
+    );
+  },
+};
