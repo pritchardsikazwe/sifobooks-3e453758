@@ -514,8 +514,16 @@ export async function cloudPostCreditNote(uid: string, args: any) {
       if (x.stock_item_id) {
         const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.stock_item_id, uid]);
         if (item) {
-          await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(x.quantity), x.stock_item_id, uid]);
-          await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, x.stock_item_id, Number(x.quantity), Number(item.cost_price || 0), h.number, "Credit note return", h.location_id || item.warehouse_id || null]);
+          const movement = prepareInventoryMovement({
+            itemId: String(x.stock_item_id),
+            movementType: "RETURN",
+            quantityDelta: Number(x.quantity),
+            unitCost: Number(item.cost_price || 0),
+            reference: h.number,
+            note: "Credit note return",
+          });
+          await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.stock_item_id, uid]);
+          await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8,$9)", [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, h.location_id || item.warehouse_id || null, movement.totalCost]);
         }
       }
     }
