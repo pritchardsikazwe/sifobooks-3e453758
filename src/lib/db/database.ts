@@ -2,8 +2,6 @@
 // - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
 // The loader stays synchronous and avoids statically analyzable Bun-only imports.
-type Database = any;
-
 // Synchronous, server-only driver resolution. No static reference to bun:sqlite,
 // so hosted/cloud bundles never try to resolve the Bun-only module.
 // SQLite is runtime-specific and server-only (Windows/standalone build only):
