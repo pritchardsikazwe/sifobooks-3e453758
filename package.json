@@ -11,6 +11,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "start": "bun dist/server/server.js",
+    "cloud:migrate": "bun run scripts/migrate-cloud.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
