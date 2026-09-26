@@ -59,3 +59,8 @@ requirePattern(cloudRpc, /cloudButcheryProcessing[\\s\\S]{0,7000}stock_balances/
 requirePattern(source("src/lib/erp/phase2.ts"), /postOpeningStock[\\s\\S]{0,5000}movementType:"opening"[\\s\\S]{0,1500}sourceType:"opening_stock"/, "local opening stock updates ledger and balance");
 requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /cloudPostOpeningStock[\\s\\S]{0,8000}adjustCloudStockBalance\\(tx, uid, itemId, locationId, qty\\)/, "cloud opening stock updates location balance");
 requirePattern(source("src/lib/db/cloud-rpc.ts"), /case "post_opening_stock": return \{ data: await cloudPostOpeningStock\(uid, args\), error: null \};/, "opening stock RPC is exposed");
+
+requirePattern(source("src/lib/erp/phase2.ts"), /function assertInventoryLocation[\\s\\S]{0,2500}WAREHOUSE_LOCATION_MISMATCH/, "local warehouse/location relationship validation");
+requirePattern(source("src/lib/erp/phase2.ts"), /receivePurchase[\\s\\S]{0,1000}assertInventoryLocation\(db,args\)/, "purchase requires explicit valid location");
+requirePattern(source("src/lib/erp/phase2.ts"), /transferStock[\\s\\S]{0,1000}assertInventoryLocation\(db,\{userId:args.userId,locationId:args.fromLocationId\}\)/, "transfer validates source location");
+requirePattern(source("src/lib/erp/phase2.ts"), /transferStock[\\s\\S]{0,1200}assertInventoryLocation\(db,\{userId:args.userId,locationId:args.toLocationId\}\)/, "transfer validates destination location");
