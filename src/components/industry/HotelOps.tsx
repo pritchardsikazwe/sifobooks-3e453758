@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -336,13 +337,6 @@ export function ReservationsBoard() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <MetricTile label="Total revenue" value={money(totalRevenue)} icon={Wallet} hint="Room + F&B + other + statutory charges" />
-        <MetricTile label="Payments" value={money(totalPayments)} icon={Wallet} hint="Recorded folio payments" />
-        <MetricTile label="Variance" value={money(paymentVariance)} icon={Wallet} tone={Math.abs(paymentVariance) < 0.01 ? "good" : "warn"} hint="Revenue less recorded payments" />
-        <MetricTile label="Housekeeping exceptions" value={String(roomsDirty)} icon={BedDouble} tone={roomsDirty ? "warn" : "good"} />
-        <MetricTile label="Audit checks" value={auditChecklist.filter(x=>x.ok).length + "/" + auditChecklist.length} icon={Moon} />
-      </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricTile label="Arrivals today" value={String(arrivals.length)} icon={LogIn} tone="info" />

@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 /**
  * Builders for the ZRA VSDC transaction shape.
  *

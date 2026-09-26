@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {

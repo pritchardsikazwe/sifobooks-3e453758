@@ -304,6 +304,7 @@ import { Route as AuthenticatedInventoryGlReconciliationRouteImport } from './ro
 import { Route as AuthenticatedInventoryControlCenterRouteImport } from './routes/_authenticated/inventory.control-center'
 import { Route as AuthenticatedInventoryCashierRecordsRouteImport } from './routes/_authenticated/inventory.cashier-records'
 import { Route as AuthenticatedHubHubRouteImport } from './routes/_authenticated/hub.$hub'
+import { Route as AuthenticatedHotelSettingsRouteImport } from './routes/_authenticated/hotel/settings'
 import { Route as AuthenticatedHotelRoomsRouteImport } from './routes/_authenticated/hotel/rooms'
 import { Route as AuthenticatedHotelRoomRackRouteImport } from './routes/_authenticated/hotel/room-rack'
 import { Route as AuthenticatedHotelRestaurantRouteImport } from './routes/_authenticated/hotel/restaurant'
@@ -1998,6 +1999,12 @@ const AuthenticatedHubHubRoute = AuthenticatedHubHubRouteImport.update({
   path: '/hub/$hub',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHotelSettingsRoute =
+  AuthenticatedHotelSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedHotelRoute,
+  } as any)
 const AuthenticatedHotelRoomsRoute = AuthenticatedHotelRoomsRouteImport.update({
   id: '/rooms',
   path: '/rooms',
@@ -2343,6 +2350,7 @@ export interface FileRoutesByFullPath {
   '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
   '/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
   '/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
+  '/hotel/settings': typeof AuthenticatedHotelSettingsRoute
   '/hub/$hub': typeof AuthenticatedHubHubRoute
   '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
@@ -2661,6 +2669,7 @@ export interface FileRoutesByTo {
   '/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
   '/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
   '/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
+  '/hotel/settings': typeof AuthenticatedHotelSettingsRoute
   '/hub/$hub': typeof AuthenticatedHubHubRoute
   '/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
@@ -2988,6 +2997,7 @@ export interface FileRoutesById {
   '/_authenticated/hotel/restaurant': typeof AuthenticatedHotelRestaurantRoute
   '/_authenticated/hotel/room-rack': typeof AuthenticatedHotelRoomRackRoute
   '/_authenticated/hotel/rooms': typeof AuthenticatedHotelRoomsRoute
+  '/_authenticated/hotel/settings': typeof AuthenticatedHotelSettingsRoute
   '/_authenticated/hub/$hub': typeof AuthenticatedHubHubRoute
   '/_authenticated/inventory/cashier-records': typeof AuthenticatedInventoryCashierRecordsRoute
   '/_authenticated/inventory/control-center': typeof AuthenticatedInventoryControlCenterRoute
@@ -3314,6 +3324,7 @@ export interface FileRouteTypes {
     | '/hotel/restaurant'
     | '/hotel/room-rack'
     | '/hotel/rooms'
+    | '/hotel/settings'
     | '/hub/$hub'
     | '/inventory/cashier-records'
     | '/inventory/control-center'
@@ -3632,6 +3643,7 @@ export interface FileRouteTypes {
     | '/hotel/restaurant'
     | '/hotel/room-rack'
     | '/hotel/rooms'
+    | '/hotel/settings'
     | '/hub/$hub'
     | '/inventory/cashier-records'
     | '/inventory/control-center'
@@ -3958,6 +3970,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hotel/restaurant'
     | '/_authenticated/hotel/room-rack'
     | '/_authenticated/hotel/rooms'
+    | '/_authenticated/hotel/settings'
     | '/_authenticated/hub/$hub'
     | '/_authenticated/inventory/cashier-records'
     | '/_authenticated/inventory/control-center'
@@ -6197,6 +6210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHubHubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hotel/settings': {
+      id: '/_authenticated/hotel/settings'
+      path: '/settings'
+      fullPath: '/hotel/settings'
+      preLoaderRoute: typeof AuthenticatedHotelSettingsRouteImport
+      parentRoute: typeof AuthenticatedHotelRoute
+    }
     '/_authenticated/hotel/rooms': {
       id: '/_authenticated/hotel/rooms'
       path: '/rooms'
@@ -6458,6 +6478,7 @@ interface AuthenticatedHotelRouteChildren {
   AuthenticatedHotelRestaurantRoute: typeof AuthenticatedHotelRestaurantRoute
   AuthenticatedHotelRoomRackRoute: typeof AuthenticatedHotelRoomRackRoute
   AuthenticatedHotelRoomsRoute: typeof AuthenticatedHotelRoomsRoute
+  AuthenticatedHotelSettingsRoute: typeof AuthenticatedHotelSettingsRoute
 }
 
 const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
@@ -6484,6 +6505,7 @@ const AuthenticatedHotelRouteChildren: AuthenticatedHotelRouteChildren = {
   AuthenticatedHotelRestaurantRoute: AuthenticatedHotelRestaurantRoute,
   AuthenticatedHotelRoomRackRoute: AuthenticatedHotelRoomRackRoute,
   AuthenticatedHotelRoomsRoute: AuthenticatedHotelRoomsRoute,
+  AuthenticatedHotelSettingsRoute: AuthenticatedHotelSettingsRoute,
 }
 
 const AuthenticatedHotelRouteWithChildren =

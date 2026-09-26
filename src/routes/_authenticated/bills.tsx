@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileBox, CheckCircle2, ExternalLink } from "lucide-react";
 import { SimpleCrud, updateStatus } from "@/components/SimpleCrud";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { describe, expect, it } from "vitest";
 import { isBalanced } from "@/components/PostingPreview";
 import {

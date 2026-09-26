@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Activity, RefreshCw, CheckCircle2, AlertTriangle, XCircle, ArrowRight,
-  BookText, ShoppingBag, UtensilsCrossed, Landmark, Boxes, Building2, BookOpen, Database,
+  BookText, ShoppingBag, UtensilsCrossed, Landmark, Boxes, Building2, BookOpen, Database, Wifi,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/system-health")({

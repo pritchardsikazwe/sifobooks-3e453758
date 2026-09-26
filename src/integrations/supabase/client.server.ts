@@ -89,8 +89,8 @@ async function executeAdminRpc(name: string, args: Record<string, any>): Promise
         const disabled = Boolean(args._disabled);
         const unlock = Boolean(args._unlock);
         const result = db.prepare(
-          "UPDATE employee_pos_permissions SET pin_disabled=?,pin_locked_until=?,failed_pin_attempts=CASE WHEN ? THEN 0 ELSE COALESCE(failed_pin_attempts,0) END WHERE id=? AND is_active=1",
-        ).run(disabled ? 1 : 0, unlock ? null : undefined, unlock ? 1 : 0, permissionId);
+          "UPDATE employee_pos_permissions SET pin_disabled=?,pin_locked_until=CASE WHEN ? THEN NULL ELSE pin_locked_until END,failed_pin_attempts=CASE WHEN ? THEN 0 ELSE COALESCE(failed_pin_attempts,0) END WHERE id=? AND is_active=1",
+        ).run(disabled ? 1 : 0, unlock ? 1 : 0, unlock ? 1 : 0, permissionId);
         if (!result.changes) return { data: { ok: false, error: "Cashier profile not found" }, error: null };
         return { data: { ok: true }, error: null };
       }

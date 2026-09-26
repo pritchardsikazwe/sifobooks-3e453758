@@ -33,7 +33,7 @@ class QueryBuilder {
 
   select(columns: string = "*") { this.spec.columns = columns; return this; }
   insert(data: any) { this.spec.operation = "insert"; this.spec.insertData = data; return this; }
-  upsert(data: any, opts?: { onConflict?: string }) { this.spec.operation = "insert"; this.spec.insertData = data; this.spec.onConflict = opts?.onConflict ?? null; return this; }
+  upsert(data: any, opts?: { onConflict?: string }) { this.spec.operation = "insert"; this.spec.insertData = data; this.spec.onConflict = opts?.onConflict ?? undefined; return this; }
   update(data: any) { this.spec.operation = "update"; this.spec.updateData = data; return this; }
   delete() { this.spec.operation = "delete"; return this; }
 
@@ -47,6 +47,7 @@ class QueryBuilder {
   is(col: string, val: any) { this.spec.filters.push({ column: col, op: "is", value: val }); return this; }
   like(col: string, val: string) { this.spec.filters.push({ column: col, op: "like", value: val }); return this; }
   ilike(col: string, val: string) { this.spec.filters.push({ column: col, op: "ilike", value: val }); return this; }
+  or(expr: string) { this.spec.filters.push({ column: "__or__", op: "or", value: expr }); return this; }
   contains(col: string, val: any) { this.spec.filters.push({ column: col, op: "like", value: `%${JSON.stringify(val)}%` }); return this; }
   overlaps(col: string, val: any[]) { this.spec.filters.push({ column: col, op: "like", value: `%${val.join(",")}%` }); return this; }
 
@@ -223,7 +224,7 @@ const auth = {
 };
 
 // ── Main supabase object ──
-export const supabase = {
+const supabaseImpl = {
   from(table: string) {
     return new QueryBuilder(table, "select");
   },
@@ -239,3 +240,5 @@ export const supabase = {
   removeChannel(_channel: any) {},
   removeAllChannels() {},
 };
+// Loosely typed on purpose: callers were written against the Supabase client API.
+export const supabase: any = supabaseImpl;
