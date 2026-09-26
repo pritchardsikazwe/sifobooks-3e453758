@@ -814,6 +814,7 @@ function Page() {
     { label: "KITCHEN", icon: "▤", run: () => navigate({ to: "/restaurant/kitchen" }), feature: "kitchen_display", channel: "restaurant" },
     { label: "SETTINGS", icon: "⚙", run: () => navigate({ to: "/pos/settings" }), feature: "settings" },
   ];
+  const visibleSideKeys = sideKeys.filter((k) => !k.channel || k.channel === "restaurant");
 
   if (loading) {
     return <div className="flex h-[70vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
