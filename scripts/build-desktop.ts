@@ -29,6 +29,8 @@ function copyDir(src: string, dest: string) {
 
 console.log(`\\nStep 1/4: Building ${productName} web application...\\n`);
 process.env.VITE_SIFOBOOKS_EDITION = editionSlug;
+// Windows standalone uses local SQLite + local JWT auth (see src/lib/platform/backend-mode.ts).
+process.env.VITE_SIFOBOOKS_BACKEND = "local";
 await $`bun run build`;
 
 console.log("\\nStep 2/4: Preparing native SifoBooks Windows icon and compiling executable...\\n");

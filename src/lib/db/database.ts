@@ -5,21 +5,21 @@
 // never evaluate Bun globals or the Bun-only module namespace.
 type Database = any;
 
-async function loadDatabaseConstructor(): Promise<any> {
-  if (typeof process !== "undefined" && process.versions?.bun) {
-    const sqliteModule = await import("bun:sqlite");
-    return sqliteModule.Database;
+// Synchronous, server-only driver resolution. No static reference to bun:sqlite,
+// so hosted/cloud bundles never try to resolve the Bun-only module.
+let DatabaseConstructorCache: any = null;
+function getDatabaseConstructor(): any {
+  if (DatabaseConstructorCache) return DatabaseConstructorCache;
+  const proc: any = typeof process !== "undefined" ? process : undefined;
+  if (proc?.versions?.bun) {
+    const req = (import.meta as any).require ?? (globalThis as any).require;
+    DatabaseConstructorCache = req("bun" + ":sqlite").Database;
+  } else {
+    const mod = proc?.getBuiltinModule?.("node:sqlite");
+    if (!mod) throw new Error("LOCAL_SQLITE_UNAVAILABLE: local SQLite is only available in the Windows/standalone build.");
+    DatabaseConstructorCache = mod.DatabaseSync;
   }
-  const sqliteModule = await import("node:sqlite");
-  return sqliteModule.DatabaseSync;
-}
-
-let DatabaseConstructorPromise: Promise<any> | null = null;
-function getDatabaseConstructor(): Promise<any> {
-  if (!DatabaseConstructorPromise) {
-    DatabaseConstructorPromise = loadDatabaseConstructor();
-  }
-  return DatabaseConstructorPromise;
+  return DatabaseConstructorCache;
 }
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -33,7 +33,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
-    const DatabaseConstructor = await getDatabaseConstructor();
+    const DatabaseConstructor = getDatabaseConstructor();
     db = new DatabaseConstructor(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
