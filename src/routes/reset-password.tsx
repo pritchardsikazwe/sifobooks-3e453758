@@ -25,13 +25,13 @@ const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const { forced } = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     // Supabase auto-parses the recovery token in the URL hash and fires PASSWORD_RECOVERY
-    const { forced } = Route.useSearch();
   const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
