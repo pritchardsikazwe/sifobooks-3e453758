@@ -10,6 +10,7 @@ function requirePattern(text: string, pattern: RegExp, label: string) {
 
 const local = source("src/lib/db/server-api.ts");
 const cloud = source("src/lib/cloud/accounting-transactions.ts");
+const cloudRpc = source("src/lib/db/cloud-rpc.ts");
 
 requirePattern(
   local,
@@ -48,3 +49,9 @@ requirePattern(
 );
 
 console.log("[inventory-sync-qa] OK: local and cloud stock movement/location-balance invariants are present");
+
+requirePattern(cloud, /export async function cloudTransferStock[\\s\\S]{0,9000}TRANSFER_OUT[\\s\\S]{0,5000}TRANSFER_IN/, "cloud transfers create paired location movements");
+requirePattern(cloud, /cloudTransferStock[\\s\\S]{0,7000}adjustCloudStockBalance\\(tx, uid, itemId, fromLocationId, out\.quantityDelta\\)/, "cloud transfer reduces source location");
+requirePattern(cloud, /cloudTransferStock[\\s\\S]{0,7000}adjustCloudStockBalance\\(tx, uid, itemId, toLocationId, inn\.quantityDelta\\)/, "cloud transfer increases destination location");
+requirePattern(cloudRpc, /case "transfer_stock": return \{ data: await cloudTransferStock\(uid, args\), error: null \};/, "cloud transfer RPC is exposed");
+requirePattern(cloudRpc, /cloudButcheryProcessing[\\s\\S]{0,7000}stock_balances/, "cloud butchery synchronizes location balances");
