@@ -16,6 +16,7 @@ const DatabaseConstructor =
     : sqliteModule.DatabaseSync;
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { readdirSync } from "fs";
 import { gunzipSync } from "zlib";
 
@@ -37,7 +38,8 @@ export function getDb(): Database {
 
 function findSchemaSql(): string {
   // Dev mode: schema.sql next to the source file
-  const devPath = join(import.meta.dir, "schema.sql");
+  const sourceDir = dirname(fileURLToPath(import.meta.url));
+  const devPath = join(sourceDir, "schema.sql");
   if (existsSync(devPath)) return readFileSync(devPath, "utf8");
 
   // Protected desktop package: compressed schema is intentionally not exposed as raw SQL.
