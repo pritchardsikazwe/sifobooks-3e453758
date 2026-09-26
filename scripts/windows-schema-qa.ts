@@ -36,6 +36,11 @@ for (const [table, columns] of Object.entries(requiredColumns)) {
   }
 }
 
+db.exec("PRAGMA wal_checkpoint(TRUNCATE);");
 db.close();
-rmSync(dbPath, { force: true });
+try {
+  rmSync(dbPath, { force: true, maxRetries: 8, retryDelay: 150 });
+} catch (error) {
+  console.warn("[windows-schema-qa] Cleanup deferred because SQLite file is still busy:", error);
+}
 console.log("[windows-schema-qa] OK: inventory schema tables and required columns are present");
