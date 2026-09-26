@@ -74,11 +74,10 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   error_message TEXT, printed_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
--- The protected/base SQLite schema already contains a legacy print_jobs table
--- without company_id. Add the compatibility column before creating the
--- multi-mode index. The migration runner safely ignores duplicate-column
--- errors on databases where the new table already supplied it.
+-- Legacy/base SQLite schema may already contain print_jobs without the
+-- multi-mode columns. Add them before the multi-mode index.
 ALTER TABLE print_jobs ADD COLUMN company_id TEXT;
+ALTER TABLE print_jobs ADD COLUMN created_at TEXT NOT NULL DEFAULT (datetime('now'));
 CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(company_id, status, created_at);
 
 CREATE TABLE IF NOT EXISTS license_activations (
