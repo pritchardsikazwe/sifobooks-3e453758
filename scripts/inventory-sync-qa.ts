@@ -64,3 +64,8 @@ requirePattern(source("src/lib/erp/phase2.ts"), /function assertInventoryLocatio
 requirePattern(source("src/lib/erp/phase2.ts"), /receivePurchase[\\s\\S]{0,1000}assertInventoryLocation\(db,args\)/, "purchase requires explicit valid location");
 requirePattern(source("src/lib/erp/phase2.ts"), /transferStock[\\s\\S]{0,1000}assertInventoryLocation\(db,\{userId:args.userId,locationId:args.fromLocationId\}\)/, "transfer validates source location");
 requirePattern(source("src/lib/erp/phase2.ts"), /transferStock[\\s\\S]{0,1200}assertInventoryLocation\(db,\{userId:args.userId,locationId:args.toLocationId\}\)/, "transfer validates destination location");
+
+requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /async function requireCloudLocation[\\s\\S]{0,1800}INVENTORY_LOCATION_NOT_FOUND/, "cloud stock flows validate explicit locations");
+requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /cloudPosCheckout[\\s\\S]{0,2500}POS_LOCATION_NOT_FOUND/, "cloud POS validates its location");
+requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /cloudRestaurantCheckout[\\s\\S]{0,5000}requireCloudLocation\(tx, uid, locationId/, "cloud restaurant validates its location");
+requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /cloudPostOpeningStock[\\s\\S]{0,1800}requireCloudLocation\(tx, uid, locationId/, "cloud opening stock validates its location");
