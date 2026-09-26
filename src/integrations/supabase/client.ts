@@ -224,7 +224,7 @@ const auth = {
 };
 
 // ── Main supabase object ──
-export const supabase = {
+const supabaseImpl = {
   from(table: string) {
     return new QueryBuilder(table, "select");
   },
@@ -240,3 +240,5 @@ export const supabase = {
   removeChannel(_channel: any) {},
   removeAllChannels() {},
 };
+// Loosely typed on purpose: callers were written against the Supabase client API.
+export const supabase: any = supabaseImpl;
