@@ -24,7 +24,7 @@ requirePattern(
 );
 requirePattern(
   local,
-  /function ledger\([\s\S]*?UPDATE stock_balances SET quantity/,
+  /function ledger\(db:any,args:any\)[\s\S]*?UPDATE stock_balances SET quantity/,
   "local ledger updates location balances",
 );
 requirePattern(
