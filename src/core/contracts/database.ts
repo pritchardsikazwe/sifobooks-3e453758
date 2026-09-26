@@ -7,3 +7,19 @@ export interface DatabasePort {
 export interface DatabaseProvider {
   getDatabase(): DatabasePort;
 }
+
+
+export interface InventoryMovementRepository {
+  insertMovement(movement: {
+    id: string;
+    userId: string;
+    itemId: string;
+    movementType: string;
+    quantity: number;
+    unitCost: number;
+    totalCost: number;
+    reference?: string;
+    note?: string;
+    locationId?: string | null;
+  }): Promise<void>;
+}
