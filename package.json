@@ -5,8 +5,8 @@
   "type": "module",
   "packageManager": "bun@1.3.14",
   "scripts": {
-    "dev": "vite dev",
-    "dev:lan": "vite dev --host 0.0.0.0 --port 3000",
+    "dev": "node ./node_modules/vite/bin/vite.js",
+    "dev:lan": "node ./node_modules/vite/bin/vite.js --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
