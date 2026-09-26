@@ -9,6 +9,7 @@ function requirePattern(text: string, pattern: RegExp, label: string) {
 }
 
 const local = source("src/lib/db/server-api.ts");
+const localInventory = source("src/lib/erp/phase2.ts");
 const cloud = source("src/lib/cloud/accounting-transactions.ts");
 const cloudRpc = source("src/lib/db/cloud-rpc.ts");
 
@@ -23,7 +24,7 @@ requirePattern(
   "local sales invoices use the inventory ledger with quantity-out",
 );
 requirePattern(
-  local,
+  localInventory,
   /function ledger\(db:any,args:any\)[\s\S]*?UPDATE stock_balances SET quantity/,
   "local ledger updates location balances",
 );
