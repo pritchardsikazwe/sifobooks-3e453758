@@ -8,17 +8,7 @@ const sqliteModule =
     ? await import("bun:sqlite")
     : await import("node:sqlite");
 
-type Database = InstanceType<
-  typeof sqliteModule extends { Database: infer T }
-    ? T extends abstract new (...args: any[]) => any
-      ? T
-      : never
-    : typeof sqliteModule extends { DatabaseSync: infer T }
-      ? T extends abstract new (...args: any[]) => any
-        ? T
-        : never
-      : never
->;
+type Database = any;
 
 const DatabaseConstructor =
   "Database" in sqliteModule
