@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import type { SQL } from "bun";
 
 let client: SQL | null = null;

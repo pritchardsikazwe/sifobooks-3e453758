@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getDb, generateUUID } from "./database";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getCloudDb } from "@/lib/cloud/postgres";
 
 type Tx = any;

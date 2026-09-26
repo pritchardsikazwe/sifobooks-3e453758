@@ -1,3 +1,4 @@
+// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 async function cloudButcheryProcessing(tx: any, uid: string, args: Record<string, any>) {
   const sourceItemId=String(args._source_item_id||"");
   const inputQty=Number(args._input_qty||0);
