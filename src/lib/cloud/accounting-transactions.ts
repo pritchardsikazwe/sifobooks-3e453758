@@ -391,6 +391,36 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
   });
 }
 
+export async function cloudPostOpeningStock(uid: string, args: any) {
+  const h = args?._opening || args || {};
+  const locationId = String(h.location_id || h.locationId || "");
+  const items = Array.isArray(args?._items) ? args._items : (Array.isArray(h.items) ? h.items : []);
+  if (!locationId) throw new Error("OPENING_LOCATION_REQUIRED");
+  if (!items.length) throw new Error("OPENING_EMPTY");
+  const reference = String(h.reference || h.opening_number || ("OPEN-" + Date.now()));
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "OPENING_STOCK", "opening_stock", null, String(h.client_ref || reference));
+    if (b.duplicate) return { reference: b.sourceId, duplicate: true, transaction_id: b.id };
+    let totalValue = 0;
+    for (const row of items) {
+      const itemId = String(row.item_id || row.itemId || "");
+      const qty = Number(row.quantity ?? row.qty);
+      const unitCost = Number(row.unit_cost ?? row.unitCost ?? 0);
+      if (!itemId || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(unitCost) || unitCost < 0) throw new Error("OPENING_LINE_INVALID");
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [itemId, uid]);
+      if (!item) throw new Error("OPENING_UNKNOWN_ITEM");
+      await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,cost_price=$2,average_cost=$2,updated_at=now() WHERE id=$3 AND user_id=$4", [qty, unitCost, itemId, uid]);
+      await adjustCloudStockBalance(tx, uid, itemId, locationId, qty);
+      const movement = prepareInventoryMovement({ itemId, movementType: "PURCHASE", quantityDelta: qty, unitCost, reference, note: "Opening stock" });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id:id(), userId:uid, itemId, movementType:"opening", quantity:qty, unitCost, totalCost:movement.totalCost, reference, note:"Opening stock", locationId });
+      totalValue += qty * unitCost;
+    }
+    await event(tx, uid, b.id, "POSTED", "Opening stock posted", { reference, locationId, totalValue });
+    return { reference, locationId, totalValue: money(totalValue), transaction_id:b.id, duplicate:false };
+  });
+}
+
 export async function cloudTransferStock(uid: string, args: any) {
   const h = args?._transfer || args || {};
   const fromLocationId = String(h.from_location_id || h.fromLocationId || "");
