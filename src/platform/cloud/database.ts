@@ -28,3 +28,15 @@ export function getCloudDatabase(): DatabasePort {
 export const cloudDatabaseProvider: DatabaseProvider = {
   getDatabase: getCloudDatabase,
 };
+
+
+import type { InventoryMovementRepository } from "@/core/contracts/database";
+
+export const cloudInventoryMovementRepository: InventoryMovementRepository = {
+  async insertMovement(movement) {
+    await getCloudDatabase().execute(
+      "INSERT INTO stock_movements (id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,total_cost,reference,note,location_id) VALUES (?,?,current_setting('app.tenant_id',true)::uuid,?,?,?,?,?,?,?,?)",
+      [movement.id, movement.userId, movement.itemId, movement.movementType, movement.quantity, movement.unitCost, movement.totalCost, movement.reference ?? null, movement.note ?? null, movement.locationId ?? null],
+    );
+  },
+};
