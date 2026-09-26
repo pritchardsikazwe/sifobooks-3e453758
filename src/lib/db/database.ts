@@ -1,8 +1,7 @@
-// SQLite is runtime-specific:
-// - Bun/Windows production uses Bun's native bun:sqlite driver.
+// SQLite is runtime-specific and server-only (Windows/standalone build):
+// - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
-// Keep the driver selection in a server-only dynamic loader so browser bundles
-// never evaluate Bun globals or the Bun-only module namespace.
+// The loader stays synchronous and avoids statically analyzable Bun-only imports.
 type Database = any;
 
 // Synchronous, server-only driver resolution. No static reference to bun:sqlite,
@@ -23,7 +22,6 @@ function getDatabaseConstructor(): any {
     const req = (import.meta as any).require ?? (globalThis as any).require;
     DatabaseConstructorCache = req("bun" + ":sqlite").Database;
   } else {
-    const mod = proc?.getBuiltinModule?.("node:sqlite");
     const mod = proc?.getBuiltinModule?.("node" + ":sqlite");
     if (!mod) throw new Error("LOCAL_SQLITE_UNAVAILABLE: local SQLite is only available in the Windows/standalone build.");
     DatabaseConstructorCache = mod.DatabaseSync;
