@@ -1,7 +1,8 @@
 function formatError(error: unknown): string {
   if (error instanceof Error) return error.message || error.name;
   if (typeof error === "string") return error;
-  try { return JSON.stringify(error); } catch { return "Unknown server error"; }
+  if (error == null) return "Unknown server error";
+  try { return JSON.stringify(error) || "Unknown server error"; } catch { return "Unknown server error"; }
 }
 
 export function renderErrorPage(error?: unknown, diagnosticId?: string): string {
