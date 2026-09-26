@@ -1,4 +1,5 @@
 import { prepareStockMovement, type StockMovementPlan } from "@/core/inventory/stock";
+import { stockNumber } from "@/core/inventory/stock";
 
 export type InventoryMovementType = "SALE" | "PURCHASE" | "RETURN" | "ADJUSTMENT" | "TRANSFER_IN" | "TRANSFER_OUT" | "PRODUCTION";
 
