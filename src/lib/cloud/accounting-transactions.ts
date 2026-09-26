@@ -98,6 +98,8 @@ export async function cloudPosCheckout(uid: string, args: any) {
   const sale = args?._sale || {};
   const items = Array.isArray(args?._items) ? args._items : [];
   const payments = Array.isArray(args?._payments) ? args._payments : [];
+  const locationId = String(sale.location_id || sale.locationId || "").trim();
+  if (!locationId) throw new Error("POS_LOCATION_REQUIRED");
   if (!items.length) throw new Error("EMPTY_SALE");
   if (!payments.length) throw new Error("PAYMENT_REQUIRED");
   return getCloudDb().begin(async (tx: Tx) => {
@@ -105,6 +107,9 @@ export async function cloudPosCheckout(uid: string, args: any) {
     const b = await batch(tx, uid, "POS_CHECKOUT", "pos_sale", null, String(sale.client_ref || ""));
     if (b.duplicate) return { sale_id: b.sourceId, sale_no: sale.sale_no, duplicate: true, transaction_id: b.id };
 
+    const location = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+    if (!location) throw new Error("POS_LOCATION_NOT_FOUND:" + locationId);
+    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("POS_LOCATION_INACTIVE:" + locationId);
     const settings = await one(tx, "SELECT tax_rate,tax_inclusive,allow_negative_stock FROM pos_settings WHERE user_id=$1 LIMIT 1", [uid]);
     const defaultRate = Number(settings?.tax_rate ?? 16);
     const taxInclusive = Number(settings?.tax_inclusive ?? 1) === 1;
@@ -177,9 +182,9 @@ export async function cloudPosCheckout(uid: string, args: any) {
         totalCost: movement.totalCost,
         reference: movement.reference,
         note: movement.note,
-        locationId: sale.location_id || x.item.warehouse_id || null,
+        locationId,
       });
-      await adjustCloudStockBalance(tx, uid, String(x.item.id), sale.location_id || x.item.warehouse_id || null, -x.qty);
+      await adjustCloudStockBalance(tx, uid, String(x.item.id), locationId, -x.qty);
     }
     for (const p of payments) {
       const amount = money(p.amount);
@@ -266,6 +271,11 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       menuByName.set(String(row.name), row);
     }
 
+    const locationId = String(sale.location_id || sale.locationId || "").trim();
+    if (!locationId) throw new Error("RESTAURANT_LOCATION_REQUIRED");
+    const location = await one(tx, "SELECT id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+    if (!location) throw new Error("RESTAURANT_LOCATION_NOT_FOUND:" + locationId);
+    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("RESTAURANT_LOCATION_INACTIVE:" + locationId);
     const ingredientTotals = new Map<string, { qty: number; item: any; unit: string | null }>();
     const lines: any[] = [];
     for (const raw of rawItems) {
@@ -292,12 +302,10 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
     }
 
     for (const d of ingredientTotals.values()) {
-      const available = sale.location_id
-        ? await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)])
-        : null;
-      const qtyAvailable = sale.location_id ? Number(available?.quantity || 0) : Number(d.item.quantity_on_hand || 0);
+      const available = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, locationId]);
+      const qtyAvailable = Number(available?.quantity || 0);
       if (qtyAvailable + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
-      if (sale.location_id && !available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
+      if (!available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
     }
 
     const orderId = existing?.id || id();
