@@ -33,3 +33,5 @@ See `.env` for required variables. Key variables:
 - `AI_API_KEY` — API key for the AI commentary feature (OpenAI-compatible endpoint)
 - `AI_API_URL` — base URL for the AI API (defaults to OpenAI)
 - `AI_MODEL` — model name for the AI API
+
+- Files ported to the local SQLite layer carry `// @ts-nocheck` and tsconfig uses strict:false + strictNullChecks; the Supabase-compat client is exported as `any`. Why: the external port left ~250 type-only errors; remove per-file as each is typed.
