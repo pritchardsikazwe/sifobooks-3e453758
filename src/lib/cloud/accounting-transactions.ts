@@ -447,8 +447,16 @@ export async function cloudPostPurchaseBill(uid: string, args: any) {
       if (x.item_id) {
         const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.item_id, uid]);
         if (!item) throw new Error("UNKNOWN_ITEM");
-        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item_id, uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'PURCHASE',$4,$5,$6,$7,$8)", [id(), uid, x.item_id, x.qty, x.price, h.bill_number, "Purchase receipt", h.location_id || item.warehouse_id || null]);
+        const movement = prepareInventoryMovement({
+          itemId: String(x.item_id),
+          movementType: "PURCHASE",
+          quantityDelta: x.qty,
+          unitCost: x.price,
+          reference: h.bill_number,
+          note: "Purchase receipt",
+        });
+        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.item_id, uid]);
+        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'PURCHASE',$4,$5,$6,$7,$8,$9)", [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, h.location_id || item.warehouse_id || null, movement.totalCost]);
       }
     }
     const a = await accounts(tx, uid);
