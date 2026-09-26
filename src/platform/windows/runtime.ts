@@ -28,5 +28,5 @@ export function getWindowsRuntimeCapabilities(): RuntimeCapabilities {
 }
 
 export const windowsRuntime: RuntimePort = {
-  capabilities: getWindowsRuntimeCapabilities(),
+  capabilities: getWindowsRuntimeCapabilities,
 };
