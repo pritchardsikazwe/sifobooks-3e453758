@@ -92,3 +92,45 @@ export function prepareInventoryTransfer(input: {
     },
   };
 }
+
+
+export interface InventoryAdjustmentPlan {
+  itemId: string;
+  quantityDelta: number;
+  unitCost: number;
+  totalCost: number;
+  reference?: string;
+  note?: string;
+}
+
+/** Prepare a controlled stock adjustment. The sign is explicit: positive adds
+ * stock and negative removes stock. Persistence and authorization remain in
+ * the runtime/application layer. */
+export function prepareInventoryAdjustment(input: {
+  itemId: string;
+  quantityDelta: number;
+  unitCost: number;
+  reference?: string;
+  note?: string;
+}): { movement: PreparedInventoryMovement; adjustment: InventoryAdjustmentPlan } {
+  if (!input.itemId) throw new Error("STOCK_ITEM_REQUIRED");
+  const movement = prepareInventoryMovement({
+    itemId: input.itemId,
+    movementType: "ADJUSTMENT",
+    quantityDelta: input.quantityDelta,
+    unitCost: input.unitCost,
+    reference: input.reference,
+    note: input.note ?? "Stock adjustment",
+  });
+  return {
+    movement,
+    adjustment: {
+      itemId: movement.itemId,
+      quantityDelta: movement.quantityDelta,
+      unitCost: movement.unitCost,
+      totalCost: movement.totalCost,
+      reference: movement.reference,
+      note: movement.note,
+    },
+  };
+}
