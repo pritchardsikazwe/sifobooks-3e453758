@@ -36,6 +36,9 @@ jobs:
       - name: Database workflow QA
         run: bun run test:database-qa
 
+      - name: Windows schema QA
+        run: bun run test:windows-schema-qa
+
       - name: Standalone edition workflow QA
         run: bun run test:standalone-workflows
 
