@@ -83,6 +83,15 @@ async function setUser(tx: Tx, uid: string) {
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [String(tenant.id)]);
 }
 
+async function requireCloudLocation(tx: Tx, uid: string, locationId: string | null | undefined, errorCode = "INVENTORY_LOCATION_REQUIRED") {
+  const value = String(locationId || "").trim();
+  if (!value) throw new Error(errorCode);
+  const row = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [value, uid]);
+  if (!row) throw new Error("INVENTORY_LOCATION_NOT_FOUND:" + value);
+  if (row.is_active === false || Number(row.is_active) === 0) throw new Error("INVENTORY_LOCATION_INACTIVE:" + value);
+  return row;
+}
+
 async function adjustCloudStockBalance(tx: Tx, uid: string, itemId: string, locationId: string | null | undefined, delta: number) {
   if (!locationId) return;
   const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, itemId, String(locationId)]);
@@ -272,7 +281,7 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
     }
 
     const locationId = String(sale.location_id || sale.locationId || "").trim();
-    if (!locationId) throw new Error("RESTAURANT_LOCATION_REQUIRED");
+    await requireCloudLocation(tx, uid, locationId, "RESTAURANT_LOCATION_REQUIRED");
     const location = await one(tx, "SELECT id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
     if (!location) throw new Error("RESTAURANT_LOCATION_NOT_FOUND:" + locationId);
     if (location.is_active === false || Number(location.is_active) === 0) throw new Error("RESTAURANT_LOCATION_INACTIVE:" + locationId);
@@ -338,7 +347,7 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       const next = Number(d.item.quantity_on_hand || 0) - d.qty;
       ingredientCost += d.qty * Number(d.item.cost_price || 0);
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3", [next, d.item.id, uid]);
-      await adjustCloudStockBalance(tx, uid, String(d.item.id), sale.location_id || d.item.warehouse_id || null, -d.qty);
+      await adjustCloudStockBalance(tx, uid, String(d.item.id), locationId, -d.qty);
       const movement = prepareInventoryMovement({
         itemId: String(d.item.id),
         movementType: "SALE",
@@ -408,6 +417,7 @@ export async function cloudPostOpeningStock(uid: string, args: any) {
   const reference = String(h.reference || h.opening_number || ("OPEN-" + Date.now()));
   return getCloudDb().begin(async (tx: Tx) => {
     await setUser(tx, uid);
+    await requireCloudLocation(tx, uid, locationId, "OPENING_LOCATION_REQUIRED");
     const b = await batch(tx, uid, "OPENING_STOCK", "opening_stock", null, String(h.client_ref || reference));
     if (b.duplicate) return { reference: b.sourceId, duplicate: true, transaction_id: b.id };
     let totalValue = 0;
@@ -514,7 +524,7 @@ export async function cloudPostInvoice(uid: string, args: any) {
           id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
           quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
           reference: movement.reference, note: movement.note,
-          locationId: x.location_id || item.warehouse_id || null,
+          locationId: x.location_id || null,
         });
       }
     }
@@ -564,7 +574,7 @@ export async function cloudPostPurchaseBill(uid: string, args: any) {
           note: "Purchase receipt",
         });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.item_id, uid]);
-        await adjustCloudStockBalance(tx, uid, String(x.item_id), h.location_id || item.warehouse_id || null, movement.quantityDelta);
+        await adjustCloudStockBalance(tx, uid, String(x.item_id), h.location_id || null, movement.quantityDelta);
         await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
           id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
           quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
