@@ -55,6 +55,7 @@ import {
   cloudReversePosSale,
   cloudRestaurantCheckout,
   cloudTransferStock,
+  cloudPostOpeningStock,
 } from "@/lib/cloud/accounting-transactions";
 
 export async function executeCloudRpc(name: string, args: Record<string, any>) {
@@ -71,6 +72,7 @@ export async function executeCloudRpc(name: string, args: Record<string, any>) {
       case "record_bill_payment": return { data: await cloudRecordBillPayment(uid, args), error: null };
       case "reverse_pos_sale": return { data: await cloudReversePosSale(uid, args), error: null };
       case "transfer_stock": return { data: await cloudTransferStock(uid, args), error: null };
+      case "post_opening_stock": return { data: await cloudPostOpeningStock(uid, args), error: null };
     }
     return await db.begin(async (tx: any) => {
       await tx.unsafe("SELECT set_config('app.user_id',$1,true)", [uid]);
