@@ -319,9 +319,17 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
         const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)]);
         await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [money(Number(bal.quantity) - d.qty), bal.id]);
       }
+      const movement = prepareInventoryMovement({
+        itemId: String(d.item.id),
+        movementType: "SALE",
+        quantityDelta: -d.qty,
+        unitCost: Number(d.item.cost_price || 0),
+        reference: orderNo,
+        note: "Restaurant recipe consumption",
+      });
       await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
-        [id(), uid, d.item.id, -d.qty, Number(d.item.cost_price || 0), orderNo, "Restaurant recipe consumption", sale.location_id || d.item.warehouse_id || null],
+        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",
+        [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, sale.location_id || d.item.warehouse_id || null, movement.totalCost],
       );
     }
     ingredientCost = money(ingredientCost);
