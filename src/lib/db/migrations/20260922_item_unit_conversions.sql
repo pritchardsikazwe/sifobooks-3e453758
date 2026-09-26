@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS item_unit_conversions (
   UNIQUE(user_id,item_id,from_unit,to_unit)
 );
 
+-- Legacy/base SQLite databases may already contain this table without
+-- the newer is_active column. Add it before creating the compatibility index.
+ALTER TABLE item_unit_conversions ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;
+
 CREATE INDEX IF NOT EXISTS idx_item_unit_conversions_item
   ON item_unit_conversions(user_id,item_id,is_active);
 
