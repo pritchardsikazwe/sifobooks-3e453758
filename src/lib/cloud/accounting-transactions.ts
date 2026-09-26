@@ -155,10 +155,18 @@ export async function cloudPosCheckout(uid: string, args: any) {
         reference: saleNo,
         note: "POS sale",
       });
-      await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",
-        [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, sale.location_id || x.item.warehouse_id || null, movement.totalCost],
-      );
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(),
+        userId: uid,
+        itemId: movement.itemId,
+        movementType: movement.movementType,
+        quantity: movement.quantityDelta,
+        unitCost: movement.unitCost,
+        totalCost: movement.totalCost,
+        reference: movement.reference,
+        note: movement.note,
+        locationId: sale.location_id || x.item.warehouse_id || null,
+      });
       if (sale.location_id) {
         const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, x.item.id, sale.location_id]);
         const after = money(Number(bal?.quantity || 0) - x.qty);
