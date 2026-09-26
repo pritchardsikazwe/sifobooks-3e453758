@@ -424,7 +424,12 @@ export async function cloudPostInvoice(uid: string, args: any) {
           note: "Sales invoice",
         });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3",[qty,stockItemId,uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",[id(),uid,movement.itemId,movement.quantityDelta,movement.unitCost,movement.reference,movement.note,x.location_id||item.warehouse_id||null,movement.totalCost]);
+        await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+          id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+          quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+          reference: movement.reference, note: movement.note,
+          locationId: x.location_id || item.warehouse_id || null,
+        });
       }
     }
     const a=await accounts(tx,uid);
@@ -473,7 +478,12 @@ export async function cloudPostPurchaseBill(uid: string, args: any) {
           note: "Purchase receipt",
         });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.item_id, uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'PURCHASE',$4,$5,$6,$7,$8,$9)", [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, h.location_id || item.warehouse_id || null, movement.totalCost]);
+        await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+          id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+          quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+          reference: movement.reference, note: movement.note,
+          locationId: h.location_id || item.warehouse_id || null,
+        });
       }
     }
     const a = await accounts(tx, uid);
