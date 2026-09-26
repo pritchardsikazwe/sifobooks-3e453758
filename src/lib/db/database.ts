@@ -40,12 +40,32 @@ function findSchemaSql(): string {
   throw new Error("schema.sql not found. Expected next to source, executable, or in data/ directory.");
 }
 
+function splitSqlStatements(sql: string): string[] {
+  const cleaned = sql.replace(/^\s*--.*$/gm, "");
+  const statements: string[] = [];
+  let current = "";
+  let triggerDepth = 0;
+  for (const line of cleaned.split(/\r?\n/)) {
+    current += line + "\n";
+    if (/^\s*CREATE\s+TRIGGER\b/i.test(line)) triggerDepth = 1;
+    if (triggerDepth > 0 && /^\s*END\s*;\s*$/i.test(line)) {
+      statements.push(current.trim());
+      current = "";
+      triggerDepth = 0;
+    } else if (triggerDepth === 0 && /;\s*$/.test(line)) {
+      statements.push(current.trim());
+      current = "";
+    }
+  }
+  if (current.trim()) statements.push(current.trim());
+  return statements.filter(Boolean);
+}
+
 function initSchema(database: Database) {
   const schema = findSchemaSql();
-  const statements = schema.split(/;\s*\n/).filter(s => s.trim() && !s.trim().startsWith("--"));
-  for (const stmt of statements) {
+  for (const stmt of splitSqlStatements(schema)) {
     try {
-      database.exec(stmt + ";");
+      database.exec(stmt);
     } catch (e: any) {
       if (!e.message?.includes("already exists")) {
         console.error("[db] Schema error:", e.message?.slice(0, 200));
@@ -357,7 +377,7 @@ function runSqlMigrations(database: Database) {
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = migrationMap.get(file) || "";
-    const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
+    const statements = splitSqlStatements(sql);
     try {
       // Migrations must be safe against databases whose schema already contains
       // some of the same objects/columns (for example databases created from
