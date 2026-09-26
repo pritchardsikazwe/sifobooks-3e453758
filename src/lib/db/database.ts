@@ -15,7 +15,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
-    db = new Database(DB_PATH);
+    db = new DatabaseSync(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
