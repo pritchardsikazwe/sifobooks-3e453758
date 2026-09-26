@@ -1,9 +1,29 @@
-import { DatabaseSync } from "node:sqlite";
+// SQLite is runtime-specific:
+// - Bun/Windows production uses Bun's native bun:sqlite driver.
+// - Node/Vite development uses node:sqlite so Vite SSR can execute cleanly.
+// The dynamic import prevents the unused runtime driver from entering the active
+// module loader path.
+const sqliteModule =
+  typeof globalThis.Bun !== "undefined"
+    ? await import("bun:sqlite")
+    : await import("node:sqlite");
 
-// Use the synchronous SQLite API that is available in both Node SSR and Bun.
-// This keeps local SQLite out of the Bun-only "bun:sqlite" module namespace,
-// which Vite's Node-style SSR loader cannot resolve during development.
-type Database = DatabaseSync;
+type Database = InstanceType<
+  typeof sqliteModule extends { Database: infer T }
+    ? T extends abstract new (...args: any[]) => any
+      ? T
+      : never
+    : typeof sqliteModule extends { DatabaseSync: infer T }
+      ? T extends abstract new (...args: any[]) => any
+        ? T
+        : never
+      : never
+>;
+
+const DatabaseConstructor =
+  "Database" in sqliteModule
+    ? sqliteModule.Database
+    : sqliteModule.DatabaseSync;
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { readdirSync } from "fs";
@@ -15,7 +35,7 @@ const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobo
 export function getDb(): Database {
   if (!db) {
     mkdirSync(dirname(DB_PATH), { recursive: true });
-    db = new DatabaseSync(DB_PATH);
+    db = new DatabaseConstructor(DB_PATH);
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
