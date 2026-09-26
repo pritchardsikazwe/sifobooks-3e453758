@@ -22,3 +22,4 @@
 - [x] ZRA Smart Invoice settings + submission queue (storage and queueing only).
 - [ ] ZRA VSDC live transmission — blocked on the tenant's own certified VSDC credentials/endpoint from ZRA.
 - [ ] Post folio settlements into the double-entry ledger (folio charges are currently operational records only).
+- [x] Restore cloud/local backend split (f7ddba6) on top of c18578e; make database.ts hosting-safe; verify build (no publish)
