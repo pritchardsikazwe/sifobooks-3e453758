@@ -36,7 +36,8 @@ function ledger(db:any,args:any) {
 }
 
 export function postOpeningStock(args:{userId:string;companyId?:string|null;branchId?:string|null;locationId:string;warehouseId?:string|null;openingDate:string;reference?:string|null;items:Array<{itemId:string;quantity:number;unitCost?:number}>}) {
-  const db=getDb(); assertPeriodOpen(args.userId,args.openingDate); assertInventoryLocation(db,args);\n  if(!args.locationId) throw new Error("OPENING_LOCATION_REQUIRED");
+  const db=getDb(); assertPeriodOpen(args.userId,args.openingDate); assertInventoryLocation(db,args);
+  if(!args.locationId) throw new Error("OPENING_LOCATION_REQUIRED");
   if(!args.items.length) throw new Error("OPENING_EMPTY");
   const ref=args.reference?.trim() || nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"OPENING_STOCK",prefix:"OPEN",padding:6});
   const tx=db.transaction(()=>{
@@ -69,7 +70,8 @@ function assertInventoryLocation(db:any,args:{userId:string;locationId:string;wa
 }
 
 export function receivePurchase(args:{userId:string;supplierId?:string|null;poId?:string|null;branchId?:string|null;warehouseId?:string|null;locationId:string;receiptDate:string;supplierInvoiceNumber?:string|null;items:Array<{itemId:string;poItemId?:string|null;quantity:number;unit?:string|null;unitCost:number;taxRate?:number;taxCode?:string|null;batchNo?:string|null;expiryDate?:string|null}>}) {
-  const db=getDb(); assertPeriodOpen(args.userId,args.receiptDate); assertInventoryLocation(db,args);\n  if(!args.items.length) throw new Error("GRN_EMPTY");
+  const db=getDb(); assertPeriodOpen(args.userId,args.receiptDate); assertInventoryLocation(db,args);
+  if(!args.items.length) throw new Error("GRN_EMPTY");
   const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(args.userId) as any;
   const companyId=company?.company_id??null;
   if(args.poId){
@@ -169,7 +171,8 @@ export function transferStock(args:{userId:string;companyId?:string|null;branchI
 }
 
 export function createStockReconciliation(args:{userId:string;companyId?:string|null;branchId?:string|null;locationId:string;warehouseId?:string|null;countDate:string;reason?:string;items:Array<{itemId:string;countedQty:number}>}) {
-  const db=getDb(); assertPeriodOpen(args.userId,args.countDate); assertInventoryLocation(db,args);\n  const number=nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"STOCK_COUNT",prefix:"CNT",padding:6});
+  const db=getDb(); assertPeriodOpen(args.userId,args.countDate); assertInventoryLocation(db,args);
+  const number=nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"STOCK_COUNT",prefix:"CNT",padding:6});
   const tx=db.transaction(()=>{
     const id=generateUUID(); let sys=0,counted=0;
     db.prepare("INSERT INTO stock_reconciliations (id,user_id,company_id,branch_id,location_id,warehouse_id,count_number,count_date,status,requested_by,reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)")

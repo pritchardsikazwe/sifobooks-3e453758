@@ -10,11 +10,11 @@ class CloudPostgresDatabase implements DatabasePort {
   readonly dialect = "postgres" as const;
 
   async query<T extends Record<string, unknown> = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
-    return await getCloudDb().unsafe(toPostgresPlaceholders(sql), params) as T[];
+    return await (getCloudDb() as any).unsafe(toPostgresPlaceholders(sql), params) as T[];
   }
 
   async execute(sql: string, params: unknown[] = []): Promise<void> {
-    await getCloudDb().unsafe(toPostgresPlaceholders(sql), params);
+    await (getCloudDb() as any).unsafe(toPostgresPlaceholders(sql), params);
   }
 }
 
@@ -30,7 +30,7 @@ export const cloudDatabaseProvider: DatabaseProvider = {
 };
 
 
-import type { InventoryMovementRepository } from "@/core/contracts/database";
+import type { TransactionalInventoryMovementRepository } from "@/core/contracts/database";
 
 export const cloudInventoryMovementRepository: TransactionalInventoryMovementRepository = {
   async insertMovement(movement) {

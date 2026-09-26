@@ -20,5 +20,5 @@ export function getCloudRuntimeCapabilities(): RuntimeCapabilities {
 }
 
 export const cloudRuntime: RuntimePort = {
-  capabilities: getCloudRuntimeCapabilities(),
+  capabilities: getCloudRuntimeCapabilities,
 };

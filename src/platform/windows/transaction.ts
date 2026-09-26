@@ -7,11 +7,11 @@ class WindowsSqliteTransaction implements TransactionPort {
   constructor(private readonly database: ReturnType<typeof getDb>) {}
 
   async query<T extends Record<string, unknown> = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
-    return this.database.prepare(sql).all(...params) as T[];
+    return this.database.prepare(sql).all(...(params as any[])) as T[];
   }
 
   async execute(sql: string, params: unknown[] = []): Promise<void> {
-    this.database.prepare(sql).run(...params);
+    this.database.prepare(sql).run(...(params as any[]));
   }
 }
 
