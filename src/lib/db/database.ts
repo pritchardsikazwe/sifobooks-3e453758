@@ -1,20 +1,24 @@
-// SQLite is runtime-specific and server-only:
+// SQLite is runtime-specific and server-only (Windows/standalone build only):
 // - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
-// This loader is synchronous because the existing SQLite API is synchronous.
-// The database module is already server-only (it also uses fs/path), so the
-// browser bundle must never import this module.
-import { createRequire } from "module";
-
+// The loader stays synchronous (the SQLite API is synchronous) but has no
+// statically analyzable module specifier, so hosted/cloud bundles never try to
+// resolve bun:sqlite or node:sqlite.
 type Database = any;
 
-const runtimeRequire = createRequire(import.meta.url);
-
+let DatabaseConstructorCache: any = null;
 function getDatabaseConstructor(): any {
-  if (process.versions?.bun) {
-    return runtimeRequire("bun:sqlite").Database;
+  if (DatabaseConstructorCache) return DatabaseConstructorCache;
+  const proc: any = typeof process !== "undefined" ? process : undefined;
+  if (proc?.versions?.bun) {
+    const req = (import.meta as any).require ?? (globalThis as any).require;
+    DatabaseConstructorCache = req("bun" + ":sqlite").Database;
+  } else {
+    const mod = proc?.getBuiltinModule?.("node" + ":sqlite");
+    if (!mod) throw new Error("LOCAL_SQLITE_UNAVAILABLE: local SQLite is only available in the Windows/standalone build.");
+    DatabaseConstructorCache = mod.DatabaseSync;
   }
-  return runtimeRequire("node:sqlite").DatabaseSync;
+  return DatabaseConstructorCache;
 }
 import { readFileSync, mkdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
