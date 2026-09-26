@@ -55,3 +55,7 @@ requirePattern(cloud, /cloudTransferStock[\\s\\S]{0,7000}adjustCloudStockBalance
 requirePattern(cloud, /cloudTransferStock[\\s\\S]{0,7000}adjustCloudStockBalance\\(tx, uid, itemId, toLocationId, inn\.quantityDelta\\)/, "cloud transfer increases destination location");
 requirePattern(cloudRpc, /case "transfer_stock": return \{ data: await cloudTransferStock\(uid, args\), error: null \};/, "cloud transfer RPC is exposed");
 requirePattern(cloudRpc, /cloudButcheryProcessing[\\s\\S]{0,7000}stock_balances/, "cloud butchery synchronizes location balances");
+
+requirePattern(source("src/lib/erp/phase2.ts"), /postOpeningStock[\\s\\S]{0,5000}movementType:"opening"[\\s\\S]{0,1500}sourceType:"opening_stock"/, "local opening stock updates ledger and balance");
+requirePattern(source("src/lib/cloud/accounting-transactions.ts"), /cloudPostOpeningStock[\\s\\S]{0,8000}adjustCloudStockBalance\\(tx, uid, itemId, locationId, qty\\)/, "cloud opening stock updates location balance");
+requirePattern(source("src/lib/db/cloud-rpc.ts"), /case "post_opening_stock": return \{ data: await cloudPostOpeningStock\(uid, args\), error: null \};/, "opening stock RPC is exposed");
