@@ -147,7 +147,12 @@ function runCompatibilityMigrations(database: Database) {
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
+  );`);
+  const inventoryLocationColumns = getTableColumns(database, "inventory_locations");
+  if (!inventoryLocationColumns.includes("branch_id")) {
+    database.exec("ALTER TABLE inventory_locations ADD COLUMN branch_id TEXT;");
+  }
+  database.exec(`
   CREATE INDEX IF NOT EXISTS idx_inventory_locations_user ON inventory_locations(user_id);
   CREATE INDEX IF NOT EXISTS idx_inventory_locations_warehouse ON inventory_locations(user_id,warehouse_id);
   CREATE INDEX IF NOT EXISTS idx_inventory_locations_branch ON inventory_locations(user_id,branch_id);
@@ -166,6 +171,10 @@ function runCompatibilityMigrations(database: Database) {
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`);
+  const warehouseColumns = getTableColumns(database, "warehouses");
+  if (!warehouseColumns.includes("branch_id")) {
+    database.exec("ALTER TABLE warehouses ADD COLUMN branch_id TEXT;");
+  }
   database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_user ON warehouses(user_id);`);
   database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_branch ON warehouses(branch_id);`);
 
