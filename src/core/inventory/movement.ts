@@ -134,3 +134,70 @@ export function prepareInventoryAdjustment(input: {
     },
   };
 }
+
+
+export interface InventoryProductionComponent {
+  itemId: string;
+  quantity: number;
+  unitCost: number;
+}
+
+export interface InventoryProductionPlan {
+  output: PreparedInventoryMovement;
+  inputs: PreparedInventoryMovement[];
+  totalInputCost: number;
+  outputCost: number;
+  reference?: string;
+  note?: string;
+}
+
+/** Prepare a production batch: consume component stock and add the finished
+ * item. Persistence remains outside the core so callers can keep the entire
+ * production operation atomic. */
+export function prepareInventoryProduction(input: {
+  outputItemId: string;
+  outputQuantity: number;
+  outputUnitCost: number;
+  components: InventoryProductionComponent[];
+  reference?: string;
+  note?: string;
+}): InventoryProductionPlan {
+  if (!input.outputItemId) throw new Error("PRODUCTION_OUTPUT_REQUIRED");
+  if (!Number.isFinite(Number(input.outputQuantity)) || Number(input.outputQuantity) <= 0) {
+    throw new Error("INVALID_PRODUCTION_OUTPUT_QUANTITY");
+  }
+  if (!Array.isArray(input.components) || input.components.length === 0) {
+    throw new Error("PRODUCTION_COMPONENTS_REQUIRED");
+  }
+
+  const inputs = input.components.map((component) => prepareInventoryMovement({
+    itemId: String(component.itemId),
+    movementType: "PRODUCTION",
+    quantityDelta: -Number(component.quantity),
+    unitCost: Number(component.unitCost),
+    reference: input.reference,
+    note: input.note ?? "Production component consumption",
+  }));
+
+  const invalid = inputs.some((movement) => movement.quantityDelta >= 0);
+  if (invalid) throw new Error("INVALID_PRODUCTION_COMPONENT_QUANTITY");
+
+  const totalInputCost = Math.round((inputs.reduce((sum, movement) => sum + movement.totalCost, 0) + Number.EPSILON) * 100) / 100;
+  const output = prepareInventoryMovement({
+    itemId: String(input.outputItemId),
+    movementType: "PRODUCTION",
+    quantityDelta: Number(input.outputQuantity),
+    unitCost: Number(input.outputUnitCost),
+    reference: input.reference,
+    note: input.note ?? "Finished goods production",
+  });
+
+  return {
+    output,
+    inputs,
+    totalInputCost,
+    outputCost: output.totalCost,
+    reference: input.reference,
+    note: input.note,
+  };
+}
