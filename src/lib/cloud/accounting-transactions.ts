@@ -83,6 +83,17 @@ async function setUser(tx: Tx, uid: string) {
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [String(tenant.id)]);
 }
 
+async function adjustCloudStockBalance(tx: Tx, uid: string, itemId: string, locationId: string | null | undefined, delta: number) {
+  if (!locationId) return;
+  const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, itemId, String(locationId)]);
+  const next = money(Number(bal?.quantity || 0) + Number(delta));
+  if (bal) {
+    await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [next, bal.id]);
+  } else {
+    await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)", [id(), uid, itemId, locationId, next]);
+  }
+}
+
 export async function cloudPosCheckout(uid: string, args: any) {
   const sale = args?._sale || {};
   const items = Array.isArray(args?._items) ? args._items : [];
@@ -168,12 +179,7 @@ export async function cloudPosCheckout(uid: string, args: any) {
         note: movement.note,
         locationId: sale.location_id || x.item.warehouse_id || null,
       });
-      if (sale.location_id) {
-        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, x.item.id, sale.location_id]);
-        const after = money(Number(bal?.quantity || 0) - x.qty);
-        if (bal) await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [after, bal.id]);
-        else await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)", [id(), uid, x.item.id, sale.location_id, after]);
-      }
+      await adjustCloudStockBalance(tx, uid, String(x.item.id), sale.location_id || x.item.warehouse_id || null, -x.qty);
     }
     for (const p of payments) {
       const amount = money(p.amount);
@@ -324,10 +330,7 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       const next = Number(d.item.quantity_on_hand || 0) - d.qty;
       ingredientCost += d.qty * Number(d.item.cost_price || 0);
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3", [next, d.item.id, uid]);
-      if (sale.location_id) {
-        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)]);
-        await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [money(Number(bal.quantity) - d.qty), bal.id]);
-      }
+      await adjustCloudStockBalance(tx, uid, String(d.item.id), sale.location_id || d.item.warehouse_id || null, -d.qty);
       const movement = prepareInventoryMovement({
         itemId: String(d.item.id),
         movementType: "SALE",
@@ -478,6 +481,7 @@ export async function cloudPostPurchaseBill(uid: string, args: any) {
           note: "Purchase receipt",
         });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.item_id, uid]);
+        await adjustCloudStockBalance(tx, uid, String(x.item_id), h.location_id || item.warehouse_id || null, movement.quantityDelta);
         await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
           id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
           quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
@@ -550,6 +554,7 @@ export async function cloudPostCreditNote(uid: string, args: any) {
             note: "Credit note return",
           });
           await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.stock_item_id, uid]);
+          await adjustCloudStockBalance(tx, uid, String(x.stock_item_id), h.location_id || item.warehouse_id || null, movement.quantityDelta);
           await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
             id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
             quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
@@ -590,6 +595,7 @@ export async function cloudReversePosSale(uid: string, args: any) {
       const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [line.item_id, uid]);
       if (!item) continue;
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(line.qty), line.item_id, uid]);
+      await adjustCloudStockBalance(tx, uid, String(line.item_id), sale.location_id || item.warehouse_id || null, Number(line.qty));
       const movement = prepareInventoryMovement({
         itemId: String(line.item_id), movementType: "RETURN", quantityDelta: Number(line.qty),
         unitCost: Number(line.unit_cost || item.cost_price || 0), reference: sale.sale_no, note: reason,
