@@ -25,12 +25,12 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
     const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
     const supabase = createClient(url, key, {
       global: {
-        fetch: (input, init) => {
+        fetch: ((input: any, init: any) => {
           const headers = new Headers(init?.headers);
           headers.set('apikey', key);
           headers.set('Authorization', `Bearer ${token}`);
           return fetch(input, { ...init, headers });
-        },
+        }) as any,
       },
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     });
