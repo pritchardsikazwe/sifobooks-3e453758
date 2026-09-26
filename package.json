@@ -27,7 +27,9 @@
     "build:installer": "powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1",
     "seed:demo": "SIFOBOOKS_DEMO=true bun run scripts/seed-public-demo.ts",
     "test:standalone-workflows": "bun run scripts/standalone-workflow-qa.ts",
-    "test:standalone-transactions": "bun run scripts/standalone-transaction-qa.ts"
+    "test:standalone-transactions": "bun run scripts/standalone-transaction-qa.ts",
+    "test:windows-schema-qa": "bun run scripts/windows-schema-qa.ts",
+    "test:inventory-sync-qa": "bun run scripts/inventory-sync-qa.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

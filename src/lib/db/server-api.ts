@@ -309,7 +309,7 @@ function executePosCheckout(args: Record<string, any>) {
         db.prepare("INSERT INTO stock_balances (id,user_id,item_id,location_id,quantity) VALUES (?,?,?,?,?)").run(generateUUID(),uid,l.item.id,locationId ?? "default",after);
       }
       db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,l.item.id,"SALE",l.baseQty,l.unitCost,saleNo,"POS sale",locationId);
+        .run(generateUUID(),uid,l.item.id,"SALE",-l.baseQty,l.unitCost,saleNo,"POS sale",locationId);
       db.prepare("INSERT INTO stock_ledger (id,user_id,item_id,warehouse_id,location_id,movement_type,quantity_in,quantity_out,balance_quantity,unit_cost,total_cost,source_type,source_id,source_number,movement_date,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .run(generateUUID(),uid,l.item.id,l.item.warehouse_id ?? null,locationId,"SALE",0,l.baseQty,after,l.unitCost,l.baseQty*l.unitCost,"pos_sale",saleId,saleNo,saleDraft.sold_at ?? new Date().toISOString(),uid);
     }
@@ -397,9 +397,24 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
       if(!item) throw new Error("UNKNOWN_ITEM");
       const available=Number(item.quantity_on_hand||0);
       if(available<x.qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
-      db.prepare("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(x.qty,x.stock_item_id,uid);
-      db.prepare("INSERT INTO stock_movements(id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES(?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,x.stock_item_id,"SALE",x.qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id??item.warehouse_id??null);
+      const locationId = x.location_id ?? item.warehouse_id ?? null;
+      const newQty = Number(item.quantity_on_hand || 0) - x.qty;
+      db.prepare("UPDATE stock_items SET quantity_on_hand=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,x.stock_item_id,uid);
+      ledger(db,{
+        userId:uid,
+        itemId:x.stock_item_id,
+        movementType:"SALE",
+        quantityIn:0,
+        quantityOut:x.qty,
+        unitCost:Number(item.cost_price||0),
+        reference:h.number,
+        note:"Sales invoice",
+        locationId,
+        warehouseId:item.warehouse_id ?? null,
+        sourceType:"sales_invoice",
+        sourceId:invoiceId,
+        date:String(h.issue_date),
+      });
     }
     const prior=db.prepare("SELECT id FROM journal_entries WHERE user_id=? AND reference=? LIMIT 1").get(uid,"INV:"+h.number) as any;
     let entryId=prior?.id;

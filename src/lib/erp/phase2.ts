@@ -35,9 +35,41 @@ function ledger(db:any,args:any) {
   return after;
 }
 
+export function postOpeningStock(args:{userId:string;companyId?:string|null;branchId?:string|null;locationId:string;warehouseId?:string|null;openingDate:string;reference?:string|null;items:Array<{itemId:string;quantity:number;unitCost?:number}>}) {
+  const db=getDb(); assertPeriodOpen(args.userId,args.openingDate); assertInventoryLocation(db,args);\n  if(!args.locationId) throw new Error("OPENING_LOCATION_REQUIRED");
+  if(!args.items.length) throw new Error("OPENING_EMPTY");
+  const ref=args.reference?.trim() || nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"OPENING_STOCK",prefix:"OPEN",padding:6});
+  const tx=db.transaction(()=>{
+    for(const row of args.items){
+      const qty=Number(row.quantity), unitCost=Number(row.unitCost??0);
+      if(!row.itemId||!Number.isFinite(qty)||qty<=0||!Number.isFinite(unitCost)||unitCost<0) throw new Error("OPENING_LINE_INVALID");
+      const item=db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(row.itemId,args.userId) as any;
+      if(!item) throw new Error("OPENING_UNKNOWN_ITEM");
+      const oldQty=Number(item.quantity_on_hand||0);
+      const oldCost=Number(item.cost_price||0);
+      const newQty=oldQty+qty;
+      const newCost=newQty>0?((oldQty*oldCost)+(qty*unitCost))/newQty:unitCost;
+      db.prepare("UPDATE stock_items SET quantity_on_hand=?,cost_price=?,average_cost=?,updated_at=datetime('now') WHERE id=? AND user_id=?").run(newQty,newCost,newCost,row.itemId,args.userId);
+      ledger(db,{userId:args.userId,itemId:row.itemId,movementType:"opening",quantityIn:qty,quantityOut:0,unitCost,reference:ref,note:"Opening stock",locationId:args.locationId,warehouseId:args.warehouseId,sourceType:"opening_stock",sourceId:ref,date:args.openingDate});
+    }
+    return {reference:ref,items:args.items.length};
+  });
+  void recordAuditEvent({userId:args.userId,branchId:args.branchId,action:"OPENING_STOCK_POSTED",entityType:"opening_stock",entityId:tx.reference,newValue:tx});
+  return tx;
+}
+
+function assertInventoryLocation(db:any,args:{userId:string;locationId:string;warehouseId?:string|null}) {
+  const locationId=String(args.locationId||"").trim();
+  if(!locationId) throw new Error("INVENTORY_LOCATION_REQUIRED");
+  const loc=db.prepare("SELECT id,warehouse_id,branch_id,is_active FROM inventory_locations WHERE id=? AND user_id=? LIMIT 1").get(locationId,args.userId) as any;
+  if(!loc) throw new Error("INVENTORY_LOCATION_NOT_FOUND:"+locationId);
+  if(Number(loc.is_active)===0) throw new Error("INVENTORY_LOCATION_INACTIVE:"+locationId);
+  if(args.warehouseId && loc.warehouse_id && String(args.warehouseId)!==String(loc.warehouse_id)) throw new Error("WAREHOUSE_LOCATION_MISMATCH");
+  return loc;
+}
+
 export function receivePurchase(args:{userId:string;supplierId?:string|null;poId?:string|null;branchId?:string|null;warehouseId?:string|null;locationId:string;receiptDate:string;supplierInvoiceNumber?:string|null;items:Array<{itemId:string;poItemId?:string|null;quantity:number;unit?:string|null;unitCost:number;taxRate?:number;taxCode?:string|null;batchNo?:string|null;expiryDate?:string|null}>}) {
-  const db=getDb(); assertPeriodOpen(args.userId,args.receiptDate);
-  if(!args.items.length) throw new Error("GRN_EMPTY");
+  const db=getDb(); assertPeriodOpen(args.userId,args.receiptDate); assertInventoryLocation(db,args);\n  if(!args.items.length) throw new Error("GRN_EMPTY");
   const company=db.prepare("SELECT company_id FROM company_members WHERE user_id=? LIMIT 1").get(args.userId) as any;
   const companyId=company?.company_id??null;
   if(args.poId){
@@ -105,6 +137,8 @@ export function receivePurchase(args:{userId:string;supplierId?:string|null;poId
 
 export function transferStock(args:{userId:string;companyId?:string|null;branchId?:string|null;fromLocationId:string;toLocationId:string;transferDate:string;items:Array<{itemId:string;quantity:number;unit?:string|null;unitCost?:number}>;reason?:string}) {
   const db=getDb(); assertPeriodOpen(args.userId,args.transferDate);
+  assertInventoryLocation(db,{userId:args.userId,locationId:args.fromLocationId});
+  assertInventoryLocation(db,{userId:args.userId,locationId:args.toLocationId});
   if(args.fromLocationId===args.toLocationId) throw new Error("TRANSFER_SAME_LOCATION");
   if(!args.items.length) throw new Error("TRANSFER_EMPTY");
   const transferNumber=nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"ST",prefix:"ST",padding:6});
@@ -135,8 +169,7 @@ export function transferStock(args:{userId:string;companyId?:string|null;branchI
 }
 
 export function createStockReconciliation(args:{userId:string;companyId?:string|null;branchId?:string|null;locationId:string;warehouseId?:string|null;countDate:string;reason?:string;items:Array<{itemId:string;countedQty:number}>}) {
-  const db=getDb(); assertPeriodOpen(args.userId,args.countDate);
-  const number=nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"STOCK_COUNT",prefix:"CNT",padding:6});
+  const db=getDb(); assertPeriodOpen(args.userId,args.countDate); assertInventoryLocation(db,args);\n  const number=nextDocumentNumber({userId:args.userId,companyId:args.companyId??null,branchId:args.branchId??null,documentType:"STOCK_COUNT",prefix:"CNT",padding:6});
   const tx=db.transaction(()=>{
     const id=generateUUID(); let sys=0,counted=0;
     db.prepare("INSERT INTO stock_reconciliations (id,user_id,company_id,branch_id,location_id,warehouse_id,count_number,count_date,status,requested_by,reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)")

@@ -36,6 +36,12 @@ jobs:
       - name: Database workflow QA
         run: bun run test:database-qa
 
+      - name: Windows schema QA
+        run: bun run test:windows-schema-qa
+      - name: Inventory synchronization QA
+        run: bun run test:inventory-sync-qa
+
+
       - name: Standalone edition workflow QA
         run: bun run test:standalone-workflows
 
@@ -70,6 +76,9 @@ jobs:
 
       - name: Standalone dependency check
         run: bun run check:standalone
+
+      - name: Windows schema QA
+        run: bun run test:windows-schema-qa
 
       - name: Install ImageMagick before desktop build
         shell: pwsh
@@ -138,6 +147,7 @@ jobs:
           } else {
             Write-Warning "Windows installer build completed, but GitHub artifact upload was unavailable."
           }
+
   vsdc-connector:
     runs-on: windows-latest
     steps:
@@ -153,7 +163,7 @@ jobs:
         run: bun run build:vsdc-connector
       - name: Create VSDC connector ZIP
         shell: pwsh
-        run: Compress-Archive -Path vsdc-connector-dist\* -DestinationPath SifoBooks-VSDC-Connector-Windows.zip -Force
+        run: Compress-Archive -Path vsdc-connector-dist\\* -DestinationPath SifoBooks-VSDC-Connector-Windows.zip -Force
       - name: Upload VSDC connector
         id: upload-vsdc
         continue-on-error: true
@@ -164,7 +174,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Report VSDC artifact upload status
+      - name: Report artifact upload status
         if: always()
         shell: pwsh
         run: |

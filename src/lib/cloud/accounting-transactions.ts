@@ -1,5 +1,8 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getCloudDb } from "@/lib/cloud/postgres";
+import { prepareJournalPosting } from "@/core/accounting/journal-plan";
+import { prepareInventoryMovement } from "@/core/inventory/movement";
+import { cloudInventoryMovementRepository } from "@/platform/cloud/database";
 
 type Tx = any;
 const money = (v: unknown) => Math.round((Number(v ?? 0) + Number.EPSILON) * 100) / 100;
@@ -36,20 +39,18 @@ async function accounts(tx: Tx, uid: string) {
   };
 }
 async function journal(tx: Tx, uid: string, reference: string, description: string, entryDate: string, lines: any[]) {
-  const debit = money(lines.reduce((s, l) => s + money(l.debit), 0));
-  const credit = money(lines.reduce((s, l) => s + money(l.credit), 0));
-  if (debit <= 0 || Math.abs(debit - credit) > 0.01) throw new Error("UNBALANCED_JOURNAL");
+  const plan = prepareJournalPosting(lines);
   const prior = await one(tx, "SELECT id FROM journal_entries WHERE user_id=$1 AND reference=$2 LIMIT 1", [uid, reference]);
   if (prior?.id) return String(prior.id);
   const entryId = id();
   await tx.unsafe(
-    "INSERT INTO journal_entries(id,user_id,tenant_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$7,'ZMW',1)",
-    [entryId, uid, "JE-" + reference, entryDate, reference, description, debit],
+    "INSERT INTO journal_entries(id,user_id,tenant_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,currency,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,'ZMW',1)",
+    [entryId, uid, "JE-" + reference, entryDate, reference, description, plan.totalDebit, plan.totalCredit],
   );
-  for (const line of lines) {
+  for (const line of plan.lines) {
     await tx.unsafe(
       "INSERT INTO journal_lines(id,user_id,tenant_id,entry_id,account_id,description,debit,credit) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7)",
-      [id(), uid, entryId, line.accountId, line.description || description, money(line.debit), money(line.credit)],
+      [id(), uid, entryId, line.accountId, line.description || description, line.debit, line.credit],
     );
   }
   return entryId;
@@ -82,10 +83,32 @@ async function setUser(tx: Tx, uid: string) {
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [String(tenant.id)]);
 }
 
+async function requireCloudLocation(tx: Tx, uid: string, locationId: string | null | undefined, errorCode = "INVENTORY_LOCATION_REQUIRED") {
+  const value = String(locationId || "").trim();
+  if (!value) throw new Error(errorCode);
+  const row = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [value, uid]);
+  if (!row) throw new Error("INVENTORY_LOCATION_NOT_FOUND:" + value);
+  if (row.is_active === false || Number(row.is_active) === 0) throw new Error("INVENTORY_LOCATION_INACTIVE:" + value);
+  return row;
+}
+
+async function adjustCloudStockBalance(tx: Tx, uid: string, itemId: string, locationId: string | null | undefined, delta: number) {
+  if (!locationId) return;
+  const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, itemId, String(locationId)]);
+  const next = money(Number(bal?.quantity || 0) + Number(delta));
+  if (bal) {
+    await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [next, bal.id]);
+  } else {
+    await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)", [id(), uid, itemId, locationId, next]);
+  }
+}
+
 export async function cloudPosCheckout(uid: string, args: any) {
   const sale = args?._sale || {};
   const items = Array.isArray(args?._items) ? args._items : [];
   const payments = Array.isArray(args?._payments) ? args._payments : [];
+  const locationId = String(sale.location_id || sale.locationId || "").trim();
+  if (!locationId) throw new Error("POS_LOCATION_REQUIRED");
   if (!items.length) throw new Error("EMPTY_SALE");
   if (!payments.length) throw new Error("PAYMENT_REQUIRED");
   return getCloudDb().begin(async (tx: Tx) => {
@@ -93,6 +116,9 @@ export async function cloudPosCheckout(uid: string, args: any) {
     const b = await batch(tx, uid, "POS_CHECKOUT", "pos_sale", null, String(sale.client_ref || ""));
     if (b.duplicate) return { sale_id: b.sourceId, sale_no: sale.sale_no, duplicate: true, transaction_id: b.id };
 
+    const location = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+    if (!location) throw new Error("POS_LOCATION_NOT_FOUND:" + locationId);
+    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("POS_LOCATION_INACTIVE:" + locationId);
     const settings = await one(tx, "SELECT tax_rate,tax_inclusive,allow_negative_stock FROM pos_settings WHERE user_id=$1 LIMIT 1", [uid]);
     const defaultRate = Number(settings?.tax_rate ?? 16);
     const taxInclusive = Number(settings?.tax_inclusive ?? 1) === 1;
@@ -147,16 +173,27 @@ export async function cloudPosCheckout(uid: string, args: any) {
         [id(), uid, saleId, x.item.id, x.item.name, x.item.sku || null, x.qty, x.price, x.unitCost, x.discount, Number(x.item.vat_rate ?? 0), x.grossLine, x.raw.note || null, x.raw.unit || x.item.unit || null, x.qty, x.item.unit || null],
       );
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item.id, uid]);
-      await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
-        [id(), uid, x.item.id, -x.qty, x.unitCost, saleNo, "POS sale", sale.location_id || x.item.warehouse_id || null],
-      );
-      if (sale.location_id) {
-        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, x.item.id, sale.location_id]);
-        const after = money(Number(bal?.quantity || 0) - x.qty);
-        if (bal) await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [after, bal.id]);
-        else await tx.unsafe("INSERT INTO stock_balances(id,user_id,tenant_id,item_id,location_id,quantity) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5)", [id(), uid, x.item.id, sale.location_id, after]);
-      }
+      const movement = prepareInventoryMovement({
+        itemId: String(x.item.id),
+        movementType: "SALE",
+        quantityDelta: -x.qty,
+        unitCost: x.unitCost,
+        reference: saleNo,
+        note: "POS sale",
+      });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(),
+        userId: uid,
+        itemId: movement.itemId,
+        movementType: movement.movementType,
+        quantity: movement.quantityDelta,
+        unitCost: movement.unitCost,
+        totalCost: movement.totalCost,
+        reference: movement.reference,
+        note: movement.note,
+        locationId,
+      });
+      await adjustCloudStockBalance(tx, uid, String(x.item.id), locationId, -x.qty);
     }
     for (const p of payments) {
       const amount = money(p.amount);
@@ -243,6 +280,11 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       menuByName.set(String(row.name), row);
     }
 
+    const locationId = String(sale.location_id || sale.locationId || "").trim();
+    await requireCloudLocation(tx, uid, locationId, "RESTAURANT_LOCATION_REQUIRED");
+    const location = await one(tx, "SELECT id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+    if (!location) throw new Error("RESTAURANT_LOCATION_NOT_FOUND:" + locationId);
+    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("RESTAURANT_LOCATION_INACTIVE:" + locationId);
     const ingredientTotals = new Map<string, { qty: number; item: any; unit: string | null }>();
     const lines: any[] = [];
     for (const raw of rawItems) {
@@ -269,12 +311,10 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
     }
 
     for (const d of ingredientTotals.values()) {
-      const available = sale.location_id
-        ? await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)])
-        : null;
-      const qtyAvailable = sale.location_id ? Number(available?.quantity || 0) : Number(d.item.quantity_on_hand || 0);
+      const available = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, locationId]);
+      const qtyAvailable = Number(available?.quantity || 0);
       if (qtyAvailable + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
-      if (sale.location_id && !available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
+      if (!available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
     }
 
     const orderId = existing?.id || id();
@@ -307,14 +347,27 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       const next = Number(d.item.quantity_on_hand || 0) - d.qty;
       ingredientCost += d.qty * Number(d.item.cost_price || 0);
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3", [next, d.item.id, uid]);
-      if (sale.location_id) {
-        const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, String(sale.location_id)]);
-        await tx.unsafe("UPDATE stock_balances SET quantity=$1,updated_at=now() WHERE id=$2", [money(Number(bal.quantity) - d.qty), bal.id]);
-      }
-      await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
-        [id(), uid, d.item.id, -d.qty, Number(d.item.cost_price || 0), orderNo, "Restaurant recipe consumption", sale.location_id || d.item.warehouse_id || null],
-      );
+      await adjustCloudStockBalance(tx, uid, String(d.item.id), locationId, -d.qty);
+      const movement = prepareInventoryMovement({
+        itemId: String(d.item.id),
+        movementType: "SALE",
+        quantityDelta: -d.qty,
+        unitCost: Number(d.item.cost_price || 0),
+        reference: orderNo,
+        note: "Restaurant recipe consumption",
+      });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(),
+        userId: uid,
+        itemId: movement.itemId,
+        movementType: movement.movementType,
+        quantity: movement.quantityDelta,
+        unitCost: movement.unitCost,
+        totalCost: movement.totalCost,
+        reference: movement.reference,
+        note: movement.note,
+        locationId: sale.location_id || d.item.warehouse_id || null,
+      });
     }
     ingredientCost = money(ingredientCost);
 
@@ -355,6 +408,82 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
   });
 }
 
+export async function cloudPostOpeningStock(uid: string, args: any) {
+  const h = args?._opening || args || {};
+  const locationId = String(h.location_id || h.locationId || "");
+  const items = Array.isArray(args?._items) ? args._items : (Array.isArray(h.items) ? h.items : []);
+  if (!locationId) throw new Error("OPENING_LOCATION_REQUIRED");
+  if (!items.length) throw new Error("OPENING_EMPTY");
+  const reference = String(h.reference || h.opening_number || ("OPEN-" + Date.now()));
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    await requireCloudLocation(tx, uid, locationId, "OPENING_LOCATION_REQUIRED");
+    const b = await batch(tx, uid, "OPENING_STOCK", "opening_stock", null, String(h.client_ref || reference));
+    if (b.duplicate) return { reference: b.sourceId, duplicate: true, transaction_id: b.id };
+    let totalValue = 0;
+    for (const row of items) {
+      const itemId = String(row.item_id || row.itemId || "");
+      const qty = Number(row.quantity ?? row.qty);
+      const unitCost = Number(row.unit_cost ?? row.unitCost ?? 0);
+      if (!itemId || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(unitCost) || unitCost < 0) throw new Error("OPENING_LINE_INVALID");
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [itemId, uid]);
+      if (!item) throw new Error("OPENING_UNKNOWN_ITEM");
+      await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,cost_price=$2,average_cost=$2,updated_at=now() WHERE id=$3 AND user_id=$4", [qty, unitCost, itemId, uid]);
+      await adjustCloudStockBalance(tx, uid, itemId, locationId, qty);
+      const movement = prepareInventoryMovement({ itemId, movementType: "PURCHASE", quantityDelta: qty, unitCost, reference, note: "Opening stock" });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id:id(), userId:uid, itemId, movementType:"opening", quantity:qty, unitCost, totalCost:movement.totalCost, reference, note:"Opening stock", locationId });
+      totalValue += qty * unitCost;
+    }
+    await event(tx, uid, b.id, "POSTED", "Opening stock posted", { reference, locationId, totalValue });
+    return { reference, locationId, totalValue: money(totalValue), transaction_id:b.id, duplicate:false };
+  });
+}
+
+export async function cloudTransferStock(uid: string, args: any) {
+  const h = args?._transfer || args || {};
+  const fromLocationId = String(h.from_location_id || h.fromLocationId || "");
+  const toLocationId = String(h.to_location_id || h.toLocationId || "");
+  const items = Array.isArray(args?._items) ? args._items : (Array.isArray(h.items) ? h.items : []);
+  if (!fromLocationId || !toLocationId || fromLocationId === toLocationId) throw new Error("TRANSFER_LOCATION_INVALID");
+  if (!items.length) throw new Error("TRANSFER_EMPTY");
+  const transferId = id();
+  const transferNumber = String(h.transfer_number || h.transferNumber || ("ST-" + Date.now()));
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "STOCK_TRANSFER", "inventory_transfer", null, String(h.client_ref || transferNumber));
+    if (b.duplicate) return { transfer_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    await tx.unsafe(
+      "INSERT INTO inventory_transfers(id,user_id,company_id,reference,from_location_id,to_location_id,transfer_date,status,notes,transfer_number) VALUES($1,$2,$3,$4,$5,$6,$7,'POSTED',$8,$9)",
+      [transferId, uid, h.company_id || null, h.reference || null, fromLocationId, toLocationId, dateOnly(h.transfer_date), h.notes || h.reason || null, transferNumber],
+    );
+    let total = 0;
+    for (const row of items) {
+      const itemId = String(row.item_id || row.itemId || "");
+      const qty = Number(row.quantity ?? row.qty);
+      if (!itemId || !Number.isFinite(qty) || qty <= 0) throw new Error("TRANSFER_LINE_INVALID");
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [itemId, uid]);
+      if (!item) throw new Error("TRANSFER_UNKNOWN_ITEM");
+      const source = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, itemId, fromLocationId]);
+      const available = Number(source?.quantity || 0);
+      if (available + 0.000001 < qty) throw new Error("TRANSFER_INSUFFICIENT_STOCK:" + itemId);
+      const unitCost = Number(row.unit_cost ?? row.unitCost ?? item.cost_price ?? 0);
+      const out = prepareInventoryMovement({ itemId, movementType: "TRANSFER_OUT", quantityDelta: -qty, unitCost, reference: transferNumber, note: "Stock transfer out" });
+      const inn = prepareInventoryMovement({ itemId, movementType: "TRANSFER_IN", quantityDelta: qty, unitCost, reference: transferNumber, note: "Stock transfer in" });
+      await adjustCloudStockBalance(tx, uid, itemId, fromLocationId, out.quantityDelta);
+      await adjustCloudStockBalance(tx, uid, itemId, toLocationId, inn.quantityDelta);
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id: id(), userId: uid, itemId, movementType: out.movementType, quantity: out.quantityDelta, unitCost, totalCost: out.totalCost, reference: transferNumber, note: out.note, locationId: fromLocationId });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id: id(), userId: uid, itemId, movementType: inn.movementType, quantity: inn.quantityDelta, unitCost, totalCost: inn.totalCost, reference: transferNumber, note: inn.note, locationId: toLocationId });
+      await tx.unsafe(
+        "INSERT INTO inventory_transfer_items(id,transfer_id,item_id,description,quantity,unit_cost,qty_received) VALUES($1,$2,$3,$4,$5,$6,$7)",
+        [id(), transferId, itemId, item.name, qty, unitCost, qty],
+      );
+      total += qty * unitCost;
+    }
+    await event(tx, uid, b.id, "POSTED", "Stock transfer posted atomically", { transferId, transferNumber, total });
+    return { transfer_id: transferId, transfer_number: transferNumber, total: money(total), transaction_id: b.id, duplicate: false };
+  });
+}
+
 export async function cloudPostInvoice(uid: string, args: any) {
   const h = args?._invoice || {};
   const items = Array.isArray(args?._items) ? args._items : [];
@@ -382,8 +511,21 @@ export async function cloudPostInvoice(uid: string, args: any) {
         const item=await one(tx,"SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE",[stockItemId,uid]);
         if(!item) throw new Error("UNKNOWN_ITEM");
         if(Number(item.quantity_on_hand||0)<qty) throw new Error("INSUFFICIENT_STOCK:"+item.name);
+        const movement = prepareInventoryMovement({
+          itemId: String(stockItemId),
+          movementType: "SALE",
+          quantityDelta: -qty,
+          unitCost: Number(item.cost_price || 0),
+          reference: h.number,
+          note: "Sales invoice",
+        });
         await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3",[qty,stockItemId,uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",[id(),uid,stockItemId,qty,Number(item.cost_price||0),h.number,"Sales invoice",x.location_id||item.warehouse_id||null]);
+        await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+          id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+          quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+          reference: movement.reference, note: movement.note,
+          locationId: x.location_id || null,
+        });
       }
     }
     const a=await accounts(tx,uid);
@@ -423,8 +565,22 @@ export async function cloudPostPurchaseBill(uid: string, args: any) {
       if (x.item_id) {
         const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.item_id, uid]);
         if (!item) throw new Error("UNKNOWN_ITEM");
-        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item_id, uid]);
-        await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'PURCHASE',$4,$5,$6,$7,$8)", [id(), uid, x.item_id, x.qty, x.price, h.bill_number, "Purchase receipt", h.location_id || item.warehouse_id || null]);
+        const movement = prepareInventoryMovement({
+          itemId: String(x.item_id),
+          movementType: "PURCHASE",
+          quantityDelta: x.qty,
+          unitCost: x.price,
+          reference: h.bill_number,
+          note: "Purchase receipt",
+        });
+        await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.item_id, uid]);
+        await adjustCloudStockBalance(tx, uid, String(x.item_id), h.location_id || null, movement.quantityDelta);
+        await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+          id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+          quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+          reference: movement.reference, note: movement.note,
+          locationId: h.location_id || item.warehouse_id || null,
+        });
       }
     }
     const a = await accounts(tx, uid);
@@ -482,8 +638,22 @@ export async function cloudPostCreditNote(uid: string, args: any) {
       if (x.stock_item_id) {
         const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [x.stock_item_id, uid]);
         if (item) {
-          await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(x.quantity), x.stock_item_id, uid]);
-          await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, x.stock_item_id, Number(x.quantity), Number(item.cost_price || 0), h.number, "Credit note return", h.location_id || item.warehouse_id || null]);
+          const movement = prepareInventoryMovement({
+            itemId: String(x.stock_item_id),
+            movementType: "RETURN",
+            quantityDelta: Number(x.quantity),
+            unitCost: Number(item.cost_price || 0),
+            reference: h.number,
+            note: "Credit note return",
+          });
+          await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [movement.quantityDelta, x.stock_item_id, uid]);
+          await adjustCloudStockBalance(tx, uid, String(x.stock_item_id), h.location_id || item.warehouse_id || null, movement.quantityDelta);
+          await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+            id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+            quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+            reference: movement.reference, note: movement.note,
+            locationId: h.location_id || item.warehouse_id || null,
+          });
         }
       }
     }
@@ -518,7 +688,17 @@ export async function cloudReversePosSale(uid: string, args: any) {
       const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [line.item_id, uid]);
       if (!item) continue;
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand+$1,updated_at=now() WHERE id=$2 AND user_id=$3", [Number(line.qty), line.item_id, uid]);
-      await tx.unsafe("INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'RETURN',$4,$5,$6,$7,$8)", [id(), uid, line.item_id, Number(line.qty), Number(line.unit_cost || item.cost_price || 0), sale.sale_no, reason, sale.location_id || item.warehouse_id || null]);
+      await adjustCloudStockBalance(tx, uid, String(line.item_id), sale.location_id || item.warehouse_id || null, Number(line.qty));
+      const movement = prepareInventoryMovement({
+        itemId: String(line.item_id), movementType: "RETURN", quantityDelta: Number(line.qty),
+        unitCost: Number(line.unit_cost || item.cost_price || 0), reference: sale.sale_no, note: reason,
+      });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, {
+        id: id(), userId: uid, itemId: movement.itemId, movementType: movement.movementType,
+        quantity: movement.quantityDelta, unitCost: movement.unitCost, totalCost: movement.totalCost,
+        reference: movement.reference, note: movement.note,
+        locationId: sale.location_id || item.warehouse_id || null,
+      });
     }
     if (sale.journal_entry_id) {
       const old = await one(tx, "SELECT * FROM journal_entries WHERE id=$1 AND user_id=$2", [sale.journal_entry_id, uid]);

@@ -92,6 +92,67 @@ function runCompatibilityMigrations(database: Database) {
   // Butchery extension compatibility: repair older/local databases even if the\n  // SQL migration was already recorded before the tables were introduced.\n  database.exec(\`\n    CREATE TABLE IF NOT EXISTS butchery_products (\n      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, item_id TEXT NOT NULL,\n      animal_type TEXT NOT NULL DEFAULT 'beef', cut_name TEXT, grade TEXT,\n      unit TEXT NOT NULL DEFAULT 'kg', price_per_kg REAL NOT NULL DEFAULT 0,\n      min_price_per_kg REAL NOT NULL DEFAULT 0, scale_enabled INTEGER NOT NULL DEFAULT 1,\n      label_enabled INTEGER NOT NULL DEFAULT 1, is_active INTEGER NOT NULL DEFAULT 1,\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')), UNIQUE(user_id,item_id)\n    );\n    CREATE TABLE IF NOT EXISTS butchery_scale_devices (\n      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL, manufacturer TEXT,\n      model TEXT, connection_type TEXT NOT NULL DEFAULT 'web_serial', port TEXT,\n      baud_rate INTEGER NOT NULL DEFAULT 9600, unit TEXT NOT NULL DEFAULT 'kg',\n      decimal_places INTEGER NOT NULL DEFAULT 3, is_active INTEGER NOT NULL DEFAULT 1,\n      last_weight REAL, last_stable INTEGER NOT NULL DEFAULT 0,\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    );\n    CREATE TABLE IF NOT EXISTS butchery_processing_batches (\n      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, reference TEXT NOT NULL,\n      source_item_id TEXT, input_qty REAL NOT NULL DEFAULT 0, input_unit TEXT NOT NULL DEFAULT 'kg',\n      input_cost REAL NOT NULL DEFAULT 0, saleable_qty REAL NOT NULL DEFAULT 0,\n      waste_qty REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'draft',\n      processed_at TEXT, notes TEXT, updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    );\n    CREATE TABLE IF NOT EXISTS butchery_yield_lines (\n      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, batch_id TEXT NOT NULL, output_item_id TEXT,\n      output_name TEXT NOT NULL, output_qty REAL NOT NULL DEFAULT 0, unit TEXT NOT NULL DEFAULT 'kg',\n      yield_percent REAL NOT NULL DEFAULT 0, note TEXT\n    );\n    CREATE INDEX IF NOT EXISTS idx_butchery_products_user ON butchery_products(user_id,is_active);\n    CREATE INDEX IF NOT EXISTS idx_butchery_scales_user ON butchery_scale_devices(user_id,is_active);\n    CREATE INDEX IF NOT EXISTS idx_butchery_batches_user ON butchery_processing_batches(user_id,processed_at);\n  \`);\n\n  // Warehouse records existed in some desktop builds without the columns
   // required by the current warehouse UI. Create the table first, then add
   // missing columns safely for existing databases.
+  // Inventory schema safety: older portable databases may not contain these tables.
+  // Only create missing structures; existing tables/columns are preserved.
+  database.exec(`CREATE TABLE IF NOT EXISTS stock_movements (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    tenant_id TEXT,
+    item_id TEXT NOT NULL,
+    movement_type TEXT NOT NULL,
+    quantity REAL NOT NULL DEFAULT 0,
+    unit_cost REAL NOT NULL DEFAULT 0,
+    total_cost REAL,
+    reference TEXT,
+    note TEXT,
+    location_id TEXT,
+    transaction_date TEXT,
+    source_type TEXT,
+    source_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_stock_movements_user_item ON stock_movements(user_id,item_id);
+  CREATE INDEX IF NOT EXISTS idx_stock_movements_location ON stock_movements(user_id,location_id);
+  CREATE INDEX IF NOT EXISTS idx_stock_movements_reference ON stock_movements(user_id,reference);
+  `);
+  database.exec(`CREATE TABLE IF NOT EXISTS goods_receipts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    company_id TEXT,
+    po_number TEXT,
+    receipt_date TEXT NOT NULL DEFAULT (date('now')),
+    warehouse_id TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    currency TEXT NOT NULL DEFAULT 'ZMW',
+    total REAL NOT NULL DEFAULT 0,
+    reference TEXT,
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  `);
+
+  database.exec(`CREATE TABLE IF NOT EXISTS inventory_locations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    company_id TEXT,
+    warehouse_id TEXT,
+    branch_id TEXT,
+    code TEXT,
+    name TEXT NOT NULL,
+    location_type TEXT NOT NULL DEFAULT 'store',
+    address TEXT,
+    notes TEXT,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_user ON inventory_locations(user_id);
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_warehouse ON inventory_locations(user_id,warehouse_id);
+  CREATE INDEX IF NOT EXISTS idx_inventory_locations_branch ON inventory_locations(user_id,branch_id);
+  `);
+
   database.exec(`CREATE TABLE IF NOT EXISTS warehouses (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
