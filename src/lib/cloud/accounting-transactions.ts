@@ -1,6 +1,7 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { getCloudDb } from "@/lib/cloud/postgres";
 import { prepareJournalPosting } from "@/core/accounting/journal-plan";
+import { prepareInventoryMovement } from "@/core/inventory/movement";
 
 type Tx = any;
 const money = (v: unknown) => Math.round((Number(v ?? 0) + Number.EPSILON) * 100) / 100;
@@ -146,9 +147,17 @@ export async function cloudPosCheckout(uid: string, args: any) {
         [id(), uid, saleId, x.item.id, x.item.name, x.item.sku || null, x.qty, x.price, x.unitCost, x.discount, Number(x.item.vat_rate ?? 0), x.grossLine, x.raw.note || null, x.raw.unit || x.item.unit || null, x.qty, x.item.unit || null],
       );
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item.id, uid]);
+      const movement = prepareInventoryMovement({
+        itemId: String(x.item.id),
+        movementType: "SALE",
+        quantityDelta: -x.qty,
+        unitCost: x.unitCost,
+        reference: saleNo,
+        note: "POS sale",
+      });
       await tx.unsafe(
-        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8)",
-        [id(), uid, x.item.id, -x.qty, x.unitCost, saleNo, "POS sale", sale.location_id || x.item.warehouse_id || null],
+        "INSERT INTO stock_movements(id,user_id,tenant_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id,total_cost) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,'SALE',$4,$5,$6,$7,$8,$9)",
+        [id(), uid, movement.itemId, movement.quantityDelta, movement.unitCost, movement.reference, movement.note, sale.location_id || x.item.warehouse_id || null, movement.totalCost],
       );
       if (sale.location_id) {
         const bal = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, x.item.id, sale.location_id]);
