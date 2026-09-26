@@ -391,6 +391,51 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
   });
 }
 
+export async function cloudTransferStock(uid: string, args: any) {
+  const h = args?._transfer || args || {};
+  const fromLocationId = String(h.from_location_id || h.fromLocationId || "");
+  const toLocationId = String(h.to_location_id || h.toLocationId || "");
+  const items = Array.isArray(args?._items) ? args._items : (Array.isArray(h.items) ? h.items : []);
+  if (!fromLocationId || !toLocationId || fromLocationId === toLocationId) throw new Error("TRANSFER_LOCATION_INVALID");
+  if (!items.length) throw new Error("TRANSFER_EMPTY");
+  const transferId = id();
+  const transferNumber = String(h.transfer_number || h.transferNumber || ("ST-" + Date.now()));
+  return getCloudDb().begin(async (tx: Tx) => {
+    await setUser(tx, uid);
+    const b = await batch(tx, uid, "STOCK_TRANSFER", "inventory_transfer", null, String(h.client_ref || transferNumber));
+    if (b.duplicate) return { transfer_id: b.sourceId, duplicate: true, transaction_id: b.id };
+    await tx.unsafe(
+      "INSERT INTO inventory_transfers(id,user_id,company_id,reference,from_location_id,to_location_id,transfer_date,status,notes,transfer_number) VALUES($1,$2,$3,$4,$5,$6,$7,'POSTED',$8,$9)",
+      [transferId, uid, h.company_id || null, h.reference || null, fromLocationId, toLocationId, dateOnly(h.transfer_date), h.notes || h.reason || null, transferNumber],
+    );
+    let total = 0;
+    for (const row of items) {
+      const itemId = String(row.item_id || row.itemId || "");
+      const qty = Number(row.quantity ?? row.qty);
+      if (!itemId || !Number.isFinite(qty) || qty <= 0) throw new Error("TRANSFER_LINE_INVALID");
+      const item = await one(tx, "SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE", [itemId, uid]);
+      if (!item) throw new Error("TRANSFER_UNKNOWN_ITEM");
+      const source = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, itemId, fromLocationId]);
+      const available = Number(source?.quantity || 0);
+      if (available + 0.000001 < qty) throw new Error("TRANSFER_INSUFFICIENT_STOCK:" + itemId);
+      const unitCost = Number(row.unit_cost ?? row.unitCost ?? item.cost_price ?? 0);
+      const out = prepareInventoryMovement({ itemId, movementType: "TRANSFER_OUT", quantityDelta: -qty, unitCost, reference: transferNumber, note: "Stock transfer out" });
+      const inn = prepareInventoryMovement({ itemId, movementType: "TRANSFER_IN", quantityDelta: qty, unitCost, reference: transferNumber, note: "Stock transfer in" });
+      await adjustCloudStockBalance(tx, uid, itemId, fromLocationId, out.quantityDelta);
+      await adjustCloudStockBalance(tx, uid, itemId, toLocationId, inn.quantityDelta);
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id: id(), userId: uid, itemId, movementType: out.movementType, quantity: out.quantityDelta, unitCost, totalCost: out.totalCost, reference: transferNumber, note: out.note, locationId: fromLocationId });
+      await cloudInventoryMovementRepository.insertMovementInTransaction(tx, { id: id(), userId: uid, itemId, movementType: inn.movementType, quantity: inn.quantityDelta, unitCost, totalCost: inn.totalCost, reference: transferNumber, note: inn.note, locationId: toLocationId });
+      await tx.unsafe(
+        "INSERT INTO inventory_transfer_items(id,transfer_id,item_id,description,quantity,unit_cost,qty_received) VALUES($1,$2,$3,$4,$5,$6,$7)",
+        [id(), transferId, itemId, item.name, qty, unitCost, qty],
+      );
+      total += qty * unitCost;
+    }
+    await event(tx, uid, b.id, "POSTED", "Stock transfer posted atomically", { transferId, transferNumber, total });
+    return { transfer_id: transferId, transfer_number: transferNumber, total: money(total), transaction_id: b.id, duplicate: false };
+  });
+}
+
 export async function cloudPostInvoice(uid: string, args: any) {
   const h = args?._invoice || {};
   const items = Array.isArray(args?._items) ? args._items : [];
