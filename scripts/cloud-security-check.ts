@@ -36,38 +36,31 @@ const failures = inventory.filter((r: any) =>
 );
 assert(failures.length === 0, failures.map((r: any) => r.table_name).join(", "));
 
-await db`
-  CREATE TEMP TABLE sifobooks_rls_probe (
-    id text primary key,
-    tenant_id uuid not null,
-    value text not null
-  )
-`;
-await db`ALTER TABLE sifobooks_rls_probe ENABLE ROW LEVEL SECURITY`;
-await db`ALTER TABLE sifobooks_rls_probe FORCE ROW LEVEL SECURITY`;
-await db`CREATE POLICY sifobooks_rls_probe_policy ON sifobooks_rls_probe
-  FOR ALL
-  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
-  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)`;
-
 const [tenantA, tenantB] = await db`
   SELECT gen_random_uuid() AS a, gen_random_uuid() AS b
 `.then((rows: any[]) => [rows[0].a, rows[0].b]);
 
 await db.begin(async (tx: any) => {
+  // The CI workflow creates this persistent probe table as the database owner.
+  // Keep all tenant checks in one transaction so app.tenant_id remains local.
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [tenantA]);
-  await tx.unsafe("INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)", ["a", tenantA, "alpha"]);
-  const own = await tx.unsafe("SELECT value FROM sifobooks_rls_probe");
-  assert(own.length === 1 && own[0].value === "alpha", "same-tenant row was not visible");
-});
+  await tx.unsafe("DELETE FROM sifobooks_rls_probe");
+  await tx.unsafe(
+    "INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)",
+    ["a", tenantA, "alpha"],
+  );
+  const ownA = await tx.unsafe("SELECT value FROM sifobooks_rls_probe");
+  assert(ownA.length === 1 && ownA[0].value === "alpha", "same-tenant row was not visible");
 
-await db.begin(async (tx: any) => {
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [tenantB]);
   const cross = await tx.unsafe("SELECT value FROM sifobooks_rls_probe");
   assert(cross.length === 0, "cross-tenant row was visible");
-  await tx.unsafe("INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)", ["b", tenantB, "beta"]);
-  const own = await tx.unsafe("SELECT value FROM sifobooks_rls_probe");
-  assert(own.length === 1 && own[0].value === "beta", "tenant B could not see its own row");
+  await tx.unsafe(
+    "INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)",
+    ["b", tenantB, "beta"],
+  );
+  const ownB = await tx.unsafe("SELECT value FROM sifobooks_rls_probe");
+  assert(ownB.length === 1 && ownB[0].value === "beta", "tenant B could not see its own row");
 });
 
 console.log(`SifoBooks cloud security checks passed: ${inventory.length} tenant-scoped tables verified; cross-tenant RLS probe denied.`);
