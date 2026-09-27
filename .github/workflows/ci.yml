@@ -251,7 +251,7 @@ jobs:
           );
           ALTER TABLE sifobooks_rls_probe ENABLE ROW LEVEL SECURITY;
           ALTER TABLE sifobooks_rls_probe FORCE ROW LEVEL SECURITY;
-          CREATE POLICY sifobooks_rls_probe_policy ON sifobooks_rls_probe
+          CREATE POLICY sifobooks_tenant_isolation ON sifobooks_rls_probe
             FOR ALL
             USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
             WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
