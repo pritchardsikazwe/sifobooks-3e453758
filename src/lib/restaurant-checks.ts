@@ -8,7 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 const rpc = (
   fn: string,
   args: Record<string, unknown>,
-) => supabase.rpc(fn, args) as unknown as Promise<{ data: unknown; error: { message: string } | null }>;
+) => {
+  return supabase.rpc(fn, args) as unknown as Promise<{ data: unknown; error: { message: string } | null }>;
+};
 
 export async function splitCheck(orderId: string, itemIds: string[], guests?: number) {
   const { data, error } = await rpc("restaurant_split_check", {
