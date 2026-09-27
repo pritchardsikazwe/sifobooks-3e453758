@@ -41,24 +41,9 @@ const [tenantA, tenantB] = await db`
 `.then((rows: any[]) => [rows[0].a, rows[0].b]);
 
 await db.begin(async (tx: any) => {
-  // Keep the temporary probe and both tenant checks on the same physical
-  // PostgreSQL connection. A pooled TEMP table is otherwise connection-local.
-  await tx.unsafe(`
-    CREATE TEMP TABLE sifobooks_rls_probe (
-      id text primary key,
-      tenant_id uuid not null,
-      value text not null
-    )
-  `);
-  await tx.unsafe("ALTER TABLE sifobooks_rls_probe ENABLE ROW LEVEL SECURITY");
-  await tx.unsafe("ALTER TABLE sifobooks_rls_probe FORCE ROW LEVEL SECURITY");
-  await tx.unsafe(`
-    CREATE POLICY sifobooks_rls_probe_policy ON sifobooks_rls_probe
-      FOR ALL
-      USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
-      WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
-  `);
-
+  // The CI workflow creates this persistent probe table as the database owner.
+  // Keep all tenant checks in one transaction so app.tenant_id remains local.
+  await tx.unsafe("TRUNCATE sifobooks_rls_probe");
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [tenantA]);
   await tx.unsafe(
     "INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)",
