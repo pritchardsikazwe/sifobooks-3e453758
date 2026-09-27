@@ -41,8 +41,8 @@ const [tenantA, tenantB] = await db`
 `.then((rows: any[]) => [rows[0].a, rows[0].b]);
 
 await db.begin(async (tx: any) => {
-  -- Keep the temporary probe and both tenant checks on the same physical
-  -- PostgreSQL connection. A pooled TEMP table is otherwise connection-local.
+  // Keep the temporary probe and both tenant checks on the same physical
+  // PostgreSQL connection. A pooled TEMP table is otherwise connection-local.
   await tx.unsafe(`
     CREATE TEMP TABLE sifobooks_rls_probe (
       id text primary key,
