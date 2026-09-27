@@ -43,8 +43,8 @@ const [tenantA, tenantB] = await db`
 await db.begin(async (tx: any) => {
   // The CI workflow creates this persistent probe table as the database owner.
   // Keep all tenant checks in one transaction so app.tenant_id remains local.
-  await tx.unsafe("TRUNCATE sifobooks_rls_probe");
   await tx.unsafe("SELECT set_config('app.tenant_id',$1,true)", [tenantA]);
+  await tx.unsafe("DELETE FROM sifobooks_rls_probe");
   await tx.unsafe(
     "INSERT INTO sifobooks_rls_probe(id,tenant_id,value) VALUES($1,$2,$3)",
     ["a", tenantA, "alpha"],
