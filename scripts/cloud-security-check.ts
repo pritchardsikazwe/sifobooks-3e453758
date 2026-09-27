@@ -3,10 +3,13 @@ import { SQL } from "bun";
 const url = process.env.POSTGRES_URL || process.env.DATABASE_URL || "";
 if (!url) throw new Error("POSTGRES_URL or DATABASE_URL is required");
 
+const tlsRaw = process.env.POSTGRES_TLS;
+const tls = tlsRaw === undefined ? undefined : tlsRaw !== "false";
+
 const db = new SQL({
   url,
   adapter: "postgres",
-  tls: process.env.POSTGRES_TLS === "false" ? "disable" : "require",
+  ...(tls === undefined ? {} : { tls }),
 });
 
 function assert(condition: unknown, message: string) {
