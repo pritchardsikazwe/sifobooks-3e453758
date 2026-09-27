@@ -59,7 +59,8 @@ BEGIN
 END $$;
 
 -- Fail closed for tenant-scoped application traffic.
--- The application sets app.tenant_id transaction-locally for each request.
+-- Some legacy tables currently store tenant_id as TEXT while newer tables use UUID.
+-- Compare through text so the policy works safely with either representation.
 DO $$
 DECLARE
   r record;
@@ -78,8 +79,8 @@ BEGIN
     EXECUTE format(
       'CREATE POLICY sifobooks_tenant_isolation ON %I
        FOR ALL
-       USING (tenant_id = NULLIF(current_setting(''app.tenant_id'', true), '''')::uuid)
-       WITH CHECK (tenant_id = NULLIF(current_setting(''app.tenant_id'', true), '''')::uuid)',
+       USING (tenant_id::text = NULLIF(current_setting(''app.tenant_id'', true), ''''))
+       WITH CHECK (tenant_id::text = NULLIF(current_setting(''app.tenant_id'', true), ''''))',
       r.table_name
     );
   END LOOP;
