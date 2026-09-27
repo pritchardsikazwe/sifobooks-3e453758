@@ -5,10 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
  * that totals, table state and the audit trail stay consistent. Every function
  * refuses to touch a check that is already paid, voided or posted.
  */
-const rpc = supabase.rpc.bind(supabase) as unknown as (
+const rpc = (
   fn: string,
   args: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message: string } | null }>;
+) => supabase.rpc(fn, args) as unknown as Promise<{ data: unknown; error: { message: string } | null }>;
 
 export async function splitCheck(orderId: string, itemIds: string[], guests?: number) {
   const { data, error } = await rpc("restaurant_split_check", {
