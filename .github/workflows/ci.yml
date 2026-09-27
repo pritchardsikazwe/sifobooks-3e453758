@@ -242,6 +242,20 @@ jobs:
           GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sifobooks_app;
           GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sifobooks_app;
           GRANT SELECT ON ALL TABLES IN SCHEMA public TO sifobooks_app;
+
+          DROP TABLE IF EXISTS sifobooks_rls_probe;
+          CREATE TABLE sifobooks_rls_probe (
+            id text PRIMARY KEY,
+            tenant_id uuid NOT NULL,
+            value text NOT NULL
+          );
+          ALTER TABLE sifobooks_rls_probe ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE sifobooks_rls_probe FORCE ROW LEVEL SECURITY;
+          CREATE POLICY sifobooks_rls_probe_policy ON sifobooks_rls_probe
+            FOR ALL
+            USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+            WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
+          GRANT SELECT, INSERT, UPDATE, DELETE ON sifobooks_rls_probe TO sifobooks_app;
           SQL
 
       - name: Run Cloud security QA as request-path role
