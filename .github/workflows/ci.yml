@@ -183,3 +183,67 @@ jobs:
           } else {
             Write-Warning "VSDC connector built successfully, but GitHub artifact upload was unavailable."
           }
+
+  cloud-postgres-qa:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sifobooks
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: sifobooks_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sifobooks"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      POSTGRES_URL: postgres://postgres:sifobooks_ci@127.0.0.1:5432/sifobooks
+      POSTGRES_TLS: "false"
+      JWT_SECRET: ci-only-sifobooks-cloud-jwt-secret-32-bytes-minimum
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply Cloud PostgreSQL migrations
+        run: bun run cloud:migrate
+
+      - name: Re-run Cloud migrations (idempotency)
+        run: bun run cloud:migrate
+
+      - name: Create non-superuser request-path role
+        env:
+          PGPASSWORD: sifobooks_ci
+        run: |
+          psql "postgresql://postgres@127.0.0.1:5432/sifobooks" -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sifobooks_app') THEN
+              CREATE ROLE sifobooks_app LOGIN PASSWORD 'sifobooks_app_ci';
+            ELSE
+              ALTER ROLE sifobooks_app WITH LOGIN PASSWORD 'sifobooks_app_ci';
+            END IF;
+          END
+          $$;
+          GRANT CONNECT ON DATABASE sifobooks TO sifobooks_app;
+          GRANT USAGE ON SCHEMA public TO sifobooks_app;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sifobooks_app;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sifobooks_app;
+          GRANT SELECT ON ALL TABLES IN SCHEMA public TO sifobooks_app;
+          SQL
+
+      - name: Run Cloud security QA as request-path role
+        env:
+          POSTGRES_URL: postgresql://sifobooks_app:sifobooks_app_ci@127.0.0.1:5432/sifobooks
+        run: bun run check:cloud-security
