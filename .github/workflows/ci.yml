@@ -184,6 +184,7 @@ jobs:
             Write-Warning "VSDC connector built successfully, but GitHub artifact upload was unavailable."
           }
 
+  # Cloud gate: migrations, idempotency, and tenant-isolation security QA.
   cloud-postgres-qa:
     runs-on: ubuntu-latest
     services:
