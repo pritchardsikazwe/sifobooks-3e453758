@@ -25,7 +25,7 @@ try {
   `;
 
   const files = (await readdir(migrationsDir))
-    .filter((file) => /^\\d+_.*\\.sql$/.test(file))
+    .filter((file) => /^\d+_.*\.sql$/.test(file))
     .sort();
 
   for (const file of files) {
