@@ -389,6 +389,25 @@ function runCompatibilityMigrations(database: Database) {
     }
   }
 
+  // account_balances must only count POSTED journal lines. The original view
+  // LEFT JOINed journal_entries with the status filter in the ON clause, so
+  // draft/void lines were still summed. Views hold no data: safe to recreate.
+  try {
+    database.exec(`DROP VIEW IF EXISTS "account_balances";
+CREATE VIEW "account_balances" AS
+SELECT a.user_id, a.id AS account_id, a.account_code, a.account_name, a.account_type,
+  COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END), 0) AS total_debit,
+  COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END), 0) AS total_credit,
+  CASE WHEN a.account_type IN ('asset','expense','cogs')
+    THEN COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END),0)-COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END),0)
+    ELSE COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END),0)-COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END),0) END AS balance,
+  COUNT(je.id) AS entry_count
+FROM chart_of_accounts a
+LEFT JOIN journal_lines jl ON jl.account_id = a.id
+LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status='posted'
+GROUP BY a.user_id, a.id, a.account_code, a.account_name, a.account_type;`);
+  } catch (error: any) { console.error("[db] account_balances view:", String(error?.message).slice(0, 160)); }
+
   // Cloud schema parity: screens query the same columns on Windows as on the
   // web. Add any column the cloud table has but the local one lacks, as a
   // NULLABLE column with no default (additive only: never drops, renames,
