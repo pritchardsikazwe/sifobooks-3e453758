@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, ArrowRight, BarChart3, Boxes, CheckCircle2, ClipboardCheck, DatabaseZap, FileCheck2, Landmark, ReceiptText, RefreshCw, ShieldCheck, ShoppingCart, UsersRound, WalletCards, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 
-export const Route=createFileRoute("/_authenticated/business-control-centre")({component: () => <ModuleGate name="Business Control Centre" tables={['control_exceptions', 'business_alerts']}><BusinessControlCentre /></ModuleGate>,head:()=>({meta:[{title:"Business Control Centre — SifoBooks"},{name:"robots",content:"noindex"}]})});
+export const Route=createFileRoute("/_authenticated/business-control-centre")({component: () => <BusinessControlCentre />,head:()=>({meta:[{title:"Business Control Centre — SifoBooks"},{name:"robots",content:"noindex"}]})});
 function BusinessControlCentre(){
   const [currency,setCurrency]=useState("ZMW"); const [company,setCompany]=useState("Your business"); const [loading,setLoading]=useState(true);
   const [s,setS]=useState({ar:0,ap:0,stock:0,bank:0,sales:0,bills:0,approvals:0,exceptions:0,zra:0,alerts:0});
@@ -19,15 +18,15 @@ function BusinessControlCentre(){
       supabase.from("companies").select("name,trading_name,base_currency").eq("user_id",u.user.id).maybeSingle(),
       supabase.from("invoices").select("total,balance_due,status"),supabase.from("bills").select("total,balance_due,status"),
       supabase.from("stock_items").select("quantity_on_hand,cost_price"),supabase.from("bank_transactions").select("amount").limit(5000),
-      supabase.from("approval_requests").select("id").eq("status","pending"),supabase.from("control_exceptions").select("id").eq("status","open"),
-      supabase.from("stock_items").select("zra_sync_status"),supabase.from("business_alerts").select("id,severity,title,message,action_url").eq("status","open").order("created_at",{ascending:false}).limit(8)
+      supabase.from("approval_requests").select("id").eq("status","pending"),
+      supabase.from("stock_items").select("zra_sync_status")
     ]);
     setCompany(c?.trading_name||c?.name||"Your business");setCurrency(c?.base_currency||"ZMW");
     setS({ar:(i??[]).reduce((x:number,r:any)=>x+Number(r.balance_due||0),0),ap:(b??[]).reduce((x:number,r:any)=>x+Number(r.balance_due||0),0),
       stock:(st??[]).reduce((x:number,r:any)=>x+Number(r.quantity_on_hand||0)*Number(r.cost_price||0),0),bank:(bt??[]).reduce((x:number,r:any)=>x+Number(r.amount||0),0),
       sales:(i??[]).reduce((x:number,r:any)=>x+Number(r.total||0),0),bills:(b??[]).reduce((x:number,r:any)=>x+Number(r.total||0),0),
-      approvals:(a??[]).length,exceptions:(e??[]).length,zra:(z??[]).filter((r:any)=>!["mapped","synced","registered"].includes(String(r.zra_sync_status||"unmapped").toLowerCase())).length,alerts:(al??[]).length});
-    setAlerts(al??[]);
+      approvals:(a??[]).length,exceptions:0,zra:(z??[]).filter((r:any)=>!["mapped","synced","registered"].includes(String(r.zra_sync_status||"unmapped").toLowerCase())).length,alerts:0});
+    setAlerts([]);
   }finally{setLoading(false)}}; useEffect(()=>{void load()},[]);
   const money=(n:number)=>fmtMoney(n,currency);
   const links=[["Bank → Cashbook → Reconciliation","Import, match, allocate, post and reconcile bank activity.","/reconciliation",Landmark],
