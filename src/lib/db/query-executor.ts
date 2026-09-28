@@ -335,6 +335,12 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       const sql = `UPDATE "${secured.table}" SET ${setClause}${clause}`;
       database.prepare(sql).run(...setVals, ...params);
       const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
+      // Honour .single()/.maybeSingle() like PostgREST: return one row object, not an array.
+      if (secured.single) {
+        if (!rows[0]) return { data: null, error: { message: "No rows found" } };
+        return { data: rows[0], error: null };
+      }
+      if (secured.maybeSingle) return { data: rows[0] ?? null, error: null };
       return { data: rows, error: null };
     }
 
