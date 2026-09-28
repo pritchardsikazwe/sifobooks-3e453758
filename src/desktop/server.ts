@@ -366,7 +366,7 @@ const STARTUP_LOG = join(logsDir, "desktop-startup.log");
 
 function writeStartupLog(message: string) {
   try {
-    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\\r\\n`, { flag: "a" });
+    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\r\n`, { flag: "a" });
   } catch {}
 }
 
