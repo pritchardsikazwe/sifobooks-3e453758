@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useState } from "react";
 import { Plus, Save, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route=createFileRoute("/_authenticated/tax-engine")({
   head:()=>({meta:[{title:"Tax Engine — SifoBooks"},{name:"description",content:"Centralized tax code configuration and historical tax control."}]}),
-  component:TaxEngine,
+  component: () => <ModuleGate name="Tax engine" tables={['tax_codes']}><TaxEngine /></ModuleGate>,
 });
 
 function TaxEngine(){

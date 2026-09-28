@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useState } from "react";
 import { ArrowRightLeft, ClipboardCheck, Plus, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route=createFileRoute("/_authenticated/inventory-control")({
   head:()=>({meta:[{title:"Inventory Control — SifoBooks"},{name:"description",content:"Warehouse transfer and physical stock reconciliation controls."}]}),
-  component:InventoryControl,
+  component: () => <ModuleGate name="Inventory Control Centre" tables={['stock_reconciliations']}><InventoryControl /></ModuleGate>,
 });
 
 function InventoryControl(){

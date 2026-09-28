@@ -136,17 +136,17 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     let cancelled = false;
     (async () => {
       const [inv, bl, ex, cs, sp] = await Promise.all([
-        supabase.from("invoices").select("id, invoice_number, total").order("created_at", { ascending: false }).limit(6),
+        supabase.from("invoices").select("id, number, total").order("created_at", { ascending: false }).limit(6),
         supabase.from("bills").select("id, bill_number, total").order("created_at", { ascending: false }).limit(6),
-        supabase.from("expenses").select("id, description, amount").order("created_at", { ascending: false }).limit(6),
+        supabase.from("expenses").select("id, expense_number, notes, amount").order("created_at", { ascending: false }).limit(6),
         supabase.from("customers").select("id, name").order("created_at", { ascending: false }).limit(6),
         supabase.from("suppliers").select("id, name").order("created_at", { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
       const list: RecentDoc[] = [];
-      (inv.data ?? []).forEach((r: any) => list.push({ kind: "invoice", id: r.id, label: `Invoice ${r.invoice_number ?? r.id.slice(0, 8)}`, sub: r.total ? `K${Number(r.total).toLocaleString()}` : undefined, url: "/invoices" }));
+      (inv.data ?? []).forEach((r: any) => list.push({ kind: "invoice", id: r.id, label: `Invoice ${r.number ?? r.id.slice(0, 8)}`, sub: r.total ? `K${Number(r.total).toLocaleString()}` : undefined, url: "/invoices" }));
       (bl.data ?? []).forEach((r: any) => list.push({ kind: "bill", id: r.id, label: `Bill ${r.bill_number ?? r.id.slice(0, 8)}`, sub: r.total ? `K${Number(r.total).toLocaleString()}` : undefined, url: "/bills" }));
-      (ex.data ?? []).forEach((r: any) => list.push({ kind: "expense", id: r.id, label: r.description || "Expense", sub: r.amount ? `K${Number(r.amount).toLocaleString()}` : undefined, url: "/expenses" }));
+      (ex.data ?? []).forEach((r: any) => list.push({ kind: "expense", id: r.id, label: r.notes || r.expense_number || "Expense", sub: r.amount ? `K${Number(r.amount).toLocaleString()}` : undefined, url: "/expenses" }));
       (cs.data ?? []).forEach((r: any) => list.push({ kind: "customer", id: r.id, label: r.name, url: "/customers" }));
       (sp.data ?? []).forEach((r: any) => list.push({ kind: "supplier", id: r.id, label: r.name, url: "/suppliers" }));
       setDocs(list);

@@ -5,6 +5,7 @@ import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, monthRange } from "@/lib/reports";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { computeTurnoverTax, isCountable, totInvoicesQuery } from "@/lib/tax-reports";
 
 export const Route = createFileRoute("/_authenticated/reports/turnover-tax")({
   head: () => ({ meta: [{ title: "Turnover Tax — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -22,17 +23,13 @@ function TurnoverTaxPage() {
     (async () => {
       setLoading(true);
       const { from, to } = monthRange(month);
-      const { data } = await supabase.from("invoices")
-        .select("invoice_number,issue_date,subtotal,total,status,customers(name)")
-        .gte("issue_date", from).lte("issue_date", to).neq("status", "draft");
-      setInvoices(data ?? []);
+      const { data } = await totInvoicesQuery(supabase, from, to);
+      setInvoices((data ?? []).filter(isCountable));
       setLoading(false);
     })();
   }, [month]);
 
-  const turnover = invoices.reduce((s, r) => s + num(r.total), 0);
-  const tot = +(turnover * rate / 100).toFixed(2);
-  const dueDate = (() => { const [y, m] = month.split("-").map(Number); const d = new Date(y, m, 14); return d.toISOString().slice(0, 10); })();
+  const { turnover, tax: tot, dueDate } = computeTurnoverTax(invoices, month, rate);
 
   const rows = [
     { Line: "Gross turnover for period", Amount: turnover.toFixed(2) },
@@ -69,7 +66,7 @@ function TurnoverTaxPage() {
               : invoices.map((r, i) => (
                 <tr key={i} className="border-t">
                   <td className="px-3 py-2">{r.issue_date}</td>
-                  <td className="px-3 py-2 font-mono">{r.invoice_number}</td>
+                  <td className="px-3 py-2 font-mono">{r.number}</td>
                   <td className="px-3 py-2">{r.customers?.name ?? ""}</td>
                   <td className="px-3 py-2 text-right">{fmt(num(r.total))}</td>
                 </tr>

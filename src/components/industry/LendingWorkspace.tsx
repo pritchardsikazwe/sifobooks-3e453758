@@ -1,5 +1,6 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { useEffect, useMemo, useState } from "react";
+import { ModuleGate } from "@/components/ModuleGate";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -142,7 +143,7 @@ function QuickAction({ to, icon: Icon, label, detail }: {to:string; icon:any; la
   </Link>;
 }
 
-export function LendingWorkspace({ screen }: { screen: Screen }) {
+function LendingWorkspaceInner({ screen }: { screen: Screen }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
@@ -644,4 +645,8 @@ export function LendingWorkspace({ screen }: { screen: Screen }) {
       {showPayment ? <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><form onSubmit={saveRepayment} className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-center justify-between"><h2 className="text-lg font-extrabold text-[#173B3A]">Record repayment</h2><button type="button" onClick={()=>setShowPayment(false)}><XCircle className="h-5 w-5"/></button></div>{activeLoans.length===0?<p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">No active loans are available for repayment.</p>:<div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="sm:col-span-2 text-sm font-semibold">Loan<select name="loan_id" required className="mt-1 w-full rounded-xl border p-3"><option value="">Select loan</option>{activeLoans.map((l:any)=><option key={l.id} value={l.id}>{l.loan_no} · {borrowerName.get(l.borrower_id)} · {money(l.balance)}</option>)}</select></label><label className="text-sm font-semibold">Amount<input name="amount" required type="number" min="0.01" step="0.01" className="mt-1 w-full rounded-xl border p-3"/></label><label className="text-sm font-semibold">Method<select name="method" className="mt-1 w-full rounded-xl border p-3"><option>cash</option><option>bank</option><option>MTN MoMo</option><option>Airtel Money</option></select></label><label className="sm:col-span-2 text-sm font-semibold">Reference<input name="reference" className="mt-1 w-full rounded-xl border p-3"/></label></div>}<button disabled={saving||activeLoans.length===0} className="mt-5 w-full rounded-xl bg-[#07834F] px-4 py-3 font-bold text-white">{saving?"Posting…":"Post repayment"}</button></form></div> : null}
     </div>
   );
+}
+
+export function LendingWorkspace(props: { screen: Screen }) {
+  return <ModuleGate name="Lending" tables={["lending_borrowers","lending_applications"]}><LendingWorkspaceInner {...props} /></ModuleGate>;
 }

@@ -33,11 +33,11 @@ function InvoiceDetailPage() {
       const [{ data: inv, error }, { data: lines }, { data: pays }, { data: moves }] = await Promise.all([
         supabase.from("invoices").select("*, customers(*)").eq("id", id).maybeSingle(),
         supabase.from("invoice_items").select("*, stock_items(name, sku)").eq("invoice_id", id),
-        supabase.from("receipts").select("id, receipt_number, receipt_date, amount, payment_method, invoice_id, status").eq("invoice_id", id).order("receipt_date", { ascending: false }),
+        supabase.from("receipts").select("id, number, receipt_date, amount, method, invoice_id, status").eq("invoice_id", id).order("receipt_date", { ascending: false }),
         supabase.from("stock_movements").select("id, movement_type, quantity, reference, note, created_at, item_id, stock_items(name, sku)").eq("reference", id).order("created_at", { ascending: false }),
       ]);
       if (error) toast.error(error.message);
-      setInvoice(inv); setItems(lines ?? []); setPayments(pays ?? []); setMovements(moves ?? []); setLoading(false);
+      setInvoice(inv); setItems(lines ?? []); setPayments((pays ?? []).map((p: any) => ({ ...p, receipt_number: p.number, payment_method: p.method }))); setMovements(moves ?? []); setLoading(false);
     })();
   }, [id]);
 

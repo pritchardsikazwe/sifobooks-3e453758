@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ModuleGate } from "@/components/ModuleGate";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import { RequireModule } from "@/components/RequireModule";
@@ -20,7 +21,7 @@ type Lease={id:string;lease_no:string;unit_id:string;tenant_id:string;lease_type
 type Charge={id:string;lease_id:string;description:string;amount:number;paid_amount:number;due_date:string;status:string};
 type Payment={id:string;payment_no:string;tenant_id:string|null;amount:number;method:string;payment_date:string};
 
-export function PropertyWorkspace({ initialTab = "dashboard" }: { initialTab?: string } = {}){
+function PropertyWorkspaceInner({ initialTab = "dashboard" }: { initialTab?: string } = {}){
  const [tab,setTab]=useState(initialTab); const [loading,setLoading]=useState(true);
  const [uid,setUid]=useState(""); const [companyId,setCompanyId]=useState("");
  const [properties,setProperties]=useState<Property[]>([]); const [units,setUnits]=useState<Unit[]>([]);
@@ -124,3 +125,7 @@ function Editor({kind,form,setForm,properties,units,tenants,onClose,onSave}:any)
 }
 function Field({l,v,set,type="text"}:{l:string;v:any;set:(v:any)=>void;type?:string}){return <div className="space-y-1"><Label>{l}</Label><Input type={type} value={v??""} onChange={e=>set(e.target.value)}/></div>}
 function SelectField({l,v,set,opts}:{l:string;v:any;set:(v:any)=>void;opts:any[][]}){return <div className="space-y-1"><Label>{l}</Label><select className="w-full rounded-md border bg-background p-2" value={v??""} onChange={e=>set(e.target.value)}><option value="">Select…</option>{opts.map(o=><option key={o[0]} value={o[0]}>{o[1]}</option>)}</select></div>}
+
+export function PropertyWorkspace(props: { initialTab?: string } = {}) {
+  return <ModuleGate name="Property management" tables={['property_assets', 'property_units', 'property_tenants', 'property_leases', 'property_charges', 'property_payments', 'property_maintenance', 'property_meter_readings', 'property_bookings']}><PropertyWorkspaceInner {...props} /></ModuleGate>;
+}
