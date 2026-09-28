@@ -1767,3 +1767,152 @@ export async function loadExpenses(
 
   return aggregateExpenses(lines, { from: p.from, to: p.to, view, accountId: p.accountId });
 }
+
+/* ------------------------------------------------------------------------ */
+/* Transfer Register — every stock transfer with route, value and status.    */
+/* Reads existing inventory_transfers / inventory_transfer_items only.       */
+/* ------------------------------------------------------------------------ */
+export async function loadTransferRegister(p: PeriodParams & { status?: string }): Promise<ReportResult> {
+  const [{ data: locs }, tr] = await Promise.all([
+    supabase.from("inventory_locations").select("id,name"),
+    (() => {
+      let q = supabase
+        .from("inventory_transfers")
+        .select("id,transfer_number,reference,transfer_date,from_location_id,to_location_id,status,purpose,total_value,created_by,dispatched_at,received_at")
+        .gte("transfer_date", p.from)
+        .lte("transfer_date", p.to)
+        .order("transfer_date", { ascending: false });
+      if (p.status && p.status !== "all") q = q.eq("status", p.status);
+      return q;
+    })(),
+  ]);
+  if (tr.error) throw tr.error;
+  const transfers = tr.data ?? [];
+  const locById = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
+  const ids = transfers.map((t: any) => t.id);
+  const lineAgg = new Map<string, { lines: number; qty: number; value: number; received: number }>();
+  if (ids.length) {
+    const { data: lines } = await supabase
+      .from("inventory_transfer_items")
+      .select("transfer_id,quantity,unit_cost,qty_received")
+      .in("transfer_id", ids);
+    for (const l of lines ?? []) {
+      const a = lineAgg.get(l.transfer_id) ?? { lines: 0, qty: 0, value: 0, received: 0 };
+      a.lines += 1;
+      a.qty += Number(l.quantity ?? 0);
+      a.value += Number(l.quantity ?? 0) * Number(l.unit_cost ?? 0);
+      a.received += Number(l.qty_received ?? 0);
+      lineAgg.set(l.transfer_id, a);
+    }
+  }
+  let totalValue = 0;
+  const rows: ReportRow[] = transfers.map((t: any) => {
+    const a = lineAgg.get(t.id) ?? { lines: 0, qty: 0, value: 0, received: 0 };
+    const value = Number(t.total_value ?? 0) || a.value;
+    totalValue += value;
+    return {
+      date: t.transfer_date,
+      number: t.transfer_number ?? t.reference ?? "—",
+      from: locById.get(t.from_location_id) ?? "—",
+      to: locById.get(t.to_location_id) ?? "—",
+      lines: a.lines,
+      qty: a.qty,
+      received: a.received,
+      value,
+      status: t.status ?? "—",
+      purpose: t.purpose ?? "",
+      _link: "/inventory/transfers",
+      _emphasis: t.status === "in_transit" || t.status === "dispatched" ? "warn" : undefined,
+    };
+  });
+  const open = transfers.filter((t: any) => !["received", "cancelled"].includes(String(t.status))).length;
+  return {
+    columns: [
+      { key: "date", label: "Date" },
+      { key: "number", label: "Transfer #" },
+      { key: "from", label: "From" },
+      { key: "to", label: "To" },
+      { key: "lines", label: "Lines", numeric: true },
+      { key: "qty", label: "Qty sent", numeric: true },
+      { key: "received", label: "Qty received", numeric: true },
+      { key: "value", label: "Value", money: true },
+      { key: "status", label: "Status" },
+      { key: "purpose", label: "Reason", defaultHidden: true },
+    ],
+    rows,
+    summary: [
+      { label: "Transfers", value: String(rows.length) },
+      { label: "Not yet received", value: String(open), tone: open ? "warn" : "good" },
+      { label: "Total value", value: acctFmt(totalValue) },
+    ],
+    notes: ["Values use the unit cost recorded on each transfer line at dispatch."],
+    sufficient: rows.length > 0,
+    facts: { transfers: rows.length, open, totalValue },
+  };
+}
+
+/* ------------------------------------------------------------------------ */
+/* POS Stock Depletion — stock moved out by till sales and back by returns,  */
+/* straight from stock_movements written by the existing POS checkout.       */
+/* ------------------------------------------------------------------------ */
+export async function loadPosStockDepletion(p: PeriodParams & { locationId?: string }): Promise<ReportResult> {
+  const [{ data: items }, { data: locs }] = await Promise.all([
+    supabase.from("stock_items").select("id,sku,name,unit"),
+    supabase.from("inventory_locations").select("id,name"),
+  ]);
+  const itemById = new Map((items ?? []).map((i: any) => [i.id, i]));
+  const locById = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
+  let q = supabase
+    .from("stock_movements")
+    .select("item_id,location_id,movement_type,quantity,unit_cost,total_cost,transaction_date,created_at,reference,source_type")
+    .gte("transaction_date", p.from)
+    .lte("transaction_date", p.to);
+  if (p.locationId) q = q.eq("location_id", p.locationId);
+  const { data: moves, error } = await q;
+  if (error) throw error;
+  const isPos = (m: any) =>
+    String(m.source_type ?? "").toLowerCase().startsWith("pos") || /^POS/i.test(String(m.reference ?? ""));
+  type Agg = { item: string; sku: string; unit: string; loc: string; sold: number; returned: number; cost: number; sales: Set<string> };
+  const agg = new Map<string, Agg>();
+  for (const m of moves ?? []) {
+    if (!isPos(m)) continue;
+    const t = String(m.movement_type ?? "").toLowerCase();
+    const qty = Math.abs(Number(m.quantity ?? 0));
+    const unitCost = Number(m.unit_cost ?? 0);
+    const key = `${m.item_id}|${m.location_id ?? ""}`;
+    const it: any = itemById.get(m.item_id);
+    const a = agg.get(key) ?? { item: it?.name ?? "(unknown item)", sku: it?.sku ?? "", unit: it?.unit ?? "", loc: locById.get(m.location_id) ?? "—", sold: 0, returned: 0, cost: 0, sales: new Set<string>() };
+    if (t === "return" || t === "in" || t === "adjust_in") { a.returned += qty; a.cost -= qty * unitCost; }
+    else { a.sold += qty; a.cost += Number(m.total_cost ?? 0) || qty * unitCost; }
+    if (m.reference) a.sales.add(String(m.reference));
+    agg.set(key, a);
+  }
+  const rows: ReportRow[] = [...agg.values()]
+    .sort((x, y) => y.sold - x.sold)
+    .map((a) => ({ item: a.item, sku: a.sku, location: a.loc, sold: a.sold, returned: a.returned, net: a.sold - a.returned, unit: a.unit, cost: a.cost, docs: a.sales.size, _link: "/inventory/stock-card" }));
+  const sold = rows.reduce((s, r) => s + Number(r.sold), 0);
+  const returned = rows.reduce((s, r) => s + Number(r.returned), 0);
+  const cost = rows.reduce((s, r) => s + Number(r.cost), 0);
+  return {
+    columns: [
+      { key: "item", label: "Item" },
+      { key: "sku", label: "SKU" },
+      { key: "location", label: "Store / location" },
+      { key: "sold", label: "Sold", numeric: true },
+      { key: "returned", label: "Returned", numeric: true },
+      { key: "net", label: "Net depletion", numeric: true },
+      { key: "unit", label: "Unit", defaultHidden: true },
+      { key: "cost", label: "Cost of stock out", money: true },
+      { key: "docs", label: "Sales / returns", numeric: true },
+    ],
+    rows,
+    summary: [
+      { label: "Units sold", value: sold.toFixed(2) },
+      { label: "Units returned", value: returned.toFixed(2) },
+      { label: "Cost of stock out", value: acctFmt(cost) },
+    ],
+    notes: ["Only stock movements recorded by the till are included. Nothing is estimated."],
+    sufficient: rows.length > 0,
+    facts: { sold, returned, cost },
+  };
+}
