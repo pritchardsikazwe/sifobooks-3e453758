@@ -220,12 +220,22 @@ export function CompanyOnboardingWizard() {
         if (branchError) throw branchError;
         branchId = branch?.id;
       }
-      const { data: warehouses } = await supabase.from("warehouses").select("id").eq("company_id", company.id).limit(1);
+      // Cloud warehouses link to the company through their branch (no
+      // company_id column online); the Windows database has both.
+      const { data: warehouses } = branchId
+        ? await supabase.from("warehouses").select("id").eq("branch_id", branchId).limit(1)
+        : { data: [] as any[] };
       if (!warehouses?.length) {
-        await supabase.from("warehouses").insert({
+        const row: Record<string, any> = {
           id: crypto.randomUUID(), user_id: u.user.id, company_id: company.id, branch_id: branchId || null,
-          name: form.warehouseName.trim(), code: "MAIN", location: form.branchCity.trim() || form.city.trim() || null, is_active: 1,
-        });
+          name: form.warehouseName.trim() || "Main Warehouse", code: "MAIN", location: form.branchCity.trim() || form.city.trim() || null, is_active: true,
+        };
+        let { error: whError } = await supabase.from("warehouses").insert(row);
+        if (whError && /company_id/i.test(String(whError.message ?? ""))) {
+          delete row.company_id;
+          ({ error: whError } = await supabase.from("warehouses").insert(row));
+        }
+        if (whError) throw whError;
       }
 
       try {
