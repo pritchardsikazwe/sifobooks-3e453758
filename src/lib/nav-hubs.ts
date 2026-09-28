@@ -43,7 +43,7 @@ export const HUBS: HubDef[] = [
           { title: "Home", url: "/dashboard", module: "core_home", iconName: "Home", primary: true, hint: "Work queue, cash position and suggested next actions." },
           { title: "Approvals", url: "/approvals", module: "core_home", iconName: "CheckCheck", hint: "Documents waiting for your decision." },
           { title: "Notifications", url: "/notifications", module: "core_home", iconName: "Bell" },
-          { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Turn features on or off for this company." },
+          { title: "Industry & Business", url: "/industry", module: "core_home", iconName: "Building2", hint: "Choose the business type and which operational workspaces this company uses." },
         ],
       },
     ],
@@ -561,7 +561,7 @@ export const PAYROLL_HUBS: HubDef[] = [
         items: [
           { title: "Payroll Setup", url: "/payroll-setup", module: "hr_payroll", iconName: "Settings2", primary: true, hint: "Pay components, grades and payroll defaults." },
           { title: "Company Settings", url: "/setup", module: "core_home", iconName: "Settings", primary: true },
-          { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid", hint: "Switch on the rest of SifoBooks when you are ready." },
+          { title: "Industry & Business", url: "/industry", module: "core_home", iconName: "Building2", hint: "Choose the business type and which operational workspaces this company uses." },
           { title: "Subscription", url: "/subscription", module: "core_home", iconName: "Sparkles", primary: true },
         ],
       },
@@ -749,7 +749,7 @@ export const RETAIL_HUBS: HubDef[] = [
       { title: "Company Setup", url: "/setup", module: "admin", iconName: "Building2", primary: true },
       { title: "Users & Roles", url: "/roles", module: "admin", iconName: "ShieldCheck", primary: true },
       { title: "POS Workers", url: "/pos-workers", module: "retail_pos", iconName: "Users" },
-      { title: "Modules", url: "/modules", module: "core_home", iconName: "LayoutGrid" },
+      { title: "Industry & Business", url: "/industry", module: "core_home", iconName: "Building2" },
     ]},
   ]},
 ];
