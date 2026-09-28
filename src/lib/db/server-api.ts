@@ -45,7 +45,18 @@ export const executeQueryFn = createServerFn({ method: "POST" })
     const token = resolveAuthToken(data.authToken);
     const auth = token ? await verifyToken(token) : null;
     if (!auth) return { data: null, error: { message: "NOT_AUTHENTICATED" } };
-    return isCloudDatabaseConfigured() ? await executeCloudQuery(data, auth.userId) : executeQuery(data, auth.userId);
+    if (isCloudDatabaseConfigured()) return await executeCloudQuery(data, auth.userId);
+    // Windows: company structure is created in SifoBooks Cloud first, then copied locally.
+    if (data.operation === "insert" || data.operation === "update") {
+      const { WRITE_THROUGH_TABLES, cloudWriteThrough } = await import("./cloud-link.server");
+      if (WRITE_THROUGH_TABLES.has(data.table)) {
+        const r = await cloudWriteThrough(auth.userId, data);
+        if (r.status === "error") return { data: null, error: { message: r.message } };
+        if (r.status === "cloud") console.log(`[cloud-write] ${data.operation} ${data.table} saved in SifoBooks Cloud (${r.rows.map((x) => x.id).join(",")})`);
+        if (r.status === "offline") console.warn(`[cloud-write] OFFLINE: ${data.operation} ${data.table} saved on this PC only (${r.reason})`);
+      }
+    }
+    return executeQuery(data, auth.userId);
   });
 
 // ── Auth ──
