@@ -21,6 +21,7 @@ import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 
 import { fmtMoney } from "@/lib/format";
+import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 import { cn } from "@/lib/utils";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
@@ -57,6 +58,7 @@ function DashboardPage() {
   const [receivables, setReceivables] = useState(0);
   const [payables, setPayables] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -79,6 +81,10 @@ function DashboardPage() {
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
       if (comp) { setCurrency(comp.base_currency || "ZMW"); setCompanyName(comp.trading_name || comp.name); }
+      if (comp) {
+        const { data: activeCompany } = await supabase.from("companies").select("id, industry").eq("user_id", u.user.id).maybeSingle();
+        if (activeCompany?.id) setCapabilities(await loadBusinessCapabilityState(activeCompany.id, activeCompany.industry || "general"));
+      }
       setTxns((tx ?? []) as Txn[]);
       setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
       setCustomerCount(custCount ?? 0);
@@ -191,7 +197,7 @@ function DashboardPage() {
           <div className="min-w-0">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">Quick Actions</span>
             <h2 className="mt-1 text-[20px] font-bold leading-tight tracking-tight text-foreground sm:text-[22px]">What would you like to do?</h2>
-            <p className="mt-1 text-[13px] text-muted-foreground">Quickly manage your business finances.</p>
+            <p className="mt-1 text-[13px] text-muted-foreground">Run the day-to-day work of your business from one place.</p>
           </div>
           <span className="hidden shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
@@ -217,7 +223,7 @@ function DashboardPage() {
         <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
         <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
         <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
-        <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />
+        {capabilities.inventory && <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />}
       </div>
     ),
 
@@ -304,8 +310,7 @@ function DashboardPage() {
           <Row icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" />
           <Row icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
           <Row icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" />
-          <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />
-          <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />
+          {capabilities.inventory && <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />}\n          {capabilities.hr_payroll && <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />}
           <Row icon={Truck} label="Suppliers" value={String(supplierCount)} to="/suppliers" />
           <Row icon={Wallet} label="Invoices" value={String(invoiceCount)} to="/invoices" />
         </div>
