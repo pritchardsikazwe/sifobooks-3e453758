@@ -179,6 +179,22 @@ function PostingCentre() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["/journal-entries", "Journal Entries", "Create, review and post balanced manual journals."],
+          ["/reports/trial-balance", "Trial Balance", "Verify total debits and credits from posted journals."],
+          ["/reports/general-ledger", "General Ledger", "Drill from accounts into posted source entries."],
+          ["/reports/profit-and-loss", "Profit & Loss", "Review revenue, cost of sales and operating expenses."],
+          ["/reports/balance-sheet", "Balance Sheet", "Review assets, liabilities and equity as at a date."],
+          ["/reports/cashflow", "Cash Flow", "Review cash movement where the report is available."],
+        ].map(([to, title, text]) => (
+          <a key={to} href={to} className="rounded-xl border p-4 transition-colors hover:bg-muted/40">
+            <div className="font-semibold">{title}</div>
+            <div className="mt-1 text-xs leading-5 text-muted-foreground">{text}</div>
+          </a>
+        ))}
+      </div>
+
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
