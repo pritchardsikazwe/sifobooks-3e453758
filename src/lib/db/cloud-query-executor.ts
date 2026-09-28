@@ -155,7 +155,7 @@ async function resolveEmbed(parent: string, e: Embed): Promise<{ table: string; 
   return null;
 }
 
-type EmbedCtx = { seq: number; params: any[]; userId: string };
+type EmbedCtx = { seq: number; params: any[]; userId: string; userParam?: string };
 
 async function jsonObjectExpr(table: string, a: string, colSpec: string, ctx: EmbedCtx): Promise<string> {
   const parsed = parseColumns(colSpec || "*");
@@ -178,7 +178,11 @@ async function embedExpr(parent: string, parentAlias: string, e: Embed, ctx: Emb
   const a = `__e${ctx.seq++}`;
   const childCols = await getCloudColumns(r.table);
   // Linked records are isolated exactly like the main table: never another user's rows.
-  const scope = (al: string) => (childCols.has("user_id") ? ` AND "${al}"."user_id" = ${pushParam(ctx.params, ctx.userId)}` : "");
+  const scope = (al: string) => {
+    if (!childCols.has("user_id")) return "";
+    ctx.userParam ||= pushParam(ctx.params, ctx.userId);
+    return ` AND "${al}"."user_id"::text = ${ctx.userParam}::text`;
+  };
   const where = (al: string) => `"${al}"."${r.childCol}"::text = "${parentAlias}"."${r.parentCol}"::text${scope(al)}`;
   const obj = await jsonObjectExpr(r.table, a, e.columns, ctx);
   const expr = r.kind === "one"
