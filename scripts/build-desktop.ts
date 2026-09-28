@@ -127,6 +127,7 @@ writeFileSync(join(OUT_DIR, "Stop-SifoBooks.ps1"), [
   "$ErrorActionPreference = 'SilentlyContinue'",
   "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
   "$dataDir = if ($env:SIFOBOOKS_DATA_DIR) { $env:SIFOBOOKS_DATA_DIR } elseif (Test-Path (Join-Path $appDir 'portable.flag')) { $appDir } else { Join-Path $env:ProgramData 'SifoBooks' }",
+  "$dataDir = Join-Path $dataDir 'data'",
   "$portFile = Join-Path $dataDir 'desktop-port.txt'",
   "$tokenFile = Join-Path $dataDir 'desktop-shutdown.token'",
   "if ((Test-Path $portFile) -and (Test-Path $tokenFile)) {",
