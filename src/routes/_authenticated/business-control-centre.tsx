@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
+import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 
 export const Route=createFileRoute("/_authenticated/business-control-centre")({component: () => <BusinessControlCentre />,head:()=>({meta:[{title:"Business Control Centre — SifoBooks"},{name:"robots",content:"noindex"}]})});
 function BusinessControlCentre(){
   const [currency,setCurrency]=useState("ZMW"); const [company,setCompany]=useState("Your business"); const [loading,setLoading]=useState(true);
   const [s,setS]=useState({ar:0,ap:0,stock:0,bank:0,sales:0,bills:0,approvals:0,exceptions:0,zra:0,alerts:0});
   const [alerts,setAlerts]=useState<any[]>([]);
+  const [capabilities,setCapabilities]=useState<Record<BusinessCapabilityKey,boolean>>({inventory:false,retail_pos:false,restaurant:false,hr_payroll:true});
   const load=async()=>{setLoading(true);try{const {data:u}=await supabase.auth.getUser();if(!u.user)return;
     const [{data:c},{data:i},{data:b},{data:st},{data:bt},{data:a},{data:e},{data:z},{data:al}]=await Promise.all([
       supabase.from("companies").select("name,trading_name,base_currency").eq("user_id",u.user.id).maybeSingle(),
@@ -22,6 +24,8 @@ function BusinessControlCentre(){
       supabase.from("stock_items").select("zra_sync_status")
     ]);
     setCompany(c?.trading_name||c?.name||"Your business");setCurrency(c?.base_currency||"ZMW");
+    const { data: activeCompany } = await supabase.from("companies").select("id, industry").eq("user_id",u.user.id).maybeSingle();
+    if (activeCompany?.id) setCapabilities(await loadBusinessCapabilityState(activeCompany.id, activeCompany.industry || "general"));
     setS({ar:(i??[]).reduce((x:number,r:any)=>x+Number(r.balance_due||0),0),ap:(b??[]).reduce((x:number,r:any)=>x+Number(r.balance_due||0),0),
       stock:(st??[]).reduce((x:number,r:any)=>x+Number(r.quantity_on_hand||0)*Number(r.cost_price||0),0),bank:(bt??[]).reduce((x:number,r:any)=>x+Number(r.amount||0),0),
       sales:(i??[]).reduce((x:number,r:any)=>x+Number(r.total||0),0),bills:(b??[]).reduce((x:number,r:any)=>x+Number(r.total||0),0),
@@ -36,7 +40,10 @@ function BusinessControlCentre(){
     ["Approval Centre","Maker-checker queue for controlled transactions.","/approval-centre",ClipboardCheck],
     ["Import & Landed Cost","Capture freight, duty, insurance and other landed costs.","/import-landed-cost",Boxes],
     ["Accountant Practice","Controlled multi-client foundation for accountants.","/accountant-practice",UsersRound],
-    ["Business Assurance","Recurring reconciliations, evidence and management review.","/business-assurance",CheckCircle2],["Supplier Invoice Control","Detect duplicate supplier invoice references.","/supplier-invoice-control",FileCheck2],["Data Quality Centre","Scan master data for missing control fields.","/data-quality-centre",ShieldCheck],["Cash Flow Control","Review bank movement, receivables and payables together.","/cash-flow-control",WalletCards],["Demo Data","Install the Luansobe Secondary School July–August source statements for testing.","/demo-data",DatabaseZap],["Restaurant Operations","POS, tables, kitchen, stock, cash and restaurant reports.","/restaurant",ShoppingCart],["Restaurant POS","Open the live restaurant selling workflow.","/restaurant/pos",ReceiptText],["Restaurant Kitchen","Review the kitchen queue and production workflow.","/restaurant/kitchen",Boxes],["Restaurant Reports","Review restaurant sales, cash and operating reports.","/restaurant/reports",BarChart3]] as const;
+    ["Business Assurance","Recurring reconciliations, evidence and management review.","/business-assurance",CheckCircle2],["Supplier Invoice Control","Detect duplicate supplier invoice references.","/supplier-invoice-control",FileCheck2],["Data Quality Centre","Scan master data for missing control fields.","/data-quality-centre",ShieldCheck],["Cash Flow Control","Review bank movement, receivables and payables together.","/cash-flow-control",WalletCards],...(capabilities.inventory ? [["Inventory Control","Stock levels, movement, counts and reconciliation.","/inventory-control-centre",Boxes] as const] : []),
+    ...(capabilities.retail_pos ? [["Retail POS","Open the retail selling workflow.","/pos",ReceiptText] as const] : []),
+    ...(capabilities.restaurant ? [["Restaurant Operations","POS, tables, kitchen, stock, cash and restaurant reports.","/restaurant",ShoppingCart] as const,["Restaurant POS","Open the live restaurant selling workflow.","/restaurant/pos",ReceiptText] as const,["Restaurant Kitchen","Review the kitchen queue and production workflow.","/restaurant/kitchen",Boxes] as const,["Restaurant Reports","Review restaurant sales, cash and operating reports.","/restaurant/reports",BarChart3] as const] : []),
+    ...(capabilities.hr_payroll ? [["Payroll Control","Run, review, pay and file the payroll cycle.","/payroll-dashboard",UsersRound] as const] : [])] as const;
   return <SifoWorkspaceShell title="Business Control Centre" purpose="One control layer connecting accounting, banking, inventory, payroll, compliance and management without replacing existing SifoBooks workflows." icon={Activity} breadcrumbs={[{label:"Home",to:"/dashboard"},{label:"Business Control Centre"}]} actions={<Button variant="outline" onClick={()=>void load()}><RefreshCw className="mr-2 h-4 w-4"/>Refresh</Button>}>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[[WalletCards,"Receivables",money(s.ar),"/reports/aged-receivables"],[ShoppingCart,"Payables",money(s.ap),"/reports/aged-payables"],[Boxes,"Inventory at cost",money(s.stock),"/inventory"],[Landmark,"Bank movement",money(s.bank),"/banking"]].map(([Icon,label,value,to]:any)=><Link key={label} to={to}><Card className="p-4 transition-colors hover:border-primary/40"><div className="flex justify-between text-xs text-muted-foreground">{label}<Icon className="h-4 w-4 text-primary"/></div><div className="mt-2 text-xl font-bold">{value}</div></Card></Link>)}</div>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Mini l="Sales recorded" v={money(s.sales)} i={ReceiptText}/><Mini l="Bills recorded" v={money(s.bills)} i={ShoppingCart}/><Mini l="Pending approvals" v={String(s.approvals)} i={ClipboardCheck}/><Mini l="Control exceptions" v={String(s.exceptions)} i={AlertTriangle}/><Mini l="ZRA items to review" v={String(s.zra)} i={ShieldCheck}/></div>
