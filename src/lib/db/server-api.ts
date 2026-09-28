@@ -64,6 +64,29 @@ export const signInFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { email: string; password: string })
   .handler(async ({ data }) => {
     try {
+      // Windows/local: SifoBooks Cloud is the identity source. When online, sign
+      // in against the cloud and mirror the user's existing companies/branches/
+      // warehouses (same ids) into SQLite. Offline or local-only accounts fall
+      // back to the local sign-in.
+      if (!isCloudDatabaseConfigured()) {
+        const { cloudSignIn, linkCloudAccount } = await import("./cloud-link.server");
+        const cloud = await cloudSignIn(data.email, data.password);
+        if (cloud.status === "ok") {
+          try {
+            const { localUserId } = await linkCloudAccount(cloud, data.password);
+            const { createSessionTokenForUser } = await import("./auth");
+            const token = await createSessionTokenForUser(localUserId);
+            if (token) {
+              const user = { id: localUserId, email: cloud.email, user_metadata: { cloud_linked: true } };
+              return { data: { user, session: { access_token: token, user } }, error: null };
+            }
+          } catch (e: any) {
+            console.error("[cloud-link] failed, using local sign-in:", e?.message || e);
+          }
+        } else if (cloud.status === "unavailable") {
+          console.warn("[cloud-link] cloud unavailable:", cloud.reason);
+        }
+      }
       return await signInWithPassword(data.email, data.password);
     } catch (error: any) {
       console.error("[auth] signIn failed:", error);
