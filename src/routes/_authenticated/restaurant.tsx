@@ -44,6 +44,16 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
+const RESTAURANT_ACTIONS: { to: string; label: string; description: string; icon: any }[] = [
+  { to: "/restaurant/pos", label: "POS", description: "Take orders & payments", icon: UtensilsCrossed },
+  { to: "/restaurant/tables", label: "Tables", description: "Floor & table service", icon: LayoutGrid },
+  { to: "/restaurant/kitchen", label: "Kitchen", description: "KDS & preparation", icon: ChefHat },
+  { to: "/restaurant/menu", label: "Menu", description: "Items, modifiers & recipes", icon: BookOpen },
+  { to: "/stock", label: "Stock", description: "Inventory & ingredients", icon: Boxes },
+  { to: "/restaurant/cash", label: "Cash", description: "Shifts & cash control", icon: Banknote },
+  { to: "/restaurant/reports", label: "Reports", description: "Sales & operations", icon: BarChart3 },
+];
+
 function RestaurantShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const primary = NAV.slice(0, 7);
@@ -106,6 +116,34 @@ function RestaurantShell() {
       </header>
 
       <main className="mx-auto max-w-[1600px] p-3 sm:p-5 lg:p-6">
+        <nav aria-label="Restaurant quick actions" className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
+          {RESTAURANT_ACTIONS.map((action) => {
+            const active = path === action.to || path.startsWith(action.to + "/");
+            return (
+              <Link
+                key={action.to}
+                to={action.to as never}
+                className={cn(
+                  "group rounded-2xl border bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#07834f] hover:shadow-md",
+                  active ? "border-[#07834f] ring-1 ring-[#07834f]/20" : "border-[#d7e4e0]",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                    active ? "bg-[#07834f] text-white" : "bg-[#eaf5f0] text-[#07834f] group-hover:bg-[#07834f] group-hover:text-white",
+                  )}>
+                    <action.icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-black text-[#173b3a]">{action.label}</div>
+                    <div className="hidden truncate text-[10px] font-medium text-[#71817f] sm:block">{action.description}</div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
         {path === "/restaurant" && (
           <div className="mb-5 flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-[#e5b83f]/15 px-3 py-1.5 text-xs font-black text-[#866611]">RESTAURANT MANAGEMENT</span>
