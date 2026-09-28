@@ -243,6 +243,7 @@ import { Route as AuthenticatedReportsVatReturnRouteImport } from './routes/_aut
 import { Route as AuthenticatedReportsVatRouteImport } from './routes/_authenticated/reports.vat'
 import { Route as AuthenticatedReportsTurnoverTaxRouteImport } from './routes/_authenticated/reports.turnover-tax'
 import { Route as AuthenticatedReportsTrialBalanceRouteImport } from './routes/_authenticated/reports.trial-balance'
+import { Route as AuthenticatedReportsTransferRegisterRouteImport } from './routes/_authenticated/reports.transfer-register'
 import { Route as AuthenticatedReportsTaxSummaryRouteImport } from './routes/_authenticated/reports.tax-summary'
 import { Route as AuthenticatedReportsSupplierStatementRouteImport } from './routes/_authenticated/reports.supplier-statement'
 import { Route as AuthenticatedReportsStockReconciliationRouteImport } from './routes/_authenticated/reports.stock-reconciliation'
@@ -250,6 +251,7 @@ import { Route as AuthenticatedReportsStockMovementRouteImport } from './routes/
 import { Route as AuthenticatedReportsSalesByItemRouteImport } from './routes/_authenticated/reports.sales-by-item'
 import { Route as AuthenticatedReportsSalesByCustomerRouteImport } from './routes/_authenticated/reports.sales-by-customer'
 import { Route as AuthenticatedReportsSalesByBranchRouteImport } from './routes/_authenticated/reports.sales-by-branch'
+import { Route as AuthenticatedReportsPosStockDepletionRouteImport } from './routes/_authenticated/reports.pos-stock-depletion'
 import { Route as AuthenticatedReportsPosIntegrityRouteImport } from './routes/_authenticated/reports.pos-integrity'
 import { Route as AuthenticatedReportsPnlRouteImport } from './routes/_authenticated/reports.pnl'
 import { Route as AuthenticatedReportsPayrollSummaryRouteImport } from './routes/_authenticated/reports.payroll-summary'
@@ -1639,6 +1641,12 @@ const AuthenticatedReportsTrialBalanceRoute =
     path: '/trial-balance',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedReportsTransferRegisterRoute =
+  AuthenticatedReportsTransferRegisterRouteImport.update({
+    id: '/transfer-register',
+    path: '/transfer-register',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
 const AuthenticatedReportsTaxSummaryRoute =
   AuthenticatedReportsTaxSummaryRouteImport.update({
     id: '/tax-summary',
@@ -1679,6 +1687,12 @@ const AuthenticatedReportsSalesByBranchRoute =
   AuthenticatedReportsSalesByBranchRouteImport.update({
     id: '/sales-by-branch',
     path: '/sales-by-branch',
+    getParentRoute: () => AuthenticatedReportsRoute,
+  } as any)
+const AuthenticatedReportsPosStockDepletionRoute =
+  AuthenticatedReportsPosStockDepletionRouteImport.update({
+    id: '/pos-stock-depletion',
+    path: '/pos-stock-depletion',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
 const AuthenticatedReportsPosIntegrityRoute =
@@ -2422,6 +2436,7 @@ export interface FileRoutesByFullPath {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/reports/pos-stock-depletion': typeof AuthenticatedReportsPosStockDepletionRoute
   '/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
@@ -2429,6 +2444,7 @@ export interface FileRoutesByFullPath {
   '/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
+  '/reports/transfer-register': typeof AuthenticatedReportsTransferRegisterRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat': typeof AuthenticatedReportsVatRoute
@@ -2743,6 +2759,7 @@ export interface FileRoutesByTo {
   '/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/reports/pos-stock-depletion': typeof AuthenticatedReportsPosStockDepletionRoute
   '/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
@@ -2750,6 +2767,7 @@ export interface FileRoutesByTo {
   '/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
+  '/reports/transfer-register': typeof AuthenticatedReportsTransferRegisterRoute
   '/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/reports/vat': typeof AuthenticatedReportsVatRoute
@@ -3073,6 +3091,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/payroll-summary': typeof AuthenticatedReportsPayrollSummaryRoute
   '/_authenticated/reports/pnl': typeof AuthenticatedReportsPnlRoute
   '/_authenticated/reports/pos-integrity': typeof AuthenticatedReportsPosIntegrityRoute
+  '/_authenticated/reports/pos-stock-depletion': typeof AuthenticatedReportsPosStockDepletionRoute
   '/_authenticated/reports/sales-by-branch': typeof AuthenticatedReportsSalesByBranchRoute
   '/_authenticated/reports/sales-by-customer': typeof AuthenticatedReportsSalesByCustomerRoute
   '/_authenticated/reports/sales-by-item': typeof AuthenticatedReportsSalesByItemRoute
@@ -3080,6 +3099,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/stock-reconciliation': typeof AuthenticatedReportsStockReconciliationRoute
   '/_authenticated/reports/supplier-statement': typeof AuthenticatedReportsSupplierStatementRoute
   '/_authenticated/reports/tax-summary': typeof AuthenticatedReportsTaxSummaryRoute
+  '/_authenticated/reports/transfer-register': typeof AuthenticatedReportsTransferRegisterRoute
   '/_authenticated/reports/trial-balance': typeof AuthenticatedReportsTrialBalanceRoute
   '/_authenticated/reports/turnover-tax': typeof AuthenticatedReportsTurnoverTaxRoute
   '/_authenticated/reports/vat': typeof AuthenticatedReportsVatRoute
@@ -3402,6 +3422,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/pos-integrity'
+    | '/reports/pos-stock-depletion'
     | '/reports/sales-by-branch'
     | '/reports/sales-by-customer'
     | '/reports/sales-by-item'
@@ -3409,6 +3430,7 @@ export interface FileRouteTypes {
     | '/reports/stock-reconciliation'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
+    | '/reports/transfer-register'
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat'
@@ -3723,6 +3745,7 @@ export interface FileRouteTypes {
     | '/reports/payroll-summary'
     | '/reports/pnl'
     | '/reports/pos-integrity'
+    | '/reports/pos-stock-depletion'
     | '/reports/sales-by-branch'
     | '/reports/sales-by-customer'
     | '/reports/sales-by-item'
@@ -3730,6 +3753,7 @@ export interface FileRouteTypes {
     | '/reports/stock-reconciliation'
     | '/reports/supplier-statement'
     | '/reports/tax-summary'
+    | '/reports/transfer-register'
     | '/reports/trial-balance'
     | '/reports/turnover-tax'
     | '/reports/vat'
@@ -4052,6 +4076,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/payroll-summary'
     | '/_authenticated/reports/pnl'
     | '/_authenticated/reports/pos-integrity'
+    | '/_authenticated/reports/pos-stock-depletion'
     | '/_authenticated/reports/sales-by-branch'
     | '/_authenticated/reports/sales-by-customer'
     | '/_authenticated/reports/sales-by-item'
@@ -4059,6 +4084,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/stock-reconciliation'
     | '/_authenticated/reports/supplier-statement'
     | '/_authenticated/reports/tax-summary'
+    | '/_authenticated/reports/transfer-register'
     | '/_authenticated/reports/trial-balance'
     | '/_authenticated/reports/turnover-tax'
     | '/_authenticated/reports/vat'
@@ -5809,6 +5835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsTrialBalanceRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/reports/transfer-register': {
+      id: '/_authenticated/reports/transfer-register'
+      path: '/transfer-register'
+      fullPath: '/reports/transfer-register'
+      preLoaderRoute: typeof AuthenticatedReportsTransferRegisterRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
     '/_authenticated/reports/tax-summary': {
       id: '/_authenticated/reports/tax-summary'
       path: '/tax-summary'
@@ -5856,6 +5889,13 @@ declare module '@tanstack/react-router' {
       path: '/sales-by-branch'
       fullPath: '/reports/sales-by-branch'
       preLoaderRoute: typeof AuthenticatedReportsSalesByBranchRouteImport
+      parentRoute: typeof AuthenticatedReportsRoute
+    }
+    '/_authenticated/reports/pos-stock-depletion': {
+      id: '/_authenticated/reports/pos-stock-depletion'
+      path: '/pos-stock-depletion'
+      fullPath: '/reports/pos-stock-depletion'
+      preLoaderRoute: typeof AuthenticatedReportsPosStockDepletionRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
     '/_authenticated/reports/pos-integrity': {
@@ -6677,6 +6717,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsPayrollSummaryRoute: typeof AuthenticatedReportsPayrollSummaryRoute
   AuthenticatedReportsPnlRoute: typeof AuthenticatedReportsPnlRoute
   AuthenticatedReportsPosIntegrityRoute: typeof AuthenticatedReportsPosIntegrityRoute
+  AuthenticatedReportsPosStockDepletionRoute: typeof AuthenticatedReportsPosStockDepletionRoute
   AuthenticatedReportsSalesByBranchRoute: typeof AuthenticatedReportsSalesByBranchRoute
   AuthenticatedReportsSalesByCustomerRoute: typeof AuthenticatedReportsSalesByCustomerRoute
   AuthenticatedReportsSalesByItemRoute: typeof AuthenticatedReportsSalesByItemRoute
@@ -6684,6 +6725,7 @@ interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsStockReconciliationRoute: typeof AuthenticatedReportsStockReconciliationRoute
   AuthenticatedReportsSupplierStatementRoute: typeof AuthenticatedReportsSupplierStatementRoute
   AuthenticatedReportsTaxSummaryRoute: typeof AuthenticatedReportsTaxSummaryRoute
+  AuthenticatedReportsTransferRegisterRoute: typeof AuthenticatedReportsTransferRegisterRoute
   AuthenticatedReportsTrialBalanceRoute: typeof AuthenticatedReportsTrialBalanceRoute
   AuthenticatedReportsTurnoverTaxRoute: typeof AuthenticatedReportsTurnoverTaxRoute
   AuthenticatedReportsVatRoute: typeof AuthenticatedReportsVatRoute
@@ -6725,6 +6767,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
     AuthenticatedReportsPayrollSummaryRoute,
   AuthenticatedReportsPnlRoute: AuthenticatedReportsPnlRoute,
   AuthenticatedReportsPosIntegrityRoute: AuthenticatedReportsPosIntegrityRoute,
+  AuthenticatedReportsPosStockDepletionRoute:
+    AuthenticatedReportsPosStockDepletionRoute,
   AuthenticatedReportsSalesByBranchRoute:
     AuthenticatedReportsSalesByBranchRoute,
   AuthenticatedReportsSalesByCustomerRoute:
@@ -6737,6 +6781,8 @@ const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
   AuthenticatedReportsSupplierStatementRoute:
     AuthenticatedReportsSupplierStatementRoute,
   AuthenticatedReportsTaxSummaryRoute: AuthenticatedReportsTaxSummaryRoute,
+  AuthenticatedReportsTransferRegisterRoute:
+    AuthenticatedReportsTransferRegisterRoute,
   AuthenticatedReportsTrialBalanceRoute: AuthenticatedReportsTrialBalanceRoute,
   AuthenticatedReportsTurnoverTaxRoute: AuthenticatedReportsTurnoverTaxRoute,
   AuthenticatedReportsVatRoute: AuthenticatedReportsVatRoute,

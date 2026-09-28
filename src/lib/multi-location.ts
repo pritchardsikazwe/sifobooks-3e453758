@@ -175,7 +175,7 @@ export function signedQty(m: { movement_type: string; quantity: number }) {
 export async function fetchStockCard(itemId: string, locationId?: string) {
   let q = supabase
     .from("stock_movements")
-    .select("id, transaction_date, created_at, movement_type, quantity, unit_cost, reference, note, location_id")
+    .select("id, transaction_date, created_at, movement_type, quantity, unit_cost, total_cost, reference, note, location_id, source_type, source_id, created_by")
     .eq("item_id", itemId)
     .order("transaction_date")
     .order("created_at")
