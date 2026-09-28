@@ -11,12 +11,13 @@ function assertIdentifier(value: string) {
   return value;
 }
 
-let activeDb: any = null; // the transaction running the current query
+let schemaDbOverride: any = null; // tests only: schema lookups use this connection
+export function __setCloudSchemaDbForTests(db: any) { schemaDbOverride = db; columnsCache.clear(); fkCache.clear(); }
 async function getCloudColumns(table: string): Promise<Set<string>> {
   if (!identifier.test(table)) return new Set();
   const cached = columnsCache.get(table);
   if (cached) return cached;
-  const db = activeDb ?? getCloudDb();
+  const db = schemaDbOverride ?? getCloudDb();
   const rows = await db.unsafe("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1", [table]);
   const set = new Set(rows.map((r: any) => String(r.column_name)));
   columnsCache.set(table, set);
@@ -113,7 +114,7 @@ export function parseColumns(spec: string): { columns: string[]; joins: Embed[] 
 const fkCache = new Map<string, { table: string; from: string; to: string }[]>();
 async function fkList(table: string) {
   if (!fkCache.has(table)) {
-    const db = activeDb ?? getCloudDb();
+    const db = schemaDbOverride ?? getCloudDb();
     const rows = await db.unsafe(
       `SELECT kcu.column_name AS "from", ccu.table_name AS "table", ccu.column_name AS "to"
          FROM information_schema.table_constraints tc
@@ -192,7 +193,6 @@ function serializeValue(value: any) {
 }
 
 export async function executeCloudQueryInTransaction(db: any, spec: QuerySpec, authenticatedUserId: string, tenantId: string): Promise<QueryResult> {
-  activeDb = db;
   const table = assertIdentifier(spec.table);
   const tableColumns = await getCloudColumns(table);
   if (!tableColumns.size) return { data: null, error: { message: `TABLE_NOT_FOUND: ${table}` } };
