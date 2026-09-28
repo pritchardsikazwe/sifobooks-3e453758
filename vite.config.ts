@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => ({
       spa: { enabled: isLocalBackend },
       server: { entry: "server" },
     }),
-    ...(command === "build" && !isLocalBackend ? [nitro({ preset: "cloudflare-module" })] : []),
+    ...(command === "build" && !isLocalBackend ? [nitro({ preset: "cloudflare-module", output: { dir: "dist", serverDir: "dist/server", publicDir: "dist/client" } })] : []),
     react(),
     tailwindcss(),
     tsConfigPaths(),
