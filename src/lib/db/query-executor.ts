@@ -24,37 +24,112 @@ export type QuerySpec = {
 
 export type QueryResult = { data: any; error: any; count?: number | null };
 
-// Parse column spec: "id, name, customers(*), stock_items(name, sku)"
-type ParsedColumns = { columns: string[]; joins: { table: string; columns: string }[] };
+// Parse column spec: "id, name, customers(*), customer:customer_id(name), journal_entries!inner(id)"
+// Embeds are resolved as correlated JSON sub-queries (never JOINs), so no column
+// of the main table can ever become ambiguous and one-to-many embeds never
+// multiply parent rows.
+type Embed = { key: string; name: string; hint: string | null; inner: boolean; columns: string };
+type ParsedColumns = { columns: string[]; joins: Embed[] };
+
+function splitTop(spec: string): string[] {
+  const out: string[] = [];
+  let depth = 0, cur = "";
+  for (const ch of spec) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) { out.push(cur.trim()); cur = ""; } else cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out.filter(Boolean);
+}
 
 function parseColumns(colSpec: string): ParsedColumns {
   const columns: string[] = [];
-  const joins: { table: string; columns: string }[] = [];
-  let depth = 0;
-  let current = "";
-  for (const char of colSpec) {
-    if (char === "(") depth++;
-    if (char === ")") depth--;
-    if (char === "," && depth === 0) {
-      processPart(current.trim());
-      current = "";
-    } else {
-      current += char;
+  const joins: Embed[] = [];
+  for (const part of splitTop(colSpec)) {
+    const m = part.match(/^(?:(\w+)\s*:\s*)?(\w+)(?:!(\w+))?(?:!(inner|left))?\s*\(([\s\S]*)\)$/);
+    if (m) {
+      let hint: string | null = m[3] ?? null, inner = m[4] === "inner";
+      if (hint === "inner") { hint = null; inner = true; }
+      joins.push({ key: m[1] || m[2], name: m[2], hint, inner, columns: m[5].trim() });
+      continue;
     }
-  }
-  if (current.trim()) processPart(current.trim());
-
-  function processPart(part: string) {
-    // Handle alias: "col:alias" — just use the col part
-    const cleanPart = part.split(":")[0].trim();
-    const joinMatch = cleanPart.match(/^(\w+)\((.*)\)$/);
-    if (joinMatch) {
-      joins.push({ table: joinMatch[1], columns: joinMatch[2].trim() });
-    } else if (cleanPart) {
-      columns.push(cleanPart);
-    }
+    // "col:alias" / "alias:col" / "col::cast" — keep the real column
+    const clean = part.split("::")[0];
+    const bits = clean.split(":").map((x) => x.trim());
+    columns.push(bits.length > 1 ? bits[1] : bits[0]);
   }
   return { columns, joins };
+}
+
+const fkCache = new Map<string, { table: string; from: string; to: string }[]>();
+function fkList(table: string) {
+  if (!fkCache.has(table)) {
+    try { fkCache.set(table, getDb().prepare(`PRAGMA foreign_key_list("${table}")`).all() as any); }
+    catch { fkCache.set(table, []); }
+  }
+  return fkCache.get(table)!;
+}
+const singular = (t: string) => t.replace(/ies$/, "y").replace(/(ses|xes)$/, (x) => x.slice(0, -2)).replace(/s$/, "");
+
+/** How `parent` relates to embed `e`: many-to-one (object) or one-to-many (array). */
+function resolveEmbed(parent: string, e: Embed): { table: string; kind: "one" | "many"; parentCol: string; childCol: string } | null {
+  const pCols = getColumns(parent);
+  // alias:fk_column(...)  e.g. customer:customer_id(name)
+  if (pCols.includes(e.name) && !getColumns(e.name).length) {
+    const fk = fkList(parent).find((f) => f.from === e.name);
+    const hasId = (t?: string) => !!t && getColumns(t).includes("id");
+    const base = e.name.replace(/_id$/, "");
+    const candidates = [
+      fk?.table,
+      ...Object.entries(JOIN_MAP).filter(([k, v]) => k.startsWith(parent + "->") && v === e.name).map(([k]) => k.split("->")[1]),
+      base + "s", base.replace(/y$/, "ies"),
+      /account$/.test(base) ? "chart_of_accounts" : undefined,
+      /(^user|_by)$/.test(e.name) || base === "user" ? "profiles" : undefined,
+    ];
+    const target = candidates.find(hasId);
+    return target ? { table: target, kind: "one", parentCol: e.name, childCol: fk?.to || "id" } : null;
+  }
+  const table = e.name;
+  const tCols = getColumns(table);
+  if (!tCols.length) return null;
+  if (e.hint && pCols.includes(e.hint)) return { table, kind: "one", parentCol: e.hint, childCol: "id" };
+  if (e.hint && tCols.includes(e.hint)) return { table, kind: "many", parentCol: "id", childCol: e.hint };
+  const fwd = fkList(parent).find((f) => f.table === table)?.from ?? JOIN_MAP[`${parent}->${table}`] ?? (pCols.includes(`${singular(table)}_id`) ? `${singular(table)}_id` : null);
+  if (fwd && pCols.includes(fwd)) return { table, kind: "one", parentCol: fwd, childCol: "id" };
+  const rev = fkList(table).find((f) => f.table === parent)?.from ?? JOIN_MAP[`${table}->${parent}`] ?? (tCols.includes(`${singular(parent)}_id`) ? `${singular(parent)}_id` : null);
+  if (rev && tCols.includes(rev)) return { table, kind: "many", parentCol: "id", childCol: rev };
+  return null;
+}
+
+let aliasSeq = 0;
+/** JSON object expression for `cols` of alias `a` (chunked: SQLite caps function args). */
+function jsonObjectExpr(table: string, a: string, colSpec: string): string {
+  const parsed = parseColumns(colSpec || "*");
+  const all = getColumns(table);
+  const cols = parsed.columns.includes("*") || !parsed.columns.length ? all : parsed.columns.filter((c) => all.includes(c));
+  const pairs: string[] = cols.map((c) => `'${c}', "${a}"."${c}"`);
+  for (const nested of parsed.joins) {
+    const sub = embedExpr(table, a, nested);
+    if (sub) pairs.push(`'${nested.key}', json(${sub.expr})`);
+  }
+  if (!pairs.length) return "json_object()";
+  const chunks: string[] = [];
+  for (let i = 0; i < pairs.length; i += 50) chunks.push(`json_object(${pairs.slice(i, i + 50).join(", ")})`);
+  return chunks.reduce((acc, c) => (acc ? `json_patch(${acc}, ${c})` : c), "");
+}
+
+function embedExpr(parent: string, parentAlias: string, e: Embed): { expr: string; exists: string } | null {
+  const r = resolveEmbed(parent, e);
+  if (!r) return null;
+  const a = `__e${aliasSeq++}`;
+  const where = `"${a}"."${r.childCol}" = "${parentAlias}"."${r.parentCol}"`;
+  const obj = jsonObjectExpr(r.table, a, e.columns);
+  const expr = r.kind === "one"
+    ? `(SELECT ${obj} FROM "${r.table}" AS "${a}" WHERE ${where} LIMIT 1)`
+    : `(SELECT COALESCE(json_group_array(json(${obj})), '[]') FROM "${r.table}" AS "${a}" WHERE ${where})`;
+  const exists = `EXISTS (SELECT 1 FROM "${r.table}" AS "${a}x" WHERE ${where.replaceAll(`"${a}"`, `"${a}x"`)})`;
+  return { expr, exists };
 }
 
 function buildWhereClause(filters: Filter[], table?: string): { clause: string; params: any[] } {
@@ -155,82 +230,43 @@ function buildWhereClause(filters: Filter[], table?: string): { clause: string; 
 function buildSelect(spec: QuerySpec): { sql: string; params: any[]; joins: ParsedColumns["joins"] } {
   const parsed = parseColumns(spec.columns || "*");
   const table = spec.table;
+  const tableCols = getColumns(table);
   const selectParts: string[] = [];
+  if (parsed.columns.includes("*") || parsed.columns.length === 0) selectParts.push(`"${table}".*`);
+  else for (const col of parsed.columns) selectParts.push(`"${table}"."${col}"`);
 
-  // Main table columns
-  if (parsed.columns.includes("*") || parsed.columns.length === 0) {
-    selectParts.push(`"${table}".*`);
-  } else {
-    for (const col of parsed.columns) {
-      selectParts.push(`"${table}"."${col}"`);
-    }
-  }
-
-  // Join tables
-  const joinClauses: string[] = [];
-  for (const join of parsed.joins) {
-    const fkCol = JOIN_MAP[`${table}->${join.table}`];
-    if (!fkCol) {
-      // Try reverse: maybe the joined table has a FK to the current table
-      const reverseFk = JOIN_MAP[`${join.table}->${table}`];
-      if (reverseFk) {
-        joinClauses.push(`LEFT JOIN "${join.table}" ON "${join.table}"."${reverseFk}" = "${table}"."id"`);
-      } else {
-        // Try common naming: singular_id
-        const sing = join.table.replace(/s$/, "");
-        const tryCol = `${sing}_id`;
-        joinClauses.push(`LEFT JOIN "${join.table}" ON "${table}"."${tryCol}" = "${join.table}"."id"`);
-      }
-    } else {
-      joinClauses.push(`LEFT JOIN "${join.table}" ON "${table}"."${fkCol}" = "${join.table}"."id"`);
-    }
-
-    // Select joined columns with prefix
-    if (join.columns === "*" || join.columns === "") {
-      const joinCols = getColumns(join.table);
-      for (const jc of joinCols) {
-        selectParts.push(`"${join.table}"."${jc}" AS "__j_${join.table}.${jc}"`);
-      }
-    } else {
-      for (const jc of join.columns.split(",").map(c => c.trim()).filter(Boolean)) {
-        selectParts.push(`"${join.table}"."${jc}" AS "__j_${join.table}.${jc}"`);
-      }
-    }
+  const innerParts: string[] = [];
+  const embeds: Embed[] = [];
+  for (const e of parsed.joins) {
+    const sub = embedExpr(table, table, e);
+    if (!sub) { if (tableCols.length) console.warn(`[db] unresolved embed ${table} -> ${e.name}`); continue; }
+    selectParts.push(`${sub.expr} AS "__j_${e.key}"`);
+    if (e.inner) innerParts.push(sub.exists);
+    embeds.push(e);
   }
 
   let sql = `SELECT ${selectParts.join(", ")} FROM "${table}"`;
-  if (joinClauses.length) sql += " " + joinClauses.join(" ");
-
   const { clause, params } = buildWhereClause(spec.filters, table);
   sql += clause;
-
+  if (innerParts.length) sql += (clause ? " AND " : " WHERE ") + innerParts.join(" AND ");
   if (spec.order.length) {
-    sql += " ORDER BY " + spec.order.map(o => `"${table}"."${o.column}" ${o.ascending ? "ASC" : "DESC"}`).join(", ");
+    sql += " ORDER BY " + spec.order.map((o) => `"${table}"."${o.column}" ${o.ascending ? "ASC" : "DESC"}`).join(", ");
   }
-
-  if (spec.range) {
-    sql += ` LIMIT ${spec.range[1] - spec.range[0] + 1} OFFSET ${spec.range[0]}`;
-  } else if (spec.limit !== null) {
-    sql += ` LIMIT ${spec.limit}`;
-  }
-
-  return { sql, params, joins: parsed.joins };
+  if (spec.range) sql += ` LIMIT ${spec.range[1] - spec.range[0] + 1} OFFSET ${spec.range[0]}`;
+  else if (spec.limit !== null) sql += ` LIMIT ${spec.limit}`;
+  return { sql, params, joins: embeds };
 }
 
 function transformJoinResults(rows: any[], joins: ParsedColumns["joins"]): any[] {
   if (joins.length === 0) return rows;
-  return rows.map(row => {
+  return rows.map((row) => {
     const result: Record<string, any> = {};
     for (const [key, value] of Object.entries(row)) {
       if (key.startsWith("__j_")) {
-        const [_, tableName, colName] = key.match(/^__j_(\w+)\.(.+)$/) || [];
-        if (tableName && colName) {
-          if (!result[tableName]) result[tableName] = {};
-          result[tableName][colName] = value;
-        }
-      } else {
-        result[key] = value;
-      }
+        let v: any = value;
+        if (typeof v === "string") { try { v = JSON.parse(v); } catch { /* keep */ } }
+        result[key.slice(4)] = v ?? null;
+      } else result[key] = value;
     }
     return result;
   });
@@ -282,6 +318,11 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       const { sql, params, joins } = buildSelect(secured);
       const rows = database.prepare(sql).all(...params);
       let data: any = transformJoinResults(rows, joins);
+      let count: number | null = null;
+      if (secured.count) {
+        const { clause, params: cp } = buildWhereClause(secured.filters, secured.table);
+        count = Number((database.prepare(`SELECT COUNT(*) AS n FROM "${secured.table}"${clause}`).get(...cp) as any)?.n ?? 0);
+      }
 
       if (secured.single) {
         data = data[0] ?? null;
@@ -289,7 +330,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       } else if (secured.maybeSingle) {
         data = data[0] ?? null;
       }
-      return { data, error: null };
+      return { data, error: null, count };
     }
 
     if (secured.operation === "insert") {
@@ -348,7 +389,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
     }
 
     if (secured.operation === "delete") {
-      const { clause, params } = buildWhereClause(secured.filters);
+      const { clause, params } = buildWhereClause(secured.filters, secured.table);
       const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
       database.prepare(`DELETE FROM "${secured.table}"${clause}`).run(...params);
       return { data: rows, error: null };
