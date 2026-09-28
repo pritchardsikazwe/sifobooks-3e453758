@@ -27,11 +27,13 @@ function pushParam(params: any[], value: any) {
   return "$" + params.length;
 }
 
-function buildWhere(filters: Filter[], params: any[]) {
+function buildWhere(filters: Filter[], params: any[], table?: string) {
   const parts: string[] = [];
   for (const f of filters) {
     assertIdentifier(f.column);
-    const col = `"${f.column}"`;
+    // Qualify with the main table so joined tables sharing user_id/company_id/
+    // status etc. can never make the filter ambiguous.
+    const col = table ? `"${table}"."${f.column}"` : `"${f.column}"`;
     switch (f.op) {
       case "eq":
         parts.push(`${col} = ${pushParam(params, f.value)}`); break;
@@ -140,12 +142,12 @@ async function executeCloudQueryInTransaction(db: any, spec: QuerySpec, authenti
 
       const params: any[] = [];
       let sql = `SELECT ${selectParts.join(", ")} FROM "${table}"${joinClauses.length ? " " + joinClauses.join(" ") : ""}`;
-      sql += buildWhere(filters, params);
+      sql += buildWhere(filters, params, table);
       if (spec.order.length) {
         sql += " ORDER BY " + spec.order.map(o => {
           assertIdentifier(o.column);
           if (!tableColumns.has(o.column)) throw new Error(`COLUMN_NOT_FOUND: ${table}.${o.column}`);
-          return `"${o.column}" ${o.ascending ? "ASC" : "DESC"}${o.nullsFirst == null ? "" : o.nullsFirst ? " NULLS FIRST" : " NULLS LAST"}`;
+          return `"${table}"."${o.column}" ${o.ascending ? "ASC" : "DESC"}${o.nullsFirst == null ? "" : o.nullsFirst ? " NULLS FIRST" : " NULLS LAST"}`;
         }).join(", ");
       }
       if (spec.range) {
