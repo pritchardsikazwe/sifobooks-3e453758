@@ -150,7 +150,7 @@ function StockPage() {
                 <option value="all">All items</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option>
               </select>
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
-                <Link to="/inventory">Inventory overview</Link>
+                <Link to="/inventory-control">Inventory Control Centre</Link>
               </Button>
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
                 <Link to="/inventory/transfers">Stock transfers</Link>
