@@ -1,3 +1,4 @@
+import cloudColumns from "./cloud-columns.json";
 // SQLite is runtime-specific and server-only (Windows/standalone build):
 // - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
@@ -384,6 +385,23 @@ function runCompatibilityMigrations(database: Database) {
         if (!/duplicate column|already exists/i.test(String(error?.message))) {
           console.error("[db] Migration error:", error?.message?.slice(0, 200));
         }
+      }
+    }
+  }
+
+  // Cloud schema parity: screens query the same columns on Windows as on the
+  // web. Add any column the cloud table has but the local one lacks, as a
+  // NULLABLE column with no default (additive only: never drops, renames,
+  // retypes or tightens anything, and never creates tables).
+  for (const [table, cols] of Object.entries(cloudColumns as Record<string, Record<string, string>>)) {
+    const existing = getTableColumns(database, table);
+    if (!existing.length) continue;
+    const have = new Set(existing);
+    for (const [name, type] of Object.entries(cols)) {
+      if (have.has(name)) continue;
+      try { database.exec(`ALTER TABLE "${table}" ADD COLUMN "${name}" ${type};`); }
+      catch (error: any) {
+        if (!/duplicate column/i.test(String(error?.message))) console.error(`[db] parity column ${table}.${name}:`, String(error?.message).slice(0, 160));
       }
     }
   }
