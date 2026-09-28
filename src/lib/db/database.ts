@@ -244,6 +244,11 @@ function runCompatibilityMigrations(database: Database) {
   database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_branch ON warehouses(branch_id);`);
 
   const migrations: Record<string, string[]> = {
+    // bank_running_balance view reads bt.status; without it every PRAGMA/
+    // query touching that view fails with "no such column: bt.status".
+    bank_transactions: [
+      "status TEXT",
+    ],
     companies: [
       "payslip_footer TEXT",
     ],
