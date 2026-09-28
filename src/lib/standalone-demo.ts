@@ -11,8 +11,19 @@ const days = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); 
 
 async function insert(table: string, rows: any[]) {
   if (!rows.length) return;
-  const { error } = await (supabase as any).from(table).insert(rows);
-  if (error) throw new Error(`${table}: ${error.message}`);
+  // The online and Windows databases differ in a few optional columns (e.g.
+  // company_id). Drop a column the database reports as unknown and retry, so a
+  // half-finished run never repeats and duplicates earlier rows.
+  let payload = rows;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { error } = await (supabase as any).from(table).insert(payload);
+    if (!error) return;
+    const col = /Could not find the '([^']+)' column|no column named (\w+)|has no column named (\w+)/i.exec(String(error.message ?? ""));
+    const name = col?.[1] ?? col?.[2] ?? col?.[3];
+    if (!name || !(name in (payload[0] ?? {}))) throw new Error(`${table}: ${error.message}`);
+    payload = payload.map(({ [name]: _drop, ...rest }) => rest);
+  }
+  throw new Error(`${table}: insert failed`);
 }
 
 export async function ensureStandaloneDemo(edition: Edition) {
