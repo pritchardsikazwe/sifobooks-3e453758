@@ -38,13 +38,16 @@ export async function runStartupChecks(): Promise<StartupReport> {
       const r = await fetch("/api/health", { cache: "no-store" });
       const j = r.ok ? await r.json().catch(() => ({})) : {};
       checks.push({ key: "db", label: "Database available", status: r.ok ? "ok" : "fail", code: r.ok ? undefined : "DB_UNAVAILABLE" });
-      checks.push({ key: "schema", label: "Schema version", status: j?.schemaVersion ? "ok" : "warn", detail: j?.schemaVersion ? String(j.schemaVersion) : "unknown" });
-      checks.push({ key: "migrations", label: "Migrations", status: j?.pendingMigrations ? "fail" : "ok", code: j?.pendingMigrations ? "MIGRATION_REQUIRED" : undefined });
+      const pending = Number(j?.pendingMigrations ?? 0);
+      checks.push({ key: "schema", label: "Database version", status: !r.ok ? "fail" : j?.schemaVersion ? "ok" : "warn", code: r.ok ? undefined : "DB_UNAVAILABLE", detail: j?.schemaVersion ? `${String(j.schemaVersion).replace(/\.sql$/, "")} (${j.appliedMigrations ?? "?"} updates applied)` : r.ok ? "New database — no updates applied yet" : "Unavailable" });
+      checks.push({ key: "migrations", label: "Updates needed", status: !r.ok ? "fail" : pending ? "fail" : "ok", code: !r.ok ? "DB_UNAVAILABLE" : pending ? "MIGRATION_REQUIRED" : undefined, detail: !r.ok ? "Unavailable" : pending ? `${pending} update(s) pending — applied with backup on restart` : "Up to date" });
     } catch {
       checks.push({ key: "db", label: "Database available", status: "fail", code: "DB_UNAVAILABLE" });
     }
   } else {
     checks.push({ key: "db", label: "Database available", status: "n/a", detail: "Cloud database" });
+    checks.push({ key: "schema", label: "Database version", status: "n/a", detail: "Managed by SifoBooks Cloud" });
+    checks.push({ key: "migrations", label: "Updates needed", status: "n/a", detail: "Managed by SifoBooks Cloud" });
   }
 
   // 4 company/device configuration
