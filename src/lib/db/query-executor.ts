@@ -78,8 +78,16 @@ function resolveEmbed(parent: string, e: Embed): { table: string; kind: "one" | 
   // alias:fk_column(...)  e.g. customer:customer_id(name)
   if (pCols.includes(e.name) && !getColumns(e.name).length) {
     const fk = fkList(parent).find((f) => f.from === e.name);
-    const guess = fk?.table ?? Object.entries(JOIN_MAP).find(([k, v]) => k.startsWith(parent + "->") && v === e.name)?.[0].split("->")[1];
-    const target = guess ?? [e.name.replace(/_id$/, "") + "s", e.name.replace(/_id$/, "").replace(/y$/, "ies")].find((t) => getColumns(t).length);
+    const hasId = (t?: string) => !!t && getColumns(t).includes("id");
+    const base = e.name.replace(/_id$/, "");
+    const candidates = [
+      fk?.table,
+      ...Object.entries(JOIN_MAP).filter(([k, v]) => k.startsWith(parent + "->") && v === e.name).map(([k]) => k.split("->")[1]),
+      base + "s", base.replace(/y$/, "ies"),
+      /account$/.test(base) ? "chart_of_accounts" : undefined,
+      /(^user|_by)$/.test(e.name) || base === "user" ? "profiles" : undefined,
+    ];
+    const target = candidates.find(hasId);
     return target ? { table: target, kind: "one", parentCol: e.name, childCol: fk?.to || "id" } : null;
   }
   const table = e.name;
