@@ -43,12 +43,12 @@ function Employee360Page(){
   if(!contract.contract_number||!contract.start_date)return toast.error("Contract number and start date are required");
   setSaving(true);
   const body=contract.document_text||`EMPLOYMENT CONTRACT\\n\\nEmployee: {{employee_name}}\\nEmployee No: {{employee_code}}\\nPosition: {{position}}\\nStart date: {{contract_start}}\\nEnd date: {{contract_end}}\\nBasic salary: {{basic_salary}}\\n\\nThe employer and employee agree to the terms in this contract and the applicable laws of Zambia. The final document must contain the statutory particulars applicable to the engagement.`;
-  const {error}=await supabase.from("hr_employee_contracts").insert({employee_id:employeeId,contract_number:contract.contract_number,contract_type:contract.contract_type,start_date:contract.start_date,end_date:contract.end_date,status:"draft",document_text:merge(body)});
+  const {error}=await supabase.from("hr_employee_contracts").insert({employee_id:employeeId,contract_number:contract.contract_number,contract_type:contract.contract_type,start_date:contract.start_date,end_date:contract.end_date||null,status:"draft",document_text:merge(body)});
   setSaving(false); if(error)toast.error(error.message);else{toast.success("Contract created");setContract({...contract,contract_number:"",document_text:""});load()}
  };
  const addDoc=async()=>{
   if(!doc.document_name)return toast.error("Document name is required");
-  const {error}=await supabase.from("hr_documents").insert({...doc,employee_id:employeeId,status:"active"});
+  const {error}=await supabase.from("hr_documents").insert({...doc,document_url:doc.document_url||null,issue_date:doc.issue_date||null,expiry_date:doc.expiry_date||null,employee_id:employeeId,status:"active"});
   if(error)toast.error(error.message);else{toast.success("Employee document recorded");setDoc({...doc,document_name:"",document_url:""});load()}
  };
  const printContract=(c:any)=>{
