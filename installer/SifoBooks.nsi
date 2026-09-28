@@ -118,6 +118,7 @@ Section "Uninstall"
   Delete "$INSTDIR\*.vbs"
   Delete "$INSTDIR\.env.example"
   Delete "$INSTDIR\.sifobooks-migrations.bin"
+  Delete "$INSTDIR\.sifobooks-schema.bin"
   RMDir "$INSTDIR"
   RMDir /r "$SMPROGRAMS\SifoBooks"
   SetShellVarContext all
