@@ -8,7 +8,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync, rmSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
 import os from "os";
 import { licenseStatus, storeLicense } from "../lib/licensing";
