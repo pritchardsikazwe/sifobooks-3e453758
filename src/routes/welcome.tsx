@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, redirect } from "@tanstack/react-router";
 import { Building2, LogIn } from "lucide-react";
 import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
 
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/welcome")({
 });
 
 function Welcome() {
+  // Belt-and-braces: never render the Windows first-run screen in the web app.
+  if (!IS_LOCAL_BACKEND) return <Navigate to="/" replace />;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center">
