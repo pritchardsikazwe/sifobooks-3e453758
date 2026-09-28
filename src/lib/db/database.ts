@@ -389,6 +389,25 @@ function getTableColumns(database: Database, table: string): string[] {
 }
 
 
+/** Read-only schema status for startup checks. Never applies or changes anything. */
+export function getSchemaStatus(): { schemaVersion: string | null; appliedCount: number; pendingMigrations: string[] } {
+  const database = getDb();
+  let applied: string[] = [];
+  try {
+    applied = (database.prepare("SELECT id FROM schema_migrations ORDER BY id").all() as any[]).map((r) => String(r.id));
+  } catch { applied = []; }
+  const known = new Set<string>();
+  const protectedMigrations = join(process.cwd(), ".sifobooks-migrations.bin");
+  if (existsSync(protectedMigrations)) {
+    try { for (const e of JSON.parse(gunzipSync(readFileSync(protectedMigrations)).toString("utf8"))) known.add(e.name); } catch { /* reported via pending */ }
+  }
+  const dir = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")].find((c) => existsSync(c));
+  if (dir) for (const n of readdirSync(dir)) if (/^\d+_.*\.sql$/.test(n)) known.add(n);
+  const appliedSet = new Set(applied);
+  const pendingMigrations = [...known].filter((n) => !appliedSet.has(n)).sort();
+  return { schemaVersion: applied.length ? applied[applied.length - 1] : null, appliedCount: applied.length, pendingMigrations };
+}
+
 function runSqlMigrations(database: Database) {
   database.exec(
     `CREATE TABLE IF NOT EXISTS schema_migrations (

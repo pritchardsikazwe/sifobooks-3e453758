@@ -12,7 +12,7 @@ import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSy
 import { join, dirname, extname, normalize } from "path";
 import os from "os";
 import { licenseStatus, storeLicense } from "../lib/licensing";
-import { getDb } from "../lib/db/database";
+import { getDb, getSchemaStatus } from "../lib/db/database";
 import { isCloudDatabaseConfigured } from "../lib/cloud/postgres";
 
 function findBaseDir(): string {
@@ -418,6 +418,16 @@ function startServer() {
         return Response.json(licenseStatus());
       } catch (error: any) {
         return Response.json({ error: error?.message || "Licence activation failed" }, { status: 400 });
+      }
+    }
+
+    if (url.pathname === "/api/health" && request.method === "GET") {
+      try {
+        const st = getSchemaStatus();
+        return Response.json({ ok: true, schemaVersion: st.schemaVersion, appliedMigrations: st.appliedCount, pendingMigrations: st.pendingMigrations.length, pending: st.pendingMigrations });
+      } catch (error) {
+        writeStartupLog(`HEALTH ERROR: ${error instanceof Error ? error.message : String(error)}`);
+        return Response.json({ ok: false, error: "DB_UNAVAILABLE" }, { status: 503 });
       }
     }
 
