@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, ArrowRight, BarChart3, Boxes, CheckCircle2, ClipboardCheck, DatabaseZap, FileCheck2, Landmark, ReceiptText, RefreshCw, ShieldCheck, ShoppingCart, UsersRound, WalletCards, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 
-export const Route=createFileRoute("/_authenticated/business-control-centre")({component:BusinessControlCentre,head:()=>({meta:[{title:"Business Control Centre — SifoBooks"},{name:"robots",content:"noindex"}]})});
+export const Route=createFileRoute("/_authenticated/business-control-centre")({component: () => <ModuleGate name="Business Control Centre" tables={['control_exceptions', 'business_alerts']}><BusinessControlCentre /></ModuleGate>,head:()=>({meta:[{title:"Business Control Centre — SifoBooks"},{name:"robots",content:"noindex"}]})});
 function BusinessControlCentre(){
   const [currency,setCurrency]=useState("ZMW"); const [company,setCompany]=useState("Your business"); const [loading,setLoading]=useState(true);
   const [s,setS]=useState({ar:0,ap:0,stock:0,bank:0,sales:0,bills:0,approvals:0,exceptions:0,zra:0,alerts:0});

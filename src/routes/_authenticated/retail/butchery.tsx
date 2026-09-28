@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useMemo, useState } from "react";
 import { Beef, Scale, PackageCheck, Printer, RefreshCw, Wifi, WifiOff, Scissors, TrendingUp, AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/retail/butchery")({
     { title: "Butchery — SifoBooks Retail" },
     { name: "description", content: "Butchery sales, weighing scale, meat stock and yield control for SifoBooks Retail." },
   ] }),
-  component: ButcheryPage,
+  component: () => <ModuleGate name="Butchery" tables={['butchery_products', 'butchery_scale_devices']}><ButcheryPage /></ModuleGate>,
 });
 
 type Product = { id: string; name: string; sku: string | null; category: string | null; sell_price: number; cost_price: number; quantity_on_hand: number };

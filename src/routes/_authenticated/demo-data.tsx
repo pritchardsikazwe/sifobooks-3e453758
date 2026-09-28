@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useState } from "react";
 import { Building2, CheckCircle2, DatabaseZap, Landmark, RefreshCw, ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 import { supabase } from "@/integrations/supabase/client";
 import { LUANSOBE_JULY, LUANSOBE_AUGUST, LUANSOBE_SEPTEMBER } from "@/demo/luansobe-statements";
 
-export const Route=createFileRoute("/_authenticated/demo-data")({component:DemoData});
+export const Route=createFileRoute("/_authenticated/demo-data")({component: () => <ModuleGate name="Demo data" tables={['demo_statement_register']}><DemoData /></ModuleGate>});
 function DemoData(){
  const [installing,setInstalling]=useState(false);const [message,setMessage]=useState("");const [installed,setInstalled]=useState(false);
  const addSeptember=async(uid:string,companyId:string,bankId:string)=>{

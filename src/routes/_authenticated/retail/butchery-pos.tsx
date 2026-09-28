@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ModuleGate } from "@/components/ModuleGate";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Beef, Scale, Search, ShoppingCart, Trash2, Plus, Minus, Banknote, Smartphone, CreditCard, User, Wifi, WifiOff, CheckCircle2, PauseCircle, RotateCcw, Barcode, Printer, Delete, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/retail/butchery-pos")({
     { title: "Butchery POS — SifoBooks Retail" },
     { name: "description", content: "Fast touchscreen butcher POS for weighed meat, cuts, mobile money, cash and card." },
   ] }),
-  component: ButcheryPos,
+  component: () => <ModuleGate name="Butchery POS" tables={['butchery_products']}><ButcheryPos /></ModuleGate>,
 });
 
 type Product = {
