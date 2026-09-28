@@ -456,6 +456,15 @@ function startServer() {
       }
     }
 
+    if (url.pathname === "/api/desktop/shutdown" && request.method === "POST") {
+      // Only the local Stop-SifoBooks script knows this token (stored in the data dir).
+      if (!SHUTDOWN_TOKEN || request.headers.get("x-sifobooks-shutdown") !== SHUTDOWN_TOKEN) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+      setTimeout(() => shutdown("shutdown request"), 100);
+      return Response.json({ ok: true });
+    }
+
     if (url.pathname === "/api/health" && request.method === "GET") {
       try {
         const st = getSchemaStatus();

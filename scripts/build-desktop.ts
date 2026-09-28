@@ -43,14 +43,30 @@ try {
 } catch {
   throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-// Icon/hidden-console flags are only supported when compiling ON Windows; a
-// cross-compile from Linux produces the same app with a visible console window.
+// Version/metadata. SIFOBOOKS_VERSION overrides (format YYYY.M.D or x.y.z).
+const appVersion = String(process.env.SIFOBOOKS_VERSION || (() => { const d = new Date(); return `${d.getUTCFullYear()}.${d.getUTCMonth() + 1}.${d.getUTCDate()}`; })());
+const winVersion = (appVersion.split(".").map((n) => String(parseInt(n, 10) || 0)).concat(["0", "0", "0", "0"]).slice(0, 4)).join(".");
+const exePath = join(OUT_DIR, exeName);
+// Icon/metadata flags are only supported by Bun when compiling ON Windows.
 if (process.platform === "win32") {
-  await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+  await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console --windows-title=${productName} --windows-publisher=${"Sifonet Technologies"} --windows-version=${winVersion} --windows-description=${productName + " Enterprise (x64)"} --windows-copyright=${"Copyright (c) 2026 Sifonet Technologies"} src/desktop/server.ts --outfile ${exePath}`;
 } else {
-  console.warn("Cross-compiling from non-Windows host: no embedded icon, console window visible.");
-  await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+  console.warn("Cross-compiling from non-Windows host: icon/version resources are not embedded (shortcuts use SifoBooks.ico).");
+  await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${exePath}`;
+  // Hide the black console window: flip the PE optional-header Subsystem from
+  // WINDOWS_CUI (3) to WINDOWS_GUI (2). Same effect as --windows-hide-console.
+  // Set SIFOBOOKS_CONSOLE=1 to keep a visible console for debugging.
+  if (process.env.SIFOBOOKS_CONSOLE !== "1") {
+    const buf = readFileSync(exePath);
+    const pe = buf.readUInt32LE(0x3c);
+    if (buf.toString("latin1", pe, pe + 4) !== "PE\0\0") throw new Error("Unexpected EXE format; cannot hide console.");
+    const subsystemOffset = pe + 24 + 68;
+    const current = buf.readUInt16LE(subsystemOffset);
+    if (current === 3) { buf.writeUInt16LE(2, subsystemOffset); writeFileSync(exePath, buf); console.log("Console window hidden (GUI subsystem)."); }
+    else console.log(`EXE subsystem already ${current}; left unchanged.`);
+  }
 }
+writeFileSync(join(OUT_DIR, "version.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, version: appVersion, fileVersion: winVersion, arch: "x64", publisher: "Sifonet Technologies", builtAt: new Date().toISOString(), consoleHidden: process.platform === "win32" || process.env.SIFOBOOKS_CONSOLE !== "1" }, null, 2));
 
 console.log("\nStep 2b/4: Preparing lightweight browser-based Windows launcher...\n");
 console.log("\\nStep 3/4: Copying application files...\\n");
