@@ -42,6 +42,7 @@ function resolveDataRoot(): string {
   return baseDir;
 }
 const dataRoot = resolveDataRoot();
+process.env.SIFOBOOKS_DATA_ROOT = dataRoot;
 const dataDir = join(dataRoot, "data");
 const backupsDir = join(dataRoot, "backups");
 const logsDir = join(dataRoot, "logs");
