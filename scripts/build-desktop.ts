@@ -43,7 +43,14 @@ try {
 } catch {
   throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+// Icon/hidden-console flags are only supported when compiling ON Windows; a
+// cross-compile from Linux produces the same app with a visible console window.
+if (process.platform === "win32") {
+  await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+} else {
+  console.warn("Cross-compiling from non-Windows host: no embedded icon, console window visible.");
+  await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+}
 
 console.log("\nStep 2b/4: Preparing lightweight browser-based Windows launcher...\n");
 console.log("\\nStep 3/4: Copying application files...\\n");
