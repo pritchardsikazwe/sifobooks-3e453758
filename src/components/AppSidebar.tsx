@@ -74,34 +74,38 @@ export function AppSidebar() {
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
 
+  const loadWorkspace = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    setEmail(u.user.email ?? "");
+    const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
+    setName(n || (u.user.email ?? "").split("@")[0]);
+    const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+    let cid = (p?.active_company_id as string | null) ?? null;
+    if (!cid) {
+      const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = cs0?.[0]?.id ?? null;
+    }
+    if (!cid) {
+      const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = (cm?.[0]?.company_id as string | undefined) ?? null;
+    }
+    if (cid) {
+      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
+      if (c) {
+        setCompanyName(c.trading_name || c.name);
+        const mode = (c as any).workspace_mode as string | null;
+        setWorkspaceModeState(mode);
+        setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
+      }
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      setEmail(u.user.email ?? "");
-      const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
-      setName(n || (u.user.email ?? "").split("@")[0]);
-      const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
-      let cid = (p?.active_company_id as string | null) ?? null;
-      if (!cid) {
-        const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
-        cid = cs0?.[0]?.id ?? null;
-      }
-      if (!cid) {
-        // Member of a company they don't own
-        const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
-        cid = (cm?.[0]?.company_id as string | undefined) ?? null;
-      }
-      if (cid) {
-        const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
-        if (c) {
-          setCompanyName(c.trading_name || c.name);
-          const mode = (c as any).workspace_mode as string | null;
-          setWorkspaceModeState(mode);
-          setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
-        }
-      }
-    })();
+    void loadWorkspace();
+    const handler = () => { void loadWorkspace(); };
+    if (typeof window !== "undefined") window.addEventListener("sifobooks:workspace-changed", handler);
+    return () => { if (typeof window !== "undefined") window.removeEventListener("sifobooks:workspace-changed", handler); };
   }, []);
 
   const signOut = async () => {
