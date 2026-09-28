@@ -122,6 +122,21 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "Set fso = Nothing",
   "Set shell = Nothing",
 ].join("\r\n"));
+writeFileSync(join(OUT_DIR, "Stop-SifoBooks.ps1"), [
+  "# Cleanly stops the local SifoBooks runtime (closes database, removes port file).",
+  "$ErrorActionPreference = 'SilentlyContinue'",
+  "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
+  "$dataDir = if ($env:SIFOBOOKS_DATA_DIR) { $env:SIFOBOOKS_DATA_DIR } elseif (Test-Path (Join-Path $appDir 'portable.flag')) { $appDir } else { Join-Path $env:ProgramData 'SifoBooks' }",
+  "$portFile = Join-Path $dataDir 'desktop-port.txt'",
+  "$tokenFile = Join-Path $dataDir 'desktop-shutdown.token'",
+  "if ((Test-Path $portFile) -and (Test-Path $tokenFile)) {",
+  "  $port = (Get-Content $portFile -Raw).Trim()",
+  "  $token = (Get-Content $tokenFile -Raw).Trim()",
+  "  try { Invoke-RestMethod -Method Post -Uri \"http://127.0.0.1:$port/api/desktop/shutdown\" -Headers @{ 'x-sifobooks-shutdown' = $token } -TimeoutSec 5 | Out-Null; Start-Sleep -Seconds 2 } catch {}",
+  "}",
+  `Get-Process -Name '${productName}' -ErrorAction SilentlyContinue | Stop-Process -ErrorAction SilentlyContinue`,
+  "",
+].join("\r\n"));
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",
   "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",

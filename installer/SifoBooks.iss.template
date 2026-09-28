@@ -67,6 +67,7 @@ Name: "{app}\logs"; Permissions: users-modify
 
 [Icons]
 Name: "{group}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
+Name: "{group}\Stop SifoBooks"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\Stop-SifoBooks.ps1"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
 Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
 Name: "{userstartup}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 
