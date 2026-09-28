@@ -8,7 +8,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, statSync, readFileSync, writeFileSync, readdirSync, unlinkSync, rmSync } from "fs";
 import { join, dirname, extname, normalize } from "path";
 import os from "os";
 import { licenseStatus, storeLicense } from "../lib/licensing";
@@ -366,7 +366,7 @@ const STARTUP_LOG = join(logsDir, "desktop-startup.log");
 
 function writeStartupLog(message: string) {
   try {
-    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\\r\\n`, { flag: "a" });
+    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\r\n`, { flag: "a" });
   } catch {}
 }
 
@@ -454,6 +454,15 @@ function startServer() {
       } catch (error: any) {
         return Response.json({ error: error?.message || "Licence activation failed" }, { status: 400 });
       }
+    }
+
+    if (url.pathname === "/api/desktop/shutdown" && request.method === "POST") {
+      // Only the local Stop-SifoBooks script knows this token (stored in the data dir).
+      if (!SHUTDOWN_TOKEN || request.headers.get("x-sifobooks-shutdown") !== SHUTDOWN_TOKEN) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+      setTimeout(() => shutdown("shutdown request"), 100);
+      return Response.json({ ok: true });
     }
 
     if (url.pathname === "/api/health" && request.method === "GET") {
@@ -697,13 +706,52 @@ try { writeFileSync(join(dataDir, "desktop-port.txt"), String(PORT), "utf8"); } 
   throw lastError instanceof Error ? lastError : new Error("Unable to start SifoBooks server");
 }
 
+// Shutdown token: lets the local Stop-SifoBooks script close the runtime cleanly.
+const SHUTDOWN_TOKEN_FILE = join(dataDir, "desktop-shutdown.token");
+let SHUTDOWN_TOKEN = "";
+
+// Single instance: if SifoBooks already runs for this data dir, just open the browser.
+try {
+  const portFile = join(dataDir, "desktop-port.txt");
+  if (!isPosClient && existsSync(portFile)) {
+    const existingPort = parseInt(readFileSync(portFile, "utf8").trim(), 10);
+    if (existingPort) {
+      const res = await fetch(`http://127.0.0.1:${existingPort}/api/health`, { signal: AbortSignal.timeout(1500) }).catch(() => null);
+      if (res && res.ok) {
+        writeStartupLog(`SifoBooks already running on port ${existingPort}; opening browser and exiting second instance.`);
+        openBrowser(`http://localhost:${existingPort}`);
+        await new Promise((r) => setTimeout(r, 300));
+        process.exit(0);
+      }
+    }
+  }
+} catch (error) {
+  writeStartupLog(`SINGLE INSTANCE CHECK ERROR: ${error instanceof Error ? error.message : String(error)}`);
+}
+
 let serverInstance: ReturnType<typeof Bun.serve>;
+let shuttingDown = false;
+function shutdown(reason: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  writeStartupLog(`Shutting down SifoBooks (${reason})`);
+  try { serverInstance?.stop(true); } catch {}
+  try { (getDb() as any)?.close?.(); } catch {}
+  try { rmSync(join(dataDir, "desktop-port.txt"), { force: true }); } catch {}
+  try { rmSync(SHUTDOWN_TOKEN_FILE, { force: true }); } catch {}
+  writeStartupLog("SifoBooks runtime stopped cleanly.");
+  process.exit(0);
+}
 try {
   serverInstance = startServer();
 } catch (error) {
   writeStartupLog(`FATAL STARTUP ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
   throw error;
 }
+try {
+  SHUTDOWN_TOKEN = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  writeFileSync(SHUTDOWN_TOKEN_FILE, SHUTDOWN_TOKEN, "utf8");
+} catch (error) { writeStartupLog(`SHUTDOWN TOKEN ERROR: ${error instanceof Error ? error.message : String(error)}`); }
 
 if (isPosClient && configuredServerUrl) {
   writeStartupLog("POS client mode: opening central server " + configuredServerUrl);
@@ -743,13 +791,6 @@ if (HOST === "127.0.0.1" || HOST === "localhost" || isNetworkServer) {
 
 }
 
-process.on("SIGINT", () => {
-  console.log("\n  Shutting down SifoBooks...");
-  serverInstance.stop();
-  process.exit(0);
-});
-
-process.on("SIGTERM", () => {
-  server.stop();
-  process.exit(0);
-});
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGBREAK" as any, () => shutdown("SIGBREAK"));
