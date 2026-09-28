@@ -254,6 +254,22 @@ export function getBusinessCapabilities(solutionId?: string | null): Record<Busi
   return { ...(INDUSTRY_CAPABILITIES[getSolution(solutionId)?.id ?? "general"] ?? INDUSTRY_CAPABILITIES.general) };
 }
 
+export async function loadBusinessCapabilityState(companyId: string | null, solutionId?: string | null): Promise<Record<BusinessCapabilityKey, boolean>> {
+  const base = getBusinessCapabilities(solutionId);
+  if (!companyId) return base;
+  const { data: rows } = await supabase
+    .from("company_modules")
+    .select("module_key")
+    .eq("company_id", companyId);
+  const suppressed = new Set((rows ?? []).map((r: any) => String(r.module_key)).filter(k => k.startsWith("__off__:")).map(k => k.slice("__off__:".length)));
+  const explicit = new Set((rows ?? []).map((r: any) => String(r.module_key)));
+  for (const cap of BUSINESS_CAPABILITIES) {
+    if (suppressed.has(cap.key)) base[cap.key] = false;
+    else if (explicit.has(cap.key)) base[cap.key] = true;
+  }
+  return base;
+}
+
 export async function setBusinessCapability(params: {
   userId: string; companyId: string; key: BusinessCapabilityKey; enabled: boolean;
 }) {
