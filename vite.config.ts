@@ -10,7 +10,20 @@ import { nitro } from "nitro/vite";
 // The Windows/desktop build sets VITE_SIFOBOOKS_BACKEND=local and keeps the Bun server output.
 const isLocalBackend = process.env.VITE_SIFOBOOKS_BACKEND === "local";
 
+// Public (publishable) Lovable Cloud connection values. .env is git-ignored in this
+// repo, so the hosted publish build would otherwise ship without them.
+const CLOUD_URL = process.env.VITE_SUPABASE_URL || "https://wtreeldehavxegrmskga.supabase.co";
+const CLOUD_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_ZG9EUzvjy7cGHAMDWzP1Dg_prGXq36S";
+const CLOUD_ID = process.env.VITE_SUPABASE_PROJECT_ID || "wtreeldehavxegrmskga";
+
 export default defineConfig(({ command }) => ({
+  define: isLocalBackend
+    ? {}
+    : {
+        "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(CLOUD_URL),
+        "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(CLOUD_KEY),
+        "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(CLOUD_ID),
+      },
   // Published hosting loads dist/server/server.js as a self-contained module
   // with no node_modules resolution — every dependency must be bundled in.
   // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
