@@ -178,13 +178,19 @@ export function CompanyOnboardingWizard() {
         financial_year_start_month: 1, base_currency: form.currency, timezone: "Africa/Lusaka", industry: form.industry,
         workspace_mode: SIFOBOOKS_EDITION, status: "active",
       };
+      // Keep the real company ID in setup state; never rely only on the write's return shape.
+      const companyId: string = company?.id ?? crypto.randomUUID();
       if (company) {
-        const { data, error } = await supabase.from("companies").update(companyPayload).eq("id", company.id).select().single();
-        if (error) throw error; company = data;
+        const { data, error } = await supabase.from("companies").update(companyPayload).eq("id", companyId).select().single();
+        if (error) throw error;
+        company = Array.isArray(data) ? data[0] : data;
       } else {
-        const { data, error } = await supabase.from("companies").insert({ id: crypto.randomUUID(), user_id: u.user.id, ...companyPayload }).select().single();
-        if (error) throw error; company = data;
+        const { data, error } = await supabase.from("companies").insert({ id: companyId, user_id: u.user.id, ...companyPayload }).select().single();
+        if (error) throw error;
+        company = Array.isArray(data) ? data[0] : data;
       }
+      company = { ...(company ?? {}), id: company?.id ?? companyId };
+      if (!company.id) throw new Error("Company setup is incomplete. A company must be created before creating a branch.");
       await supabase.from("profiles").update({
         business_name: form.name.trim(), country: form.country, currency: form.currency, tax_id: form.tpin.trim() || null,
         phone: form.phone.trim() || null, team_size: "1", industry: form.industry, tpin: form.tpin.trim() || null,
