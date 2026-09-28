@@ -38,6 +38,8 @@ export type ReportId =
   | "stock-valuation"
   | "stock-movement"
   | "stock-reconciliation"
+  | "transfer-register"
+  | "pos-stock-depletion"
   | "sales-by-item"
   | "sales-by-customer"
   | "sales-by-branch"
