@@ -31,11 +31,44 @@ function findBaseDir(): string {
 
 const baseDir = findBaseDir();
 const clientDir = join(baseDir, "client");
-const dataDir = join(baseDir, "data");
-const backupsDir = join(baseDir, "backups");
-const networkConfigPath = join(baseDir, "config", "network.json");
-const serverIdentityPath = join(baseDir, "config", "server-identity.json");
-const networkDevicesPath = join(baseDir, "config", "network-devices.json");
+// Writable company data lives OUTSIDE the install folder (Program Files is not
+// user-writable and is replaced on upgrade). Windows: %ProgramData%\\SifoBooks,
+// shared by all users of this PC. Override with SIFOBOOKS_DATA_DIR, or place a
+// "portable.flag" file next to the EXE to keep data beside it (USB/portable use).
+function resolveDataRoot(): string {
+  if (process.env.SIFOBOOKS_DATA_DIR) return process.env.SIFOBOOKS_DATA_DIR;
+  if (existsSync(join(baseDir, "portable.flag"))) return baseDir;
+  if (process.platform === "win32") return join(process.env.ProgramData || process.env.PROGRAMDATA || "C:\\ProgramData", "SifoBooks");
+  return baseDir;
+}
+const dataRoot = resolveDataRoot();
+const dataDir = join(dataRoot, "data");
+const backupsDir = join(dataRoot, "backups");
+const logsDir = join(dataRoot, "logs");
+const networkConfigPath = join(dataRoot, "config", "network.json");
+const serverIdentityPath = join(dataRoot, "config", "server-identity.json");
+const networkDevicesPath = join(dataRoot, "config", "network-devices.json");
+
+// One-time, non-destructive upgrade from older builds that kept data inside the
+// install folder: COPY data/config/backups across only when the new location has
+// no database yet. The old files are never deleted.
+function copyTreeIfMissing(src: string, dest: string) {
+  if (!existsSync(src)) return;
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src)) {
+    const a = join(src, entry), b = join(dest, entry);
+    if (statSync(a).isDirectory()) copyTreeIfMissing(a, b);
+    else if (!existsSync(b)) writeFileSync(b, readFileSync(a));
+  }
+}
+if (dataRoot !== baseDir && !existsSync(join(dataDir, "sifobooks.db")) && existsSync(join(baseDir, "data", "sifobooks.db"))) {
+  try {
+    for (const d of ["data", "config", "backups"]) copyTreeIfMissing(join(baseDir, d), join(dataRoot, d));
+    console.log(`[data] Copied existing company data from ${baseDir} to ${dataRoot} (originals kept).`);
+  } catch (error) {
+    console.error("[data] Legacy data copy failed; originals untouched:", error);
+  }
+}
 
 function getOrCreateServerIdentity() {
   try {
@@ -103,7 +136,8 @@ const configuredServerUrl = String(process.env.SIFOBOOKS_SERVER_URL || networkCo
 
 mkdirSync(dataDir, { recursive: true });
 mkdirSync(backupsDir, { recursive: true });
-mkdirSync(join(baseDir, "config"), { recursive: true });
+mkdirSync(join(dataRoot, "config"), { recursive: true });
+mkdirSync(logsDir, { recursive: true });
 
 if (!existsSync(networkConfigPath)) {
   writeFileSync(networkConfigPath, JSON.stringify({
@@ -124,7 +158,7 @@ function createStartupBackup() {
     const destination = join(backupsDir, `sifobooks-${stamp}.db`);
     writeFileSync(destination, readFileSync(dbPath));
     const backups = readdirSync(backupsDir)
-      .filter((name) => /^sifobooks-.*\\.db$/.test(name))
+      .filter((name) => /^sifobooks-.*\.db$/.test(name))
       .sort()
       .reverse();
     for (const old of backups.slice(30)) {
@@ -327,7 +361,7 @@ function openBrowser(url: string) {
 }
 
 const configuredPort = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
-const STARTUP_LOG = join(dataDir, "desktop-startup.log");
+const STARTUP_LOG = join(logsDir, "desktop-startup.log");
 
 function writeStartupLog(message: string) {
   try {
@@ -461,6 +495,7 @@ function startServer() {
         configuredPort,
         configuredServerUrl: configuredServerUrl || null,
         baseDir,
+        dataRoot,
         clientDirExists: existsSync(clientDir),
         serverBundleEmbedded: true,
         database,
