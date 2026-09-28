@@ -147,7 +147,7 @@ export const HUBS: HubDef[] = [
   },
   {
     key: "finance",
-    label: "Finance",
+    label: "Accounting & Banking",
     iconName: "Landmark",
     purpose: "Bank, ledger and period close — the books behind everything.",
     groups: [
