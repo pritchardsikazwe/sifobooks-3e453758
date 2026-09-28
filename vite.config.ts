@@ -4,13 +4,18 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
+import { nitro } from "nitro/vite";
+
+// Hosted (Lovable/Cloudflare) builds must emit a Cloudflare worker bundle.
+// The Windows/desktop build sets VITE_SIFOBOOKS_BACKEND=local and keeps the Bun server output.
+const isLocalBackend = process.env.VITE_SIFOBOOKS_BACKEND === "local";
 
 export default defineConfig(({ command }) => ({
   // Published hosting loads dist/server/server.js as a self-contained module
   // with no node_modules resolution — every dependency must be bundled in.
   // (bun:sqlite stays external; it is only reachable on the bun/self-hosted
   // runtime where the DB layer is actually used.)
-  ssr: command === "build" ? { noExternal: true, external: ["bun"] } : { external: ["bun"] },
+  ssr: command === "build" && isLocalBackend ? { noExternal: true, external: ["bun"] } : { external: ["bun"] },
   // Vite 8/Rolldown resolves build-time imports separately from SSR externals.
   // Bun is provided by the Bun runtime and must not be bundled/resolved by Rolldown.
   build: { rolldownOptions: { external: ["bun"] } },
@@ -20,8 +25,10 @@ export default defineConfig(({ command }) => ({
     tanstackStart({
       // The local app relies on browser-side SQLite server functions; avoid the
       // incompatible SSR virtual-module path while preserving all client features.
-      spa: { enabled: true },
+      spa: { enabled: isLocalBackend },
+      server: { entry: "server" },
     }),
+    ...(command === "build" && !isLocalBackend ? [nitro({ preset: "cloudflare-module" })] : []),
     react(),
     tailwindcss(),
     tsConfigPaths(),
