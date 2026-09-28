@@ -26,7 +26,17 @@ async function insert(table: string, rows: any[]) {
   throw new Error(`${table}: insert failed`);
 }
 
-export async function ensureStandaloneDemo(edition: Edition) {
+// One run per edition at a time: screens that load together must not seed twice.
+const inFlight = new Map<Edition, Promise<any>>();
+export function ensureStandaloneDemo(edition: Edition) {
+  const running = inFlight.get(edition);
+  if (running) return running;
+  const p = runStandaloneDemo(edition).finally(() => inFlight.delete(edition));
+  inFlight.set(edition, p);
+  return p;
+}
+
+async function runStandaloneDemo(edition: Edition) {
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   if (!uid) return { seeded: false, reason: "NOT_SIGNED_IN" };
