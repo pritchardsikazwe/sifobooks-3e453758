@@ -61,7 +61,10 @@ function buildWhereClause(filters: Filter[], table?: string): { clause: string; 
   const parts: string[] = [];
   const params: any[] = [];
   for (const f of filters) {
-    const col = `"${f.column}"`;
+    // Always qualify with the main table: joined tables (e.g. companies,
+    // branches) also carry user_id/company_id, which made SQLite fail with
+    // "ambiguous column name: user_id" on any select with an embed.
+    const col = table && !String(f.column).includes(".") ? `"${table}"."${f.column}"` : `"${f.column}"`;
     const op = f.op;
     const val = f.value;
     switch (op) {
@@ -202,7 +205,7 @@ function buildSelect(spec: QuerySpec): { sql: string; params: any[]; joins: Pars
   sql += clause;
 
   if (spec.order.length) {
-    sql += " ORDER BY " + spec.order.map(o => `"${o.column}" ${o.ascending ? "ASC" : "DESC"}`).join(", ");
+    sql += " ORDER BY " + spec.order.map(o => `"${table}"."${o.column}" ${o.ascending ? "ASC" : "DESC"}`).join(", ");
   }
 
   if (spec.range) {
