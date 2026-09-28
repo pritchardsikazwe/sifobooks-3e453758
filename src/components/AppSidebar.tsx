@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
+import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 
 
 import { useInstalledModules } from "@/hooks/useInstalledModules";
@@ -71,6 +72,7 @@ export function AppSidebar() {
   const [name, setName] = useState("Account");
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
 
@@ -96,6 +98,8 @@ export function AppSidebar() {
         setCompanyName(c.trading_name || c.name);
         const mode = (c as any).workspace_mode as string | null;
         setWorkspaceModeState(mode);
+        const industry = (c as any).industry as string | null;
+        if (industry) setCapabilities(await loadBusinessCapabilityState(cid, industry));
         setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
       }
     }
@@ -136,7 +140,7 @@ export function AppSidebar() {
     // inside the hub workspace, the command palette and its own deep link.
     for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
       const visible = visibleHubGroups(hub, installed, canView);
-      const all = visible.flatMap(g => g.items).filter(i => !(i as any).superAdminOnly || isSuperAdmin);
+      const all = visible.flatMap(g => g.items).filter(i => {\n        if ((i as any).superAdminOnly && !isSuperAdmin) return false;\n        const capabilityByModule: Record<string, BusinessCapabilityKey | undefined> = { inventory: "inventory", retail_pos: "retail_pos", restaurant: "restaurant", hr_payroll: "hr_payroll" };\n        const cap = capabilityByModule[i.module];\n        return !cap || capabilities[cap];\n      });
       if (all.length === 0) continue;
       const primary = all.filter(i => i.primary);
       const items = (primary.length ? primary : all.slice(0, 4)).map(i => ({
@@ -148,7 +152,7 @@ export function AppSidebar() {
       groups.push({ label: hub.label, items });
     }
     return groups;
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, capabilities]);
 
 
   const isOpen = (label: string) => {
