@@ -231,6 +231,60 @@ export function getSolution(id?: string | null): IndustrySolution | undefined {
   return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
 }
 
+export type BusinessCapabilityKey = "inventory" | "retail_pos" | "restaurant" | "hr_payroll";
+
+export const BUSINESS_CAPABILITIES: Array<{ key: BusinessCapabilityKey; label: string; description: string }> = [
+  { key: "inventory", label: "Inventory & Stock", description: "Items, locations, transfers, stock counts and valuation." },
+  { key: "retail_pos", label: "Retail Point of Sale", description: "Shop till, cashier shifts, sales history and retail controls." },
+  { key: "restaurant", label: "Restaurant Operations", description: "Restaurant POS, tables, kitchen, menu, recipes and restaurant reports." },
+  { key: "hr_payroll", label: "People & Payroll", description: "Employees, attendance, leave and payroll." },
+];
+
+const INDUSTRY_CAPABILITIES: Record<string, Record<BusinessCapabilityKey, boolean>> = {
+  general: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  retail: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
+  restaurant: { inventory: true, retail_pos: false, restaurant: true, hr_payroll: true },
+  wholesale: { inventory: true, retail_pos: false, restaurant: false, hr_payroll: true },
+  professional_services: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  other: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+};
+
+export function getBusinessCapabilities(solutionId?: string | null): Record<BusinessCapabilityKey, boolean> {
+  return { ...(INDUSTRY_CAPABILITIES[getSolution(solutionId)?.id ?? "general"] ?? INDUSTRY_CAPABILITIES.general) };
+}
+
+export async function setBusinessCapability(params: {
+  userId: string; companyId: string; key: BusinessCapabilityKey; enabled: boolean;
+}) {
+  const moduleKey = params.key;
+  const { error: deleteError } = await supabase
+    .from("company_modules")
+    .delete()
+    .eq("company_id", params.companyId)
+    .eq("module_key", `__off__:${moduleKey}`);
+  if (deleteError) throw deleteError;
+
+  if (!params.enabled) {
+    const { error } = await supabase.from("company_modules").upsert({
+      user_id: params.userId,
+      company_id: params.companyId,
+      module_key: `__off__:${moduleKey}`,
+      config: { source: "business_capability" },
+    }, { onConflict: "company_id,module_key" });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("company_modules").upsert({
+      user_id: params.userId,
+      company_id: params.companyId,
+      module_key: moduleKey,
+      config: { source: "business_capability" },
+    }, { onConflict: "company_id,module_key" });
+    if (error) throw error;
+  }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("sifobooks:modules-changed"));
+}
+
 export const FEATURE_PREFIX = "feature:";
 export const featureRowKey = (k: string) => `${FEATURE_PREFIX}${k}`;
 
@@ -302,8 +356,21 @@ export async function applyIndustrySolution(params: {
   const sol = getSolution(params.solutionId);
   if (!sol) throw new Error(`Unknown industry solution: ${params.solutionId}`);
 
-  const { error } = await supabase.from("companies").update({ industry: sol.id }).eq("id", params.companyId);
+  const capabilities = getBusinessCapabilities(sol.id);
+  const workspaceMode = ["general", "retail", "restaurant"].includes(sol.id) ? sol.id : null;
+
+  const companyUpdate: Record<string, any> = { industry: sol.id };
+  if (workspaceMode) companyUpdate.workspace_mode = workspaceMode;
+  const { error } = await supabase.from("companies").update(companyUpdate).eq("id", params.companyId);
   if (error) throw error;
+
+  // Configure the business workspace without creating a second accounting system.
+  // Core accounting/sales/purchasing remain shared; industry-specific capabilities
+  // such as inventory, retail POS and restaurant operations are explicitly enabled
+  // or suppressed for this company.
+  for (const [key, enabled] of Object.entries(capabilities) as [BusinessCapabilityKey, boolean][]) {
+    await setBusinessCapability({ userId: params.userId, companyId: params.companyId, key, enabled });
+  }
 
   let coaAdded = 0;
   const preset = sol.presetId ? getIndustry(sol.presetId) : undefined;
