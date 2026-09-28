@@ -49,7 +49,7 @@ function parseColumns(colSpec: string): ParsedColumns {
   for (const part of splitTop(colSpec)) {
     const m = part.match(/^(?:(\w+)\s*:\s*)?(\w+)(?:!(\w+))?(?:!(inner|left))?\s*\(([\s\S]*)\)$/);
     if (m) {
-      let hint = m[3] ?? null, inner = m[4] === "inner";
+      let hint: string | null = m[3] ?? null, inner = m[4] === "inner";
       if (hint === "inner") { hint = null; inner = true; }
       joins.push({ key: m[1] || m[2], name: m[2], hint, inner, columns: m[5].trim() });
       continue;
