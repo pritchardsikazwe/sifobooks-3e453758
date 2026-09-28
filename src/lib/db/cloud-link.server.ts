@@ -122,29 +122,43 @@ export async function linkCloudAccount(cloud: { userId: string; email: string; a
   }
   const mapUser = (v: any) => (v === cloud.userId ? localUserId : v);
 
-  // 2. Read only what cloud security lets this user see.
+  // 2. Read only what cloud security lets this user see. Each stage is logged;
+  //    a failure names the stage and nothing is written locally (step 3 runs
+  //    only after every read succeeded, inside one transaction).
   const t = cloud.accessToken;
-  const profile = (await cloudGet(t, `profiles?select=*&id=eq.${cloud.userId}`))[0];
-  const members = await cloudGet(t, `company_members?select=*&user_id=eq.${cloud.userId}`);
-  const owned = await cloudGet(t, `companies?select=*`);
+  const stage = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+    try { const v = await fn(); console.log(`[cloud-link] stage ok: ${name}`); return v; }
+    catch (e: any) {
+      console.error(`[cloud-link] stage FAILED: ${name}: ${String(e?.message || e).slice(0, 200)}`);
+      throw new Error(`Cloud → Windows transfer failed at stage "${name}": ${e?.message || e}`);
+    }
+  };
+  const profile = (await stage("profile", () => cloudGet(t, `profiles?select=*&id=eq.${cloud.userId}`)))[0];
+  const members = await stage("company members", () => cloudGet(t, `company_members?select=*&user_id=eq.${cloud.userId}`));
+  const owned = await stage("companies", () => cloudGet(t, `companies?select=*`));
   const companyIds = Array.from(new Set([...members.map((m) => m.company_id), ...owned.map((c) => c.id)].filter(Boolean)));
   const data: Record<string, any[]> = { companies: owned, company_members: members };
   if (companyIds.length) {
     const f = `company_id=${inList(companyIds)}`;
-    data.branches = await cloudGet(t, `branches?select=*&${f}`);
-    data.warehouses = await cloudGet(t, `warehouses?select=*&${f}`).catch(() => []);
-    data.inventory_locations = await cloudGet(t, `inventory_locations?select=*&${f}`).catch(() => []);
+    data.branches = await stage("branches", () => cloudGet(t, `branches?select=*&${f}`));
+    data.warehouses = await stage("warehouses", () => cloudGet(t, `warehouses?select=*&${f}`));
+    data.inventory_locations = await stage("stock locations", () => cloudGet(t, `inventory_locations?select=*&${f}`));
   }
 
-  // 3. Write atomically, parents first, same ids.
+  // 3. Write atomically, parents first, same ids. Any error rolls back all rows.
   const counts: Record<string, number> = {};
-  db.transaction(() => {
-    if (profile) upsertRows(db, "profiles", [{ ...profile, id: localUserId, email }], mapUser);
-    else if (!db.prepare("SELECT 1 FROM profiles WHERE id=?").get(localUserId))
-      db.prepare("INSERT INTO profiles (id,email,full_name,onboarded,created_at,updated_at) VALUES (?,?,?,?,datetime('now'),datetime('now'))")
-        .run(localUserId, email, email, companyIds.length ? 1 : 0);
-    for (const table of TABLES) counts[table] = upsertRows(db, table, data[table] ?? [], mapUser);
-  })();
+  try {
+    db.transaction(() => {
+      if (profile) upsertRows(db, "profiles", [{ ...profile, id: localUserId, email }], mapUser);
+      else if (!db.prepare("SELECT 1 FROM profiles WHERE id=?").get(localUserId))
+        db.prepare("INSERT INTO profiles (id,email,full_name,onboarded,created_at,updated_at) VALUES (?,?,?,?,datetime('now'),datetime('now'))")
+          .run(localUserId, email, email, companyIds.length ? 1 : 0);
+      for (const table of TABLES) counts[table] = upsertRows(db, table, data[table] ?? [], mapUser);
+    })();
+  } catch (e: any) {
+    console.error(`[cloud-link] stage FAILED: save to this PC (rolled back): ${String(e?.message || e).slice(0, 200)}`);
+    throw new Error(`Cloud → Windows transfer failed at stage "save to this PC" (nothing saved): ${e?.message || e}`);
+  }
 
   saveCloudSession(localUserId, cloud);
   console.log(`[cloud-link] ${email} linked: ${JSON.stringify(counts)}`);
