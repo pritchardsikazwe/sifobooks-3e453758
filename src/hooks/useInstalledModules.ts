@@ -64,5 +64,12 @@ export function useInstalledModules() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => { void refresh(); };
+    window.addEventListener("sifobooks:modules-changed", handler);
+    return () => window.removeEventListener("sifobooks:modules-changed", handler);
+  }, [refresh]);
+
   return { installed, companyId, loading, refresh, isInstalled: (k: string) => installed.has(k) };
 }
