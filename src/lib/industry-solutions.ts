@@ -379,6 +379,7 @@ export async function applyIndustrySolution(params: {
   if (workspaceMode) companyUpdate.workspace_mode = workspaceMode;
   const { error } = await supabase.from("companies").update(companyUpdate).eq("id", params.companyId);
   if (error) throw error;
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("sifobooks:workspace-changed"));
 
   // Configure the business workspace without creating a second accounting system.
   // Core accounting/sales/purchasing remain shared; industry-specific capabilities
