@@ -64,12 +64,14 @@ Section "SifoBooks (required)" SecMain
   File /r /x "backups" /x "data" /x "logs" "..\desktop-dist\*.*"
 
   ; Shared data folders (kept on uninstall / upgrade). Users get Modify rights.
-  CreateDirectory "$COMMONAPPDATA\SifoBooks"
-  CreateDirectory "$COMMONAPPDATA\SifoBooks\data"
-  CreateDirectory "$COMMONAPPDATA\SifoBooks\backups"
-  CreateDirectory "$COMMONAPPDATA\SifoBooks\config"
-  CreateDirectory "$COMMONAPPDATA\SifoBooks\logs"
-  nsExec::Exec 'icacls "$COMMONAPPDATA\SifoBooks" /grant *S-1-5-32-545:(OI)(CI)M /T /C /Q'
+  SetShellVarContext all
+  CreateDirectory "$APPDATA\SifoBooks"
+  CreateDirectory "$APPDATA\SifoBooks\data"
+  CreateDirectory "$APPDATA\SifoBooks\backups"
+  CreateDirectory "$APPDATA\SifoBooks\config"
+  CreateDirectory "$APPDATA\SifoBooks\logs"
+  nsExec::Exec 'icacls "$APPDATA\SifoBooks" /grant *S-1-5-32-545:(OI)(CI)M /T /C /Q'
+  SetShellVarContext current
 
   CreateDirectory "$SMPROGRAMS\SifoBooks"
   CreateShortcut "$SMPROGRAMS\SifoBooks\SifoBooks.lnk" "$INSTDIR\SifoBooks.exe" "" "$INSTDIR\SifoBooks.ico" 0
