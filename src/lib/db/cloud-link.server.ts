@@ -14,7 +14,7 @@ function cloudConfig() {
 }
 
 export type CloudSignIn =
-  | { status: "ok"; userId: string; email: string; accessToken: string }
+  | { status: "ok"; userId: string; email: string; accessToken: string; refreshToken?: string; expiresAt?: number }
   | { status: "invalid" }
   | { status: "unavailable"; reason: string };
 
@@ -29,7 +29,7 @@ export async function cloudSignIn(email: string, password: string): Promise<Clou
       signal: AbortSignal.timeout(10000),
     });
     const body: any = await res.json().catch(() => ({}));
-    if (res.ok && body?.access_token) return { status: "ok", userId: body.user.id, email: body.user.email, accessToken: body.access_token };
+    if (res.ok && body?.access_token) return { status: "ok", userId: body.user.id, email: body.user.email, accessToken: body.access_token, refreshToken: body.refresh_token, expiresAt: body.expires_at };
     if (res.status === 400 || res.status === 401) return { status: "invalid" };
     return { status: "unavailable", reason: `HTTP ${res.status}` };
   } catch (e: any) {
@@ -146,6 +146,97 @@ export async function linkCloudAccount(cloud: { userId: string; email: string; a
     for (const table of TABLES) counts[table] = upsertRows(db, table, data[table] ?? [], mapUser);
   })();
 
+  saveCloudSession(localUserId, cloud);
   console.log(`[cloud-link] ${email} linked: ${JSON.stringify(counts)}`);
   return { localUserId, companyIds, counts };
+}
+
+// ── Cloud write-through for company structure ──────────────────────────────
+// While a Windows user is cloud-linked and online, company/branch/warehouse
+// records are created in SifoBooks Cloud FIRST (same id, the user's own cloud
+// session, cloud security applies) and only then copied into SQLite. Offline
+// (cloud unreachable) falls back to a local-only write, logged explicitly.
+export const WRITE_THROUGH_TABLES = new Set(["companies", "company_members", "branches", "warehouses", "inventory_locations"]);
+
+function ensureLinkTable(db: any) {
+  db.exec("CREATE TABLE IF NOT EXISTS cloud_links (local_user_id TEXT PRIMARY KEY, cloud_user_id TEXT NOT NULL, access_token TEXT, refresh_token TEXT, expires_at INTEGER, updated_at TEXT DEFAULT (datetime('now')))");
+}
+
+function saveCloudSession(localUserId: string, c: any) {
+  const db = getDb();
+  ensureLinkTable(db);
+  db.prepare("INSERT INTO cloud_links (local_user_id,cloud_user_id,access_token,refresh_token,expires_at,updated_at) VALUES (?,?,?,?,?,datetime('now')) ON CONFLICT(local_user_id) DO UPDATE SET cloud_user_id=excluded.cloud_user_id,access_token=excluded.access_token,refresh_token=COALESCE(excluded.refresh_token,cloud_links.refresh_token),expires_at=excluded.expires_at,updated_at=datetime('now')")
+    .run(localUserId, c.userId, c.accessToken, c.refreshToken ?? null, c.expiresAt ?? null);
+}
+
+async function cloudSessionFor(localUserId: string) {
+  const db = getDb();
+  ensureLinkTable(db);
+  const row: any = db.prepare("SELECT * FROM cloud_links WHERE local_user_id=?").get(localUserId);
+  if (!row) return null;
+  const now = Math.floor(Date.now() / 1000);
+  if (row.expires_at && row.expires_at - 60 > now) return row;
+  const cfg = cloudConfig();
+  if (!cfg || !row.refresh_token) return row;
+  const res = await fetch(`${cfg.url}/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST", headers: { apikey: cfg.key, "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: row.refresh_token }), signal: AbortSignal.timeout(10000),
+  });
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok || !body?.access_token) throw Object.assign(new Error("SifoBooks Cloud session expired — please sign out and sign in again."), { auth: true });
+  saveCloudSession(localUserId, { userId: row.cloud_user_id, accessToken: body.access_token, refreshToken: body.refresh_token, expiresAt: body.expires_at });
+  return { ...row, access_token: body.access_token };
+}
+
+type WriteResult = { status: "cloud"; rows: any[] } | { status: "offline"; reason: string } | { status: "not-linked" } | { status: "error"; message: string };
+
+/** Push an insert/update to SifoBooks Cloud. Returns cloud rows (same ids). */
+export async function cloudWriteThrough(localUserId: string, spec: any): Promise<WriteResult> {
+  const cfg = cloudConfig();
+  if (!cfg) return { status: "not-linked" };
+  let link: any;
+  try { link = await cloudSessionFor(localUserId); } catch (e: any) {
+    if (e?.auth) return { status: "error", message: e.message };
+    return { status: "offline", reason: String(e?.message || e) };
+  }
+  if (!link) return { status: "not-linked" };
+  const toCloud = (v: any) => (v === localUserId ? link.cloud_user_id : v);
+  const mapRow = (r: any) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, toCloud(v)]));
+  let path = `${cfg.url}/rest/v1/${spec.table}`;
+  let method = "POST";
+  let payload: any;
+  const headers: any = { apikey: cfg.key, Authorization: `Bearer ${link.access_token}`, "Content-Type": "application/json", Prefer: "return=representation" };
+  if (spec.operation === "insert") {
+    const rows = (Array.isArray(spec.insertData) ? spec.insertData : [spec.insertData]).map((r: any) => ({ ...r, id: r.id || crypto.randomUUID() }));
+    spec.insertData = Array.isArray(spec.insertData) ? rows : rows[0]; // keep ids identical locally
+    payload = rows.map(mapRow);
+    if (spec.onConflict) { headers.Prefer += ",resolution=merge-duplicates"; path += `?on_conflict=${spec.onConflict}`; }
+  } else if (spec.operation === "update") {
+    if (!spec.filters?.length || spec.filters.some((f: any) => f.op !== "eq")) return { status: "not-linked" };
+    method = "PATCH";
+    payload = mapRow(spec.updateData || {});
+    path += "?" + spec.filters.map((f: any) => `${f.column}=eq.${encodeURIComponent(String(toCloud(f.value)))}`).join("&");
+  } else return { status: "not-linked" };
+
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(path, { method, headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(15000) });
+    } catch (e: any) {
+      return { status: "offline", reason: String(e?.message || e) };
+    }
+    const body: any = await res.json().catch(() => null);
+    if (res.ok) return { status: "cloud", rows: Array.isArray(body) ? body : [] };
+    // Local-only column the cloud doesn't have: drop it and retry.
+    const m = body?.code === "PGRST204" && /'([^']+)' column/.exec(body?.message || "");
+    if (m) {
+      const col = m[1];
+      if (Array.isArray(payload)) payload = payload.map((r: any) => { const { [col]: _, ...rest } = r; return rest; });
+      else { const { [col]: _, ...rest } = payload; payload = rest; }
+      continue;
+    }
+    if (res.status >= 500) return { status: "offline", reason: `HTTP ${res.status}` };
+    return { status: "error", message: `SifoBooks Cloud rejected ${spec.table}: ${body?.message || "HTTP " + res.status}` };
+  }
+  return { status: "error", message: `SifoBooks Cloud rejected ${spec.table}` };
 }
