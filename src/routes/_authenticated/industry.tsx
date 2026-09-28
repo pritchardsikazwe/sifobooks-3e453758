@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   INDUSTRY_SOLUTIONS, getSolution, loadIndustryState, isFeatureOn,
-  setFeature, applyIndustrySolution, type IndustrySolution,
+  setFeature, applyIndustrySolution, getBusinessCapabilities, loadBusinessCapabilityState,
+  setBusinessCapability, BUSINESS_CAPABILITIES, type IndustrySolution, type BusinessCapabilityKey,
 } from "@/lib/industry-solutions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,13 +35,16 @@ function IndustryPage() {
   const [solutionId, setSolutionId] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const [switchTo, setSwitchTo] = useState<IndustrySolution | null>(null);
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>(getBusinessCapabilities("general"));
 
   useEffect(() => {
     (async () => {
       const s = await loadIndustryState();
       setUserId(s.userId); setCompanyId(s.companyId);
-      setSolutionId(getSolution(s.solutionId)?.id ?? "general");
+      const resolvedSolution = getSolution(s.solutionId)?.id ?? "general";
+      setSolutionId(resolvedSolution);
       setOverrides(s.overrides);
+      setCapabilities(await loadBusinessCapabilityState(s.companyId, resolvedSolution));
       setLoading(false);
     })();
   }, []);
@@ -59,12 +63,28 @@ function IndustryPage() {
     } finally { setBusy(null); }
   };
 
+  const toggleCapability = async (key: BusinessCapabilityKey, next: boolean) => {
+    if (!userId || !companyId) { toast.error("No active company"); return; }
+    setBusy(key);
+    const previous = capabilities[key];
+    setCapabilities(p => ({ ...p, [key]: next }));
+    try {
+      await setBusinessCapability({ userId, companyId, key, enabled: next });
+      const label = BUSINESS_CAPABILITIES.find(c => c.key === key)?.label ?? key;
+      toast.success(next ? label + " enabled" : label + " hidden from this workspace");
+    } catch (e: any) {
+      setCapabilities(p => ({ ...p, [key]: previous }));
+      toast.error(e.message ?? "Could not update business capability");
+    } finally { setBusy(null); }
+  };
+
   const confirmSwitch = async () => {
     if (!switchTo || !userId || !companyId) return;
     setBusy("switch");
     try {
       const res = await applyIndustrySolution({ userId, companyId, solutionId: switchTo.id });
       setSolutionId(switchTo.id);
+      setCapabilities(await loadBusinessCapabilityState(companyId, switchTo.id));
       toast.success(`${switchTo.label} is now your industry solution`, {
         description: res.coa_added ? `${res.coa_added} account(s) added. No existing data was changed.` : "No existing data was changed.",
       });
@@ -118,6 +138,35 @@ function IndustryPage() {
                 <Layers className="h-3.5 w-3.5 text-primary" /> {s}
               </span>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Business capabilities */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Business capabilities</CardTitle>
+          <CardDescription>
+            Choose which shared SifoBooks work areas this company actually uses. Accounting remains the common engine; these switches control which operational workspaces appear in the navigation.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {BUSINESS_CAPABILITIES.map(cap => {
+              const on = capabilities[cap.key];
+              return (
+                <div key={cap.key} className="flex items-center justify-between gap-4 rounded-xl border p-4">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm">{cap.label}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{cap.description}</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={"text-xs font-semibold " + (on ? "text-emerald-600" : "text-muted-foreground")}>{on ? "ON" : "OFF"}</span>
+                    <Switch checked={on} disabled={busy === cap.key} onCheckedChange={v => toggleCapability(cap.key, v)} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
