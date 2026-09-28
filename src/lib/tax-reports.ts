@@ -23,19 +23,19 @@ export function isCountable(row: { status?: string | null }) {
 export function vatInvoicesQuery(db: any, from: string, to: string) {
   return db.from("invoices").select(VAT_INVOICE_COLUMNS)
     .gte("issue_date", from).lte("issue_date", to)
-    .not("status", "in", `(${EXCLUDED_STATUSES.join(",")})`)
+    .neq("status", "draft") // voided/cancelled removed by isCountable (same on both databases)
     .order("issue_date", { ascending: true });
 }
 export function vatBillsQuery(db: any, from: string, to: string) {
   return db.from("bills").select(VAT_BILL_COLUMNS)
     .gte("bill_date", from).lte("bill_date", to)
-    .not("status", "in", `(${EXCLUDED_STATUSES.join(",")})`)
+    .neq("status", "draft") // voided/cancelled removed by isCountable (same on both databases)
     .order("bill_date", { ascending: true });
 }
 export function totInvoicesQuery(db: any, from: string, to: string) {
   return db.from("invoices").select(TOT_INVOICE_COLUMNS)
     .gte("issue_date", from).lte("issue_date", to)
-    .not("status", "in", `(${EXCLUDED_STATUSES.join(",")})`)
+    .neq("status", "draft") // voided/cancelled removed by isCountable (same on both databases)
     .order("issue_date", { ascending: true });
 }
 
