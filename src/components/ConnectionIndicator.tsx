@@ -29,23 +29,31 @@ export function ConnectionIndicator() {
     return subscribeQueue(refresh);
   }, []);
 
+  // ONLINE / OFFLINE / SYNCING / SYNC ERROR. "Synced" is only shown after the
+  // server confirmed every queued item (the queue removes items only on success).
+  const syncError = net.state !== "offline" && !net.syncing && net.failed > 0;
+
   const tone =
     net.state === "offline"
       ? "bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/30"
+      : syncError
+        ? "bg-destructive/10 text-destructive border-destructive/30"
       : net.state === "syncing"
         ? "bg-sky-500/12 text-sky-700 dark:text-sky-300 border-sky-500/30"
         : "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
 
   const label =
     net.state === "offline"
-      ? "Offline Mode"
+      ? "Offline"
+      : syncError
+        ? "Sync error"
       : net.state === "syncing"
-        ? "Synchronising…"
+        ? "Syncing…"
         : net.state === "synced"
           ? "All changes synchronised"
           : "Online";
 
-  const Icon = net.state === "offline" ? CloudOff : net.state === "syncing" ? RefreshCw : net.state === "synced" ? CheckCircle2 : Cloud;
+  const Icon = net.state === "offline" ? CloudOff : syncError ? AlertTriangle : net.state === "syncing" ? RefreshCw : net.state === "synced" ? CheckCircle2 : Cloud;
 
   return (
     <Popover>
