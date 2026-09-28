@@ -208,6 +208,7 @@ export function CompanyOnboardingWizard() {
         }
       }
 
+      if (!company?.id) throw new Error("Company setup is incomplete. A company must be created before creating a branch.");
       const { data: existingBranches } = await supabase.from("branches").select("id").eq("company_id", company.id).limit(1);
       let branchId = existingBranches?.[0]?.id;
       if (!branchId) {
