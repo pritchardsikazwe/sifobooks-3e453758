@@ -28,6 +28,29 @@ export const Route = createFileRoute("/_authenticated/inventory/stock-card")({
 
 type Product = { id: string; name: string; sku: string | null; unit: string; cost_price: number };
 
+const SOURCE_LABEL: Record<string, string> = {
+  transfer: "Stock transfer",
+  production_batch: "Production batch",
+  stock_count: "Stock count",
+  pos_sale: "POS sale",
+  pos_return: "POS return",
+  purchase: "Purchase receipt",
+  invoice: "Invoice",
+};
+
+/** Where the movement came from — only what the movement record itself says. */
+function sourceLabel(r: any): string {
+  if (r.source_type) return SOURCE_LABEL[r.source_type] ?? String(r.source_type).replace(/_/g, " ");
+  if (/^POS/i.test(String(r.reference ?? ""))) return "POS sale";
+  return "—";
+}
+
+function lineValue(r: any): number {
+  const total = Number(r.total_cost ?? 0);
+  if (total) return Math.abs(total);
+  return Math.abs(Number(r.delta ?? 0)) * Number(r.unit_cost ?? 0);
+}
+
 function StockCardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -105,29 +128,35 @@ function StockCardPage() {
             <tr>
               <th className="px-4 py-2 text-left">Date</th>
               <th className="px-4 py-2 text-left">Movement</th>
-              <th className="px-4 py-2 text-left">Location</th>
               <th className="px-4 py-2 text-left">Reference</th>
+              <th className="px-4 py-2 text-left">Source document</th>
+              <th className="px-4 py-2 text-left">Location</th>
               <th className="px-4 py-2 text-right">In</th>
               <th className="px-4 py-2 text-right">Out</th>
               <th className="px-4 py-2 text-right">Balance</th>
-              <th className="px-4 py-2 text-left">Note</th>
+              <th className="px-4 py-2 text-right">Unit cost</th>
+              <th className="px-4 py-2 text-right">Value</th>
+              <th className="px-4 py-2 text-left">User</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="px-4 py-1.5">{r.transaction_date}</td>
+                <td className="px-4 py-1.5">{r.transaction_date ?? String(r.created_at ?? "").slice(0, 10)}</td>
                 <td className="px-4 py-1.5">{MOVEMENT_LABEL[r.movement_type] ?? r.movement_type}</td>
-                <td className="px-4 py-1.5">{locName(r.location_id)}</td>
                 <td className="px-4 py-1.5 text-muted-foreground">{r.reference ?? "—"}</td>
+                <td className="px-4 py-1.5 text-muted-foreground">{sourceLabel(r)}</td>
+                <td className="px-4 py-1.5">{locName(r.location_id)}</td>
                 <td className="px-4 py-1.5 text-right text-emerald-600">{r.delta > 0 ? r.delta : ""}</td>
                 <td className="px-4 py-1.5 text-right text-destructive">{r.delta < 0 ? -r.delta : ""}</td>
                 <td className="px-4 py-1.5 text-right font-semibold">{r.balance}</td>
-                <td className="px-4 py-1.5 text-muted-foreground">{r.note ?? ""}</td>
+                <td className="px-4 py-1.5 text-right">{r.unit_cost != null ? fmtMoney(Number(r.unit_cost)) : "—"}</td>
+                <td className="px-4 py-1.5 text-right">{fmtMoney(lineValue(r))}</td>
+                <td className="px-4 py-1.5 text-muted-foreground">{r.created_by ? String(r.created_by).slice(0, 8) : "—"}</td>
               </tr>
             ))}
             {!rows.length && !loading && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No movements recorded for this product yet.</td></tr>
+              <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">No movements recorded for this product yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -136,8 +165,9 @@ function StockCardPage() {
       <ExportMenu
         rows={rows.map((r) => ({
           Date: r.transaction_date, Movement: MOVEMENT_LABEL[r.movement_type] ?? r.movement_type,
-          Location: locName(r.location_id), Reference: r.reference, In: r.delta > 0 ? r.delta : "",
-          Out: r.delta < 0 ? -r.delta : "", Balance: r.balance,
+          Reference: r.reference, "Source document": sourceLabel(r), Location: locName(r.location_id),
+          In: r.delta > 0 ? r.delta : "", Out: r.delta < 0 ? -r.delta : "", Balance: r.balance,
+          "Unit cost": r.unit_cost ?? "", Value: lineValue(r), User: r.created_by ?? "",
         }))}
         filename={`stock-card-${product?.sku ?? product?.name ?? "item"}`}
         title="Stock card"
