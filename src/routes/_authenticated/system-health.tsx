@@ -150,15 +150,18 @@ function SystemHealthPage() {
         .from("zra_device_configs")
         .select("id,mode,tpin,branch_code,device_serial,vsdc_endpoint,connector_endpoint,last_verified_at")
         .limit(100);
-      const zraRows = (zraConfigs ?? []) as any[];
+      // Read-only: a missing settings record/table simply means "not configured".
+      const zraMissing = !!zraConfigError && /does not exist|no such table|schema cache|could not find|42P01|PGRST20/i.test(String((zraConfigError as any).message ?? "") + String((zraConfigError as any).code ?? ""));
+      const zraErr = zraMissing ? null : zraConfigError;
+      const zraRows = (zraErr || zraMissing ? [] : (zraConfigs ?? [])) as any[];
       const zraConfigured = zraRows.filter((x) => x.tpin && x.branch_code && x.device_serial).length;
       const zraUnverified = zraRows.filter((x) => x.tpin && x.branch_code && x.device_serial && !x.last_verified_at).length;
       out.push({
         key: "zra-health", title: "ZRA Smart Invoice / VSDC", icon: Activity,
         description: "Checks whether Smart Invoice devices have the core taxpayer, branch and device configuration required for VSDC.",
-        severity: zraConfigError ? "warn" : zraRows.length === 0 ? "warn" : zraConfigured < zraRows.length || zraUnverified > 0 ? "warn" : "pass",
-        metric: zraConfigError ? "configuration check unavailable" : zraRows.length === 0 ? "not configured" : `${zraConfigured}/${zraRows.length} devices configured`,
-        detail: zraConfigError ? String(zraConfigError.message ?? zraConfigError) : zraUnverified ? `${zraUnverified} configured device(s) have not recorded a verification time.` : "Configuration fields are present.",
+        severity: zraErr ? "warn" : zraRows.length === 0 ? "warn" : zraConfigured < zraRows.length || zraUnverified > 0 ? "warn" : "pass",
+        metric: zraErr ? "configuration check unavailable" : zraRows.length === 0 ? "ZRA device not configured" : `${zraConfigured}/${zraRows.length} devices configured`,
+        detail: zraErr ? "The ZRA configuration could not be read." : zraRows.length === 0 ? "No ZRA device settings exist yet. Nothing has been set up or connected." : zraUnverified ? `${zraUnverified} configured device(s) have not recorded a verification time.` : "Configuration fields are present.",
         fixTo: "/zra-smart-invoice", fixLabel: "Open ZRA settings",
       });
 
