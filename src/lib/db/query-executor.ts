@@ -310,6 +310,11 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       const { sql, params, joins } = buildSelect(secured);
       const rows = database.prepare(sql).all(...params);
       let data: any = transformJoinResults(rows, joins);
+      let count: number | null = null;
+      if (secured.count) {
+        const { clause, params: cp } = buildWhereClause(secured.filters, secured.table);
+        count = Number((database.prepare(`SELECT COUNT(*) AS n FROM "${secured.table}"${clause}`).get(...cp) as any)?.n ?? 0);
+      }
 
       if (secured.single) {
         data = data[0] ?? null;
@@ -317,7 +322,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
       } else if (secured.maybeSingle) {
         data = data[0] ?? null;
       }
-      return { data, error: null };
+      return { data, error: null, count };
     }
 
     if (secured.operation === "insert") {
@@ -376,7 +381,7 @@ export function executeQuery(spec: QuerySpec, authenticatedUserId?: string): Que
     }
 
     if (secured.operation === "delete") {
-      const { clause, params } = buildWhereClause(secured.filters);
+      const { clause, params } = buildWhereClause(secured.filters, secured.table);
       const rows = database.prepare(`SELECT * FROM "${secured.table}"${clause}`).all(...params);
       database.prepare(`DELETE FROM "${secured.table}"${clause}`).run(...params);
       return { data: rows, error: null };
