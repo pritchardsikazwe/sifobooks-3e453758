@@ -116,6 +116,7 @@ import { Route as AuthenticatedEmployeesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDonorsRouteImport } from './routes/_authenticated/donors'
 import { Route as AuthenticatedDocumentsBrandingRouteImport } from './routes/_authenticated/documents-branding'
 import { Route as AuthenticatedDevicesTerminalsRouteImport } from './routes/_authenticated/devices-terminals'
+import { Route as AuthenticatedDeviceActivationRouteImport } from './routes/_authenticated/device-activation'
 import { Route as AuthenticatedDemoDataRouteImport } from './routes/_authenticated/demo-data'
 import { Route as AuthenticatedDemoCentreRouteImport } from './routes/_authenticated/demo-centre'
 import { Route as AuthenticatedDataQualityCentreRouteImport } from './routes/_authenticated/data-quality-centre'
@@ -916,6 +917,12 @@ const AuthenticatedDevicesTerminalsRoute =
   AuthenticatedDevicesTerminalsRouteImport.update({
     id: '/devices-terminals',
     path: '/devices-terminals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDeviceActivationRoute =
+  AuthenticatedDeviceActivationRouteImport.update({
+    id: '/device-activation',
+    path: '/device-activation',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDemoDataRoute = AuthenticatedDemoDataRouteImport.update({
@@ -2234,6 +2241,7 @@ export interface FileRoutesByFullPath {
   '/data-quality-centre': typeof AuthenticatedDataQualityCentreRoute
   '/demo-centre': typeof AuthenticatedDemoCentreRoute
   '/demo-data': typeof AuthenticatedDemoDataRoute
+  '/device-activation': typeof AuthenticatedDeviceActivationRoute
   '/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
   '/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/donors': typeof AuthenticatedDonorsRoute
@@ -2559,6 +2567,7 @@ export interface FileRoutesByTo {
   '/data-quality-centre': typeof AuthenticatedDataQualityCentreRoute
   '/demo-centre': typeof AuthenticatedDemoCentreRoute
   '/demo-data': typeof AuthenticatedDemoDataRoute
+  '/device-activation': typeof AuthenticatedDeviceActivationRoute
   '/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
   '/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/donors': typeof AuthenticatedDonorsRoute
@@ -2883,6 +2892,7 @@ export interface FileRoutesById {
   '/_authenticated/data-quality-centre': typeof AuthenticatedDataQualityCentreRoute
   '/_authenticated/demo-centre': typeof AuthenticatedDemoCentreRoute
   '/_authenticated/demo-data': typeof AuthenticatedDemoDataRoute
+  '/_authenticated/device-activation': typeof AuthenticatedDeviceActivationRoute
   '/_authenticated/devices-terminals': typeof AuthenticatedDevicesTerminalsRoute
   '/_authenticated/documents-branding': typeof AuthenticatedDocumentsBrandingRoute
   '/_authenticated/donors': typeof AuthenticatedDonorsRoute
@@ -3211,6 +3221,7 @@ export interface FileRouteTypes {
     | '/data-quality-centre'
     | '/demo-centre'
     | '/demo-data'
+    | '/device-activation'
     | '/devices-terminals'
     | '/documents-branding'
     | '/donors'
@@ -3536,6 +3547,7 @@ export interface FileRouteTypes {
     | '/data-quality-centre'
     | '/demo-centre'
     | '/demo-data'
+    | '/device-activation'
     | '/devices-terminals'
     | '/documents-branding'
     | '/donors'
@@ -3859,6 +3871,7 @@ export interface FileRouteTypes {
     | '/_authenticated/data-quality-centre'
     | '/_authenticated/demo-centre'
     | '/_authenticated/demo-data'
+    | '/_authenticated/device-activation'
     | '/_authenticated/devices-terminals'
     | '/_authenticated/documents-branding'
     | '/_authenticated/donors'
@@ -4905,6 +4918,13 @@ declare module '@tanstack/react-router' {
       path: '/devices-terminals'
       fullPath: '/devices-terminals'
       preLoaderRoute: typeof AuthenticatedDevicesTerminalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/device-activation': {
+      id: '/_authenticated/device-activation'
+      path: '/device-activation'
+      fullPath: '/device-activation'
+      preLoaderRoute: typeof AuthenticatedDeviceActivationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/demo-data': {
@@ -6931,6 +6951,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDataQualityCentreRoute: typeof AuthenticatedDataQualityCentreRoute
   AuthenticatedDemoCentreRoute: typeof AuthenticatedDemoCentreRoute
   AuthenticatedDemoDataRoute: typeof AuthenticatedDemoDataRoute
+  AuthenticatedDeviceActivationRoute: typeof AuthenticatedDeviceActivationRoute
   AuthenticatedDevicesTerminalsRoute: typeof AuthenticatedDevicesTerminalsRoute
   AuthenticatedDocumentsBrandingRoute: typeof AuthenticatedDocumentsBrandingRoute
   AuthenticatedDonorsRoute: typeof AuthenticatedDonorsRoute
@@ -7096,6 +7117,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDataQualityCentreRoute: AuthenticatedDataQualityCentreRoute,
   AuthenticatedDemoCentreRoute: AuthenticatedDemoCentreRoute,
   AuthenticatedDemoDataRoute: AuthenticatedDemoDataRoute,
+  AuthenticatedDeviceActivationRoute: AuthenticatedDeviceActivationRoute,
   AuthenticatedDevicesTerminalsRoute: AuthenticatedDevicesTerminalsRoute,
   AuthenticatedDocumentsBrandingRoute: AuthenticatedDocumentsBrandingRoute,
   AuthenticatedDonorsRoute: AuthenticatedDonorsRoute,
