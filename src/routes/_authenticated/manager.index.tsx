@@ -34,7 +34,7 @@ function ManagerDashboard() {
         supabase.from("pos_sales").select("total,discount,status").gte("sold_at", start.toISOString()),
         supabase.from("pos_shifts").select("status,review_status,variance"),
         supabase.from("inventory_transfers").select("status"),
-        supabase.from("stock_balances").select("qty, stock_items(reorder_level)"),
+        supabase.from("stock_balances").select("quantity, stock_items(reorder_level)"),
       ]);
       const sales = (salesRes.data ?? []) as any[];
       const shifts = (shiftsRes.data ?? []) as any[];
@@ -51,7 +51,7 @@ function ManagerDashboard() {
         discounts: done.reduce((a, s) => a + Number(s.discount ?? 0), 0),
         transfers: transfers.filter((t) => ["draft", "dispatched", "pending"].includes(String(t.status))).length,
         inTransit: transfers.filter((t) => String(t.status) === "dispatched").length,
-        lowStock: stock.filter((r) => Number(r.qty ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
+        lowStock: stock.filter((r) => Number(r.quantity ?? 0) <= Number(r.stock_items?.reorder_level ?? 0)).length,
       });
     })();
   }, []);
