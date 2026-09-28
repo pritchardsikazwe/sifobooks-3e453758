@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PublicJobsRouteImport } from './routes/public-jobs'
@@ -335,6 +336,11 @@ import { Route as AuthenticatedBillDetailIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedTeachingMaterialsIdQuoteRouteImport } from './routes/_authenticated/teaching-materials.$id.quote'
 import { Route as AuthenticatedJournalEntryEditIdRouteImport } from './routes/_authenticated/journal-entry.edit.$id'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -2186,6 +2192,7 @@ export interface FileRoutesByFullPath {
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/accountant-practice': typeof AuthenticatedAccountantPracticeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/approval-centre': typeof AuthenticatedApprovalCentreRoute
@@ -2511,6 +2518,7 @@ export interface FileRoutesByTo {
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/accountant-practice': typeof AuthenticatedAccountantPracticeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/approval-centre': typeof AuthenticatedApprovalCentreRoute
@@ -2833,6 +2841,7 @@ export interface FileRoutesById {
   '/public-jobs': typeof PublicJobsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/accountant-practice': typeof AuthenticatedAccountantPracticeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/approval-centre': typeof AuthenticatedApprovalCentreRoute
@@ -3160,6 +3169,7 @@ export interface FileRouteTypes {
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/accountant-practice'
     | '/admin'
     | '/approval-centre'
@@ -3485,6 +3495,7 @@ export interface FileRouteTypes {
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/accountant-practice'
     | '/admin'
     | '/approval-centre'
@@ -3806,6 +3817,7 @@ export interface FileRouteTypes {
     | '/public-jobs'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/welcome'
     | '/_authenticated/accountant-practice'
     | '/_authenticated/admin'
     | '/_authenticated/approval-centre'
@@ -4134,6 +4146,7 @@ export interface RootRouteChildren {
   PublicJobsRoute: typeof PublicJobsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WelcomeRoute: typeof WelcomeRoute
   DemoIndexRoute: typeof DemoIndexRoute
   ApiConnectorCompleteRoute: typeof ApiConnectorCompleteRoute
   ApiConnectorHeartbeatRoute: typeof ApiConnectorHeartbeatRoute
@@ -4145,6 +4158,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -7263,6 +7283,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicJobsRoute: PublicJobsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WelcomeRoute: WelcomeRoute,
   DemoIndexRoute: DemoIndexRoute,
   ApiConnectorCompleteRoute: ApiConnectorCompleteRoute,
   ApiConnectorHeartbeatRoute: ApiConnectorHeartbeatRoute,
