@@ -25,7 +25,7 @@ export default defineConfig(({ command }) => ({
     tanstackStart({
       // The local app relies on browser-side SQLite server functions; avoid the
       // incompatible SSR virtual-module path while preserving all client features.
-      spa: { enabled: true },
+      spa: { enabled: isLocalBackend },
       server: { entry: "server" },
     }),
     ...(command === "build" && !isLocalBackend ? [nitro({ preset: "cloudflare-module" })] : []),
