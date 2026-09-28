@@ -1,23 +1,34 @@
-# Diagnosis: SifoBooks online site and login failure
+# SifoBooks Windows + Cloud architecture upgrade (lovable-development only)
 
-## Current state (checked)
-- https://sifobooks.com/ returns 500. https://sifobooks.lovable.app/ redirects (302). The preview /auth page returns 200.
-- The current version is `c18578e` ("restore synchronous sqlite runtime loader for Windows"), pushed from GitHub at 19:37 today.
-- The preview sign-in fix `f7ddba6` ("Fixed Lovable preview auth bug") is **not part of `c18578e`**. The two versions branched from the same point (`1806bc8`), and `c18578e` was committed on the other branch.
+## Audit findings (already exists — will be reused, not duplicated)
+- Backend split: `backend-mode.ts` switches cloud (hosted) vs local SQLite (Windows, `VITE_SIFOBOOKS_BACKEND=local`).
+- Core contracts: `src/core/contracts/{database,runtime,transaction}.ts` with Windows adapters in `src/platform/windows/*` and cloud adapters in `src/platform/cloud/*`.
+- Local SQLite + migrations: `src/lib/db/database.ts`, `src/lib/db/migrations/*` incl. multi-mode foundation (`deployment_profiles`, `sync_devices`, `sync_queue`, `migration_runs`, `backup_catalog`, `license_activations`).
+- Browser offline queue: `offline-queue.ts` + `offline-db.ts` (IndexedDB, client idempotency keys, retries, conflicts, device id).
+- Status UI: `ConnectionIndicator`, `OfflineBanner`, `network-status.ts`.
+- Cloud sync protocol: `src/lib/cloud/sync.ts`, `sync-applier.ts`, cloud migration 005 (devices, events, conflicts, idempotency, cursors).
+- Devices: `devices-terminals.tsx`, `print_devices`, `printTerminal.ts` device id.
+- Onboarding: `/onboarding` company wizard, `/launch` resolver, `/network-setup`.
+- ZRA: `src/lib/zra/*`, VSDC connector agent, `zra_invoice_queue`.
+- Desktop runtime: `src/desktop/server.ts`, `scripts/build-desktop.ts`, Inno Setup installer.
 
-## Root cause
-1. **`f7ddba6` is missing from the current version.** Because of this, the online app has no split between the cloud and Windows backends again. These files are absent: `backend-mode.ts`, `cloud-client*.ts`, `local-client*.ts`. The sign-in client (`client.ts`) is back to the local-database version. Every sign-in and data request goes to the local SQLite database through server functions, and that database cannot run on Lovable hosting. So login fails, even in the preview once a real sign-in is tried.
-2. **`c18578e` itself** changes only `src/lib/db/database.ts`. It swaps the dynamic loader for a static `createRequire(import.meta.url)` plus `require("bun:sqlite")` or `require("node:sqlite")`. That works in the Windows build with Bun and in local development with Node. But in the hosted server runtime, `createRequire`/`require` of built-in modules cannot be resolved or bundled, and there is no disk for the database file. Whatever loads this file crashes, and with `f7ddba6` missing, the sign-in path loads it.
-3. **The live site** is still running an older failed deployment (`No such module "assets/react"`). It has not been republished since the cloud split, so it never received `f7ddba6`.
+## Missing pieces to add (small, additive)
+1. **Deployment-mode contract**: extend `core/contracts/runtime.ts` with the 4 modes (cloud, windows-standalone, local-server, hybrid) and a single `getDeploymentMode()` resolver; stop the two conflicting mode enums from drifting (keep old names as aliases).
+2. **Windows first-run screen** (`/welcome`, local build only): "Create New Company" / "Sign In to Existing Company", routing into the existing signup/onboarding/launch flows. Hosted build redirects `/welcome` to `/`.
+3. **Device activation step** after company/branch selection: register device in the existing cloud device registry (tenant + branch + device id) and write the local `deployment_profiles` row. Re-activating on a new PC joins the same company — never creates one.
+4. **Startup check service** (`src/lib/platform/startup-checks.ts`): database, schema version, migrations, company/device config, session, connectivity, sync queue. Returns typed diagnostic codes (DB_UNAVAILABLE, MIGRATION_REQUIRED, COMPANY_NOT_CONFIGURED, DEVICE_NOT_REGISTERED, CLOUD_UNAVAILABLE, SYNC_PENDING, PERMISSION_DENIED).
+5. **Friendlier error screen**: root error component maps those codes to clear messages (no secrets) instead of the generic "This page didn't load".
+6. **Sync status**: unify `ConnectionIndicator` states to ONLINE / OFFLINE / SYNCING / SYNC ERROR with pending-count and last error; never mark synced without server confirmation (already true in queue — verify).
+7. **Migration safety**: schema-version table + pre-migration backup via existing `backup-db` logic; migration errors reported, never auto-delete.
+8. **ZRA interface only**: `src/core/contracts/fiscal.ts` (`FiscalDevicePort`) with a "not configured" adapter; `fiscalized` only set on a real VSDC success response. No production connection.
+9. **Cloud schema (additive only)**: if needed, a `company_devices` table in Lovable Cloud (company_id, branch_id, device_id, device_type, status, last_seen) with GRANTs + RLS by company membership. Checked against `print_devices` first to avoid duplication.
 
-## Smallest safe fix
-1. Bring `f7ddba6`'s changes back on top of `c18578e`, using the cloud/local split files and the `client.ts` / `client.server.ts` / `auth-attacher.ts` / `auth-middleware.ts` versions from `f7ddba6`, plus the `build-desktop.ts` local flag. Keep `c18578e`'s Windows-side loader intent.
-2. Make `database.ts` safe for hosting without breaking Windows. Keep the synchronous loader, but resolve the built-in module through `process.getBuiltinModule` (falling back to `createRequire` only when running under Bun or Node). The online app must never import this file; only the Windows/local client reaches it.
-3. Check: code check, production build (confirm the built server has no `bun:sqlite`, `node:sqlite` or `assets/react` references), automated tests, and a preview sign-up **and** sign-in with the test account.
-4. Publish only after you confirm, then verify that https://sifobooks.com/ returns 200 and the sign-in page loads.
+## Out of scope
+No module rewrites, no main merge, no production publish, no ZRA production, no business data changes.
 
-## To prevent recurrence
-The GitHub branch and Lovable edits diverged. Future Windows commits should be made on top of the latest Lovable version, or they will drop the cloud split again.
+## Testing (Preview)
+Hosted: signup, onboarding, sign-in, company/branch selection, device registration, offline POS sale via existing IndexedDB queue (network blocked in Playwright), pending state, restore, sync once, no duplicate, second session sees same company, core modules still open.
+Windows-specific (SQLite, first-run, local server) cannot run in Preview — verified by typecheck, `windows-schema-qa` and desktop build script only.
 
-## Not touched
-No code, database or business data changes in this diagnosis.
+## Deliverable
+Report with the 13 items requested; then wait for approval.
