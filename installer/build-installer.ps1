@@ -34,9 +34,13 @@ $guidMap = @{
   payroll="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE009"
 }
 $template = Get-Content (Join-Path $PSScriptRoot "SifoBooks.iss.template") -Raw
-$template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__","2026.09.22")
+$appVersion = "2026.9.28"
+$versionFile = Join-Path $PSScriptRoot "..\desktop-dist\version.json"
+if (Test-Path $versionFile) { $appVersion = (Get-Content $versionFile -Raw | ConvertFrom-Json).version }
+$template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__",$appVersion)
 $outDir = Join-Path $root "installer-dist"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+$null = 0
 $outIss = Join-Path $PSScriptRoot "SifoBooks-$Edition.iss"
 Set-Content -Path $outIss -Value $template -Encoding UTF8
 

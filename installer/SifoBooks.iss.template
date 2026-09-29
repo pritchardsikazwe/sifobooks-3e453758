@@ -40,7 +40,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
-Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
+Name: "startmenu"; Description: "Create a Start Menu shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
 Name: "startup"; Description: "Start SifoBooks automatically when Windows starts"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 Name: "launch"; Description: "Launch SifoBooks after installation"; GroupDescription: "After installation:"; Flags: unchecked
 Name: "servermode"; Description: "Configure this PC as the SifoBooks Server"; GroupDescription: "Installation mode:"; Flags: exclusive
@@ -52,6 +52,14 @@ Source: "assets\SifoBooks-logo.svg"; DestDir: "{app}\branding"; Flags: ignorever
 Source: "assets\SifoBooks-wizard.bmp"; DestDir: "{app}\branding"; Flags: ignoreversion
 
 [Dirs]
+; Company data (database, backups, config, logs) lives in ProgramData so it is
+; writable, survives upgrades, and is never removed by the uninstaller.
+Name: "{commonappdata}\SifoBooks"; Permissions: users-modify; Flags: uninsneveruninstall
+Name: "{commonappdata}\SifoBooks\data"; Permissions: users-modify; Flags: uninsneveruninstall
+Name: "{commonappdata}\SifoBooks\backups"; Permissions: users-modify; Flags: uninsneveruninstall
+Name: "{commonappdata}\SifoBooks\config"; Permissions: users-modify; Flags: uninsneveruninstall
+Name: "{commonappdata}\SifoBooks\logs"; Permissions: users-modify; Flags: uninsneveruninstall
+; Legacy folders kept for older installs (data is copied, never moved).
 Name: "{app}\data"; Permissions: users-modify
 Name: "{app}\backups"; Permissions: users-modify
 Name: "{app}\config"; Permissions: users-modify
@@ -59,6 +67,7 @@ Name: "{app}\logs"; Permissions: users-modify
 
 [Icons]
 Name: "{group}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
+Name: "{group}\Stop SifoBooks"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\Stop-SifoBooks.ps1"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
 Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
 Name: "{userstartup}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 

@@ -150,7 +150,7 @@ function StockPage() {
                 <option value="all">All items</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option>
               </select>
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
-                <Link to="/inventory">Inventory overview</Link>
+                <Link to="/inventory-control">Inventory Control Centre</Link>
               </Button>
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
                 <Link to="/inventory/transfers">Stock transfers</Link>
@@ -212,10 +212,14 @@ function GroupedStockTable({
     },
     { key: "unit", header: "Order By Unit", cell: i => <span className="text-xs">{i.unit || "unit"}</span> },
     { key: "cost_price", header: "Cost", align: "right", cell: i => money(Number(i.cost_price)) },
+    { key: "sell_price", header: "Selling Price", align: "right", cell: i => money(Number(i.sell_price)) },
+    { key: "vat_rate", header: "VAT", align: "right", cell: i => `${Number(i.vat_rate ?? 0)}%` },
+    { key: "hs_code", header: "HS Code", sortable: true, cell: i => i.hs_code || "—" },
     { key: "qty_per_unit", header: "Qty/Unit", align: "right", sortable: false, cell: i => (i.unit ? 1 : "—") },
     { key: "description", header: "Item Size", cell: i => <span className="text-xs">{i.description ?? "—"}</span> },
     { key: "cost_per_item", header: "Cost per Item", align: "right", accessor: i => Number(i.cost_price), cell: i => money(Number(i.cost_price)) },
     { key: "quantity_on_hand", header: "Stock Qty", align: "right", cell: i => <span className="font-medium">{Number(i.quantity_on_hand)}</span> },
+    { key: "stock_value", header: "Stock Value", align: "right", sortable: false, accessor: i => Number(i.cost_price) * Number(i.quantity_on_hand), cell: i => money(Number(i.cost_price) * Number(i.quantity_on_hand)) },
     { key: "reorder_level", header: "Reorder Level", align: "right", cell: i => Number(i.reorder_level) || "—" },
     {
       key: "reorder_status", header: "Reorder", align: "center", sortable: false,

@@ -178,13 +178,19 @@ export function CompanyOnboardingWizard() {
         financial_year_start_month: 1, base_currency: form.currency, timezone: "Africa/Lusaka", industry: form.industry,
         workspace_mode: SIFOBOOKS_EDITION, status: "active",
       };
+      // Keep the real company ID in setup state; never rely only on the write's return shape.
+      const companyId: string = company?.id ?? crypto.randomUUID();
       if (company) {
-        const { data, error } = await supabase.from("companies").update(companyPayload).eq("id", company.id).select().single();
-        if (error) throw error; company = data;
+        const { data, error } = await supabase.from("companies").update(companyPayload).eq("id", companyId).select().single();
+        if (error) throw error;
+        company = Array.isArray(data) ? data[0] : data;
       } else {
-        const { data, error } = await supabase.from("companies").insert({ id: crypto.randomUUID(), user_id: u.user.id, ...companyPayload }).select().single();
-        if (error) throw error; company = data;
+        const { data, error } = await supabase.from("companies").insert({ id: companyId, user_id: u.user.id, ...companyPayload }).select().single();
+        if (error) throw error;
+        company = Array.isArray(data) ? data[0] : data;
       }
+      company = { ...(company ?? {}), id: company?.id ?? companyId };
+      if (!company.id) throw new Error("Company setup is incomplete. A company must be created before creating a branch.");
       await supabase.from("profiles").update({
         business_name: form.name.trim(), country: form.country, currency: form.currency, tax_id: form.tpin.trim() || null,
         phone: form.phone.trim() || null, team_size: "1", industry: form.industry, tpin: form.tpin.trim() || null,
@@ -202,6 +208,7 @@ export function CompanyOnboardingWizard() {
         }
       }
 
+      if (!company?.id) throw new Error("Company setup is incomplete. A company must be created before creating a branch.");
       const { data: existingBranches } = await supabase.from("branches").select("id").eq("company_id", company.id).limit(1);
       let branchId = existingBranches?.[0]?.id;
       if (!branchId) {
@@ -213,12 +220,22 @@ export function CompanyOnboardingWizard() {
         if (branchError) throw branchError;
         branchId = branch?.id;
       }
-      const { data: warehouses } = await supabase.from("warehouses").select("id").eq("company_id", company.id).limit(1);
+      // Cloud warehouses link to the company through their branch (no
+      // company_id column online); the Windows database has both.
+      const { data: warehouses } = branchId
+        ? await supabase.from("warehouses").select("id").eq("branch_id", branchId).limit(1)
+        : { data: [] as any[] };
       if (!warehouses?.length) {
-        await supabase.from("warehouses").insert({
+        const row: Record<string, any> = {
           id: crypto.randomUUID(), user_id: u.user.id, company_id: company.id, branch_id: branchId || null,
-          name: form.warehouseName.trim(), code: "MAIN", location: form.branchCity.trim() || form.city.trim() || null, is_active: 1,
-        });
+          name: form.warehouseName.trim() || "Main Warehouse", code: "MAIN", location: form.branchCity.trim() || form.city.trim() || null, is_active: true,
+        };
+        let { error: whError } = await supabase.from("warehouses").insert(row);
+        if (whError && /company_id/i.test(String(whError.message ?? ""))) {
+          delete row.company_id;
+          ({ error: whError } = await supabase.from("warehouses").insert(row));
+        }
+        if (whError) throw whError;
       }
 
       try {

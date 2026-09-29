@@ -275,9 +275,9 @@ export async function mySales(cashierUserId: string, period: Period, from?: stri
   const perSale: Record<string, { qty: number; count: number }> = {};
   const methods: Record<string, string> = {};
   if (ids.length) {
-    const { data: items } = await supabase.from("pos_sale_items").select("sale_id,item_name,qty,line_total").in("sale_id", ids);
+    const { data: items } = await supabase.from("pos_sale_items").select("sale_id,name,qty,line_total").in("sale_id", ids);
     (items ?? []).forEach((i: any) => {
-      const k = i.item_name ?? "Item";
+      const k = i.name ?? "Item";
       lines[k] = { qty: n(lines[k]?.qty) + n(i.qty), value: n(lines[k]?.value) + n(i.line_total) };
       perSale[i.sale_id] = { qty: n(perSale[i.sale_id]?.qty) + n(i.qty), count: n(perSale[i.sale_id]?.count) + 1 };
     });
@@ -439,7 +439,7 @@ export type CountLine = { itemId: string; name: string; sku: string | null; expe
 export async function countSheet(tenantId: string, locationId: string): Promise<CountLine[]> {
   const { data } = await supabase
     .from("stock_balances")
-    .select("qty,item_id,stock_items(name,sku)")
+    .select("quantity,item_id,stock_items(name,sku)")
     .eq("user_id", tenantId)
     .eq("location_id", locationId);
   return ((data ?? []) as any[])
@@ -447,7 +447,7 @@ export async function countSheet(tenantId: string, locationId: string): Promise<
       itemId: r.item_id as string,
       name: (r.stock_items?.name as string) ?? "Item",
       sku: (r.stock_items?.sku as string) ?? null,
-      expected: n(r.qty),
+      expected: n(r.quantity),
       counted: "",
     }))
     .sort((x, y) => x.name.localeCompare(y.name));

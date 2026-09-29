@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ModuleGate } from "@/components/ModuleGate";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
@@ -74,7 +75,7 @@ const UNAVAILABLE: Record<string, string> = {
   "/school/student-portal": "Student portal",
 };
 
-export function SchoolWorkspace({ screen }: { screen: string }) {
+function SchoolWorkspaceInner({ screen }: { screen: string }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
@@ -480,4 +481,17 @@ export function SchoolWorkspace({ screen }: { screen: string }) {
       </IndustryShell>
     </div>
   );
+}
+
+const SCHOOL_SCREEN_TABLES: [RegExp, string, string[]][] = [
+  [/boarding/, "Boarding", ["boarding_houses","boarding_beds","boarding_allocations","school_boarding_rooms","school_boarding_leave_requests","school_boarding_visitors","school_boarding_meal_plans","school_boarding_meal_assignments","school_boarding_attendance","school_boarding_maintenance"]],
+  [/transport/, "School transport", ["school_transport"]],
+  [/library/, "Library", ["library_loans"]],
+  [/health/, "Student health", ["student_health"]],
+  [/discipline/, "Student discipline", ["student_discipline"]],
+];
+export function SchoolWorkspace(props: { screen: string }) {
+  const hit = SCHOOL_SCREEN_TABLES.find(([re]) => re.test(props.screen));
+  if (!hit) return <SchoolWorkspaceInner {...props} />;
+  return <ModuleGate name={hit[1]} tables={hit[2]}><SchoolWorkspaceInner {...props} /></ModuleGate>;
 }

@@ -21,8 +21,10 @@ export type SifoBooksLicense = {
 
 const LICENSE_FILE = "data/license.json";
 
+// Writable licence/trial files live in the data root chosen by the desktop
+// server (outside Program Files); falls back to the working folder.
 function baseDir() {
-  return process.cwd();
+  return process.env.SIFOBOOKS_DATA_ROOT || process.cwd();
 }
 
 function b64url(input: Buffer | string) {
@@ -36,8 +38,8 @@ function fromB64url(input: string) {
 function publicKeyPem() {
   const configured = process.env.SIFOBOOKS_LICENSE_PUBLIC_KEY;
   if (configured) return configured.replace(/\\n/g, "\n");
-  const path = join(baseDir(), "config", "license-public-key.pem");
-  return existsSync(path) ? readFileSync(path, "utf8") : "";
+  const path = [join(process.cwd(), "config", "license-public-key.pem"), join(baseDir(), "config", "license-public-key.pem")].find((p) => existsSync(p)) || "";
+  return path ? readFileSync(path, "utf8") : "";
 }
 
 export function getDeviceFingerprint() {

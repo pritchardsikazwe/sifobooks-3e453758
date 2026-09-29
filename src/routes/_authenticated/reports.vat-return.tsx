@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, monthRange } from "@/lib/reports";
 import { Input } from "@/components/ui/input";
+import { computeVatReturn, isCountable, vatBillsQuery, vatInvoicesQuery } from "@/lib/tax-reports";
 
 export const Route = createFileRoute("/_authenticated/reports/vat-return")({
   head: () => ({ meta: [{ title: "VAT Return (VAT 3) — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -21,30 +22,17 @@ function VatReturnPage() {
       setLoading(true);
       const { from, to } = monthRange(month);
       const [{ data: inv }, { data: bl }] = await Promise.all([
-        supabase.from("invoices").select("invoice_number,issue_date,subtotal,vat_amount,total,status,customers(name)")
-          .gte("issue_date", from).lte("issue_date", to).neq("status", "draft"),
-        supabase.from("bills").select("bill_number,bill_date,subtotal,vat_amount,total,status,suppliers(name)")
-          .gte("bill_date", from).lte("bill_date", to).neq("status", "draft"),
+        vatInvoicesQuery(supabase, from, to),
+        vatBillsQuery(supabase, from, to),
       ]);
-      setInvoices(inv ?? []); setBills(bl ?? []);
+      setInvoices((inv ?? []).filter(isCountable)); setBills((bl ?? []).filter(isCountable));
       setLoading(false);
     })();
   }, [month]);
 
-  const totals = useMemo(() => {
-    const standardOut = invoices.filter(i => num(i.vat_amount) > 0);
-    const zeroRatedOut = invoices.filter(i => num(i.vat_amount) === 0);
-    const standardIn = bills.filter(b => num(b.vat_amount) > 0);
-    return {
-      salesStandardNet: standardOut.reduce((s, r) => s + num(r.subtotal), 0),
-      salesStandardVat: standardOut.reduce((s, r) => s + num(r.vat_amount), 0),
-      salesZeroRatedNet: zeroRatedOut.reduce((s, r) => s + num(r.subtotal), 0),
-      purchasesNet: standardIn.reduce((s, r) => s + num(r.subtotal), 0),
-      purchasesVat: standardIn.reduce((s, r) => s + num(r.vat_amount), 0),
-    };
-  }, [invoices, bills]);
+  const totals = useMemo(() => computeVatReturn(invoices, bills), [invoices, bills]);
 
-  const netVat = totals.salesStandardVat - totals.purchasesVat;
+  const netVat = totals.netVat;
 
   const rows = [
     { Box: "1. Standard-rated sales (net)", Amount: totals.salesStandardNet.toFixed(2) },
@@ -81,8 +69,8 @@ function VatReturnPage() {
         </table>
       </div>
 
-      <Register title="VAT Output Register (Sales)" rows={invoices} refKey="invoice_number" dateKey="issue_date" party="customers" />
-      <Register title="VAT Input Register (Purchases)" rows={bills} refKey="bill_number" dateKey="bill_date" party="suppliers" />
+      <Register title="VAT Output Register (Sales)" rows={invoices} refKey="number" dateKey="issue_date" party="customers" vatKey="vat_amount" />
+      <Register title="VAT Input Register (Purchases)" rows={bills} refKey="bill_number" dateKey="bill_date" party="suppliers" vatKey="tax_amount" />
     </ReportShell>
   );
 }
@@ -99,7 +87,7 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: "eme
   );
 }
 
-function Register({ title, rows, refKey, dateKey, party }: { title: string; rows: any[]; refKey: string; dateKey: string; party: "customers" | "suppliers" }) {
+function Register({ title, rows, refKey, dateKey, party, vatKey }: { title: string; rows: any[]; refKey: string; dateKey: string; party: "customers" | "suppliers"; vatKey: string }) {
   return (
     <div className="mb-6">
       <div className="text-sm font-semibold text-slate-700 mb-1">{title}</div>
@@ -117,7 +105,7 @@ function Register({ title, rows, refKey, dateKey, party }: { title: string; rows
                   <td className="px-3 py-2 font-mono">{r[refKey]}</td>
                   <td className="px-3 py-2">{r[party]?.name ?? ""}</td>
                   <td className="px-3 py-2 text-right">{fmt(num(r.subtotal))}</td>
-                  <td className="px-3 py-2 text-right">{fmt(num(r.vat_amount))}</td>
+                  <td className="px-3 py-2 text-right">{fmt(num(r[vatKey]))}</td>
                   <td className="px-3 py-2 text-right font-semibold">{fmt(num(r.total))}</td>
                 </tr>
               ))}

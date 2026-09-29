@@ -97,6 +97,13 @@ const REPORTS: Report[] = [
   { id: "inventory-valuation", name: "Stock Valuation", description: "On-hand quantity × recorded cost, per item and location.", to: "/reports/inventory-valuation", icon: Package, category: "inventory" },
   { id: "stock-movement", name: "Stock Movement", description: "Opening, in, out, adjustments and closing by item and location.", to: "/reports/stock-movement", icon: Package, category: "inventory" },
   { id: "stock-reconciliation", name: "Stock Reconciliation", description: "Expected stock from movement history vs actual balances, with variances.", to: "/reports/stock-reconciliation", icon: Package, category: "inventory" },
+  { id: "transfer-register", name: "Transfer Register", description: "Every warehouse → store transfer with route, quantities, value and status.", to: "/reports/transfer-register", icon: Package, category: "inventory" },
+  { id: "pos-stock-depletion", name: "POS Stock Depletion", description: "Stock taken out by till sales and returned by till returns, per item and store.", to: "/reports/pos-stock-depletion", icon: Package, category: "inventory" },
+  { id: "stock-card", name: "Stock Card", description: "Every movement for one item with running balance, cost and user.", to: "/inventory/stock-card", icon: Package, category: "inventory" },
+  { id: "stock-adjustments", name: "Stock Adjustment Register", description: "All stock adjustments with variance, reason and source count.", to: "/stock-adjustments", icon: Package, category: "inventory" },
+  { id: "stock-counts", name: "Stock Take", description: "Physical counts with system vs counted quantities and approval status.", to: "/stock-counts", icon: Package, category: "inventory" },
+  { id: "inventory-flow", name: "Inventory Flow", description: "Trace stock from production through transfers to the till.", to: "/inventory-flow-audit", icon: Package, category: "inventory" },
+  { id: "inventory-gl", name: "Inventory → GL Reconciliation", description: "Stock value versus the inventory account in the ledger.", to: "/inventory/gl-reconciliation", icon: Package, category: "inventory" },
 
   // Expenses
   { id: "expenses-summary", name: "Expenses Summary", description: "Total expenses for the period, by category, with % of total and transaction counts.", to: "/reports/expenses", icon: Receipt, category: "expenses" },

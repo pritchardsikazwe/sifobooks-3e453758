@@ -21,9 +21,11 @@ import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 
 import { fmtMoney } from "@/lib/format";
+import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 import { cn } from "@/lib/utils";
+import { resolveAuthenticatedContext } from "@/lib/workspace-context";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
-import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { loadProfitAndLoss, loadBalanceSheet, loadArAging, loadApAging, loadSalesByBranch, loadSalesByCustomer, loadSalesByItem } from "@/lib/reports/engine";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
@@ -56,7 +58,14 @@ function DashboardPage() {
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [receivables, setReceivables] = useState(0);
   const [payables, setPayables] = useState(0);
+  const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
+  const [zraQueue, setZraQueue] = useState({ pending: 0, failed: 0, submitted: 0 });
+  const [integrity, setIntegrity] = useState({ draft: 0, unbalanced: 0, reversed: 0 });
+  const [management, setManagement] = useState({ branches: [] as any[], customers: [] as any[], products: [] as any[], overdueReceivables: 0, supplierObligations: 0 });
+  const [topCustomers, setTopCustomers] = useState<Array<{ name: string; total: number }>>([]);
+  const [lowStock, setLowStock] = useState<Array<{ name: string; qty: number; reorder: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -64,28 +73,82 @@ function DashboardPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      void ensureStandaloneDemo("accounting").catch((e) => console.error("[standalone-demo:accounting]", e));
+      const ctx = await resolveAuthenticatedContext();
+      if (!ctx?.company) return;
       const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
-             { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
+             { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }, { data: zraRows }, { data: journalRows }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
-        supabase.from("companies").select("name, trading_name, base_currency").eq("user_id", u.user.id).maybeSingle(),
+        supabase.from("companies").select("name, trading_name, base_currency").eq("id", ctx.company.id).maybeSingle(),
         supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
-        supabase.from("stock_items").select("quantity_on_hand, sell_price"),
+        supabase.from("stock_items").select("name, quantity_on_hand, cost_price, reorder_level"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
         supabase.from("suppliers").select("*", { count: "exact", head: true }),
         supabase.from("invoices").select("total, balance_due, status"),
         supabase.from("bills").select("total, balance_due, status"),
+        supabase.from("zra_invoice_queue").select("status"),
+        supabase.from("journal_entries").select("status, total_debit, total_credit, reversal_of"),
       ]);
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
       if (comp) { setCurrency(comp.base_currency || "ZMW"); setCompanyName(comp.trading_name || comp.name); }
+      if (comp) {
+        setCapabilities(await loadBusinessCapabilityState(ctx.company.id, ctx.company.industry || "general"));
+      }
       setTxns((tx ?? []) as Txn[]);
-      setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
+      setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.cost_price || 0), 0));
       setCustomerCount(custCount ?? 0);
       setSupplierCount(suppCount ?? 0);
       setInvoiceCount((invs ?? []).length);
       setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
       setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
+      const customerRows = (await supabase.from("customers").select("id, name")).data ?? [];
+      const customerMap = new Map((customerRows as any[]).map(c => [c.id, c.name]));
+      const totals = new Map<string, number>();
+      (invs ?? []).forEach((inv: any) => { if (inv.customer_id) totals.set(inv.customer_id, (totals.get(inv.customer_id) || 0) + Number(inv.total || 0)); });
+      setTopCustomers(Array.from(totals.entries()).map(([id, total]) => ({ name: customerMap.get(id) ?? "Unknown customer", total })).sort((a, b) => b.total - a.total).slice(0, 5));
+      setLowStock((stk ?? []).map((x: any) => ({ name: x.name || "Unnamed item", qty: Number(x.quantity_on_hand || 0), reorder: Number(x.reorder_level || 0) })).filter(x => x.reorder > 0 && x.qty <= x.reorder).sort((a, b) => a.qty - b.qty).slice(0, 6));
+      const zra = (zraRows ?? []) as Array<{ status?: string }>;
+      const journals = (journalRows ?? []) as Array<{ status?: string; total_debit?: number; total_credit?: number; reversal_of?: string | null }>;
+      setIntegrity({
+        draft: journals.filter(j => String(j.status || "").toLowerCase() === "draft").length,
+        unbalanced: journals.filter(j => Math.abs(Number(j.total_debit || 0) - Number(j.total_credit || 0)) > 0.000001).length,
+        reversed: journals.filter(j => Boolean(j.reversal_of)).length,
+      });
+      setZraQueue({
+        pending: zra.filter(r => ["pending", "queued", "sync_pending"].includes(String(r.status || "").toLowerCase())).length,
+        failed: zra.filter(r => ["failed", "error", "zra_failed", "sync_failed"].includes(String(r.status || "").toLowerCase())).length,
+        submitted: zra.filter(r => ["submitted", "fiscalised", "fiscalized"].includes(String(r.status || "").toLowerCase())).length,
+      });
+
+      try {
+        const now = new Date();
+        const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        const to = now.toISOString().slice(0, 10);
+        const [pnl, bs] = await Promise.all([
+          loadProfitAndLoss({ from, to }),
+          loadBalanceSheet({ to, fyStart: `${now.getFullYear()}-01-01` }),
+        ]);
+        setAccounting({
+          revenue: Number(pnl.facts.revenue || 0), cogs: Number(pnl.facts.cogs || 0),
+          grossProfit: Number(pnl.facts.grossProfit || 0), opex: Number(pnl.facts.opex || 0),
+          netProfit: Number(pnl.facts.netProfit || 0), grossMargin: Number(pnl.facts.grossMargin || 0),
+          assets: Number(bs.facts.assets || 0), liabilities: Number(bs.facts.liabilities || 0),
+          equity: Number(bs.facts.equity || 0), balanced: Boolean(bs.facts.balanced),
+        })
+        try {
+          const [branchReport, customerReport, productReport, arReport, apReport] = await Promise.all([
+            loadSalesByBranch({ from, to }), loadSalesByCustomer({ from, to }), loadSalesByItem({ from, to }),
+            loadArAging({ to }), loadApAging({ to }),
+          ]);
+          const rows = (r: any) => Array.isArray(r?.rows) ? r.rows : [];
+          setManagement({
+            branches: rows(branchReport).slice(0, 5), customers: rows(customerReport).slice(0, 5), products: rows(productReport).slice(0, 5),
+            overdueReceivables: rows(arReport).filter((x: any) => x.due && x.due < to).reduce((s: number, x: any) => s + Number(x.balance || 0), 0),
+            supplierObligations: rows(apReport).reduce((s: number, x: any) => s + Number(x.balance || 0), 0),
+          });
+        } catch (e) { console.warn("Management dashboard reports unavailable:", e); }
+;
+      } catch (e) { console.warn("Accounting dashboard summary unavailable:", e); }
       setLoading(false);
     })();
   }, [navigate]);
@@ -96,6 +159,10 @@ function DashboardPage() {
     const monthTx = txns.filter(t => t.txn_date >= monthStart);
     const revenue = monthTx.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
     const expenses = monthTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+    const todayKey = now.toISOString().slice(0, 10);
+    const todayTx = txns.filter(t => String(t.txn_date).slice(0, 10) === todayKey);
+    const todayIn = todayTx.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+    const todayOut = todayTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const netProfit = revenue - expenses;
     const cashAtBank = txns.reduce((s, t) => s + Number(t.amount), 0);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -104,7 +171,7 @@ function DashboardPage() {
     const lmRev = lm.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
     const lmExp = lm.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const pct = (curr: number, prev: number) => prev === 0 ? 0 : ((curr - prev) / prev) * 100;
-    return { revenue, expenses, netProfit, cashAtBank,
+    return { revenue, expenses, netProfit, cashAtBank, todayIn, todayOut, todayNet: todayIn - todayOut,
       revDelta: pct(revenue, lmRev), expDelta: pct(expenses, lmExp),
       netDelta: pct(netProfit, lmRev - lmExp) };
   }, [txns]);
@@ -144,7 +211,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -160,6 +227,9 @@ function DashboardPage() {
   const spans: Record<string, string> = {
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
+    "today-pulse": "col-span-12",
+    "management-insights": "col-span-12",
+    "operational-intelligence": "col-span-12",
     "sales-chart": "col-span-12 lg:col-span-5",
     "income-vs-expenses": "col-span-12 lg:col-span-4",
     "cash-flow": "col-span-12 lg:col-span-3",
@@ -173,8 +243,11 @@ function DashboardPage() {
   const WIDGET_LABELS: Record<string, string> = {
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
+    "today-pulse": "Today's business pulse",
+    "management-insights": "Management insights",
+    "operational-intelligence": "Operational intelligence",
     "sales-chart": "Sales by month",
-    "income-vs-expenses": "Income vs Expenses",
+    "income-vs-expenses": "Money In vs Money Out",
     "cash-flow": "Cash flow",
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
@@ -191,7 +264,7 @@ function DashboardPage() {
           <div className="min-w-0">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">Quick Actions</span>
             <h2 className="mt-1 text-[20px] font-bold leading-tight tracking-tight text-foreground sm:text-[22px]">What would you like to do?</h2>
-            <p className="mt-1 text-[13px] text-muted-foreground">Quickly manage your business finances.</p>
+            <p className="mt-1 text-[13px] text-muted-foreground">Run the day-to-day work of your business from one place.</p>
           </div>
           <span className="hidden shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:inline">Press ⌘K</span>
         </div>
@@ -210,19 +283,41 @@ function DashboardPage() {
 
     "kpis": (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
-        <SifoKpiCard label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-        <SifoKpiCard label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
-        <SifoKpiCard label="Cash at Bank" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
+        <SifoKpiCard label="Revenue MTD" value={money(accounting.revenue)} icon={TrendingUp} module="sales" hint="Posted revenue" to="/reports/pnl" />
+        <SifoKpiCard label="Cost of Sales" value={money(accounting.cogs)} icon={Package} module="inventory" hint="Posted COGS" to="/reports/pnl" />
+        <SifoKpiCard label="Net Profit MTD" value={money(accounting.netProfit)} icon={PiggyBank} module="accounting" positive={accounting.netProfit >= 0} hint={`${(accounting.grossMargin * 100).toFixed(1)}% gross margin`} to="/reports/pnl" />
+        <SifoKpiCard label="Gross Profit MTD" value={money(accounting.grossProfit)} icon={TrendingUp} module="accounting" positive={accounting.grossProfit >= 0} hint="Revenue less COGS" to="/reports/pnl" />
+        <SifoKpiCard label="Bank Movement" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
         <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
         <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
         <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
-        <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />
+        {capabilities.inventory && <SifoKpiCard label="Inventory at Cost" value={money(stockValue)} icon={Package} module="inventory" hint="On-hand cost value" to="/stock" />}
       </div>
     ),
 
+    "today-pulse": (
+      <Panel title="Today’s Business Pulse" subtitle="Live figures from recorded bank transactions and open documents">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
+          <PulseTile label="Money in today" value={money(stats.todayIn)} tone="positive" />
+          <PulseTile label="Money out today" value={money(stats.todayOut)} tone="negative" />
+          <PulseTile label="Net movement" value={money(stats.todayNet)} tone={stats.todayNet >= 0 ? "positive" : "negative"} />
+          <PulseTile label="Gross profit MTD" value={money(accounting.grossProfit)} tone={accounting.grossProfit >= 0 ? "positive" : "negative"} to="/reports/pnl" />
+          <PulseTile label="Ledger status" value={accounting.balanced ? "Balanced" : "Check"} tone={accounting.balanced ? "positive" : "negative"} to="/reports/trial-balance" />
+          <PulseTile label="Open invoices" value={String(invoiceCount)} to="/invoices" />
+          <PulseTile label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
+          <PulseTile label="Payables" value={money(payables)} to="/reports/aged-payables" />
+          {capabilities.inventory && <PulseTile label="Stock at cost" value={money(stockValue)} to="/stock" />}
+          <PulseTile label="Customers" value={String(customerCount)} to="/customers" />
+          <PulseTile label="ZRA pending" value={String(zraQueue.pending)} tone={zraQueue.pending > 0 ? "negative" : "positive"} to="/compliance" />
+          <PulseTile label="ZRA failed" value={String(zraQueue.failed)} tone={zraQueue.failed > 0 ? "negative" : "positive"} to="/compliance" />
+          <PulseTile label="Draft journals" value={String(integrity.draft)} tone={integrity.draft > 0 ? "negative" : "positive"} to="/journal-entries" />
+          <PulseTile label="Unbalanced journals" value={String(integrity.unbalanced)} tone={integrity.unbalanced > 0 ? "negative" : "positive"} to="/reports/trial-balance" />
+        </div>
+      </Panel>
+    ),
+
     "sales-chart": (
-      <Panel title="Sales by Month" subtitle="Last 12 months">
+      <Panel title="Money In by Month" subtitle="Last 12 months">
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={monthlySeries}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
@@ -235,7 +330,7 @@ function DashboardPage() {
       </Panel>
     ),
     "income-vs-expenses": (
-      <Panel title="Income vs Expenses" subtitle="12-month trend">
+      <Panel title="Money In vs Money Out" subtitle="12-month trend">
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={monthlySeries}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
@@ -250,7 +345,7 @@ function DashboardPage() {
       </Panel>
     ),
     "cash-flow": (
-      <Panel title="Cash Flow" subtitle="Cumulative">
+      <Panel title="Cumulative Net Cash" subtitle="Cumulative">
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={cashFlowSeries}>
             <defs>
@@ -268,7 +363,7 @@ function DashboardPage() {
       </Panel>
     ),
     "revenue-categories": (
-      <Panel title="Revenue Categories" subtitle="Top 5">
+      <Panel title="Money In Categories" subtitle="Top 5">
         {categoryData.length === 0 ? (
           <EmptyState label="No categorised income yet" />
         ) : (
@@ -298,14 +393,45 @@ function DashboardPage() {
         </div>
       </Panel>
     ),
+    "operational-intelligence": (
+      <Panel title="Operational Intelligence" subtitle="Real workload signals from invoices and inventory">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Top customers</div>
+            {topCustomers.length === 0 ? <EmptyState label="No invoiced customers yet" /> : <div className="space-y-1">
+              {topCustomers.map(c => <Row key={c.name} icon={ArrowUpRight} label={c.name} value={money(c.total)} to="/customers" />)}
+            </div>}
+          </div>
+          <div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Low stock</div>
+            {lowStock.length === 0 ? <EmptyState label="No items at or below reorder level" /> : <div className="space-y-1">
+              {lowStock.map(i => <Link key={i.name} to="/stock" className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/50"><span className="text-sm font-medium truncate">{i.name}</span><span className="text-xs font-semibold text-rose-600">{i.qty} / {i.reorder}</span></Link>)}
+            </div>}
+          </div>
+        </div>
+      </Panel>
+    ),
+
+    "management-insights": (
+      <Panel title="Management Insights" subtitle="Completed sales and current receivables/payables">
+        <div className="grid gap-5 xl:grid-cols-3">
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Branches</div>{management.branches.length ? management.branches.map((r:any)=><div key={r.branch} className="flex justify-between py-1.5 text-sm"><span className="truncate">{r.branch}</span><span className="font-semibold">{money(Number(r.gross||0))}</span></div>) : <EmptyState label="No completed branch sales" />}</div>
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Top products</div>{management.products.length ? management.products.map((r:any)=><div key={r.item} className="flex justify-between py-1.5 text-sm"><span className="truncate">{r.item}</span><span className="font-semibold">{money(Number(r.gross||0))}</span></div>) : <EmptyState label="No completed product sales" />}</div>
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Receivables / payables</div><div className="rounded-lg border p-3"><div className="flex justify-between text-sm"><span>Overdue receivables</span><span className="font-semibold text-rose-600">{money(management.overdueReceivables)}</span></div><div className="mt-2 flex justify-between text-sm"><span>Supplier obligations</span><span className="font-semibold">{money(management.supplierObligations)}</span></div></div></div>
+        </div>
+      </Panel>
+    ),
+
     "snapshot": (
       <Panel title="Snapshot" subtitle="Key modules">
         <div className="space-y-1">
           <Row icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" />
+          <Row icon={BookText} label="Assets" value={money(accounting.assets)} to="/reports/balance-sheet" />
+          <Row icon={BookText} label="Liabilities" value={money(accounting.liabilities)} to="/reports/balance-sheet" />
+          <Row icon={BookText} label="Equity" value={money(accounting.equity)} to="/reports/balance-sheet" />
           <Row icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
           <Row icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" />
-          <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />
-          <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />
+          {capabilities.inventory && <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />}\n          {capabilities.hr_payroll && <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />}
           <Row icon={Truck} label="Suppliers" value={String(supplierCount)} to="/suppliers" />
           <Row icon={Wallet} label="Invoices" value={String(invoiceCount)} to="/invoices" />
         </div>
@@ -315,6 +441,12 @@ function DashboardPage() {
       <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
         <div className="space-y-1">
           <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
+          <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
+          <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
+          <Row icon={ShieldCheck} label="ZRA Submitted" value={String(zraQueue.submitted)} to="/compliance" />
+          <Row icon={BookText} label="Draft journals" value={String(integrity.draft)} to="/journal-entries" />
+          <Row icon={BookText} label="Unbalanced journals" value={String(integrity.unbalanced)} to="/reports/trial-balance" />
+          <Row icon={RotateCcw} label="Reversed journals" value={String(integrity.reversed)} to="/journal-entries" />
           <Row icon={ShieldCheck} label="PAYE" value="View" to="/reports/payroll-summary" />
           <Row icon={ShieldCheck} label="NAPSA & NHIMA" value="View" to="/payroll-dashboard" />
           <Row icon={ShieldCheck} label="Tax Summary" value="View" to="/reports/tax-summary" />
@@ -502,6 +634,16 @@ function Panel({ children, title, subtitle, action, className }: { children: Rea
       {children}
     </div>
   );
+}
+
+function PulseTile({ label, value, to, tone = "neutral" }: { label: string; value: string; to?: string; tone?: "positive" | "negative" | "neutral" }) {
+  const content = (
+    <div className="rounded-xl border border-border bg-background/60 p-3 transition-colors hover:bg-muted/40">
+      <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={cn("mt-1 text-sm font-bold tabular-nums", tone === "positive" ? "text-emerald-600 dark:text-emerald-400" : tone === "negative" ? "text-rose-600 dark:text-rose-400" : "text-foreground")}>{value}</div>
+    </div>
+  );
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
 function QuickTile({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExportMenu } from "@/lib/exports";
 import { fmtMoney } from "@/lib/format";
 
@@ -36,20 +37,86 @@ function WarehousesPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ code: "", name: "", location: "", manager: "" });
+  const [contextLoading, setContextLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [branches, setBranches] = useState<Row[]>([]);
+  const [branchId, setBranchId] = useState<string>("");
+  const [form, setForm] = useState({ code: "", name: "", location: "", manager: "", branchId: "" });
 
-  const load = async () => {
-    setLoading(true); setError(null);
+  const loadForBranch = async (selectedBranchId: string) => {
+    setLoading(true);
+    setError(null);
     const { data, error } = await supabase.from("warehouses")
-      .select("id, code, name, location, manager, is_active, created_at")
+      .select("id, code, name, location, manager, is_active, created_at, branch_id")
+      .eq("branch_id", selectedBranchId)
       .order("name");
     if (error) setError(error.message);
     setRows(data ?? []);
     setLoading(false);
   };
 
-  useEffect(() => { void load(); }, []);
+  const loadContextAndWarehouses = async () => {
+    setContextLoading(true);
+    setLoading(true);
+    setError(null);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) {
+      setError("Not signed in");
+      setContextLoading(false); setLoading(false);
+      return;
+    }
 
+    const { data: profile } = await supabase.from("profiles")
+      .select("active_company_id").eq("id", u.user.id).maybeSingle();
+    let cid = (profile?.active_company_id as string | null) ?? null;
+
+    if (!cid) {
+      const { data: owned } = await supabase.from("companies")
+        .select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = owned?.[0]?.id ?? null;
+    }
+    if (!cid) {
+      const { data: membership } = await supabase.from("company_members")
+        .select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = membership?.[0]?.company_id ?? null;
+    }
+
+    if (!cid) {
+      setCompanyId(null); setBranches([]); setRows([]);
+      setError("No active company. Select or create a company first.");
+      setContextLoading(false); setLoading(false);
+      return;
+    }
+
+    setCompanyId(cid);
+    const { data: branchRows, error: branchError } = await supabase.from("branches")
+      .select("id, name, code, city").eq("company_id", cid).order("name");
+
+    if (branchError) {
+      setBranches([]); setRows([]); setError(branchError.message);
+      setContextLoading(false); setLoading(false);
+      return;
+    }
+
+    const nextBranches = (branchRows ?? []) as Row[];
+    setBranches(nextBranches);
+    const ids = nextBranches.map(b => b.id).filter(Boolean);
+
+    if (!ids.length) {
+      setBranchId(""); setRows([]);
+      setError("No branch exists for this company. Create a branch before creating a warehouse.");
+      setContextLoading(false); setLoading(false);
+      return;
+    }
+
+    const currentBranch = branchId && ids.includes(branchId) ? branchId : ids[0];
+    setBranchId(currentBranch);
+    setForm(f => ({ ...f, branchId: currentBranch }));
+    await loadForBranch(currentBranch);
+    setContextLoading(false); setLoading(false);
+  };
+
+  useEffect(() => { void loadContextAndWarehouses(); }, []);
   // Real stock held in the selected warehouse — never a creation screen.
   useEffect(() => {
     if (!selected) { setItems([]); setMovements([]); return; }
@@ -99,23 +166,41 @@ function WarehousesPage() {
   ];
 
   const createWarehouse = async () => {
+    const selectedBranchId = form.branchId || branchId;
+    if (!companyId) return toast.error("Select an active company first");
+    if (!selectedBranchId) return toast.error("Select a branch first");
     if (!form.name.trim()) return toast.error("Name is required");
+
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
-    const { error } = await supabase.from("warehouses").insert({
+
+    const row: Record<string, any> = {
+      id: crypto.randomUUID(),
       user_id: u.user.id,
+      company_id: companyId,
+      branch_id: selectedBranchId,
       code: form.code.trim() || null,
       name: form.name.trim(),
       location: form.location.trim() || null,
       manager: form.manager.trim() || null,
-    });
+      is_active: true,
+    };
+
+    let { error } = await supabase.from("warehouses").insert(row);
+    if (error && /company_id/i.test(String(error.message ?? ""))) {
+      const { company_id: _companyId, ...cloudRow } = row;
+      ({ error } = await supabase.from("warehouses").insert(cloudRow));
+    }
+
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success(`${form.name.trim()} created`);
+    const branchName = branches.find(b => b.id === selectedBranchId)?.name ?? "selected branch";
+    toast.success(form.name.trim() + " created in " + branchName);
     setCreateOpen(false);
-    setForm({ code: "", name: "", location: "", manager: "" });
-    void load();
+    setForm({ code: "", name: "", location: "", manager: "", branchId: selectedBranchId });
+    setBranchId(selectedBranchId);
+    await loadForBranch(selectedBranchId);
   };
 
   return (
@@ -129,6 +214,21 @@ function WarehousesPage() {
         showTabs={false}
         actions={
           <>
+            <div className="min-w-[190px]">
+              <Select value={branchId} onValueChange={v => {
+                setBranchId(v);
+                setForm(f => ({ ...f, branchId: v }));
+                setSelected(null);
+                void loadForBranch(v);
+              }} disabled={contextLoading || branches.length === 0}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select branch" /></SelectTrigger>
+                <SelectContent>
+                  {branches.map(b => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}{b.code ? " · " + b.code : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <ExportMenu
               rows={rows.map(r => ({
                 Code: r.code ?? "", Name: r.name, Location: r.location ?? "",
@@ -274,6 +374,17 @@ function WarehousesPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>New warehouse</DialogTitle></DialogHeader>
           <div className="grid gap-3 py-1">
+            <div className="space-y-1">
+              <Label>Branch *</Label>
+              <Select value={form.branchId || branchId} onValueChange={v => setForm({ ...form, branchId: v })} disabled={branches.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                <SelectContent>
+                  {branches.map(b => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}{b.code ? " · " + b.code : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1"><Label>Code</Label>
                 <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />

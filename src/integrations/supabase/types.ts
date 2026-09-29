@@ -4833,6 +4833,145 @@ export type Database = {
           },
         ]
       }
+      hr_documents: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          document_name: string
+          document_text: string | null
+          document_type: string
+          document_url: string | null
+          employee_id: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          document_name: string
+          document_text?: string | null
+          document_type: string
+          document_url?: string | null
+          employee_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          document_name?: string
+          document_text?: string | null
+          document_type?: string
+          document_url?: string | null
+          employee_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employee_contracts: {
+        Row: {
+          attestation_reference: string | null
+          attestation_status: string
+          attested_at: string | null
+          company_id: string | null
+          contract_number: string
+          contract_type: string
+          created_at: string
+          created_by: string | null
+          document_text: string | null
+          employee_id: string
+          end_date: string | null
+          id: string
+          signed_employee_at: string | null
+          signed_employer_at: string | null
+          start_date: string
+          status: string
+          template_id: string | null
+          termination_date: string | null
+          termination_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attestation_reference?: string | null
+          attestation_status?: string
+          attested_at?: string | null
+          company_id?: string | null
+          contract_number: string
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          document_text?: string | null
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          signed_employee_at?: string | null
+          signed_employer_at?: string | null
+          start_date: string
+          status?: string
+          template_id?: string | null
+          termination_date?: string | null
+          termination_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          attestation_reference?: string | null
+          attestation_status?: string
+          attested_at?: string | null
+          company_id?: string | null
+          contract_number?: string
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          document_text?: string | null
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          signed_employee_at?: string | null
+          signed_employer_at?: string | null
+          start_date?: string
+          status?: string
+          template_id?: string | null
+          termination_date?: string | null
+          termination_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imprest_register: {
         Row: {
           amount_issued: number

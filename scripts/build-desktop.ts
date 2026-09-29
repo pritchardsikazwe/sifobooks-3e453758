@@ -43,7 +43,30 @@ try {
 } catch {
   throw new Error("ImageMagick is required to create the SifoBooks Windows icon. Install ImageMagick and retry.");
 }
-await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console src/desktop/server.ts --outfile ${join(OUT_DIR, exeName)}`;
+// Version/metadata. SIFOBOOKS_VERSION overrides (format YYYY.M.D or x.y.z).
+const appVersion = String(process.env.SIFOBOOKS_VERSION || (() => { const d = new Date(); return `${d.getUTCFullYear()}.${d.getUTCMonth() + 1}.${d.getUTCDate()}`; })());
+const winVersion = (appVersion.split(".").map((n) => String(parseInt(n, 10) || 0)).concat(["0", "0", "0", "0"]).slice(0, 4)).join(".");
+const exePath = join(OUT_DIR, exeName);
+// Icon/metadata flags are only supported by Bun when compiling ON Windows.
+if (process.platform === "win32") {
+  await $`bun build --compile --target=bun-windows-x64 --windows-icon=${iconOutput} --windows-hide-console --windows-title=${productName} --windows-publisher=${"Sifonet Technologies"} --windows-version=${winVersion} --windows-description=${productName + " Enterprise (x64)"} --windows-copyright=${"Copyright (c) 2026 Sifonet Technologies"} src/desktop/server.ts --outfile ${exePath}`;
+} else {
+  console.warn("Cross-compiling from non-Windows host: icon/version resources are not embedded (shortcuts use SifoBooks.ico).");
+  await $`bun build --compile --target=bun-windows-x64 src/desktop/server.ts --outfile ${exePath}`;
+  // Hide the black console window: flip the PE optional-header Subsystem from
+  // WINDOWS_CUI (3) to WINDOWS_GUI (2). Same effect as --windows-hide-console.
+  // Set SIFOBOOKS_CONSOLE=1 to keep a visible console for debugging.
+  if (process.env.SIFOBOOKS_CONSOLE !== "1") {
+    const buf = readFileSync(exePath);
+    const pe = buf.readUInt32LE(0x3c);
+    if (buf.toString("latin1", pe, pe + 4) !== "PE\0\0") throw new Error("Unexpected EXE format; cannot hide console.");
+    const subsystemOffset = pe + 24 + 68;
+    const current = buf.readUInt16LE(subsystemOffset);
+    if (current === 3) { buf.writeUInt16LE(2, subsystemOffset); writeFileSync(exePath, buf); console.log("Console window hidden (GUI subsystem)."); }
+    else console.log(`EXE subsystem already ${current}; left unchanged.`);
+  }
+}
+writeFileSync(join(OUT_DIR, "version.json"), JSON.stringify({ product: "SifoBooks", edition: editionSlug, version: appVersion, fileVersion: winVersion, arch: "x64", publisher: "Sifonet Technologies", builtAt: new Date().toISOString(), consoleHidden: process.platform === "win32" || process.env.SIFOBOOKS_CONSOLE !== "1" }, null, 2));
 
 console.log("\nStep 2b/4: Preparing lightweight browser-based Windows launcher...\n");
 console.log("\\nStep 3/4: Copying application files...\\n");
@@ -54,7 +77,7 @@ copyDir("dist/client", CLIENT_DIR);
 const protectedSchema = gzipSync(readFileSync("src/lib/db/schema.sql"));
 writeFileSync(join(OUT_DIR, ".sifobooks-schema.bin"), protectedSchema);
 const migrationFiles = existsSync("src/lib/db/migrations")
-  ? readdirSync("src/lib/db/migrations").filter((name) => /^\\d+_.*\\.sql$/.test(name)).sort()
+  ? readdirSync("src/lib/db/migrations").filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
   : [];
 const migrationBundle = migrationFiles.map((name) => ({ name, sql: readFileSync(join("src/lib/db/migrations", name), "utf8") }));
 writeFileSync(join(OUT_DIR, ".sifobooks-migrations.bin"), gzipSync(Buffer.from(JSON.stringify(migrationBundle), "utf8")));
@@ -98,6 +121,22 @@ writeFileSync(join(OUT_DIR, "Start-SifoBooks.vbs"), [
   "End If",
   "Set fso = Nothing",
   "Set shell = Nothing",
+].join("\r\n"));
+writeFileSync(join(OUT_DIR, "Stop-SifoBooks.ps1"), [
+  "# Cleanly stops the local SifoBooks runtime (closes database, removes port file).",
+  "$ErrorActionPreference = 'SilentlyContinue'",
+  "$appDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
+  "$dataDir = if ($env:SIFOBOOKS_DATA_DIR) { $env:SIFOBOOKS_DATA_DIR } elseif (Test-Path (Join-Path $appDir 'portable.flag')) { $appDir } else { Join-Path $env:ProgramData 'SifoBooks' }",
+  "$dataDir = Join-Path $dataDir 'data'",
+  "$portFile = Join-Path $dataDir 'desktop-port.txt'",
+  "$tokenFile = Join-Path $dataDir 'desktop-shutdown.token'",
+  "if ((Test-Path $portFile) -and (Test-Path $tokenFile)) {",
+  "  $port = (Get-Content $portFile -Raw).Trim()",
+  "  $token = (Get-Content $tokenFile -Raw).Trim()",
+  "  try { Invoke-RestMethod -Method Post -Uri \"http://127.0.0.1:$port/api/desktop/shutdown\" -Headers @{ 'x-sifobooks-shutdown' = $token } -TimeoutSec 5 | Out-Null; Start-Sleep -Seconds 2 } catch {}",
+  "}",
+  `Get-Process -Name '${productName}' -ErrorAction SilentlyContinue | Stop-Process -ErrorAction SilentlyContinue`,
+  "",
 ].join("\r\n"));
 writeFileSync(join(OUT_DIR, "Create-SifoBooks-Shortcut.ps1"), [
   "$ErrorActionPreference = 'Stop'",

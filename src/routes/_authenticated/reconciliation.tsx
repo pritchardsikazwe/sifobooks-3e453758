@@ -206,14 +206,20 @@ function Reconciliation() {
     const inflow = filtered.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
     const outflow = filtered.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Number(t.amount), 0);
     const rec = filtered.filter(t => t.reconciled).length;
-    return { inflow, outflow, rec, total: filtered.length };
+    const unreconciled = filtered.length - rec;
+    return { inflow, outflow, rec, unreconciled, total: filtered.length };
   }, [filtered]);
 
   const scoreCandidate = (t: Txn, c: Candidate): Scored | null => {
-    const amt = Math.abs(Number(t.amount));
+    const txnAmount = Number(t.amount);
+    const amt = Math.abs(txnAmount);
     const cAmt = Math.abs(c.amount);
     const amtDiff = Math.abs(cAmt - amt);
     const dayDiff = Math.abs(new Date(c.date).getTime() - new Date(t.txn_date).getTime()) / 86400000;
+    // Do not suggest a receipt for a bank payment or a bill payment for a deposit.
+    // Journal entries remain eligible because their bank-side direction depends on the posting.
+    if (c.kind === "receipt" && txnAmount < 0) return null;
+    if (c.kind === "bill_payment" && txnAmount > 0) return null;
     if (amtDiff > amountTol || dayDiff > dateTol) return null;
     let score = 0;
     const exactAmt = amtDiff < 0.01;
@@ -490,6 +496,13 @@ function Reconciliation() {
   return (
     <div className="p-6 space-y-6">
       <SifoHubTabs hub="finance" active="/reconciliation" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Transactions</div><div className="mt-1 text-xl font-semibold">{totals.total}</div><div className="text-xs text-muted-foreground">in selected period</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Reconciled</div><div className="mt-1 text-xl font-semibold text-emerald-700">{totals.rec}</div><div className="text-xs text-muted-foreground">matched or confirmed</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">To review</div><div className="mt-1 text-xl font-semibold text-amber-700">{totals.unreconciled}</div><div className="text-xs text-muted-foreground">not yet reconciled</div></CardContent></Card>
+        <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Net movement</div><div className="mt-1 text-xl font-semibold">{(totals.inflow + totals.outflow).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div className="text-xs text-muted-foreground">inflow less outflow</div></CardContent></Card>
+      </div>
+
       <SifoModuleHeader
         module="accounting"
         icon={Scale}

@@ -1,250 +1,204 @@
-// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Menu, X } from "lucide-react";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SifoMark, SifoWordmark, Eyebrow, SectionHead } from "@/components/landing/SifoBrand";
 import {
-  SifoFeatureGrid, SifoHero, SifoProductTabs, SifoTrust,
-} from "@/components/landing/SifoLandingShowcase";
-import { SifoIndustryRegistration } from "@/components/landing/SifoIndustryRegistration";
-import { SifoPayrollProduct } from "@/components/landing/SifoPayrollProduct";
+  ArrowRight, BarChart3, Building2, CheckCircle2, ChefHat, CircleDollarSign, ClipboardCheck,
+  FileText, GraduationCap, Hotel, Package, ReceiptText, ShieldCheck, ShoppingCart,
+  Smartphone, Users, Utensils, WalletCards, Wifi, Zap
+} from "lucide-react";
 
-const NAV = [
-  { label: "Platform", href: "#platform" },
-  { label: "Solutions", href: "#solutions" },
-  { label: "Payroll", href: "#payroll" },
-  { label: "Industries", href: "#industries" },
-  { label: "Features", href: "#features" },
-  { label: "Compliance", href: "#compliance" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Resources", href: "#resources" },
-];
+const modules = [
+  ["Accounting", "General Ledger, Reports & Financials", CircleDollarSign],
+  ["POS", "Retail & Supermarket Point of Sale", ShoppingCart],
+  ["Restaurant", "Table Orders, Kitchen Display", Utensils],
+  ["Payroll", "Employees, PAYE, NAPSA, NHIMA", Users],
+  ["ZRA Compliance", "Smart Invoice, VAT & Returns", ReceiptText],
+  ["Inventory", "Stock Control, Warehouses", Package],
+  ["Consultants", "Multi-Company, Client Management", Building2],
+  ["All-in-One", "One subscription, multiple businesses", Zap],
+] as const;
+
+const industries = [
+  ["Retail & POS", "Shops & Supermarkets", ShoppingCart],
+  ["Restaurant", "Cafés & Bars", Utensils],
+  ["Hotel", "Accommodation", Hotel],
+  ["School", "Education Institutions", GraduationCap],
+  ["Property", "Rentals & Estates", Building2],
+  ["Microfinance", "SACCOs & Lending", WalletCards],
+  ["Manufacturing", "Production & Inventory", Package],
+  ["Services", "Agencies & NGOs", BriefcaseIcon],
+] as const;
+
+function BriefcaseIcon({ className }: { className?: string }) {
+  return <Zap className={className} />;
+}
 
 export function SifoLandingHome() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-sifo-ink font-sans text-white">
-      <SiteHeader />
-      <SifoHero />
-      <LogoBand />
-      <SifoProductTabs />
-      <div id="solutions"><SifoFeatureGrid /></div>
-      <SifoPayrollProduct />
-      <SifoIndustryRegistration />
-      <div id="compliance"><SifoTrust /></div>
-      <Pricing />
+    <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
+      <Header />
+      <Hero />
+      <ModuleGrid />
+      <IndustryGrid />
+      <Compliance />
+      <Screens />
       <FinalCta />
-      <SiteFooter />
+      <Footer />
     </main>
   );
 }
 
-/* ── header ───────────────────────────────────────────────────── */
-
-function SiteHeader() {
-  const [open, setOpen] = useState(false);
+function Header() {
+  const nav = ["Home", "Features", "Industries", "Compliance", "Pricing", "Resources", "Support"];
   return (
-    <header className="sticky top-0 z-50 border-b border-sifo-line/70 bg-sifo-ink/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-3 sm:px-6">
-        <Link to="/" aria-label="SifoBooks home" className="shrink-0">
-          <SifoWordmark />
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#061f1a]/95 text-white backdrop-blur-xl">
+      <div className="mx-auto flex h-[72px] max-w-[1450px] items-center gap-5 px-5 sm:px-8">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+          <div className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-400/30 bg-emerald-950 text-white shadow-lg">
+            <span className="text-xl font-black">S</span>
+          </div>
+          <div className="leading-none">
+            <div className="text-[21px] font-extrabold tracking-tight">Sifo<span className="text-emerald-300">Books</span></div>
+            <div className="mt-1 hidden text-[8px] font-bold uppercase tracking-[.2em] text-emerald-100/50 sm:block">Accounting · POS · ERP</div>
+          </div>
         </Link>
-
-        <nav aria-label="Main" className="ml-4 hidden flex-1 items-center gap-0.5 xl:flex">
-          {NAV.map((n) => (
-            <a key={n.label} href={n.href} className="rounded-lg px-3 py-2 text-[13px] font-semibold text-sifo-haze transition-colors hover:bg-white/5 hover:text-white">
-              {n.label}
-            </a>
-          ))}
+        <nav className="hidden flex-1 items-center gap-1 lg:flex">
+          {nav.map((n, i) => <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${i === 0 ? "text-emerald-300" : "text-emerald-50/70 hover:bg-white/5 hover:text-white"}`}>{n}</a>)}
         </nav>
-
         <div className="ml-auto flex items-center gap-2">
-          <Link to="/demo" className="sifo-btn sifo-btn-quiet hidden !px-3 !py-2 lg:inline-flex">Demos</Link>
-          <Link to="/auth" search={{ tab: "signin" }} className="sifo-btn sifo-btn-ghost !px-4 !py-2">Sign in</Link>
-          <Link to="/auth" search={{ tab: "signup" }} className="sifo-btn sifo-btn-primary !px-4 !py-2">Start free</Link>
-
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <button aria-label="Open menu" className="sifo-btn sifo-btn-ghost !px-2.5 !py-2 xl:hidden">
-                <Menu className="h-4 w-4" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[19rem] border-sifo-line bg-sifo-ink p-0 text-white">
-              <SheetTitle className="sr-only">SifoBooks navigation</SheetTitle>
-              <div className="flex items-center justify-between border-b border-sifo-line/70 px-5 py-4">
-                <SifoWordmark />
-                <button aria-label="Close menu" onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-sifo-haze hover:bg-white/5 hover:text-white">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <nav className="flex flex-col p-3">
-                {NAV.map((n) => (
-                  <a key={n.label} href={n.href} onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-3 text-sm font-semibold text-sifo-haze transition-colors hover:bg-white/5 hover:text-white">
-                    {n.label}
-                  </a>
-                ))}
-              </nav>
-              <div className="space-y-2 border-t border-sifo-line/70 p-4">
-                <Link to="/demo" onClick={() => setOpen(false)} className="sifo-btn sifo-btn-ghost w-full">See a demo</Link>
-                <Link to="/auth" search={{ tab: "signin" }} onClick={() => setOpen(false)} className="sifo-btn sifo-btn-ghost w-full">Sign in</Link>
-                <Link to="/auth" search={{ tab: "signup" }} onClick={() => setOpen(false)} className="sifo-btn sifo-btn-primary w-full">Start free</Link>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <Link to="/auth" search={{ tab: "signin" }} className="hidden rounded-xl border border-white/15 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/5 sm:inline-flex">Sign in</Link>
+          <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/30 hover:from-emerald-300 hover:to-emerald-500">Start free</Link>
+          <button aria-label="Open navigation" className="grid h-11 w-11 place-items-center rounded-xl border border-white/15 bg-white/5 lg:hidden">
+            <span className="text-xl leading-none">☰</span>
+          </button>
         </div>
       </div>
     </header>
   );
 }
 
-/* ── capability band ──────────────────────────────────────────── */
-
-function LogoBand() {
-  const items = ["Accounting", "Point of sale", "Inventory", "Payroll & HR", "Banking", "Purchasing", "Fixed assets", "Compliance"];
+function Hero() {
   return (
-    <div className="border-y border-sifo-line/60 bg-sifo-ink-2/70">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-7 gap-y-2 px-5 py-4 sm:px-6">
-        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-sifo-copper">In the box</span>
-        {items.map((i) => (
-          <span key={i} className="text-[12px] font-semibold text-sifo-haze/80">{i}</span>
-        ))}
+    <section className="relative overflow-hidden bg-[#061f1a] text-white">
+      <div className="absolute inset-0 opacity-80 bg-[linear-gradient(rgba(108,174,154,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(108,174,154,.08)_1px,transparent_1px)] bg-[size:72px_72px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_20%,rgba(22,163,74,.28),transparent_32%),radial-gradient(circle_at_10%_80%,rgba(234,179,8,.10),transparent_30%)]" />
+      <div className="relative mx-auto grid max-w-[1450px] items-center gap-10 px-5 pb-12 pt-14 sm:px-8 sm:pb-16 sm:pt-20 lg:min-h-[690px] lg:grid-cols-[.9fr_1.1fr] lg:py-20">
+        <div className="relative z-10 max-w-[680px]">
+          <div className="mb-7 inline-flex items-center rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-amber-300">
+            🇿🇲 Built in Zambia for Zambian business
+          </div>
+          <h1 className="max-w-[720px] text-[50px] font-black leading-[.93] tracking-[-.055em] sm:text-6xl lg:text-[72px]">
+            One platform.<br />
+            <span className="text-emerald-300">Every operation.</span><br />
+            Fully accounted<br className="sm:hidden" /> for.
+          </h1>
+          <p className="mt-7 max-w-[650px] text-[18px] leading-8 text-emerald-50/65 sm:text-xl">
+            SifoBooks runs the till, the stores, the payroll and the ledger on one record — so the figure a manager sees on the floor is the same figure the accountant files with ZRA.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link to="/auth" search={{ tab: "signup" }} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-600 px-7 text-base font-extrabold text-white shadow-xl shadow-emerald-950/40">
+              Start free <ArrowRight className="h-5 w-5" />
+            </Link>
+            <a href="#features" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/[.02] px-7 text-base font-bold text-white hover:bg-white/5">
+              <span className="text-xl">◈</span> Explore platform
+            </a>
+            <a href="#screens" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 px-7 text-base font-extrabold text-slate-950 shadow-xl shadow-amber-950/30">
+              <span className="text-lg">▷</span> See demo
+            </a>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-white/10 pt-7 sm:grid-cols-4">
+            <HeroStat value="Multi-company" label="One login, multiple businesses" />
+            <HeroStat value="Branches" label="Centralised branch operations" />
+            <HeroStat value="POS + ERP" label="Sales connected to accounts" />
+            <HeroStat value="Zambia" label="Built around local compliance" />
+          </div>
+        </div>
+        <HeroDashboard />
+      </div>
+    </section>
+  );
+}
+
+function HeroStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <div className="text-base font-extrabold text-white sm:text-lg">{value}</div>
+      <div className="mt-1 text-[10px] leading-4 text-emerald-100/45 sm:text-[11px]">{label}</div>
+    </div>
+  );
+}
+
+function HeroDashboard() {
+  const kpis = [["Sales", "ZMW 125,430", "+12%"], ["Stock", "ZMW 84,200", "Healthy"], ["Payroll", "ZMW 46,890", "Processed"], ["ZRA", "Synced", "Ready"]];
+  return (
+    <div className="relative hidden min-h-[520px] lg:block">
+      <div className="absolute right-[-6%] top-[3%] w-[108%] rotate-[-2deg] rounded-[30px] border border-white/20 bg-white p-2 shadow-[0_40px_110px_rgba(0,0,0,.5)]">
+        <div className="overflow-hidden rounded-[22px] bg-slate-50">
+          <div className="flex h-11 items-center border-b bg-white px-4"><div className="text-[9px] font-bold text-slate-500">SifoBooks · Business Control Centre</div><div className="ml-auto flex gap-1.5"><span className="h-2 w-2 rounded-full bg-red-300"/><span className="h-2 w-2 rounded-full bg-amber-300"/><span className="h-2 w-2 rounded-full bg-emerald-500"/></div></div>
+          <div className="grid grid-cols-[122px_1fr]">
+            <div className="bg-[#003b32] p-3"><div className="mb-6 text-xs font-black text-white">SifoBooks</div>{["Dashboard","Sales & POS","Purchases","Inventory","Accounting","Payroll","ZRA","NAPSA","NHIMA","Reports"].map((x,i)=><div key={x} className={`mb-1 rounded-md px-2 py-1.5 text-[7px] font-semibold ${i===0?"bg-emerald-400/20 text-white":"text-emerald-100/60"}`}>{x}</div>)}</div>
+            <div className="p-4">
+              <div className="mb-4 flex items-end justify-between"><div><div className="text-[8px] text-slate-400">SifoBooks Business</div><div className="text-base font-black text-slate-900">Operations Overview</div></div><div className="rounded-md border bg-white px-2 py-1 text-[8px]">September 2026</div></div>
+              <div className="grid grid-cols-4 gap-2">{kpis.map(k=><div key={k[0]} className="rounded-xl border bg-white p-2.5 shadow-sm"><div className="text-[7px] text-slate-400">{k[0]}</div><div className="mt-1 text-[11px] font-black text-slate-900">{k[1]}</div><div className="mt-1 text-[7px] font-bold text-emerald-600">{k[2]}</div></div>)}</div>
+              <div className="mt-3 grid grid-cols-[1.4fr_.6fr] gap-3">
+                <div className="rounded-xl border bg-white p-3"><div className="mb-2 text-[8px] font-bold text-slate-800">Money in vs money out</div><div className="flex h-32 items-end gap-1.5">{[38,52,44,62,57,74,68,86,94].map((h,i)=><div key={i} className="flex-1 rounded-t bg-emerald-600/80" style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[6px] text-slate-400">Jan Feb Mar Apr May Jun Jul Aug Sep</div></div>
+                <div className="rounded-xl border bg-white p-3"><div className="text-[8px] font-bold text-slate-800">Connected operations</div><div className="mt-4 space-y-2">{["POS → Sales","Stock → COGS","Payroll → Ledger","Invoice → ZRA"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-[7px] font-bold text-slate-600">{x}<span className="float-right text-emerald-600">✓</span></div>)}</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute bottom-[-1%] left-[1%] z-20 w-[180px] rounded-[25px] border-4 border-white bg-[#063f35] p-3 shadow-2xl">
+        <div className="mb-2 flex items-center justify-between text-[8px] font-bold text-white"><span>SifoBooks Mobile</span><Smartphone className="h-3 w-3"/></div>
+        <div className="rounded-xl bg-white p-3 text-slate-900"><div className="text-[7px] text-slate-400">Today's Sales</div><div className="mt-1 text-lg font-black">ZMW 12,450</div><div className="mt-1 text-[7px] font-bold text-emerald-600">+18%</div><div className="mt-3 grid grid-cols-2 gap-1.5">{["POS","Invoice","Payroll","Reports"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-center text-[7px] font-bold">{x}</div>)}</div></div>
       </div>
     </div>
   );
 }
 
-/* ── pricing ──────────────────────────────────────────────────── */
-
-function Pricing() {
-  const tiers = [
-    { name: "Starter", who: "Single shop or office finding its feet.", has: ["One company, one branch", "Accounting, sales, purchases", "Point of sale and stock", "Standard reports"], cta: "Start free", accent: false },
-    { name: "Business", who: "Growing operations with staff and stores.", has: ["Multiple branches and warehouses", "Payroll, HR and approvals", "Bank reconciliation", "Full report pack and exports"], cta: "Start free", accent: true },
-    { name: "Payroll only", who: "Pay staff properly without buying the whole system.", has: ["Employees, grades and pay components", "Gross-to-net runs, review and approval", "Payslips and payment batches", "PAYE, NAPSA and NHIMA returns"], cta: "Start with Payroll", accent: false },
-    { name: "Industry", who: "Hotels, restaurants, schools and mining.", has: ["Everything in Business", "Industry workspace of your choice", "Compliance and licence register", "Smart Invoice queue setup"], cta: "Talk to us", accent: false },
-  ];
-  return (
-    <section id="pricing" className="relative border-t border-sifo-line/60 bg-sifo-ink py-16 sifo-edge md:py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-6">
-        <SectionHead
-          eyebrow="Pricing"
-          align="center"
-          title="Pay for the shape of your business"
-          lede="Pricing scales with companies, users and the modules you switch on. Tell us your setup and we will quote it in kwacha — no per-feature surprises."
-        />
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {tiers.map((t) => (
-            <div key={t.name} className={`relative rounded-2xl border p-6 ${t.accent ? "border-sifo-mint/35 bg-sifo-mint/6" : "border-sifo-line/70 bg-sifo-ink-2"}`}>
-              {t.accent ? <span className="absolute -top-2.5 left-6 rounded-full bg-sifo-green px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Most chosen</span> : null}
-              <h3 className="font-display text-lg font-bold tracking-tight text-white">{t.name}</h3>
-              <p className="mt-1.5 text-[13px] leading-6 text-sifo-haze">{t.who}</p>
-              <ul className="mt-4 space-y-2">
-                {t.has.map((h) => (
-                  <li key={h} className="flex gap-2 text-[13px] font-medium text-white/85">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sifo-mint" /> {h}
-                  </li>
-                ))}
-              </ul>
-              {t.name === "Payroll only" ? (
-                <div className="mt-4 rounded-lg border border-sifo-line/70 bg-sifo-ink px-3 py-2 text-[12px] leading-5 text-sifo-haze">
-                  Upgrade to full SifoBooks at any time — payroll history carries over.
-                </div>
-              ) : null}
-              {t.cta === "Talk to us"
-                ? <a href="#contact" className="sifo-btn sifo-btn-ghost mt-6 w-full">{t.cta}</a>
-                : <Link to="/auth" search={{ tab: "signup" }} className={`sifo-btn mt-6 w-full ${t.accent ? "sifo-btn-primary" : "sifo-btn-ghost"}`}>{t.cta}</Link>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+function ModuleGrid() {
+  return <section id="features" className="bg-white py-10 sm:py-12"><div className="mx-auto max-w-[1450px] px-5 sm:px-8"><div className="mb-5 flex items-end justify-between"><div><h2 className="text-2xl font-black tracking-tight sm:text-3xl">Complete Solution for Every Business Need</h2><p className="mt-1 text-sm text-slate-500">All the tools you need in one powerful system — designed for Zambian businesses, consultants and organisations.</p></div><a href="#screens" className="hidden text-sm font-bold text-emerald-700 sm:block">Explore all modules →</a></div><div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">{modules.map(([name,sub,Icon])=><div key={name} className="group rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-[0_6px_24px_rgba(15,23,42,.06)] transition hover:-translate-y-1 hover:border-emerald-200"><div className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white"><Icon className="h-5 w-5"/></div><div className="mt-3 text-xs font-extrabold">{name}</div><div className="mt-1 text-[9px] leading-4 text-slate-500">{sub}</div></div>)}</div></div></section>;
 }
 
-/* ── final CTA ────────────────────────────────────────────────── */
+function IndustryGrid() {
+  return <section id="industries" className="bg-slate-50 py-12"><div className="mx-auto max-w-[1450px] px-5 sm:px-8"><div className="mb-6 flex items-end justify-between"><div><h2 className="text-3xl font-black tracking-tight">Solutions for Every Industry</h2><p className="mt-1 text-sm text-slate-500">One connected platform with specialised workspaces.</p></div><span className="hidden text-sm font-bold text-emerald-700 sm:block">Built for real businesses in Zambia →</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">{industries.map(([name,sub,Icon])=><div key={name} className="relative min-h-[118px] overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-emerald-950 via-emerald-800 to-emerald-600 p-4 text-white shadow-lg"><div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-amber-300/20"/><Icon className="relative h-7 w-7 text-amber-300"/><div className="relative mt-6 text-xs font-extrabold">{name}</div><div className="relative mt-1 text-[9px] text-emerald-50/75">{sub}</div></div>)}</div></div></section>;
+}
+
+function Compliance() {
+  const items = ["ZRA Smart Invoice & VAT Returns", "PAYE Calculations & Submissions", "NAPSA Contributions", "NHIMA Contributions", "Employee Tax Certificates (TP10)", "Compliance Reports & Audit Trail"];
+  return <section id="compliance" className="bg-white py-14 sm:py-20"><div className="mx-auto grid max-w-[1450px] items-center gap-10 px-5 sm:px-8 lg:grid-cols-[.85fr_1.15fr]"><div><div className="text-xs font-extrabold uppercase tracking-[.18em] text-emerald-700">Stay compliant in Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Compliance without the paperwork maze.</h2><p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Keep statutory workflows visible in the same system as accounting, payroll and sales.</p><ul className="mt-6 space-y-3">{items.map(x=><li key={x} className="flex items-center gap-3 text-sm font-semibold text-slate-700"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600"/>{x}</li>)}</ul></div><ComplianceMockup/></div></section>;
+}
+
+function ComplianceMockup() {
+  return <div className="relative rounded-[30px] border border-slate-200 bg-slate-50 p-4 shadow-[0_25px_80px_rgba(15,23,42,.12)]"><div className="absolute -top-5 right-6 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white shadow-lg">✓ ZRA Smart Invoice Ready</div><div className="grid gap-3 md:grid-cols-[1fr_220px]"><div className="rounded-2xl border bg-white p-4"><div className="flex items-center justify-between border-b pb-3"><div className="text-sm font-black">Sales Invoice</div><div className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[9px] font-bold text-white">Submit to ZRA</div></div><div className="mt-4 grid grid-cols-2 gap-3 text-[9px]"><span>Customer<br/><b>ABC Supplies Ltd</b></span><span>Invoice Date<br/><b>25 Sep 2026</b></span><span>Invoice No.<br/><b>INV-00045</b></span><span>Branch<br/><b>Ndola</b></span></div><div className="mt-4 overflow-hidden rounded-lg border"><div className="grid grid-cols-4 bg-slate-50 p-2 text-[8px] font-bold"><span>Item</span><span>Qty</span><span>VAT</span><span>Total</span></div>{["Maize Meal","Cooking Oil","Sugar"].map((x,i)=><div key={x} className="grid grid-cols-4 border-t p-2 text-[8px]"><span>{x}</span><span>{[12,5,8][i]}</span><span>16%</span><b>{["1,392","1,450","1,670"][i]}</b></div>)}</div><div className="mt-3 text-right text-sm font-black">ZMW 4,524.00</div></div><div className="rounded-2xl border bg-white p-5"><div className="text-[9px] font-black">ZRA SMART INVOICE</div><div className="mt-4 grid h-36 place-items-center rounded-lg border-2 border-dashed text-xs font-black text-slate-400">QR CODE</div><div className="mt-3 text-[8px] text-slate-500">Fiscal reference and receipt data appear here after a successful ZRA response.</div></div></div><div className="mt-4 grid grid-cols-3 gap-3">{[["ZRA","Smart Invoice"],["NAPSA","Contributions"],["NHIMA","Contributions"]].map(x=><div key={x[0]} className="rounded-xl border bg-white p-3 text-center"><div className="text-lg font-black text-emerald-800">{x[0]}</div><div className="text-[8px] text-slate-500">{x[1]}</div></div>)}</div></div>;
+}
+
+function Screens() {
+  return <section id="screens" className="bg-slate-50 py-14 sm:py-20"><div className="mx-auto max-w-[1450px] px-5 sm:px-8"><div className="mb-7"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-emerald-700">See SifoBooks in action</div><h2 className="mt-2 text-4xl font-black tracking-tight">Modern screens for real business operations.</h2><p className="mt-2 text-sm text-slate-500">Clean workflows for cashiers, restaurant teams, payroll officers and accountants.</p></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><PosScreen/><RestaurantScreen/><PayrollScreen/><ReportsScreen/></div></div></section>;
+}
+
+function ScreenFrame({ children, title, sub }: any) {
+  return <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_15px_45px_rgba(15,23,42,.09)]"><div className="flex items-center gap-2 border-b bg-white px-3 py-2"><span className="h-2 w-2 rounded-full bg-red-300"/><span className="h-2 w-2 rounded-full bg-amber-300"/><span className="h-2 w-2 rounded-full bg-emerald-500"/><span className="ml-auto text-[8px] font-bold text-slate-400">{title}</span></div><div className="min-h-[215px] bg-slate-50 p-3">{children}</div><div className="border-t bg-white p-3"><div className="text-sm font-black">{title}</div><div className="mt-1 text-[10px] text-slate-500">{sub}</div></div></div>;
+}
+
+function PosScreen() {
+  return <ScreenFrame title="POS Screen" sub="Fast, simple and reliable"><div className="grid h-[175px] grid-cols-[.7fr_1.3fr] gap-2"><div className="rounded-lg bg-[#003b32] p-2 text-white">{["Dashboard","Products","Customers","Sales","Reports"].map(x=><div key={x} className="mb-1 rounded bg-white/10 px-2 py-1 text-[7px]">{x}</div>)}</div><div className="rounded-lg border bg-white p-2"><div className="grid grid-cols-3 gap-1">{["Burger","Chips","Coke","Water","Chicken","Coffee"].map(x=><div key={x} className="rounded border p-2 text-center text-[7px] font-bold">{x}</div>)}</div><div className="mt-2 rounded bg-emerald-50 p-2 text-[8px] font-bold">Cart · ZMW 140.00</div><div className="mt-2 rounded bg-emerald-700 p-2 text-center text-[8px] font-bold text-white">Complete Sale</div></div></div></ScreenFrame>;
+}
+
+function RestaurantScreen() {
+  return <ScreenFrame title="Restaurant Screen" sub="Table orders & kitchen display"><div className="grid h-[175px] grid-cols-[.7fr_1.3fr] gap-2"><div className="grid grid-cols-3 gap-1">{["T1","T2","T3","T4","T5","T6","T7","T8","T9"].map(x=><div key={x} className="grid place-items-center rounded-lg border bg-white text-[8px] font-black text-emerald-800">{x}</div>)}</div><div className="rounded-lg border bg-white p-2"><div className="text-[8px] font-black">Kitchen Display</div>{["2× Chicken Burger","1× Chips","2× Coffee"].map((x,i)=><div key={x} className={`mt-1 rounded p-2 text-[7px] font-bold ${i===0?"bg-amber-100":"bg-emerald-50"}`}>{x}<span className="float-right">{i===0?"Preparing":"New"}</span></div>)}</div></div></ScreenFrame>;
+}
+
+function PayrollScreen() {
+  return <ScreenFrame title="Payroll Screen" sub="Employees, PAYE, NAPSA, NHIMA"><div className="rounded-lg border bg-white"><div className="grid grid-cols-5 bg-slate-50 p-2 text-[7px] font-bold"><span>Employee</span><span>PAYE</span><span>NAPSA</span><span>NHIMA</span><span>Net Pay</span></div>{["Chanda M.","Mulenga B.","Kasonde A.","Tembo R."].map((x,i)=><div key={x} className="grid grid-cols-5 border-t p-2 text-[7px]"><span className="font-bold">{x}</span><span>{[650,1200,520,980][i]}</span><span>{[500,700,450,600][i]}</span><span>{[450,630,405,540][i]}</span><span className="font-bold">{[3400,4470,3125,3880][i]}</span></div>)}</div><div className="mt-2 flex gap-1"><span className="rounded bg-emerald-700 px-2 py-1 text-[7px] font-bold text-white">Process Payroll</span><span className="rounded border px-2 py-1 text-[7px] font-bold">Generate Returns</span></div></ScreenFrame>;
+}
+
+function ReportsScreen() {
+  return <ScreenFrame title="Accounting Reports" sub="Real-time financial insights"><div className="rounded-lg border bg-white p-3"><div className="flex items-center justify-between text-[8px] font-black"><span>Profit & Loss</span><span className="text-slate-400">This Year</span></div><div className="mt-4 flex h-28 items-end gap-2">{[30,42,35,55,50,68,62,78,92].map((h,i)=><div key={i} className="flex-1 rounded-t bg-emerald-600" style={{height:`${h}%`}}/>)}</div><div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded bg-slate-50 p-2"><div className="text-[7px] text-slate-400">Total Income</div><b className="text-[10px]">ZMW 425,600</b></div><div className="rounded bg-slate-50 p-2"><div className="text-[7px] text-slate-400">Net Profit</div><b className="text-[10px] text-emerald-700">ZMW 98,450</b></div></div></div></ScreenFrame>;
+}
 
 function FinalCta() {
-  return (
-    <section id="contact" className="relative overflow-hidden border-t border-sifo-line/60 bg-sifo-ink-2 py-16 sifo-grain md:py-24">
-      <div className="pointer-events-none absolute inset-0 sifo-ledger opacity-50" aria-hidden />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(60rem 24rem at 50% 110%, rgba(18,165,87,.2), transparent 65%)" }}
-        aria-hidden
-      />
-      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-6">
-        <Eyebrow tone="copper">Get started</Eyebrow>
-        <h2 className="mt-5 font-display text-3xl font-bold leading-[1.05] tracking-[-0.035em] text-white md:text-5xl">
-          Put the whole business on one set of books.
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-sifo-haze">
-          Create your company, invite your team and start posting. Explore the demos first if you would rather look
-          around before signing up.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/auth" search={{ tab: "signup" }} className="sifo-btn sifo-btn-primary">Start free <ArrowRight className="h-4 w-4" /></Link>
-          <Link to="/demo" className="sifo-btn sifo-btn-ghost">See a demo</Link>
-          <Link to="/auth" search={{ tab: "signin" }} className="sifo-btn sifo-btn-quiet">Sign in</Link>
-        </div>
-      </div>
-    </section>
-  );
+  return <section className="relative overflow-hidden bg-[#003b32] py-16 text-white sm:py-20"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(22,163,74,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-emerald-300/20 bg-emerald-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-emerald-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Everything your business needs. One connected system.</h2><p className="mt-4 max-w-xl text-emerald-50/80">Start with accounting, POS, payroll or inventory and add the modules your business needs as you grow.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
 }
 
-/* ── footer ───────────────────────────────────────────────────── */
-
-function SiteFooter() {
-  const groups: { title: string; links: { label: string; href?: string; to?: string }[] }[] = [
-    { title: "Product", links: [{ label: "Platform overview", href: "#platform" }, { label: "Point of sale", href: "#platform" }, { label: "Accounting", href: "#platform" }, { label: "Inventory", href: "#platform" }, { label: "Payroll & HR", href: "#solutions" }] },
-    { title: "Industries", links: [{ label: "SifoHotel", href: "#industries" }, { label: "SifoRestaurant", href: "#industries" }, { label: "SifoSchool", href: "#industries" }, { label: "SifoMining", href: "#industries" }] },
-    { title: "Company", links: [{ label: "Pricing", href: "#pricing" }, { label: "Contact", href: "#contact" }, { label: "Demos", to: "/demo" }] },
-    { title: "Support", links: [{ label: "Sign in", to: "/auth" }, { label: "Compliance notes", href: "#compliance" }, { label: "Get in touch", href: "#contact" }] },
-  ];
-  return (
-    <footer id="resources" className="border-t border-sifo-line/70 bg-sifo-ink">
-      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
-          <div>
-            <SifoWordmark sub="Business management platform" />
-            <p className="mt-4 max-w-sm text-[13px] leading-6 text-sifo-haze">
-              One connected workspace for accounting, operations and Zambian statutory compliance — from the first sale
-              to the signed-off financial statements.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-            {groups.map((g) => (
-              <div key={g.title}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sifo-copper">{g.title}</p>
-                <ul className="mt-3 space-y-2">
-                  {g.links.map((l) => (
-                    <li key={l.label}>
-                      {l.to
-                        ? <Link to={l.to} className="text-[13px] font-medium text-sifo-haze transition-colors hover:text-white">{l.label}</Link>
-                        : <a href={l.href} className="text-[13px] font-medium text-sifo-haze transition-colors hover:text-white">{l.label}</a>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-12 rounded-xl border border-sifo-line/70 bg-sifo-ink-2/60 p-4 text-[11.5px] leading-6 text-sifo-haze/85">
-          Product screens on this page are previews with illustrative figures — no customer or company data is shown.
-          SifoBooks supports ZRA Smart Invoice submission using credentials issued to your own business; certification of
-          that connection is granted by ZRA, not by SifoBooks.
-        </div>
-
-        <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t border-sifo-line/70 pt-6 sm:flex-row sm:items-center">
-          <p className="text-[12px] text-sifo-haze/70">© {new Date().getFullYear()} SifoBooks. All rights reserved.</p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-sifo-haze/70">
-            <a href="#contact" className="transition-colors hover:text-white">Terms</a>
-            <a href="#contact" className="transition-colors hover:text-white">Privacy</a>
-            <a href="#contact" className="transition-colors hover:text-white">Data protection</a>
-            <span className="inline-flex items-center gap-1.5"><SifoMark className="h-4 w-4" /> Lusaka, Zambia</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+function Footer() {
+  return <footer className="bg-[#002c26] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-emerald-100/60">Accounting · POS · ERP · Zambia</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-emerald-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-emerald-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
 }

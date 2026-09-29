@@ -416,6 +416,25 @@ function BankingPage() {
           <Stat icon={<Wallet className="h-4 w-4" />} label="Latest balance" value={latestBalance != null ? money(latestBalance) : "—"} tint="bg-amber-100 text-amber-700" />
         </div>
 
+        <Card className="mt-6 overflow-hidden">
+          <CardHeader className="border-b">
+            <CardTitle className="text-base">Finance control centre</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Move from imported statement data to allocation, cashbook, reconciliation and reporting without leaving the finance workflow.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <FinanceLink to="/bank-accounts" title="Bank Accounts" text="Accounts, opening balances and current bank activity." icon={<Landmark className="h-4 w-4" />} />
+            <FinanceLink to="/cashbook" title="Cashbook" text="Review cash and bank movements with posting controls." icon={<Wallet className="h-4 w-4" />} />
+            <FinanceLink to="/bank-rules" title="Bank Rules" text="Apply repeatable allocation rules to recurring transactions." icon={<CheckCircle2 className="h-4 w-4" />} />
+            <FinanceLink to="/reconciliation-sessions" title="Reconciliation Sessions" text="Formal statement-to-book matching and locking." icon={<Scale className="h-4 w-4" />} />
+            <FinanceLink to="/reconciliation" title="Quick Reconciliation" text="Match imported transactions against the ledger." icon={<RotateCcw className="h-4 w-4" />} />
+            <FinanceLink to="/reports/bank-reconciliation" title="Bank Reconciliation Report" text="Review reconciliation status and differences." icon={<BookOpen className="h-4 w-4" />} />
+            <FinanceLink to="/reports/cashbook" title="Cashbook Report" text="Report cash and bank activity for the selected period." icon={<TrendingUp className="h-4 w-4" />} />
+            <FinanceLink to="/posting-centre" title="Posting Centre" text="Review accounting postings before relying on reports." icon={<Scale className="h-4 w-4" />} />
+          </CardContent>
+        </Card>
+
         <Card className="mt-8">
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -670,6 +689,20 @@ function BankingPage() {
   );
 }
 
+
+function FinanceLink({ to, title, text, icon }: { to: string; title: string; text: string; icon: React.ReactNode }) {
+  return (
+    <Link to={to} className="group rounded-xl border p-4 transition-colors hover:bg-muted/40">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-background text-primary">{icon}</span>
+        <div className="min-w-0">
+          <div className="font-semibold">{title}</div>
+          <div className="mt-1 text-xs leading-5 text-muted-foreground">{text}</div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: string; tint: string }) {
   return (

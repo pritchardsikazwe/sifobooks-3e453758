@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
+import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 
 
 import { useInstalledModules } from "@/hooks/useInstalledModules";
@@ -46,6 +47,13 @@ const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> 
   "People":             { dot: "bg-mod-payroll",       text: "text-mod-payroll",       soft: "bg-mod-payroll/10" },
   "Point of Sale":      { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
   "More":               { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
+  "Company Setup":      { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
+  "Sales & POS":        { dot: "bg-mod-sales",         text: "text-mod-sales",         soft: "bg-mod-sales/10" },
+  "Accounting":         { dot: "bg-mod-accounting",    text: "text-mod-accounting",    soft: "bg-mod-accounting/10" },
+  "Banking":            { dot: "bg-mod-banking",       text: "text-mod-banking",       soft: "bg-mod-banking/10" },
+  "Tax & Compliance":   { dot: "bg-destructive",       text: "text-destructive",       soft: "bg-destructive/10" },
+  "Business Modules":   { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
+  "Settings":           { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
 };
 
 const hueFor = (c: string) => CATEGORY_HUE[c] ?? CATEGORY_HUE["Core"];
@@ -71,37 +79,44 @@ export function AppSidebar() {
   const [name, setName] = useState("Account");
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
 
+  const loadWorkspace = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    setEmail(u.user.email ?? "");
+    const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
+    setName(n || (u.user.email ?? "").split("@")[0]);
+    const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+    let cid = (p?.active_company_id as string | null) ?? null;
+    if (!cid) {
+      const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = cs0?.[0]?.id ?? null;
+    }
+    if (!cid) {
+      const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
+      cid = (cm?.[0]?.company_id as string | undefined) ?? null;
+    }
+    if (cid) {
+      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
+      if (c) {
+        setCompanyName(c.trading_name || c.name);
+        const mode = (c as any).workspace_mode as string | null;
+        setWorkspaceModeState(mode);
+        const industry = (c as any).industry as string | null;
+        if (industry) setCapabilities(await loadBusinessCapabilityState(cid, industry));
+        setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
+      }
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      setEmail(u.user.email ?? "");
-      const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
-      setName(n || (u.user.email ?? "").split("@")[0]);
-      const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
-      let cid = (p?.active_company_id as string | null) ?? null;
-      if (!cid) {
-        const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
-        cid = cs0?.[0]?.id ?? null;
-      }
-      if (!cid) {
-        // Member of a company they don't own
-        const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
-        cid = (cm?.[0]?.company_id as string | undefined) ?? null;
-      }
-      if (cid) {
-        const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
-        if (c) {
-          setCompanyName(c.trading_name || c.name);
-          const mode = (c as any).workspace_mode as string | null;
-          setWorkspaceModeState(mode);
-          setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
-        }
-      }
-    })();
+    void loadWorkspace();
+    const handler = () => { void loadWorkspace(); };
+    if (typeof window !== "undefined") window.addEventListener("sifobooks:workspace-changed", handler);
+    return () => { if (typeof window !== "undefined") window.removeEventListener("sifobooks:workspace-changed", handler); };
   }, []);
 
   const signOut = async () => {
@@ -119,32 +134,115 @@ export function AppSidebar() {
   const { canView, isSuperAdmin, isStaff, access, loading: permsLoading } = usePermissions();
 
   const sections = useMemo(() => {
-    const groups: { label: string; items: { title: string; url: string; icon: any }[] }[] = [];
-    if (permsLoading) return groups;
+    type NavItem = { title: string; url: string; icon: any; module?: string };
+
+    if (permsLoading) return [];
+
+    // Staff navigation remains permission-driven.
     if (isStaff) {
-      // Staff: least-privilege navigation built from permissions only.
-      for (const g of staffNav(access)) {
-        groups.push({ label: g.label, items: g.items.map(i => ({ title: i.title, url: i.url, icon: iconFor(i.iconName) })) });
-      }
-      return groups;
-    }
-    // Owners/admins: compact workflow hubs. Every other route stays reachable
-    // inside the hub workspace, the command palette and its own deep link.
-    for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
-      const visible = visibleHubGroups(hub, installed, canView);
-      const all = visible.flatMap(g => g.items).filter(i => !(i as any).superAdminOnly || isSuperAdmin);
-      if (all.length === 0) continue;
-      const primary = all.filter(i => i.primary);
-      const items = (primary.length ? primary : all.slice(0, 4)).map(i => ({
-        title: i.title, url: i.url, icon: iconFor(i.iconName),
+      return staffNav(access).map(g => ({
+        label: g.label,
+        items: g.items.map(i => ({ title: i.title, url: i.url, icon: iconFor(i.iconName) })),
       }));
-      if (all.length > items.length) {
-        items.push({ title: `More ${hub.label.toLowerCase()} tools…`, url: `/hub/${hub.key}`, icon: Icons.MoreHorizontal });
-      }
-      groups.push({ label: hub.label, items });
     }
-    return groups;
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode]);
+
+    // Build one clean, predictable navigation from the existing route registry.
+    // The registry remains the source of truth; this only changes presentation.
+    const collected: NavItem[] = [];
+    const seen = new Set<string>();
+
+    for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
+      for (const group of visibleHubGroups(hub, installed, canView)) {
+        for (const item of group.items) {
+          if ((item as any).superAdminOnly && !isSuperAdmin) continue;
+
+          const capabilityByModule: Record<string, BusinessCapabilityKey | undefined> = {
+            inventory: "inventory",
+            retail_pos: "retail_pos",
+            restaurant: "restaurant",
+            hr_payroll: "hr_payroll",
+          };
+          const cap = capabilityByModule[item.module];
+          if (cap && !capabilities[cap]) continue;
+
+          if (seen.has(item.url)) continue;
+          seen.add(item.url);
+          collected.push({
+            title: item.title,
+            url: item.url,
+            icon: iconFor(item.iconName),
+            module: item.module,
+          });
+        }
+      }
+    }
+
+    const byUrl = (patterns: string[], titles: string[] = []) =>
+      collected.filter(i =>
+        patterns.some(p => i.url === p || i.url.startsWith(p + "/")) ||
+        titles.some(t => i.title.toLowerCase() === t.toLowerCase())
+      );
+
+    const used = new Set<string>();
+    const make = (label: string, items: NavItem[]) => {
+      const unique = items.filter(i => {
+        if (used.has(i.url)) return false;
+        used.add(i.url);
+        return true;
+      });
+      return unique.length ? { label, items: unique } : null;
+    };
+
+    const groups = [
+      make("Home", byUrl(["/dashboard", "/approvals", "/notifications", "/industry"])),
+      make("Company Setup", byUrl(
+        ["/setup", "/warehouses", "/roles", "/admin", "/documents-branding", "/audit-logs"],
+        ["Company Setup", "Branches & Warehouses", "Users & Roles", "Administration", "Documents & Branding", "Audit Logs"]
+      )),
+      make("Sales & POS", byUrl(
+        ["/pos", "/pos-sales", "/invoices", "/quotes", "/customers", "/receipts", "/credit-notes", "/returns", "/restaurant/pos", "/restaurant/orders"],
+        ["Retail POS", "POS Sales History", "Invoices", "Quotes", "Customers", "Receive Payments", "Credit Notes", "Returns"]
+      )),
+      make("Purchases", byUrl(
+        ["/bills", "/purchase-orders", "/suppliers", "/expenses", "/bill-payments", "/goods-receipts", "/quotation-comparison", "/expense-rules"],
+        ["Bills", "Purchase Orders", "Suppliers", "Expenses", "Supplier Payments", "Goods Receipts"]
+      )),
+      make("Inventory", byUrl(
+        ["/inventory", "/stock", "/inventory/transfers", "/stock-counts", "/inventory/reconciliation", "/inventory-control-centre", "/inventory/stock-card", "/stock-adjustments", "/inventory/locations", "/stock-batches", "/stock-serials", "/inventory/production", "/inventory/cashier-records", "/inventory-sheets", "/restaurant/items-stock"],
+        ["Items", "Items & Stock", "Transfers", "Stock Counts", "Reconciliation", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
+      )),
+      make("Accounting", byUrl(
+        ["/chart-of-accounts", "/journal-entries", "/opening-balances", "/period-close", "/fixed-assets", "/budgets", "/fx-rates", "/posting-wizard"],
+        ["Chart of Accounts", "Journal Entries", "Opening Balances", "Period Close", "Fixed Assets", "Budgets", "Exchange Rates", "Smart Posting Wizard"]
+      )),
+      make("Banking", byUrl(
+        ["/banking", "/bank-accounts", "/bank-rules", "/reconciliation", "/reconciliation-sessions", "/cashbook"],
+        ["Banking", "Bank Accounts", "Bank Rules", "Recon Sessions", "Cashbook", "Reconciliation"]
+      )),
+      make("Payroll", byUrl(
+        ["/payroll", "/employees", "/attendance", "/timesheet", "/payroll-dashboard", "/payroll-review", "/payroll-payments", "/payroll-statutory", "/payroll-rules", "/payroll-setup", "/payroll-transactions", "/payroll-tools", "/leave", "/jobs", "/hr-compliance", "/hr360"],
+        ["Payroll", "Employees", "Attendance", "Timesheet", "Leave", "Jobs & Recruitment"]
+      )),
+      make("Tax & Compliance", byUrl(
+        ["/compliance", "/compliance-centre", "/zra-smart-invoice", "/reports/vat-return", "/reports/income-tax", "/reports/turnover-tax"],
+        ["Compliance", "Government Compliance", "ZRA Smart Invoice", "ZRA Item Mapping", "Submission Queue", "Audit Trail"]
+      )),
+      make("Reports", byUrl(
+        ["/reports"],
+        ["Reports Centre", "Trial Balance", "Annual Financial Statements", "Customer Statement", "Supplier Statement", "Inventory Flow & Audit"]
+      )),
+      make("Business Modules", byUrl(
+        ["/school", "/hotel", "/property", "/public-services", "/restaurant", "/retail", "/industry"],
+        ["School Management", "Hotel Management", "Property & Tenancy", "Public Services"]
+      )),
+      make("Settings", byUrl(
+        ["/modules", "/subscription", "/learn"],
+        ["Settings", "Modules", "Subscription", "Learn Centre", "New Company Setup", "Accounting Basics"]
+      )),
+    ];
+
+    return groups.filter(Boolean) as { label: string; items: NavItem[] }[];
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, capabilities]);
 
 
   const isOpen = (label: string) => {
@@ -162,7 +260,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-[#DDEBE6] bg-[#F7FBF9] text-[#173B3A] shadow-[4px_0_24px_rgba(23,59,58,.035)] [&_[data-sidebar=sidebar]]:bg-[#F7FBF9]"
+      className="border-r border-[#DDEBE6] bg-[#F7FBF9] text-[#173B3A] shadow-[4px_0_24px_rgba(23,59,58,.035)] [&_[data-sidebar=sidebar]]:bg-[#F7FBF9] [&_[data-sidebar=sidebar]]:w-[278px]"
     >
       <SidebarHeader className="border-b border-[#E3EEE9] bg-gradient-to-b from-white via-[#FAFCFB] to-[#F2F9F6] px-3 py-3">
         <SifoBooksLogo showWordmark={!collapsed} className="w-full" markClassName="h-9 w-9" />
@@ -190,7 +288,7 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {section.items.map(item => {
                       const Icon = item.icon;
-                      const active = currentPath === item.url;
+                      const active = currentPath === item.url || currentPath.startsWith(item.url + "/");
                       const hue = hueFor(section.label);
                       return (
                         <SidebarMenuItem key={item.url}>
@@ -217,7 +315,7 @@ export function AppSidebar() {
             <Collapsible key={section.label} open={open} onOpenChange={() => toggle(section.label)}>
               <SidebarGroup className="py-1">
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="group/label mx-1 flex items-center justify-between rounded-lg px-2.5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.16em] text-[#78908B] font-extrabold cursor-pointer hover:text-[#07834F] transition-colors select-none">
+                  <SidebarGroupLabel className="group/label mx-1 flex items-center justify-between rounded-lg px-2.5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.12em] text-[#718A84] font-extrabold cursor-pointer hover:text-[#07834F] transition-colors select-none">
                     <span className="flex items-center gap-1.5">
                       <span className={`h-1.5 w-1.5 rounded-full ${hueFor(section.label).dot}`} />
                       {section.label}
@@ -230,7 +328,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {section.items.map(item => {
                         const Icon = item.icon;
-                        const active = currentPath === item.url;
+                        const active = currentPath === item.url || currentPath.startsWith(item.url + "/");
                         const hue = hueFor(section.label);
                         return (
                           <SidebarMenuItem key={item.url}>

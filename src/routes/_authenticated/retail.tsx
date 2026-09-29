@@ -21,6 +21,16 @@ export const Route = createFileRoute("/_authenticated/retail")({
   component: () => <RequireModule moduleKey="retail_pos"><RetailDashboard /></RequireModule>,
 });
 
+const RETAIL_ACTIONS: { to: string; label: string; description: string; icon: any }[] = [
+  { to: "/pos", label: "POS", description: "Sell at the counter", icon: ShoppingBag },
+  { to: "/pos-sales", label: "Sales", description: "Receipts, refunds & voids", icon: Receipt },
+  { to: "/stock", label: "Stock", description: "Products & quantities", icon: Boxes },
+  { to: "/purchase-orders", label: "Purchasing", description: "Orders & supplier buying", icon: Package },
+  { to: "/expenses", label: "Expenses", description: "Record business spending", icon: Wallet },
+  { to: "/banking", label: "Banking", description: "Cash, bank & reconciliation", icon: Landmark },
+  { to: "/reports", label: "Reports", description: "Sales & financial reports", icon: BarChart3 },
+];
+
 function RetailDashboard() {
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
@@ -101,6 +111,22 @@ function RetailDashboard() {
             </div>
           </div>
         </header>
+
+        <nav aria-label="Retail quick actions" className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
+          {RETAIL_ACTIONS.map((action) => (
+            <Link key={action.to} to={action.to} className="group rounded-2xl border border-[#D7E7E1] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-600 hover:shadow-md">
+              <div className="flex items-center gap-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white">
+                  <action.icon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-black text-[#173b3a]">{action.label}</div>
+                  <div className="hidden truncate text-[10px] text-muted-foreground sm:block">{action.description}</div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </nav>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric title="Sales this month" value={fmtMoney(metrics.revenue)} hint={`${metrics.transactions} completed transactions`} icon={ShoppingBag} />

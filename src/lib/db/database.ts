@@ -1,3 +1,4 @@
+import cloudColumns from "./cloud-columns.json";
 // SQLite is runtime-specific and server-only (Windows/standalone build):
 // - Bun/Windows production uses bun:sqlite.
 // - Node/Vite development uses node:sqlite.
@@ -244,6 +245,11 @@ function runCompatibilityMigrations(database: Database) {
   database.exec(`CREATE INDEX IF NOT EXISTS idx_warehouses_branch ON warehouses(branch_id);`);
 
   const migrations: Record<string, string[]> = {
+    // bank_running_balance view reads bt.status; without it every PRAGMA/
+    // query touching that view fails with "no such column: bt.status".
+    bank_transactions: [
+      "status TEXT",
+    ],
     companies: [
       "payslip_footer TEXT",
     ],
@@ -382,12 +388,67 @@ function runCompatibilityMigrations(database: Database) {
       }
     }
   }
+
+  // account_balances must only count POSTED journal lines. The original view
+  // LEFT JOINed journal_entries with the status filter in the ON clause, so
+  // draft/void lines were still summed. Views hold no data: safe to recreate.
+  try {
+    database.exec(`DROP VIEW IF EXISTS "account_balances";
+CREATE VIEW "account_balances" AS
+SELECT a.user_id, a.id AS account_id, a.account_code, a.account_name, a.account_type,
+  COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END), 0) AS total_debit,
+  COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END), 0) AS total_credit,
+  CASE WHEN a.account_type IN ('asset','expense','cogs')
+    THEN COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END),0)-COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END),0)
+    ELSE COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit END),0)-COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit END),0) END AS balance,
+  COUNT(je.id) AS entry_count
+FROM chart_of_accounts a
+LEFT JOIN journal_lines jl ON jl.account_id = a.id
+LEFT JOIN journal_entries je ON je.id = jl.entry_id AND je.status='posted'
+GROUP BY a.user_id, a.id, a.account_code, a.account_name, a.account_type;`);
+  } catch (error: any) { console.error("[db] account_balances view:", String(error?.message).slice(0, 160)); }
+
+  // Cloud schema parity: screens query the same columns on Windows as on the
+  // web. Add any column the cloud table has but the local one lacks, as a
+  // NULLABLE column with no default (additive only: never drops, renames,
+  // retypes or tightens anything, and never creates tables).
+  for (const [table, cols] of Object.entries(cloudColumns as Record<string, Record<string, string>>)) {
+    const existing = getTableColumns(database, table);
+    if (!existing.length) continue;
+    const have = new Set(existing);
+    for (const [name, type] of Object.entries(cols)) {
+      if (have.has(name)) continue;
+      try { database.exec(`ALTER TABLE "${table}" ADD COLUMN "${name}" ${type};`); }
+      catch (error: any) {
+        if (!/duplicate column/i.test(String(error?.message))) console.error(`[db] parity column ${table}.${name}:`, String(error?.message).slice(0, 160));
+      }
+    }
+  }
 }
 
 function getTableColumns(database: Database, table: string): string[] {
   return (database.prepare(`PRAGMA table_info("${table}")`).all() as any[]).map((row) => String(row.name));
 }
 
+
+/** Read-only schema status for startup checks. Never applies or changes anything. */
+export function getSchemaStatus(): { schemaVersion: string | null; appliedCount: number; pendingMigrations: string[] } {
+  const database = getDb();
+  let applied: string[] = [];
+  try {
+    applied = (database.prepare("SELECT id FROM schema_migrations ORDER BY id").all() as any[]).map((r) => String(r.id));
+  } catch { applied = []; }
+  const known = new Set<string>();
+  const protectedMigrations = join(process.cwd(), ".sifobooks-migrations.bin");
+  if (existsSync(protectedMigrations)) {
+    try { for (const e of JSON.parse(gunzipSync(readFileSync(protectedMigrations)).toString("utf8"))) known.add(e.name); } catch { /* reported via pending */ }
+  }
+  const dir = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")].find((c) => existsSync(c));
+  if (dir) for (const n of readdirSync(dir)) if (/^\d+_.*\.sql$/.test(n)) known.add(n);
+  const appliedSet = new Set(applied);
+  const pendingMigrations = [...known].filter((n) => !appliedSet.has(n)).sort();
+  return { schemaVersion: applied.length ? applied[applied.length - 1] : null, appliedCount: applied.length, pendingMigrations };
+}
 
 function runSqlMigrations(database: Database) {
   database.exec(
