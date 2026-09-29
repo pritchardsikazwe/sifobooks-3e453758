@@ -116,7 +116,7 @@ function Shell() {
       <div className="sifobooks-2026-app min-h-screen flex w-full bg-background text-foreground">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 w-full min-w-0 border-b border-border bg-card/90 backdrop-blur-xl flex items-center gap-1.5 sm:gap-3 px-2 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
+          <header className="h-16 w-full min-w-0 border-b border-[#DDEBE6] bg-white/95 backdrop-blur-xl flex items-center gap-1.5 sm:gap-3 px-2 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(23,59,58,0.04)]">
             <SidebarTrigger className="shrink-0 text-muted-foreground hover:text-foreground" />
             <Button
               variant="ghost"
@@ -127,13 +127,13 @@ function Shell() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground min-w-[150px]">
               <span className="font-semibold text-foreground">SifoBooks</span>
               <span className="text-border">/</span>
               <span className="text-muted-foreground">{crumb}</span>
             </div>
             {canSwitchCompany ? (
-              <div className="flex min-w-0 items-center gap-1"><CompanySwitcher /><WorkspaceSwitch /></div>
+              <div className="flex min-w-0 items-center gap-1 rounded-xl bg-[#F7FBF9] p-1 border border-[#E4EEE9]"><CompanySwitcher /><WorkspaceSwitch /></div>
             ) : (
               <div className="hidden sm:flex min-w-0 items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground truncate">
                 {access?.role_name}{access?.branch_name ? ` · ${access.branch_name}` : ""}
@@ -141,7 +141,7 @@ function Shell() {
             )}
             <button
               onClick={() => setCmdOpen(true)}
-              className="ml-2 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/50 hover:bg-card hover:border-primary/30 transition text-left text-sm text-muted-foreground"
+              className="ml-1 hidden md:flex flex-1 max-w-xl items-center gap-2 h-9 px-3 rounded-xl border border-[#E1ECE7] bg-[#F7FBF9] hover:bg-white hover:border-[#07834F]/30 transition text-left text-sm text-muted-foreground"
             >
               <Search className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1 truncate">Search anything… invoices, customers, transactions</span>
