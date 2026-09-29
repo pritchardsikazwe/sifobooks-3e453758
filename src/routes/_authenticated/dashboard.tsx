@@ -59,6 +59,7 @@ function DashboardPage() {
   const [receivables, setReceivables] = useState(0);
   const [payables, setPayables] = useState(0);
   const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
+  const [zraQueue, setZraQueue] = useState({ pending: 0, failed: 0, submitted: 0 });
   const [loading, setLoading] = useState(true);
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
@@ -80,6 +81,7 @@ function DashboardPage() {
         supabase.from("suppliers").select("*", { count: "exact", head: true }),
         supabase.from("invoices").select("total, balance_due, status"),
         supabase.from("bills").select("total, balance_due, status"),
+        supabase.from("zra_invoice_queue").select("status"),
       ]);
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
@@ -94,6 +96,12 @@ function DashboardPage() {
       setInvoiceCount((invs ?? []).length);
       setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
       setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
+      const zra = (zraRows ?? []) as Array<{ status?: string }>;
+      setZraQueue({
+        pending: zra.filter(r => ["pending", "queued", "sync_pending"].includes(String(r.status || "").toLowerCase())).length,
+        failed: zra.filter(r => ["failed", "error", "zra_failed", "sync_failed"].includes(String(r.status || "").toLowerCase())).length,
+        submitted: zra.filter(r => ["submitted", "fiscalised", "fiscalized"].includes(String(r.status || "").toLowerCase())).length,
+      });
 
       try {
         const now = new Date();
@@ -266,6 +274,8 @@ function DashboardPage() {
           <PulseTile label="Payables" value={money(payables)} to="/reports/aged-payables" />
           {capabilities.inventory && <PulseTile label="Stock value" value={money(stockValue)} to="/stock" />}
           <PulseTile label="Customers" value={String(customerCount)} to="/customers" />
+          <PulseTile label="ZRA pending" value={String(zraQueue.pending)} tone={zraQueue.pending > 0 ? "negative" : "positive"} to="/compliance" />
+          <PulseTile label="ZRA failed" value={String(zraQueue.failed)} tone={zraQueue.failed > 0 ? "negative" : "positive"} to="/compliance" />
         </div>
       </Panel>
     ),
@@ -351,6 +361,9 @@ function DashboardPage() {
       <Panel title="Snapshot" subtitle="Key modules">
         <div className="space-y-1">
           <Row icon={Landmark} label="Banking" value={money(stats.cashAtBank)} to="/banking" />
+          <Row icon={BookText} label="Assets" value={money(accounting.assets)} to="/reports/balance-sheet" />
+          <Row icon={BookText} label="Liabilities" value={money(accounting.liabilities)} to="/reports/balance-sheet" />
+          <Row icon={BookText} label="Equity" value={money(accounting.equity)} to="/reports/balance-sheet" />
           <Row icon={ArrowUpRight} label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
           <Row icon={ArrowDownRight} label="Payables" value={money(payables)} to="/reports/aged-payables" />
           {capabilities.inventory && <Row icon={Boxes} label="Inventory" value={money(stockValue)} to="/stock" />}\n          {capabilities.hr_payroll && <Row icon={Banknote} label="Payroll" value="Manage" to="/payroll" />}
@@ -363,6 +376,9 @@ function DashboardPage() {
       <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
         <div className="space-y-1">
           <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
+          <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
+          <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
+          <Row icon={ShieldCheck} label="ZRA Submitted" value={String(zraQueue.submitted)} to="/compliance" />
           <Row icon={ShieldCheck} label="PAYE" value="View" to="/reports/payroll-summary" />
           <Row icon={ShieldCheck} label="NAPSA & NHIMA" value="View" to="/payroll-dashboard" />
           <Row icon={ShieldCheck} label="Tax Summary" value="View" to="/reports/tax-summary" />
