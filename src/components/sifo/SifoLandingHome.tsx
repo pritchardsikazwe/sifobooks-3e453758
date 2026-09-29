@@ -77,28 +77,80 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#003b32] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_30%,rgba(22,163,74,.42),transparent_34%),radial-gradient(circle_at_15%_100%,rgba(234,179,8,.14),transparent_30%)]" />
-      <div className="relative mx-auto grid min-h-[620px] max-w-[1450px] items-center gap-6 px-5 py-12 sm:px-8 lg:grid-cols-[.86fr_1.14fr] lg:py-16">
-        <div className="relative z-10 max-w-[620px]">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-500/20 px-4 py-2 text-xs font-bold text-emerald-50">🇿🇲 Built for Zambian Businesses</div>
-          <h1 className="text-5xl font-black leading-[.98] tracking-[-.05em] sm:text-6xl xl:text-[66px]">Accounting, POS &<br /><span className="text-amber-400">Business Management</span><br />Made Simple</h1>
-          <p className="mt-5 max-w-[570px] text-base leading-7 text-emerald-50/85 sm:text-lg">One system for accounting, inventory, POS, payroll and Zambian compliance. Built for businesses, consultants and organisations that want everything connected.</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 shadow-xl shadow-amber-950/20">Start Free Trial <ArrowRight className="h-4 w-4" /></Link>
-            <Link to="/demo" className="inline-flex items-center gap-2 rounded-xl border border-white/60 bg-white/5 px-6 py-3.5 text-sm font-bold">▶ Watch Demo</Link>
+    <section className="relative overflow-hidden bg-[#061f1a] text-white">
+      <div className="absolute inset-0 opacity-80 bg-[linear-gradient(rgba(108,174,154,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(108,174,154,.08)_1px,transparent_1px)] bg-[size:72px_72px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_20%,rgba(22,163,74,.28),transparent_32%),radial-gradient(circle_at_10%_80%,rgba(234,179,8,.10),transparent_30%)]" />
+      <div className="relative mx-auto grid max-w-[1450px] items-center gap-10 px-5 pb-12 pt-14 sm:px-8 sm:pb-16 sm:pt-20 lg:min-h-[690px] lg:grid-cols-[.9fr_1.1fr] lg:py-20">
+        <div className="relative z-10 max-w-[680px]">
+          <div className="mb-7 inline-flex items-center rounded-full border border-amber-300/25 bg-amber-400/10 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-amber-300">
+            🇿🇲 Built in Zambia for Zambian business
           </div>
-          <div className="mt-9 grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <Proof icon={ReceiptText} text="ZRA Ready" />
-            <Proof icon={Wifi} text="Online & Offline" />
-            <Proof icon={Package} text="All-in-One" />
-            <Proof icon={ShieldCheck} text="Secure" />
-            <Proof icon={Users} text="For Consultants" />
+          <h1 className="max-w-[720px] text-[50px] font-black leading-[.93] tracking-[-.055em] sm:text-6xl lg:text-[72px]">
+            One platform.<br />
+            <span className="text-emerald-300">Every operation.</span><br />
+            Fully accounted<br className="sm:hidden" /> for.
+          </h1>
+          <p className="mt-7 max-w-[650px] text-[18px] leading-8 text-emerald-50/65 sm:text-xl">
+            SifoBooks runs the till, the stores, the payroll and the ledger on one record — so the figure a manager sees on the floor is the same figure the accountant files with ZRA.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link to="/auth" search={{ tab: "signup" }} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-600 px-7 text-base font-extrabold text-white shadow-xl shadow-emerald-950/40">
+              Start free <ArrowRight className="h-5 w-5" />
+            </Link>
+            <a href="#features" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/[.02] px-7 text-base font-bold text-white hover:bg-white/5">
+              <span className="text-xl">◈</span> Explore platform
+            </a>
+            <a href="#screens" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 px-7 text-base font-extrabold text-slate-950 shadow-xl shadow-amber-950/30">
+              <span className="text-lg">▷</span> See demo
+            </a>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-white/10 pt-7 sm:grid-cols-4">
+            <HeroStat value="Multi-company" label="One login, multiple businesses" />
+            <HeroStat value="Branches" label="Centralised branch operations" />
+            <HeroStat value="POS + ERP" label="Sales connected to accounts" />
+            <HeroStat value="Zambia" label="Built around local compliance" />
           </div>
         </div>
         <HeroDashboard />
       </div>
     </section>
+  );
+}
+
+function HeroStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <div className="text-base font-extrabold text-white sm:text-lg">{value}</div>
+      <div className="mt-1 text-[10px] leading-4 text-emerald-100/45 sm:text-[11px]">{label}</div>
+    </div>
+  );
+}
+
+function HeroDashboard() {
+  const kpis = [["Sales", "ZMW 125,430", "+12%"], ["Stock", "ZMW 84,200", "Healthy"], ["Payroll", "ZMW 46,890", "Processed"], ["ZRA", "Synced", "Ready"]];
+  return (
+    <div className="relative hidden min-h-[520px] lg:block">
+      <div className="absolute right-[-6%] top-[3%] w-[108%] rotate-[-2deg] rounded-[30px] border border-white/20 bg-white p-2 shadow-[0_40px_110px_rgba(0,0,0,.5)]">
+        <div className="overflow-hidden rounded-[22px] bg-slate-50">
+          <div className="flex h-11 items-center border-b bg-white px-4"><div className="text-[9px] font-bold text-slate-500">SifoBooks · Business Control Centre</div><div className="ml-auto flex gap-1.5"><span className="h-2 w-2 rounded-full bg-red-300"/><span className="h-2 w-2 rounded-full bg-amber-300"/><span className="h-2 w-2 rounded-full bg-emerald-500"/></div></div>
+          <div className="grid grid-cols-[122px_1fr]">
+            <div className="bg-[#003b32] p-3"><div className="mb-6 text-xs font-black text-white">SifoBooks</div>{["Dashboard","Sales & POS","Purchases","Inventory","Accounting","Payroll","ZRA","NAPSA","NHIMA","Reports"].map((x,i)=><div key={x} className={`mb-1 rounded-md px-2 py-1.5 text-[7px] font-semibold ${i===0?"bg-emerald-400/20 text-white":"text-emerald-100/60"}`}>{x}</div>)}</div>
+            <div className="p-4">
+              <div className="mb-4 flex items-end justify-between"><div><div className="text-[8px] text-slate-400">SifoBooks Business</div><div className="text-base font-black text-slate-900">Operations Overview</div></div><div className="rounded-md border bg-white px-2 py-1 text-[8px]">September 2026</div></div>
+              <div className="grid grid-cols-4 gap-2">{kpis.map(k=><div key={k[0]} className="rounded-xl border bg-white p-2.5 shadow-sm"><div className="text-[7px] text-slate-400">{k[0]}</div><div className="mt-1 text-[11px] font-black text-slate-900">{k[1]}</div><div className="mt-1 text-[7px] font-bold text-emerald-600">{k[2]}</div></div>)}</div>
+              <div className="mt-3 grid grid-cols-[1.4fr_.6fr] gap-3">
+                <div className="rounded-xl border bg-white p-3"><div className="mb-2 text-[8px] font-bold text-slate-800">Money in vs money out</div><div className="flex h-32 items-end gap-1.5">{[38,52,44,62,57,74,68,86,94].map((h,i)=><div key={i} className="flex-1 rounded-t bg-emerald-600/80" style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[6px] text-slate-400">Jan Feb Mar Apr May Jun Jul Aug Sep</div></div>
+                <div className="rounded-xl border bg-white p-3"><div className="text-[8px] font-bold text-slate-800">Connected operations</div><div className="mt-4 space-y-2">{["POS → Sales","Stock → COGS","Payroll → Ledger","Invoice → ZRA"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-[7px] font-bold text-slate-600">{x}<span className="float-right text-emerald-600">✓</span></div>)}</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute bottom-[-1%] left-[1%] z-20 w-[180px] rounded-[25px] border-4 border-white bg-[#063f35] p-3 shadow-2xl">
+        <div className="mb-2 flex items-center justify-between text-[8px] font-bold text-white"><span>SifoBooks Mobile</span><Smartphone className="h-3 w-3"/></div>
+        <div className="rounded-xl bg-white p-3 text-slate-900"><div className="text-[7px] text-slate-400">Today's Sales</div><div className="mt-1 text-lg font-black">ZMW 12,450</div><div className="mt-1 text-[7px] font-bold text-emerald-600">+18%</div><div className="mt-3 grid grid-cols-2 gap-1.5">{["POS","Invoice","Payroll","Reports"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-center text-[7px] font-bold">{x}</div>)}</div></div>
+      </div>
+    </div>
   );
 }
 
