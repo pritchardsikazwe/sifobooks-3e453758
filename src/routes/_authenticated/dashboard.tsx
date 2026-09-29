@@ -25,7 +25,7 @@ import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/i
 import { cn } from "@/lib/utils";
 import { resolveAuthenticatedContext } from "@/lib/workspace-context";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
-import { loadProfitAndLoss, loadBalanceSheet } from "@/lib/reports/engine";
+import { loadProfitAndLoss, loadBalanceSheet, loadArAging, loadApAging, loadSalesByBranch, loadSalesByCustomer, loadSalesByItem } from "@/lib/reports/engine";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
@@ -61,6 +61,7 @@ function DashboardPage() {
   const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
   const [zraQueue, setZraQueue] = useState({ pending: 0, failed: 0, submitted: 0 });
   const [integrity, setIntegrity] = useState({ draft: 0, unbalanced: 0, reversed: 0 });
+  const [management, setManagement] = useState({ branches: [] as any[], customers: [] as any[], products: [] as any[], overdueReceivables: 0, supplierObligations: 0 });
   const [topCustomers, setTopCustomers] = useState<Array<{ name: string; total: number }>>([]);
   const [lowStock, setLowStock] = useState<Array<{ name: string; qty: number; reorder: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +134,20 @@ function DashboardPage() {
           netProfit: Number(pnl.facts.netProfit || 0), grossMargin: Number(pnl.facts.grossMargin || 0),
           assets: Number(bs.facts.assets || 0), liabilities: Number(bs.facts.liabilities || 0),
           equity: Number(bs.facts.equity || 0), balanced: Boolean(bs.facts.balanced),
-        });
+        })
+        try {
+          const [branchReport, customerReport, productReport, arReport, apReport] = await Promise.all([
+            loadSalesByBranch({ from, to }), loadSalesByCustomer({ from, to }), loadSalesByItem({ from, to }),
+            loadArAging({ to }), loadApAging({ to }),
+          ]);
+          const rows = (r: any) => Array.isArray(r?.rows) ? r.rows : [];
+          setManagement({
+            branches: rows(branchReport).slice(0, 5), customers: rows(customerReport).slice(0, 5), products: rows(productReport).slice(0, 5),
+            overdueReceivables: rows(arReport).filter((x: any) => x.due && x.due < to).reduce((s: number, x: any) => s + Number(x.balance || 0), 0),
+            supplierObligations: rows(apReport).reduce((s: number, x: any) => s + Number(x.balance || 0), 0),
+          });
+        } catch (e) { console.warn("Management dashboard reports unavailable:", e); }
+;
       } catch (e) { console.warn("Accounting dashboard summary unavailable:", e); }
       setLoading(false);
     })();
@@ -197,7 +211,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -214,6 +228,7 @@ function DashboardPage() {
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
     "today-pulse": "col-span-12",
+    "management-insights": "col-span-12",
     "operational-intelligence": "col-span-12",
     "sales-chart": "col-span-12 lg:col-span-5",
     "income-vs-expenses": "col-span-12 lg:col-span-4",
@@ -229,6 +244,7 @@ function DashboardPage() {
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
     "today-pulse": "Today's business pulse",
+    "management-insights": "Management insights",
     "operational-intelligence": "Operational intelligence",
     "sales-chart": "Sales by month",
     "income-vs-expenses": "Money In vs Money Out",
@@ -392,6 +408,16 @@ function DashboardPage() {
               {lowStock.map(i => <Link key={i.name} to="/stock" className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/50"><span className="text-sm font-medium truncate">{i.name}</span><span className="text-xs font-semibold text-rose-600">{i.qty} / {i.reorder}</span></Link>)}
             </div>}
           </div>
+        </div>
+      </Panel>
+    ),
+
+    "management-insights": (
+      <Panel title="Management Insights" subtitle="Completed sales and current receivables/payables">
+        <div className="grid gap-5 xl:grid-cols-3">
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Branches</div>{management.branches.length ? management.branches.map((r:any)=><div key={r.branch} className="flex justify-between py-1.5 text-sm"><span className="truncate">{r.branch}</span><span className="font-semibold">{money(Number(r.gross||0))}</span></div>) : <EmptyState label="No completed branch sales" />}</div>
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Top products</div>{management.products.length ? management.products.map((r:any)=><div key={r.item} className="flex justify-between py-1.5 text-sm"><span className="truncate">{r.item}</span><span className="font-semibold">{money(Number(r.gross||0))}</span></div>) : <EmptyState label="No completed product sales" />}</div>
+          <div><div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Receivables / payables</div><div className="rounded-lg border p-3"><div className="flex justify-between text-sm"><span>Overdue receivables</span><span className="font-semibold text-rose-600">{money(management.overdueReceivables)}</span></div><div className="mt-2 flex justify-between text-sm"><span>Supplier obligations</span><span className="font-semibold">{money(management.supplierObligations)}</span></div></div></div>
         </div>
       </Panel>
     ),
