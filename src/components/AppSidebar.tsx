@@ -140,7 +140,17 @@ export function AppSidebar() {
     // inside the hub workspace, the command palette and its own deep link.
     for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
       const visible = visibleHubGroups(hub, installed, canView);
-      const all = visible.flatMap(g => g.items).filter(i => {\n        if ((i as any).superAdminOnly && !isSuperAdmin) return false;\n        const capabilityByModule: Record<string, BusinessCapabilityKey | undefined> = { inventory: "inventory", retail_pos: "retail_pos", restaurant: "restaurant", hr_payroll: "hr_payroll" };\n        const cap = capabilityByModule[i.module];\n        return !cap || capabilities[cap];\n      });
+      const all = visible.flatMap(g => g.items).filter(i => {
+        if ((i as any).superAdminOnly && !isSuperAdmin) return false;
+        const capabilityByModule: Record<string, BusinessCapabilityKey | undefined> = {
+          inventory: "inventory",
+          retail_pos: "retail_pos",
+          restaurant: "restaurant",
+          hr_payroll: "hr_payroll",
+        };
+        const cap = capabilityByModule[i.module];
+        return !cap || capabilities[cap];
+      });
       if (all.length === 0) continue;
       const primary = all.filter(i => i.primary);
       const items = (primary.length ? primary : all.slice(0, 4)).map(i => ({
