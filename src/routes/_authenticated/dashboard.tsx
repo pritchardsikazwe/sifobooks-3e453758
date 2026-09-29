@@ -73,7 +73,7 @@ function DashboardPage() {
       const ctx = await resolveAuthenticatedContext();
       if (!ctx?.company) return;
       const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
-             { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
+             { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }, { data: zraRows }, { data: journalRows }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
         supabase.from("companies").select("name, trading_name, base_currency").eq("id", ctx.company.id).maybeSingle(),
         supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
