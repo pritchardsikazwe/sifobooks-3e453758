@@ -23,6 +23,7 @@ import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 import { fmtMoney } from "@/lib/format";
 import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 import { cn } from "@/lib/utils";
+import { resolveAuthenticatedContext } from "@/lib/workspace-context";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
@@ -65,10 +66,12 @@ function DashboardPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
+      const ctx = await resolveAuthenticatedContext();
+      if (!ctx?.company) return;
       const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
              { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
-        supabase.from("companies").select("name, trading_name, base_currency").eq("user_id", u.user.id).maybeSingle(),
+        supabase.from("companies").select("name, trading_name, base_currency").eq("id", ctx.company.id).maybeSingle(),
         supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
         supabase.from("stock_items").select("quantity_on_hand, sell_price"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
@@ -80,8 +83,7 @@ function DashboardPage() {
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
       if (comp) { setCurrency(comp.base_currency || "ZMW"); setCompanyName(comp.trading_name || comp.name); }
       if (comp) {
-        const { data: activeCompany } = await supabase.from("companies").select("id, industry").eq("user_id", u.user.id).maybeSingle();
-        if (activeCompany?.id) setCapabilities(await loadBusinessCapabilityState(activeCompany.id, activeCompany.industry || "general"));
+        setCapabilities(await loadBusinessCapabilityState(ctx.company.id, ctx.company.industry || "general"));
       }
       setTxns((tx ?? []) as Txn[]);
       setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
@@ -100,6 +102,10 @@ function DashboardPage() {
     const monthTx = txns.filter(t => t.txn_date >= monthStart);
     const revenue = monthTx.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
     const expenses = monthTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+    const todayKey = now.toISOString().slice(0, 10);
+    const todayTx = txns.filter(t => String(t.txn_date).slice(0, 10) === todayKey);
+    const todayIn = todayTx.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+    const todayOut = todayTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const netProfit = revenue - expenses;
     const cashAtBank = txns.reduce((s, t) => s + Number(t.amount), 0);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -108,7 +114,7 @@ function DashboardPage() {
     const lmRev = lm.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
     const lmExp = lm.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const pct = (curr: number, prev: number) => prev === 0 ? 0 : ((curr - prev) / prev) * 100;
-    return { revenue, expenses, netProfit, cashAtBank,
+    return { revenue, expenses, netProfit, cashAtBank, todayIn, todayOut, todayNet: todayIn - todayOut,
       revDelta: pct(revenue, lmRev), expDelta: pct(expenses, lmExp),
       netDelta: pct(netProfit, lmRev - lmExp) };
   }, [txns]);
@@ -148,7 +154,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -164,6 +170,7 @@ function DashboardPage() {
   const spans: Record<string, string> = {
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
+    "today-pulse": "col-span-12",
     "sales-chart": "col-span-12 lg:col-span-5",
     "income-vs-expenses": "col-span-12 lg:col-span-4",
     "cash-flow": "col-span-12 lg:col-span-3",
@@ -177,6 +184,7 @@ function DashboardPage() {
   const WIDGET_LABELS: Record<string, string> = {
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
+    "today-pulse": "Today's business pulse",
     "sales-chart": "Sales by month",
     "income-vs-expenses": "Money In vs Money Out",
     "cash-flow": "Cash flow",
@@ -223,6 +231,21 @@ function DashboardPage() {
         <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
         {capabilities.inventory && <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />}
       </div>
+    ),
+
+    "today-pulse": (
+      <Panel title="Today’s Business Pulse" subtitle="Live figures from recorded bank transactions and open documents">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
+          <PulseTile label="Money in today" value={money(stats.todayIn)} tone="positive" />
+          <PulseTile label="Money out today" value={money(stats.todayOut)} tone="negative" />
+          <PulseTile label="Net movement" value={money(stats.todayNet)} tone={stats.todayNet >= 0 ? "positive" : "negative"} />
+          <PulseTile label="Open invoices" value={String(invoiceCount)} to="/invoices" />
+          <PulseTile label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
+          <PulseTile label="Payables" value={money(payables)} to="/reports/aged-payables" />
+          {capabilities.inventory && <PulseTile label="Stock value" value={money(stockValue)} to="/stock" />}
+          <PulseTile label="Customers" value={String(customerCount)} to="/customers" />
+        </div>
+      </Panel>
     ),
 
     "sales-chart": (
@@ -505,6 +528,16 @@ function Panel({ children, title, subtitle, action, className }: { children: Rea
       {children}
     </div>
   );
+}
+
+function PulseTile({ label, value, to, tone = "neutral" }: { label: string; value: string; to?: string; tone?: "positive" | "negative" | "neutral" }) {
+  const content = (
+    <div className="rounded-xl border border-border bg-background/60 p-3 transition-colors hover:bg-muted/40">
+      <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={cn("mt-1 text-sm font-bold tabular-nums", tone === "positive" ? "text-emerald-600 dark:text-emerald-400" : tone === "negative" ? "text-rose-600 dark:text-rose-400" : "text-foreground")}>{value}</div>
+    </div>
+  );
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
 function QuickTile({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
