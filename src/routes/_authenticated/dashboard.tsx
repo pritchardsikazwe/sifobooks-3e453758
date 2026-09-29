@@ -24,7 +24,6 @@ import { fmtMoney } from "@/lib/format";
 import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 import { cn } from "@/lib/utils";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
-import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
@@ -66,7 +65,6 @@ function DashboardPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      void ensureStandaloneDemo("accounting").catch((e) => console.error("[standalone-demo:accounting]", e));
       const [{ data: prof }, { data: comp }, { data: tx }, { data: stk },
              { count: custCount }, { count: suppCount }, { data: invs }, { data: bills }] = await Promise.all([
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
@@ -180,7 +178,7 @@ function DashboardPage() {
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
     "sales-chart": "Sales by month",
-    "income-vs-expenses": "Income vs Expenses",
+    "income-vs-expenses": "Money In vs Money Out",
     "cash-flow": "Cash flow",
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
@@ -216,10 +214,10 @@ function DashboardPage() {
 
     "kpis": (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <SifoKpiCard label="Revenue MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
-        <SifoKpiCard label="Expenses MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-        <SifoKpiCard label="Net Profit MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
-        <SifoKpiCard label="Cash at Bank" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
+        <SifoKpiCard label="Money In MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
+        <SifoKpiCard label="Money Out MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
+        <SifoKpiCard label="Net Cash MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
+        <SifoKpiCard label="Bank Movement" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
         <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
         <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
         <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
@@ -228,7 +226,7 @@ function DashboardPage() {
     ),
 
     "sales-chart": (
-      <Panel title="Sales by Month" subtitle="Last 12 months">
+      <Panel title="Money In by Month" subtitle="Last 12 months">
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={monthlySeries}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
@@ -241,7 +239,7 @@ function DashboardPage() {
       </Panel>
     ),
     "income-vs-expenses": (
-      <Panel title="Income vs Expenses" subtitle="12-month trend">
+      <Panel title="Money In vs Money Out" subtitle="12-month trend">
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={monthlySeries}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
@@ -256,7 +254,7 @@ function DashboardPage() {
       </Panel>
     ),
     "cash-flow": (
-      <Panel title="Cash Flow" subtitle="Cumulative">
+      <Panel title="Cumulative Net Cash" subtitle="Cumulative">
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={cashFlowSeries}>
             <defs>
@@ -274,7 +272,7 @@ function DashboardPage() {
       </Panel>
     ),
     "revenue-categories": (
-      <Panel title="Revenue Categories" subtitle="Top 5">
+      <Panel title="Money In Categories" subtitle="Top 5">
         {categoryData.length === 0 ? (
           <EmptyState label="No categorised income yet" />
         ) : (
