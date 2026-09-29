@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { selectCompany } from "@/lib/workspace-context";
+import { resolveAuthenticatedContext, selectCompany } from "@/lib/workspace-context";
 
 type Company = { id: string; name: string; base_currency: string | null; country: string | null };
 
@@ -16,6 +16,7 @@ export function CompanySwitcher() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [branchName, setBranchName] = useState<string | null>(null);
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -70,6 +71,12 @@ export function CompanySwitcher() {
     }
 
     setActiveId(active);
+    try {
+      const ctx = await resolveAuthenticatedContext();
+      setBranchName(ctx?.operational.branchName ?? null);
+    } catch {
+      setBranchName(null);
+    }
   };
 
   useEffect(() => {
@@ -129,11 +136,12 @@ export function CompanySwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 gap-2 px-2 sm:px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+          className="h-9 gap-1.5 px-2 sm:px-2.5 border border-[#DDEBE6] bg-white hover:bg-[#F3FAF7] text-[#173B3A] shadow-sm"
         >
-          <Building2 className="h-4 w-4 text-[#0f4c5c]" />
-          <span className="hidden sm:inline max-w-[140px] truncate font-medium">
-            {active?.name ?? "Select company"}
+          <Building2 className="h-4 w-4 text-[#07834F]" />
+          <span className="hidden sm:flex min-w-0 max-w-[180px] flex-col items-start leading-tight">
+            <span className="max-w-[180px] truncate font-semibold">{active?.name ?? "Select company"}</span>
+            {branchName && <span className="max-w-[180px] truncate text-[10px] text-slate-500">Branch · {branchName}</span>}
           </span>
           <ChevronsUpDown className="h-3.5 w-3.5 text-slate-400" />
         </Button>
@@ -183,7 +191,7 @@ export function CompanySwitcher() {
           ) : (
             <button
               onClick={() => setCreating(true)}
-              className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-slate-100 text-sm text-[#0f4c5c] font-medium"
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#F0F8F4] text-sm text-[#07834F] font-semibold"
             >
               <Plus className="h-4 w-4" /> Add company
             </button>
