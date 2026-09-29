@@ -76,7 +76,7 @@ function DashboardPage() {
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
         supabase.from("companies").select("name, trading_name, base_currency").eq("id", ctx.company.id).maybeSingle(),
         supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
-        supabase.from("stock_items").select("quantity_on_hand, sell_price"),
+        supabase.from("stock_items").select("quantity_on_hand, cost_price"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
         supabase.from("suppliers").select("*", { count: "exact", head: true }),
         supabase.from("invoices").select("total, balance_due, status"),
@@ -90,7 +90,7 @@ function DashboardPage() {
         setCapabilities(await loadBusinessCapabilityState(ctx.company.id, ctx.company.industry || "general"));
       }
       setTxns((tx ?? []) as Txn[]);
-      setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.sell_price || 0), 0));
+      setStockValue((stk ?? []).reduce((s, x: any) => s + Number(x.quantity_on_hand || 0) * Number(x.cost_price || 0), 0));
       setCustomerCount(custCount ?? 0);
       setSupplierCount(suppCount ?? 0);
       setInvoiceCount((invs ?? []).length);
@@ -257,7 +257,7 @@ function DashboardPage() {
         <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
         <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
         <SifoKpiCard label="Outstanding Invoices" value={String(invoiceCount)} icon={FileText} module="sales" hint="Open documents" to="/invoices" />
-        {capabilities.inventory && <SifoKpiCard label="Inventory Value" value={money(stockValue)} icon={Package} module="inventory" hint="At sell price" to="/stock" />}
+        {capabilities.inventory && <SifoKpiCard label="Inventory at Cost" value={money(stockValue)} icon={Package} module="inventory" hint="On-hand cost value" to="/stock" />}
       </div>
     ),
 
@@ -272,7 +272,7 @@ function DashboardPage() {
           <PulseTile label="Open invoices" value={String(invoiceCount)} to="/invoices" />
           <PulseTile label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
           <PulseTile label="Payables" value={money(payables)} to="/reports/aged-payables" />
-          {capabilities.inventory && <PulseTile label="Stock value" value={money(stockValue)} to="/stock" />}
+          {capabilities.inventory && <PulseTile label="Stock at cost" value={money(stockValue)} to="/stock" />}
           <PulseTile label="Customers" value={String(customerCount)} to="/customers" />
           <PulseTile label="ZRA pending" value={String(zraQueue.pending)} tone={zraQueue.pending > 0 ? "negative" : "positive"} to="/compliance" />
           <PulseTile label="ZRA failed" value={String(zraQueue.failed)} tone={zraQueue.failed > 0 ? "negative" : "positive"} to="/compliance" />
