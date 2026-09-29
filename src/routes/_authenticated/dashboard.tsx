@@ -25,6 +25,7 @@ import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/i
 import { cn } from "@/lib/utils";
 import { resolveAuthenticatedContext } from "@/lib/workspace-context";
 import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
+import { loadProfitAndLoss, loadBalanceSheet } from "@/lib/reports/engine";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
@@ -57,6 +58,7 @@ function DashboardPage() {
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [receivables, setReceivables] = useState(0);
   const [payables, setPayables] = useState(0);
+  const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
   const [loading, setLoading] = useState(true);
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
@@ -92,6 +94,23 @@ function DashboardPage() {
       setInvoiceCount((invs ?? []).length);
       setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
       setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
+
+      try {
+        const now = new Date();
+        const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        const to = now.toISOString().slice(0, 10);
+        const [pnl, bs] = await Promise.all([
+          loadProfitAndLoss({ from, to }),
+          loadBalanceSheet({ to, fyStart: `${now.getFullYear()}-01-01` }),
+        ]);
+        setAccounting({
+          revenue: Number(pnl.facts.revenue || 0), cogs: Number(pnl.facts.cogs || 0),
+          grossProfit: Number(pnl.facts.grossProfit || 0), opex: Number(pnl.facts.opex || 0),
+          netProfit: Number(pnl.facts.netProfit || 0), grossMargin: Number(pnl.facts.grossMargin || 0),
+          assets: Number(bs.facts.assets || 0), liabilities: Number(bs.facts.liabilities || 0),
+          equity: Number(bs.facts.equity || 0), balanced: Boolean(bs.facts.balanced),
+        });
+      } catch (e) { console.warn("Accounting dashboard summary unavailable:", e); }
       setLoading(false);
     })();
   }, [navigate]);
@@ -222,9 +241,10 @@ function DashboardPage() {
 
     "kpis": (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <SifoKpiCard label="Money In MTD" value={money(stats.revenue)} delta={stats.revDelta} icon={TrendingUp} module="sales" series={monthlySeries.map(m => m.income)} to="/reports/pnl" />
-        <SifoKpiCard label="Money Out MTD" value={money(stats.expenses)} delta={stats.expDelta} icon={Receipt} module="purchases" series={monthlySeries.map(m => m.expenses)} positive={false} to="/expenses" />
-        <SifoKpiCard label="Net Cash MTD" value={money(stats.netProfit)} delta={stats.netDelta} icon={PiggyBank} module="accounting" series={monthlySeries.map(m => m.net)} positive={stats.netProfit >= 0} to="/reports/pnl" />
+        <SifoKpiCard label="Revenue MTD" value={money(accounting.revenue)} icon={TrendingUp} module="sales" hint="Posted revenue" to="/reports/pnl" />
+        <SifoKpiCard label="Cost of Sales" value={money(accounting.cogs)} icon={Package} module="inventory" hint="Posted COGS" to="/reports/pnl" />
+        <SifoKpiCard label="Net Profit MTD" value={money(accounting.netProfit)} icon={PiggyBank} module="accounting" positive={accounting.netProfit >= 0} hint={`${(accounting.grossMargin * 100).toFixed(1)}% gross margin`} to="/reports/pnl" />
+        <SifoKpiCard label="Gross Profit MTD" value={money(accounting.grossProfit)} icon={TrendingUp} module="accounting" positive={accounting.grossProfit >= 0} hint="Revenue less COGS" to="/reports/pnl" />
         <SifoKpiCard label="Bank Movement" value={money(stats.cashAtBank)} icon={Landmark} module="banking" series={cashFlowSeries.map(c => c.balance)} positive={stats.cashAtBank >= 0} hint="All bank accounts" to="/banking" />
         <SifoKpiCard label="Receivables" value={money(receivables)} icon={ArrowUpRight} module="sales" hint="Owed to you" to="/reports/aged-receivables" />
         <SifoKpiCard label="Payables" value={money(payables)} icon={ArrowDownRight} module="purchases" hint="You owe" to="/reports/aged-payables" />
@@ -239,6 +259,8 @@ function DashboardPage() {
           <PulseTile label="Money in today" value={money(stats.todayIn)} tone="positive" />
           <PulseTile label="Money out today" value={money(stats.todayOut)} tone="negative" />
           <PulseTile label="Net movement" value={money(stats.todayNet)} tone={stats.todayNet >= 0 ? "positive" : "negative"} />
+          <PulseTile label="Gross profit MTD" value={money(accounting.grossProfit)} tone={accounting.grossProfit >= 0 ? "positive" : "negative"} to="/reports/pnl" />
+          <PulseTile label="Ledger status" value={accounting.balanced ? "Balanced" : "Check"} tone={accounting.balanced ? "positive" : "negative"} to="/reports/trial-balance" />
           <PulseTile label="Open invoices" value={String(invoiceCount)} to="/invoices" />
           <PulseTile label="Receivables" value={money(receivables)} to="/reports/aged-receivables" />
           <PulseTile label="Payables" value={money(payables)} to="/reports/aged-payables" />
