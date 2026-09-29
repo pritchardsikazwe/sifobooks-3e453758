@@ -49,23 +49,26 @@ export function SifoLandingHome() {
 function Header() {
   const nav = ["Home", "Features", "Industries", "Compliance", "Pricing", "Resources", "Support"];
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-[64px] max-w-[1450px] items-center gap-6 px-5 sm:px-8">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#061f1a]/95 text-white backdrop-blur-xl">
+      <div className="mx-auto flex h-[72px] max-w-[1450px] items-center gap-5 px-5 sm:px-8">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-950 text-white shadow-md">
+          <div className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-400/30 bg-emerald-950 text-white shadow-lg">
             <span className="text-xl font-black">S</span>
           </div>
           <div className="leading-none">
-            <div className="text-[20px] font-extrabold tracking-tight text-emerald-950">SifoBooks</div>
-            <div className="mt-1 text-[8px] font-bold uppercase tracking-[.2em] text-slate-500">Accounting · POS · ERP</div>
+            <div className="text-[21px] font-extrabold tracking-tight">Sifo<span className="text-emerald-300">Books</span></div>
+            <div className="mt-1 hidden text-[8px] font-bold uppercase tracking-[.2em] text-emerald-100/50 sm:block">Accounting · POS · ERP</div>
           </div>
         </Link>
         <nav className="hidden flex-1 items-center gap-1 lg:flex">
-          {nav.map((n, i) => <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${i === 0 ? "text-emerald-800" : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"}`}>{n}</a>)}
+          {nav.map((n, i) => <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${i === 0 ? "text-emerald-300" : "text-emerald-50/70 hover:bg-white/5 hover:text-white"}`}>{n}</a>)}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <Link to="/auth" search={{ tab: "signin" }} className="hidden rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:inline-flex">Sign In</Link>
-          <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-extrabold text-slate-950 shadow-sm hover:bg-amber-300">Get Started</Link>
+          <Link to="/auth" search={{ tab: "signin" }} className="hidden rounded-xl border border-white/15 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/5 sm:inline-flex">Sign in</Link>
+          <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/30 hover:from-emerald-300 hover:to-emerald-500">Start free</Link>
+          <button aria-label="Open navigation" className="grid h-11 w-11 place-items-center rounded-xl border border-white/15 bg-white/5 lg:hidden">
+            <span className="text-xl leading-none">☰</span>
+          </button>
         </div>
       </div>
     </header>
@@ -96,35 +99,6 @@ function Hero() {
         <HeroDashboard />
       </div>
     </section>
-  );
-}
-
-function Proof({ icon: Icon, text }: any) {
-  return <div className="flex items-center gap-2 text-[10px] font-semibold leading-4 text-emerald-50/85"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-emerald-300/20 bg-emerald-950/60"><Icon className="h-4 w-4 text-amber-300" /></span>{text}</div>;
-}
-
-function HeroDashboard() {
-  const kpis = [["Total Sales", "ZMW 125,430", "+12%"], ["Purchases", "ZMW 48,200", "-5%"], ["Profit", "ZMW 46,890", "+18%"], ["VAT (ZRA)", "ZMW 18,450", "Synced"]];
-  return (
-    <div className="relative min-h-[410px] lg:min-h-[520px]">
-      <div className="absolute right-[-8%] top-[4%] w-[108%] rotate-[-2deg] rounded-[28px] border border-white/30 bg-white p-2 shadow-[0_35px_100px_rgba(0,0,0,.45)]">
-        <div className="overflow-hidden rounded-[21px] bg-slate-50">
-          <div className="flex h-10 items-center border-b bg-white px-4"><div className="text-[9px] font-bold text-slate-500">SifoBooks Business Dashboard</div><div className="ml-auto flex gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500"/><span className="h-2 w-2 rounded-full bg-slate-300"/><span className="h-2 w-2 rounded-full bg-slate-300"/></div></div>
-          <div className="grid grid-cols-[118px_1fr]">
-            <div className="hidden bg-[#003b32] p-3 sm:block"><div className="mb-6 text-xs font-black text-white">SifoBooks</div>{["Dashboard","Sales","Purchases","Inventory","Accounting","POS","Payroll","ZRA","NAPSA","NHIMA","Reports"].map((x,i)=><div key={x} className={`mb-0.5 rounded-md px-2 py-1.5 text-[7px] font-semibold ${i===0?"bg-emerald-500/25 text-white":"text-emerald-100/60"}`}>{x}</div>)}</div>
-            <div className="p-4 sm:p-5">
-              <div className="mb-4 flex items-end justify-between"><div><div className="text-[8px] text-slate-400">SifoBooks Demo Ltd</div><div className="text-base font-black">Business Overview</div></div><div className="rounded-md border bg-white px-2 py-1 text-[8px]">01–30 Sep 2026</div></div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{kpis.map(k=><div key={k[0]} className="rounded-xl border bg-white p-2.5 shadow-sm"><div className="text-[7px] text-slate-400">{k[0]}</div><div className="mt-1 text-[12px] font-black">{k[1]}</div><div className="mt-1 text-[7px] font-bold text-emerald-600">{k[2]}</div></div>)}</div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-[1.35fr_.65fr]"><div className="rounded-xl border bg-white p-3"><div className="mb-2 text-[8px] font-bold">Sales Performance</div><div className="flex h-32 items-end gap-1.5">{[32,45,38,58,52,70,62,83,92].map((h,i)=><div key={i} className="flex-1 rounded-t bg-emerald-600/80" style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[6px] text-slate-400">Jan Feb Mar Apr May Jun Jul Aug Sep</div></div><div className="rounded-xl border bg-white p-3"><div className="text-[8px] font-bold">Business Summary</div><div className="mx-auto my-4 grid h-24 w-24 place-items-center rounded-full border-[16px] border-emerald-700 border-r-amber-400 border-b-slate-200"><div className="text-center"><div className="text-[7px] text-slate-400">Total</div><div className="text-[9px] font-black">125,430</div></div></div><div className="text-[7px] text-slate-500">Retail · Restaurant · Hotel · Services</div></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="absolute bottom-[-3%] left-[2%] z-20 w-[155px] rounded-[24px] border-4 border-white bg-[#063f35] p-3 shadow-2xl sm:w-[175px]">
-        <div className="mb-2 flex items-center justify-between text-[8px] font-bold text-white"><span>SifoBooks</span><Smartphone className="h-3 w-3"/></div>
-        <div className="rounded-xl bg-white p-3 text-slate-900"><div className="text-[7px] text-slate-400">Today's Sales</div><div className="mt-1 text-lg font-black">ZMW 12,450</div><div className="mt-1 text-[7px] font-bold text-emerald-600">+18%</div><div className="mt-3 grid grid-cols-2 gap-1.5">{["POS","Invoice","Payroll","Reports"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-center text-[7px] font-bold">{x}</div>)}</div></div>
-      </div>
-    </div>
   );
 }
 
