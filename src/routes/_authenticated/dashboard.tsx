@@ -60,6 +60,7 @@ function DashboardPage() {
   const [payables, setPayables] = useState(0);
   const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
   const [zraQueue, setZraQueue] = useState({ pending: 0, failed: 0, submitted: 0 });
+  const [integrity, setIntegrity] = useState({ draft: 0, unbalanced: 0, reversed: 0 });
   const [loading, setLoading] = useState(true);
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
@@ -82,6 +83,7 @@ function DashboardPage() {
         supabase.from("invoices").select("total, balance_due, status"),
         supabase.from("bills").select("total, balance_due, status"),
         supabase.from("zra_invoice_queue").select("status"),
+        supabase.from("journal_entries").select("status, total_debit, total_credit, reversal_of"),
       ]);
       if (!prof?.onboarded) { navigate({ to: "/onboarding" }); return; }
       setFirstName((prof?.full_name || u.user.email || "").split(" ")[0].split("@")[0]);
@@ -97,6 +99,12 @@ function DashboardPage() {
       setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
       setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
       const zra = (zraRows ?? []) as Array<{ status?: string }>;
+      const journals = (journalRows ?? []) as Array<{ status?: string; total_debit?: number; total_credit?: number; reversal_of?: string | null }>;
+      setIntegrity({
+        draft: journals.filter(j => String(j.status || "").toLowerCase() === "draft").length,
+        unbalanced: journals.filter(j => Math.abs(Number(j.total_debit || 0) - Number(j.total_credit || 0)) > 0.000001).length,
+        reversed: journals.filter(j => Boolean(j.reversal_of)).length,
+      });
       setZraQueue({
         pending: zra.filter(r => ["pending", "queued", "sync_pending"].includes(String(r.status || "").toLowerCase())).length,
         failed: zra.filter(r => ["failed", "error", "zra_failed", "sync_failed"].includes(String(r.status || "").toLowerCase())).length,
@@ -276,6 +284,8 @@ function DashboardPage() {
           <PulseTile label="Customers" value={String(customerCount)} to="/customers" />
           <PulseTile label="ZRA pending" value={String(zraQueue.pending)} tone={zraQueue.pending > 0 ? "negative" : "positive"} to="/compliance" />
           <PulseTile label="ZRA failed" value={String(zraQueue.failed)} tone={zraQueue.failed > 0 ? "negative" : "positive"} to="/compliance" />
+          <PulseTile label="Draft journals" value={String(integrity.draft)} tone={integrity.draft > 0 ? "negative" : "positive"} to="/journal-entries" />
+          <PulseTile label="Unbalanced journals" value={String(integrity.unbalanced)} tone={integrity.unbalanced > 0 ? "negative" : "positive"} to="/reports/trial-balance" />
         </div>
       </Panel>
     ),
@@ -379,6 +389,9 @@ function DashboardPage() {
           <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
           <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
           <Row icon={ShieldCheck} label="ZRA Submitted" value={String(zraQueue.submitted)} to="/compliance" />
+          <Row icon={BookText} label="Draft journals" value={String(integrity.draft)} to="/journal-entries" />
+          <Row icon={BookText} label="Unbalanced journals" value={String(integrity.unbalanced)} to="/reports/trial-balance" />
+          <Row icon={RotateCcw} label="Reversed journals" value={String(integrity.reversed)} to="/journal-entries" />
           <Row icon={ShieldCheck} label="PAYE" value="View" to="/reports/payroll-summary" />
           <Row icon={ShieldCheck} label="NAPSA & NHIMA" value="View" to="/payroll-dashboard" />
           <Row icon={ShieldCheck} label="Tax Summary" value="View" to="/reports/tax-summary" />
