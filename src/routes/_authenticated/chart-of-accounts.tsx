@@ -34,6 +34,8 @@ type Row = {
   balance: number;
   entry_count: number;
   purpose?: string | null;
+  reporting_class?: string | null;
+  parent_id?: string | null;
   normal_balance?: "Dr" | "Cr" | null;
 };
 
@@ -45,6 +47,15 @@ const TYPES = [
   { value: "expense", label: "Expense" },
   { value: "cogs", label: "Cost of Goods Sold" },
 ];
+
+const REPORTING_CLASSES: Record<string, string[]> = {
+  asset: ["Current Asset", "Non-current Asset", "Cash & Bank", "Accounts Receivable", "Inventory", "Fixed Asset", "Other Asset"],
+  liability: ["Current Liability", "Non-current Liability", "Accounts Payable", "Tax Liability", "Payroll Liability", "Loan Liability", "Other Liability"],
+  equity: ["Share Capital", "Owner Capital", "Retained Earnings", "Drawings", "Other Equity"],
+  revenue: ["Sales Revenue", "Service Revenue", "Other Operating Income", "Other Income"],
+  cogs: ["Cost of Sales", "Inventory COGS", "Stock Adjustment"],
+  expense: ["Operating Expense", "Payroll Expense", "Occupancy", "Utilities", "Bank Charges", "Depreciation", "Other Expense"],
+};
 
 const TYPE_COLOR: Record<string, string> = {
   asset: "bg-blue-100 text-blue-700",
@@ -61,7 +72,7 @@ function ChartOfAccountsPage() {
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ account_code: "", account_name: "", account_type: "expense", description: "" });
+  const [form, setForm] = useState({ account_code: "", account_name: "", account_type: "expense", reporting_class: "Operating Expense", parent_id: "", description: "" });
   const [saving, setSaving] = useState(false);
   const [drawer, setDrawer] = useState<Row | null>(null);
   const [entries, setEntries] = useState<any[]>([]);
@@ -91,12 +102,12 @@ function ChartOfAccountsPage() {
     setLoading(true);
     const [{ data, error }, { data: coa }] = await Promise.all([
       (supabase as any).from("account_balances").select("*").order("account_code"),
-      (supabase as any).from("chart_of_accounts").select("id, purpose, normal_balance"),
+      (supabase as any).from("chart_of_accounts").select("id, purpose, reporting_class, parent_id, normal_balance"),
     ]);
     if (error) { toast.error(error.message); setRows([]); }
     else {
-      const meta = new Map<string, { purpose?: string; normal_balance?: "Dr" | "Cr" }>(
-        (coa ?? []).map((c: any) => [c.id, { purpose: c.purpose, normal_balance: c.normal_balance }]),
+      const meta = new Map<string, { purpose?: string; reporting_class?: string; parent_id?: string; normal_balance?: "Dr" | "Cr" }>(
+        (coa ?? []).map((c: any) => [c.id, { purpose: c.purpose, reporting_class: c.reporting_class, parent_id: c.parent_id, normal_balance: c.normal_balance }]),
       );
       setRows(((data ?? []) as Row[]).map(r => ({ ...r, ...(meta.get(r.account_id) ?? {}) })));
     }
@@ -107,7 +118,7 @@ function ChartOfAccountsPage() {
   const filtered = useMemo(() => rows.filter(r => {
     if (typeFilter !== "all" && r.account_type !== typeFilter) return false;
     if (!q) return true;
-    const s = `${r.account_code} ${r.account_name} ${r.account_type}`.toLowerCase();
+    const s = `${r.account_code} ${r.account_name} ${r.account_type} ${r.reporting_class ?? ""}`.toLowerCase();
     return s.includes(q.toLowerCase());
   }), [rows, q, typeFilter]);
 
@@ -123,13 +134,13 @@ function ChartOfAccountsPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
     const { error } = await supabase.from("chart_of_accounts").insert({
-      user_id: u.user.id, is_active: true, ...form,
+      user_id: u.user.id, is_active: true, ...form, parent_id: form.parent_id || null,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Account created");
     setOpen(false);
-    setForm({ account_code: "", account_name: "", account_type: "expense", description: "" });
+    setForm({ account_code: "", account_name: "", account_type: "expense", reporting_class: "Operating Expense", parent_id: "", description: "" });
     load();
   };
 
@@ -146,7 +157,8 @@ function ChartOfAccountsPage() {
           saving={saving}
           saveLabel="Create account"
         >
-          <SifoFormSection title="Details">
+          <SifoFormSection title="Account setup">
+            <div className="col-span-full rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-900">Choose the accounting class carefully. SifoBooks uses these classifications for financial statements and management reports.</div>
             <SifoField label="Code" required htmlFor="coa-code">
               <Input id="coa-code" className="h-11" value={form.account_code} onChange={e => setForm({ ...form, account_code: e.target.value })} placeholder="e.g. 5100" />
             </SifoField>
@@ -154,6 +166,18 @@ function ChartOfAccountsPage() {
               <Select value={form.account_type} onValueChange={v => setForm({ ...form, account_type: v })}>
                 <SelectTrigger id="coa-type" className="h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Financial statement class" required htmlFor="coa-class">
+              <Select value={form.reporting_class} onValueChange={v => setForm({ ...form, reporting_class: v })}>
+                <SelectTrigger id="coa-class" className="h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>{(REPORTING_CLASSES[form.account_type] ?? []).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+            </SifoField>
+            <SifoField label="Parent account" wide htmlFor="coa-parent">
+              <Select value={form.parent_id || "none"} onValueChange={v => setForm({ ...form, parent_id: v === "none" ? "" : v })}>
+                <SelectTrigger id="coa-parent" className="h-11"><SelectValue placeholder="Top-level account" /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Top-level account</SelectItem>{rows.filter(r => r.account_type === form.account_type).map(r => <SelectItem key={r.account_id} value={r.account_id}>{r.account_code} · {r.account_name}</SelectItem>)}</SelectContent>
               </Select>
             </SifoField>
             <SifoField label="Name" required wide htmlFor="coa-name">
@@ -175,12 +199,14 @@ function ChartOfAccountsPage() {
         module="accounting"
         icon={BookOpen}
         title="Chart of Accounts"
-        description="Live balances from posted journal entries. Click an account to see its transactions."
+        description="Your financial structure. Account classes drive the Trial Balance, Profit & Loss and Balance Sheet."
         breadcrumbs={[{ label: "Accounting", to: "/chart-of-accounts" }, { label: "Chart of Accounts" }]}
         actions={
           <Button variant="save" size="sm" className="h-9" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1.5" />New Account</Button>
         }
       />
+
+      <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">How to use:</span> Create accounts by type, then place them under a parent account where appropriate. SifoBooks posts transactions to these accounts automatically.</div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {TYPES.map(t => (
@@ -212,7 +238,7 @@ function ChartOfAccountsPage() {
               <tr>
                 <th className="text-left py-2">Code</th>
                 <th className="text-left">Account</th>
-                <th className="text-left">Type</th>
+                <th className="text-left">Type / Class</th>
                 <th className="text-right">Debit</th>
                 <th className="text-right">Credit</th>
                 <th className="text-right">Balance</th>
@@ -255,7 +281,7 @@ function ChartOfAccountsPage() {
                     </div>
                   </td>
                   <td>
-                    <Badge className={TYPE_COLOR[r.account_type] ?? ""} variant="secondary">{r.account_type}</Badge>
+                    <Badge className={TYPE_COLOR[r.account_type] ?? ""} variant="secondary">{r.account_type}</Badge>{r.reporting_class && <div className="text-[10px] text-muted-foreground mt-0.5">{r.reporting_class}</div>}
                     {r.normal_balance && <span className="ml-1 text-[10px] text-muted-foreground">{r.normal_balance}</span>}
                   </td>
                   <td className="text-right tabular-nums">{r.total_debit > 0 ? fmtMoney(r.total_debit) : ""}</td>
