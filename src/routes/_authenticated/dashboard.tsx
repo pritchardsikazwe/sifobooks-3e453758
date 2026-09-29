@@ -61,6 +61,8 @@ function DashboardPage() {
   const [accounting, setAccounting] = useState({ revenue: 0, cogs: 0, grossProfit: 0, opex: 0, netProfit: 0, grossMargin: 0, assets: 0, liabilities: 0, equity: 0, balanced: true });
   const [zraQueue, setZraQueue] = useState({ pending: 0, failed: 0, submitted: 0 });
   const [integrity, setIntegrity] = useState({ draft: 0, unbalanced: 0, reversed: 0 });
+  const [topCustomers, setTopCustomers] = useState<Array<{ name: string; total: number }>>([]);
+  const [lowStock, setLowStock] = useState<Array<{ name: string; qty: number; reorder: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
 
@@ -77,7 +79,7 @@ function DashboardPage() {
         supabase.from("profiles").select("full_name, onboarded").eq("id", u.user.id).maybeSingle(),
         supabase.from("companies").select("name, trading_name, base_currency").eq("id", ctx.company.id).maybeSingle(),
         supabase.from("bank_transactions").select("id, txn_date, description, amount, reference, category").order("txn_date", { ascending: false }).limit(1000),
-        supabase.from("stock_items").select("quantity_on_hand, cost_price"),
+        supabase.from("stock_items").select("name, quantity_on_hand, cost_price, reorder_level"),
         supabase.from("customers").select("*", { count: "exact", head: true }),
         supabase.from("suppliers").select("*", { count: "exact", head: true }),
         supabase.from("invoices").select("total, balance_due, status"),
@@ -98,6 +100,12 @@ function DashboardPage() {
       setInvoiceCount((invs ?? []).length);
       setReceivables((invs ?? []).reduce((s: number, i: any) => s + Number(i.balance_due || 0), 0));
       setPayables((bills ?? []).reduce((s: number, b: any) => s + Number(b.balance_due || 0), 0));
+      const customerRows = (await supabase.from("customers").select("id, name")).data ?? [];
+      const customerMap = new Map((customerRows as any[]).map(c => [c.id, c.name]));
+      const totals = new Map<string, number>();
+      (invs ?? []).forEach((inv: any) => { if (inv.customer_id) totals.set(inv.customer_id, (totals.get(inv.customer_id) || 0) + Number(inv.total || 0)); });
+      setTopCustomers(Array.from(totals.entries()).map(([id, total]) => ({ name: customerMap.get(id) ?? "Unknown customer", total })).sort((a, b) => b.total - a.total).slice(0, 5));
+      setLowStock((stk ?? []).map((x: any) => ({ name: x.name || "Unnamed item", qty: Number(x.quantity_on_hand || 0), reorder: Number(x.reorder_level || 0) })).filter(x => x.reorder > 0 && x.qty <= x.reorder).sort((a, b) => a.qty - b.qty).slice(0, 6));
       const zra = (zraRows ?? []) as Array<{ status?: string }>;
       const journals = (journalRows ?? []) as Array<{ status?: string; total_debit?: number; total_credit?: number; reversal_of?: string | null }>;
       setIntegrity({
@@ -189,7 +197,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -206,6 +214,7 @@ function DashboardPage() {
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
     "today-pulse": "col-span-12",
+    "operational-intelligence": "col-span-12",
     "sales-chart": "col-span-12 lg:col-span-5",
     "income-vs-expenses": "col-span-12 lg:col-span-4",
     "cash-flow": "col-span-12 lg:col-span-3",
@@ -220,6 +229,7 @@ function DashboardPage() {
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
     "today-pulse": "Today's business pulse",
+    "operational-intelligence": "Operational intelligence",
     "sales-chart": "Sales by month",
     "income-vs-expenses": "Money In vs Money Out",
     "cash-flow": "Cash flow",
@@ -367,6 +377,25 @@ function DashboardPage() {
         </div>
       </Panel>
     ),
+    "operational-intelligence": (
+      <Panel title="Operational Intelligence" subtitle="Real workload signals from invoices and inventory">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Top customers</div>
+            {topCustomers.length === 0 ? <EmptyState label="No invoiced customers yet" /> : <div className="space-y-1">
+              {topCustomers.map(c => <Row key={c.name} icon={ArrowUpRight} label={c.name} value={money(c.total)} to="/customers" />)}
+            </div>}
+          </div>
+          <div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Low stock</div>
+            {lowStock.length === 0 ? <EmptyState label="No items at or below reorder level" /> : <div className="space-y-1">
+              {lowStock.map(i => <Link key={i.name} to="/stock" className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/50"><span className="text-sm font-medium truncate">{i.name}</span><span className="text-xs font-semibold text-rose-600">{i.qty} / {i.reorder}</span></Link>)}
+            </div>}
+          </div>
+        </div>
+      </Panel>
+    ),
+
     "snapshot": (
       <Panel title="Snapshot" subtitle="Key modules">
         <div className="space-y-1">
