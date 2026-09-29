@@ -328,7 +328,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {section.items.map(item => {
                         const Icon = item.icon;
-                        const active = currentPath === item.url;
+                        const active = currentPath === item.url || currentPath.startsWith(item.url + "/");
                         const hue = hueFor(section.label);
                         return (
                           <SidebarMenuItem key={item.url}>
