@@ -29,6 +29,13 @@
       "when": 1790783699386,
       "tag": "0003_pos_checkout_schema_alignment",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790783893582,
+      "tag": "0004_pos_resolve_location_text_register_fix",
+      "breakpoints": true
     }
   ]
 }
