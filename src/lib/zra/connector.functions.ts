@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { registerZraConnector, listZraConnectors } from "./connector.server";
 
 const withConnectorAuth=async(fn:any,args:any)=>{
