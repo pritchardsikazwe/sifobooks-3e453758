@@ -6,6 +6,7 @@ import {
   cloudListDevices, cloudSaveDevice, cloudGetConfig, cloudSaveConfig, cloudInitializeDevice,
   cloudGetStandardCodes, cloudGetItemClasses, cloudSyncCatalog, cloudListInventory,
   cloudSearchItemClasses, cloudListStandardCodes, cloudMapInventoryItem, cloudRegisterInventoryItem,
+  cloudSubmitPosSale, cloudSubmitCorrection, cloudSelectInvoice, cloudSaveStockItems, cloudSaveStockMaster,
 } from "./cloud";
 import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
@@ -302,7 +303,7 @@ const localZraRegisterInventoryItemFn = createServerFn({method:"POST"})
     return {response,payload,data:db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId)};
   });
 
-export const zraSaveItemFn = createServerFn({ method:"POST" })
+const localZraSaveItemFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveItem(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
@@ -679,6 +680,13 @@ const cloudPost = (handler: (data: any) => Promise<any>) =>
   createServerFn({ method: "POST" })
     .inputValidator((raw: unknown) => raw as any)
     .handler(async ({ data }) => handler(data));
+
+export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudPost(cloudSaveItem);
+export const zraSubmitPosSaleHostedFn = IS_LOCAL_BACKEND ? zraSubmitPosSaleFn : cloudPost(cloudSubmitPosSale);
+export const zraSubmitCorrectionHostedFn = IS_LOCAL_BACKEND ? zraSubmitCorrectionFn : cloudPost(cloudSubmitCorrection);
+export const zraSelectInvoiceHostedFn = IS_LOCAL_BACKEND ? zraSelectInvoiceFn : cloudPost(cloudSelectInvoice);
+export const zraSaveStockItemsHostedFn = IS_LOCAL_BACKEND ? zraSaveStockItemsFn : cloudPost(cloudSaveStockItems);
+export const zraSaveStockMasterHostedFn = IS_LOCAL_BACKEND ? zraSaveStockMasterFn : cloudPost(cloudSaveStockMaster);
 
 export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudPost(cloudListDevices);
 export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudPost(cloudSaveDevice);
