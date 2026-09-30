@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";\nimport { supabase } from "@/integrations/supabase/client";
 import { registerZraConnector, listZraConnectors } from "./connector.server";
 
 export const zraRegisterConnectorFn=createServerFn({method:"POST"})
