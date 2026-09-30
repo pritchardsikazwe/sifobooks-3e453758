@@ -221,18 +221,18 @@ function IndustryGrid() {
           </div>
           <span className="hidden items-center gap-2 text-sm font-bold text-blue-700 sm:flex">Built for real businesses in Zambia <ArrowRight className="h-4 w-4"/></span>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
           {industries.map(([name, sub, Icon, image], index) => (
             <div
               key={name}
-              className="group relative min-h-[172px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
+              className="group relative min-h-[142px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               <img src={image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-85 transition duration-700 group-hover:scale-110 group-hover:opacity-80" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#06265f]/95 via-[#06265f]/55 to-blue-900/5" />
               <div className="absolute -right-5 -top-5 h-24 w-24 rounded-full bg-blue-300/15 blur-sm transition duration-500 group-hover:scale-125" />
               <div className="relative flex h-full min-h-[172px] flex-col justify-between p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-xl border border-amber-300/30 bg-[#06265f]/60 text-amber-300 backdrop-blur-sm transition duration-500 group-hover:scale-110 group-hover:bg-amber-300 group-hover:text-emerald-950">
+                <div className="grid h-9 w-9 place-items-center rounded-xl border border-amber-300/30 bg-[#06265f]/60 text-amber-300 backdrop-blur-sm transition duration-500 group-hover:scale-110 group-hover:bg-amber-300 group-hover:text-emerald-950">
                   <Icon className="h-5 w-5"/>
                 </div>
                 <div>
@@ -253,11 +253,103 @@ function IndustryGrid() {
 
 function Compliance() {
   const items = ["ZRA Smart Invoice & VAT Returns", "PAYE Calculations & Submissions", "NAPSA Contributions", "NHIMA Contributions", "Employee Tax Certificates (TP10)", "Compliance Reports & Audit Trail"];
-  return <section id="compliance" className="bg-white py-12 sm:py-16"><div className="mx-auto grid max-w-[1450px] items-center gap-8 px-5 sm:px-8 lg:grid-cols-[.8fr_1.2fr]"><div className="sifo-reveal"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-blue-700">Stay compliant in Zambia</div><h2 className="mt-3 text-3xl font-black sm:text-5xl tracking-tight sm:text-5xl">Compliance without the paperwork maze.</h2><p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Keep statutory workflows visible in the same system as accounting, payroll and sales.</p><ul className="mt-5 space-y-2.5">{items.map(x=><li key={x} className="flex items-center gap-3 text-sm font-semibold text-slate-700"><CheckCircle2 className="h-5 w-5 shrink-0 text-blue-600"/>{x}</li>)}</ul></div><ComplianceMockup/></div></section>;
+  return (
+    <section id="compliance" className="bg-white py-12 sm:py-16">
+      <div className="mx-auto max-w-[1500px] px-4 sm:px-7 lg:px-10">
+        <div className="rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,.08)] overflow-hidden">
+          <div className="grid items-center gap-6 px-5 py-7 sm:px-8 lg:grid-cols-[.9fr_1.8fr] lg:px-10 lg:py-8">
+            <div className="sifo-reveal">
+              <div className="text-[10px] font-extrabold uppercase tracking-[.18em] text-blue-700">Stay compliant in Zambia</div>
+              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Compliance without the paperwork maze.</h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                SifoBooks helps you meet statutory requirements with connected workflows, clear records and real-time integration.
+              </p>
+              <a href="#screens" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700">
+                Learn more <ArrowRight className="h-4 w-4"/>
+              </a>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-4">
+              <ComplianceAuthority
+                icon={<ShieldCheck className="h-7 w-7"/>}
+                name="ZRA"
+                title="Zambia Revenue Authority"
+                lines={["Smart Invoice", "VAT Returns", "PAYE Calculations"]}
+              />
+              <ComplianceAuthority
+                icon={<Landmark className="h-7 w-7"/>}
+                name="NAPSA"
+                title="National Pension Scheme Authority"
+                lines={["Contributions", "Submissions", "Employee Records"]}
+              />
+              <ComplianceAuthority
+                icon={<Users className="h-7 w-7"/>}
+                name="NHIMA"
+                title="National Health Insurance Management Authority"
+                lines={["Contributions", "Employee Enrolment", "Returns"]}
+              />
+              <ComplianceAuthority
+                icon={<ClipboardCheck className="h-7 w-7"/>}
+                name="Ministry of Labour"
+                title="Labour & Social Security"
+                lines={["Employee Tax (TP10)", "Compliance Reports", "Audit Trail"]}
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-3 sm:px-8">
+            <div className="flex gap-5 overflow-x-auto pb-1 scrollbar-none">
+              {items.map((x) => (
+                <div key={x} className="flex shrink-0 items-center gap-2 text-[10px] font-semibold text-slate-600">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600"/>
+                  {x}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <ComplianceMockup/>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ComplianceAuthority({
+  icon, name, title, lines,
+}: {
+  icon: ReactNode;
+  name: string;
+  title: string;
+  lines: string[];
+}) {
+  return (
+    <div className="group rounded-2xl border border-slate-100 bg-white p-3 transition duration-300 hover:-translate-y-1 hover:border-blue-100 hover:shadow-lg hover:shadow-blue-100/50">
+      <div className="flex items-start gap-2.5">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 transition group-hover:bg-blue-600 group-hover:text-white">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <div className="text-base font-black text-blue-800">{name}</div>
+          <div className="mt-0.5 line-clamp-2 text-[8px] font-semibold leading-3 text-slate-500">{title}</div>
+        </div>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        {lines.map((line) => (
+          <div key={line} className="flex items-center gap-1.5 text-[8px] font-semibold text-slate-600">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600"/>
+            {line}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ComplianceMockup() {
-  return <div className="relative rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/40 p-3 sm:p-4 shadow-[0_25px_80px_rgba(15,23,42,.12)] sifo-reveal"><div className="absolute -top-5 right-6 rounded-xl bg-blue-700 sifo-pulse px-4 py-2 text-xs font-extrabold text-white shadow-lg">✓ ZRA Smart Invoice Ready</div><div className="grid gap-3 md:grid-cols-[1fr_220px]"><div className="rounded-2xl border bg-white p-4"><div className="flex items-center justify-between border-b pb-3"><div className="text-sm font-black">Sales Invoice</div><div className="rounded-lg bg-blue-700 px-3 py-1.5 text-[9px] font-bold text-white">Submit to ZRA</div></div><div className="mt-4 grid grid-cols-2 gap-3 text-[9px]"><span>Customer<br/><b>ABC Supplies Ltd</b></span><span>Invoice Date<br/><b>25 Sep 2026</b></span><span>Invoice No.<br/><b>INV-00045</b></span><span>Branch<br/><b>Ndola</b></span></div><div className="mt-4 overflow-hidden rounded-lg border"><div className="grid grid-cols-4 bg-slate-50 p-2 text-[8px] font-bold"><span>Item</span><span>Qty</span><span>VAT</span><span>Total</span></div>{["Maize Meal","Cooking Oil","Sugar"].map((x,i)=><div key={x} className="grid grid-cols-4 border-t p-2 text-[8px]"><span>{x}</span><span>{[12,5,8][i]}</span><span>16%</span><b>{["1,392","1,450","1,670"][i]}</b></div>)}</div><div className="mt-3 text-right text-sm font-black">ZMW 4,524.00</div></div><div className="rounded-2xl border bg-white p-5"><div className="text-[9px] font-black">ZRA SMART INVOICE</div><div className="mt-4 grid h-36 place-items-center rounded-lg border-2 border-dashed text-xs font-black text-slate-400">QR CODE</div><div className="mt-3 text-[8px] text-slate-500">Fiscal reference and receipt data appear here after a successful ZRA response.</div></div></div><div className="mt-4 grid grid-cols-3 gap-3">{[["ZRA","Smart Invoice"],["NAPSA","Contributions"],["NHIMA","Contributions"]].map(x=><div key={x[0]} className="rounded-xl border bg-white p-3 text-center"><div className="text-lg font-black text-blue-800">{x[0]}</div><div className="text-[8px] text-slate-500">{x[1]}</div></div>)}</div></div>;
+  return <div className="relative rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/40 p-3 sm:p-4 shadow-[0_25px_80px_rgba(15,23,42,.12)] sifo-reveal"><div className="absolute -top-5 right-6 rounded-xl bg-blue-700 sifo-pulse px-4 py-2 text-xs font-extrabold text-white shadow-lg">✓ ZRA Smart Invoice Ready</div><div className="grid gap-3 md:grid-cols-[1fr_220px]"><div className="rounded-2xl border bg-white p-4"><div className="flex items-center justify-between border-b pb-3"><div className="text-sm font-black">Sales Invoice</div><div className="rounded-lg bg-blue-700 px-3 py-1.5 text-[9px] font-bold text-white">Submit to ZRA</div></div><div className="mt-4 grid grid-cols-2 gap-3 text-[9px]"><span>Customer<br/><b>ABC Supplies Ltd</b></span><span>Invoice Date<br/><b>25 Sep 2026</b></span><span>Invoice No.<br/><b>INV-00045</b></span><span>Branch<br/><b>Ndola</b></span></div><div className="mt-4 overflow-hidden rounded-lg border"><div className="grid grid-cols-4 bg-slate-50 p-2 text-[8px] font-bold"><span>Item</span><span>Qty</span><span>VAT</span><span>Total</span></div>{["Maize Meal","Cooking Oil","Sugar"].map((x,i)=><div key={x} className="grid grid-cols-4 border-t p-2 text-[8px]"><span>{x}</span><span>{[12,5,8][i]}</span><span>16%</span><b>{["1,392","1,450","1,670"][i]}</b></div>)}</div><div className="mt-3 text-right text-sm font-black">ZMW 4,524.00</div></div><div className="rounded-2xl border bg-white p-5"><div className="text-[9px] font-black">ZRA SMART INVOICE</div><div className="mt-4 grid h-28 place-items-center sm:h-36 rounded-lg border-2 border-dashed text-xs font-black text-slate-400">QR CODE</div><div className="mt-3 text-[8px] text-slate-500">Fiscal reference and receipt data appear here after a successful ZRA response.</div></div></div><div className="mt-4 grid grid-cols-3 gap-3">{[["ZRA","Smart Invoice"],["NAPSA","Contributions"],["NHIMA","Contributions"]].map(x=><div key={x[0]} className="rounded-xl border bg-white p-3 text-center"><div className="text-lg font-black text-blue-800">{x[0]}</div><div className="text-[8px] text-slate-500">{x[1]}</div></div>)}</div></div>;
 }
 
 function Screens() {
