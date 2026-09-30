@@ -62,7 +62,7 @@ async function runStandaloneDemo(edition: Edition) {
     // by inventing a location at checkout.
     if (edition === "retail" || edition === "enterprise" || edition === "accounting") {
       const { data: existingLocation } = await (supabase as any).from("inventory_locations")
-        .select("id").eq("is_active", true).eq("user_id", uid)
+        .select("id").eq("is_active", true).eq("user_id", uid).eq("company_id", companyId)
         .order("is_default", { ascending: false }).limit(1).maybeSingle();
 
       if (!existingLocation?.id) {
