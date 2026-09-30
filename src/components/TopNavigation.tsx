@@ -131,10 +131,7 @@ function useNavigationMenus(): Menu[] {
 
   // Staff see only the same permission-filtered routes. Avoid showing empty
   // administrative menus just because the owner has those capabilities.
-  return menus.filter(m => !isStaff || m.items.length > 0).map(m => ({
-    ...m,
-    items: m.items.filter(i => i.url !== pathname || pathname === i.url),
-  }));
+  return menus.filter(m => !isStaff || m.items.length > 0);
 }
 
 export function TopNavigation() {
