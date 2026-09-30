@@ -212,7 +212,10 @@ export async function cloudInitializeDevice(data: any) {
       response_json: JSON.stringify(response),
     });
   }
-  return response;
+  return success
+    ? { state: "success", route: "direct", resultCd: "000", resultMsg: response?.resultMsg ?? null, message: "The VSDC confirmed initialization (code 000)." }
+    : { state: "failed", layer: "ZRA", route: "direct", resultCd: response?.resultCd ?? null, resultMsg: response?.resultMsg ?? null,
+        message: `The VSDC/ZRA refused initialization${response?.resultCd ? ` (code ${response.resultCd})` : ""}: ${response?.resultMsg || "no message returned"}` };
 }
 
 export async function cloudGetStandardCodes(data: any) {
