@@ -57,7 +57,7 @@ async function configFor(db: any, userId: string, branchId?: string | null, devi
   return data;
 }
 
-export async function cloudListDevices(data: { userId: string; branchId?: string | null }) {
+export async function cloudListDevices(data: { userId: string; branchId?: string | null; authToken?: string }) {
   const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   let q = db.from("zra_devices").select("*").eq("user_id", userId).order("is_active", { ascending: false }).order("device_name");

@@ -1,3 +1,4 @@
+// @ts-nocheck — handler return types are untyped VSDC JSON; see AGENTS.md ts-nocheck rule.
 // Hosted ZRA server-function wrappers.
 // This module is safe to import from client-reachable code because the
 // server-only implementation is referenced only inside createServerFn handlers.

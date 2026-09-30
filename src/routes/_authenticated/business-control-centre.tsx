@@ -21,7 +21,8 @@ function BusinessControlCentre(){
       supabase.from("invoices").select("total,balance_due,status"),supabase.from("bills").select("total,balance_due,status"),
       supabase.from("stock_items").select("quantity_on_hand,cost_price"),supabase.from("bank_transactions").select("amount").limit(5000),
       supabase.from("approval_requests").select("id").eq("status","pending"),
-      supabase.from("stock_items").select("zra_sync_status")
+      supabase.from("stock_items").select("zra_sync_status"),
+      Promise.resolve({data:[] as any[]}),Promise.resolve({data:[] as any[]})
     ]);
     setCompany(c?.trading_name||c?.name||"Your business");setCurrency(c?.base_currency||"ZMW");
     const { data: activeCompany } = await supabase.from("companies").select("id, industry").eq("user_id",u.user.id).maybeSingle();
