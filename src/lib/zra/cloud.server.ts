@@ -15,6 +15,7 @@ import {
   saveStockMaster,
   selectInvoice,
 } from "./vsdc";
+import { requiresConnector, routeInitialize, routeHealth, checkCommand } from "./connector-routing.server";
 
 function cloudClient(authToken?: string) {
   const token = (authToken || getRequestHeader("authorization") || "").replace(/^Bearer\s+/i, "").trim();
