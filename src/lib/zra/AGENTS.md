@@ -1,0 +1,2 @@
+- ZRA/VSDC goes through src/core/contracts/fiscal.ts FiscalDevicePort; only a real "fiscalized" VSDC response marks a sale fiscalised. Why: fiscal logic stays out of the POS/accounting core.
+- Connector tables (zra_connector_credentials/commands/events) are service-role only via connector.server.ts getConnectorDb (fails closed); other zra_* tables are owner-only. Why: credentials/jobs never browser-reachable.
