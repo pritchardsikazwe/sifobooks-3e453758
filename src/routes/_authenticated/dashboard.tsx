@@ -438,8 +438,9 @@ function DashboardPage() {
       </Panel>
     ),
     "compliance": (
-      <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+      <Panel title="Compliance Center" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
         <div className="space-y-1">
+          <Row icon={ShieldCheck} label="ZRA Smart Invoice" value="Open" to="/zra-smart-invoice" />
           <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
           <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
           <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
