@@ -36,6 +36,13 @@
       "when": 1790783893582,
       "tag": "0004_pos_resolve_location_text_register_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790783974637,
+      "tag": "0005_complete_pos_sale_service_and_discount_fix",
+      "breakpoints": true
     }
   ]
 }
