@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useRouterState, useRouter } fr
 import { supabase } from "@/integrations/supabase/client";
 import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { TopNavigation } from "@/components/TopNavigation";
-import { Search, Bell, HelpCircle, Settings as SettingsIcon, Command, ArrowLeft, LogOut, User } from "lucide-react";
+import { Search, Bell, HelpCircle, Settings as SettingsIcon, Command, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -74,9 +74,7 @@ function useBreadcrumb() {
 function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
-  const crumb = useBreadcrumb();
   const pageKey = useRouterState({ select: r => r.location.pathname });
-  const router = useRouter();
   const { access } = Route.useRouteContext() as { access?: Access | null };
   const isStaff = Boolean(access && !access.is_owner && !access.is_super_admin);
   const canSettings = !isStaff || hasPerm(access, "settings.manage");
