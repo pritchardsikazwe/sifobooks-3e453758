@@ -1,6 +1,7 @@
 // Hosted/Lovable Cloud ZRA adapter.
-// Uses the authenticated Supabase session for data access. Windows/local mode
-// continues to use src/lib/zra/server.ts's SQLite implementation.
+// SERVER-ONLY MODULE: loaded dynamically by createServerFn handlers.
+// It may safely access the request Authorization header and hosted Supabase.
+// Windows/local mode continues to use src/lib/zra/server.ts's SQLite implementation.
 import { createClient } from "@supabase/supabase-js";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import {
