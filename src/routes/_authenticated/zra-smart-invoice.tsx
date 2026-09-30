@@ -14,6 +14,7 @@ import {
   zraSyncCatalogFn, zraListInventoryFn, zraSearchItemClassesFn, zraListStandardCodesFn,
   zraMapInventoryItemFn, zraRegisterInventoryItemFn, zraListDevicesFn, zraSaveDeviceFn,
 } from "@/lib/zra/server";
+import { zraListConnectorsFn, zraRegisterConnectorFn } from "@/lib/zra/connector.functions";
 
 export const Route = createFileRoute("/_authenticated/zra-smart-invoice")({
   head: () => ({ meta: [
@@ -44,12 +45,17 @@ function ZraSmartInvoicePage() {
   const [mapForm,setMapForm]=useState<any>({});
   const [devices,setDevices]=useState<any[]>([]);
   const [selectedDeviceId,setSelectedDeviceId]=useState("");
+  const [connectors,setConnectors]=useState<any[]>([]);
+  const [newCredential,setNewCredential]=useState("");
+  const [connectorBusy,setConnectorBusy]=useState(false);
   const [deviceDraft,setDeviceDraft]=useState<any>({deviceName:"POS 1",deviceType:"desktop",terminalId:"",deploymentMode:"local",environment:"test",tpin:"",branchCode:"000",deviceSerial:"",vsdcEndpoint:"",connectorEndpoint:""});
 
 
   const load=async(uid:string,preferredDeviceId?:string)=>{
     const deviceResult:any=await zraListDevicesFn({data:{userId:uid}});
     const deviceRows=deviceResult?.data ?? [];
+    const connectorResult:any=await zraListConnectorsFn({data:{userId:uid,deviceId:preferredDeviceId || selectedDeviceId || deviceRows[0]?.id || null}});
+    setConnectors(connectorResult?.data ?? []);
     setDevices(deviceRows);
     const nextDeviceId=preferredDeviceId || selectedDeviceId || deviceRows[0]?.id || "";
     if(nextDeviceId){
@@ -210,6 +216,45 @@ function ZraSmartInvoicePage() {
         </button>)}
         {!devices.length&&<div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground md:col-span-2 lg:col-span-3">No ZRA devices registered yet. Create one for each computer/device registered by ZRA.</div>}
       </div>
+    </Card>
+
+    <Card className="rounded-xl border-emerald-200 bg-emerald-50/40 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-2"><Network className="h-5 w-5 text-emerald-700"/><div><h2 className="font-semibold">SifoBooks ZRA Connector</h2><p className="text-xs text-muted-foreground">For hosted SifoBooks Cloud, this Windows connector securely bridges the cloud to the customer's local VSDC. The VSDC is never exposed to the public internet.</p></div></div>
+        <Badge className={connectors.some(x=>x.status==="active"&&x.last_seen_at)?"bg-emerald-100 text-emerald-800":"bg-slate-100 text-slate-700"}>{connectors.some(x=>x.status==="active"&&x.last_seen_at)?"Connector registered":"Not registered"}</Badge>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border bg-background p-3"><div className="text-xs text-muted-foreground">Selected device</div><div className="mt-1 font-medium">{devices.find((d:any)=>d.id===selectedDeviceId)?.device_name || "Select a ZRA device above"}</div></div>
+        <div className="rounded-lg border bg-background p-3"><div className="text-xs text-muted-foreground">Environment</div><div className="mt-1 font-medium">{form.mode==="production"?"PRODUCTION":"TEST / UAT"}</div></div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="outline" disabled={connectorBusy||!selectedDeviceId} onClick={async()=>{
+          if(!userId||!selectedDeviceId)return;
+          setConnectorBusy(true);setNewCredential("");
+          try{
+            const r:any=await zraRegisterConnectorFn({data:{userId,deviceId:selectedDeviceId,name:form.device_name||"SifoBooks VSDC Connector",environment:form.mode==="production"?"production":"test"}});
+            setNewCredential(r.credential||"");
+            toast.success("Connector registered. Copy the credential now; it will not be shown again.");
+            await load(userId,selectedDeviceId);
+          }catch(e:any){toast.error(e?.message||"Could not register connector");}
+          finally{setConnectorBusy(false);}
+        }}><Plus className="mr-2 h-4 w-4"/>Register / rotate connector</Button>
+        <Button variant="outline" disabled={!connectors.length} onClick={()=>void load(userId,selectedDeviceId||undefined)}><RefreshCw className="mr-2 h-4 w-4"/>Refresh status</Button>
+      </div>
+      {connectors[0]&&<div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+        <div><span className="text-muted-foreground">Connector ID</span><div className="font-medium">{connectors[0].connector_id}</div></div>
+        <div><span className="text-muted-foreground">Status</span><div className="font-medium">{connectors[0].status}</div></div>
+        <div><span className="text-muted-foreground">Last seen</span><div className="font-medium">{connectors[0].last_seen_at||"Waiting for connector"}</div></div>
+      </div>}
+      {newCredential&&<div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3">
+        <div className="font-medium text-amber-900">One-time connector credential</div>
+        <div className="mt-1 break-all rounded bg-background p-2 font-mono text-xs">{newCredential}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={()=>{void navigator.clipboard?.writeText(newCredential);toast.success("Credential copied");}}>Copy credential</Button>
+          <span className="self-center text-xs text-amber-800">Store it securely. It is not stored in plaintext.</span>
+        </div>
+      </div>}
+      <div className="mt-3 text-xs text-muted-foreground">Windows connector defaults to <code>https://sifobooks.com</code> and the customer's local VSDC URL <code>http://127.0.0.1:8085</code>. Use TEST/UAT first.</div>
     </Card>
 
     <Card className="rounded-xl p-5">
