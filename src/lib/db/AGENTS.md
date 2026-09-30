@@ -1,0 +1,3 @@
+- Both query engines (query-executor.ts SQLite, cloud-query-executor.ts Postgres) resolve embeds as correlated JSON sub-queries, never JOINs, qualify filters/sorts with the main table, scope embeds to the caller's user_id; local tables gain missing cloud columns from cloud-columns.json. Why: JOINs made columns ambiguous and leaked rows.
+- Windows sign-in: SifoBooks Cloud is the identity source; online sign-in mirrors companies/members/branches/warehouses/locations into SQLite with the same ids (cloud-link.server.ts); offline falls back to local. Why: never a duplicate company.
+- Windows company structure is written to Cloud first (cloud_links), then SQLite with the same id; unreachable cloud = logged offline local-only write. Why: no independent local company.
