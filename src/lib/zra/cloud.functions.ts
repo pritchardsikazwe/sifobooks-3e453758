@@ -15,6 +15,8 @@ import {
   cloudGetConfig,
   cloudSaveConfig,
   cloudInitializeDevice,
+  cloudTestVsdcConnection,
+  cloudCheckConnectorCommand,
   cloudGetStandardCodes,
   cloudGetItemClasses,
   cloudSyncCatalog,
@@ -83,3 +85,9 @@ export const cloudMapInventoryItemFn = createServerFn({ method: "POST" })
 export const cloudRegisterInventoryItemFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as any)
   .handler(({ data }) => cloudRegisterInventoryItem(data));
+export const cloudTestVsdcConnectionFn = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => raw as any)
+  .handler(({ data }) => cloudTestVsdcConnection(data));
+export const cloudCheckConnectorCommandFn = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => raw as any)
+  .handler(({ data }) => cloudCheckConnectorCommand(data));

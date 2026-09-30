@@ -13,6 +13,7 @@ import {
   zraGetConfigFn, zraGetStandardCodesFn, zraInitializeDeviceFn, zraSaveConfigFn,
   zraSyncCatalogFn, zraListInventoryFn, zraSearchItemClassesFn, zraListStandardCodesFn,
   zraMapInventoryItemFn, zraRegisterInventoryItemFn, zraListDevicesFn, zraSaveDeviceFn,
+  zraTestVsdcConnectionFn, zraCheckConnectorCommandFn,
 } from "@/lib/zra/server";
 import { zraListConnectorsFn, zraRegisterConnectorFn } from "@/lib/zra/connector.functions";
 
@@ -102,14 +103,52 @@ function ZraSmartInvoicePage() {
     finally{setBusy(false);}
   };
 
+  // Follows a connector job until the Windows connector reports back (max ~3 min).
+  const followCommand=async(first:any,label:string)=>{
+    let r=first;
+    for(let i=0;r?.state==="pending"&&r?.commandId&&i<40;i++){
+      setMessage(r.message||`${label}: waiting for the connector…`);
+      await new Promise(res=>setTimeout(res,4000));
+      r=await zraCheckConnectorCommandFn({data:{userId,deviceId:selectedDeviceId||null,commandId:r.commandId}});
+    }
+    return r;
+  };
+  const describe=(r:any)=>r?.layer?`[${r.layer}] ${r.message}`:(r?.message||"");
+
   const initialize=async()=>{
     if(!userId||!form.tpin||!form.branch_code||!form.device_serial){toast.error("Enter TPIN, Branch ID and Device Serial first.");return;}
-    setBusy(true);setMessage("Initializing the VSDC device...");
+    setBusy(true);setMessage("Sending the initialization request…");
     try{
-      const result:any=await zraInitializeDeviceFn({data:{userId,deviceId:selectedDeviceId || null,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
-      if(result?.resultCd==="000"){setMessage("VSDC initialized successfully.");toast.success("ZRA VSDC initialized");await load(userId);}
-      else{setMessage(result?.resultMsg||"VSDC returned an unsuccessful result.");toast.error(result?.resultMsg||"VSDC initialization failed");}
-    }catch(e:any){setMessage(e?.message||"Could not reach the VSDC.");toast.error(e?.message||"Could not reach the VSDC");}
+      let result:any=await zraInitializeDeviceFn({data:{userId,deviceId:selectedDeviceId || null,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
+      result=await followCommand(result,"Initialize");
+      // Windows/local copy returns the raw VSDC answer.
+      if(result&&!result.state) result=result.resultCd==="000"?{state:"success",message:"VSDC initialized successfully (code 000)."}:{state:"failed",layer:"ZRA",message:result.resultMsg||"VSDC returned an unsuccessful result."};
+      if(result?.state==="success"){setMessage(result.message);toast.success("ZRA VSDC initialized");await load(userId);}
+      else if(result?.state==="pending"){setMessage("The connector has not answered yet. The request stays queued; press Initialize Device again later to check.");toast.error("Connector did not answer in time");}
+      else{setMessage(describe(result)||"Initialization failed.");toast.error(describe(result)||"VSDC initialization failed");}
+    }catch(e:any){setMessage(`[SifoBooks] ${e?.message||"Request failed"}`);toast.error(e?.message||"Request failed");}
+    finally{setBusy(false);}
+  };
+
+  const testConnection=async()=>{
+    if(!userId) return;
+    setBusy(true);setMessage("Testing the VSDC connection through the connector…");
+    try{
+      let r:any=await zraTestVsdcConnectionFn({data:{userId,deviceId:selectedDeviceId||null}});
+      r=await followCommand(r,"Test");
+      const c=r?.connector, h=r?.health||{};
+      const lines=[
+        `Connector: ${c?.status??"unknown"}${c?.name?` (${c.name})`:""}${c?.lastSeenAt?`, last check-in ${new Date(c.lastSeenAt).toLocaleString()}`:""}`,
+        `VSDC reachable: ${h.reachable===true?"yes":h.reachable===false?"no":"unknown"}`,
+        `HTTP status: ${h.httpStatus??"—"}`,
+        `VSDC version: ${h.version??"—"}`,
+        `Circuit breaker: ${h.circuitBreaker??"—"}${h.healthy===true?" (healthy)":h.healthy===false?" (unhealthy)":""}`,
+      ];
+      if(h.note) lines.push(h.note);
+      if(r?.state!=="success") lines.unshift(describe(r));
+      setMessage(lines.join("\n"));
+      r?.state==="success"?toast.success("VSDC reachable through the connector"):toast.error(describe(r)||"Test failed");
+    }catch(e:any){setMessage(`[SifoBooks] ${e?.message||"Request failed"}`);}
     finally{setBusy(false);}
   };
 
@@ -271,8 +310,8 @@ function ZraSmartInvoicePage() {
         <div><Label>Device Serial</Label><Input className="mt-1" value={form.device_serial||""} onChange={e=>update("device_serial",e.target.value)} placeholder="VSDC device serial"/></div>
         <div><Label>Taxpayer Name</Label><Input className="mt-1" value={form.taxpayer_name||""} onChange={e=>update("taxpayer_name",e.target.value)} placeholder="Registered taxpayer name"/></div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-2"><Button onClick={save} disabled={busy}>Save configuration</Button><Button variant="outline" onClick={initialize} disabled={busy}><KeyRound className="mr-2 h-4 w-4"/>Initialize Device</Button><Button variant="outline" onClick={syncCatalog} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Sync ZRA Dictionaries</Button></div>
-      {message&&<div className="mt-4 rounded-lg border bg-muted/40 p-3 text-sm">{message}</div>}
+      <div className="mt-5 flex flex-wrap gap-2"><Button onClick={save} disabled={busy}>Save configuration</Button><Button variant="outline" onClick={initialize} disabled={busy}><KeyRound className="mr-2 h-4 w-4"/>Initialize Device</Button><Button variant="outline" onClick={testConnection} disabled={busy}><Network className="mr-2 h-4 w-4"/>Test VSDC Connection</Button><Button variant="outline" onClick={syncCatalog} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Sync ZRA Dictionaries</Button></div>
+      {message&&<div className="mt-4 whitespace-pre-line rounded-lg border bg-muted/40 p-3 text-sm">{message}</div>}
     </Card>
 
     <Card className="rounded-xl p-5">

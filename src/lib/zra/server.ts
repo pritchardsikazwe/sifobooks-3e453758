@@ -9,6 +9,7 @@ import {
   cloudGetConfigFn, cloudSaveConfigFn, cloudInitializeDeviceFn, cloudGetStandardCodesFn,
   cloudGetItemClassesFn, cloudSyncCatalogFn, cloudListInventoryFn, cloudSearchItemClassesFn,
   cloudListStandardCodesFn, cloudMapInventoryItemFn, cloudRegisterInventoryItemFn,
+  cloudTestVsdcConnectionFn, cloudCheckConnectorCommandFn,
 } from "./cloud.functions";
 import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
@@ -705,3 +706,7 @@ export const zraSearchItemClassesFn=(args:any)=>callZraFn(localZraSearchItemClas
 export const zraListStandardCodesFn=(args:any)=>callZraFn(localZraListStandardCodesFn,cloudListStandardCodesFn,args);
 export const zraMapInventoryItemFn=(args:any)=>callZraFn(localZraMapInventoryItemFn,cloudMapInventoryItemFn,args);
 export const zraRegisterInventoryItemFn=(args:any)=>callZraFn(localZraRegisterInventoryItemFn,cloudRegisterInventoryItemFn,args);
+// Hosted-only connector diagnostics. The Windows copy talks to its VSDC directly.
+const localOnlyNotice=async()=>({state:"failed",layer:"SifoBooks",route:"direct",message:"This Windows copy talks to the VSDC directly; the connector check is for the online version."});
+export const zraTestVsdcConnectionFn=(args:any)=>callZraFn(localOnlyNotice,cloudTestVsdcConnectionFn,args);
+export const zraCheckConnectorCommandFn=(args:any)=>callZraFn(localOnlyNotice,cloudCheckConnectorCommandFn,args);

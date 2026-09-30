@@ -15,6 +15,7 @@ import {
   saveStockMaster,
   selectInvoice,
 } from "./vsdc";
+import { requiresConnector, routeInitialize, routeHealth, checkCommand } from "./connector-routing.server";
 
 function cloudClient(authToken?: string) {
   const token = (authToken || getRequestHeader("authorization") || "").replace(/^Bearer\s+/i, "").trim();
@@ -154,15 +155,48 @@ export async function cloudSaveConfig(data: any) {
   return { data: device.data, error: null };
 }
 
-export async function cloudInitializeDevice(data: any) {
+async function routedContext(data: any) {
   const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId, data.deviceId);
-  if (!cfg) throw new Error("ZRA_DEVICE_NOT_CONFIGURED");
-  const response: any = await initializeDevice(
-    { tpin: data.tpin, bhfId: data.bhfId, dvcSrlNo: data.dvcSrlNo },
-    { baseUrl: vsdcUrl(cfg) },
-  );
+  return { db, userId, cfg };
+}
+
+function sifobooksFailure(e: any) {
+  return { state: "failed", layer: "SifoBooks", route: "connector", message: `SifoBooks could not process the request: ${String(e?.message || e).slice(0, 200)}` };
+}
+
+export async function cloudTestVsdcConnection(data: any) {
+  try {
+    const { userId, cfg } = await routedContext(data);
+    if (!cfg) return { state: "failed", layer: "SifoBooks", route: "connector", message: "ZRA device not configured." };
+    return await routeHealth({ userId, cfg });
+  } catch (e) { return sifobooksFailure(e); }
+}
+
+export async function cloudCheckConnectorCommand(data: any) {
+  try {
+    const ctx = await routedContext(data);
+    return await checkCommand(ctx, String(data.commandId || ""));
+  } catch (e) { return sifobooksFailure(e); }
+}
+
+export async function cloudInitializeDevice(data: any) {
+  let ctx: any;
+  try { ctx = await routedContext(data); } catch (e) { return sifobooksFailure(e); }
+  const { db, userId, cfg } = ctx;
+  if (!cfg) return { state: "failed", layer: "SifoBooks", route: "connector", message: "ZRA device not configured." };
+  const payload = { tpin: data.tpin, bhfId: data.bhfId, dvcSrlNo: data.dvcSrlNo };
+  // Local VSDC (loopback/private address): the hosted server must never call it directly.
+  if (requiresConnector(cfg)) {
+    try { return await routeInitialize({ db, userId, cfg, payload }); } catch (e) { return sifobooksFailure(e); }
+  }
+  let response: any;
+  try {
+    response = await initializeDevice(payload, { baseUrl: vsdcUrl(cfg) });
+  } catch (e: any) {
+    return { state: "failed", layer: "Local VSDC", route: "direct", message: `The VSDC could not be reached: ${String(e?.message || e).slice(0, 200)}` };
+  }
   const success = isSuccessfulVsdcResponse(response);
   if (cfg.device_id) {
     await db.from("zra_devices").update({
@@ -179,7 +213,10 @@ export async function cloudInitializeDevice(data: any) {
       response_json: JSON.stringify(response),
     });
   }
-  return response;
+  return success
+    ? { state: "success", route: "direct", resultCd: "000", resultMsg: response?.resultMsg ?? null, message: "The VSDC confirmed initialization (code 000)." }
+    : { state: "failed", layer: "ZRA", route: "direct", resultCd: response?.resultCd ?? null, resultMsg: response?.resultMsg ?? null,
+        message: `The VSDC/ZRA refused initialization${response?.resultCd ? ` (code ${response.resultCd})` : ""}: ${response?.resultMsg || "no message returned"}` };
 }
 
 export async function cloudGetStandardCodes(data: any) {
