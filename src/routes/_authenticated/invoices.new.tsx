@@ -196,14 +196,19 @@ function NewInvoicePage() {
     if (!u.user) { setSaving(false); return; }
 
     if (targetStatus === "sent") {
-      const rpcItems = valid.map(i => ({
-        stock_item_id: i.stockItemId ?? null,
-        description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
-        quantity: i.qty,
-        unit_price: i.price,
-        vat_rate: i.vatRate,
-        location_id: i.warehouseId ?? null,
-      }));
+      const rpcItems = valid.map(i => {
+        const gross = i.qty * i.price;
+        const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
+        return {
+          stock_item_id: i.stockItemId ?? null,
+          description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
+          quantity: i.qty,
+          unit_price: i.price,
+          discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
+          vat_rate: i.vatRate,
+          warehouse_id: i.warehouseId ?? null,
+        };
+      });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
         _invoice: {
           customer_id: customerId,
@@ -212,6 +217,8 @@ function NewInvoicePage() {
           due_date: dueDate,
           currency,
           tax_inclusive: taxInclusive,
+          tax_scheme: taxScheme,
+          expected_total: Math.round((totals.subtotal + totals.tax) * 100) / 100,
           seller_tpin: company?.tpin ?? null,
           buyer_tpin: buyerTpin || null,
           notes,
@@ -221,7 +228,14 @@ function NewInvoicePage() {
       } as any);
       if (postError || !posted) {
         setSaving(false);
-        return toast.error(postError?.message ?? "Invoice could not be posted");
+        const m = postError?.message ?? "";
+        const why = m.startsWith("TOTAL_MISMATCH") ? "The posted total would differ from the total shown. Nothing was posted — please check the lines."
+          : m.startsWith("UNSUPPORTED_TAX_SCHEME") ? "Posting is available for VAT invoices only for now. Save as draft instead."
+          : m.startsWith("INSUFFICIENT_STOCK:") ? `Not enough stock for ${m.split(":")[1]}.`
+          : m.startsWith("NO_COST:") ? `${m.split(":")[1]} has no cost price yet.`
+          : m.startsWith("NO_LOCATION") ? "No stock location is set up for this warehouse or company."
+          : m || "Invoice could not be posted";
+        return toast.error(why);
       }
       setSaving(false);
       toast.success(`Invoice ${number} posted — journal, receivable, stock and ZRA queue updated`);
