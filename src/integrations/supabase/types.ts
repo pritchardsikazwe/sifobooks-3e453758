@@ -12721,6 +12721,10 @@ export type Database = {
       post_imprest: { Args: { _id: string }; Returns: string }
       post_receipt: { Args: { _receipt_id: string }; Returns: string }
       post_restaurant_order: { Args: { _order_id: string }; Returns: string }
+      post_sales_invoice: {
+        Args: { _invoice: Json; _items?: Json }
+        Returns: Json
+      }
       post_school_grant: { Args: { _id: string }; Returns: string }
       post_stock_count: { Args: { _count_id: string }; Returns: Json }
       post_tuckshop: { Args: { _id: string }; Returns: string }
