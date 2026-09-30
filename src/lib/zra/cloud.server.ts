@@ -28,8 +28,8 @@ function cloudClient(authToken?: string) {
   });
 }
 
-async function requireUser() {
-  const db = cloudClient();
+async function requireUser(authToken?: string) {
+  const db = cloudClient(authToken);
   const { data, error } = await db.auth.getUser();
   if (error || !data.user) throw new Error("NOT_AUTHENTICATED");
   return { db, userId: data.user.id };
