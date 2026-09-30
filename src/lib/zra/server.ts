@@ -1,7 +1,7 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
-import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";\nimport { supabase } from "@/integrations/supabase/client";
 import {
   cloudSaveItemFn, cloudSubmitPosSaleFn, cloudSubmitCorrectionFn, cloudSelectInvoiceFn,
   cloudSaveStockItemsFn, cloudSaveStockMasterFn, cloudListDevicesFn, cloudSaveDeviceFn,
