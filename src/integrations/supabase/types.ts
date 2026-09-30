@@ -3094,9 +3094,11 @@ export type Database = {
         Row: {
           allow: Json
           branch_id: string | null
+          cashier_code: string | null
           company_id: string | null
           created_at: string
           deny: Json
+          display_name: string | null
           drawer_name: string | null
           email: string | null
           employee_id: string | null
@@ -3121,9 +3123,11 @@ export type Database = {
         Insert: {
           allow?: Json
           branch_id?: string | null
+          cashier_code?: string | null
           company_id?: string | null
           created_at?: string
           deny?: Json
+          display_name?: string | null
           drawer_name?: string | null
           email?: string | null
           employee_id?: string | null
@@ -3148,9 +3152,11 @@ export type Database = {
         Update: {
           allow?: Json
           branch_id?: string | null
+          cashier_code?: string | null
           company_id?: string | null
           created_at?: string
           deny?: Json
+          display_name?: string | null
           drawer_name?: string | null
           email?: string | null
           employee_id?: string | null
@@ -12656,6 +12662,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff_of: { Args: { _tenant: string }; Returns: boolean }
+      item_tracks_stock: { Args: { _item_type: string }; Returns: boolean }
       lock_reconciliation: { Args: { _session_id: string }; Returns: Json }
       log_cashier_activity: {
         Args: {
@@ -12697,6 +12704,10 @@ export type Database = {
       pos_has_books: { Args: { _tenant: string }; Returns: boolean }
       pos_integrity_report: { Args: never; Returns: Json }
       pos_matrix: { Args: { _feature: string; _role: string }; Returns: string }
+      pos_resolve_location: {
+        Args: { _hint?: string; _register?: string }
+        Returns: string
+      }
       pos_tenant_for: { Args: { _worker: string }; Returns: string }
       post_allowance: { Args: { _id: string }; Returns: string }
       post_asset_disposal: { Args: { _disposal_id: string }; Returns: string }
