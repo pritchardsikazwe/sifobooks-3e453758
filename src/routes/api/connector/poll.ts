@@ -1,22 +1,21 @@
-// @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateConnector } from "@/lib/cloud/connector";
-import { getCloudDb } from "@/lib/cloud/postgres";
+import { authenticateZraConnector, getCloudDb } from "@/lib/zra/connector.server";
 
 export const Route = createFileRoute("/api/connector/poll")({
- server:{handlers:{POST:async({request})=>{
-  try{
-   const body=await request.json();
-   const tenantId=await authenticateConnector(String(body.connectorId||""),String(body.credential||""));
-   const db=getCloudDb(); const limit=Math.min(Math.max(Number(body.limit||20),1),100);
-   const commands=await db.begin(async(tx:any)=>{
-    await tx`SELECT set_config('app.tenant_id',${tenantId},true)`;
-    const rows=await tx`SELECT id,command_type,payload,created_at FROM cloud_connector_commands
-      WHERE tenant_id=${tenantId} AND connector_id=${body.connectorId} AND status='queued'
-      ORDER BY created_at ASC LIMIT ${limit} FOR UPDATE SKIP LOCKED`;
-    for(const row of rows) await tx`UPDATE cloud_connector_commands SET status='delivered',delivered_at=now() WHERE id=${row.id}`;
-    return rows;
-   });
-   return Response.json({commands});
-  }catch(e:any){return Response.json({error:String(e?.message||e)},{status:401});}
- }}}});
+  server:{handlers:{POST:async({request})=>{
+    try{
+      const body=await request.json();
+      const auth=await authenticateZraConnector(String(body.connectorId||""),String(body.credential||""));
+      const db=getCloudDb();
+      const limit=Math.min(Math.max(Number(body.limit||20),1),100);
+      const rows=await db`SELECT id,command_type,payload,created_at FROM zra_connector_commands
+        WHERE user_id=${auth.user_id} AND connector_id=${auth.connector_id} AND status='queued'
+        ORDER BY created_at ASC LIMIT ${limit}`;
+      for(const row of rows){
+        await db`UPDATE zra_connector_commands SET status='delivered',delivered_at=now()
+          WHERE id=${row.id} AND user_id=${auth.user_id} AND connector_id=${auth.connector_id}`;
+      }
+      return Response.json({commands:rows.map((row:any)=>({...row,payload:typeof row.payload==="string"?JSON.parse(row.payload||"{}"):row.payload}))});
+    }catch(e:any){return Response.json({error:String(e?.message||e)},{status:401});}
+  }}}
+});
