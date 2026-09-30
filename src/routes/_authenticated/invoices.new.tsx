@@ -206,7 +206,7 @@ function NewInvoicePage() {
           unit_price: i.price,
           discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
           vat_rate: i.vatRate,
-          location_id: i.warehouseId ?? null,
+          warehouse_id: i.warehouseId ?? null,
         };
       });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
