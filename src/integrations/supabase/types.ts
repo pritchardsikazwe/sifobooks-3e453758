@@ -7236,6 +7236,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          location_id: string | null
           name: string
           updated_at: string
           user_id: string
@@ -7245,6 +7246,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          location_id?: string | null
           name: string
           updated_at?: string
           user_id?: string
@@ -7254,6 +7256,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          location_id?: string | null
           name?: string
           updated_at?: string
           user_id?: string
@@ -7262,6 +7265,8 @@ export type Database = {
       }
       pos_sale_items: {
         Row: {
+          base_qty: number | null
+          base_unit: string | null
           created_at: string
           discount: number
           id: string
@@ -7274,10 +7279,13 @@ export type Database = {
           sale_id: string
           sku: string | null
           tax_rate: number
+          unit: string | null
           unit_cost: number
           user_id: string
         }
         Insert: {
+          base_qty?: number | null
+          base_unit?: string | null
           created_at?: string
           discount?: number
           id?: string
@@ -7290,10 +7298,13 @@ export type Database = {
           sale_id: string
           sku?: string | null
           tax_rate?: number
+          unit?: string | null
           unit_cost?: number
           user_id?: string
         }
         Update: {
+          base_qty?: number | null
+          base_unit?: string | null
           created_at?: string
           discount?: number
           id?: string
@@ -7306,6 +7317,7 @@ export type Database = {
           sale_id?: string
           sku?: string | null
           tax_rate?: number
+          unit?: string | null
           unit_cost?: number
           user_id?: string
         }
@@ -10831,6 +10843,7 @@ export type Database = {
           quantity_on_hand: number
           reorder_level: number
           reserved_qty: number
+          reserved_stock: number
           retail_price: number
           safety_stock: number
           sales_account_id: string | null
@@ -10848,6 +10861,17 @@ export type Database = {
           vat_rate: number
           warehouse_id: string | null
           wholesale_price: number
+          zra_item_class_code: string | null
+          zra_item_code: string | null
+          zra_item_type_code: string | null
+          zra_last_sync_at: string | null
+          zra_origin_country_code: string | null
+          zra_pkg_unit_code: string | null
+          zra_qty_unit_code: string | null
+          zra_raw_data: string | null
+          zra_sync_status: string
+          zra_tax_rate: number | null
+          zra_vat_category_code: string | null
         }
         Insert: {
           barcode?: string | null
@@ -10879,6 +10903,7 @@ export type Database = {
           quantity_on_hand?: number
           reorder_level?: number
           reserved_qty?: number
+          reserved_stock?: number
           retail_price?: number
           safety_stock?: number
           sales_account_id?: string | null
@@ -10896,6 +10921,17 @@ export type Database = {
           vat_rate?: number
           warehouse_id?: string | null
           wholesale_price?: number
+          zra_item_class_code?: string | null
+          zra_item_code?: string | null
+          zra_item_type_code?: string | null
+          zra_last_sync_at?: string | null
+          zra_origin_country_code?: string | null
+          zra_pkg_unit_code?: string | null
+          zra_qty_unit_code?: string | null
+          zra_raw_data?: string | null
+          zra_sync_status?: string
+          zra_tax_rate?: number | null
+          zra_vat_category_code?: string | null
         }
         Update: {
           barcode?: string | null
@@ -10927,6 +10963,7 @@ export type Database = {
           quantity_on_hand?: number
           reorder_level?: number
           reserved_qty?: number
+          reserved_stock?: number
           retail_price?: number
           safety_stock?: number
           sales_account_id?: string | null
@@ -10944,6 +10981,17 @@ export type Database = {
           vat_rate?: number
           warehouse_id?: string | null
           wholesale_price?: number
+          zra_item_class_code?: string | null
+          zra_item_code?: string | null
+          zra_item_type_code?: string | null
+          zra_last_sync_at?: string | null
+          zra_origin_country_code?: string | null
+          zra_pkg_unit_code?: string | null
+          zra_qty_unit_code?: string | null
+          zra_raw_data?: string | null
+          zra_sync_status?: string
+          zra_tax_rate?: number | null
+          zra_vat_category_code?: string | null
         }
         Relationships: [
           {
@@ -11859,11 +11907,383 @@ export type Database = {
           },
         ]
       }
-      zra_invoice_queue: {
+      zra_connector_commands: {
+        Row: {
+          command_type: string
+          completed_at: string | null
+          connector_id: string
+          created_at: string
+          delivered_at: string | null
+          device_id: string | null
+          error_message: string | null
+          id: string
+          payload: string
+          response: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          command_type: string
+          completed_at?: string | null
+          connector_id: string
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string | null
+          error_message?: string | null
+          id: string
+          payload?: string
+          response?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          command_type?: string
+          completed_at?: string | null
+          connector_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string | null
+          error_message?: string | null
+          id?: string
+          payload?: string
+          response?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zra_connector_credentials: {
+        Row: {
+          company_id: string | null
+          connector_id: string
+          created_at: string
+          credential_hash: string
+          device_id: string
+          environment: string
+          id: string
+          last_seen_at: string | null
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          connector_id: string
+          created_at?: string
+          credential_hash: string
+          device_id: string
+          environment?: string
+          id: string
+          last_seen_at?: string | null
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          connector_id?: string
+          created_at?: string
+          credential_hash?: string
+          device_id?: string
+          environment?: string
+          id?: string
+          last_seen_at?: string | null
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zra_connector_events: {
+        Row: {
+          connector_id: string
+          created_at: string
+          device_id: string | null
+          event_type: string
+          id: string
+          payload: string | null
+          request_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          device_id?: string | null
+          event_type: string
+          id: string
+          payload?: string | null
+          request_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          device_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: string | null
+          request_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zra_device_events: {
         Row: {
           created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          response_code: string | null
+          response_json: string | null
+          status: string
+          user_id: string
+          zra_device_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id: string
+          message?: string | null
+          response_code?: string | null
+          response_json?: string | null
+          status?: string
+          user_id: string
+          zra_device_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          response_code?: string | null
+          response_json?: string | null
+          status?: string
+          user_id?: string
+          zra_device_id?: string
+        }
+        Relationships: []
+      }
+      zra_devices: {
+        Row: {
+          branch_code: string
+          branch_id: string | null
+          branch_name: string | null
+          company_id: string | null
+          connector_endpoint: string | null
+          created_at: string
+          deployment_mode: string
+          device_name: string
+          device_serial: string
+          device_type: string
+          environment: string
+          id: string
+          initialization_status: string
+          is_active: boolean
+          last_submission_at: string | null
+          last_submission_status: string | null
+          last_verified_at: string | null
+          metadata_json: string | null
+          status: string
+          taxpayer_name: string | null
+          terminal_id: string | null
+          tpin: string | null
+          updated_at: string
+          user_id: string
+          vsdc_endpoint: string | null
+        }
+        Insert: {
+          branch_code: string
+          branch_id?: string | null
+          branch_name?: string | null
+          company_id?: string | null
+          connector_endpoint?: string | null
+          created_at?: string
+          deployment_mode?: string
+          device_name: string
+          device_serial: string
+          device_type?: string
+          environment?: string
+          id: string
+          initialization_status?: string
+          is_active?: boolean
+          last_submission_at?: string | null
+          last_submission_status?: string | null
+          last_verified_at?: string | null
+          metadata_json?: string | null
+          status?: string
+          taxpayer_name?: string | null
+          terminal_id?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id: string
+          vsdc_endpoint?: string | null
+        }
+        Update: {
+          branch_code?: string
+          branch_id?: string | null
+          branch_name?: string | null
+          company_id?: string | null
+          connector_endpoint?: string | null
+          created_at?: string
+          deployment_mode?: string
+          device_name?: string
+          device_serial?: string
+          device_type?: string
+          environment?: string
+          id?: string
+          initialization_status?: string
+          is_active?: boolean
+          last_submission_at?: string | null
+          last_submission_status?: string | null
+          last_verified_at?: string | null
+          metadata_json?: string | null
+          status?: string
+          taxpayer_name?: string | null
+          terminal_id?: string | null
+          tpin?: string | null
+          updated_at?: string
+          user_id?: string
+          vsdc_endpoint?: string | null
+        }
+        Relationships: []
+      }
+      zra_document_corrections: {
+        Row: {
+          correction_type: string
+          created_at: string
+          created_by: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          original_reference: string | null
+          payload: string | null
+          reason: string
+          response: string | null
+          sale_id: string
+          status: string
+          updated_at: string
+          user_id: string
+          zra_reference: string | null
+          zra_status: string | null
+        }
+        Insert: {
+          correction_type: string
+          created_at?: string
+          created_by?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id: string
+          original_reference?: string | null
+          payload?: string | null
+          reason: string
+          response?: string | null
+          sale_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          zra_reference?: string | null
+          zra_status?: string | null
+        }
+        Update: {
+          correction_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          original_reference?: string | null
+          payload?: string | null
+          reason?: string
+          response?: string | null
+          sale_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          zra_reference?: string | null
+          zra_status?: string | null
+        }
+        Relationships: []
+      }
+      zra_fiscal_controls: {
+        Row: {
+          error_code: string | null
+          error_message: string | null
+          fiscalized_at: string | null
+          id: string
+          idempotency_key: string
+          invoice_number: string | null
+          sale_id: string
+          state: string
+          submission_at: string | null
+          terminal_id: string | null
+          updated_at: string
+          user_id: string
+          zra_internal_data: string | null
+          zra_qr_data: string | null
+          zra_receipt_number: string | null
+          zra_receipt_signature: string | null
+          zra_response_json: string | null
+        }
+        Insert: {
+          error_code?: string | null
+          error_message?: string | null
+          fiscalized_at?: string | null
+          id: string
+          idempotency_key: string
+          invoice_number?: string | null
+          sale_id: string
+          state?: string
+          submission_at?: string | null
+          terminal_id?: string | null
+          updated_at?: string
+          user_id: string
+          zra_internal_data?: string | null
+          zra_qr_data?: string | null
+          zra_receipt_number?: string | null
+          zra_receipt_signature?: string | null
+          zra_response_json?: string | null
+        }
+        Update: {
+          error_code?: string | null
+          error_message?: string | null
+          fiscalized_at?: string | null
+          id?: string
+          idempotency_key?: string
+          invoice_number?: string | null
+          sale_id?: string
+          state?: string
+          submission_at?: string | null
+          terminal_id?: string | null
+          updated_at?: string
+          user_id?: string
+          zra_internal_data?: string | null
+          zra_qr_data?: string | null
+          zra_receipt_number?: string | null
+          zra_receipt_signature?: string | null
+          zra_response_json?: string | null
+        }
+        Relationships: []
+      }
+      zra_invoice_queue: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          error_code: string | null
           id: string
           invoice_number: string | null
+          last_attempt_at: string | null
           levy_amount: number
           payload: Json | null
           response_code: string | null
@@ -11876,11 +12296,19 @@ export type Database = {
           updated_at: string
           user_id: string
           vat_amount: number
+          zra_device_id: string | null
+          zra_internal_data: string | null
+          zra_qr_url: string | null
+          zra_receipt_number: string | null
+          zra_receipt_signature: string | null
         }
         Insert: {
+          attempt_count?: number
           created_at?: string
+          error_code?: string | null
           id?: string
           invoice_number?: string | null
+          last_attempt_at?: string | null
           levy_amount?: number
           payload?: Json | null
           response_code?: string | null
@@ -11893,11 +12321,19 @@ export type Database = {
           updated_at?: string
           user_id: string
           vat_amount?: number
+          zra_device_id?: string | null
+          zra_internal_data?: string | null
+          zra_qr_url?: string | null
+          zra_receipt_number?: string | null
+          zra_receipt_signature?: string | null
         }
         Update: {
+          attempt_count?: number
           created_at?: string
+          error_code?: string | null
           id?: string
           invoice_number?: string | null
+          last_attempt_at?: string | null
           levy_amount?: number
           payload?: Json | null
           response_code?: string | null
@@ -11910,6 +12346,50 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vat_amount?: number
+          zra_device_id?: string | null
+          zra_internal_data?: string | null
+          zra_qr_url?: string | null
+          zra_receipt_number?: string | null
+          zra_receipt_signature?: string | null
+        }
+        Relationships: []
+      }
+      zra_item_classes: {
+        Row: {
+          branch_id: string | null
+          id: string
+          item_cls_cd: string
+          item_cls_lvl: number | null
+          item_cls_nm: string | null
+          raw_data: string | null
+          tax_ty_cd: string | null
+          updated_at: string
+          use_yn: string | null
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          id: string
+          item_cls_cd: string
+          item_cls_lvl?: number | null
+          item_cls_nm?: string | null
+          raw_data?: string | null
+          tax_ty_cd?: string | null
+          updated_at?: string
+          use_yn?: string | null
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          id?: string
+          item_cls_cd?: string
+          item_cls_lvl?: number | null
+          item_cls_nm?: string | null
+          raw_data?: string | null
+          tax_ty_cd?: string | null
+          updated_at?: string
+          use_yn?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -11961,6 +12441,96 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vsdc_endpoint?: string | null
+        }
+        Relationships: []
+      }
+      zra_standard_codes: {
+        Row: {
+          branch_id: string | null
+          code: string
+          code_class: string
+          code_class_name: string | null
+          description: string | null
+          id: string
+          name: string | null
+          raw_data: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          code: string
+          code_class: string
+          code_class_name?: string | null
+          description?: string | null
+          id: string
+          name?: string | null
+          raw_data?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          code?: string
+          code_class?: string
+          code_class_name?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+          raw_data?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zra_stock_sync_records: {
+        Row: {
+          error_code: string | null
+          error_message: string | null
+          id: string
+          org_sar_no: number | null
+          sale_id: string | null
+          sar_no: number | null
+          stock_items_request: string | null
+          stock_items_response: string | null
+          stock_items_status: string | null
+          stock_master_request: string | null
+          stock_master_response: string | null
+          stock_master_status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          error_code?: string | null
+          error_message?: string | null
+          id: string
+          org_sar_no?: number | null
+          sale_id?: string | null
+          sar_no?: number | null
+          stock_items_request?: string | null
+          stock_items_response?: string | null
+          stock_items_status?: string | null
+          stock_master_request?: string | null
+          stock_master_response?: string | null
+          stock_master_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          org_sar_no?: number | null
+          sale_id?: string | null
+          sar_no?: number | null
+          stock_items_request?: string | null
+          stock_items_response?: string | null
+          stock_items_status?: string | null
+          stock_master_request?: string | null
+          stock_master_response?: string | null
+          stock_master_status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
