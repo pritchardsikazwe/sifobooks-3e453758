@@ -1,6 +1,13 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
+import {
+  cloudListDevices, cloudSaveDevice, cloudGetConfig, cloudSaveConfig, cloudInitializeDevice,
+  cloudGetStandardCodes, cloudGetItemClasses, cloudSyncCatalog, cloudListInventory,
+  cloudSearchItemClasses, cloudListStandardCodes, cloudMapInventoryItem, cloudRegisterInventoryItem,
+  cloudSubmitPosSale, cloudSubmitCorrection, cloudSelectInvoice, cloudSaveStockItems, cloudSaveStockMaster,
+} from "./cloud";
 import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
   getItemClasses,
@@ -72,7 +79,7 @@ function recordZraDeviceEvent(db:any, deviceId:string, userId:string, eventType:
     .run(generateUUID(),deviceId,userId,eventType,status,message ?? null,response?.resultCd ?? null,response ? JSON.stringify(response) : null);
 }
 
-export const zraListDevicesFn = createServerFn({ method:"POST" })
+const localZraListDevicesFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null})
   .handler(async ({data})=>{
     const db=getDb();
@@ -80,7 +87,7 @@ export const zraListDevicesFn = createServerFn({ method:"POST" })
     return {data:rows};
   });
 
-export const zraSaveDeviceFn = createServerFn({ method:"POST" })
+const localZraSaveDeviceFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {
     userId:string; deviceId?:string|null; companyId?:string|null; branchId?:string|null;
     deviceName:string; deviceType?:string; terminalId?:string|null; deploymentMode?:string;
@@ -110,11 +117,11 @@ function nowZraDate() {
 
 function toDateOnly() { return nowZraDate().slice(0, 8); }
 
-export const zraGetConfigFn = createServerFn({ method: "POST" })
+const localZraGetConfigFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as ZraConfigInput & { deviceId?: string | null })
   .handler(async ({ data }) => ({ data: getSavedConfig(data.userId, data.branchId, data.deviceId), error: null }));
 
-export const zraSaveConfigFn = createServerFn({ method: "POST" })
+const localZraSaveConfigFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as {
     userId: string; branchId?: string | null; mode?: string; taxpayerName?: string | null;
     tpin?: string | null; branchCode?: string | null; deviceSerial?: string | null;
@@ -143,7 +150,7 @@ export const zraSaveConfigFn = createServerFn({ method: "POST" })
     return { data: getSavedConfig(data.userId, data.branchId), error: null };
   });
 
-export const zraInitializeDeviceFn = createServerFn({ method: "POST" })
+const localZraInitializeDeviceFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => raw as { userId:string; branchId?:string|null; deviceId?:string|null; tpin:string; bhfId:string; dvcSrlNo:string })
   .handler(async ({ data }) => {
     const db=getDb();
@@ -164,21 +171,21 @@ export const zraInitializeDeviceFn = createServerFn({ method: "POST" })
     return response;
   });
 
-export const zraGetStandardCodesFn = createServerFn({ method:"POST" })
+const localZraGetStandardCodesFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;tpin:string;bhfId:string;lastReqDt:string})
   .handler(async ({data}) => {
     const cfg=getSavedConfig(data.userId,data.branchId);
     return getStandardCodes({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)});
   });
 
-export const zraGetItemClassesFn = createServerFn({ method:"POST" })
+const localZraGetItemClassesFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;tpin:string;bhfId:string;lastReqDt:string})
   .handler(async ({data}) => {
     const cfg=getSavedConfig(data.userId,data.branchId);
     return getItemClasses({tpin:data.tpin,bhfId:data.bhfId,lastReqDt:data.lastReqDt},{baseUrl:requireVsdcUrl(cfg)});
   });
 
-export const zraSyncCatalogFn = createServerFn({ method:"POST" })
+const localZraSyncCatalogFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;tpin:string;bhfId:string;lastReqDt:string})
   .handler(async ({data}) => {
     const cfg=getSavedConfig(data.userId,data.branchId);
@@ -217,7 +224,7 @@ export const zraSyncCatalogFn = createServerFn({ method:"POST" })
       classCount:db.prepare("SELECT COUNT(*) AS n FROM zra_item_classes WHERE user_id=? AND (? IS NULL OR branch_id=?)").get(data.userId,data.branchId ?? null,data.branchId ?? null)?.n ?? 0};
   });
 
-export const zraListInventoryFn = createServerFn({ method:"POST" })
+const localZraListInventoryFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;search?:string;limit?:number})
   .handler(async ({data})=>{
     const db=getDb(); const limit=Math.min(Math.max(Number(data.limit ?? 100),1),500);
@@ -228,7 +235,7 @@ export const zraListInventoryFn = createServerFn({ method:"POST" })
     return {data:rows};
   });
 
-export const zraSearchItemClassesFn = createServerFn({ method:"POST" })
+const localZraSearchItemClassesFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;search?:string;limit?:number})
   .handler(async ({data})=>{
     const db=getDb(); const limit=Math.min(Math.max(Number(data.limit ?? 50),1),200);
@@ -241,7 +248,7 @@ export const zraSearchItemClassesFn = createServerFn({ method:"POST" })
     return {data:rows};
   });
 
-export const zraListStandardCodesFn = createServerFn({ method:"POST" })
+const localZraListStandardCodesFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;className?:string;search?:string;limit?:number})
   .handler(async ({data})=>{
     const db=getDb(); const limit=Math.min(Math.max(Number(data.limit ?? 200),1),1000);
@@ -252,7 +259,7 @@ export const zraListStandardCodesFn = createServerFn({ method:"POST" })
     return {data:rows};
   });
 
-export const zraMapInventoryItemFn = createServerFn({ method:"POST" })
+const localZraMapInventoryItemFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {
     userId:string; itemId:string; itemClassCode:string; itemTypeCode?:string|null; originCountryCode?:string|null;
     pkgUnitCode:string; qtyUnitCode:string; vatCategoryCode:string; taxRate?:number|null;
@@ -271,7 +278,7 @@ export const zraMapInventoryItemFn = createServerFn({ method:"POST" })
     return {data:db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId)};
   });
 
-export const zraRegisterInventoryItemFn = createServerFn({method:"POST"})
+const localZraRegisterInventoryItemFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;itemId:string;regrId?:string;regrNm?:string})
   .handler(async ({data})=>{
     const db=getDb();
@@ -296,7 +303,7 @@ export const zraRegisterInventoryItemFn = createServerFn({method:"POST"})
     return {response,payload,data:db.prepare("SELECT * FROM stock_items WHERE id=? AND user_id=?").get(data.itemId,data.userId)};
   });
 
-export const zraSaveItemFn = createServerFn({ method:"POST" })
+const localZraSaveItemFn = createServerFn({ method:"POST" })
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveItem(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
@@ -453,7 +460,7 @@ async function syncZraStockAfterSale(db:any,userId:string,saleId:string,saleNo:s
   }
 }
 
-export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
+const localZraSubmitPosSaleFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;saleNo?:string;terminalId?:string|null})
   .handler(async ({data})=>{
     const db=getDb();
@@ -652,18 +659,45 @@ function nextCorrectionNumber(db:any,userId:string,type:string) {
   return `${prefix}-${new Date().getFullYear()}-${String(Number(row?.n||0)+1).padStart(6,"0")}`;
 }
 
-export const zraSubmitCorrectionFn = createServerFn({method:"POST"})
+const localZraSubmitCorrectionFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";reason:string;terminalId?:string|null})
   .handler(async ({data})=>submitZraSaleCorrection(data));
 
-export const zraSelectInvoiceFn = createServerFn({method:"POST"})
+const localZraSelectInvoiceFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return selectInvoice(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
-export const zraSaveStockItemsFn = createServerFn({method:"POST"})
+const localZraSaveStockItemsFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockItems(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
-export const zraSaveStockMasterFn = createServerFn({method:"POST"})
+const localZraSaveStockMasterFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockMaster(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
+
+
+const cloudPost = (handler: (data: any) => Promise<any>) =>
+  createServerFn({ method: "POST" })
+    .inputValidator((raw: unknown) => raw as any)
+    .handler(async ({ data }) => handler(data));
+
+export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudPost(cloudSaveItem);
+export const zraSubmitPosSaleFn = IS_LOCAL_BACKEND ? localZraSubmitPosSaleFn : cloudPost(cloudSubmitPosSale);
+export const zraSubmitCorrectionFn = IS_LOCAL_BACKEND ? localZraSubmitCorrectionFn : cloudPost(cloudSubmitCorrection);
+export const zraSelectInvoiceFn = IS_LOCAL_BACKEND ? localZraSelectInvoiceFn : cloudPost(cloudSelectInvoice);
+export const zraSaveStockItemsFn = IS_LOCAL_BACKEND ? localZraSaveStockItemsFn : cloudPost(cloudSaveStockItems);
+export const zraSaveStockMasterFn = IS_LOCAL_BACKEND ? localZraSaveStockMasterFn : cloudPost(cloudSaveStockMaster);
+
+export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudPost(cloudListDevices);
+export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudPost(cloudSaveDevice);
+export const zraGetConfigFn = IS_LOCAL_BACKEND ? localZraGetConfigFn : cloudPost(cloudGetConfig);
+export const zraSaveConfigFn = IS_LOCAL_BACKEND ? localZraSaveConfigFn : cloudPost(cloudSaveConfig);
+export const zraInitializeDeviceFn = IS_LOCAL_BACKEND ? localZraInitializeDeviceFn : cloudPost(cloudInitializeDevice);
+export const zraGetStandardCodesFn = IS_LOCAL_BACKEND ? localZraGetStandardCodesFn : cloudPost(cloudGetStandardCodes);
+export const zraGetItemClassesFn = IS_LOCAL_BACKEND ? localZraGetItemClassesFn : cloudPost(cloudGetItemClasses);
+export const zraSyncCatalogFn = IS_LOCAL_BACKEND ? localZraSyncCatalogFn : cloudPost(cloudSyncCatalog);
+export const zraListInventoryFn = IS_LOCAL_BACKEND ? localZraListInventoryFn : cloudPost(cloudListInventory);
+export const zraSearchItemClassesFn = IS_LOCAL_BACKEND ? localZraSearchItemClassesFn : cloudPost(cloudSearchItemClasses);
+export const zraListStandardCodesFn = IS_LOCAL_BACKEND ? localZraListStandardCodesFn : cloudPost(cloudListStandardCodes);
+export const zraMapInventoryItemFn = IS_LOCAL_BACKEND ? localZraMapInventoryItemFn : cloudPost(cloudMapInventoryItem);
+export const zraRegisterInventoryItemFn = IS_LOCAL_BACKEND ? localZraRegisterInventoryItemFn : cloudPost(cloudRegisterInventoryItem);
