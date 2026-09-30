@@ -105,32 +105,53 @@ export async function cloudGetConfig(data: any) {
 export async function cloudSaveConfig(data: any) {
   const { db, userId } = await requireUser();
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
-  const row = {
-    id: data.id ?? crypto.randomUUID(),
-    user_id: userId,
-    branch_id: data.branchId ?? null,
-    mode: data.mode ?? "test",
-    taxpayer_name: data.taxpayerName ?? null,
-    tpin: data.tpin ?? null,
-    branch_code: data.branchCode ?? null,
-    device_serial: data.deviceSerial ?? null,
-    vsdc_endpoint: data.vsdcEndpoint ?? null,
-    notes: data.notes ?? null,
-    updated_at: new Date().toISOString(),
-  };
-  const { data: saved, error } = await db.from("zra_smart_invoice_config").upsert(row, { onConflict: "id" }).select("*").single();
-  if (error) throw new Error(error.message);
-  if (data.deviceSerial && data.branchCode) {
-    await cloudSaveDevice({
-      userId, branchId: data.branchId, deviceId: data.deviceId, companyId: data.companyId,
-      deviceName: data.deviceName ?? `SifoBooks ${data.deviceSerial}`,
-      deviceType: data.deviceType ?? "desktop", terminalId: data.terminalId,
-      deploymentMode: data.deploymentMode ?? "local", environment: data.mode === "production" ? "production" : "test",
-      tpin: data.tpin, branchCode: data.branchCode, deviceSerial: data.deviceSerial,
-      vsdcEndpoint: data.vsdcEndpoint, connectorEndpoint: data.connectorEndpoint, taxpayerName: data.taxpayerName,
-    });
+
+  // In hosted mode the device record is the authoritative ZRA configuration.
+  // Save it first so UAT setup is not blocked by the legacy config table's RLS.
+  if (!data.deviceSerial || !data.branchCode) {
+    throw new Error("ZRA_CONFIG_REQUIRED: Branch ID and Device Serial are required.");
   }
-  return { data: saved, error: null };
+
+  const device = await cloudSaveDevice({
+    userId,
+    branchId: data.branchId,
+    deviceId: data.deviceId,
+    companyId: data.companyId,
+    deviceName: data.deviceName ?? ("SifoBooks " + data.deviceSerial),
+    deviceType: data.deviceType ?? "desktop",
+    terminalId: data.terminalId,
+    deploymentMode: data.deploymentMode ?? "local",
+    environment: data.mode === "production" ? "production" : "test",
+    tpin: data.tpin,
+    branchCode: data.branchCode,
+    deviceSerial: data.deviceSerial,
+    vsdcEndpoint: data.vsdcEndpoint,
+    connectorEndpoint: data.connectorEndpoint,
+    taxpayerName: data.taxpayerName,
+  });
+
+  // Keep the legacy configuration row synchronized when its RLS policy permits it.
+  // Failure here must not make the primary device save appear to fail.
+  try {
+    const row = {
+      id: data.id ?? crypto.randomUUID(),
+      user_id: userId,
+      branch_id: data.branchId ?? null,
+      mode: data.mode ?? "test",
+      taxpayer_name: data.taxpayerName ?? null,
+      tpin: data.tpin ?? null,
+      branch_code: data.branchCode ?? null,
+      device_serial: data.deviceSerial ?? null,
+      vsdc_endpoint: data.vsdcEndpoint ?? null,
+      notes: data.notes ?? null,
+      updated_at: new Date().toISOString(),
+    };
+    await db.from("zra_smart_invoice_config").upsert(row, { onConflict: "id" });
+  } catch {
+    // zra_devices remains the authoritative hosted configuration.
+  }
+
+  return { data: device.data, error: null };
 }
 
 export async function cloudInitializeDevice(data: any) {
