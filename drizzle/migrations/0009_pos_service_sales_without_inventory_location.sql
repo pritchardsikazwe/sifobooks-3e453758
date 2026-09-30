@@ -22,7 +22,7 @@ BEGIN
   -- 1. till
   IF _register IS NOT NULL THEN
     SELECT r.location_id INTO _loc FROM public.pos_registers r
-      JOIN public.inventory_locations l ON l.id = r.location_id AND l.user_id = _uid AND COALESCE(l.is_active, true)
+      JOIN public.inventory_locations l ON l.id::text = r.location_id AND l.user_id = _uid AND COALESCE(l.is_active, true)
      WHERE r.id = _register AND r.user_id = _uid;
     IF _loc IS NOT NULL THEN RETURN _loc; END IF;
   END IF;
