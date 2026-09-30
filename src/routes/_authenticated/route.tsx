@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, Link, useRouterState, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { TopNavigation } from "@/components/TopNavigation";
@@ -61,15 +61,6 @@ export const Route = createFileRoute("/_authenticated")({
   },
   component: Shell,
 });
-
-function useBreadcrumb() {
-  const path = useRouterState({ select: r => r.location.pathname });
-  return useMemo(() => {
-    const seg = path.split("/").filter(Boolean);
-    if (!seg.length) return "Dashboard";
-    return seg[0].replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-  }, [path]);
-}
 
 function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
