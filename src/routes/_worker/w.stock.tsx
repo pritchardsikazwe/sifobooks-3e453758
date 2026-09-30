@@ -40,7 +40,7 @@ function WorkerStock() {
       setA(asg);
       const loc = await resolveStoreLocation(asg);
       setStore(loc);
-      if (asg && loc) setRows(await storeStock(asg.tenantId, loc.id, ""));
+      if (asg) setRows(await storeStock(asg.tenantId, loc?.id ?? null, ""));
       setLoading(false);
     })();
   }, []);
@@ -73,7 +73,7 @@ function WorkerStock() {
 
       <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search item name, SKU or scan a barcode" className="max-w-sm" />
 
-      {!store && !loading && (
+      {!store && !loading && rows.length === 0 && (
         <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200">
           Your account has no store or location assigned, so there is no stock to show. Ask your manager to assign you to a
           store — a cashier cannot create one.
