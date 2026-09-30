@@ -40,7 +40,7 @@ function WorkerStock() {
       setA(asg);
       const loc = await resolveStoreLocation(asg);
       setStore(loc);
-      if (asg && loc) setRows(await storeStock(asg.tenantId, loc.id, ""));
+      if (asg) setRows(await storeStock(asg.tenantId, loc?.id ?? null, ""));
       setLoading(false);
     })();
   }, []);
