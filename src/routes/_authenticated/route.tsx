@@ -62,7 +62,17 @@ export const Route = createFileRoute("/_authenticated")({
   component: Shell,
 });
 
-class NavigationErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {\n  state = { hasError: false };\n  static getDerivedStateFromError() { return { hasError: true }; }\n  componentDidCatch(error: unknown) { console.error("[SifoBooks] Top navigation failed:", error); }\n  render() {\n    if (this.state.hasError) return null;\n    return this.props.children;\n  }\n}\n\nfunction Shell() {
+class NavigationErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: unknown) { console.error("[SifoBooks] Top navigation failed:", error); }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const pageKey = useRouterState({ select: r => r.location.pathname });
