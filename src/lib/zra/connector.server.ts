@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { getCloudDb } from "./cloud/postgres";
+import { getCloudDb } from "../cloud/postgres";
 
 function authClient(){
   const token=(getRequestHeader("authorization")||"").replace(/^Bearer\\s+/i,"").trim();
