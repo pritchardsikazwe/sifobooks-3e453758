@@ -64,6 +64,13 @@
       "when": 1790784600678,
       "tag": "0008_post_sales_invoice_warehouse_location",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790795833656,
+      "tag": "0009_pos_service_sales_without_inventory_location",
+      "breakpoints": true
     }
   ]
 }
