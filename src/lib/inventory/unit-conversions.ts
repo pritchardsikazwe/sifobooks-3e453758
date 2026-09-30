@@ -14,6 +14,12 @@ export function normalizeUnit(value: unknown, fallback = "unit") {
   return clean(value) || fallback;
 }
 
+export function normalizeConversionPair(fromUnit: unknown, toUnit: unknown) {
+  const from = normalizeUnit(fromUnit);
+  const to = normalizeUnit(toUnit);
+  return { fromUnit: from, toUnit: to };
+}
+
 /**
  * Convert a transaction quantity into the item's base unit.
  * A missing conversion is only allowed when the transaction unit already
@@ -34,7 +40,7 @@ export function convertToBaseUnit(
   if (fromUnit === baseUnit) return { quantity, fromUnit, baseUnit, multiplier: 1 };
 
   const row = db.prepare(
-    "SELECT id,from_unit,to_unit,multiplier FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 AND lower(from_unit)=? AND lower(to_unit)=? LIMIT 1",
+    "SELECT id,from_unit,to_unit,multiplier FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 AND lower(trim(from_unit))=? AND lower(trim(to_unit))=? ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT 1",
   ).get(userId, item.id, fromUnit, baseUnit) as any;
 
   if (!row || !(Number(row.multiplier) > 0)) {
@@ -62,7 +68,7 @@ export function convertFromBaseUnit(
   if (toUnit === baseUnit) return { quantity: baseQuantity, fromUnit: baseUnit, toUnit, multiplier: 1 };
 
   const row = db.prepare(
-    "SELECT id,from_unit,to_unit,multiplier FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 AND lower(from_unit)=? AND lower(to_unit)=? LIMIT 1",
+    "SELECT id,from_unit,to_unit,multiplier FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 AND lower(trim(from_unit))=? AND lower(trim(to_unit))=? ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT 1",
   ).get(userId, item.id, baseUnit, toUnit) as any;
 
   if (!row || !(Number(row.multiplier) > 0)) {
@@ -88,8 +94,7 @@ export async function saveUnitConversion(args: {
 }) {
   const { getDb } = await import("@/lib/db/database");
   const db = getDb();
-  const fromUnit = normalizeUnit(args.fromUnit);
-  const toUnit = normalizeUnit(args.toUnit);
+  const { fromUnit, toUnit } = normalizeConversionPair(args.fromUnit, args.toUnit);
   const multiplier = Number(args.multiplier);
 
   if (fromUnit === toUnit) throw new Error("UNIT_CONVERSION_SAME_UNIT");
@@ -98,26 +103,47 @@ export async function saveUnitConversion(args: {
   const item = db.prepare("SELECT id,base_unit FROM stock_items WHERE id=? AND user_id=? LIMIT 1").get(args.itemId,args.userId) as any;
   if (!item) throw new Error("ITEM_NOT_FOUND");
 
-  const id = generateId();
-  db.prepare(
-    "INSERT INTO item_unit_conversions (id,user_id,item_id,from_unit,to_unit,multiplier,is_active) VALUES (?,?,?,?,?,?,1) ON CONFLICT(user_id,item_id,from_unit,to_unit) DO UPDATE SET multiplier=excluded.multiplier,is_active=1,updated_at=datetime('now')",
-  ).run(id,args.userId,args.itemId,fromUnit,toUnit,multiplier);
-
-  const row = db.prepare(
-    "SELECT id FROM item_unit_conversions WHERE user_id=? AND item_id=? AND lower(from_unit)=? AND lower(to_unit)=? LIMIT 1",
+  // Do not rely on the legacy case-sensitive UNIQUE constraint. Find the
+  // canonical pair first so "Carton -> Piece" and "carton -> piece" cannot
+  // create separate conversions.
+  const existing = db.prepare(
+    "SELECT id FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 AND lower(trim(from_unit))=? AND lower(trim(to_unit))=? ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT 1",
   ).get(args.userId,args.itemId,fromUnit,toUnit) as any;
+
+  let conversionId = existing?.id as string | undefined;
+  if (conversionId) {
+    db.prepare(
+      "UPDATE item_unit_conversions SET from_unit=?,to_unit=?,multiplier=?,is_active=1,updated_at=datetime('now') WHERE id=?",
+    ).run(fromUnit,toUnit,multiplier,conversionId);
+  } else {
+    conversionId = generateId();
+    db.prepare(
+      "INSERT INTO item_unit_conversions (id,user_id,item_id,from_unit,to_unit,multiplier,is_active) VALUES (?,?,?,?,?,?,1)",
+    ).run(conversionId,args.userId,args.itemId,fromUnit,toUnit,multiplier);
+  }
 
   db.prepare(
     "INSERT INTO item_unit_conversion_audit (id,user_id,item_id,conversion_id,action,from_unit,to_unit,multiplier,actor_id) VALUES (?,?,?,?,?,?,?,?,?)",
-  ).run(generateId(),args.userId,args.itemId,row?.id ?? id,"UPSERT",fromUnit,toUnit,multiplier,args.actorId ?? args.userId);
+  ).run(generateId(),args.userId,args.itemId,conversionId,"UPSERT",fromUnit,toUnit,multiplier,args.actorId ?? args.userId);
 
-  return { id: row?.id ?? id, itemId: args.itemId, fromUnit, toUnit, multiplier };
+  return { id: conversionId, itemId: args.itemId, fromUnit, toUnit, multiplier };
 }
 
 export async function listUnitConversions(userId: string, itemId: string) {
   const { getDb } = await import("@/lib/db/database");
   const db = getDb();
-  return db.prepare(
-    "SELECT * FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 ORDER BY from_unit,to_unit",
-  ).all(userId,itemId);
+  const rows = db.prepare(
+    "SELECT * FROM item_unit_conversions WHERE user_id=? AND item_id=? AND is_active=1 ORDER BY from_unit,to_unit,updated_at DESC,created_at DESC",
+  ).all(userId,itemId) as any[];
+
+  // Defensive de-duplication for legacy rows created before unit names were
+  // canonicalized. Keep the newest row for each semantic pair.
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const { fromUnit, toUnit } = normalizeConversionPair(row.from_unit,row.to_unit);
+    const key = `${fromUnit}→${toUnit}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
