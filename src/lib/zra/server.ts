@@ -1,7 +1,8 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
-import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";\nimport { supabase } from "@/integrations/supabase/client";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
+import { supabase } from "@/integrations/supabase/client";
 import {
   cloudSaveItemFn, cloudSubmitPosSaleFn, cloudSubmitCorrectionFn, cloudSelectInvoiceFn,
   cloudSaveStockItemsFn, cloudSaveStockMasterFn, cloudListDevicesFn, cloudSaveDeviceFn,
@@ -677,23 +678,30 @@ const localZraSaveStockMasterFn = createServerFn({method:"POST"})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockMaster(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
 
-export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudSaveItemFn;
-export const zraSubmitPosSaleFn = IS_LOCAL_BACKEND ? localZraSubmitPosSaleFn : cloudSubmitPosSaleFn;
-export const zraSubmitCorrectionFn = IS_LOCAL_BACKEND ? localZraSubmitCorrectionFn : cloudSubmitCorrectionFn;
-export const zraSelectInvoiceFn = IS_LOCAL_BACKEND ? localZraSelectInvoiceFn : cloudSelectInvoiceFn;
-export const zraSaveStockItemsFn = IS_LOCAL_BACKEND ? localZraSaveStockItemsFn : cloudSaveStockItemsFn;
-export const zraSaveStockMasterFn = IS_LOCAL_BACKEND ? localZraSaveStockMasterFn : cloudSaveStockMasterFn;
+async function callZraFn(localFn:any, cloudFn:any, args:any){
+  if(IS_LOCAL_BACKEND) return localFn(args);
+  const {data:sessionData}=await supabase.auth.getSession();
+  const token=sessionData.session?.access_token;
+  if(!token) throw new Error("NOT_AUTHENTICATED");
+  return cloudFn({...args,data:{...(args?.data||{}),authToken:token}});
+}
 
-export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudListDevicesFn;
-export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudSaveDeviceFn;
-export const zraGetConfigFn = IS_LOCAL_BACKEND ? localZraGetConfigFn : cloudGetConfigFn;
-export const zraSaveConfigFn = IS_LOCAL_BACKEND ? localZraSaveConfigFn : cloudSaveConfigFn;
-export const zraInitializeDeviceFn = IS_LOCAL_BACKEND ? localZraInitializeDeviceFn : cloudInitializeDeviceFn;
-export const zraGetStandardCodesFn = IS_LOCAL_BACKEND ? localZraGetStandardCodesFn : cloudGetStandardCodesFn;
-export const zraGetItemClassesFn = IS_LOCAL_BACKEND ? localZraGetItemClassesFn : cloudGetItemClassesFn;
-export const zraSyncCatalogFn = IS_LOCAL_BACKEND ? localZraSyncCatalogFn : cloudSyncCatalogFn;
-export const zraListInventoryFn = IS_LOCAL_BACKEND ? localZraListInventoryFn : cloudListInventoryFn;
-export const zraSearchItemClassesFn = IS_LOCAL_BACKEND ? localZraSearchItemClassesFn : cloudSearchItemClassesFn;
-export const zraListStandardCodesFn = IS_LOCAL_BACKEND ? localZraListStandardCodesFn : cloudListStandardCodesFn;
-export const zraMapInventoryItemFn = IS_LOCAL_BACKEND ? localZraMapInventoryItemFn : cloudMapInventoryItemFn;
-export const zraRegisterInventoryItemFn = IS_LOCAL_BACKEND ? localZraRegisterInventoryItemFn : cloudRegisterInventoryItemFn;
+export const zraSaveItemFn=(args:any)=>callZraFn(localZraSaveItemFn,cloudSaveItemFn,args);
+export const zraSubmitPosSaleFn=(args:any)=>callZraFn(localZraSubmitPosSaleFn,cloudSubmitPosSaleFn,args);
+export const zraSubmitCorrectionFn=(args:any)=>callZraFn(localZraSubmitCorrectionFn,cloudSubmitCorrectionFn,args);
+export const zraSelectInvoiceFn=(args:any)=>callZraFn(localZraSelectInvoiceFn,cloudSelectInvoiceFn,args);
+export const zraSaveStockItemsFn=(args:any)=>callZraFn(localZraSaveStockItemsFn,cloudSaveStockItemsFn,args);
+export const zraSaveStockMasterFn=(args:any)=>callZraFn(localZraSaveStockMasterFn,cloudSaveStockMasterFn,args);
+export const zraListDevicesFn=(args:any)=>callZraFn(localZraListDevicesFn,cloudListDevicesFn,args);
+export const zraSaveDeviceFn=(args:any)=>callZraFn(localZraSaveDeviceFn,cloudSaveDeviceFn,args);
+export const zraGetConfigFn=(args:any)=>callZraFn(localZraGetConfigFn,cloudGetConfigFn,args);
+export const zraSaveConfigFn=(args:any)=>callZraFn(localZraSaveConfigFn,cloudSaveConfigFn,args);
+export const zraInitializeDeviceFn=(args:any)=>callZraFn(localZraInitializeDeviceFn,cloudInitializeDeviceFn,args);
+export const zraGetStandardCodesFn=(args:any)=>callZraFn(localZraGetStandardCodesFn,cloudGetStandardCodesFn,args);
+export const zraGetItemClassesFn=(args:any)=>callZraFn(localZraGetItemClassesFn,cloudGetItemClassesFn,args);
+export const zraSyncCatalogFn=(args:any)=>callZraFn(localZraSyncCatalogFn,cloudSyncCatalogFn,args);
+export const zraListInventoryFn=(args:any)=>callZraFn(localZraListInventoryFn,cloudListInventoryFn,args);
+export const zraSearchItemClassesFn=(args:any)=>callZraFn(localZraSearchItemClassesFn,cloudSearchItemClassesFn,args);
+export const zraListStandardCodesFn=(args:any)=>callZraFn(localZraListStandardCodesFn,cloudListStandardCodesFn,args);
+export const zraMapInventoryItemFn=(args:any)=>callZraFn(localZraMapInventoryItemFn,cloudMapInventoryItemFn,args);
+export const zraRegisterInventoryItemFn=(args:any)=>callZraFn(localZraRegisterInventoryItemFn,cloudRegisterInventoryItemFn,args);
