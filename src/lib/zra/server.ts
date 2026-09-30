@@ -460,7 +460,7 @@ async function syncZraStockAfterSale(db:any,userId:string,saleId:string,saleNo:s
   }
 }
 
-export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
+const localZraSubmitPosSaleFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;saleNo?:string;terminalId?:string|null})
   .handler(async ({data})=>{
     const db=getDb();
@@ -659,19 +659,19 @@ function nextCorrectionNumber(db:any,userId:string,type:string) {
   return `${prefix}-${new Date().getFullYear()}-${String(Number(row?.n||0)+1).padStart(6,"0")}`;
 }
 
-export const zraSubmitCorrectionFn = createServerFn({method:"POST"})
+const localZraSubmitCorrectionFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;correctionType:"CREDIT_NOTE"|"DEBIT_NOTE";reason:string;terminalId?:string|null})
   .handler(async ({data})=>submitZraSaleCorrection(data));
 
-export const zraSelectInvoiceFn = createServerFn({method:"POST"})
+const localZraSelectInvoiceFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return selectInvoice(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
-export const zraSaveStockItemsFn = createServerFn({method:"POST"})
+const localZraSaveStockItemsFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockItems(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
-export const zraSaveStockMasterFn = createServerFn({method:"POST"})
+const localZraSaveStockMasterFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;branchId?:string|null;payload:Record<string,unknown>})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockMaster(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
@@ -682,11 +682,11 @@ const cloudPost = (handler: (data: any) => Promise<any>) =>
     .handler(async ({ data }) => handler(data));
 
 export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudPost(cloudSaveItem);
-export const zraSubmitPosSaleHostedFn = IS_LOCAL_BACKEND ? zraSubmitPosSaleFn : cloudPost(cloudSubmitPosSale);
-export const zraSubmitCorrectionHostedFn = IS_LOCAL_BACKEND ? zraSubmitCorrectionFn : cloudPost(cloudSubmitCorrection);
-export const zraSelectInvoiceHostedFn = IS_LOCAL_BACKEND ? zraSelectInvoiceFn : cloudPost(cloudSelectInvoice);
-export const zraSaveStockItemsHostedFn = IS_LOCAL_BACKEND ? zraSaveStockItemsFn : cloudPost(cloudSaveStockItems);
-export const zraSaveStockMasterHostedFn = IS_LOCAL_BACKEND ? zraSaveStockMasterFn : cloudPost(cloudSaveStockMaster);
+export const zraSubmitPosSaleFn = IS_LOCAL_BACKEND ? localZraSubmitPosSaleFn : cloudPost(cloudSubmitPosSale);
+export const zraSubmitCorrectionFn = IS_LOCAL_BACKEND ? localZraSubmitCorrectionFn : cloudPost(cloudSubmitCorrection);
+export const zraSelectInvoiceFn = IS_LOCAL_BACKEND ? localZraSelectInvoiceFn : cloudPost(cloudSelectInvoice);
+export const zraSaveStockItemsFn = IS_LOCAL_BACKEND ? localZraSaveStockItemsFn : cloudPost(cloudSaveStockItems);
+export const zraSaveStockMasterFn = IS_LOCAL_BACKEND ? localZraSaveStockMasterFn : cloudPost(cloudSaveStockMaster);
 
 export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudPost(cloudListDevices);
 export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudPost(cloudSaveDevice);
