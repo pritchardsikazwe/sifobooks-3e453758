@@ -228,7 +228,14 @@ function NewInvoicePage() {
       } as any);
       if (postError || !posted) {
         setSaving(false);
-        return toast.error(postError?.message ?? "Invoice could not be posted");
+        const m = postError?.message ?? "";
+        const why = m.startsWith("TOTAL_MISMATCH") ? "The posted total would differ from the total shown. Nothing was posted — please check the lines."
+          : m.startsWith("UNSUPPORTED_TAX_SCHEME") ? "Posting is available for VAT invoices only for now. Save as draft instead."
+          : m.startsWith("INSUFFICIENT_STOCK:") ? `Not enough stock for ${m.split(":")[1]}.`
+          : m.startsWith("NO_COST:") ? `${m.split(":")[1]} has no cost price yet.`
+          : m.startsWith("NO_LOCATION") ? "No stock location is set up for this warehouse or company."
+          : m || "Invoice could not be posted";
+        return toast.error(why);
       }
       setSaving(false);
       toast.success(`Invoice ${number} posted — journal, receivable, stock and ZRA queue updated`);
