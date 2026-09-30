@@ -1,17 +1,37 @@
 import { createClient } from "@supabase/supabase-js";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { getCloudDb } from "../cloud/postgres";
 
-function authClient(authToken?: string){
-  const token=(authToken || getRequestHeader("authorization")||"").replace(/^Bearer\s+/i,"").trim();
-  const url=import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+function supabaseUrl(){
+  return import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+}
+
+function publishableKey(){
+  return import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
+}
+
+function authClient(){
+  const token=(getRequestHeader("authorization")||"").replace(/^Bearer\s+/i,"").trim();
+  const url=supabaseUrl();
+  const key=publishableKey();
   if(!token||!url||!key) throw new Error("NOT_AUTHENTICATED");
   return createClient(url,key,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false,autoRefreshToken:false}});
 }
 
-async function requireUser(authToken?:string){
-  const db=authClient(authToken);
+/**
+ * Hosted connector-control-plane database client.
+ * Prefer the server-only service role when available; fall back to the
+ * publishable key because migration 013 does not enable RLS on connector
+ * control-plane tables. Never expose the service role key to the browser.
+ */
+export function getConnectorDb(){
+  const url=supabaseUrl();
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY || publishableKey();
+  if(!url||!key) throw new Error("SUPABASE_NOT_CONFIGURED");
+  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+}
+
+async function requireUser(){
+  const db=authClient();
   const {data,error}=await db.auth.getUser();
   if(error||!data.user) throw new Error("NOT_AUTHENTICATED");
   return {userId:data.user.id};
@@ -26,45 +46,64 @@ async function hashCredential(value:string){
 function newCredential(){return crypto.randomUUID()+"."+crypto.randomUUID();}
 
 export async function registerZraConnector(data:{userId:string;deviceId?:string|null;name?:string|null;environment?:string}){
-  const {userId}=await requireUser(data.authToken);
+  const {userId}=await requireUser();
   if(userId!==data.userId) throw new Error("USER_CONTEXT_MISMATCH");
-  const db=getCloudDb();
-  const device= data.deviceId
-    ? await db`SELECT id,company_id,branch_id,device_name,environment,device_serial FROM zra_devices WHERE id=${data.deviceId} AND user_id=${userId} LIMIT 1`
-    : await db`SELECT id,company_id,branch_id,device_name,environment,device_serial FROM zra_devices WHERE user_id=${userId} ORDER BY updated_at DESC LIMIT 1`;
-  if(!device[0]) throw new Error("ZRA_DEVICE_NOT_FOUND");
+  const db=getConnectorDb();
+  const query=data.deviceId
+    ? db.from("zra_devices").select("id,company_id,branch_id,device_name,environment,device_serial").eq("id",data.deviceId).eq("user_id",userId).limit(1)
+    : db.from("zra_devices").select("id,company_id,branch_id,device_name,environment,device_serial").eq("user_id",userId).order("updated_at",{ascending:false}).limit(1);
+  const {data:rows,error}=await query;
+  if(error) throw new Error(error.message);
+  const device=rows?.[0];
+  if(!device) throw new Error("ZRA_DEVICE_NOT_FOUND");
+
   const connectorId="SIF-"+crypto.randomUUID().replaceAll("-","").slice(0,16).toUpperCase();
   const credential=newCredential();
   const hash=await hashCredential(credential);
-  await db`UPDATE zra_connector_credentials SET status='revoked',revoked_at=now() WHERE user_id=${userId} AND device_id=${device[0].id} AND status='active'`;
-  await db`INSERT INTO zra_connector_credentials
-    (id,user_id,company_id,device_id,connector_id,credential_hash,status,environment,name)
-    VALUES(${crypto.randomUUID()},${userId},${device[0].company_id||null},${device[0].id},${connectorId},${hash},'active',${data.environment||device[0].environment||"test"},${data.name||device[0].device_name||"SifoBooks Connector"})`;
-  await db`INSERT INTO zra_connector_events
-    (id,user_id,device_id,connector_id,event_type,status,payload)
-    VALUES(${crypto.randomUUID()},${userId},${device[0].id},${connectorId},'REGISTERED','success',${JSON.stringify({environment:data.environment||device[0].environment||"test"})})`;
-  return {connectorId,credential,deviceId:device[0].id,deviceSerial:device[0].device_serial,environment:data.environment||device[0].environment||"test",warning:"Store this credential securely. It is shown only once."};
+  const {error:revokeError}=await db.from("zra_connector_credentials")
+    .update({status:"revoked",revoked_at:new Date().toISOString(),updated_at:new Date().toISOString()})
+    .eq("user_id",userId).eq("device_id",device.id).eq("status","active");
+  if(revokeError) throw new Error(revokeError.message);
+
+  const {error:insertError}=await db.from("zra_connector_credentials").insert({
+    id:crypto.randomUUID(),user_id:userId,company_id:device.company_id||null,device_id:device.id,
+    connector_id:connectorId,credential_hash:hash,status:"active",
+    environment:data.environment||device.environment||"test",
+    name:data.name||device.device_name||"SifoBooks Connector"
+  });
+  if(insertError) throw new Error(insertError.message);
+
+  const {error:eventError}=await db.from("zra_connector_events").insert({
+    id:crypto.randomUUID(),user_id:userId,device_id:device.id,connector_id:connectorId,
+    event_type:"REGISTERED",status:"success",
+    payload:JSON.stringify({environment:data.environment||device.environment||"test"})
+  });
+  if(eventError) throw new Error(eventError.message);
+
+  return {connectorId,credential,deviceId:device.id,deviceSerial:device.device_serial,environment:data.environment||device.environment||"test",warning:"Store this credential securely. It is shown only once."};
 }
 
 export async function listZraConnectors(data:{userId:string;deviceId?:string|null}){
-  const {userId}=await requireUser(data.authToken);
+  const {userId}=await requireUser();
   if(userId!==data.userId) throw new Error("USER_CONTEXT_MISMATCH");
-  const db=getCloudDb();
-  const rows=data.deviceId
-    ? await db`SELECT id,device_id,connector_id,status,environment,name,last_used_at,last_seen_at,created_at,updated_at FROM zra_connector_credentials WHERE user_id=${userId} AND device_id=${data.deviceId} ORDER BY created_at DESC`
-    : await db`SELECT id,device_id,connector_id,status,environment,name,last_used_at,last_seen_at,created_at,updated_at FROM zra_connector_credentials WHERE user_id=${userId} ORDER BY created_at DESC`;
-  return {data:rows};
+  const db=getConnectorDb();
+  let query=db.from("zra_connector_credentials")
+    .select("id,device_id,connector_id,status,environment,name,last_used_at,last_seen_at,created_at,updated_at")
+    .eq("user_id",userId).order("created_at",{ascending:false});
+  if(data.deviceId) query=query.eq("device_id",data.deviceId);
+  const {data:rows,error}=await query;
+  if(error) throw new Error(error.message);
+  return {data:rows??[]};
 }
 
 export async function authenticateZraConnector(connectorId:string,credential:string){
   const hash=await hashCredential(credential);
-  const db=getCloudDb();
-  const rows=await db`SELECT id,user_id,company_id,device_id,connector_id,environment,status FROM zra_connector_credentials
-    WHERE connector_id=${connectorId} AND credential_hash=${hash} AND status='active'
-    LIMIT 1`;
-  if(!rows[0]) throw new Error("CONNECTOR_AUTH_FAILED");
-  await db`UPDATE zra_connector_credentials SET last_used_at=now(),updated_at=now() WHERE id=${rows[0].id}`;
-  return rows[0];
+  const db=getConnectorDb();
+  const {data:row,error}=await db.from("zra_connector_credentials")
+    .select("id,user_id,company_id,device_id,connector_id,environment,status")
+    .eq("connector_id",connectorId).eq("credential_hash",hash).eq("status","active").maybeSingle();
+  if(error) throw new Error(error.message);
+  if(!row) throw new Error("CONNECTOR_AUTH_FAILED");
+  await db.from("zra_connector_credentials").update({last_used_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",row.id);
+  return row;
 }
-
-export { getCloudDb };
