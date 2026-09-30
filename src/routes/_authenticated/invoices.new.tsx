@@ -196,14 +196,19 @@ function NewInvoicePage() {
     if (!u.user) { setSaving(false); return; }
 
     if (targetStatus === "sent") {
-      const rpcItems = valid.map(i => ({
-        stock_item_id: i.stockItemId ?? null,
-        description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
-        quantity: i.qty,
-        unit_price: i.price,
-        vat_rate: i.vatRate,
-        location_id: i.warehouseId ?? null,
-      }));
+      const rpcItems = valid.map(i => {
+        const gross = i.qty * i.price;
+        const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
+        return {
+          stock_item_id: i.stockItemId ?? null,
+          description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
+          quantity: i.qty,
+          unit_price: i.price,
+          discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
+          vat_rate: i.vatRate,
+          location_id: i.warehouseId ?? null,
+        };
+      });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
         _invoice: {
           customer_id: customerId,
@@ -212,6 +217,8 @@ function NewInvoicePage() {
           due_date: dueDate,
           currency,
           tax_inclusive: taxInclusive,
+          tax_scheme: taxScheme,
+          expected_total: Math.round((totals.subtotal + totals.tax) * 100) / 100,
           seller_tpin: company?.tpin ?? null,
           buyer_tpin: buyerTpin || null,
           notes,
