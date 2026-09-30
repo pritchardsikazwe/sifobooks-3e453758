@@ -3,7 +3,7 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import { getCloudDb } from "../cloud/postgres";
 
 function authClient(authToken?: string){
-  const token=(authToken || getRequestHeader("authorization")||"").replace(/^Bearer\\s+/i,"").trim();
+  const token=(authToken || getRequestHeader("authorization")||"").replace(/^Bearer\s+/i,"").trim();
   const url=import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
   if(!token||!url||!key) throw new Error("NOT_AUTHENTICATED");
