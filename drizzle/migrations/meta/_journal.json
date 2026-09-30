@@ -50,6 +50,13 @@
       "when": 1790784488777,
       "tag": "0006_invoice_posting_change_numbering",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790784548410,
+      "tag": "0007_post_sales_invoice_free_text_lines",
+      "breakpoints": true
     }
   ]
 }
