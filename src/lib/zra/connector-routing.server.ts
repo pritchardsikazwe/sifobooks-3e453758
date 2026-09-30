@@ -33,7 +33,7 @@ export function requiresConnector(cfg: any): boolean {
 export async function findConnector(userId: string, deviceId?: string | null) {
   const db = getConnectorDb();
   let q = db.from("zra_connector_credentials")
-    .select("connector_id,device_id,display_name,last_seen_at,status")
+    .select("connector_id,device_id,name,last_seen_at,status")
     .eq("user_id", userId).eq("status", "active")
     .order("last_seen_at", { ascending: false, nullsFirst: false }).limit(10);
   const { data, error } = await q;
@@ -47,7 +47,7 @@ export async function findConnector(userId: string, deviceId?: string | null) {
 }
 
 function connectorSummary(found: any) {
-  return { status: found.status, name: found.row?.display_name ?? found.row?.connector_id ?? null, lastSeenAt: found.row?.last_seen_at ?? null };
+  return { status: found.status, name: found.row?.name ?? found.row?.connector_id ?? null, lastSeenAt: found.row?.last_seen_at ?? null };
 }
 
 function connectorUnavailable(found: any, route: "connector" = "connector"): RoutedResult {
