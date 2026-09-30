@@ -31,7 +31,7 @@ type ZraCode = any;
 function ZraSmartInvoicePage() {
   const [userId,setUserId]=useState("");
   const [config,setConfig]=useState<Config>({});
-  const [form,setForm]=useState<Config>({mode:"test",deployment_mode:"local",vsdc_endpoint:""});
+  const [form,setForm]=useState<Config>({mode:"test",deployment_mode:"local",vsdc_endpoint:"http://127.0.0.1:8085"});
   const [stats,setStats]=useState({pending:0,submitted:0,failed:0,total:0});
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
