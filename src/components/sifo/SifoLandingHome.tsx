@@ -59,29 +59,39 @@ export function SifoLandingHome() {
 
 function Header() {
   const nav = ["Home", "Features", "Industries", "Compliance", "Pricing", "Resources", "Support"];
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 text-slate-950 backdrop-blur-xl">
-      <div className="mx-auto flex h-[72px] max-w-[1450px] items-center gap-5 px-5 sm:px-8">
+      <div className="mx-auto flex h-[76px] max-w-[1500px] items-center gap-4 px-4 sm:px-7 lg:px-10">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <div className="relative grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-emerald-950/40 sifo-pulse">
+          <div className="relative grid h-11 w-11 place-items-center rounded-xl border border-blue-200 bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-200/50 sifo-pulse">
             <span className="text-xl font-black italic">S</span>
           </div>
           <div className="leading-none">
-            <div className="text-[21px] font-extrabold tracking-tight text-slate-950">Sifo<span className="text-blue-600">Books</span></div>
+            <div className="text-[22px] font-extrabold tracking-tight text-slate-950">Sifo<span className="text-blue-600">Books</span></div>
             <div className="mt-1 hidden text-[8px] font-bold uppercase tracking-[.2em] text-slate-400 sm:block">Accounting · POS · ERP</div>
           </div>
         </Link>
         <nav className="hidden flex-1 items-center gap-1 lg:flex">
-          {nav.map((n, i) => <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${i === 0 ? "text-blue-600" : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"}`}>{n}</a>)}
+          {nav.map((n, i) => <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} className={`rounded-lg px-3 py-2 text-[12px] font-semibold ${i === 0 ? "text-blue-600" : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"}`}>{n}</a>)}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <Link to="/auth" search={{ tab: "signin" }} className="hidden rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 sm:inline-flex">Sign in</Link>
-          <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/30 hover:from-emerald-300 hover:to-emerald-500">Start free</Link>
-          <button aria-label="Open navigation" className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-blue-700 transition hover:bg-blue-50 lg:hidden">
+          <Link to="/auth" search={{ tab: "signup" }} className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-blue-200 hover:from-blue-500 hover:to-blue-800">Start free</Link>
+          <button aria-label={menuOpen ? "Close navigation" : "Open navigation"} onClick={() => setMenuOpen(!menuOpen)} className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-blue-700 transition hover:bg-blue-50 lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
         </div>
       </div>
+      {menuOpen && (
+        <div className="border-t border-slate-200 bg-white px-4 py-3 shadow-xl lg:hidden">
+          <nav className="mx-auto grid max-w-[1500px] gap-1 sm:grid-cols-2">
+            {nav.map((n, i) => (
+              <a key={n} href={i ? `#${n.toLowerCase()}` : "#"} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700">{n}</a>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
@@ -91,21 +101,21 @@ function Hero() {
     <section className="relative overflow-hidden bg-white text-slate-950">
       <div className="absolute inset-0 opacity-70 bg-[linear-gradient(rgba(37,99,235,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,.055)_1px,transparent_1px)] bg-[size:72px_72px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_20%,rgba(37,99,235,.13),transparent_34%),radial-gradient(circle_at_8%_80%,rgba(245,158,11,.13),transparent_28%)]" /><div className="sifo-glow absolute -right-20 top-20 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
-      <div className="relative mx-auto grid max-w-[1450px] items-center gap-10 px-5 pb-12 pt-14 sm:px-8 sm:pb-16 sm:pt-20 lg:min-h-[650px] lg:grid-cols-[.9fr_1.1fr] lg:py-16">
-        <div className="relative z-10 max-w-[680px] sifo-reveal">
-          <div className="mb-7 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">
+      <div className="relative mx-auto grid max-w-[1500px] items-center gap-8 px-4 pb-10 pt-10 sm:px-7 sm:pb-14 sm:pt-14 lg:min-h-[690px] lg:grid-cols-[.84fr_1.16fr] lg:gap-4 lg:px-10 lg:py-16">
+        <div className="relative z-10 max-w-[690px] sifo-reveal">
+          <div className="mb-6 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">
             🇿🇲 Built in Zambia for Zambian business
           </div>
-          <h1 className="max-w-[720px] text-[48px] font-black leading-[.95] tracking-[-.055em] sm:text-6xl lg:text-[68px]">
+          <h1 className="max-w-[720px] text-[44px] font-black leading-[.94] tracking-[-.06em] sm:text-6xl lg:text-[76px]">
             One platform.<br />
             <span className="text-blue-600">Every operation.</span><br />
             Fully accounted<br className="sm:hidden" /> for.
           </h1>
-          <p className="mt-7 max-w-[650px] text-[17px] leading-7 text-slate-600 sm:text-xl">
+          <p className="mt-6 max-w-[650px] text-[16px] leading-7 text-slate-600 sm:text-xl">
             SifoBooks runs the till, the stores, the payroll and the ledger on one record — so the figure a manager sees on the floor is the same figure the accountant files with ZRA.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link to="/auth" search={{ tab: "signup" }} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-7 text-base font-extrabold text-white shadow-xl shadow-emerald-950/40">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link to="/auth" search={{ tab: "signup" }} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-7 text-base font-extrabold text-white shadow-xl shadow-blue-200/50">
               Start free <ArrowRight className="h-5 w-5" />
             </Link>
             <a href="#features" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-blue-200 bg-white px-7 text-base font-bold text-blue-800 hover:bg-blue-50">
@@ -115,7 +125,7 @@ function Hero() {
               <span className="text-lg">▷</span> See demo
             </a>
           </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-slate-200 pt-7 sm:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-slate-200 pt-7 sm:grid-cols-4">
             <HeroStat value="Multi-company" label="One login, multiple businesses" />
             <HeroStat value="Branches" label="Centralised branch operations" />
             <HeroStat value="POS + ERP" label="Sales connected to accounts" />
@@ -140,24 +150,24 @@ function HeroStat({ value, label }: { value: string; label: string }) {
 function HeroDashboard() {
   const kpis = [["Sales", "ZMW 125,430", "+12%"], ["Stock", "ZMW 84,200", "Healthy"], ["Payroll", "ZMW 46,890", "Processed"], ["ZRA", "Synced", "Ready"]];
   return (
-    <div className="relative mt-2 min-h-[360px] sm:min-h-[450px] lg:mt-0 lg:min-h-[520px]">
-      <div className="sifo-float absolute right-[-2%] top-[2%] w-[104%] sm:right-[-4%] sm:w-[108%] rotate-[-2deg] rounded-[30px] border border-blue-100 bg-white p-2 shadow-[0_40px_110px_rgba(0,0,0,.5)]">
+    <div className="relative mt-2 min-h-[340px] sm:min-h-[430px] lg:mt-0 lg:min-h-[560px]">
+      <div className="sifo-float absolute right-[-7%] top-[3%] w-[111%] sm:right-[-5%] sm:w-[114%] rotate-[-1deg] rounded-[30px] border border-blue-100 bg-white p-2 shadow-[0_35px_90px_rgba(15,23,42,.18)]">
         <div className="overflow-hidden rounded-[22px] bg-slate-50">
           <div className="flex h-11 items-center border-b bg-white px-4"><div className="text-[9px] font-bold text-slate-500">SifoBooks · Business Control Centre</div><div className="ml-auto flex gap-1.5"><span className="h-2 w-2 rounded-full bg-red-300"/><span className="h-2 w-2 rounded-full bg-amber-300"/><span className="h-2 w-2 rounded-full bg-emerald-500"/></div></div>
-          <div className="grid grid-cols-[122px_1fr]">
-            <div className="bg-[#003b32] p-3"><div className="mb-6 text-xs font-black text-white">SifoBooks</div>{["Dashboard","Sales & POS","Purchases","Inventory","Accounting","Payroll","ZRA","NAPSA","NHIMA","Reports"].map((x,i)=><div key={x} className={`mb-1 rounded-md px-2 py-1.5 text-[7px] font-semibold ${i===0?"bg-emerald-400/20 text-white":"text-blue-100/60"}`}>{x}</div>)}</div>
-            <div className="p-4">
+          <div className="grid grid-cols-[116px_1fr]">
+            <div className="bg-[#06265f] p-3"><div className="mb-6 text-xs font-black text-white">SifoBooks</div>{["Dashboard","Sales & POS","Purchases","Inventory","Accounting","Payroll","ZRA","NAPSA","NHIMA","Reports"].map((x,i)=><div key={x} className={`mb-1 rounded-md px-2 py-1.5 text-[7px] font-semibold ${i===0?"bg-blue-500/25 text-white":"text-blue-100/60"}`}>{x}</div>)}</div>
+            <div className="p-4 sm:p-5">
               <div className="mb-4 flex items-end justify-between"><div><div className="text-[8px] text-slate-400">SifoBooks Business</div><div className="text-base font-black text-slate-900">Operations Overview</div></div><div className="rounded-md border bg-white px-2 py-1 text-[8px]">September 2026</div></div>
               <div className="grid grid-cols-4 gap-2">{kpis.map(k=><div key={k[0]} className="rounded-xl border bg-white p-2.5 shadow-sm"><div className="text-[7px] text-slate-400">{k[0]}</div><div className="mt-1 text-[11px] font-black text-slate-900">{k[1]}</div><div className="mt-1 text-[7px] font-bold text-blue-600">{k[2]}</div></div>)}</div>
               <div className="mt-3 grid grid-cols-[1.4fr_.6fr] gap-3">
-                <div className="rounded-xl border bg-white p-3"><div className="mb-2 text-[8px] font-bold text-slate-800">Money in vs money out</div><div className="flex h-32 items-end gap-1.5">{[38,52,44,62,57,74,68,86,94].map((h,i)=><div key={i} className="flex-1 rounded-t bg-emerald-600/80" style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[6px] text-slate-400">Jan Feb Mar Apr May Jun Jul Aug Sep</div></div>
+                <div className="rounded-xl border bg-white p-3"><div className="mb-2 text-[8px] font-bold text-slate-800">Money in vs money out</div><div className="flex h-36 items-end gap-1.5">{[38,52,44,62,57,74,68,86,94].map((h,i)=><div key={i} className="flex-1 rounded-t bg-blue-600/85" style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[6px] text-slate-400">Jan Feb Mar Apr May Jun Jul Aug Sep</div></div>
                 <div className="rounded-xl border bg-white p-3"><div className="text-[8px] font-bold text-slate-800">Connected operations</div><div className="mt-4 space-y-2">{["POS → Sales","Stock → COGS","Payroll → Ledger","Invoice → ZRA"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-[7px] font-bold text-slate-600">{x}<span className="float-right text-blue-600">✓</span></div>)}</div></div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="absolute bottom-[-2%] left-[3%] z-20 w-[150px] sm:w-[180px] rounded-[25px] border-4 border-white bg-[#0b3b8f] p-3 shadow-2xl">
+      <div className="absolute bottom-[-2%] left-[1%] z-20 w-[158px] sm:w-[190px] rounded-[28px] border-4 border-white bg-[#0b3b8f] p-3 shadow-2xl">
         <div className="mb-2 flex items-center justify-between text-[8px] font-bold text-white"><span>SifoBooks Mobile</span><Smartphone className="h-3 w-3"/></div>
         <div className="rounded-xl bg-white p-3 text-slate-900"><div className="text-[7px] text-slate-400">Today's Sales</div><div className="mt-1 text-lg font-black">ZMW 12,450</div><div className="mt-1 text-[7px] font-bold text-blue-600">+18%</div><div className="mt-3 grid grid-cols-2 gap-1.5">{["POS","Invoice","Payroll","Reports"].map(x=><div key={x} className="rounded-lg bg-slate-50 p-2 text-center text-[7px] font-bold">{x}</div>)}</div></div>
       </div>
@@ -167,7 +177,7 @@ function HeroDashboard() {
 
 function ModuleGrid() {
   return (
-    <section id="features" className="bg-white py-12 sm:py-16">
+    <section id="features" className="relative bg-white py-12 sm:py-16"><div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-100 to-transparent" />
       <div className="mx-auto max-w-[1450px] px-5 sm:px-8">
         <div className="mb-7 flex items-end justify-between sifo-reveal">
           <div>
@@ -177,15 +187,15 @@ function ModuleGrid() {
           </div>
           <a href="#screens" className="hidden items-center gap-2 text-sm font-bold text-blue-700 transition hover:gap-3 sm:flex">Explore all modules <ArrowRight className="h-4 w-4"/></a>
         </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-8">
           {modules.map(([name, sub, Icon], index) => (
             <div
               key={name}
-              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,23,42,.055)] transition duration-500 hover:-translate-y-2 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(37,99,235,.13)] sifo-reveal"
+              className="group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,23,42,.055)] transition duration-500 hover:-translate-y-2 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(37,99,235,.13)] sifo-reveal"
               style={{ animationDelay: `${index * 70}ms` }}
             >
               <div className="absolute inset-x-8 -top-12 h-20 rounded-full bg-blue-100/60 blur-2xl opacity-0 transition duration-500 group-hover:opacity-100" />
-              <div className="relative mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 transition duration-500 group-hover:scale-110 group-hover:bg-blue-700 group-hover:text-white group-hover:rotate-3">
+              <div className="relative mx-auto grid h-13 w-13 place-items-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 transition duration-500 group-hover:scale-110 group-hover:bg-blue-700 group-hover:text-white group-hover:rotate-3">
                 <Icon className="h-5 w-5"/>
               </div>
               <div className="relative mt-4 text-[13px] font-extrabold">{name}</div>
@@ -201,7 +211,7 @@ function ModuleGrid() {
 
 function IndustryGrid() {
   return (
-    <section id="industries" className="bg-slate-50 py-14 sm:py-16">
+    <section id="industries" className="relative bg-slate-50 py-12 sm:py-16"><div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
       <div className="mx-auto max-w-[1450px] px-5 sm:px-8">
         <div className="mb-7 flex items-end justify-between sifo-reveal">
           <div>
@@ -215,13 +225,13 @@ function IndustryGrid() {
           {industries.map(([name, sub, Icon, image], index) => (
             <div
               key={name}
-              className="group relative min-h-[150px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
+              className="group relative min-h-[172px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <img src={image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-700 group-hover:scale-110 group-hover:opacity-80" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06265f] via-[#06265f]/75 to-blue-900/15" />
+              <img src={image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-85 transition duration-700 group-hover:scale-110 group-hover:opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#06265f]/95 via-[#06265f]/55 to-blue-900/5" />
               <div className="absolute -right-5 -top-5 h-24 w-24 rounded-full bg-blue-300/15 blur-sm transition duration-500 group-hover:scale-125" />
-              <div className="relative flex h-full min-h-[150px] flex-col justify-between p-4">
+              <div className="relative flex h-full min-h-[172px] flex-col justify-between p-4">
                 <div className="grid h-10 w-10 place-items-center rounded-xl border border-amber-300/30 bg-[#06265f]/60 text-amber-300 backdrop-blur-sm transition duration-500 group-hover:scale-110 group-hover:bg-amber-300 group-hover:text-emerald-950">
                   <Icon className="h-5 w-5"/>
                 </div>
@@ -243,11 +253,11 @@ function IndustryGrid() {
 
 function Compliance() {
   const items = ["ZRA Smart Invoice & VAT Returns", "PAYE Calculations & Submissions", "NAPSA Contributions", "NHIMA Contributions", "Employee Tax Certificates (TP10)", "Compliance Reports & Audit Trail"];
-  return <section id="compliance" className="bg-white py-14 sm:py-20"><div className="mx-auto grid max-w-[1450px] items-center gap-10 px-5 sm:px-8 lg:grid-cols-[.85fr_1.15fr]"><div className="sifo-reveal"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-blue-700">Stay compliant in Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Compliance without the paperwork maze.</h2><p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Keep statutory workflows visible in the same system as accounting, payroll and sales.</p><ul className="mt-6 space-y-3">{items.map(x=><li key={x} className="flex items-center gap-3 text-sm font-semibold text-slate-700"><CheckCircle2 className="h-5 w-5 shrink-0 text-blue-600"/>{x}</li>)}</ul></div><ComplianceMockup/></div></section>;
+  return <section id="compliance" className="bg-white py-12 sm:py-16"><div className="mx-auto grid max-w-[1450px] items-center gap-8 px-5 sm:px-8 lg:grid-cols-[.8fr_1.2fr]"><div className="sifo-reveal"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-blue-700">Stay compliant in Zambia</div><h2 className="mt-3 text-3xl font-black sm:text-5xl tracking-tight sm:text-5xl">Compliance without the paperwork maze.</h2><p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Keep statutory workflows visible in the same system as accounting, payroll and sales.</p><ul className="mt-5 space-y-2.5">{items.map(x=><li key={x} className="flex items-center gap-3 text-sm font-semibold text-slate-700"><CheckCircle2 className="h-5 w-5 shrink-0 text-blue-600"/>{x}</li>)}</ul></div><ComplianceMockup/></div></section>;
 }
 
 function ComplianceMockup() {
-  return <div className="relative rounded-[30px] border border-slate-200 bg-slate-50 p-4 shadow-[0_25px_80px_rgba(15,23,42,.12)] sifo-reveal"><div className="absolute -top-5 right-6 rounded-xl bg-blue-700 sifo-pulse px-4 py-2 text-xs font-extrabold text-white shadow-lg">✓ ZRA Smart Invoice Ready</div><div className="grid gap-3 md:grid-cols-[1fr_220px]"><div className="rounded-2xl border bg-white p-4"><div className="flex items-center justify-between border-b pb-3"><div className="text-sm font-black">Sales Invoice</div><div className="rounded-lg bg-blue-700 px-3 py-1.5 text-[9px] font-bold text-white">Submit to ZRA</div></div><div className="mt-4 grid grid-cols-2 gap-3 text-[9px]"><span>Customer<br/><b>ABC Supplies Ltd</b></span><span>Invoice Date<br/><b>25 Sep 2026</b></span><span>Invoice No.<br/><b>INV-00045</b></span><span>Branch<br/><b>Ndola</b></span></div><div className="mt-4 overflow-hidden rounded-lg border"><div className="grid grid-cols-4 bg-slate-50 p-2 text-[8px] font-bold"><span>Item</span><span>Qty</span><span>VAT</span><span>Total</span></div>{["Maize Meal","Cooking Oil","Sugar"].map((x,i)=><div key={x} className="grid grid-cols-4 border-t p-2 text-[8px]"><span>{x}</span><span>{[12,5,8][i]}</span><span>16%</span><b>{["1,392","1,450","1,670"][i]}</b></div>)}</div><div className="mt-3 text-right text-sm font-black">ZMW 4,524.00</div></div><div className="rounded-2xl border bg-white p-5"><div className="text-[9px] font-black">ZRA SMART INVOICE</div><div className="mt-4 grid h-36 place-items-center rounded-lg border-2 border-dashed text-xs font-black text-slate-400">QR CODE</div><div className="mt-3 text-[8px] text-slate-500">Fiscal reference and receipt data appear here after a successful ZRA response.</div></div></div><div className="mt-4 grid grid-cols-3 gap-3">{[["ZRA","Smart Invoice"],["NAPSA","Contributions"],["NHIMA","Contributions"]].map(x=><div key={x[0]} className="rounded-xl border bg-white p-3 text-center"><div className="text-lg font-black text-blue-800">{x[0]}</div><div className="text-[8px] text-slate-500">{x[1]}</div></div>)}</div></div>;
+  return <div className="relative rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/40 p-3 sm:p-4 shadow-[0_25px_80px_rgba(15,23,42,.12)] sifo-reveal"><div className="absolute -top-5 right-6 rounded-xl bg-blue-700 sifo-pulse px-4 py-2 text-xs font-extrabold text-white shadow-lg">✓ ZRA Smart Invoice Ready</div><div className="grid gap-3 md:grid-cols-[1fr_220px]"><div className="rounded-2xl border bg-white p-4"><div className="flex items-center justify-between border-b pb-3"><div className="text-sm font-black">Sales Invoice</div><div className="rounded-lg bg-blue-700 px-3 py-1.5 text-[9px] font-bold text-white">Submit to ZRA</div></div><div className="mt-4 grid grid-cols-2 gap-3 text-[9px]"><span>Customer<br/><b>ABC Supplies Ltd</b></span><span>Invoice Date<br/><b>25 Sep 2026</b></span><span>Invoice No.<br/><b>INV-00045</b></span><span>Branch<br/><b>Ndola</b></span></div><div className="mt-4 overflow-hidden rounded-lg border"><div className="grid grid-cols-4 bg-slate-50 p-2 text-[8px] font-bold"><span>Item</span><span>Qty</span><span>VAT</span><span>Total</span></div>{["Maize Meal","Cooking Oil","Sugar"].map((x,i)=><div key={x} className="grid grid-cols-4 border-t p-2 text-[8px]"><span>{x}</span><span>{[12,5,8][i]}</span><span>16%</span><b>{["1,392","1,450","1,670"][i]}</b></div>)}</div><div className="mt-3 text-right text-sm font-black">ZMW 4,524.00</div></div><div className="rounded-2xl border bg-white p-5"><div className="text-[9px] font-black">ZRA SMART INVOICE</div><div className="mt-4 grid h-36 place-items-center rounded-lg border-2 border-dashed text-xs font-black text-slate-400">QR CODE</div><div className="mt-3 text-[8px] text-slate-500">Fiscal reference and receipt data appear here after a successful ZRA response.</div></div></div><div className="mt-4 grid grid-cols-3 gap-3">{[["ZRA","Smart Invoice"],["NAPSA","Contributions"],["NHIMA","Contributions"]].map(x=><div key={x[0]} className="rounded-xl border bg-white p-3 text-center"><div className="text-lg font-black text-blue-800">{x[0]}</div><div className="text-[8px] text-slate-500">{x[1]}</div></div>)}</div></div>;
 }
 
 function Screens() {
@@ -267,7 +277,7 @@ function Screens() {
   }, [slides.length]);
 
   return (
-    <section id="screens" className="bg-white py-14 sm:py-20">
+    <section id="screens" className="bg-white py-12 sm:py-16">
       <div className="mx-auto max-w-[1450px] px-5 sm:px-8">
         <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sifo-reveal">
           <div>
@@ -289,7 +299,7 @@ function Screens() {
           ))}
         </div>
 
-        <div className="relative mt-5 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-[0_24px_70px_rgba(15,23,42,.10)] sm:p-5">
+        <div className="relative mt-5 overflow-hidden rounded-[30px] border border-blue-100 bg-gradient-to-br from-slate-50 to-blue-50/50 p-3 shadow-[0_24px_70px_rgba(15,23,42,.10)] sm:p-6">
           <div key={slides[active].key} className="sifo-reveal">
             <div className="mb-4 flex flex-col gap-1 px-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -311,7 +321,7 @@ function Screens() {
 }
 
 function GalleryFrame({ children }: { children: ReactNode }) {
-  return <div className="grid min-h-[250px] place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-inner sm:min-h-[330px] sm:p-5">{children}</div>;
+  return <div className="grid min-h-[270px] place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-inner sm:min-h-[360px] sm:p-5">{children}</div>;
 }
 
 function PosGallery() {
@@ -345,9 +355,9 @@ function MobileGallery() {
 }
 
 function FinalCta() {
-  return <section className="relative overflow-hidden bg-[#06265f] py-16 text-white sm:py-20"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Everything your business needs. One connected system.</h2><p className="mt-4 max-w-xl text-emerald-50/80">Start with accounting, POS, payroll or inventory and add the modules your business needs as you grow.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
+  return <section className="relative overflow-hidden bg-[#06265f] py-14 text-white sm:py-18"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Everything your business needs. One connected system.</h2><p className="mt-4 max-w-xl text-blue-50/80">Start with accounting, POS, payroll or inventory and add the modules your business needs as you grow.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
 }
 
 function Footer() {
-  return <footer className="bg-[#061b46] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-emerald-100/60">Accounting · POS · ERP · Zambia</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-emerald-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-blue-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
+  return <footer className="bg-[#061b46] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-blue-100/60">Accounting · POS · ERP · Zambia</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-blue-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-blue-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
 }
