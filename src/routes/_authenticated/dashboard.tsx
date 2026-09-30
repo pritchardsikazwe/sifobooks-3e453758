@@ -211,7 +211,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "banking", "snapshot", "compliance", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -235,6 +235,7 @@ function DashboardPage() {
     "cash-flow": "col-span-12 lg:col-span-3",
     "revenue-categories": "col-span-12 lg:col-span-4",
     "quick-actions": "col-span-12 lg:col-span-4",
+    "banking": "col-span-12 lg:col-span-4",
     "snapshot": "col-span-12 lg:col-span-4",
     "compliance": "col-span-12 lg:col-span-4",
     "recent-activity": "col-span-12",
@@ -251,6 +252,7 @@ function DashboardPage() {
     "cash-flow": "Cash flow",
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
+    "banking": "Banking",
     "snapshot": "Module snapshot",
     "compliance": "Compliance",
     "recent-activity": "Recent activity",
@@ -422,6 +424,31 @@ function DashboardPage() {
       </Panel>
     ),
 
+    "banking": (
+      <Panel title="Banking" subtitle="Cash position and latest movement" action={<Link to="/banking" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <PulseTile label="Bank movement" value={money(stats.cashAtBank)} tone={stats.cashAtBank >= 0 ? "positive" : "negative"} />
+          <PulseTile label="Today in" value={money(stats.todayIn)} tone="positive" />
+        </div>
+        {recent.length === 0 ? (
+          <EmptyState label="No bank transactions yet" cta="Open banking" to="/banking" />
+        ) : (
+          <div className="space-y-1">
+            {recent.slice(0, 4).map(t => (
+              <Link key={t.id} to="/banking" className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-medium">{t.description}</div>
+                  <div className="text-[10px] text-muted-foreground">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}</div>
+                </div>
+                <span className={cn("shrink-0 text-xs font-bold tabular-nums", t.amount >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+    ),
     "snapshot": (
       <Panel title="Snapshot" subtitle="Key modules">
         <div className="space-y-1">
@@ -438,8 +465,9 @@ function DashboardPage() {
       </Panel>
     ),
     "compliance": (
-      <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+      <Panel title="Compliance Center" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
         <div className="space-y-1">
+          <Row icon={ShieldCheck} label="ZRA Smart Invoice" value="Open" to="/zra-smart-invoice" />
           <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
           <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
           <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
