@@ -10,8 +10,8 @@ function authClient(authToken?: string){
   return createClient(url,key,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false,autoRefreshToken:false}});
 }
 
-async function requireUser(){
-  const db=authClient();
+async function requireUser(authToken?:string){
+  const db=authClient(authToken);
   const {data,error}=await db.auth.getUser();
   if(error||!data.user) throw new Error("NOT_AUTHENTICATED");
   return {userId:data.user.id};
