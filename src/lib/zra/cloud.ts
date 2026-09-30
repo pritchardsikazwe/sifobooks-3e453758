@@ -9,6 +9,10 @@ import {
   initializeDevice,
   isSuccessfulVsdcResponse,
   saveItem,
+  saveSales,
+  saveStockItems,
+  saveStockMaster,
+  selectInvoice,
 } from "./vsdc";
 
 function cloudClient() {
@@ -419,7 +423,7 @@ export async function cloudSubmitPosSale(data:any){
   const built=await cloudBuildSalesPayload(db,userId,data.saleId,saleNo,terminalId);
   const id=existing.data?.id??crypto.randomUUID();
   const upsert=await db.from("zra_fiscal_controls").upsert({
-    id,user_id:userId,sale_id:data.saleId,terminal_id:terminalId,invoicenumber:saleNo,state:"SUBMITTED",idempotency_key:idempotencyKey,submission_at:new Date().toISOString(),updated_at:new Date().toISOString()
+    id,user_id:userId,sale_id:data.saleId,terminal_id:terminalId,invoice_number:saleNo,state:"SUBMITTED",idempotency_key:idempotencyKey,submission_at:new Date().toISOString(),updated_at:new Date().toISOString()
   },{onConflict:"user_id,sale_id"}).select("*").single();
   if(upsert.error) throw new Error(upsert.error.message);
   const queueId=crypto.randomUUID();
