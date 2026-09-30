@@ -103,16 +103,12 @@ function Hero() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_20%,rgba(37,99,235,.13),transparent_34%),radial-gradient(circle_at_8%_80%,rgba(245,158,11,.13),transparent_28%)]" /><div className="sifo-glow absolute -right-20 top-20 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
       <div className="relative mx-auto grid max-w-[1500px] items-center gap-8 px-4 pb-10 pt-10 sm:px-7 sm:pb-14 sm:pt-14 lg:min-h-[690px] lg:grid-cols-[.84fr_1.16fr] lg:gap-4 lg:px-10 lg:py-16">
         <div className="relative z-10 max-w-[690px] sifo-reveal">
-          <div className="mb-6 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">
-            🇿🇲 Built in Zambia for Zambian business
-          </div>
           <h1 className="max-w-[720px] text-[44px] font-black leading-[.94] tracking-[-.06em] sm:text-6xl lg:text-[76px]">
-            One platform.<br />
-            <span className="text-blue-600">Every operation.</span><br />
-            Fully accounted<br className="sm:hidden" /> for.
+            Run your business.<br />
+            <span className="text-blue-600">Keep everything in order.</span>
           </h1>
           <p className="mt-6 max-w-[650px] text-[16px] leading-7 text-slate-600 sm:text-xl">
-            SifoBooks runs the till, the stores, the payroll and the ledger on one record — so the figure a manager sees on the floor is the same figure the accountant files with ZRA.
+            Manage sales, stock, purchases, payroll and accounts from one place. SifoBooks keeps your day-to-day work connected, so you spend less time chasing figures and more time running the business.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link to="/auth" search={{ tab: "signup" }} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-7 text-base font-extrabold text-white shadow-xl shadow-blue-200/50">
@@ -126,10 +122,10 @@ function Hero() {
             </a>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-slate-200 pt-7 sm:grid-cols-4">
-            <HeroStat value="Multi-company" label="One login, multiple businesses" />
-            <HeroStat value="Branches" label="Centralised branch operations" />
-            <HeroStat value="POS + ERP" label="Sales connected to accounts" />
-            <HeroStat value="Zambia" label="Built around local compliance" />
+            <HeroStat value="Multi-company" label="Manage more than one business" />
+            <HeroStat value="Branches" label="Keep every branch in view" />
+            <HeroStat value="POS + ERP" label="Sales flow into your accounts" />
+            <HeroStat value="Zambia" label="Ready for Zambia tax workflows" />
           </div>
         </div>
         <HeroDashboard />
@@ -183,7 +179,7 @@ function ModuleGrid() {
           <div>
             <div className="mb-2 text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">One connected platform</div>
             <h2 className="text-2xl font-black tracking-tight sm:text-3xl">Complete Solution for Every Business Need</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">All the tools you need in one powerful system — designed for Zambian businesses, consultants and organisations.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Bring sales, stock, payroll and accounting together without having to run separate systems.</p>
           </div>
           <a href="#screens" className="hidden items-center gap-2 text-sm font-bold text-blue-700 transition hover:gap-3 sm:flex">Explore all modules <ArrowRight className="h-4 w-4"/></a>
         </div>
@@ -217,7 +213,7 @@ function IndustryGrid() {
           <div>
             <div className="mb-2 text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">Specialised workspaces</div>
             <h2 className="text-3xl font-black tracking-tight">Solutions for Every Industry</h2>
-            <p className="mt-1 text-sm text-slate-500">One connected platform with specialised workspaces.</p>
+            <p className="mt-1 text-sm text-slate-500">Set up the workspace that fits the way your business operates.</p>
           </div>
           <span className="hidden items-center gap-2 text-sm font-bold text-blue-700 sm:flex">Built for real businesses in Zambia <ArrowRight className="h-4 w-4"/></span>
         </div>
@@ -260,9 +256,9 @@ function Compliance() {
           <div className="grid items-center gap-6 px-5 py-7 sm:px-8 lg:grid-cols-[.9fr_1.8fr] lg:px-10 lg:py-8">
             <div className="sifo-reveal">
               <div className="text-[10px] font-extrabold uppercase tracking-[.18em] text-blue-700">Stay compliant in Zambia</div>
-              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Compliance without the paperwork maze.</h2>
+              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Stay on top of your statutory work.</h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                SifoBooks helps you meet statutory requirements with connected workflows, clear records and real-time integration.
+                Keep your tax, payroll and statutory records organised alongside the transactions that created them.
               </p>
               <a href="#screens" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700">
                 Learn more <ArrowRight className="h-4 w-4"/>
@@ -374,8 +370,8 @@ function Screens() {
         <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sifo-reveal">
           <div>
             <div className="text-[11px] font-extrabold uppercase tracking-[.18em] text-blue-700">See it in action</div>
-            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Real screens. Real workflows.</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">Explore the SifoBooks experience across POS, payroll, accounting, analytics and mobile.</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">See how SifoBooks works.</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500">Take a look at the tools your team can use every day — from the till to payroll and financial reports.</p>
           </div>
           <div className="hidden gap-2 sm:flex">
             <button onClick={() => setActive((active - 1 + slides.length) % slides.length)} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm hover:bg-blue-50" aria-label="Previous screen"><span className="text-lg">‹</span></button>
@@ -447,9 +443,9 @@ function MobileGallery() {
 }
 
 function FinalCta() {
-  return <section className="relative overflow-hidden bg-[#06265f] py-14 text-white sm:py-18"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Everything your business needs. One connected system.</h2><p className="mt-4 max-w-xl text-blue-50/80">Start with accounting, POS, payroll or inventory and add the modules your business needs as you grow.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
+  return <section className="relative overflow-hidden bg-[#06265f] py-14 text-white sm:py-18"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Bring your business into one place.</h2><p className="mt-4 max-w-xl text-blue-50/80">Start with the tools you need today and add more as your business grows.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
 }
 
 function Footer() {
-  return <footer className="bg-[#061b46] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-blue-100/60">Accounting · POS · ERP · Zambia</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-blue-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-blue-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
+  return <footer className="bg-[#061b46] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-blue-100/60">Accounting · POS · Business Management</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-blue-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-blue-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
 }
