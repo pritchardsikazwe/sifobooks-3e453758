@@ -476,6 +476,13 @@ export async function cloudSubmitCorrection(data:any){
   }
 }
 
+export async function cloudSaveItem(data:any){
+  const { db, userId } = await requireUser();
+  if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
+  const cfg = await configFor(db, userId, data.branchId);
+  return saveItem(data.payload, { baseUrl: vsdcUrl(cfg) });
+}
+
 export async function cloudSelectInvoice(data:any){
   const {db,userId}=await requireUser(); if(userId!==data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg=await configFor(db,userId,data.branchId); return selectInvoice(data.payload,{baseUrl:vsdcUrl(cfg)});
