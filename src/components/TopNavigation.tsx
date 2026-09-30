@@ -112,6 +112,23 @@ function useNavigationMenus(): Menu[] {
     ["Users & Roles", "Administration", "Audit Logs", "Approval Centre", "Approvals", "System Health"]
   );
 
+  const menuTheme: Record<string, { iconBg: string; iconText: string; activeBg: string }> = {
+  Home: { iconBg: "bg-[#EAF6F0]", iconText: "text-[#07834F]", activeBg: "bg-[#EAF6F0]" },
+  Customers: { iconBg: "bg-[#EEF5FF]", iconText: "text-[#2563EB]", activeBg: "bg-[#EEF5FF]" },
+  Suppliers: { iconBg: "bg-[#FFF5E8]", iconText: "text-[#C77700]", activeBg: "bg-[#FFF5E8]" },
+  Sales: { iconBg: "bg-[#EAFBF4]", iconText: "text-[#059669]", activeBg: "bg-[#EAFBF4]" },
+  Purchases: { iconBg: "bg-[#FFF1F2]", iconText: "text-[#E11D48]", activeBg: "bg-[#FFF1F2]" },
+  Inventory: { iconBg: "bg-[#F3F0FF]", iconText: "text-[#7C3AED]", activeBg: "bg-[#F3F0FF]" },
+  Banking: { iconBg: "bg-[#ECFDF5]", iconText: "text-[#047857]", activeBg: "bg-[#ECFDF5]" },
+  Accounting: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#1D4ED8]", activeBg: "bg-[#EFF6FF]" },
+  POS: { iconBg: "bg-[#FFF7ED]", iconText: "text-[#EA580C]", activeBg: "bg-[#FFF7ED]" },
+  Manufacturing: { iconBg: "bg-[#F5F3FF]", iconText: "text-[#6D28D9]", activeBg: "bg-[#F5F3FF]" },
+  "HR & Payroll": { iconBg: "bg-[#FDF2F8]", iconText: "text-[#BE185D]", activeBg: "bg-[#FDF2F8]" },
+  Reports: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#0369A1]", activeBg: "bg-[#EFF6FF]" },
+  Company: { iconBg: "bg-[#F8FAFC]", iconText: "text-[#475569]", activeBg: "bg-[#F8FAFC]" },
+  Administration: { iconBg: "bg-[#F1F5F9]", iconText: "text-[#334155]", activeBg: "bg-[#F1F5F9]" },
+};
+
   const menus = [
     { label: "Home", icon: "Home", items: match(["/dashboard", "/notifications", "/approvals"], ["Home", "Notifications", "Approvals"]) },
     { label: "Customers", icon: "Users", items: take(customers) },
@@ -143,9 +160,10 @@ export function TopNavigation() {
       aria-label="Main navigation"
       className="border-b border-[#DDEBE6] bg-white px-2 sm:px-4"
     >
-      <div className="mx-auto flex h-12 max-w-[1800px] items-center gap-0.5 overflow-x-auto no-scrollbar">
+      <div className="mx-auto flex h-[52px] max-w-[1800px] items-center gap-0.5 overflow-x-auto no-scrollbar">
         {menus.map(menu => {
           const Icon = iconFor(menu.icon);
+          const theme = menuTheme[menu.label] ?? menuTheme.Home;
           const active = menu.items.some(i => pathname === i.url || pathname.startsWith(i.url + "/"));
           return (
             <DropdownMenu key={menu.label}>
@@ -155,11 +173,13 @@ export function TopNavigation() {
                   className={cn(
                     "group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold text-[#526B65] outline-none transition-colors",
                     "hover:bg-[#F1F8F5] hover:text-[#07834F]",
-                    "focus-visible:ring-2 focus-visible:ring-primary/30",
-                    active && "bg-[#EAF6F0] text-[#07834F]"
+                    "focus-visible:ring-2 focus-visible:ring-[#07834F]/30 focus-visible:ring-offset-1",
+                    active && cn(theme.activeBg, theme.iconText)
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5 shrink-0 stroke-[1.9]" />
+                  <span className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-md", theme.iconBg, theme.iconText)}>
+                    <Icon className="h-3.5 w-3.5 stroke-[2]" />
+                  </span>
                   <span>{menu.label}</span>
                   <ChevronDown className="h-3 w-3 opacity-60 transition-transform group-data-[state=open]:rotate-180" />
                 </button>
@@ -187,8 +207,8 @@ export function TopNavigation() {
                         )}
                       >
                         <Link to={item.url} className="flex min-w-0 items-start gap-2.5">
-                          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#EAF6F0] text-[#07834F]">
-                            <ItemIcon className="h-4 w-4" />
+                          <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg", theme.iconBg, theme.iconText)}>
+                            <ItemIcon className="h-4 w-4 stroke-[1.9]" />
                           </span>
                           <span className="min-w-0">
                             <span className="block truncate text-[13px] font-semibold text-[#173B3A]">{item.title}</span>
