@@ -81,9 +81,19 @@ export function SifoWorkQueue({ currency = "ZMW" }: { currency?: string }) {
     );
 
   return (
-    <div className="space-y-4">
+    <Card className="rounded-2xl border-[#DDEBE6] bg-white p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">To Do List</div>
+          <h2 className="mt-1 text-base font-bold text-foreground">Things that need your attention</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Live actions generated from your business records.</p>
+        </div>
+        <Icons.ClipboardCheck className="h-5 w-5 shrink-0 text-primary" />
+      </div>
+      <div className="space-y-4">
       {section("Needs your attention", attention)}
       {section("Suggested next actions", suggested)}
-    </div>
+      </div>
+    </Card>
   );
 }
