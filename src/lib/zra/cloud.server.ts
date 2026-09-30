@@ -16,8 +16,8 @@ import {
   selectInvoice,
 } from "./vsdc";
 
-function cloudClient() {
-  const token = (getRequestHeader("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+function cloudClient(authToken?: string) {
+  const token = (authToken || getRequestHeader("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   const url = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!token) throw new Error("NOT_AUTHENTICATED");
@@ -28,8 +28,8 @@ function cloudClient() {
   });
 }
 
-async function requireUser() {
-  const db = cloudClient();
+async function requireUser(authToken?: string) {
+  const db = cloudClient(authToken);
   const { data, error } = await db.auth.getUser();
   if (error || !data.user) throw new Error("NOT_AUTHENTICATED");
   return { db, userId: data.user.id };
@@ -58,7 +58,7 @@ async function configFor(db: any, userId: string, branchId?: string | null, devi
 }
 
 export async function cloudListDevices(data: { userId: string; branchId?: string | null }) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   let q = db.from("zra_devices").select("*").eq("user_id", userId).order("is_active", { ascending: false }).order("device_name");
   if (data.branchId) q = q.eq("branch_id", data.branchId);
@@ -68,7 +68,7 @@ export async function cloudListDevices(data: { userId: string; branchId?: string
 }
 
 export async function cloudSaveDevice(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const { data: existing } = data.deviceId
     ? await db.from("zra_devices").select("id").eq("id", data.deviceId).eq("user_id", userId).maybeSingle()
@@ -97,13 +97,13 @@ export async function cloudSaveDevice(data: any) {
 }
 
 export async function cloudGetConfig(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   return { data: await configFor(db, userId, data.branchId, data.deviceId), error: null };
 }
 
 export async function cloudSaveConfig(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
 
   // In hosted mode the device record is the authoritative ZRA configuration.
@@ -155,7 +155,7 @@ export async function cloudSaveConfig(data: any) {
 }
 
 export async function cloudInitializeDevice(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId, data.deviceId);
   if (!cfg) throw new Error("ZRA_DEVICE_NOT_CONFIGURED");
@@ -183,21 +183,21 @@ export async function cloudInitializeDevice(data: any) {
 }
 
 export async function cloudGetStandardCodes(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId);
   return getStandardCodes({ tpin: data.tpin, bhfId: data.bhfId, lastReqDt: data.lastReqDt }, { baseUrl: vsdcUrl(cfg) });
 }
 
 export async function cloudGetItemClasses(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId);
   return getItemClasses({ tpin: data.tpin, bhfId: data.bhfId, lastReqDt: data.lastReqDt }, { baseUrl: vsdcUrl(cfg) });
 }
 
 export async function cloudSyncCatalog(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId);
   const codes: any = await getStandardCodes({ tpin: data.tpin, bhfId: data.bhfId, lastReqDt: data.lastReqDt }, { baseUrl: vsdcUrl(cfg) });
@@ -245,7 +245,7 @@ export async function cloudSyncCatalog(data: any) {
 }
 
 export async function cloudListInventory(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const limit = Math.min(Math.max(Number(data.limit ?? 100), 1), 500);
   let q = db.from("stock_items").select("*").eq("user_id", userId).order("name").limit(limit);
@@ -259,7 +259,7 @@ export async function cloudListInventory(data: any) {
 }
 
 export async function cloudSearchItemClasses(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const limit = Math.min(Math.max(Number(data.limit ?? 50), 1), 200);
   let q = db.from("zra_item_classes").select("*").eq("user_id", userId).order("item_cls_lvl", { ascending: false }).order("item_cls_nm").limit(limit);
@@ -274,7 +274,7 @@ export async function cloudSearchItemClasses(data: any) {
 }
 
 export async function cloudListStandardCodes(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   let q = db.from("zra_standard_codes").select("*").eq("user_id", userId).order("code_class").order("name").limit(Math.min(Math.max(Number(data.limit ?? 200), 1), 1000));
   if (data.className) q = q.or(`code_class.eq.${data.className},name.ilike.%${data.className}%`);
@@ -285,7 +285,7 @@ export async function cloudListStandardCodes(data: any) {
 }
 
 export async function cloudMapInventoryItem(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const { data: cls } = await db.from("zra_item_classes").select("*").eq("user_id", userId).eq("item_cls_cd", data.itemClassCode).limit(1).maybeSingle();
   if (!cls) throw new Error("ZRA classification code was not found in the synchronized VSDC dictionary.");
@@ -311,7 +311,7 @@ export async function cloudMapInventoryItem(data: any) {
 }
 
 export async function cloudRegisterInventoryItem(data: any) {
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, null);
   const { data: item, error } = await db.from("stock_items").select("*").eq("id", data.itemId).eq("user_id", userId).maybeSingle();
@@ -498,7 +498,7 @@ export async function cloudSubmitCorrection(data:any){
 }
 
 export async function cloudSaveItem(data:any){
-  const { db, userId } = await requireUser();
+  const { db, userId } = await requireUser(data.authToken);
   if (userId !== data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const cfg = await configFor(db, userId, data.branchId);
   return saveItem(data.payload, { baseUrl: vsdcUrl(cfg) });

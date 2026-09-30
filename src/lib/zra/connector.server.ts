@@ -2,16 +2,16 @@ import { createClient } from "@supabase/supabase-js";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { getCloudDb } from "../cloud/postgres";
 
-function authClient(){
-  const token=(getRequestHeader("authorization")||"").replace(/^Bearer\\s+/i,"").trim();
+function authClient(authToken?: string){
+  const token=(authToken || getRequestHeader("authorization")||"").replace(/^Bearer\s+/i,"").trim();
   const url=import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
   if(!token||!url||!key) throw new Error("NOT_AUTHENTICATED");
   return createClient(url,key,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false,autoRefreshToken:false}});
 }
 
-async function requireUser(){
-  const db=authClient();
+async function requireUser(authToken?:string){
+  const db=authClient(authToken);
   const {data,error}=await db.auth.getUser();
   if(error||!data.user) throw new Error("NOT_AUTHENTICATED");
   return {userId:data.user.id};
@@ -26,7 +26,7 @@ async function hashCredential(value:string){
 function newCredential(){return crypto.randomUUID()+"."+crypto.randomUUID();}
 
 export async function registerZraConnector(data:{userId:string;deviceId?:string|null;name?:string|null;environment?:string}){
-  const {userId}=await requireUser();
+  const {userId}=await requireUser(data.authToken);
   if(userId!==data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const db=getCloudDb();
   const device= data.deviceId
@@ -47,7 +47,7 @@ export async function registerZraConnector(data:{userId:string;deviceId?:string|
 }
 
 export async function listZraConnectors(data:{userId:string;deviceId?:string|null}){
-  const {userId}=await requireUser();
+  const {userId}=await requireUser(data.authToken);
   if(userId!==data.userId) throw new Error("USER_CONTEXT_MISMATCH");
   const db=getCloudDb();
   const rows=data.deviceId
