@@ -4,7 +4,7 @@ import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { TopNavigation } from "@/components/TopNavigation";
 import { Search, Bell, HelpCircle, Settings as SettingsIcon, Command, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/_authenticated")({
   component: Shell,
 });
 
-function Shell() {
+class NavigationErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {\n  state = { hasError: false };\n  static getDerivedStateFromError() { return { hasError: true }; }\n  componentDidCatch(error: unknown) { console.error("[SifoBooks] Top navigation failed:", error); }\n  render() {\n    if (this.state.hasError) return null;\n    return this.props.children;\n  }\n}\n\nfunction Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const pageKey = useRouterState({ select: r => r.location.pathname });
@@ -155,7 +155,7 @@ function Shell() {
                 </DropdownMenu>
               </div>
             </div>
-            <TopNavigation />
+            <NavigationErrorBoundary><TopNavigation /></NavigationErrorBoundary>
           </header>
 
 
