@@ -18,15 +18,15 @@ function authClient(){
 }
 
 /**
- * Hosted connector-control-plane database client.
- * Prefer the server-only service role when available; fall back to the
- * publishable key because migration 013 does not enable RLS on connector
- * control-plane tables. Never expose the service role key to the browser.
+ * Hosted connector-control-plane database client (server-only).
+ * Connector tables have RLS on with no browser policies, so only the
+ * service role can reach them. Fails closed if it is missing.
+ * Never expose the service role key to the browser.
  */
 export function getConnectorDb(){
-  const url=supabaseUrl();
-  const key=process.env.SUPABASE_SERVICE_ROLE_KEY || publishableKey();
-  if(!url||!key) throw new Error("SUPABASE_NOT_CONFIGURED");
+  const url=process.env.SUPABASE_URL || supabaseUrl();
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!url||!key) throw new Error("CONNECTOR_SERVER_NOT_CONFIGURED");
   return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 }
 
