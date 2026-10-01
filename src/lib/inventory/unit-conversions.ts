@@ -10,8 +10,20 @@ export type UnitConversion = {
 
 const clean = (value: unknown) => String(value ?? "").trim().toLowerCase();
 
+const UNIT_ALIASES: Record<string, string> = {
+  each: "each",
+  ea: "each",
+  unit: "each",
+  units: "each",
+  pc: "each",
+  pcs: "each",
+  piece: "each",
+  pieces: "each",
+};
+
 export function normalizeUnit(value: unknown, fallback = "unit") {
-  return clean(value) || fallback;
+  const cleaned = clean(value) || fallback;
+  return UNIT_ALIASES[cleaned] ?? cleaned;
 }
 
 export function normalizeConversionPair(fromUnit: unknown, toUnit: unknown) {
