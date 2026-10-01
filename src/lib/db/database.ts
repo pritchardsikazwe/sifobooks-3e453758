@@ -239,6 +239,11 @@ function runCompatibilityMigrations(database: Database) {
     actor_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`);
+  try {
+    database.prepare("UPDATE stock_items SET base_unit=COALESCE(NULLIF(unit,''),'each') WHERE base_unit='each' AND COALESCE(NULLIF(unit,''),'each') <> 'each'").run();
+    database.prepare("UPDATE stock_items SET sales_unit=COALESCE(sales_unit,unit) WHERE sales_unit IS NULL").run();
+  } catch {}
+  
   const inventoryLocationColumns = getTableColumns(database, "inventory_locations");
   if (!inventoryLocationColumns.includes("branch_id")) {
     database.exec("ALTER TABLE inventory_locations ADD COLUMN branch_id TEXT;");
