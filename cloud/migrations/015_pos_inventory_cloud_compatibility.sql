@@ -36,6 +36,22 @@ ALTER TABLE IF EXISTS pos_shifts
   ADD COLUMN IF NOT EXISTS submitted_at TEXT,
   ADD COLUMN IF NOT EXISTS cash_denominations TEXT;
 
+ALTER TABLE IF EXISTS employee_pos_permissions
+  ADD COLUMN IF NOT EXISTS cashier_code TEXT,
+  ADD COLUMN IF NOT EXISTS display_name TEXT,
+  ADD COLUMN IF NOT EXISTS failed_pin_attempts INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS pin_locked_until TEXT,
+  ADD COLUMN IF NOT EXISTS pin_disabled INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS pin_set_at TEXT,
+  ADD COLUMN IF NOT EXISTS last_pin_login_at TEXT,
+  ADD COLUMN IF NOT EXISTS branch_id TEXT,
+  ADD COLUMN IF NOT EXISTS location_id TEXT,
+  ADD COLUMN IF NOT EXISTS register_id TEXT,
+  ADD COLUMN IF NOT EXISTS drawer_name TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS employee_pos_permissions_cashier_code_uq
+  ON employee_pos_permissions(cashier_code) WHERE cashier_code IS NOT NULL;
+
 ALTER TABLE IF EXISTS warehouses
   ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT 'Warehouse',
   ADD COLUMN IF NOT EXISTS location TEXT,
