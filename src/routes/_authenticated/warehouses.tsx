@@ -249,7 +249,7 @@ function WarehousesPage() {
         columns={columns}
         loading={loading}
         error={error}
-        onRetry={() => void load()}
+        onRetry={() => void loadContextAndWarehouses()}
         tableId="warehouses"
         searchPlaceholder="Search by code, name, location or manager…"
         onRowClick={r => setSelected(r)}

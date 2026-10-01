@@ -56,6 +56,32 @@ async function runStandaloneDemo(edition: Edition) {
     .select("id").eq("user_id", uid).eq("module_key", markerFor(edition, 1)).limit(1).maybeSingle();
   const catalogueOnly = Boolean(v1Marker?.data);
   if (catalogueOnly) {
+    // Repair older demo workspaces that received the v1 catalogue without an
+    // active stock location. Stock-tracked demo items must have a real
+    // inventory location so POS can post stock movements; do not bypass this
+    // by inventing a location at checkout.
+    if (edition === "retail" || edition === "enterprise" || edition === "accounting") {
+      const { data: existingLocation } = await (supabase as any).from("inventory_locations")
+        .select("id").eq("is_active", true).eq("user_id", uid).eq("company_id", companyId)
+        .order("is_default", { ascending: false }).limit(1).maybeSingle();
+
+      if (!existingLocation?.id) {
+        const warehouseId = id();
+        const locationId = id();
+        await insert("warehouses", [{
+          id: warehouseId, user_id: uid, company_id: companyId,
+          code: "DEMO-WH01", name: "Demo Main Warehouse", location: "Demo",
+          is_active: 1,
+        }]);
+        await insert("inventory_locations", [{
+          id: locationId, user_id: uid, company_id: companyId,
+          name: "Demo Main Store", code: "DEMO-STORE01",
+          location_type: "store", warehouse_id: warehouseId, is_active: 1,
+          is_default: 1, address: "Demo",
+        }]);
+      }
+    }
+
     const names = edition === "retail" || edition === "enterprise" || edition === "accounting"
       ? ["Coca-Cola 500ml","Mineral Water 500ml","Bread 500g","Sugar 2kg","Cooking Oil 2L","Rice 5kg","Bath Soap","Milk 1L","Eggs 30 Pack"]
       : edition === "restaurant"

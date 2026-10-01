@@ -123,6 +123,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
       try {
         const r = await searchRecords(q);
         if (!cancelled) setHits(r);
+      } catch {
+        if (!cancelled) setHits([]);
       } finally {
         if (!cancelled) setSearching(false);
       }

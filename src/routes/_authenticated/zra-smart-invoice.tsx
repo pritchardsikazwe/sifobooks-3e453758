@@ -13,7 +13,9 @@ import {
   zraGetConfigFn, zraGetStandardCodesFn, zraInitializeDeviceFn, zraSaveConfigFn,
   zraSyncCatalogFn, zraListInventoryFn, zraSearchItemClassesFn, zraListStandardCodesFn,
   zraMapInventoryItemFn, zraRegisterInventoryItemFn, zraListDevicesFn, zraSaveDeviceFn,
+  zraTestVsdcConnectionFn, zraCheckConnectorCommandFn,
 } from "@/lib/zra/server";
+import { zraListConnectorsFn, zraRegisterConnectorFn } from "@/lib/zra/connector.functions";
 
 export const Route = createFileRoute("/_authenticated/zra-smart-invoice")({
   head: () => ({ meta: [
@@ -31,7 +33,7 @@ type ZraCode = any;
 function ZraSmartInvoicePage() {
   const [userId,setUserId]=useState("");
   const [config,setConfig]=useState<Config>({});
-  const [form,setForm]=useState<Config>({mode:"test",deployment_mode:"local",vsdc_endpoint:""});
+  const [form,setForm]=useState<Config>({mode:"test",deployment_mode:"local",vsdc_endpoint:"http://127.0.0.1:8085"});
   const [stats,setStats]=useState({pending:0,submitted:0,failed:0,total:0});
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
@@ -44,12 +46,17 @@ function ZraSmartInvoicePage() {
   const [mapForm,setMapForm]=useState<any>({});
   const [devices,setDevices]=useState<any[]>([]);
   const [selectedDeviceId,setSelectedDeviceId]=useState("");
+  const [connectors,setConnectors]=useState<any[]>([]);
+  const [newCredential,setNewCredential]=useState("");
+  const [connectorBusy,setConnectorBusy]=useState(false);
   const [deviceDraft,setDeviceDraft]=useState<any>({deviceName:"POS 1",deviceType:"desktop",terminalId:"",deploymentMode:"local",environment:"test",tpin:"",branchCode:"000",deviceSerial:"",vsdcEndpoint:"",connectorEndpoint:""});
 
 
   const load=async(uid:string,preferredDeviceId?:string)=>{
     const deviceResult:any=await zraListDevicesFn({data:{userId:uid}});
     const deviceRows=deviceResult?.data ?? [];
+    const connectorResult:any=await zraListConnectorsFn({data:{userId:uid,deviceId:preferredDeviceId || selectedDeviceId || deviceRows[0]?.id || null}});
+    setConnectors(connectorResult?.data ?? []);
     setDevices(deviceRows);
     const nextDeviceId=preferredDeviceId || selectedDeviceId || deviceRows[0]?.id || "";
     if(nextDeviceId){
@@ -96,14 +103,52 @@ function ZraSmartInvoicePage() {
     finally{setBusy(false);}
   };
 
+  // Follows a connector job until the Windows connector reports back (max ~3 min).
+  const followCommand=async(first:any,label:string)=>{
+    let r=first;
+    for(let i=0;r?.state==="pending"&&r?.commandId&&i<40;i++){
+      setMessage(r.message||`${label}: waiting for the connector…`);
+      await new Promise(res=>setTimeout(res,4000));
+      r=await zraCheckConnectorCommandFn({data:{userId,deviceId:selectedDeviceId||null,commandId:r.commandId}});
+    }
+    return r;
+  };
+  const describe=(r:any)=>r?.layer?`[${r.layer}] ${r.message}`:(r?.message||"");
+
   const initialize=async()=>{
     if(!userId||!form.tpin||!form.branch_code||!form.device_serial){toast.error("Enter TPIN, Branch ID and Device Serial first.");return;}
-    setBusy(true);setMessage("Initializing the VSDC device...");
+    setBusy(true);setMessage("Sending the initialization request…");
     try{
-      const result:any=await zraInitializeDeviceFn({data:{userId,deviceId:selectedDeviceId || null,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
-      if(result?.resultCd==="000"){setMessage("VSDC initialized successfully.");toast.success("ZRA VSDC initialized");await load(userId);}
-      else{setMessage(result?.resultMsg||"VSDC returned an unsuccessful result.");toast.error(result?.resultMsg||"VSDC initialization failed");}
-    }catch(e:any){setMessage(e?.message||"Could not reach the VSDC.");toast.error(e?.message||"Could not reach the VSDC");}
+      let result:any=await zraInitializeDeviceFn({data:{userId,deviceId:selectedDeviceId || null,tpin:form.tpin,bhfId:form.branch_code,dvcSrlNo:form.device_serial}});
+      result=await followCommand(result,"Initialize");
+      // Windows/local copy returns the raw VSDC answer.
+      if(result&&!result.state) result=result.resultCd==="000"?{state:"success",message:"VSDC initialized successfully (code 000)."}:{state:"failed",layer:"ZRA",message:result.resultMsg||"VSDC returned an unsuccessful result."};
+      if(result?.state==="success"){setMessage(result.message);toast.success("ZRA VSDC initialized");await load(userId);}
+      else if(result?.state==="pending"){setMessage("The connector has not answered yet. The request stays queued; press Initialize Device again later to check.");toast.error("Connector did not answer in time");}
+      else{setMessage(describe(result)||"Initialization failed.");toast.error(describe(result)||"VSDC initialization failed");}
+    }catch(e:any){setMessage(`[SifoBooks] ${e?.message||"Request failed"}`);toast.error(e?.message||"Request failed");}
+    finally{setBusy(false);}
+  };
+
+  const testConnection=async()=>{
+    if(!userId) return;
+    setBusy(true);setMessage("Testing the VSDC connection through the connector…");
+    try{
+      let r:any=await zraTestVsdcConnectionFn({data:{userId,deviceId:selectedDeviceId||null}});
+      r=await followCommand(r,"Test");
+      const c=r?.connector, h=r?.health||{};
+      const lines=[
+        `Connector: ${c?.status??"unknown"}${c?.name?` (${c.name})`:""}${c?.lastSeenAt?`, last check-in ${new Date(c.lastSeenAt).toLocaleString()}`:""}`,
+        `VSDC reachable: ${h.reachable===true?"yes":h.reachable===false?"no":"unknown"}`,
+        `HTTP status: ${h.httpStatus??"—"}`,
+        `VSDC version: ${h.version??"—"}`,
+        `Circuit breaker: ${h.circuitBreaker??"—"}${h.healthy===true?" (healthy)":h.healthy===false?" (unhealthy)":""}`,
+      ];
+      if(h.note) lines.push(h.note);
+      if(r?.state!=="success") lines.unshift(describe(r));
+      setMessage(lines.join("\n"));
+      r?.state==="success"?toast.success("VSDC reachable through the connector"):toast.error(describe(r)||"Test failed");
+    }catch(e:any){setMessage(`[SifoBooks] ${e?.message||"Request failed"}`);}
     finally{setBusy(false);}
   };
 
@@ -212,6 +257,45 @@ function ZraSmartInvoicePage() {
       </div>
     </Card>
 
+    <Card className="rounded-xl border-emerald-200 bg-emerald-50/40 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-2"><Network className="h-5 w-5 text-emerald-700"/><div><h2 className="font-semibold">SifoBooks ZRA Connector</h2><p className="text-xs text-muted-foreground">For hosted SifoBooks Cloud, this Windows connector securely bridges the cloud to the customer's local VSDC. The VSDC is never exposed to the public internet.</p></div></div>
+        <Badge className={connectors.some(x=>x.status==="active"&&x.last_seen_at)?"bg-emerald-100 text-emerald-800":"bg-slate-100 text-slate-700"}>{connectors.some(x=>x.status==="active"&&x.last_seen_at)?"Connector registered":"Not registered"}</Badge>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border bg-background p-3"><div className="text-xs text-muted-foreground">Selected device</div><div className="mt-1 font-medium">{devices.find((d:any)=>d.id===selectedDeviceId)?.device_name || "Select a ZRA device above"}</div></div>
+        <div className="rounded-lg border bg-background p-3"><div className="text-xs text-muted-foreground">Environment</div><div className="mt-1 font-medium">{form.mode==="production"?"PRODUCTION":"TEST / UAT"}</div></div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="outline" disabled={connectorBusy||!selectedDeviceId} onClick={async()=>{
+          if(!userId||!selectedDeviceId)return;
+          setConnectorBusy(true);setNewCredential("");
+          try{
+            const r:any=await zraRegisterConnectorFn({data:{userId,deviceId:selectedDeviceId,name:form.device_name||"SifoBooks VSDC Connector",environment:form.mode==="production"?"production":"test"}});
+            setNewCredential(r.credential||"");
+            toast.success("Connector registered. Copy the credential now; it will not be shown again.");
+            await load(userId,selectedDeviceId);
+          }catch(e:any){toast.error(e?.message||"Could not register connector");}
+          finally{setConnectorBusy(false);}
+        }}><Plus className="mr-2 h-4 w-4"/>Register / rotate connector</Button>
+        <Button variant="outline" disabled={!connectors.length} onClick={()=>void load(userId,selectedDeviceId||undefined)}><RefreshCw className="mr-2 h-4 w-4"/>Refresh status</Button>
+      </div>
+      {connectors[0]&&<div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+        <div><span className="text-muted-foreground">Connector ID</span><div className="font-medium">{connectors[0].connector_id}</div></div>
+        <div><span className="text-muted-foreground">Status</span><div className="font-medium">{connectors[0].status}</div></div>
+        <div><span className="text-muted-foreground">Last seen</span><div className="font-medium">{connectors[0].last_seen_at||"Waiting for connector"}</div></div>
+      </div>}
+      {newCredential&&<div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3">
+        <div className="font-medium text-amber-900">One-time connector credential</div>
+        <div className="mt-1 break-all rounded bg-background p-2 font-mono text-xs">{newCredential}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={()=>{void navigator.clipboard?.writeText(newCredential);toast.success("Credential copied");}}>Copy credential</Button>
+          <span className="self-center text-xs text-amber-800">Store it securely. It is not stored in plaintext.</span>
+        </div>
+      </div>}
+      <div className="mt-3 text-xs text-muted-foreground">Windows connector defaults to <code>https://sifobooks.com</code> and the customer's local VSDC URL <code>http://127.0.0.1:8085</code>. Use TEST/UAT first.</div>
+    </Card>
+
     <Card className="rounded-xl p-5">
       <div className="mb-5 flex items-center gap-2"><Server className="h-5 w-5"/><div><h2 className="font-semibold">VSDC Connection</h2><p className="text-xs text-muted-foreground">SifoBooks communicates with the local Java/Tomcat VSDC over REST/JSON.</p></div></div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -226,8 +310,8 @@ function ZraSmartInvoicePage() {
         <div><Label>Device Serial</Label><Input className="mt-1" value={form.device_serial||""} onChange={e=>update("device_serial",e.target.value)} placeholder="VSDC device serial"/></div>
         <div><Label>Taxpayer Name</Label><Input className="mt-1" value={form.taxpayer_name||""} onChange={e=>update("taxpayer_name",e.target.value)} placeholder="Registered taxpayer name"/></div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-2"><Button onClick={save} disabled={busy}>Save configuration</Button><Button variant="outline" onClick={initialize} disabled={busy}><KeyRound className="mr-2 h-4 w-4"/>Initialize Device</Button><Button variant="outline" onClick={syncCatalog} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Sync ZRA Dictionaries</Button></div>
-      {message&&<div className="mt-4 rounded-lg border bg-muted/40 p-3 text-sm">{message}</div>}
+      <div className="mt-5 flex flex-wrap gap-2"><Button onClick={save} disabled={busy}>Save configuration</Button><Button variant="outline" onClick={initialize} disabled={busy}><KeyRound className="mr-2 h-4 w-4"/>Initialize Device</Button><Button variant="outline" onClick={testConnection} disabled={busy}><Network className="mr-2 h-4 w-4"/>Test VSDC Connection</Button><Button variant="outline" onClick={syncCatalog} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Sync ZRA Dictionaries</Button></div>
+      {message&&<div className="mt-4 whitespace-pre-line rounded-lg border bg-muted/40 p-3 text-sm">{message}</div>}
     </Card>
 
     <Card className="rounded-xl p-5">
