@@ -17,7 +17,7 @@ INSERT INTO public.inventory_locations
 SELECT
   gen_random_uuid(),
   w.user_id,
-  w.company_id,
+  NULL,
   COALESCE(NULLIF(w.name,''), 'Warehouse') || ' Stock',
   COALESCE(NULLIF(w.code,''), 'MAIN') || '-STOCK',
   'warehouse',
@@ -54,7 +54,7 @@ WHERE NOT EXISTS (
 )
 AND NOT EXISTS (
   SELECT 1 FROM public.warehouses w
-  WHERE w.company_id = c.id AND COALESCE(w.is_active,true)
+  WHERE NULL = c.id AND COALESCE(w.is_active,true)
 );
 
 -- Harden the existing invoice RPC: resolve the warehouse to its location,
@@ -92,7 +92,7 @@ BEGIN
         SELECT
           gen_random_uuid(),
           _uid,
-          w.company_id,
+          NULL,
           COALESCE(NULLIF(w.name,''),'Warehouse') || ' Stock',
           COALESCE(NULLIF(w.code,''),'MAIN') || '-STOCK',
           'warehouse',
