@@ -107,8 +107,8 @@ export async function cloudPosCheckout(uid: string, args: any) {
   const sale = args?._sale || {};
   const items = Array.isArray(args?._items) ? args._items : [];
   const payments = Array.isArray(args?._payments) ? args._payments : [];
-  const locationId = String(sale.location_id || sale.locationId || "").trim();
-  if (!locationId) throw new Error("POS_LOCATION_REQUIRED");
+  const requestedLocationId = String(sale.location_id || sale.locationId || "").trim();
+  const locationId = requestedLocationId || null;
   if (!items.length) throw new Error("EMPTY_SALE");
   if (!payments.length) throw new Error("PAYMENT_REQUIRED");
   return getCloudDb().begin(async (tx: Tx) => {
@@ -116,9 +116,11 @@ export async function cloudPosCheckout(uid: string, args: any) {
     const b = await batch(tx, uid, "POS_CHECKOUT", "pos_sale", null, String(sale.client_ref || ""));
     if (b.duplicate) return { sale_id: b.sourceId, sale_no: sale.sale_no, duplicate: true, transaction_id: b.id };
 
-    const location = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
-    if (!location) throw new Error("POS_LOCATION_NOT_FOUND:" + locationId);
-    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("POS_LOCATION_INACTIVE:" + locationId);
+    if (locationId) {
+      const location = await one(tx, "SELECT id,warehouse_id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+      if (!location) throw new Error("POS_LOCATION_NOT_FOUND:" + locationId);
+      if (location.is_active === false || Number(location.is_active) === 0) throw new Error("POS_LOCATION_INACTIVE:" + locationId);
+    }
     const settings = await one(tx, "SELECT tax_rate,tax_inclusive,allow_negative_stock FROM pos_settings WHERE user_id=$1 LIMIT 1", [uid]);
     const defaultRate = Number(settings?.tax_rate ?? 16);
     const taxInclusive = Number(settings?.tax_inclusive ?? 1) === 1;
@@ -141,11 +143,12 @@ export async function cloudPosCheckout(uid: string, args: any) {
       const lineVat = taxInclusive && rate > 0 ? money(net - net / (1 + rate / 100)) : money(net * rate / 100);
       const lineSubtotal = taxInclusive ? money(net - lineVat) : net;
       const lineTotal = taxInclusive ? net : money(net + lineVat);
-      const unitCost = Number(item.cost_price ?? 0);
+      const tracksStock = Number(item.track_stock ?? 1) !== 0;
+      const unitCost = tracksStock ? Number(item.cost_price ?? 0) : 0;
       if (!Number.isFinite(unitCost) || unitCost < 0) throw new Error("BAD_COST");
-      if (!allowNegative && Number(item.quantity_on_hand || 0) + 0.000001 < qty) throw new Error("INSUFFICIENT_STOCK:" + item.name);
+      if (tracksStock && !allowNegative && Number(item.quantity_on_hand || 0) + 0.000001 < qty) throw new Error("INSUFFICIENT_STOCK:" + item.name);
       gross += grossLine; subtotal += lineSubtotal; vat += lineVat; cost += money(qty * unitCost);
-      resolved.push({ raw, item, qty, price, discount, grossLine, lineSubtotal, lineVat, lineTotal, unitCost });
+      resolved.push({ raw, item, qty, price, discount, grossLine, lineSubtotal, lineVat, lineTotal, unitCost, tracksStock });
     }
 
     const saleDiscountPct = Math.min(100, Math.max(0, Number(sale.sale_discount_pct || 0)));
@@ -172,6 +175,7 @@ export async function cloudPosCheckout(uid: string, args: any) {
         "INSERT INTO pos_sale_items(id,user_id,tenant_id,sale_id,item_id,name,sku,qty,price,unit_cost,discount,tax_rate,line_total,note,unit,base_qty,base_unit) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)",
         [id(), uid, saleId, x.item.id, x.item.name, x.item.sku || null, x.qty, x.price, x.unitCost, x.discount, Number(x.item.vat_rate ?? 0), x.grossLine, x.raw.note || null, x.raw.unit || x.item.unit || null, x.qty, x.item.unit || null],
       );
+      if (!x.tracksStock) continue;
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=quantity_on_hand-$1,updated_at=now() WHERE id=$2 AND user_id=$3", [x.qty, x.item.id, uid]);
       const movement = prepareInventoryMovement({
         itemId: String(x.item.id),
