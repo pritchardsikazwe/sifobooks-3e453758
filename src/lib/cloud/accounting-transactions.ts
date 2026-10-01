@@ -284,11 +284,13 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
       menuByName.set(String(row.name), row);
     }
 
-    const locationId = String(sale.location_id || sale.locationId || "").trim();
-    await requireCloudLocation(tx, uid, locationId, "RESTAURANT_LOCATION_REQUIRED");
-    const location = await one(tx, "SELECT id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
-    if (!location) throw new Error("RESTAURANT_LOCATION_NOT_FOUND:" + locationId);
-    if (location.is_active === false || Number(location.is_active) === 0) throw new Error("RESTAURANT_LOCATION_INACTIVE:" + locationId);
+    const requestedLocationId = String(sale.location_id || sale.locationId || "").trim();
+    const locationId = requestedLocationId || null;
+    if (locationId) {
+      const location = await one(tx, "SELECT id,is_active FROM inventory_locations WHERE id=$1 AND user_id=$2 LIMIT 1", [locationId, uid]);
+      if (!location) throw new Error("RESTAURANT_LOCATION_NOT_FOUND:" + locationId);
+      if (location.is_active === false || Number(location.is_active) === 0) throw new Error("RESTAURANT_LOCATION_INACTIVE:" + locationId);
+    }
     const ingredientTotals = new Map<string, { qty: number; item: any; unit: string | null }>();
     const lines: any[] = [];
     for (const raw of rawItems) {
@@ -315,10 +317,18 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
     }
 
     for (const d of ingredientTotals.values()) {
-      const available = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, locationId]);
-      const qtyAvailable = Number(available?.quantity || 0);
-      if (qtyAvailable + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
-      if (!available) throw new Error("LOCATION_STOCK_NOT_INITIALIZED:" + d.item.name);
+      if (Number(d.item.track_stock ?? 1) === 0) continue;
+      if (locationId) {
+        const available = await one(tx, "SELECT id,quantity FROM stock_balances WHERE user_id=$1 AND item_id=$2 AND location_id=$3 FOR UPDATE", [uid, d.item.id, locationId]);
+        const qtyAvailable = Number(available?.quantity ?? 0);
+        if (qtyAvailable + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
+        if (!available) {
+          const overall = Number(d.item.quantity_on_hand || 0);
+          if (overall + 0.000001 < d.qty) throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
+        }
+      } else if (Number(d.item.quantity_on_hand || 0) + 0.000001 < d.qty) {
+        throw new Error("INSUFFICIENT_STOCK:" + d.item.name);
+      }
     }
 
     const orderId = existing?.id || id();
@@ -348,6 +358,7 @@ export async function cloudRestaurantCheckout(uid: string, args: any) {
 
     let ingredientCost = 0;
     for (const d of ingredientTotals.values()) {
+      if (Number(d.item.track_stock ?? 1) === 0) continue;
       const next = Number(d.item.quantity_on_hand || 0) - d.qty;
       ingredientCost += d.qty * Number(d.item.cost_price || 0);
       await tx.unsafe("UPDATE stock_items SET quantity_on_hand=$1,updated_at=now() WHERE id=$2 AND user_id=$3", [next, d.item.id, uid]);
