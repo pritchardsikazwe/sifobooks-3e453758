@@ -4,8 +4,8 @@ import { ChevronDown, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
-import { HUBS, type HubItem } from "@/lib/nav-hubs";
-import { MODULES } from "@/lib/modules";
+import { hubsForMode, visibleHubGroups, type HubItem } from "@/lib/nav-hubs";
+import { SIFOBOOKS_EDITION } from "@/lib/edition";
 import { cn } from "@/lib/utils";
 
 type Menu = {
@@ -24,20 +24,14 @@ function useNavigationMenus(): Menu[] {
   const { canView, isStaff, isSuperAdmin } = usePermissions();
   const pathname = useRouterState({ select: r => r.location.pathname });
 
-  // Core/default modules form the stable primary navigation. Optional industry
-  // workspaces still remain installation/edition driven elsewhere.
-  const navigationEnabled = new Set(
-    MODULES.filter(m => m.core || m.defaultInstalled).map(m => m.key)
-  );
+  const hubs = hubsForMode(undefined, SIFOBOOKS_EDITION);
   const all: HubItem[] = [];
   const seen = new Set<string>();
 
-  for (const hub of HUBS) {
-    for (const group of hub.groups) {
+  for (const hub of hubs) {
+    for (const group of visibleHubGroups(hub, installed, canView)) {
       for (const item of group.items) {
-        if (!navigationEnabled.has(item.module)) continue;
         if ((item as any).superAdminOnly && !isSuperAdmin) continue;
-        if (!canView(item.module)) continue;
         if (seen.has(item.url)) continue;
         seen.add(item.url);
         all.push(item);
@@ -45,18 +39,8 @@ function useNavigationMenus(): Menu[] {
     }
   }
 
-  // Keep optional modules visible only when the company actually has them.
-  // This preserves the module registry as the source of truth without hiding
-  // the core Sage-style navigation when company_modules has not been hydrated.
-  const installedSet = new Set(installed);
-  const optionalModule = (key: string) => {
-    const def = MODULES.find(m => m.key === key);
-    return Boolean(def && !def.core && !def.defaultInstalled);
-  };
-  const visibleAll = all.filter(item => !optionalModule(item.module) || installedSet.has(item.module));
-
   const match = (patterns: string[], titles: string[] = []) =>
-    visibleAll.filter(item =>
+    all.filter(item =>
       patterns.some(p => item.url === p || item.url.startsWith(p + "/")) ||
       titles.some(t => item.title.toLowerCase() === t.toLowerCase())
     );
@@ -75,12 +59,12 @@ function useNavigationMenus(): Menu[] {
 
   const sales = take([
     ...match(["/invoices", "/quotes", "/receipts", "/credit-notes", "/returns"], ["Invoices", "Quotes", "Receive Payments", "Credit Notes", "Returns"]),
-    ...visibleAll.filter(i => i.module === "sales" && !customers.includes(i) && !suppliers.includes(i)),
+    ...all.filter(i => i.module === "sales" && !customers.includes(i) && !suppliers.includes(i)),
   ]);
 
   const purchases = take([
     ...match(["/bills", "/purchase-orders", "/expenses", "/bill-payments", "/goods-receipts", "/quotation-comparison", "/expense-rules"], ["Bills", "Purchase Orders", "Expenses", "Supplier Payments", "Goods Receipts", "Quotation Comparison"]),
-    ...visibleAll.filter(i => i.module === "purchases" && !customers.includes(i) && !suppliers.includes(i)),
+    ...all.filter(i => i.module === "purchases" && !customers.includes(i) && !suppliers.includes(i)),
   ]);
 
   const inventory = match(
@@ -128,11 +112,6 @@ function useNavigationMenus(): Menu[] {
     ["Users & Roles", "Administration", "Audit Logs", "Approval Centre", "Approvals", "System Health"]
   );
 
-  const compliance = match(
-    ["/compliance", "/compliance-centre", "/zra-smart-invoice", "/reports/vat-return"],
-    ["Compliance", "Government Compliance", "ZRA Smart Invoice", "VAT Return (VAT 3)"]
-  );
-
   const menuTheme: Record<string, { iconBg: string; iconText: string; activeBg: string }> = {
   Home: { iconBg: "bg-[#EAF6F0]", iconText: "text-[#07834F]", activeBg: "bg-[#EAF6F0]" },
   Customers: { iconBg: "bg-[#EEF5FF]", iconText: "text-[#2563EB]", activeBg: "bg-[#EEF5FF]" },
@@ -146,7 +125,6 @@ function useNavigationMenus(): Menu[] {
   Manufacturing: { iconBg: "bg-[#F5F3FF]", iconText: "text-[#6D28D9]", activeBg: "bg-[#F5F3FF]" },
   "HR & Payroll": { iconBg: "bg-[#FDF2F8]", iconText: "text-[#BE185D]", activeBg: "bg-[#FDF2F8]" },
   Reports: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#0369A1]", activeBg: "bg-[#EFF6FF]" },
-  Compliance: { iconBg: "bg-[#ECFDF5]", iconText: "text-[#047857]", activeBg: "bg-[#ECFDF5]" },
   Company: { iconBg: "bg-[#F8FAFC]", iconText: "text-[#475569]", activeBg: "bg-[#F8FAFC]" },
   Administration: { iconBg: "bg-[#F1F5F9]", iconText: "text-[#334155]", activeBg: "bg-[#F1F5F9]" },
 };
@@ -164,13 +142,15 @@ function useNavigationMenus(): Menu[] {
     { label: "Manufacturing", icon: "Factory", items: take(manufacturing) },
     { label: "HR & Payroll", icon: "UsersRound", items: take(payroll) },
     { label: "Reports", icon: "BarChart3", items: take(reports) },
-    { label: "Compliance", icon: "ShieldCheck", items: take(compliance) },
     { label: "Company", icon: "Building2", items: take(company) },
     { label: "Administration", icon: "Settings2", items: take(administration) },
   ].filter(m => m.items.length > 0 || m.label === "Home") as Menu[];
 
+  // Staff see only the same permission-filtered routes. Avoid showing empty
+  // administrative menus just because the owner has those capabilities.
   return menus.filter(m => !isStaff || m.items.length > 0);
 }
+
 export function TopNavigation() {
   const pathname = useRouterState({ select: r => r.location.pathname });
   const menus = useNavigationMenus();
