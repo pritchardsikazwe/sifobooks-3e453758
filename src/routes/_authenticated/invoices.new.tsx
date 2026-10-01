@@ -18,6 +18,7 @@ import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { salesInvoiceLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+import { zraSubmitInvoiceFn } from "@/lib/zra/server";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -237,8 +238,21 @@ function NewInvoicePage() {
           : m || "Invoice could not be posted";
         return toast.error(why);
       }
-      setSaving(false);
-      toast.success(`Invoice ${number} posted — journal, receivable, stock and ZRA queue updated`);
+      try {
+        const fiscal = await zraSubmitInvoiceFn({
+          data: { userId: u.user.id, invoiceId: posted.invoice_id },
+        } as any);
+        setSaving(false);
+        if (fiscal?.fiscalState === "FISCALIZED") {
+          const receiptNo = fiscal?.response?.data?.receipt?.rcptNo ?? fiscal?.response?.data?.rcptNo;
+          toast.success(`Invoice ${number} posted and fiscalized by ZRA${receiptNo ? ` — Receipt ${receiptNo}` : ""}`);
+        } else {
+          toast.warning(`Invoice ${number} was posted to accounting, but ZRA did not accept it. The invoice remains in the ZRA queue for retry.`);
+        }
+      } catch (zraError: any) {
+        setSaving(false);
+        toast.warning(`Invoice ${number} was posted to accounting, but ZRA submission needs attention: ${zraError?.message ?? "VSDC submission failed"}`);
+      }
       navigate({ to: "/invoices" });
       return;
     }
