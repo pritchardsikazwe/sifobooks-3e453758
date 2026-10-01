@@ -93,7 +93,7 @@ function NewInvoicePage() {
     (async () => {
       const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
         supabase.from("customers").select("id, name, tpin, payment_terms_days, address, phone, email").eq("active", true).order("name"),
-        supabase.from("stock_items").select("id, name, sku, unit, vat_rate, sell_price, quantity_on_hand, reserved_qty").order("name"),
+        supabase.from("stock_items").select("id, name, sku, unit, vat_rate, sell_price, quantity_on_hand, reserved_qty, warehouse_id").order("name"),
         supabase.from("warehouses").select("id, name, code, location, manager").order("name"),
         supabase.from("companies").select("*").maybeSingle(),
         supabase.from("invoices").select("*", { count: "exact", head: true }),
