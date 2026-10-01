@@ -487,7 +487,8 @@ function buildInvoiceSalesPayload(db:any,userId:string,invoiceId:string) {
     const qty=Number(r.quantity||0), price=Number(r.unit_price||0);
     const gross=qty*price;
     const discount=0;
-    const rate=Number(r.zra_tax_rate ?? r.vat_rate ?? invoice.vat_amount && invoice.subtotal ? (Number(invoice.vat_amount)/Math.max(Number(invoice.subtotal),0.01))*100 : 0);
+    const fallbackRate=Number(invoice.vat_amount||0)>0 ? (Number(invoice.vat_amount)/Math.max(Number(invoice.subtotal),0.01))*100 : 0;
+    const rate=Number(r.zra_tax_rate ?? r.vat_rate ?? fallbackRate);
     const vatCat=String(r.zra_vat_category_code);
     const tax=rate>0 ? gross-gross/(1+rate/100) : 0;
     const taxable=gross-tax;
