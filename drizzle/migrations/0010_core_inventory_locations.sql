@@ -22,7 +22,7 @@ SELECT
   COALESCE(NULLIF(w.code,''), 'MAIN') || '-STOCK',
   'warehouse',
   w.id,
-  1,
+  true,
   1,
   now()
 FROM public.warehouses w
@@ -44,7 +44,7 @@ SELECT
   COALESCE(NULLIF(c.name,''), 'Company') || ' Main Stock',
   'MAIN-STOCK',
   'warehouse',
-  1,
+  true,
   1,
   now()
 FROM public.companies c
