@@ -412,9 +412,12 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
     const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 0);
     if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
     const gross=Math.round(qty*price*100)/100;
-    const tax=taxInclusive ? Math.round((gross-gross/(1+rate/100))*100)/100 : Math.round(gross*rate/100*100)/100;
-    const net=taxInclusive ? Math.round((gross-tax)*100)/100 : gross;
-    subtotal+=net; vat+=tax; resolved.push({...x,qty,price,rate,line:gross,tax,net});
+    const discount=Math.min(Math.max(Number(x.discount_amount ?? 0),0),gross);
+    const netBeforeTax=Math.max(gross-discount,0);
+    const tax=taxInclusive ? Math.round((netBeforeTax-netBeforeTax/(1+rate/100))*100)/100 : Math.round(netBeforeTax*rate/100*100)/100;
+    const net=taxInclusive ? Math.round((netBeforeTax-tax)*100)/100 : netBeforeTax;
+    const lineTotal=taxInclusive ? netBeforeTax : Math.round((netBeforeTax+tax)*100)/100;
+    subtotal+=net; vat+=tax; resolved.push({...x,qty,price,rate,discount,line:lineTotal,tax,net});
   }
   subtotal=Math.round(subtotal*100)/100; vat=Math.round(vat*100)/100; const total=Math.round((subtotal+vat)*100)/100;
   const ar=postingAccount(db,uid,companyId,"SALES_RECEIVABLE",["1100","1200"]);
@@ -427,8 +430,8 @@ function executeSalesInvoicePosting(args: Record<string, any>) {
     else db.prepare("INSERT INTO invoices(id,user_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
       .run(invoiceId,uid,h.customer_id??null,h.number,h.issue_date,h.due_date??null,"sent",h.currency??"ZMW",subtotal,vat,total,0,total,h.seller_tpin??null,h.buyer_tpin??null,h.notes??null);
     if(!existing){
-      for(const x of resolved) db.prepare("INSERT INTO invoice_items(id,user_id,invoice_id,stock_item_id,description,quantity,unit_price,vat_rate,line_total) VALUES(?,?,?,?,?,?,?,?,?)")
-        .run(generateUUID(),uid,invoiceId,x.stock_item_id??null,x.description??"Item",x.qty,x.price,x.rate,x.line);
+      for(const x of resolved) db.prepare("INSERT INTO invoice_items(id,user_id,invoice_id,stock_item_id,description,quantity,unit_price,vat_rate,discount_amount,discount_type,line_total) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+        .run(generateUUID(),uid,invoiceId,x.stock_item_id??null,x.description??"Item",x.qty,x.price,x.rate,x.discount,x.discount_type??"amount",x.line);
     }
     for(const x of resolved){
       if(!x.stock_item_id) continue;
