@@ -19,6 +19,18 @@ const UNIT_ALIASES: Record<string, string> = {
   pcs: "each",
   piece: "each",
   pieces: "each",
+  kilogram: "kg",
+  kilograms: "kg",
+  kg: "kg",
+  kgs: "kg",
+  gram: "g",
+  grams: "g",
+  g: "g",
+  litre: "l",
+  liter: "l",
+  litres: "l",
+  liters: "l",
+  l: "l",
 };
 
 export function normalizeUnit(value: unknown, fallback = "unit") {
