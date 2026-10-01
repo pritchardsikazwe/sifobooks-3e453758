@@ -29,6 +29,7 @@ type Line = {
   stockItemId?: string | null;
   description: string;
   warehouseId?: string | null;
+  locationId?: string | null;
   qty: number;
   price: number;
   discount: number;
@@ -177,8 +178,12 @@ function NewInvoicePage() {
     const s = stock.find(x => x.id === stockId);
     if (!s) return;
     setItems(prev => prev.map((it, i) => i === idx ? {
-      ...it, stockItemId: s.id, description: s.name,
-      price: Number(s.sell_price), vatRate: Number(s.vat_rate ?? 16),
+      ...it,
+      stockItemId: s.id,
+      description: s.name,
+      price: Number(s.sell_price),
+      vatRate: Number(s.vat_rate ?? 16),
+      warehouseId: it.warehouseId ?? s.warehouse_id ?? null,
     } : it));
   };
 
@@ -208,6 +213,7 @@ function NewInvoicePage() {
           discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
           vat_rate: i.vatRate,
           warehouse_id: i.warehouseId ?? null,
+          location_id: i.locationId ?? null,
         };
       });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
