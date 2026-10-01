@@ -12,6 +12,9 @@ ALTER TABLE IF EXISTS stock_items
   ADD COLUMN IF NOT EXISTS min_stock DOUBLE PRECISION NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS created_at TEXT NOT NULL DEFAULT now();
 
+UPDATE stock_items SET base_unit=COALESCE(NULLIF(unit,''),'each') WHERE base_unit='each' AND COALESCE(NULLIF(unit,''),'each') <> 'each';
+UPDATE stock_items SET sales_unit=COALESCE(sales_unit,unit) WHERE sales_unit IS NULL;
+
 ALTER TABLE IF EXISTS invoice_items
   ADD COLUMN IF NOT EXISTS discount_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS discount_type TEXT NOT NULL DEFAULT 'amount';
