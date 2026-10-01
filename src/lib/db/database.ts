@@ -213,6 +213,31 @@ function runCompatibilityMigrations(database: Database) {
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS item_unit_conversions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    from_unit TEXT NOT NULL,
+    to_unit TEXT NOT NULL,
+    multiplier REAL NOT NULL DEFAULT 1,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_item_unit_conversions_lookup
+    ON item_unit_conversions(user_id,item_id,from_unit,to_unit,is_active);
+  CREATE TABLE IF NOT EXISTS item_unit_conversion_audit (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    conversion_id TEXT,
+    action TEXT NOT NULL,
+    from_unit TEXT,
+    to_unit TEXT,
+    multiplier REAL,
+    actor_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`);
   const inventoryLocationColumns = getTableColumns(database, "inventory_locations");
   if (!inventoryLocationColumns.includes("branch_id")) {
@@ -258,6 +283,10 @@ function runCompatibilityMigrations(database: Database) {
     ],
     stock_items: [
       "barcode TEXT",
+      "base_unit TEXT",
+      "sales_unit TEXT",
+      "purchase_unit TEXT",
+      "track_stock INTEGER NOT NULL DEFAULT 1",
       "category TEXT",
       "item_type TEXT",
       "bin TEXT",
@@ -357,6 +386,26 @@ function runCompatibilityMigrations(database: Database) {
     ],
     pos_sales: [
       "branch_id TEXT",
+    ],
+    pos_registers: [
+      "location_id TEXT",
+      "created_at TEXT NOT NULL DEFAULT (datetime('now'))",
+    ],
+    pos_shifts: [
+      "location_id TEXT",
+      "branch_id TEXT",
+      "cash_sales REAL NOT NULL DEFAULT 0",
+      "card_sales REAL NOT NULL DEFAULT 0",
+      "momo_sales REAL NOT NULL DEFAULT 0",
+      "other_sales REAL NOT NULL DEFAULT 0",
+      "drawer_name TEXT",
+      "station TEXT",
+      "manager_comment TEXT",
+      "review_status TEXT",
+      "reviewed_at TEXT",
+      "reviewed_by TEXT",
+      "submitted_at TEXT",
+      "cash_denominations TEXT",
     ],
     goods_receipts: [
       "company_id TEXT",
