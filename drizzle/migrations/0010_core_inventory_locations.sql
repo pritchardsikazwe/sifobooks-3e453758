@@ -22,8 +22,8 @@ SELECT
   COALESCE(NULLIF(w.code,''), 'MAIN') || '-STOCK',
   'warehouse',
   w.id,
-  true,
-  true,
+  1,
+  1,
   now()
 FROM public.warehouses w
 WHERE NOT EXISTS (
@@ -44,8 +44,8 @@ SELECT
   COALESCE(NULLIF(c.name,''), 'Company') || ' Main Stock',
   'MAIN-STOCK',
   'warehouse',
-  true,
-  true,
+  1,
+  1,
   now()
 FROM public.companies c
 WHERE NOT EXISTS (
@@ -97,8 +97,8 @@ BEGIN
           COALESCE(NULLIF(w.code,''),'MAIN') || '-STOCK',
           'warehouse',
           w.id,
-          true,
-          true,
+          1,
+          1,
           now()
         FROM public.warehouses w
         WHERE w.id::text = NULLIF(it->>'warehouse_id','')
@@ -117,8 +117,8 @@ BEGIN
           'Main Stock',
           'MAIN-STOCK',
           'warehouse',
-          true,
-          true,
+          1,
+          1,
           now()
         FROM public.company_members cm
         WHERE cm.user_id = _uid
