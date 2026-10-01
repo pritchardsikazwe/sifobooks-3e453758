@@ -377,6 +377,10 @@ function runCompatibilityMigrations(database: Database) {
       "pin_locked_until TEXT",
       "last_pin_login_at TEXT",
     ],
+    invoice_items: [
+      "discount_amount REAL NOT NULL DEFAULT 0",
+      "discount_type TEXT NOT NULL DEFAULT 'amount'",
+    ],
     stock_movements: [
       "total_cost REAL",
       "transaction_date TEXT",
