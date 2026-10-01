@@ -18,7 +18,7 @@ SELECT
   gen_random_uuid(),
   w.user_id,
   NULL,
-  COALESCE(NULLIF(w.name,''), 'Warehouse') || ' Stock',
+  'Warehouse ' || COALESCE(NULLIF(w.code,''), 'MAIN') || ' Stock',
   COALESCE(NULLIF(w.code,''), 'MAIN') || '-STOCK',
   'warehouse',
   w.id,
@@ -54,7 +54,7 @@ WHERE NOT EXISTS (
 )
 AND NOT EXISTS (
   SELECT 1 FROM public.warehouses w
-  WHERE NULL = c.id AND COALESCE(w.is_active,true)
+  WHERE w.user_id = c.user_id
 );
 
 -- Harden the existing invoice RPC: resolve the warehouse to its location,
@@ -93,7 +93,7 @@ BEGIN
           gen_random_uuid(),
           _uid,
           NULL,
-          COALESCE(NULLIF(w.name,''),'Warehouse') || ' Stock',
+          'Warehouse ' || COALESCE(NULLIF(w.code,''), 'MAIN') || ' Stock',
           COALESCE(NULLIF(w.code,''),'MAIN') || '-STOCK',
           'warehouse',
           w.id,
