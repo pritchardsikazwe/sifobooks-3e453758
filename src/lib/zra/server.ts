@@ -453,6 +453,126 @@ async function syncZraStockAfterSale(db:any,userId:string,saleId:string,saleNo:s
   }
 }
 
+function buildInvoiceSalesPayload(db:any,userId:string,invoiceId:string) {
+  const invoice=db.prepare("SELECT * FROM invoices WHERE id=? AND user_id=? LIMIT 1").get(invoiceId,userId) as any;
+  if(!invoice) throw new Error("INVOICE_NOT_FOUND");
+  const cfg=getSavedConfig(userId,null);
+  if(!cfg?.tpin || !cfg?.branch_code) throw new Error("ZRA_NOT_CONFIGURED: Configure TPIN and Branch ID before submitting sales.");
+
+  const rows=db.prepare(
+    `SELECT ii.*, si.name AS stock_name, si.sku, si.barcode, si.zra_item_code, si.zra_item_class_code,
+            si.zra_pkg_unit_code, si.zra_qty_unit_code, si.zra_vat_category_code, si.zra_tax_rate,
+            si.vat_rate, si.unit
+       FROM invoice_items ii
+       LEFT JOIN stock_items si ON si.id=ii.stock_item_id
+      WHERE ii.invoice_id=? AND ii.user_id=? ORDER BY ii.id`
+  ).all(invoiceId,userId) as any[];
+  if(!rows.length) throw new Error("ZRA_EMPTY_INVOICE: Invoice has no item lines.");
+
+  const unmapped=rows.filter(r=>!r.zra_item_class_code || !r.zra_pkg_unit_code || !r.zra_qty_unit_code || !r.zra_vat_category_code);
+  if(unmapped.length) throw new Error("ZRA_ITEM_NOT_MAPPED: " + unmapped.map(r=>r.description || r.stock_name || r.sku || "Item").join(", "));
+
+  const salesTypeCode=zraStandardCode(db,userId,"Transaction Type",["normal"]);
+  const receiptTypeCode=zraStandardCode(db,userId,"Sales Receipt Type",["sale"]);
+  const statusCode=zraStandardCode(db,userId,"Transaction Progress",["approved"]);
+  const paymentTypeCode=zraStandardCode(db,userId,"Payment Method",["credit","other"]);
+  const salesCategoryCode=zraStandardCode(db,userId,"Sales Category",["retail"]);
+  const currencyCode=zraStandardCode(db,userId,"Currency",["zambian kwacha","zambia kwacha","zmw"]);
+  const actor=db.prepare("SELECT au.email,p.full_name FROM auth_users au LEFT JOIN profiles p ON p.id=au.id WHERE au.id=? LIMIT 1").get(userId) as any;
+  const actorId=String(userId).replace(/-/g,"").slice(0,20);
+  const actorName=String(actor?.full_name||actor?.email||userId).slice(0,60);
+  const customer=invoice.customer_id ? db.prepare("SELECT tpin,name FROM customers WHERE id=? AND user_id=? LIMIT 1").get(invoice.customer_id,userId) as any : null;
+
+  const itemList=rows.map((r:any,index:number)=>{
+    const qty=Number(r.quantity||0), price=Number(r.unit_price||0);
+    const gross=qty*price;
+    const discount=0;
+    const fallbackRate=Number(invoice.vat_amount||0)>0 ? (Number(invoice.vat_amount)/Math.max(Number(invoice.subtotal),0.01))*100 : 0;
+    const rate=Number(r.zra_tax_rate ?? r.vat_rate ?? fallbackRate);
+    const vatCat=String(r.zra_vat_category_code);
+    const tax=rate>0 ? gross-gross/(1+rate/100) : 0;
+    const taxable=gross-tax;
+    return {
+      itemSeq:index+1,itemCd:r.zra_item_code || r.sku || r.id,itemClsCd:r.zra_item_class_code,
+      itemNm:r.description || r.stock_name || r.sku || "Item",bcd:r.barcode || "",
+      pkgUnitCd:r.zra_pkg_unit_code,pkg:0,qtyUnitCd:r.zra_qty_unit_code,qty,
+      prc:price,splyAmt:gross,dcRt:0,dcAmt:discount,vatCatCd:vatCat,
+      vatTaxblAmt:taxable,vatAmt:tax,totAmt:gross,_taxRate:rate,_vatCat:vatCat
+    };
+  });
+
+  const bands=["A","B","C","C1","C2","C3","D","RVAT","E","F","Ipl1","Ipl2","Tl","Ecm","Exeeg","Tot"];
+  const taxbl:any={}, taxAmt:any={}, taxRt:any={};
+  for(const b of bands){taxbl[b]=0;taxAmt[b]=0;taxRt[b]=0;}
+  for(const item of itemList){
+    const b=item._vatCat;
+    if(bands.includes(b)){taxbl[b]+=item.vatTaxblAmt;taxAmt[b]+=item.vatAmt;taxRt[b]=Math.max(taxRt[b],item._taxRate);}
+  }
+  const payload:any={
+    tpin:cfg.tpin,bhfId:cfg.branch_code,orgInvcNo:0,cisInvcNo:String(invoice.number),
+    custTpin:customer?.tpin ?? invoice.buyer_tpin ?? null,custNm:customer?.name ?? null,
+    salesTyCd:salesTypeCode,rcptTyCd:receiptTypeCode,pmtTyCd:paymentTypeCode,salesSttsCd:statusCode,
+    cfmDt:nowZraDate(),salesDt:String(invoice.issue_date).replace(/-/g,"").slice(0,8),stockRlsDt:nowZraDate(),
+    cnclReqDt:null,cnclDt:null,rfdDt:null,rfdRsnCd:null,totItemCnt:itemList.length,currencyTyCd:currencyCode,
+    exchangeRt:String(invoice.exchange_rate ?? 1),prchrAcptcYn:"N",remark:String(invoice.notes||"").slice(0,400),
+    regrId:actorId,regrNm:actorName,modrId:actorId,modrNm:actorName,saleCtyCd:salesCategoryCode,
+    totTaxblAmt:itemList.reduce((a:number,i:any)=>a+i.vatTaxblAmt,0),
+    totTaxAmt:itemList.reduce((a:number,i:any)=>a+i.vatAmt,0),totAmt:Number(invoice.total||0),
+    taxblAmtTot:0,taxAmtTot:0,itemList:itemList.map(({_taxRate,_vatCat,...i}:any)=>i),
+  };
+  for(const b of bands){payload["taxblAmt"+b]=Number(taxbl[b]||0);payload["taxAmt"+b]=Number(taxAmt[b]||0);payload["taxRt"+b]=Number(taxRt[b]||0);}
+  payload.taxblAmtTot=0;payload.taxAmtTot=0;payload.taxRtTot=0;
+  return {cfg,payload};
+}
+
+export const zraSubmitInvoiceFn = createServerFn({method:"POST"})
+  .inputValidator((raw:unknown)=>raw as {userId:string;invoiceId:string})
+  .handler(async ({data})=>{
+    const db=getDb();
+    const invoice=db.prepare("SELECT * FROM invoices WHERE id=? AND user_id=? LIMIT 1").get(data.invoiceId,data.userId) as any;
+    if(!invoice) throw new Error("INVOICE_NOT_FOUND");
+
+    const existing=db.prepare("SELECT * FROM zra_invoice_queue WHERE user_id=? AND source_id=? ORDER BY updated_at DESC LIMIT 1").get(data.userId,data.invoiceId) as any;
+    if(existing?.status==="submitted" && existing?.zra_receipt_number){
+      return {queueId:existing.id,fiscalState:"FISCALIZED",response:{resultCd:existing.response_code,resultMsg:existing.response_message,data:{rcptNo:existing.zra_receipt_number,intrlData:existing.zra_internal_data,rcptSign:existing.zra_receipt_signature,qrCodeUrl:existing.zra_qr_url}}};
+    }
+
+    const {cfg,payload}=buildInvoiceSalesPayload(db,data.userId,data.invoiceId);
+    const queueId=existing?.id ?? generateUUID();
+    if(existing){
+      db.prepare("UPDATE zra_invoice_queue SET status='submitting',attempt_count=attempt_count+1,last_attempt_at=datetime('now'),payload=?,updated_at=datetime('now') WHERE id=?")
+        .run(JSON.stringify(payload),queueId);
+    } else {
+      db.prepare("INSERT INTO zra_invoice_queue (id,user_id,source_type,source_id,invoice_number,total,vat_amount,status,payload,attempt_count,last_attempt_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))")
+        .run(queueId,data.userId,"invoice",data.invoiceId,invoice.number,Number(invoice.total||0),Number(invoice.vat_amount||0),"submitting",JSON.stringify(payload),1);
+    }
+
+    try{
+      const response:any=await saveSales(payload,{baseUrl:requireVsdcUrl(cfg)});
+      const success=isSuccessfulVsdcResponse(response);
+      const zraData=response.data ?? {};
+      const receipt=zraData.receipt ?? zraData;
+      const receiptNo=receipt.rcptNo ?? zraData.rcptNo ?? null;
+      const internalData=receipt.intrlData ?? zraData.intrlData ?? null;
+      const signature=receipt.rcptSign ?? zraData.rcptSign ?? null;
+      const qrUrl=receipt.qrCodeUrl ?? zraData.qrCodeUrl ?? null;
+      db.prepare(`UPDATE zra_invoice_queue SET status=?,submitted_at=CASE WHEN ? THEN datetime('now') ELSE submitted_at END,response_code=?,response_message=?,zra_receipt_number=?,zra_internal_data=?,zra_receipt_signature=?,zra_qr_url=?,error_code=?,updated_at=datetime('now') WHERE id=?`)
+        .run(success?"submitted":"failed",success?1:0,response.resultCd ?? null,response.resultMsg ?? null,receiptNo,internalData,signature,qrUrl,success?null:response.resultCd ?? null,queueId);
+      if(success){
+        db.prepare("UPDATE invoices SET status='posted',updated_at=datetime('now') WHERE id=? AND user_id=?").run(data.invoiceId,data.userId);
+        await recordAuditEvent({userId:data.userId,action:"INVOICE_FISCALIZED",entityType:"invoice",entityId:data.invoiceId,newValue:{invoiceNumber:invoice.number,receiptNumber:receiptNo,resultCode:response.resultCd}});
+      } else {
+        await recordAuditEvent({userId:data.userId,action:"INVOICE_ZRA_REJECTED",entityType:"invoice",entityId:data.invoiceId,newValue:{invoiceNumber:invoice.number,resultCode:response.resultCd,message:response.resultMsg}});
+      }
+      return {queueId,response,payload,fiscalState:success?"FISCALIZED":"REJECTED"};
+    }catch(error:any){
+      db.prepare("UPDATE zra_invoice_queue SET status='failed',response_message=?,error_code='VSDC_REQUEST_FAILED',last_attempt_at=datetime('now'),updated_at=datetime('now') WHERE id=?")
+        .run(error?.message || "VSDC request failed",queueId);
+      await recordAuditEvent({userId:data.userId,action:"INVOICE_ZRA_SUBMISSION_FAILED",entityType:"invoice",entityId:data.invoiceId,newValue:{error:error?.message || "VSDC request failed"}});
+      throw error;
+    }
+  });
+
 export const zraSubmitPosSaleFn = createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>raw as {userId:string;saleId:string;saleNo?:string;terminalId?:string|null})
   .handler(async ({data})=>{
