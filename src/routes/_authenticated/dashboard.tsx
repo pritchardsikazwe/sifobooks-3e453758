@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
-import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
+import { SifoKpiCard, SifoQuickAction } from "@/components/sifo";
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 
 import { fmtMoney } from "@/lib/format";
@@ -211,7 +211,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "banking", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["todo-list", "kpis", "today-pulse", "banking", "compliance", "quick-bar", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -225,6 +225,7 @@ function DashboardPage() {
   };
 
   const spans: Record<string, string> = {
+    "todo-list": "col-span-12 lg:col-span-6",
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
     "today-pulse": "col-span-12",
@@ -235,13 +236,14 @@ function DashboardPage() {
     "cash-flow": "col-span-12 lg:col-span-3",
     "revenue-categories": "col-span-12 lg:col-span-4",
     "quick-actions": "col-span-12 lg:col-span-4",
-    "banking": "col-span-12 lg:col-span-4",
+    "banking": "col-span-12 lg:col-span-3",
     "snapshot": "col-span-12 lg:col-span-4",
-    "compliance": "col-span-12 lg:col-span-4",
+    "compliance": "col-span-12 lg:col-span-3",
     "recent-activity": "col-span-12",
   };
 
   const WIDGET_LABELS: Record<string, string> = {
+    "todo-list": "To Do List",
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
     "today-pulse": "Today's business pulse",
@@ -260,6 +262,10 @@ function DashboardPage() {
 
 
   const widgetContent: Record<string, React.ReactNode> = {
+    "todo-list": (
+      <SifoWorkQueue currency={currency} />
+    ),
+
     "quick-bar": (
       <div className="rounded-3xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5">
         <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
