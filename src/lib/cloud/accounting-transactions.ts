@@ -514,14 +514,16 @@ export async function cloudPostInvoice(uid: string, args: any) {
       const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 16);
       if(!(qty>0)||!(price>=0)||!(rate>=0)) throw new Error("INVALID_INVOICE_LINE");
       const gross=money(qty*price);
-      const tax=taxInclusive?money(gross-gross/(1+rate/100)):money(gross*rate/100);
-      subtotal+=taxInclusive?money(gross-tax):gross; vat+=tax;
+      const discount=money(Math.min(Math.max(Number(x.discount_amount ?? 0),0),gross));
+      const netBeforeTax=money(Math.max(gross-discount,0));
+      const tax=taxInclusive?money(netBeforeTax-netBeforeTax/(1+rate/100)):money(netBeforeTax*rate/100);
+      subtotal+=taxInclusive?money(netBeforeTax-tax):netBeforeTax; vat+=tax;
     }
     subtotal=money(subtotal); vat=money(vat); const total=money(subtotal+vat); const invoiceId=id();
     await tx.unsafe("INSERT INTO invoices(id,user_id,tenant_id,customer_id,number,issue_date,due_date,status,currency,subtotal,vat_amount,total,amount_paid,balance_due,seller_tpin,buyer_tpin,notes,exchange_rate) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,'posted',$7,$8,$9,$10,0,$10,$11,$12,$13,1)",[invoiceId,uid,h.customer_id||null,h.number,dateOnly(h.issue_date),h.due_date||null,h.currency||"ZMW",subtotal,vat,total,h.seller_tpin||null,h.buyer_tpin||null,h.notes||null]);
     for(const x of items){
-      const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 16), line=money(qty*price), stockItemId=x.stock_item_id||null;
-      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10)",[id(),uid,invoiceId,stockItemId,x.description||"Item",x.hs_code||null,qty,price,rate,line]);
+      const qty=Number(x.quantity), price=Number(x.unit_price), rate=Number(x.vat_rate ?? 16), gross=money(qty*price), discount=money(Math.min(Math.max(Number(x.discount_amount ?? 0),0),gross)), netBeforeTax=money(Math.max(gross-discount,0)), line=taxInclusive?netBeforeTax:money(netBeforeTax+money(netBeforeTax*rate/100)), stockItemId=x.stock_item_id||null;
+      await tx.unsafe("INSERT INTO invoice_items(id,user_id,tenant_id,invoice_id,stock_item_id,description,hs_code,quantity,unit_price,vat_rate,discount_amount,discount_type,line_total) VALUES($1,$2,current_setting('app.tenant_id',true)::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",[id(),uid,invoiceId,stockItemId,x.description||"Item",x.hs_code||null,qty,price,rate,discount,x.discount_type||"amount",line]);
       if(stockItemId){
         const item=await one(tx,"SELECT * FROM stock_items WHERE id=$1 AND user_id=$2 FOR UPDATE",[stockItemId,uid]);
         if(!item) throw new Error("UNKNOWN_ITEM");
