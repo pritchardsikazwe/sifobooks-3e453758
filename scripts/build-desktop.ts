@@ -227,6 +227,94 @@ writeFileSync(join(OUT_DIR, "README-FIRST.txt"), [
   "",
 ].join("\r\n"));
 console.log("\\nStep 4/4: Standalone package ready.");
+
+async function smokeTestWindowsExecutable() {
+  if (process.platform !== "win32") return;
+
+  console.log("\\nWindows runtime smoke test: starting compiled executable...\\n");
+  const smokeData = join(OUT_DIR, ".smoke-data");
+  rmSync(smokeData, { recursive: true, force: true });
+  mkdirSync(smokeData, { recursive: true });
+
+  const smokePort = "38123";
+  const child = Bun.spawn([exePath], {
+    cwd: OUT_DIR,
+    env: {
+      ...process.env,
+      SIFOBOOKS_DATA_DIR: smokeData,
+      SIFOBOOKS_NO_BROWSER: "1",
+      SIFOBOOKS_LICENSE_ENFORCEMENT: "false",
+      SIFOBOOKS_MODE: "offline",
+      SIFOBOOKS_HOST: "127.0.0.1",
+      PORT: smokePort,
+    },
+    windowsHide: true,
+    stdout: "ignore",
+    stderr: "ignore",
+  });
+
+  const baseUrl = "http://127.0.0.1:" + smokePort;
+  let healthy = false;
+
+  try {
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await Bun.sleep(500);
+      try {
+        const response = await fetch(baseUrl + "/api/health", { signal: AbortSignal.timeout(1000) });
+        if (response.ok) {
+          const body = await response.json() as { ok?: boolean };
+          if (body.ok) {
+            healthy = true;
+            break;
+          }
+        }
+      } catch {}
+    }
+
+    if (!healthy) throw new Error("Compiled Windows executable did not become healthy within 30 seconds.");
+
+    const diagnosticsResponse = await fetch(baseUrl + "/api/desktop/diagnostics", { signal: AbortSignal.timeout(3000) });
+    if (!diagnosticsResponse.ok) throw new Error("Desktop diagnostics endpoint failed.");
+    const diagnostics = await diagnosticsResponse.json() as {
+      ok?: boolean;
+      clientDirExists?: boolean;
+      serverBundleEmbedded?: boolean;
+    };
+    if (!diagnostics.ok) throw new Error("Desktop diagnostics reported an unhealthy database.");
+    if (!diagnostics.clientDirExists) throw new Error("Compiled desktop package cannot find client assets.");
+    if (!diagnostics.serverBundleEmbedded) throw new Error("Compiled desktop server bundle is not available.");
+
+    const rootResponse = await fetch(baseUrl + "/", { signal: AbortSignal.timeout(3000) });
+    if (!rootResponse.ok) throw new Error("Compiled desktop root returned HTTP " + rootResponse.status + ".");
+
+    const dbPath = join(smokeData, "data", "sifobooks.db");
+    if (!existsSync(dbPath)) throw new Error("Compiled desktop did not create its SQLite database.");
+
+    const tokenPath = join(smokeData, "data", "desktop-shutdown.token");
+    if (existsSync(tokenPath)) {
+      const token = readFileSync(tokenPath, "utf8").trim();
+      await fetch(baseUrl + "/api/desktop/shutdown", {
+        method: "POST",
+        headers: { "x-sifobooks-shutdown": token },
+        signal: AbortSignal.timeout(3000),
+      }).catch(() => {});
+    }
+
+    console.log("PASS: compiled EXE starts");
+    console.log("PASS: local SQLite initializes");
+    console.log("PASS: desktop diagnostics are healthy");
+    console.log("PASS: client assets are served");
+    console.log("PASS: root page responds");
+    console.log("Windows runtime smoke test: PASSED");
+  } finally {
+    try { child.kill(); } catch {}
+    await Bun.sleep(500);
+    rmSync(smokeData, { recursive: true, force: true });
+  }
+}
+
+await smokeTestWindowsExecutable();
+
 console.log(`Edition: ${productName}`);
 console.log("Copy the complete desktop-dist/ folder to a Windows PC.");
 console.log(`Run start-sifobooks.bat or ${exeName}.`);
