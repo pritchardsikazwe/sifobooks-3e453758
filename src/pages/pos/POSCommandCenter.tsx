@@ -226,7 +226,7 @@ export default function POSCommandCenter() {
   const canSeeEndDay = role === "manager";
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-[#102f2f] text-white text-sm">
+    <div className="absolute inset-0 flex overflow-hidden bg-[#102f2f] text-white text-sm">
       {/* MOBILE MENU */}
       {mobileMenu && (
         <div className="absolute inset-0 z-50 bg-[#0b2424] lg:hidden">

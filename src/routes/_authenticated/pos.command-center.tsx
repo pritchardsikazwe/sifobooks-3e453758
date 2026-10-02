@@ -13,5 +13,9 @@ export const Route = createFileRoute("/_authenticated/pos/command-center")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: POSCommandCenter,
+  component: () => (
+    <div className="relative h-[calc(100dvh-6.5rem)] min-h-[560px] overflow-hidden">
+      <POSCommandCenter />
+    </div>
+  ),
 });
