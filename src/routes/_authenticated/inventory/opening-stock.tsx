@@ -54,7 +54,7 @@ function OpeningStockPage() {
     const { data, error } = await supabase.rpc("post_opening_stock" as any, payload as any);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success(`Opening stock posted — ${data?.reference ?? reference || "posted"}`);
+    toast.success(`Opening stock posted — ${(data?.reference ?? reference) || "posted"}`);
     setQuantity(0);
     setReference("");
   };
