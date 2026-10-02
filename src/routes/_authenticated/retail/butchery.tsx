@@ -157,6 +157,20 @@ function ButcheryPage() {
         </div>
       </header>
 
+      <div className="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div><div className="text-sm font-black text-emerald-950">Butchery 2026 Workspace</div><div className="text-xs text-slate-500">Products, receiving, processing, scales, labels, prices, inventory, sales and reports — using the existing SifoBooks engine.</div></div>
+          <Button asChild size="sm" className="bg-emerald-800"><Link to="/retail/butchery-dashboard">Open Workspace</Link></Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
+          {[
+            ["/retail/butchery-products","Products"],["/retail/butchery-receiving","Receiving"],["/retail/butchery-processing","Processing"],
+            ["/retail/butchery-scale","Scale"],["/retail/butchery-labels","Labels"],["/retail/butchery-prices","Prices"],
+            ["/retail/butchery-inventory","Inventory"],["/retail/butchery-reports","Reports"]
+          ].map(([to,label]) => <Button key={to} asChild variant="outline" size="sm"><Link to={to as any}>{label}</Link></Button>)}
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={Beef} label="Butchery items" value={String(meatProducts.length)} />
         <Metric icon={Scale} label="Live weight" value={`${scale.weight.toFixed(3)} kg`} />
