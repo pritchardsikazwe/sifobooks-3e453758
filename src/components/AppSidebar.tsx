@@ -204,6 +204,41 @@ export function AppSidebar() {
     };
 
     const groups = [
+    // Hotel navigation is a first-class workspace. Keep every Hotel screen
+    // reachable from the main sidebar even when the broader industry registry
+    // is incomplete for an older company profile.
+    const hotelSidebarItems: NavItem[] = [
+      ["Hotel Dashboard", "/hotel", "LayoutDashboard"],
+      ["Front Desk", "/hotel/front-desk", "House"],
+      ["Reservations", "/hotel/reservations", "CalendarCheck"],
+      ["Booking Engine", "/hotel/booking", "CalendarRange"],
+      ["Rooms & Rack", "/hotel/room-rack", "BedDouble"],
+      ["Rates & Availability", "/hotel/rates", "Tag"],
+      ["Channels", "/hotel/channels", "Globe2"],
+      ["Guests", "/hotel/guests", "Users"],
+      ["Pre-arrival", "/hotel/pre-arrival", "Link2"],
+      ["Check In / Out", "/hotel/check-in-out", "DoorOpen"],
+      ["Housekeeping", "/hotel/housekeeping", "ClipboardCheck"],
+      ["Folios & Billing", "/hotel/folios", "ReceiptText"],
+      ["Payments", "/hotel/payments", "CreditCard"],
+      ["Hotel POS", "/hotel/pos", "UtensilsCrossed"],
+      ["Events", "/hotel/events", "PartyPopper"],
+      ["Maintenance", "/hotel/maintenance", "Wrench"],
+      ["Inventory", "/hotel/inventory", "Boxes"],
+      ["Night Audit", "/hotel/night-audit", "Moon"],
+      ["Accounting", "/hotel/accounting", "Wallet"],
+      ["Reports", "/hotel/reports", "BarChart3"],
+      ["Compliance", "/hotel/compliance", "ShieldCheck"],
+      ["Hotel Settings", "/hotel/settings", "Settings"],
+    ].map(([title, url, icon]) => ({ title, url, icon: iconFor(icon) }));
+    const hotelUrls = new Set(hotelSidebarItems.map(i => i.url));
+    for (const item of hotelSidebarItems) {
+      if (!seen.has(item.url)) {
+        seen.add(item.url);
+        collected.push(item);
+      }
+    }
+
       make("Home", byUrl(["/dashboard", "/approvals", "/notifications", "/industry"])),
       make("Company Setup", byUrl(
         ["/setup", "/warehouses", "/roles", "/admin", "/documents-branding", "/audit-logs"],
