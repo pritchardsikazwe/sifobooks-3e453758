@@ -2,12 +2,30 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getDb, generateUUID } from "../db/database";
 import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
-import {
-  cloudListDevices, cloudSaveDevice, cloudGetConfig, cloudSaveConfig, cloudInitializeDevice,
-  cloudGetStandardCodes, cloudGetItemClasses, cloudSyncCatalog, cloudListInventory,
-  cloudSearchItemClasses, cloudListStandardCodes, cloudMapInventoryItem, cloudRegisterInventoryItem,
-  cloudSubmitPosSale, cloudSubmitCorrection, cloudSelectInvoice, cloudSaveStockItems, cloudSaveStockMaster,
-} from "./cloud";
+// Keep the hosted/cloud adapter out of the client dependency graph.
+// This module is imported by route components, so cloud.ts must only load
+// inside a server RPC handler. This preserves request-header/Supabase access
+// without triggering TanStack's client import protection during production builds.
+type CloudHandlerName =
+  | "cloudSaveItem"
+  | "cloudSubmitPosSale"
+  | "cloudSubmitCorrection"
+  | "cloudSelectInvoice"
+  | "cloudSaveStockItems"
+  | "cloudSaveStockMaster"
+  | "cloudListDevices"
+  | "cloudSaveDevice"
+  | "cloudGetConfig"
+  | "cloudSaveConfig"
+  | "cloudInitializeDevice"
+  | "cloudGetStandardCodes"
+  | "cloudGetItemClasses"
+  | "cloudSyncCatalog"
+  | "cloudListInventory"
+  | "cloudSearchItemClasses"
+  | "cloudListStandardCodes"
+  | "cloudMapInventoryItem"
+  | "cloudRegisterInventoryItem";
 import { enqueueZraOperation, updateZraOutbox, recordAuditEvent, assertFiscalTransition, nextDocumentNumber } from "@/lib/compliance/governance";
 import {
   getItemClasses,
@@ -676,28 +694,38 @@ const localZraSaveStockMasterFn = createServerFn({method:"POST"})
   .handler(async ({data})=>{const cfg=getSavedConfig(data.userId,data.branchId);return saveStockMaster(data.payload,{baseUrl:requireVsdcUrl(cfg)});});
 
 
-const cloudPost = (handler: (data: any) => Promise<any>) =>
+const cloudPost = (name: CloudHandlerName) =>
   createServerFn({ method: "POST" })
     .inputValidator((raw: unknown) => raw as any)
-    .handler(async ({ data }) => handler(data));
+    .handler(async ({ data }) => {
+      // Dynamic import is intentionally inside the server handler. The cloud
+      // adapter imports @tanstack/react-start/server and must never enter the
+      // client bundle/dependency graph.
+      const cloud = await import("./cloud");
+      const handler = cloud[name] as (input: any) => Promise<any>;
+      if (typeof handler !== "function") {
+        throw new Error(`ZRA_CLOUD_HANDLER_NOT_FOUND: ${name}`);
+      }
+      return handler(data);
+    });
 
-export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudPost(cloudSaveItem);
-export const zraSubmitPosSaleFn = IS_LOCAL_BACKEND ? localZraSubmitPosSaleFn : cloudPost(cloudSubmitPosSale);
-export const zraSubmitCorrectionFn = IS_LOCAL_BACKEND ? localZraSubmitCorrectionFn : cloudPost(cloudSubmitCorrection);
-export const zraSelectInvoiceFn = IS_LOCAL_BACKEND ? localZraSelectInvoiceFn : cloudPost(cloudSelectInvoice);
-export const zraSaveStockItemsFn = IS_LOCAL_BACKEND ? localZraSaveStockItemsFn : cloudPost(cloudSaveStockItems);
-export const zraSaveStockMasterFn = IS_LOCAL_BACKEND ? localZraSaveStockMasterFn : cloudPost(cloudSaveStockMaster);
+export const zraSaveItemFn = IS_LOCAL_BACKEND ? localZraSaveItemFn : cloudPost("cloudSaveItem");
+export const zraSubmitPosSaleFn = IS_LOCAL_BACKEND ? localZraSubmitPosSaleFn : cloudPost("cloudSubmitPosSale");
+export const zraSubmitCorrectionFn = IS_LOCAL_BACKEND ? localZraSubmitCorrectionFn : cloudPost("cloudSubmitCorrection");
+export const zraSelectInvoiceFn = IS_LOCAL_BACKEND ? localZraSelectInvoiceFn : cloudPost("cloudSelectInvoice");
+export const zraSaveStockItemsFn = IS_LOCAL_BACKEND ? localZraSaveStockItemsFn : cloudPost("cloudSaveStockItems");
+export const zraSaveStockMasterFn = IS_LOCAL_BACKEND ? localZraSaveStockMasterFn : cloudPost("cloudSaveStockMaster");
 
-export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudPost(cloudListDevices);
-export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudPost(cloudSaveDevice);
-export const zraGetConfigFn = IS_LOCAL_BACKEND ? localZraGetConfigFn : cloudPost(cloudGetConfig);
-export const zraSaveConfigFn = IS_LOCAL_BACKEND ? localZraSaveConfigFn : cloudPost(cloudSaveConfig);
-export const zraInitializeDeviceFn = IS_LOCAL_BACKEND ? localZraInitializeDeviceFn : cloudPost(cloudInitializeDevice);
-export const zraGetStandardCodesFn = IS_LOCAL_BACKEND ? localZraGetStandardCodesFn : cloudPost(cloudGetStandardCodes);
-export const zraGetItemClassesFn = IS_LOCAL_BACKEND ? localZraGetItemClassesFn : cloudPost(cloudGetItemClasses);
-export const zraSyncCatalogFn = IS_LOCAL_BACKEND ? localZraSyncCatalogFn : cloudPost(cloudSyncCatalog);
-export const zraListInventoryFn = IS_LOCAL_BACKEND ? localZraListInventoryFn : cloudPost(cloudListInventory);
-export const zraSearchItemClassesFn = IS_LOCAL_BACKEND ? localZraSearchItemClassesFn : cloudPost(cloudSearchItemClasses);
-export const zraListStandardCodesFn = IS_LOCAL_BACKEND ? localZraListStandardCodesFn : cloudPost(cloudListStandardCodes);
-export const zraMapInventoryItemFn = IS_LOCAL_BACKEND ? localZraMapInventoryItemFn : cloudPost(cloudMapInventoryItem);
-export const zraRegisterInventoryItemFn = IS_LOCAL_BACKEND ? localZraRegisterInventoryItemFn : cloudPost(cloudRegisterInventoryItem);
+export const zraListDevicesFn = IS_LOCAL_BACKEND ? localZraListDevicesFn : cloudPost("cloudListDevices");
+export const zraSaveDeviceFn = IS_LOCAL_BACKEND ? localZraSaveDeviceFn : cloudPost("cloudSaveDevice");
+export const zraGetConfigFn = IS_LOCAL_BACKEND ? localZraGetConfigFn : cloudPost("cloudGetConfig");
+export const zraSaveConfigFn = IS_LOCAL_BACKEND ? localZraSaveConfigFn : cloudPost("cloudSaveConfig");
+export const zraInitializeDeviceFn = IS_LOCAL_BACKEND ? localZraInitializeDeviceFn : cloudPost("cloudInitializeDevice");
+export const zraGetStandardCodesFn = IS_LOCAL_BACKEND ? localZraGetStandardCodesFn : cloudPost("cloudGetStandardCodes");
+export const zraGetItemClassesFn = IS_LOCAL_BACKEND ? localZraGetItemClassesFn : cloudPost("cloudGetItemClasses");
+export const zraSyncCatalogFn = IS_LOCAL_BACKEND ? localZraSyncCatalogFn : cloudPost("cloudSyncCatalog");
+export const zraListInventoryFn = IS_LOCAL_BACKEND ? localZraListInventoryFn : cloudPost("cloudListInventory");
+export const zraSearchItemClassesFn = IS_LOCAL_BACKEND ? localZraSearchItemClassesFn : cloudPost("cloudSearchItemClasses");
+export const zraListStandardCodesFn = IS_LOCAL_BACKEND ? localZraListStandardCodesFn : cloudPost("cloudListStandardCodes");
+export const zraMapInventoryItemFn = IS_LOCAL_BACKEND ? localZraMapInventoryItemFn : cloudPost("cloudMapInventoryItem");
+export const zraRegisterInventoryItemFn = IS_LOCAL_BACKEND ? localZraRegisterInventoryItemFn : cloudPost("cloudRegisterInventoryItem");
