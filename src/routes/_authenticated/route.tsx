@@ -51,6 +51,9 @@ export const Route = createFileRoute("/_authenticated")({
         const { data: s } = await supabase.auth.getSession();
         if (s.session) return { user: s.session.user, ...(await enforceRoute(location.pathname)) };
       }
+      // The server rejected the stored session. Clear it locally so /auth does
+      // not see a stale session and bounce straight back here (sign-in loop).
+      if (error) { try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ } }
       throw redirect({ to: "/auth" });
     } catch (e: any) {
       if (e?.isRedirect || e?.to) throw e;
