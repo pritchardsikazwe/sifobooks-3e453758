@@ -11,3 +11,4 @@ export { SifoNextActionPanel, SifoCompletionPanel } from "./SifoNextActionPanel"
 export { SifoWorkQueue } from "./SifoWorkQueue";
 export { SifoHubTabs } from "./SifoHubTabs";
 export { SifoWorkflowGuide } from "./SifoWorkflowGuide";
+export { SifoPage, SifoFilterBar, SifoSection } from "./SifoWorkspacePrimitives";
