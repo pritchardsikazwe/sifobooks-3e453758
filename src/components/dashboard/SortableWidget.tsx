@@ -23,7 +23,7 @@ export function SortableWidget({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(span, "relative", editMode && "ring-1 ring-dashed ring-primary/40 rounded-lg")}
+      className={cn(span, "relative min-w-0", editMode && "ring-1 ring-dashed ring-primary/40 rounded-lg")}
     >
       {editMode && (
         <div className="absolute -top-2 left-2 right-2 z-10 flex items-center justify-between pointer-events-none">
