@@ -153,8 +153,10 @@ export function SimpleCrud({
   const [form, setForm] = useState<Record<string, any>>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const setField = (name: string, value: any) => {
     setForm(prev => ({ ...prev, [name]: value }));
+    setDirty(true);
     setErrors(prev => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
@@ -225,11 +227,25 @@ export function SimpleCrud({
     let query = supabase.from(table as any).select("*");
     if (orderBy) query = query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
     const { data, error } = await query;
-    if (error) toast.error(error.message);
+    if (error) toast.error(`${title}: ${error.message}`);
     setRows(data ?? []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n" && !open) {
+        event.preventDefault();
+        openNew();
+      }
+      if (event.key === "Escape" && open && !saving) {
+        event.preventDefault();
+        if (!dirty || confirm("Discard unsaved changes?")) setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, saving, dirty]);
 
   const filtered = rows.filter(r => {
     if (statusField && statusVal !== "__all" && String(r[statusField] ?? "") !== statusVal) return false;
@@ -249,12 +265,13 @@ export function SimpleCrud({
 
   const openNew = () => {
     if (onNew) return onNew();
-    setEditing(null); setForm(initial); setErrors({}); setOpen(true);
+    setEditing(null); setForm(initial); setErrors({}); setDirty(false); setOpen(true);
   };
   const openEdit = (r: any) => {
     if (onOpenRow) return onOpenRow(r);
     setEditing(r);
     setErrors({});
+    setDirty(false);
     setForm(Object.fromEntries(fields.map(f => {
       const v = r[f.name];
       if (typeof v === "boolean") return [f.name, String(v)];
@@ -294,30 +311,48 @@ export function SimpleCrud({
       }
       else if (v === "") payload[f.name] = null;
     }
+    if (!editing) {
+      const identityField = fields.find(f =>
+        ["code", "sku", "barcode", "employee_code", "supplier_code", "customer_code", "invoice_number", "item_code"].includes(f.name)
+        && String(form[f.name] ?? "").trim()
+      );
+      if (identityField) {
+        const { data: duplicateRows } = await supabase.from(table as any)
+          .select("id").eq(identityField.name, String(form[identityField.name]).trim()).limit(1);
+        if ((duplicateRows ?? []).length) {
+          setErrors({ [identityField.name]: identityField.label + " already exists" });
+          return toast.error(identityField.label + " already exists");
+        }
+      }
+    }
     setSaving(true);
-    const res = editing
-      ? await supabase.from(table as any).update(payload).eq("id", editing.id)
-      : await offlineInsert(table, payload);
-    setSaving(false);
-    if (res.error) return toast.error(res.error.message);
-    toast.success(
-      editing
-        ? "Updated"
-        : (res as any).queued
-          ? "Saved offline — will sync when back online"
-          : "Created",
-    );
-    setOpen(false);
-    load();
+    try {
+      const res = editing
+        ? await supabase.from(table as any).update(payload).eq("id", editing.id)
+        : await offlineInsert(table, payload);
+      setSaving(false);
+      if (res.error) return toast.error((editing ? "Update failed: " : "Create failed: ") + res.error.message);
+      toast.success(editing ? "Updated successfully" : ((res as any).queued ? "Saved offline — will sync when back online" : "Created successfully"));
+      setDirty(false);
+      setOpen(false);
+      await load();
+    } catch (e: any) {
+      setSaving(false);
+      toast.error((editing ? "Update failed: " : "Create failed: ") + (e?.message ?? "Unknown error"));
+    }
   };
 
 
   const remove = async (r: any) => {
-    if (!confirm("Delete this record?")) return;
-    const { error } = await supabase.from(table as any).delete().eq("id", r.id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    load();
+    if (!confirm("Delete this record? This cannot be undone.")) return;
+    try {
+      const { error } = await supabase.from(table as any).delete().eq("id", r.id);
+      if (error) return toast.error("Delete failed: " + error.message);
+      toast.success("Deleted successfully");
+      await load();
+    } catch (e: any) {
+      toast.error("Delete failed: " + (e?.message ?? "Unknown error"));
+    }
   };
 
   const dtColumns: DTColumn<any>[] = useMemo(() => {
@@ -477,7 +512,7 @@ export function SimpleCrud({
       {headerExtra}
       {module && <SifoModuleAI module={module} />}
       {exportable && <ExportMenu rows={exportRows} filename={table} title={title} />}
-      <Button onClick={openNew} size="sm" className="h-9"><Plus className="h-4 w-4 mr-1.5" />New</Button>
+      <Button onClick={openNew} size="sm" className="h-9" title="Create new record (Ctrl+N)"><Plus className="h-4 w-4 mr-1.5" />New<span className="ml-2 hidden text-[10px] opacity-60 sm:inline">Ctrl+N</span></Button>
     </>
   );
 
@@ -489,8 +524,8 @@ export function SimpleCrud({
           module={module}
           icon={Icon}
           title={editing ? `Edit ${title}` : `New ${title}`}
-          subtitle={description}
-          onCancel={() => setOpen(false)}
+          subtitle={${description ?? ""}${dirty ? " · Unsaved changes" : ""}}
+          onCancel={() => { if (!dirty || confirm("Discard unsaved changes?")) setOpen(false); }}
           onSave={save}
           saving={saving}
           saveDisabled={!previewOk}
