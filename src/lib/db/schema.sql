@@ -1335,7 +1335,8 @@ CREATE TABLE IF NOT EXISTS "journal_entries" (
   "exchange_rate" REAL NOT NULL DEFAULT 1,
   "batch_id" TEXT,
   "attachment_url" TEXT,
-  "reversal_reason" TEXT
+  "reversal_reason" TEXT,
+  "reversed_by" TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "journal_lines" (
