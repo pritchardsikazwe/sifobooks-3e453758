@@ -9,6 +9,7 @@ import {
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { toast } from "sonner";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import { postSchoolFeePaymentToLedger } from "@/lib/operationalPosting";
 import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
