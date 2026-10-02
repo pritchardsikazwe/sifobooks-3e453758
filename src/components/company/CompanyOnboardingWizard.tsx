@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { getSolution, applyIndustrySolution } from "@/lib/industry-solutions";
 import { getIndustryStarter, INDUSTRY_STARTERS } from "@/lib/industry-starters";
@@ -47,7 +47,7 @@ const editionModules: Record<string, string[]> = {
   property: ["Accounting", "Invoicing", "Sales", "Property", "Customers & Suppliers", "Reports"],
 };
 
-const steps = [
+const baseSteps = [
   ["Welcome", "Start your SifoBooks setup"],
   ["Business Profile", "Tell us about your business"],
   ["Legal & Tax", "Business registration and tax"],
@@ -59,6 +59,10 @@ const steps = [
   ["Devices & Printing", "Set up your devices"],
   ["Finish", "Review and launch SifoBooks"],
 ] as const;
+
+// Display order follows the first-run flow: Welcome → Administrator → Business → Modules → Location → Tax → Accounting → Backup → Devices → Finish.
+const STEP_ORDER = [0, 6, 1, 3, 4, 2, 5, 7, 8, 9] as const;
+const steps = STEP_ORDER.map((i) => baseSteps[i]);
 
 const defaultForm = (): Form => {
   const starter = getIndustryStarter(SIFOBOOKS_EDITION);
@@ -140,7 +144,7 @@ export function CompanyOnboardingWizard() {
     true,
     true,
     true,
-  ][step];
+  ][STEP_ORDER[step]];
 
   const toggleModule = (module: string) => {
     setForm(prev => ({ ...prev, modules: prev.modules.includes(module) ? prev.modules.filter(x => x !== module) : [...prev.modules, module] }));
@@ -338,7 +342,7 @@ export function CompanyOnboardingWizard() {
   };
 
   const renderStep = () => {
-    switch (step) {
+    switch (STEP_ORDER[step]) {
       case 0: return (
         <div className="grid gap-6 md:grid-cols-[1.1fr_.9fr] items-center">
           <div>
@@ -354,6 +358,13 @@ export function CompanyOnboardingWizard() {
               ].map(([I, text]) => <div key={text as string} className="flex items-center gap-2 text-sm text-slate-700"><I className="h-4 w-4 text-emerald-700" /><span>{text as string}</span></div>)}
             </div>
             <div className="mt-6 flex items-center gap-2 text-xs text-slate-500"><Clock3 className="h-4 w-4" /> Estimated setup time: 5–10 minutes</div>
+            <ul className="mt-5 space-y-1 text-sm text-slate-700">{["Create your business","Set up your accounting","Choose your business modules","Import or create your products/customers","Start using SifoBooks"].map((t, i) => <li key={t} className="flex gap-2"><span className="font-bold text-emerald-700">{i + 1}.</span>{t}</li>)}</ul>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 text-xs">
+              <div className={`rounded-xl border p-3 ${desktopMode ? "border-emerald-500 bg-emerald-50" : ""}`}><div className="font-bold text-slate-900">Windows Standalone</div><div className="mt-1 text-slate-600">Local database → works offline → local company data → optional cloud sync</div></div>
+              <div className={`rounded-xl border p-3 ${!desktopMode ? "border-emerald-500 bg-emerald-50" : ""}`}><div className="font-bold text-slate-900">SifoBooks Cloud</div><div className="mt-1 text-slate-600">Online database → multiple users and branches → access from anywhere</div></div>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">You can start on Windows and activate cloud services later.</p>
+            <div className="mt-5 flex flex-wrap gap-2"><Button onClick={() => setStep(1)} className="bg-emerald-800 hover:bg-emerald-900">Start Setup <ArrowRight className="ml-2 h-4 w-4" /></Button><Button variant="outline" asChild><Link to="/demo">Explore Demo</Link></Button></div>
           </div>
           <div className="hidden md:flex min-h-[300px] rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-800 to-emerald-700 items-end justify-center p-8 overflow-hidden">
             <div className="rounded-2xl border border-white/20 bg-white/10 p-8 text-center text-white backdrop-blur"><Building2 className="mx-auto h-16 w-16 text-amber-300" /><div className="mt-4 text-xl font-bold">{SIFOBOOKS_PRODUCT_NAME}</div><div className="text-sm text-emerald-100">{desktopMode ? "Standalone Windows Edition" : "Cloud Edition"}</div></div>
@@ -461,6 +472,8 @@ export function CompanyOnboardingWizard() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[
             ["Business", form.name || "—"], ["Edition", SIFOBOOKS_EDITION_LABEL[SIFOBOOKS_EDITION]], ["Location", form.branchName || "—"], ["Currency", form.currency], ["Accounting Year", form.financialYear], ["VAT Registered", form.vatRegistered ? "Yes" : "No"], ["Modules", form.modules.length + " enabled"], ["Database", desktopMode ? "Local SQLite" : "Cloud"], ["Backup", form.backupEnabled ? `${form.backupFrequency} (${form.backupRetention})` : "Disabled"], ["Administrator", form.adminName || "—"],
           ].map(([k,v]) => <div key={k} className="rounded-xl border bg-white p-4"><div className="text-xs text-slate-500">{k}</div><div className="mt-1 font-semibold text-slate-900">{v}</div></div>)}</div>
+          <div className="rounded-xl border bg-white p-4 text-sm"><div className="font-semibold text-slate-900">Next, after you open SifoBooks</div><div className="mt-2 flex flex-wrap gap-2"><Button variant="outline" size="sm" asChild><Link to="/users">Add users</Link></Button><Button variant="outline" size="sm" asChild><Link to="/import">Import data</Link></Button></div></div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><div className="font-semibold">Want to learn first?</div><p className="mt-1">Sample data opens in a separate demo company and never mixes with your real company.</p><Button variant="outline" size="sm" className="mt-2" asChild><Link to="/demo">Start with Sample Data</Link></Button></div>
         </div>
       );
     }
