@@ -682,9 +682,9 @@ function executeRestaurantCheckout(args: Record<string, any>) {
 
     if (existingOrder) {
       db.prepare(
-        "UPDATE restaurant_orders SET business_date=?,table_id=?,order_type=?,guests=?,subtotal=?,discount=?,tax=?,service_charge=?,gratuity=?,delivery_fee=?,total=?,server_name=?,customer_name=?,status='paid',payment_method=?,amount_paid=?,closed_at=?,journal_entry_id=NULL WHERE id=? AND user_id=?",
+        "UPDATE restaurant_orders SET client_ref=?,business_date=?,table_id=?,order_type=?,guests=?,subtotal=?,discount=?,tax=?,service_charge=?,gratuity=?,delivery_fee=?,total=?,server_name=?,customer_name=?,status='paid',payment_method=?,amount_paid=?,closed_at=?,journal_entry_id=NULL WHERE id=? AND user_id=?",
       ).run(
-        businessDate, sale.table_id ?? existingOrder.table_id ?? null, sale.order_type ?? existingOrder.order_type ?? "DINE-IN",
+        clientRef, businessDate, sale.table_id ?? existingOrder.table_id ?? null, sale.order_type ?? existingOrder.order_type ?? "DINE-IN",
         Number(sale.guests || existingOrder.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
         sale.server_name ?? existingOrder.server_name ?? null, sale.customer_name ?? existingOrder.customer_name ?? null,
         paymentRows.length === 1 ? paymentRows[0].method : "split", total, new Date().toISOString(), existingOrder.id, uid,
@@ -695,9 +695,9 @@ function executeRestaurantCheckout(args: Record<string, any>) {
       orderNo = existingOrder.order_no;
     } else {
       db.prepare(
-        "INSERT INTO restaurant_orders (id,user_id,order_no,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       ).run(
-        orderId, uid, orderNo, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
+        orderId, uid, orderNo, clientRef, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
         Number(sale.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
         sale.server_name ?? null, sale.customer_name ?? null, "paid",
         paymentRows.length === 1 ? paymentRows[0].method : "split", total,

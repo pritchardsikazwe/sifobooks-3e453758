@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, HelpCircle, Search, Settings2, Wifi } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bell, HelpCircle, Search, Settings2, Wifi, Database, FlaskConical } from "lucide-react";
+import { isStandaloneDemoModeEnabled, setStandaloneDemoMode } from "@/lib/standalone-demo";
 import { cn } from "@/lib/utils";
 
 export type StandaloneNavItem = { label: string; to: string; active?: boolean };
@@ -21,6 +23,18 @@ export function SifoStandaloneFrame({
   children: React.ReactNode;
   className?: string;
 }) {
+  const [demoMode, setDemoMode] = useState(false);
+  useEffect(() => setDemoMode(isStandaloneDemoModeEnabled()), []);
+
+  const toggleDemoMode = () => {
+    const next = !demoMode;
+    setStandaloneDemoMode(next);
+    setDemoMode(next);
+    if (next) {
+      window.location.reload();
+    }
+  };
+
   return (
     <div className={cn("min-h-screen bg-[#F5FAF8] text-[#173B3A]", className)}>
       <header className="sticky top-0 z-30 border-b border-[#DCE9E5] bg-white/95 backdrop-blur">
@@ -39,7 +53,11 @@ export function SifoStandaloneFrame({
             </div>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="hidden items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 sm:flex"><Wifi className="h-3.5 w-3.5" /> Online</span>
+            <span className="hidden items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 sm:flex"><Database className="h-3.5 w-3.5" /> Local / Offline Ready</span>
+            <button onClick={toggleDemoMode} title={demoMode ? "Demo Mode is enabled" : "Enable demo data"} className={cn(
+              "hidden items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-bold sm:flex",
+              demoMode ? "border-amber-300 bg-amber-50 text-amber-800" : "border-[#DCE9E5] bg-white text-[#5F7772]"
+            )}><FlaskConical className="h-3.5 w-3.5" /> {demoMode ? "Demo Mode" : "Demo Data"}</button>
             <button className="grid h-9 w-9 place-items-center rounded-lg border bg-white text-[#5F7772] hover:bg-[#F5FAF8]" aria-label="Notifications"><Bell className="h-4 w-4" /></button>
             <button className="grid h-9 w-9 place-items-center rounded-lg border bg-white text-[#5F7772] hover:bg-[#F5FAF8]" aria-label="Help"><HelpCircle className="h-4 w-4" /></button>
             <button className="grid h-9 w-9 place-items-center rounded-lg border bg-white text-[#5F7772] hover:bg-[#F5FAF8]" aria-label="Settings"><Settings2 className="h-4 w-4" /></button>
