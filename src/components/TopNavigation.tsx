@@ -146,6 +146,11 @@ export function TopNavigation() {
       <div className="mx-auto flex h-10 max-w-[1800px] items-stretch overflow-x-auto no-scrollbar">
         {menus.map(menu => {
           const active = menu.items.some(i => pathname === i.url || pathname.startsWith(i.url + "/"));
+          const columnBreak = Math.ceil(menu.items.length / 2);
+          const columns = [
+            menu.items.slice(0, columnBreak),
+            menu.items.slice(columnBreak),
+          ].filter(column => column.length > 0);
           return (
             <DropdownMenu key={menu.label}>
               <DropdownMenuTrigger asChild>
@@ -165,37 +170,44 @@ export function TopNavigation() {
               <DropdownMenuContent
                 align="start"
                 sideOffset={1}
-                className="z-50 w-[min(560px,calc(100vw-16px))] rounded-md border-border bg-popover p-1.5 shadow-elevated"
+                className="z-50 w-[min(640px,calc(100vw-16px))] rounded-md border-border bg-popover p-1.5 shadow-elevated"
               >
                 <DropdownMenuLabel className="px-2.5 py-2 text-xs font-semibold text-foreground">
                   {menu.label}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-2">
-                  {menu.items.map(item => {
-                    const ItemIcon = iconFor(item.iconName);
-                    const itemActive = pathname === item.url || pathname.startsWith(item.url + "/");
-                    return (
-                      <DropdownMenuItem
-                        key={item.url}
-                        asChild
-                        className={cn(
-                          "cursor-pointer rounded px-2.5 py-2 focus:bg-muted",
-                          itemActive && "bg-muted text-primary"
-                        )}
-                      >
-                        <Link to={item.url} className="flex min-w-0 items-start gap-2.5">
-                          <ItemIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                          <span className="min-w-0">
-                            <span className="block truncate text-xs font-medium text-popover-foreground">{item.title}</span>
-                            {item.hint && (
-                              <span className="mt-0.5 block line-clamp-1 text-[10px] leading-4 text-muted-foreground">{item.hint}</span>
+                <div className={cn("grid gap-x-2", columns.length > 1 && "grid-cols-2")}>
+                  {columns.map((column, columnIndex) => (
+                    <div
+                      key={`${menu.label}-${columnIndex}`}
+                      className={cn("flex min-w-0 flex-col gap-0.5", columnIndex > 0 && "border-l border-border pl-2")}
+                    >
+                      {column.map(item => {
+                        const ItemIcon = iconFor(item.iconName);
+                        const itemActive = pathname === item.url || pathname.startsWith(item.url + "/");
+                        return (
+                          <DropdownMenuItem
+                            key={item.url}
+                            asChild
+                            className={cn(
+                              "min-h-11 cursor-pointer rounded px-2.5 py-2 focus:bg-muted",
+                              itemActive && "bg-muted text-primary"
                             )}
-                          </span>
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                          >
+                            <Link to={item.url} className="flex min-w-0 items-start gap-2.5">
+                              <ItemIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                              <span className="min-w-0">
+                                <span className="block text-xs font-medium leading-4 text-popover-foreground">{item.title}</span>
+                                {item.hint && (
+                                  <span className="mt-0.5 block line-clamp-2 text-[10px] leading-4 text-muted-foreground">{item.hint}</span>
+                                )}
+                              </span>
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
