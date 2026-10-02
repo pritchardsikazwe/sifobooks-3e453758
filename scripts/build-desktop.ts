@@ -232,12 +232,19 @@ async function smokeTestWindowsExecutable() {
   if (process.platform !== "win32") return;
 
   console.log("\\nWindows runtime smoke test: starting compiled executable...\\n");
-  const smokeData = join(OUT_DIR, ".smoke-data");
+  // The smoke test runs with the packaged directory as its cwd. exePath is
+  // relative to the repository root, so passing it directly to spawn would
+  // resolve to desktop-dist\\desktop-dist\\<exe>.exe on Windows.
+  const smokeData = join(process.cwd(), OUT_DIR, ".smoke-data");
+  const executablePath = join(process.cwd(), exePath);
+  if (!existsSync(executablePath)) {
+    throw new Error("Compiled Windows executable was not found at " + executablePath);
+  }
   rmSync(smokeData, { recursive: true, force: true });
   mkdirSync(smokeData, { recursive: true });
 
   const smokePort = "38123";
-  const child = Bun.spawn([exePath], {
+  const child = Bun.spawn([executablePath], {
     cwd: OUT_DIR,
     env: {
       ...process.env,
