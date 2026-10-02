@@ -19,6 +19,7 @@ import { EntitySelector, type EntityOption } from "@/components/selectors/Entity
 import { PostingPreview, isBalanced, type PreviewLine } from "@/components/PostingPreview";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { SifoPage } from "@/components/sifo";
 import { SifoStatusBadge } from "@/components/sifo/SifoStatusBadge";
 import { SifoModuleAI } from "@/components/sifo/SifoModuleAI";
 import { MODULE_THEMES, type ModuleKey } from "@/lib/module-theme";
@@ -506,7 +507,7 @@ export function SimpleCrud({
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
+    <SifoPage className="space-y-4">
       {module ? (
         <SifoModuleHeader
           module={module}
@@ -565,7 +566,7 @@ export function SimpleCrud({
       />
 
       <LedgerImpactSheet target={ledger} onOpenChange={o => { if (!o) setLedger(null); }} />
-    </div>
+    </SifoPage>
   );
 }
 
