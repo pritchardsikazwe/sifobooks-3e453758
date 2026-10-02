@@ -11,7 +11,7 @@ const COLOR: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/_authenticated/suppliers")({
-  head: () => ({ meta: [{ title: "Suppliers — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Suppliers — SifoBooks" }, { name: "description", content: "Manage suppliers and purchasing contacts in SifoBooks." }, { property: "og:title", content: "Suppliers — SifoBooks" }, { property: "og:description", content: "Manage suppliers and purchasing contacts in SifoBooks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <SimpleCrud
       module="purchases"

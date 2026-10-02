@@ -3,12 +3,13 @@ import { cn } from "@/lib/utils";
 
 /** Card shell used for every dashboard widget and module panel. */
 export function SifoPanel({
-  title, subtitle, action, module, children, className, bodyClassName,
+  title, subtitle, action, module, icon: Icon, children, className, bodyClassName,
 }: {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
   module?: ModuleKey;
+  icon?: any;
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
@@ -20,7 +21,7 @@ export function SifoPanel({
       {(title || action) && (
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="min-w-0">
-            {title && <div className="truncate text-sm font-semibold text-foreground">{title}</div>}
+            {title && <div className="flex items-center gap-2 truncate text-sm font-semibold text-foreground">{Icon && <Icon className={cn("h-4 w-4 shrink-0", theme?.text ?? "text-primary")} />}{title}</div>}
             {subtitle && <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{subtitle}</div>}
           </div>
           {action}

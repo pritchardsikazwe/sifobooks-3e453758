@@ -9,3 +9,4 @@ Folder rules: src/lib/db/AGENTS.md (databases, Windows sync), src/lib/zra/AGENTS
 - Inactive modules are wrapped in ModuleGate; never create placeholder tables. Why: no screen guaranteed to fail, no fake models.
 - VAT/Turnover Tax maths live in src/lib/tax-reports.ts. Why: identical on web and Windows.
 - Till sale numbers come only from next_doc_number('POS') inside pos_checkout (advisory lock); terminal numbers ignored. Why: unique, restart-safe, no renumbering.
+- Core workspace UI composes `src/components/sifo/*`, shadcn controls, and `DataTable`; avoid page-local visual systems. Why: one SifoBooks 2026 source of truth.

@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Boxes, PackageCheck, PackageX, AlertTriangle, Layers, Coins, ScanLine, Plus,
-  Warehouse as WarehouseIcon, ArrowDownRight, ArrowUpRight, Search, Sparkles,
+  Warehouse as WarehouseIcon, ArrowDownRight, ArrowUpRight, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 } from "@/lib/inventory";
 import { toast } from "sonner";
 import { SifoHubTabs } from "@/components/sifo/SifoHubTabs";
+import { SifoFilterBar, SifoKpiCard, SifoModuleHeader, SifoPage, SifoPanel } from "@/components/sifo";
 
 type SearchParams = { q?: string; warehouse?: string; category?: string; status?: string };
 
@@ -36,6 +37,9 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
       { name: "description", content: "Live stock on hand, warehouse valuation and reorder attention across your SifoBooks inventory." },
       { property: "og:title", content: "Inventory Dashboard — SifoBooks" },
       { property: "og:description", content: "Live stock on hand, warehouse valuation and reorder attention." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: InventoryDashboard,
@@ -119,15 +123,9 @@ function InventoryDashboard() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 space-y-5">
+    <SifoPage>
       <SifoHubTabs hub="inventory" active="/inventory" />
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
-          <p className="text-sm text-muted-foreground">Live stock on hand, valuation and reorder attention.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <SifoModuleHeader module="inventory" icon={Boxes} title="Inventory" description="Live stock on hand, valuation and reorder attention." breadcrumbs={[{ label: "Inventory" }]} actions={<>
           <ExportMenu
             rows={rows.map((r) => ({
               SKU: r.sku, Item: r.name, Category: r.category, Warehouse: r.warehouse_name, Bin: r.bin,
@@ -150,34 +148,22 @@ function InventoryDashboard() {
           <Button asChild size="sm" variant="save" className="gap-1.5">
             <Link to="/stock"><Plus className="h-4 w-4" /> New transaction</Link>
           </Button>
-        </div>
-      </div>
+        </>} />
 
       {/* KPI cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
-        <Kpi label="Total items" value={String(kpis.totalItems)} icon={<Boxes className="h-4 w-4" />} onClick={() => setParam({ status: "all" })} />
-        <Kpi label="Stock value" value={fmtMoney(kpis.stockValue)} icon={<Coins className="h-4 w-4" />} to="/reports/inventory-valuation" />
-        <Kpi label="Available" value={kpis.available.toLocaleString()} icon={<PackageCheck className="h-4 w-4" />} onClick={() => setParam({ status: "in_stock" })} />
-        <Kpi label="Reserved" value={kpis.reserved.toLocaleString()} icon={<Layers className="h-4 w-4" />} onClick={() => setParam({ status: "all" })} />
-        <Kpi label="Low stock" value={String(kpis.low + kpis.critical)} tone="warn" icon={<AlertTriangle className="h-4 w-4" />} onClick={() => setParam({ status: "reorder" })} />
-        <Kpi label="Out of stock" value={String(kpis.out)} tone="bad" icon={<PackageX className="h-4 w-4" />} onClick={() => setParam({ status: "out" })} />
+        <SifoKpiCard module="inventory" label="Total items" value={String(kpis.totalItems)} icon={Boxes} />
+        <SifoKpiCard module="inventory" label="Stock value" value={fmtMoney(kpis.stockValue)} icon={Coins} to="/reports/inventory-valuation" />
+        <SifoKpiCard module="inventory" label="Available" value={kpis.available.toLocaleString()} icon={PackageCheck} />
+        <SifoKpiCard module="inventory" label="Reserved" value={kpis.reserved.toLocaleString()} icon={Layers} />
+        <SifoKpiCard module="inventory" label="Low stock" value={String(kpis.low + kpis.critical)} icon={AlertTriangle} positive={false} />
+        <SifoKpiCard module="inventory" label="Out of stock" value={String(kpis.out)} icon={PackageX} positive={false} />
       </div>
 
       {/* Grid + side panels */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-            <div className="relative min-w-[220px] flex-1">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-8 h-9"
-                placeholder="Search SKU, barcode or item..."
-                value={term}
-                onChange={(e) => setTerm(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") setParam({ q: term || undefined }); }}
-                onBlur={() => setParam({ q: term || undefined })}
-              />
-            </div>
+          <SifoFilterBar search={term} onSearchChange={setTerm} searchPlaceholder="Search SKU, barcode or item…" filters={<>
             <Select value={search.warehouse ?? "all"} onValueChange={(v) => setParam({ warehouse: v })}>
               <SelectTrigger className="h-9 w-[170px]"><SelectValue placeholder="Warehouse" /></SelectTrigger>
               <SelectContent>
@@ -205,7 +191,7 @@ function InventoryDashboard() {
                 <SelectItem value="reorder">Needs reorder</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </>} />
 
           <DataTable
             data={rows}
@@ -228,7 +214,7 @@ function InventoryDashboard() {
         </div>
 
         <div className="space-y-4">
-          <Panel title="Warehouse stock value" icon={<WarehouseIcon className="h-4 w-4" />}>
+          <SifoPanel module="inventory" title="Warehouse stock value" icon={WarehouseIcon}>
             {whValues.length === 0 && <p className="text-sm text-muted-foreground">No stock recorded yet.</p>}
             {whValues.map((w) => {
               const pct = totalValue > 0 ? (w.value / totalValue) * 100 : 0;
@@ -249,16 +235,16 @@ function InventoryDashboard() {
                 </button>
               );
             })}
-          </Panel>
+          </SifoPanel>
 
-          <Panel title="Reorder attention" icon={<AlertTriangle className="h-4 w-4" />}>
+          <SifoPanel module="inventory" title="Reorder attention" icon={AlertTriangle}>
             <ReorderRow label="Critical" count={kpis.critical} tone="text-destructive" onClick={() => setParam({ status: "critical" })} />
             <ReorderRow label="Low stock" count={kpis.low} tone="text-amber-600" onClick={() => setParam({ status: "low" })} />
             <ReorderRow label="Out of stock" count={kpis.out} tone="text-destructive" onClick={() => setParam({ status: "out" })} />
             <ReorderRow label="Overstock" count={kpis.overstock} tone="text-sky-600" onClick={() => setParam({ status: "overstock" })} />
-          </Panel>
+          </SifoPanel>
 
-          <Panel title="Recent inventory activity" icon={<Sparkles className="h-4 w-4" />}>
+          <SifoPanel module="inventory" title="Recent inventory activity" icon={Sparkles}>
             {activity.length === 0 && <p className="text-sm text-muted-foreground">No stock movements yet.</p>}
             {activity.map((m) => {
               const inbound = Number(m.quantity) >= 0;
@@ -278,7 +264,7 @@ function InventoryDashboard() {
                 </div>
               );
             })}
-          </Panel>
+          </SifoPanel>
         </div>
       </div>
 
@@ -348,35 +334,7 @@ function InventoryDashboard() {
           </Tabs>
         )}
       </DetailDrawer>
-    </div>
-  );
-}
-
-function Kpi({ label, value, icon, tone, onClick, to }: {
-  label: string; value: string; icon: React.ReactNode;
-  tone?: "warn" | "bad"; onClick?: () => void; to?: string;
-}) {
-  const body = (
-    <div className="rounded-xl border bg-card p-4 text-left transition-shadow hover:shadow-md">
-      <div className="flex items-center justify-between text-muted-foreground">
-        <span className="text-xs font-medium">{label}</span>
-        <span className={tone === "bad" ? "text-destructive" : tone === "warn" ? "text-amber-600" : "text-primary"}>{icon}</span>
-      </div>
-      <div className="mt-2 text-xl font-semibold tracking-tight tabular-nums">{value}</div>
-    </div>
-  );
-  if (to) return <Link to={to as any} className="block">{body}</Link>;
-  return <button type="button" onClick={onClick} className="block w-full">{body}</button>;
-}
-
-function Panel({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-        <span className="text-primary">{icon}</span>{title}
-      </div>
-      <div className="space-y-1">{children}</div>
-    </div>
+    </SifoPage>
   );
 }
 
