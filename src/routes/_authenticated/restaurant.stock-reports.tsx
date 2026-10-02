@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { printCurrentView } from "@/services/printDocument";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3, Boxes, Download, FileText, Printer, RefreshCw, Search,
@@ -375,7 +376,7 @@ function RestaurantStockReports() {
     return movementRows.map(x => ({ Date:x.date,SKU:x.sku,Item:x.item,Warehouse:x.warehouse,Type:x.type,Reference:x.reference,Direction:x.direction,Quantity:x.qty,"Unit Cost":x.unitCost,Value:x.value,Note:x.note }));
   }, [tab, filteredItems, warehouseMap, movementRows, recipeRows]);
 
-  const printReport = () => window.print();
+  const printReport = () => void printCurrentView("Stock report");
 
   return (
     <div className="stock-reports-2026 space-y-5">

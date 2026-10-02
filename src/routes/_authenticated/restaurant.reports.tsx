@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { printCurrentView } from "@/services/printDocument";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -285,7 +286,7 @@ function RestaurantReportsLegacy() {
             </div>
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search report data" className="w-52 print:hidden" />
             <Button variant="outline" onClick={downloadCsv(exportRows, report, from, to)}><Download className="mr-2 h-4 w-4" /> CSV</Button>
-            <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Print</Button>
+            <Button variant="outline" onClick={() => void printCurrentView("Restaurant report")}><Printer className="mr-2 h-4 w-4" /> Print</Button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">

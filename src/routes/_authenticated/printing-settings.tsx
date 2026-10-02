@@ -120,7 +120,15 @@ function PrintingSettings() {
 
   const test = async (name: string) => {
     const res = await printTestPage(name);
-    res.ok ? toast.success(`Test page sent to ${name}`) : toast.error(res.error ?? "Test print failed — job queued");
+    if (res.ok) return toast.success(`Test page sent to ${name}`);
+    // Name the failing layer so the operator knows what to fix.
+    const isBrowser = name === BROWSER_PRINTER;
+    const reason = !isBrowser && !online
+      ? "Printer helper is not running on this PC. Start SifoPrint on this computer, then try again."
+      : !isBrowser && !printers.some((p: any) => p.name === name)
+        ? `Printer "${name}" was not found on this PC. Check it is switched on and installed in Windows.`
+        : `The printer refused the job: ${res.error ?? "unknown error"}.`;
+    toast.error(`${reason} The test page is queued.`);
   };
 
   const pending = queue.filter((j) => j.status === "queued" || j.status === "retrying" || j.status === "failed");

@@ -1,8 +1,10 @@
 import { Printer, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { printCurrentView } from "@/services/printDocument";
 
 export function SifoPrintTools({ title = "Print document", className = "" }: { title?: string; className?: string }) {
-  const print = () => window.print();
+  // Silent print via the local agent; falls back to a saved PDF + queued job.
+  const print = () => void printCurrentView(title);
   return (
     <div className={`sifo-print-tools flex flex-wrap gap-2 ${className}`}>
       <Button type="button" variant="outline" size="sm" onClick={print}>

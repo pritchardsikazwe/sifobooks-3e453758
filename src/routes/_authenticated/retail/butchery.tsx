@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { printHtmlDocument } from "@/services/printDocument";
 import { ModuleGate } from "@/components/ModuleGate";
 import { useEffect, useMemo, useState } from "react";
 import { Beef, Scale, PackageCheck, Printer, RefreshCw, Wifi, WifiOff, Scissors, TrendingUp, AlertTriangle, Plus } from "lucide-react";
@@ -136,10 +137,8 @@ function ButcheryPage() {
 
   const printLabel = () => {
     if (!selected || !scale.weight) return toast.error("Select meat and capture a weight first");
-    const label = window.open("", "_blank", "width=420,height=600");
-    if (!label) return toast.error("Allow pop-ups to print labels");
-    label.document.write(`<html><head><title>SifoBooks Meat Label</title><style>body{font-family:Arial;padding:20px}.box{border:2px solid #111;padding:18px;width:300px}.big{font-size:28px;font-weight:700}.muted{color:#666}</style></head><body><div class="box"><div class="muted">SIFObooks RETAIL</div><h2>${selected.name}</h2><div class="big">${scale.weight.toFixed(3)} KG</div><p>Price/kg: K${price.toFixed(2)}</p><p class="big">K${saleTotal.toFixed(2)}</p><p class="muted">SKU: ${selected.sku || "N/A"}</p><p class="muted">Packed: ${new Date().toLocaleDateString("en-ZM")}</p></div><script>window.print();</script></body></html>`);
-    label.document.close();
+    const html = `<h2>${selected.name}</h2><p>${scale.weight.toFixed(3)} KG</p><p>Price/kg: K${price.toFixed(2)}</p><p>Total: K${saleTotal.toFixed(2)}</p><p>SKU: ${selected.sku || "N/A"}</p><p>Packed: ${new Date().toLocaleDateString("en-ZM")}</p>`;
+    void printHtmlDocument("SifoBooks Meat Label", html, `meat-label-${selected.sku || "item"}.pdf`);
   };
 
   return (
