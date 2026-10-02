@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
 
-export const Route = createFileRoute("/_authenticated/retail")({
+export const Route = createFileRoute("/_authenticated/retail/")({
   head: () => ({
     meta: [
       { title: "Retail Dashboard — SifoBooks" },
