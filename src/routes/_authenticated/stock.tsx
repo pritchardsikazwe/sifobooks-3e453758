@@ -302,7 +302,17 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [price, setPrice] = useState(0);
   const [qty, setQty] = useState(0);
   const [reorder, setReorder] = useState(0);
+  const [locations, setLocations] = useState<Array<{ id: string; name: string; is_default: boolean }>>([]);
+  const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase.from("inventory_locations").select("id,name,is_default").eq("is_active", true).order("is_default", { ascending: false }).order("name").then(({ data }: any) => {
+      const rows = data ?? [];
+      setLocations(rows);
+      setLocationId((current) => current || rows[0]?.id || "");
+    });
+  }, []);
 
   const pickHs = (code: string) => {
     setHsCode(code);
@@ -312,17 +322,31 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
   const submit = async () => {
     if (!name.trim()) return toast.error("Name is required");
+    if (qty > 0 && !locationId) return toast.error("Choose a stock location before recording opening stock");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
     const finalHs = hsMode === "list" ? (hsCode || null) : (customHs.trim() || null);
-    const { error } = await supabase.from("stock_items").insert({
+    const { data: created, error } = await supabase.from("stock_items").insert({
       user_id: u.user.id, name: name.trim(), sku: sku.trim() || null,
       hs_code: finalHs, tax_category: taxCategory, vat_rate: vatRate,
-      unit, cost_price: cost, sell_price: price, quantity_on_hand: qty, reorder_level: reorder,
-    });
+      unit, cost_price: cost, sell_price: price, quantity_on_hand: 0, reorder_level: reorder,
+    }).select("id").single();
+    if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
+    if (qty > 0) {
+      const reference = `OPEN-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(created.id).slice(0, 8).toUpperCase()}`;
+      const { error: openingError } = await supabase.from("stock_movements").insert({
+        user_id: u.user.id, item_id: created.id, movement_type: "opening", quantity: qty,
+        unit_cost: cost, total_cost: qty * cost, reference, note: "Opening stock", location_id: locationId,
+        source_type: "opening_stock", source_id: created.id, created_by: u.user.id,
+      });
+      if (openingError) {
+        await supabase.from("stock_items").delete().eq("id", created.id);
+        setSaving(false);
+        return toast.error(`Opening stock was not recorded: ${openingError.message}`);
+      }
+    }
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success("Item added");
     onCreated();
   };
@@ -384,6 +408,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         <SifoField label="Cost price"><Input type="number" min={0} step="0.01" value={cost} onChange={e => setCost(Number(e.target.value))} /></SifoField>
         <SifoField label="Sell price"><Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(Number(e.target.value))} /></SifoField>
         <SifoField label="Opening quantity"><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>
+        {qty > 0 && <SifoField label="Opening stock location" required><Select value={locationId} onValueChange={setLocationId}><SelectTrigger><SelectValue placeholder="Select store or warehouse" /></SelectTrigger><SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name}{location.is_default ? " (Default)" : ""}</SelectItem>)}</SelectContent></Select></SifoField>}
         <SifoField label="Reorder level"><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></SifoField>
       </SifoFormSection>
     </SifoFormPage>
