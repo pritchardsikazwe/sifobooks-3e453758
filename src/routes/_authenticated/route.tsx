@@ -158,7 +158,10 @@ function Shell() {
                 <SifoAssistantButton />
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" title="Help" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end"><DropdownMenuLabel>Help</DropdownMenuLabel><DropdownMenuItem asChild><Link to="/demo">Demo Center</Link></DropdownMenuItem></DropdownMenuContent>
+                </DropdownMenu>
                 {canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>}
               </div>
               <DropdownMenu>

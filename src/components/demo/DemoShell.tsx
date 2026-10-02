@@ -12,6 +12,7 @@ export function DemoBanner() {
     <div className="sticky top-0 z-40 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-amber-500 px-4 py-2 text-center text-xs font-bold uppercase tracking-wide text-amber-950">
       <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> {DEMO_BANNER}</span>
       <span className="font-semibold normal-case tracking-normal">Nothing here is a real customer, and nothing you do can affect a real account.</span>
+      <Link to="/dashboard" className="rounded-md border border-current px-2 py-0.5 normal-case tracking-normal hover:bg-amber-400">Exit Demo — back to My Company</Link>
     </div>
   );
 }
