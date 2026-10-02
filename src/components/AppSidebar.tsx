@@ -260,6 +260,7 @@ export function AppSidebar() {
         ["/lending"],
         ["Lending", "Borrowers", "Loan Applications", "Repayments", "Collections", "Loan Portfolio", "Lending Reports"]
       )),
+      make("All Business Workspaces", industryItems.map(([title,url,icon]) => ({ title, url, icon: iconFor(icon) }))),
       make("Settings", byUrl(
         ["/modules", "/subscription", "/learn"],
         ["Settings", "Modules", "Subscription", "Learn Centre", "New Company Setup", "Accounting Basics"]
