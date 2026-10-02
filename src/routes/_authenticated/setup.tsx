@@ -81,17 +81,17 @@ function SetupPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-10 h-auto p-1">
-          <TabsTrigger value="profile" className="gap-1"><Building2 className="h-3.5 w-3.5" /><span className="hidden md:inline">Profile</span></TabsTrigger>
-          <TabsTrigger value="companies" className="gap-1"><Building2 className="h-3.5 w-3.5" /><span className="hidden md:inline">Companies</span></TabsTrigger>
-          <TabsTrigger value="branches" className="gap-1"><MapPin className="h-3.5 w-3.5" /><span className="hidden md:inline">Branches</span></TabsTrigger>
-          <TabsTrigger value="departments" className="gap-1"><Users className="h-3.5 w-3.5" /><span className="hidden md:inline">Departments</span></TabsTrigger>
-          <TabsTrigger value="costs" className="gap-1"><Wallet className="h-3.5 w-3.5" /><span className="hidden md:inline">Cost Centres</span></TabsTrigger>
-          <TabsTrigger value="fy" className="gap-1"><CalendarRange className="h-3.5 w-3.5" /><span className="hidden md:inline">Financial Year</span></TabsTrigger>
-          <TabsTrigger value="tax" className="gap-1"><Percent className="h-3.5 w-3.5" /><span className="hidden md:inline">Tax</span></TabsTrigger>
-          <TabsTrigger value="positions" className="gap-1"><BriefcaseBusiness className="h-3.5 w-3.5" /><span className="hidden md:inline">Positions</span></TabsTrigger>
-          <TabsTrigger value="roles" className="gap-1"><ShieldCheck className="h-3.5 w-3.5" /><span className="hidden md:inline">Roles</span></TabsTrigger>
-          <TabsTrigger value="approvals" className="gap-1"><GitBranch className="h-3.5 w-3.5" /><span className="hidden md:inline">Approvals</span></TabsTrigger>
+        <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">
+          <TabsTrigger value="profile" className="shrink-0 gap-1.5 px-3"><Building2 className="h-3.5 w-3.5" /><span>Profile</span></TabsTrigger>
+          <TabsTrigger value="companies" className="shrink-0 gap-1.5 px-3"><Building2 className="h-3.5 w-3.5" /><span>Companies</span></TabsTrigger>
+          <TabsTrigger value="branches" className="shrink-0 gap-1.5 px-3"><MapPin className="h-3.5 w-3.5" /><span>Branches</span></TabsTrigger>
+          <TabsTrigger value="departments" className="shrink-0 gap-1.5 px-3"><Users className="h-3.5 w-3.5" /><span>Departments</span></TabsTrigger>
+          <TabsTrigger value="costs" className="shrink-0 gap-1.5 px-3"><Wallet className="h-3.5 w-3.5" /><span>Cost Centres</span></TabsTrigger>
+          <TabsTrigger value="fy" className="shrink-0 gap-1.5 px-3"><CalendarRange className="h-3.5 w-3.5" /><span>Financial Year</span></TabsTrigger>
+          <TabsTrigger value="tax" className="shrink-0 gap-1.5 px-3"><Percent className="h-3.5 w-3.5" /><span>Tax</span></TabsTrigger>
+          <TabsTrigger value="positions" className="shrink-0 gap-1.5 px-3"><BriefcaseBusiness className="h-3.5 w-3.5" /><span>Positions</span></TabsTrigger>
+          <TabsTrigger value="roles" className="shrink-0 gap-1.5 px-3"><ShieldCheck className="h-3.5 w-3.5" /><span>Roles</span></TabsTrigger>
+          <TabsTrigger value="approvals" className="shrink-0 gap-1.5 px-3"><GitBranch className="h-3.5 w-3.5" /><span>Approvals</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-4"><ProfileTab company={company} onSaved={setCompany} /></TabsContent>
