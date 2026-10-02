@@ -7,7 +7,10 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { ExportMenu } from "@/lib/exports";
 import { fmtMoney } from "@/lib/format";
 import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Eye, Printer } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { printReceipt } from "@/services/universalPrintService";
+import { toast } from "sonner";
 import { SifoModuleHeader, SifoPage, SifoStatusBadge } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/pos-sales")({
@@ -40,6 +43,37 @@ function PosSales() {
   const [to, setTo] = useState(iso(new Date()));
   const [onlyUnposted, setOnlyUnposted] = useState(false);
   const [target, setTarget] = useState<LedgerTarget | null>(null);
+  const [view, setView] = useState<{ sale: Sale; items: any[]; payments: any[] } | null>(null);
+
+  const openReceipt = async (sale: Sale) => {
+    const [{ data: items }, { data: payments }] = await Promise.all([
+      supabase.from("pos_sale_items").select("*").eq("sale_id", sale.id),
+      supabase.from("pos_payments").select("*").eq("sale_id", sale.id),
+    ]);
+    setView({ sale, items: items ?? [], payments: payments ?? [] });
+  };
+
+  const reprint = async () => {
+    if (!view) return;
+    const { sale, items, payments } = view;
+    const paid = payments.reduce((s, p) => s + Number(p.amount ?? 0), 0);
+    const no = sale.sale_no ?? sale.id.slice(0, 8);
+    try {
+      const res = await printReceipt({
+        businessName: "SifoBooks",
+        receiptNumber: no,
+        date: sale.sold_at,
+        items: items.map(i => ({ name: i.name, quantity: Number(i.qty), price: Number(i.price), total: Number(i.line_total ?? Number(i.qty) * Number(i.price)) })),
+        subtotal: Number(sale.subtotal), discount: Number(sale.discount), tax: Number(sale.tax), total: Number(sale.total),
+        paymentMethod: payments.map(p => p.method).filter(Boolean).join(", ") || undefined,
+        amountPaid: paid || undefined,
+        change: paid ? Math.max(0, paid - Number(sale.total)) : undefined,
+        footer: "*** COPY — REPRINT ***",
+      }, undefined, 1, { jobId: `receipt-copy:${no}:${Date.now()}`, reference: no, openCashDrawer: false });
+      if (res?.ok === false) toast.warning(res.error ?? "Printer not reachable — saved to the print queue.");
+      else toast.success("Receipt copy sent to printer");
+    } catch (e: any) { toast.error(e?.message ?? "Reprint failed"); }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -80,6 +114,10 @@ function PosSales() {
     },
     {
       key: "actions", header: "", cell: r => (
+        <div className="flex justify-end gap-1">
+        <Button size="sm" variant="ghost" onClick={e => { e.stopPropagation(); openReceipt(r); }}>
+          <Eye className="mr-1 h-3.5 w-3.5" /> Receipt
+        </Button>
         <Button size="sm" variant="ghost" onClick={e => {
           e.stopPropagation();
           setTarget({
@@ -92,6 +130,7 @@ function PosSales() {
         }}>
           <BookOpen className="mr-1 h-3.5 w-3.5" /> Ledger
         </Button>
+        </div>
       ),
     },
   ];
@@ -133,6 +172,37 @@ function PosSales() {
             total: fmtMoney(rs.reduce((s, r) => s + Number(r.total ?? 0), 0)),
           })}
       />
+
+      <Dialog open={!!view} onOpenChange={o => { if (!o) setView(null); }}>
+        <DialogContent className="max-w-sm">
+          {view && <>
+            <DialogHeader><DialogTitle>Receipt {view.sale.sale_no ?? view.sale.id.slice(0, 8)}</DialogTitle></DialogHeader>
+            <div className="space-y-3 font-mono text-xs">
+              <div className="text-muted-foreground">{new Date(view.sale.sold_at).toLocaleString()} · {view.sale.customer_name || "Walk-in"}</div>
+              <div className="divide-y divide-border border-y border-border">
+                {view.items.map((i, k) => (
+                  <div key={k} className="flex justify-between py-1.5">
+                    <span>{Number(i.qty)} × {i.name}</span>
+                    <span>{fmtMoney(Number(i.line_total ?? Number(i.qty) * Number(i.price)))}</span>
+                  </div>
+                ))}
+                {view.items.length === 0 && <div className="py-2 text-muted-foreground">No lines recorded.</div>}
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between"><span>Subtotal</span><span>{fmtMoney(Number(view.sale.subtotal))}</span></div>
+                {Number(view.sale.discount) > 0 && <div className="flex justify-between"><span>Discount</span><span>-{fmtMoney(Number(view.sale.discount))}</span></div>}
+                <div className="flex justify-between"><span>VAT</span><span>{fmtMoney(Number(view.sale.tax))}</span></div>
+                <div className="flex justify-between font-semibold"><span>Total</span><span>{fmtMoney(Number(view.sale.total))}</span></div>
+                {view.payments.map((p, k) => (
+                  <div key={k} className="flex justify-between text-muted-foreground"><span>{p.method ?? "Payment"}</span><span>{fmtMoney(Number(p.amount ?? 0))}</span></div>
+                ))}
+              </div>
+              {view.sale.status === "void" && <div className="text-destructive">VOID{view.sale.void_reason ? ` — ${view.sale.void_reason}` : ""}</div>}
+            </div>
+            <Button className="w-full" onClick={reprint}><Printer className="mr-2 h-4 w-4" /> Reprint (copy)</Button>
+          </>}
+        </DialogContent>
+      </Dialog>
 
       <LedgerImpactSheet target={target} onOpenChange={open => { if (!open) setTarget(null); }} />
     </SifoPage>
