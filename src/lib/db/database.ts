@@ -105,6 +105,59 @@ function initSchema(database: Database) {
       }
     }
   }
+
+  // Legacy-database repair: CREATE TABLE IF NOT EXISTS preserves an older
+  // table shape, so it cannot add columns introduced by a newer release.
+  // Reconcile additive columns before application queries run.
+  repairSchemaColumns(database, schema);
+}
+
+function repairSchemaColumns(database: Database, schema: string) {
+  const tableStatements = splitSqlStatements(schema).filter((statement) =>
+    /^\s*CREATE\s+TABLE\s+/i.test(statement),
+  );
+
+  for (const statement of tableStatements) {
+    const header = statement.match(/^\s*CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+["\`]?([A-Za-z0-9_]+)["\`]?\s*\(/i);
+    if (!header) continue;
+    const table = header[1];
+    const open = statement.indexOf("(");
+    const close = statement.lastIndexOf(")");
+    if (open < 0 || close <= open) continue;
+
+    const existing = new Set(getTableColumns(database, table));
+    if (!existing.size) continue;
+
+    const body = statement.slice(open + 1, close);
+    for (const rawLine of body.split(/\r?\n/)) {
+      const line = rawLine.trim().replace(/,$/, "").trim();
+      if (!line || /^(CONSTRAINT|PRIMARY\s+KEY|UNIQUE|FOREIGN\s+KEY|CHECK)\b/i.test(line)) continue;
+
+      const match = line.match(/^["\`]?([A-Za-z_][A-Za-z0-9_]*)["\`]?\s+(.+)$/);
+      if (!match) continue;
+
+      const name = match[1];
+      let definition = match[2];
+      if (existing.has(name)) continue;
+
+      // Avoid non-additive definitions that SQLite cannot safely append.
+      if (/\bPRIMARY\s+KEY\b|\bUNIQUE\b|\bGENERATED\s+ALWAYS\b/i.test(definition)) continue;
+      if (/\bNOT\s+NULL\b/i.test(definition) && !/\bDEFAULT\b/i.test(definition)) continue;
+      if (/\bDEFAULT\s+(CURRENT_TIME|CURRENT_DATE|CURRENT_TIMESTAMP)\b/i.test(definition)) continue;
+      if (/\bREFERENCES\b/i.test(definition) && !/\bDEFAULT\b/i.test(definition)) definition += " DEFAULT NULL";
+
+      try {
+        database.exec("ALTER TABLE \"" + table + "\" ADD COLUMN \"" + name + "\" " + definition + ";");
+        existing.add(name);
+        console.info("[db] Legacy schema repaired: " + table + "." + name);
+      } catch (error: any) {
+        const message = String(error?.message || "");
+        if (!/duplicate column|already exists/i.test(message)) {
+          console.error("[db] Legacy schema repair failed: " + table + "." + name + ":", message.slice(0, 200));
+        }
+      }
+    }
+  }
 }
 
 export function generateUUID(): string {
