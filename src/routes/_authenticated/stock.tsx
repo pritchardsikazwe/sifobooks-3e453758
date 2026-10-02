@@ -118,21 +118,6 @@ function StockPage() {
   const outOfStock = items.filter(i => Number(i.quantity_on_hand) <= 0).length;
   const categoryCount = categories.length;
 
-  if (openNew) {
-    return (
-      <div className="p-4 sm:p-6">
-        <NewItemForm onCancel={() => setOpenNew(false)} onCreated={() => { setOpenNew(false); load(); }} />
-      </div>
-    );
-  }
-  if (moveFor) {
-    return (
-      <div className="p-4 sm:p-6">
-        <MovementForm item={moveFor} onCancel={() => setMoveFor(null)} onSaved={() => { setMoveFor(null); load(); }} />
-      </div>
-    );
-  }
-
   return (
     <SifoPage>
       <SifoHubTabs hub="inventory" active="/stock" />
