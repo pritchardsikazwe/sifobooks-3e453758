@@ -248,7 +248,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [locations, setLocations] = useState<Array<{ id: string; name: string; is_default: boolean }>>([]);
   const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [itemType, setItemType] = useState("stock");
+  const [itemType, setItemType] = useState("product");
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -263,7 +263,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [trackExpiry, setTrackExpiry] = useState(false);
   const { accounts, defaultFor } = useCoaAccounts();
   const [acct, setAcct] = useState<Record<string, string | null>>({});
-  const isStock = itemType === "stock";
+  const isStock = itemType === "product";
 
   useEffect(() => {
     if (!accounts.length) return;
@@ -391,7 +391,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
           <Select value={itemType} onValueChange={setItemType}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="stock">Stock item (tracked quantity)</SelectItem>
+              <SelectItem value="product">Stock item (tracked quantity)</SelectItem>
               <SelectItem value="non_stock">Non-stock item</SelectItem>
               <SelectItem value="service">Service</SelectItem>
             </SelectContent>
