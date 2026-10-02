@@ -361,6 +361,9 @@ function runCompatibilityMigrations(database: Database) {
       "amount_paid REAL NOT NULL DEFAULT 0",
       "journal_entry_id TEXT",
       "void_reason TEXT",
+      // Idempotent restaurant checkout reference used by the atomic POS
+      // checkout engine. NULL keeps legacy/manual orders fully compatible.
+      "client_ref TEXT",
     ],
     restaurant_tables: [
       "shape TEXT NOT NULL DEFAULT 'square'",
