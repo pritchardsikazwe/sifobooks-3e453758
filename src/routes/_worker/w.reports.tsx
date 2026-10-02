@@ -103,8 +103,8 @@ function RetailDay({ ctx, date, setDate }: { ctx: any; date: string; setDate: (v
     if (!ctx?.tenantId) return;
     void (async () => {
       setLoading(true);
-      const from = `${date}T00:00:00.000Z`;
-      const to = `${date}T23:59:59.999Z`;
+      const from = new Date(`${date}T00:00:00.000+02:00`).toISOString(); // Zambia (CAT, UTC+2) business day
+      const to = new Date(`${date}T23:59:59.999+02:00`).toISOString();
       let q = supabase
         .from("pos_sales")
         .select("id,sale_no,total,tax,discount,status,sold_at,created_by")

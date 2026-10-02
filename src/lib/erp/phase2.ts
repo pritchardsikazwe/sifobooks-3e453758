@@ -22,7 +22,7 @@ function taxFor(db:any,userId:string,companyId:string|null,code:string|undefined
   return row ?? {id:null,code:code||"standard",name:"Configured VAT",tax_type:"VAT",rate:rateFallback,category:"standard",inclusive_default:1,effective_from:date,zra_tax_code:null};
 }
 
-function ledger(db:any,args:any) {
+export function ledger(db:any,args:any) {
   db.prepare("INSERT INTO stock_movements (id,user_id,item_id,movement_type,quantity,unit_cost,reference,note,location_id) VALUES (?,?,?,?,?,?,?,?,?)")
     .run(generateUUID(),args.userId,args.itemId,args.movementType,args.quantity,args.unitCost,args.reference,args.note,args.locationId);
   const balance=db.prepare("SELECT * FROM stock_balances WHERE user_id=? AND item_id=? AND location_id=? LIMIT 1").get(args.userId,args.itemId,args.locationId) as any;
