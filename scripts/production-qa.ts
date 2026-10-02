@@ -20,7 +20,7 @@ requireText("Build", "scripts/build-desktop.ts", editions);
 requireText("Build", ".github/workflows/ci.yml", editions);
 requireText("Build", "package.json", ["build:desktop", "test", "qa:production"]);
 
-const core = ["dashboard.tsx","companies.tsx","chart-of-accounts.tsx","customers.tsx","suppliers.tsx","invoices.tsx","bills.tsx","journal-entries.tsx","posting-centre.tsx","audit-logs.tsx","reconciliation.tsx","pos.tsx","payroll.tsx","compliance.tsx","zra-smart-invoice.tsx","network-setup.tsx"];
+const core = ["dashboard.tsx","companies.tsx","chart-of-accounts.tsx","customers.tsx","suppliers.tsx","invoices.tsx","bills.tsx","journal-entries.tsx","posting-centre.tsx","audit-logs.tsx","reconciliation.tsx","pos.index.tsx","payroll.tsx","compliance.tsx","zra-smart-invoice.tsx","network-setup.tsx"];
 for (const route of core) requireFile("Core workflows", "src/routes/_authenticated/" + route);
 const reports = ["reports.trial-balance.tsx","reports.general-ledger.tsx","reports.pnl.tsx","reports.balance-sheet.tsx","reports.vat-return.tsx","reports.bank-reconciliation.tsx","reports.inventory-valuation.tsx","reports.stock-reconciliation.tsx","reports.pos-integrity.tsx","reports.payroll-summary.tsx"];
 for (const route of reports) requireFile("Reports", "src/routes/_authenticated/" + route);
@@ -29,7 +29,8 @@ const editionRoutes: Record<string,string[]> = {
  retail:["retail-control-center.tsx","retail-shift-control.tsx","pos.retail-command-center.tsx","inventory.reconciliation.tsx","stock-counts.tsx"],
  restaurant:["restaurant.tsx","restaurant.pos.tsx","restaurant.orders.tsx","restaurant.kitchen.tsx","restaurant.tables.tsx","restaurant.end-of-day.tsx","restaurant.reports.tsx"],
  hotel:["hotel.tsx","hotel/booking.tsx","hotel/front-desk.tsx","hotel/check-in-out.tsx","hotel/folios.tsx","hotel/housekeeping.tsx","hotel/night-audit.tsx","hotel/reports.tsx"],
- school:["school.tsx","school/students.tsx","school/admissions.tsx","school/attendance.tsx","school/fees.tsx","school/exams.tsx","school/report-cards.tsx","school/parent-portal.tsx"]
+ school:["school.tsx","school/students.tsx","school/admissions.tsx","school/attendance.tsx","school/fees.tsx","school/exams.tsx","school/report-cards.tsx","school/parent-portal.tsx"],
+ butchery:["retail.butchery-dashboard.tsx","retail.butchery-products.tsx","retail.butchery-receiving.tsx","retail.butchery-processing.tsx","retail.butchery-scale.tsx","retail.butchery-labels.tsx","retail.butchery-prices.tsx","retail.butchery-inventory.tsx","retail.butchery-sales.tsx","retail.butchery-reports.tsx","retail.butchery-invoice.tsx"]
 };
 for (const entry of Object.entries(editionRoutes)) for (const route of entry[1]) requireFile("Edition: " + entry[0], "src/routes/_authenticated/" + route);
 
