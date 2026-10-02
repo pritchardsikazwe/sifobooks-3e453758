@@ -23,7 +23,7 @@ export const PRICE_LEVELS: { key: PriceLevel; label: string; factor: number }[] 
 ];
 export const priceFactor = (level: PriceLevel) => PRICE_LEVELS.find((l) => l.key === level)?.factor ?? 1;
 
-export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; warehouse_id?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
+export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; track_stock?:boolean; warehouse_id?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
 export type PosCustomer = { id:string; name:string; phone:string|null; code:string|null; price_level?:PriceLevel };
 export type PosSettings = { show_images:boolean; show_stock:boolean; show_sku:boolean; products_per_row:number; enable_fast_sellers:boolean; enable_quick_qty:boolean; enable_quick_discounts:boolean; allow_price_change:boolean; allow_negative_stock:boolean; default_customer:string; default_price_level:PriceLevel; default_payment:string; tax_rate:number; tax_inclusive:boolean; auto_new_sale:boolean; auto_print_receipt:boolean; silent_print:boolean; receipt_footer:string|null };
 export const DEFAULT_SETTINGS: PosSettings = { show_images:true, show_stock:true, show_sku:true, products_per_row:4, enable_fast_sellers:true, enable_quick_qty:true, enable_quick_discounts:true, allow_price_change:true, allow_negative_stock:false, default_customer:"Walk-in Customer", default_price_level:"normal", default_payment:"cash", tax_rate:16, tax_inclusive:true, auto_new_sale:true, auto_print_receipt:false, silent_print:false, receipt_footer:null };
@@ -33,7 +33,7 @@ const n = (v:any) => Number(v ?? 0);
 
 export async function loadProducts(locationId?:string|null):Promise<PosProduct[]> {
   try {
-    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,item_type,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
+    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,track_stock,item_type,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
     if(error)throw error;
     const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??r.unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[];
     if(locationId){

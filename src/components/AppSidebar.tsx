@@ -168,7 +168,12 @@ export function AppSidebar() {
             hr_payroll: "hr_payroll",
           };
           const cap = capabilityByModule[item.module];
-          if (cap && !capabilities[cap]) continue;
+          // Inventory and Retail POS are core operational modules. They must
+          // remain visible even when a company is still classified as
+          // "general" or has not completed industry setup. Restaurant is also
+          // kept discoverable so an installed till cannot disappear from the
+          // sidebar because of an incomplete industry profile.
+          if (cap && !capabilities[cap] && !["inventory", "retail_pos", "restaurant"].includes(item.module)) continue;
 
           if (seen.has(item.url)) continue;
           seen.add(item.url);
@@ -239,6 +244,10 @@ export function AppSidebar() {
       make("Business Modules", byUrl(
         ["/school", "/hotel", "/property", "/public-services", "/restaurant", "/retail", "/industry"],
         ["School Management", "Hotel Management", "Property & Tenancy", "Public Services"]
+      )),
+      make("Lending", byUrl(
+        ["/lending"],
+        ["Lending", "Borrowers", "Loan Applications", "Repayments", "Collections", "Loan Portfolio", "Lending Reports"]
       )),
       make("Settings", byUrl(
         ["/modules", "/subscription", "/learn"],

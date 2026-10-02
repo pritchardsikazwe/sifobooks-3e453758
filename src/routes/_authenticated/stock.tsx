@@ -330,6 +330,9 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     const { data: created, error } = await supabase.from("stock_items").insert({
       user_id: u.user.id, name: name.trim(), sku: sku.trim() || null,
       hs_code: finalHs, tax_category: taxCategory, vat_rate: vatRate,
+      unit, base_unit: unit, sales_unit: unit, track_stock: 1,
+      cost_price: cost, sell_price: price, quantity_on_hand: qty, reorder_level: reorder,
+    });
       unit, cost_price: cost, sell_price: price, quantity_on_hand: 0, reorder_level: reorder,
     }).select("id").single();
     if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
@@ -560,6 +563,7 @@ function ImportCsvDialog({ open, setOpen, onImported }: { open: boolean; setOpen
       user_id: u.user!.id,
       name: r.name, sku: r.sku, hs_code: r.hs_code,
       tax_category: r.tax_category, vat_rate: r.vat_rate, unit: r.unit,
+      base_unit: r.unit || "each", sales_unit: r.unit || "each", track_stock: 1,
       cost_price: r.cost_price, sell_price: r.sell_price,
       quantity_on_hand: r.quantity_on_hand, reorder_level: r.reorder_level,
     }));
