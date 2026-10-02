@@ -88,6 +88,8 @@ export const ROUTE_RULES: Rule[] = [
   { prefix: "/pos-sales", any: ["pos.retail.access"] },
   { prefix: "/pos-workers", any: ["users.manage"] },
   { prefix: "/pos", any: ["pos.retail.access"] },
+  { prefix: "/retail/butchery-pos", any: ["pos.retail.access"] },
+  { prefix: "/retail/butchery", any: ["pos.retail.access"] },
   { prefix: "/sifopos", any: ["pos.retail.access"] },
   { prefix: "/devices-terminals", any: ["settings.manage"] },
   { prefix: "/printing-settings", any: ["settings.manage"] },

@@ -126,7 +126,6 @@ import { Route as AuthenticatedReconciliationRouteImport } from './routes/_authe
 import { Route as AuthenticatedReconciliationSessionsRouteImport } from './routes/_authenticated/reconciliation-sessions'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRestaurantRouteImport } from './routes/_authenticated/restaurant'
-import { Route as AuthenticatedRetailRouteImport } from './routes/_authenticated/retail'
 import { Route as AuthenticatedRetailControlCenterRouteImport } from './routes/_authenticated/retail-control-center'
 import { Route as AuthenticatedRetailShiftControlRouteImport } from './routes/_authenticated/retail-shift-control'
 import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
@@ -286,6 +285,7 @@ import { Route as AuthenticatedRestaurantSettingsRouteImport } from './routes/_a
 import { Route as AuthenticatedRestaurantShiftsRouteImport } from './routes/_authenticated/restaurant.shifts'
 import { Route as AuthenticatedRestaurantStockReportsRouteImport } from './routes/_authenticated/restaurant.stock-reports'
 import { Route as AuthenticatedRestaurantTablesRouteImport } from './routes/_authenticated/restaurant.tables'
+import { Route as AuthenticatedRetailIndexRouteImport } from './routes/_authenticated/retail.index'
 import { Route as AuthenticatedRetailButcheryRouteImport } from './routes/_authenticated/retail/butchery'
 import { Route as AuthenticatedRetailButcheryPosRouteImport } from './routes/_authenticated/retail/butchery-pos'
 import { Route as AuthenticatedRetailReportsRouteImport } from './routes/_authenticated/retail.reports'
@@ -980,11 +980,6 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
 const AuthenticatedRestaurantRoute = AuthenticatedRestaurantRouteImport.update({
   id: '/restaurant',
   path: '/restaurant',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRetailRoute = AuthenticatedRetailRouteImport.update({
-  id: '/retail',
-  path: '/retail',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRetailControlCenterRoute =
@@ -1915,23 +1910,29 @@ const AuthenticatedRestaurantTablesRoute =
     path: '/tables',
     getParentRoute: () => AuthenticatedRestaurantRoute,
   } as any)
+const AuthenticatedRetailIndexRoute =
+  AuthenticatedRetailIndexRouteImport.update({
+    id: '/retail/',
+    path: '/retail/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRetailButcheryRoute =
   AuthenticatedRetailButcheryRouteImport.update({
-    id: '/butchery',
-    path: '/butchery',
-    getParentRoute: () => AuthenticatedRetailRoute,
+    id: '/retail/butchery',
+    path: '/retail/butchery',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRetailButcheryPosRoute =
   AuthenticatedRetailButcheryPosRouteImport.update({
-    id: '/butchery-pos',
-    path: '/butchery-pos',
-    getParentRoute: () => AuthenticatedRetailRoute,
+    id: '/retail/butchery-pos',
+    path: '/retail/butchery-pos',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRetailReportsRoute =
   AuthenticatedRetailReportsRouteImport.update({
-    id: '/reports',
-    path: '/reports',
-    getParentRoute: () => AuthenticatedRetailRoute,
+    id: '/retail/reports',
+    path: '/retail/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSchoolAcademicsRoute =
   AuthenticatedSchoolAcademicsRouteImport.update({
@@ -2334,7 +2335,6 @@ export interface FileRoutesByFullPath {
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
-  '/retail': typeof AuthenticatedRetailRouteWithChildren
   '/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
   '/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/roles': typeof AuthenticatedRolesRoute
@@ -2544,6 +2544,7 @@ export interface FileRoutesByFullPath {
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
+  '/retail/': typeof AuthenticatedRetailIndexRoute
   '/w/': typeof WorkerWIndexRoute
   '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
@@ -2659,7 +2660,6 @@ export interface FileRoutesByTo {
   '/receipts': typeof AuthenticatedReceiptsRoute
   '/reconciliation': typeof AuthenticatedReconciliationRoute
   '/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
-  '/retail': typeof AuthenticatedRetailRouteWithChildren
   '/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
   '/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/roles': typeof AuthenticatedRolesRoute
@@ -2869,6 +2869,7 @@ export interface FileRoutesByTo {
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/restaurant': typeof AuthenticatedRestaurantIndexRoute
+  '/retail': typeof AuthenticatedRetailIndexRoute
   '/w': typeof WorkerWIndexRoute
   '/demo/$industry': typeof DemoIndustryIndexRoute
   '/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
@@ -2993,7 +2994,6 @@ export interface FileRoutesById {
   '/_authenticated/reconciliation-sessions': typeof AuthenticatedReconciliationSessionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/restaurant': typeof AuthenticatedRestaurantRouteWithChildren
-  '/_authenticated/retail': typeof AuthenticatedRetailRouteWithChildren
   '/_authenticated/retail-control-center': typeof AuthenticatedRetailControlCenterRoute
   '/_authenticated/retail-shift-control': typeof AuthenticatedRetailShiftControlRoute
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
@@ -3203,6 +3203,7 @@ export interface FileRoutesById {
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
+  '/_authenticated/retail/': typeof AuthenticatedRetailIndexRoute
   '/_worker/w/': typeof WorkerWIndexRoute
   '/demo/$industry/': typeof DemoIndustryIndexRoute
   '/_authenticated/journal-entry/edit/$id': typeof AuthenticatedJournalEntryEditIdRoute
@@ -3326,7 +3327,6 @@ export interface FileRouteTypes {
     | '/reconciliation-sessions'
     | '/reports'
     | '/restaurant'
-    | '/retail'
     | '/retail-control-center'
     | '/retail-shift-control'
     | '/roles'
@@ -3536,6 +3536,7 @@ export interface FileRouteTypes {
     | '/quotes/'
     | '/reports/'
     | '/restaurant/'
+    | '/retail/'
     | '/w/'
     | '/demo/$industry/'
     | '/journal-entry/edit/$id'
@@ -3651,7 +3652,6 @@ export interface FileRouteTypes {
     | '/receipts'
     | '/reconciliation'
     | '/reconciliation-sessions'
-    | '/retail'
     | '/retail-control-center'
     | '/retail-shift-control'
     | '/roles'
@@ -3861,6 +3861,7 @@ export interface FileRouteTypes {
     | '/quotes'
     | '/reports'
     | '/restaurant'
+    | '/retail'
     | '/w'
     | '/demo/$industry'
     | '/journal-entry/edit/$id'
@@ -3984,7 +3985,6 @@ export interface FileRouteTypes {
     | '/_authenticated/reconciliation-sessions'
     | '/_authenticated/reports'
     | '/_authenticated/restaurant'
-    | '/_authenticated/retail'
     | '/_authenticated/retail-control-center'
     | '/_authenticated/retail-shift-control'
     | '/_authenticated/roles'
@@ -4194,6 +4194,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/_authenticated/restaurant/'
+    | '/_authenticated/retail/'
     | '/_worker/w/'
     | '/demo/$industry/'
     | '/_authenticated/journal-entry/edit/$id'
@@ -5040,13 +5041,6 @@ declare module '@tanstack/react-router' {
       path: '/restaurant'
       fullPath: '/restaurant'
       preLoaderRoute: typeof AuthenticatedRestaurantRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/retail': {
-      id: '/_authenticated/retail'
-      path: '/retail'
-      fullPath: '/retail'
-      preLoaderRoute: typeof AuthenticatedRetailRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/retail-control-center': {
@@ -6162,26 +6156,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRestaurantTablesRouteImport
       parentRoute: typeof AuthenticatedRestaurantRoute
     }
+    '/_authenticated/retail/': {
+      id: '/_authenticated/retail/'
+      path: '/retail'
+      fullPath: '/retail/'
+      preLoaderRoute: typeof AuthenticatedRetailIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/retail/butchery': {
       id: '/_authenticated/retail/butchery'
-      path: '/butchery'
+      path: '/retail/butchery'
       fullPath: '/retail/butchery'
       preLoaderRoute: typeof AuthenticatedRetailButcheryRouteImport
-      parentRoute: typeof AuthenticatedRetailRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/retail/butchery-pos': {
       id: '/_authenticated/retail/butchery-pos'
-      path: '/butchery-pos'
+      path: '/retail/butchery-pos'
       fullPath: '/retail/butchery-pos'
       preLoaderRoute: typeof AuthenticatedRetailButcheryPosRouteImport
-      parentRoute: typeof AuthenticatedRetailRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/retail/reports': {
       id: '/_authenticated/retail/reports'
-      path: '/reports'
+      path: '/retail/reports'
       fullPath: '/retail/reports'
       preLoaderRoute: typeof AuthenticatedRetailReportsRouteImport
-      parentRoute: typeof AuthenticatedRetailRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/school/academics': {
       id: '/_authenticated/school/academics'
@@ -6881,21 +6882,6 @@ const AuthenticatedRestaurantRouteWithChildren =
     AuthenticatedRestaurantRouteChildren,
   )
 
-interface AuthenticatedRetailRouteChildren {
-  AuthenticatedRetailButcheryRoute: typeof AuthenticatedRetailButcheryRoute
-  AuthenticatedRetailButcheryPosRoute: typeof AuthenticatedRetailButcheryPosRoute
-  AuthenticatedRetailReportsRoute: typeof AuthenticatedRetailReportsRoute
-}
-
-const AuthenticatedRetailRouteChildren: AuthenticatedRetailRouteChildren = {
-  AuthenticatedRetailButcheryRoute: AuthenticatedRetailButcheryRoute,
-  AuthenticatedRetailButcheryPosRoute: AuthenticatedRetailButcheryPosRoute,
-  AuthenticatedRetailReportsRoute: AuthenticatedRetailReportsRoute,
-}
-
-const AuthenticatedRetailRouteWithChildren =
-  AuthenticatedRetailRoute._addFileChildren(AuthenticatedRetailRouteChildren)
-
 interface AuthenticatedSchoolRouteChildren {
   AuthenticatedSchoolAcademicsRoute: typeof AuthenticatedSchoolAcademicsRoute
   AuthenticatedSchoolAdmissionsRoute: typeof AuthenticatedSchoolAdmissionsRoute
@@ -7086,7 +7072,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReconciliationSessionsRoute: typeof AuthenticatedReconciliationSessionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedRestaurantRoute: typeof AuthenticatedRestaurantRouteWithChildren
-  AuthenticatedRetailRoute: typeof AuthenticatedRetailRouteWithChildren
   AuthenticatedRetailControlCenterRoute: typeof AuthenticatedRetailControlCenterRoute
   AuthenticatedRetailShiftControlRoute: typeof AuthenticatedRetailShiftControlRoute
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
@@ -7143,9 +7128,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPosRetailCommandCenterRoute: typeof AuthenticatedPosRetailCommandCenterRoute
   AuthenticatedPosSettingsRoute: typeof AuthenticatedPosSettingsRoute
   AuthenticatedPurchaseOrderDetailIdRoute: typeof AuthenticatedPurchaseOrderDetailIdRoute
+  AuthenticatedRetailButcheryRoute: typeof AuthenticatedRetailButcheryRoute
+  AuthenticatedRetailButcheryPosRoute: typeof AuthenticatedRetailButcheryPosRoute
+  AuthenticatedRetailReportsRoute: typeof AuthenticatedRetailReportsRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
   AuthenticatedPosIndexRoute: typeof AuthenticatedPosIndexRoute
+  AuthenticatedRetailIndexRoute: typeof AuthenticatedRetailIndexRoute
   AuthenticatedJournalEntryEditIdRoute: typeof AuthenticatedJournalEntryEditIdRoute
 }
 
@@ -7259,7 +7248,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReconciliationSessionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedRestaurantRoute: AuthenticatedRestaurantRouteWithChildren,
-  AuthenticatedRetailRoute: AuthenticatedRetailRouteWithChildren,
   AuthenticatedRetailControlCenterRoute: AuthenticatedRetailControlCenterRoute,
   AuthenticatedRetailShiftControlRoute: AuthenticatedRetailShiftControlRoute,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
@@ -7328,9 +7316,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPosSettingsRoute: AuthenticatedPosSettingsRoute,
   AuthenticatedPurchaseOrderDetailIdRoute:
     AuthenticatedPurchaseOrderDetailIdRoute,
+  AuthenticatedRetailButcheryRoute: AuthenticatedRetailButcheryRoute,
+  AuthenticatedRetailButcheryPosRoute: AuthenticatedRetailButcheryPosRoute,
+  AuthenticatedRetailReportsRoute: AuthenticatedRetailReportsRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
   AuthenticatedPosIndexRoute: AuthenticatedPosIndexRoute,
+  AuthenticatedRetailIndexRoute: AuthenticatedRetailIndexRoute,
   AuthenticatedJournalEntryEditIdRoute: AuthenticatedJournalEntryEditIdRoute,
 }
 

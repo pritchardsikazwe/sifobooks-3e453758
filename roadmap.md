@@ -6,6 +6,8 @@
 - [x] Landing-page demo cards with visual previews and strong CTAs.
 
 ## Done
+- [x] Compact and align the Worker Command Center without changing its workflow.
+- [x] Keep Butchery POS on its dedicated route for authorised retail staff.
 - [x] Real Hotel module: live-data workspace (guests, folios, payments, POS, maintenance, inventory); removed hard-coded sample guests/rooms.
 - [x] Real School module: live-data workspace (students, classes, guardians, fees, payments, staff); removed hard-coded sample learners.
 - [x] Real Restaurant floor plan: existing-table-first, table detail sheet, status legend, KPIs.
