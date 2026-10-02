@@ -231,7 +231,6 @@ export function AppSidebar() {
       ["Compliance", "/hotel/compliance", "ShieldCheck"],
       ["Hotel Settings", "/hotel/settings", "Settings"],
     ].map(([title, url, icon]) => ({ title, url, icon: iconFor(icon) }));
-    const hotelUrls = new Set(hotelSidebarItems.map(i => i.url));
     for (const item of hotelSidebarItems) {
       if (!seen.has(item.url)) {
         seen.add(item.url);
