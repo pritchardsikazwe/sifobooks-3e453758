@@ -311,14 +311,16 @@ export function SimpleCrud({
       }
       else if (v === "") payload[f.name] = null;
     }
-    if (!editing) {
+    {
       const identityField = fields.find(f =>
         ["code", "sku", "barcode", "employee_code", "supplier_code", "customer_code", "invoice_number", "item_code"].includes(f.name)
         && String(form[f.name] ?? "").trim()
       );
       if (identityField) {
-        const { data: duplicateRows } = await supabase.from(table as any)
+        let duplicateQuery = supabase.from(table as any)
           .select("id").eq(identityField.name, String(form[identityField.name]).trim()).limit(1);
+        if (editing) duplicateQuery = duplicateQuery.neq("id", editing.id);
+        const { data: duplicateRows } = await duplicateQuery;
         if ((duplicateRows ?? []).length) {
           setErrors({ [identityField.name]: identityField.label + " already exists" });
           return toast.error(identityField.label + " already exists");
