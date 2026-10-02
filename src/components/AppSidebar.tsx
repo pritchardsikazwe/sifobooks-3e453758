@@ -203,41 +203,18 @@ export function AppSidebar() {
       return unique.length ? { label, items: unique } : null;
     };
 
-    const groups = [
-    // Hotel navigation is a first-class workspace. Keep every Hotel screen
-    // reachable from the main sidebar even when the broader industry registry
-    // is incomplete for an older company profile.
-    const hotelSidebarItems: NavItem[] = [
-      ["Hotel Dashboard", "/hotel", "LayoutDashboard"],
-      ["Front Desk", "/hotel/front-desk", "House"],
-      ["Reservations", "/hotel/reservations", "CalendarCheck"],
-      ["Booking Engine", "/hotel/booking", "CalendarRange"],
-      ["Rooms & Rack", "/hotel/room-rack", "BedDouble"],
-      ["Rates & Availability", "/hotel/rates", "Tag"],
-      ["Channels", "/hotel/channels", "Globe2"],
-      ["Guests", "/hotel/guests", "Users"],
-      ["Pre-arrival", "/hotel/pre-arrival", "Link2"],
-      ["Check In / Out", "/hotel/check-in-out", "DoorOpen"],
-      ["Housekeeping", "/hotel/housekeeping", "ClipboardCheck"],
-      ["Folios & Billing", "/hotel/folios", "ReceiptText"],
-      ["Payments", "/hotel/payments", "CreditCard"],
-      ["Hotel POS", "/hotel/pos", "UtensilsCrossed"],
-      ["Events", "/hotel/events", "PartyPopper"],
-      ["Maintenance", "/hotel/maintenance", "Wrench"],
-      ["Inventory", "/hotel/inventory", "Boxes"],
-      ["Night Audit", "/hotel/night-audit", "Moon"],
-      ["Accounting", "/hotel/accounting", "Wallet"],
-      ["Reports", "/hotel/reports", "BarChart3"],
-      ["Compliance", "/hotel/compliance", "ShieldCheck"],
-      ["Hotel Settings", "/hotel/settings", "Settings"],
-    ].map(([title, url, icon]) => ({ title, url, icon: iconFor(icon) }));
-    for (const item of hotelSidebarItems) {
-      if (!seen.has(item.url)) {
-        seen.add(item.url);
-        collected.push(item);
-      }
-    }
+    // Explicit module navigation keeps every implemented workspace screen clickable.
+    const industryItems: Array<[string,string,string]> = [
+      ["Hotel Dashboard","/hotel","Hotel"],["Front Desk","/hotel/front-desk","LayoutDashboard"],["Reservations","/hotel/reservations","CalendarCheck"],["Booking Engine","/hotel/booking","CalendarRange"],["Room Rack","/hotel/room-rack","BedDouble"],["Rooms","/hotel/rooms","DoorOpen"],["Rates","/hotel/rates","Tag"],["Channels","/hotel/channels","Globe2"],["Guests","/hotel/guests","Users"],["Pre-arrival","/hotel/pre-arrival","ClipboardCheck"],["Check In / Out","/hotel/check-in-out","DoorOpen"],["Housekeeping","/hotel/housekeeping","Sparkles"],["Folios","/hotel/folios","ReceiptText"],["Payments","/hotel/payments","CreditCard"],["Hotel POS","/hotel/pos","UtensilsCrossed"],["Restaurant","/hotel/restaurant","Utensils"],["Events","/hotel/events","PartyPopper"],["Maintenance","/hotel/maintenance","Wrench"],["Inventory","/hotel/inventory","Boxes"],["Night Audit","/hotel/night-audit","Moon"],["Accounting","/hotel/accounting","Wallet"],["Reports","/hotel/reports","BarChart3"],["Compliance","/hotel/compliance","ShieldCheck"],["Guest Portal","/hotel/guest-portal","ExternalLink"],["Hotel Settings","/hotel/settings","Settings"],
+      ["School Dashboard","/school","School"],["Preschool","/school/preschool","Baby"],["Admissions","/school/admissions","UserPlus"],["Students","/school/students","GraduationCap"],["Student Profile","/school/student-profile","UserRound"],["Parents","/school/parents","Users"],["Academics","/school/academics","BookOpen"],["Timetable","/school/timetable","CalendarDays"],["Attendance","/school/attendance","ClipboardCheck"],["Exams","/school/exams","FileQuestion"],["Report Cards","/school/report-cards","FileText"],["Fees & Billing","/school/fees-billing","Receipt"],["Fees","/school/fees","BadgeDollarSign"],["Payments","/school/payments","CreditCard"],["Scholarships","/school/scholarships","Award"],["Boarding","/school/boarding","BedDouble"],["Transport","/school/transport","Bus"],["Library","/school/library","Library"],["Meals","/school/meals","Utensils"],["Discipline","/school/discipline","ShieldAlert"],["Health","/school/health","HeartPulse"],["Communications","/school/communications","MessageSquare"],["Staff","/school/staff","UsersRound"],["Parent Portal","/school/parent-portal","ExternalLink"],["Student Portal","/school/student-portal","ExternalLink"],["School Reports","/school/reports","BarChart3"],["Compliance","/school/compliance","ShieldCheck"],["School Settings","/school/settings","Settings"],
+      ["Property Dashboard","/property","Building2"],["Tenants","/property/tenants","Users"],["Leases","/property/leases","FileText"],["Collections","/property/collections","Wallet"],["Maintenance","/property/maintenance","Wrench"],["Property Reports","/property/reports","BarChart3"],
+      ["Lending Dashboard","/lending","Landmark"],["Borrowers","/lending/borrowers","Users"],["Applications","/lending/applications","FileText"],["Credit Assessment","/lending/credit-assessment","ShieldCheck"],["Loan Products","/lending/products","Package"],["Portfolio","/lending/portfolio","PieChart"],["Disbursements","/lending/disbursements","Send"],["Repayments","/lending/repayments","CreditCard"],["Collections","/lending/collections","Wallet"],["Field Collections","/lending/field-collections","MapPin"],["Arrears","/lending/arrears","AlertTriangle"],["Promises","/lending/promises","Handshake"],["Guarantors","/lending/guarantors","UsersRound"],["Collateral","/lending/collateral","LockKeyhole"],["Group Lending","/lending/group-lending","Users"],["Savings","/lending/savings","PiggyBank"],["Investors","/lending/investors","Landmark"],["Mobile Money","/lending/mobile-money","Smartphone"],["Restructuring","/lending/restructuring","RefreshCw"],["Write-offs","/lending/writeoffs","Archive"],["Risk & Fraud","/lending/risk-fraud","ShieldAlert"],["Communications","/lending/communications","MessageSquare"],["Documents","/lending/documents","FileText"],["Customer Portal","/lending/customer-portal","ExternalLink"],["Investor Portal","/lending/investor-portal","ExternalLink"],["Lending Accounting","/lending/accounting","BookOpen"],["Lending Reports","/lending/reports","BarChart3"],["Lending Compliance","/lending/compliance","ShieldCheck"],["Branches","/lending/branches","GitBranch"],["Lending Settings","/lending/settings","Settings"],
+      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
+      ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail.butchery-products","Beef"],["Receiving","/retail.butchery-receiving","PackagePlus"],["Processing & Yield","/retail.butchery-processing","Scissors"],["Scale","/retail.butchery-scale","Scale"],["Labels","/retail.butchery-labels","Tags"],["Prices","/retail.butchery-prices","Tag"],["Inventory","/retail.butchery-inventory","Boxes"],["Sales","/retail.butchery-sales","Receipt"],["Reports","/retail.butchery-reports","BarChart3"],["Invoice","/retail.butchery-invoice","FileText"],
+    ];
+    for (const [title,url,icon] of industryItems) if (!seen.has(url)) { seen.add(url); collected.push({title,url,icon:iconFor(icon)}); }
 
+    const groups = [
       make("Home", byUrl(["/dashboard", "/approvals", "/notifications", "/industry"])),
       make("Company Setup", byUrl(
         ["/setup", "/warehouses", "/roles", "/admin", "/documents-branding", "/audit-logs"],
