@@ -26,7 +26,7 @@ export function SifoModuleHeader({
 }) {
   const theme = moduleTheme(module);
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-2.5", className)}>
       {breadcrumbs.length > 0 && (
         <nav className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
           {breadcrumbs.map((b, i) => (
