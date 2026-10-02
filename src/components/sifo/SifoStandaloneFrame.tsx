@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Bell, HelpCircle, Search, Settings2, Wifi, Database, FlaskConical } from "lucide-react";
 import { isStandaloneDemoModeEnabled, setStandaloneDemoMode } from "@/lib/standalone-demo";
 import { cn } from "@/lib/utils";
@@ -22,8 +23,8 @@ export function SifoStandaloneFrame({
   children: React.ReactNode;
   className?: string;
 }) {
-  const [demoMode, setDemoMode] = React.useState(false);
-  React.useEffect(() => setDemoMode(isStandaloneDemoModeEnabled()), []);
+  const [demoMode, setDemoMode] = useState(false);
+  useEffect(() => setDemoMode(isStandaloneDemoModeEnabled()), []);
 
   const toggleDemoMode = () => {
     const next = !demoMode;
