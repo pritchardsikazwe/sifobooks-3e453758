@@ -119,14 +119,17 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   // checks stock at the selling location before anything is posted.
   // shift_id travels with the sale so a queued offline sale still posts to the
   // shift it was rung on, even after that shift has been closed.
-  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,location_id:draft.locationId??null,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
+  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,register_id:draft.registerId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,location_id:draft.locationId??null,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
   const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,unit:l.unit??null,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
   const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const {data:authUser}=await supabase.auth.getUser(); const args:any=IS_LOCAL_BACKEND?{_uid:authUser.user?.id??null,_sale:salePayload,_items:itemRows,_payments:payRows}:{_sale:salePayload,_items:itemRows,_payments:payRows};
   const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
   if(!isOnline())return stash();
   try{
     const {data,error}=await supabase.rpc("pos_checkout" as any,args as any);
-    if(error){if(isNetworkError(error.message))return stash();throw new Error(posErrorMessage(error.message));}
+    // Keep the database error code intact. The screen translates it once so a
+    // specific stock, location, shift or unit problem is never replaced by the
+    // generic fallback message.
+    if(error){if(isNetworkError(error.message))return stash();throw new Error(error.message);}
     const res=data as any;
     return {ok:true as const,offline:false,sale_no:res?.sale_no??sale_no,id:(res?.sale_id??null) as string|null,duplicate:Boolean(res?.duplicate)};
   }catch(e:any){if(e?.message&&!isNetworkError(e.message))throw e;return stash();}
@@ -137,7 +140,8 @@ export function posErrorMessage(raw:string):string{
   const m=String(raw||"");
   if(/NO_ACTIVE_SHIFT/.test(m))return "No open shift. Open your shift before selling.";
   if(/NO_REGISTER/.test(m))return "Your shift is not linked to a till. Ask a manager to assign your register.";
-  if(/NO_LOCATION/.test(m))return "No stock location is configured. A manager must set a store on this till, the cashier, the branch, or mark a company default store.";
+  if(/NO_LOCATION|POS_LOCATION_REQUIRED|INVENTORY_LOCATION_REQUIRED/.test(m))return "No stock location is configured. Complete opening stock at a real store, or ask a manager to set that store on this till, the cashier, the branch, or as the company default.";
+  if(/LOCATION_NOT_FOUND|LOCATION_INACTIVE/.test(m))return "The selected stock location is unavailable. Choose an active store before completing the sale.";
   if(/UNIT_CONVERSION_MISSING:(.*)/.test(m)){const [prod,sold,base]=(m.split("UNIT_CONVERSION_MISSING:")[1]||"").split(/["']/)[0].split("|");return `${(prod||"This product").trim()} is sold in "${(sold||"?").trim()}" but its stock unit is "${(base||"?").trim()}", and no conversion is set up. Sell it in "${(base||"?").trim()}" or ask a manager to set the conversion. Nothing was posted.`;}
   if(/INSUFFICIENT_STOCK:(.*)/.test(m))return `Not enough stock for ${m.split("INSUFFICIENT_STOCK:")[1]?.split(/["']/)[0]?.trim()||"an item"} at this store. A manager can authorise it.`;
   if(/NO_COST:(.*)/.test(m))return `${m.split("NO_COST:")[1]?.split(/["']/)[0]?.trim()||"An item"} has no cost price set, so profit cannot be worked out. Ask a manager to set its cost.`;
