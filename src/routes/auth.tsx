@@ -210,6 +210,7 @@ function AuthPage() {
                     <div className="flex items-center justify-between">
                       <Label htmlFor="si-pw">Password</Label>
                       <button type="button" onClick={() => { setTab("reset"); setError(null); setNotice(null); }} className="text-xs text-primary hover:underline">Forgot password?</button>
+                      <Link to="/demo" className="ml-3 text-xs text-primary hover:underline">Try SifoBooks Demo</Link>
                     </div>
                     <Input id="si-pw" name="password" type="password" autoComplete="current-password" required />
                   </div>
