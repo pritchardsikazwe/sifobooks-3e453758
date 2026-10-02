@@ -15,7 +15,7 @@ import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
-import { SifoFilterBar, SifoKpiCard } from "@/components/sifo";
+import { SifoFilterBar, SifoKpiCard, SifoHubTabs, SifoModuleHeader, SifoPage } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
@@ -118,173 +118,127 @@ function StockPage() {
   const outOfStock = items.filter(i => Number(i.quantity_on_hand) <= 0).length;
   const categoryCount = categories.length;
 
+  if (openNew) {
+    return (
+      <div className="p-4 sm:p-6">
+        <NewItemForm onCancel={() => setOpenNew(false)} onCreated={() => { setOpenNew(false); load(); }} />
+      </div>
+    );
+  }
+  if (moveFor) {
+    return (
+      <div className="p-4 sm:p-6">
+        <MovementForm item={moveFor} onCancel={() => setMoveFor(null)} onSaved={() => { setMoveFor(null); load(); }} />
+      </div>
+    );
+  }
+
   return (
-    <SifoWorkspaceShell
-      title="Items / Products"
-      purpose="Manage products, services and inventory used across POS, sales, purchasing and stock control."
-      icon={Package}
-      breadcrumbs={[{ label: "Inventory" }, { label: "Items / Products" }]}
-      actions={
-        <>
-          <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
-          <Button size="sm" className="h-10 gap-1.5" variant="save" onClick={() => setOpenNew(true)}>
-            <Plus className="h-4 w-4" /> Add item
-          </Button>
-        </>
-      }
-    >
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SifoKpiCard module="inventory" label="Total items" value={items.length.toLocaleString()} hint="Active product catalogue" icon={Package} />
+    <SifoPage>
+      <SifoHubTabs hub="inventory" active="/stock" />
+      <SifoModuleHeader
+        module="inventory"
+        icon={Package}
+        title="Items"
+        description="Product master data, pricing, stock tracking and ZRA tax setup."
+        breadcrumbs={[{ label: "Inventory" }, { label: "Items" }]}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm"><Link to="/inventory/receive-stock"><ArrowDownRight className="mr-1.5 h-4 w-4" />Receive Stock</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/inventory/opening-stock"><ArrowUpRight className="mr-1.5 h-4 w-4" />Opening Stock</Link></Button>
+            <ImportCsvDialog open={openImport} setOpen={setOpenImport} onImported={load} />
+            <Button size="sm" variant="save" onClick={() => setOpenNew(true)}><Plus className="mr-1.5 h-4 w-4" />Add Item</Button>
+          </div>
+        }
+      />
+
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <SifoKpiCard module="inventory" label="Items" value={items.length.toLocaleString()} hint="Active product catalogue" icon={Package} />
         <SifoKpiCard module="inventory" label="Stock value" value={money(stockValue)} hint="Current inventory at cost" icon={ArrowUpRight} />
         <SifoKpiCard module="inventory" label="Low stock" value={low.length.toLocaleString()} hint="At or below reorder level" icon={AlertTriangle} positive={false} />
-        <SifoKpiCard module="inventory" label="Categories" value={categoryCount.toLocaleString()} hint={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={Sliders} />
+        <SifoKpiCard module="inventory" label="Out of stock" value={outOfStock.toLocaleString()} hint="Requires receiving or replenishment" icon={ArrowDownRight} positive={false} />
+        <SifoKpiCard module="inventory" label="Categories" value={categoryCount.toLocaleString()} hint="Product categories" icon={Sliders} />
       </div>
 
       <Card className="overflow-hidden">
-        <CardHeader className="p-3 sm:p-4">
+        <CardHeader className="border-b p-3 sm:p-4">
           <SifoFilterBar
             search={q}
             onSearchChange={setQ}
-            searchPlaceholder="Search items, SKU, barcode or description…"
+            searchPlaceholder="Search item, SKU, barcode or description…"
             className="border-0 p-0 shadow-none"
-            filters={<>
-              <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Category filter">
-                <option value="all">All categories</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Stock status filter">
-                <option value="all">All items</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option>
-              </select>
-              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
-                <Link to="/inventory-control">Inventory Control Centre</Link>
-              </Button>
-              <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
-                <Link to="/inventory/transfers">Stock transfers</Link>
-              </Button>
-            </>}
+            filters={
+              <>
+                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="h-9 rounded-lg border bg-background px-3 text-sm" aria-label="Category filter">
+                  <option value="all">All categories</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-9 rounded-lg border bg-background px-3 text-sm" aria-label="Stock status filter">
+                  <option value="all">All stock</option>
+                  <option value="in">In stock</option>
+                  <option value="low">Low stock</option>
+                  <option value="out">Out of stock</option>
+                </select>
+              </>
+            }
           />
         </CardHeader>
-        <CardContent className="p-3 sm:p-4">
-          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span><strong className="text-foreground">{filtered.length}</strong> items shown</span>
-            <span>Click an item action to move stock, edit or remove it.</span>
+        <CardContent className="p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 text-sm">
+            <div><span className="font-semibold">{filtered.length}</span> items</div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="ghost" size="sm"><Link to="/inventory/stock-card">Stock Card</Link></Button>
+              <Button asChild variant="ghost" size="sm"><Link to="/inventory/transfers">Transfers</Link></Button>
+              <Button asChild variant="ghost" size="sm"><Link to="/stock-counts">Stock Counts</Link></Button>
+              <Button asChild variant="ghost" size="sm"><Link to="/stock-adjustments">Adjustments</Link></Button>
+            </div>
           </div>
-          <GroupedStockTable items={filtered} locationLabel={businessName || "Main Store"} money={money} onMove={setMoveFor} onDelete={removeItem} loading={loading} />
+          <InventoryItemsTable items={filtered} money={money} onMove={setMoveFor} onDelete={removeItem} loading={loading} />
         </CardContent>
       </Card>
-    </SifoWorkspaceShell>
+    </SifoPage>
   );
 }
 
-function GroupedStockTable({
-  items, locationLabel, money, onMove, onDelete, loading,
+function InventoryItemsTable({
+  items, money, onMove, onDelete, loading,
 }: {
-  items: Item[]; locationLabel: string; money: (n: number) => string;
+  items: Item[]; money: (n: number) => string;
   onMove: (i: Item) => void; onDelete: (id: string) => void;
   loading: boolean;
 }) {
-  const groups = useMemo(() => {
-    const m = new Map<string, Item[]>();
-    items.forEach(i => {
-      const key = (i.tax_category || "OTHER").toUpperCase();
-      if (!m.has(key)) m.set(key, []);
-      m.get(key)!.push(i);
-    });
-    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [items]);
-
   const columns: DTColumn<Item>[] = [
     {
-      key: "name", header: "Category / Item", sticky: true,
-      cell: i => (
-        <div>
-          <div className="font-medium">{i.name}</div>
-          {i.sku && <div className="text-xs text-muted-foreground">SKU {i.sku}</div>}
-        </div>
-      ),
+      key: "name", header: "Item", sticky: true, sortable: true,
+      cell: i => <div><div className="font-medium">{i.name}</div>{i.sku && <div className="text-xs text-muted-foreground">{i.sku}</div>}</div>,
     },
-    { key: "unit", header: "Order By Unit", cell: i => <span className="text-xs">{i.unit || "unit"}</span> },
-    { key: "cost_price", header: "Cost", align: "right", cell: i => money(Number(i.cost_price)) },
-    { key: "sell_price", header: "Selling Price", align: "right", cell: i => money(Number(i.sell_price)) },
+    { key: "tax_category", header: "Category", cell: i => <Badge variant="outline" className="capitalize">{i.tax_category || "Other"}</Badge> },
+    { key: "unit", header: "Unit", cell: i => i.unit || "each" },
+    { key: "quantity_on_hand", header: "On hand", align: "right", sortable: true, cell: i => <span className={Number(i.quantity_on_hand) <= 0 ? "font-semibold text-destructive" : "font-semibold"}>{Number(i.quantity_on_hand).toLocaleString()}</span> },
+    { key: "reorder_level", header: "Reorder", align: "right", sortable: true, cell: i => Number(i.reorder_level) || "—" },
+    { key: "cost_price", header: "Cost", align: "right", sortable: true, cell: i => money(Number(i.cost_price)) },
+    { key: "sell_price", header: "Selling", align: "right", sortable: true, cell: i => money(Number(i.sell_price)) },
+    { key: "stock_value", header: "Value", align: "right", sortable: false, accessor: i => Number(i.cost_price) * Number(i.quantity_on_hand), cell: i => money(Number(i.cost_price) * Number(i.quantity_on_hand)) },
     { key: "vat_rate", header: "VAT", align: "right", cell: i => `${Number(i.vat_rate ?? 0)}%` },
-    { key: "hs_code", header: "HS Code", sortable: true, cell: i => i.hs_code || "—" },
-    { key: "qty_per_unit", header: "Qty/Unit", align: "right", sortable: false, cell: i => (i.unit ? 1 : "—") },
-    { key: "description", header: "Item Size", cell: i => <span className="text-xs">{i.description ?? "—"}</span> },
-    { key: "cost_per_item", header: "Cost per Item", align: "right", accessor: i => Number(i.cost_price), cell: i => money(Number(i.cost_price)) },
-    { key: "quantity_on_hand", header: "Stock Qty", align: "right", cell: i => <span className="font-medium">{Number(i.quantity_on_hand)}</span> },
-    { key: "stock_value", header: "Stock Value", align: "right", sortable: false, accessor: i => Number(i.cost_price) * Number(i.quantity_on_hand), cell: i => money(Number(i.cost_price) * Number(i.quantity_on_hand)) },
-    { key: "reorder_level", header: "Reorder Level", align: "right", cell: i => Number(i.reorder_level) || "—" },
-    {
-      key: "reorder_status", header: "Reorder", align: "center", sortable: false,
-      cell: i => {
-        const isLow = Number(i.reorder_level) > 0 && Number(i.quantity_on_hand) <= Number(i.reorder_level);
-        return (
-          <span className={`inline-block rounded px-3 py-1 text-xs font-bold ${isLow ? "bg-amber-500 text-primary-foreground" : "bg-sky-400 text-primary-foreground"}`}>
-            {isLow ? "REORDER" : "OK"}
-          </span>
-        );
-      },
-    },
-    {
-      key: "reorder_qty", header: "Item Reorder Qty", align: "right", sortable: false,
-      accessor: i => {
-        const qty = Number(i.quantity_on_hand);
-        const rl = Number(i.reorder_level);
-        const isLow = rl > 0 && qty <= rl;
-        return isLow ? Math.max(rl * 2 - qty, rl) : 0;
-      },
-      cell: i => {
-        const qty = Number(i.quantity_on_hand);
-        const rl = Number(i.reorder_level);
-        const isLow = rl > 0 && qty <= rl;
-        const reorderQty = isLow ? Math.max(rl * 2 - qty, rl) : 0;
-        return <span className="font-medium">{reorderQty || 0}</span>;
-      },
-    },
-    {
-      key: "actions", header: "", sortable: false, sticky: true,
-      cell: i => (
-        <div className="whitespace-nowrap text-right">
-          <Button size="sm" variant="ghost" onClick={() => onMove(i)}><Sliders className="h-3 w-3" /></Button>
-          <Button size="icon" variant="ghost" onClick={() => onDelete(i.id)} aria-label="Delete"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
-        </div>
-      ),
-    },
+    { key: "actions", header: "", sortable: false, sticky: true, cell: i => (
+      <div className="flex justify-end gap-1">
+        <Button size="sm" variant="ghost" title="Stock movement" onClick={() => onMove(i)}><Sliders className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" title="Delete item" onClick={() => onDelete(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+      </div>
+    )},
   ];
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground">
-        Location: {locationLabel}
-      </div>
-      <div className="space-y-4 bg-card p-4">
-        {groups.length === 0 && !loading && (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            No stock items yet. Click "New item" to add your first product.
-          </div>
-        )}
-        {(loading ? [["", []]] as [string, Item[]][] : groups).map(([cat, rows]) => (
-          <div key={cat || "loading"}>
-            {cat && (
-              <div className="rounded-t-md bg-amber-100/60 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-                {cat}
-              </div>
-            )}
-            <DataTable
-              tableId={`stock-items-${cat || "all"}`}
-              columns={columns}
-              data={rows}
-              loading={loading}
-              searchPlaceholder={null}
-              empty="No items in this category."
-              className="rounded-t-none"
-              totals={rowsIn => ({
-                cost_per_item: money(rowsIn.reduce((s, i) => s + Number(i.cost_price) * Number(i.quantity_on_hand), 0)),
-              })}
-            />
-          </div>
-        ))}
-      </div>
+    <div className="overflow-x-auto">
+      <DataTable
+        tableId="inventory-items-2026"
+        columns={columns}
+        data={items}
+        loading={loading}
+        searchPlaceholder={null}
+        empty={<div className="py-12 text-center text-sm text-muted-foreground">No items match your filters. Use Add Item, Receive Stock or Opening Stock to get started.</div>}
+        className="rounded-none border-0"
+      />
     </div>
   );
 }
