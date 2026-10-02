@@ -33,7 +33,7 @@ const n = (v:any) => Number(v ?? 0);
 
 export async function loadProducts(locationId?:string|null):Promise<PosProduct[]> {
   try {
-    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,track_stock,item_type,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
+    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,item_type,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
     if(error)throw error;
     const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??r.unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[];
     if(locationId){
