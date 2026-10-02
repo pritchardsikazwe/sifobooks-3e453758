@@ -29,7 +29,7 @@ export function SifoKpiCard({
 
   const body = (
     <div className={cn(
-      "group relative overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-[0_4px_18px_rgba(20,50,40,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(20,50,40,0.10)] sm:p-4",
+      "group relative overflow-hidden rounded-xl border border-border bg-card p-3 shadow-[0_4px_18px_rgba(20,50,40,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(20,50,40,0.10)] sm:p-4",
       className,
     )}>
 
