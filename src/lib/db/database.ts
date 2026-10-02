@@ -44,12 +44,31 @@ export function getDb(): Database {
     const DatabaseConstructor = getDatabaseConstructor();
     db = new DatabaseConstructor(dbPath());
     db.exec("PRAGMA journal_mode = WAL;");
+    db.exec("PRAGMA synchronous = NORMAL;");
+    db.exec("PRAGMA busy_timeout = 5000;");
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
     runCompatibilityMigrations(db);
     runSqlMigrations(db);
+    runStartupDatabaseHealth(db);
   }
   return db;
+}
+
+function runStartupDatabaseHealth(database: Database) {
+  try {
+    const quick = database.prepare("PRAGMA quick_check(20)").all() as any[];
+    const problems = quick.map((row: any) => Object.values(row)[0]).filter((value: any) => value && value !== "ok");
+    if (problems.length) console.error("[db] SQLite quick_check reported:", problems.slice(0, 20));
+  } catch (error: any) {
+    console.error("[db] SQLite quick_check failed:", String(error?.message ?? error));
+  }
+  try {
+    const foreignKeys = database.prepare("PRAGMA foreign_key_check").all() as any[];
+    if (foreignKeys.length) console.warn("[db] SQLite foreign_key_check found", foreignKeys.length, "issue(s)");
+  } catch (error: any) {
+    console.warn("[db] SQLite foreign_key_check unavailable:", String(error?.message ?? error));
+  }
 }
 
 function findSchemaSql(): string {
