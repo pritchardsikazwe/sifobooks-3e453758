@@ -31,14 +31,18 @@ export async function loadEnabledCatalogModules(companyId: string): Promise<Set<
 }
 
 /** Switches a module on using the same company_modules rows as Industry & Business. */
-export async function addCatalogModule(params: { userId: string; companyId: string; moduleKey: string }) {
+export async function addCatalogModule(params: { userId: string; companyId: string; moduleKey: string; extraKeys?: string[] }) {
+  const keys = [params.moduleKey, ...(params.extraKeys ?? [])];
   const { error: delErr } = await supabase.from("company_modules").delete()
-    .eq("company_id", params.companyId).eq("module_key", `__off__:${params.moduleKey}`);
+    .eq("company_id", params.companyId).in("module_key", keys.map((k) => `__off__:${k}`));
   if (delErr) throw delErr;
-  const { error } = await supabase.from("company_modules").upsert({
-    user_id: params.userId, company_id: params.companyId, module_key: params.moduleKey,
-    config: { source: "subscription_add_module" },
-  }, { onConflict: "company_id,module_key" });
+  const { error } = await supabase.from("company_modules").upsert(
+    keys.map((k) => ({
+      user_id: params.userId, company_id: params.companyId, module_key: k,
+      config: { source: "subscription_add_module" },
+    })),
+    { onConflict: "company_id,module_key" },
+  );
   if (error) throw error;
   if (typeof window !== "undefined") window.dispatchEvent(new Event("sifobooks:modules-changed"));
 }
