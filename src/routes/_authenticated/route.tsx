@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
-import { QuickCreate } from "@/components/QuickCreate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -83,7 +82,6 @@ function Shell() {
   const { access } = Route.useRouteContext() as { access?: Access | null };
   const isStaff = Boolean(access && !access.is_owner && !access.is_super_admin);
   const canSettings = !isStaff || hasPerm(access, "settings.manage");
-  const canCreate = !isStaff || hasPerm(access, "accounting.manage");
   const canSwitchCompany = !isStaff;
 
   useEffect(() => {
@@ -162,7 +160,6 @@ function Shell() {
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
                 {canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>}
               </div>
-              {canCreate && <QuickCreate />}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account">
