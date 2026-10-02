@@ -109,7 +109,6 @@ import { Route as AuthenticatedPayrollToolsRouteImport } from './routes/_authent
 import { Route as AuthenticatedPayrollTransactionsRouteImport } from './routes/_authenticated/payroll-transactions'
 import { Route as AuthenticatedPeriodCloseRouteImport } from './routes/_authenticated/period-close'
 import { Route as AuthenticatedPettyCashRouteImport } from './routes/_authenticated/petty-cash'
-import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPosSalesRouteImport } from './routes/_authenticated/pos-sales'
 import { Route as AuthenticatedPosWorkersRouteImport } from './routes/_authenticated/pos-workers'
 import { Route as AuthenticatedPostingCentreRouteImport } from './routes/_authenticated/posting-centre'
@@ -217,6 +216,7 @@ import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedManagerCashiersRouteImport } from './routes/_authenticated/manager.cashiers'
 import { Route as AuthenticatedManagerShiftsRouteImport } from './routes/_authenticated/manager.shifts'
 import { Route as AuthenticatedPayrollReportsRouteImport } from './routes/_authenticated/payroll.reports'
+import { Route as AuthenticatedPosIndexRouteImport } from './routes/_authenticated/pos.index'
 import { Route as AuthenticatedPosCommandCenterRouteImport } from './routes/_authenticated/pos.command-center'
 import { Route as AuthenticatedPosRetailCommandCenterRouteImport } from './routes/_authenticated/pos.retail-command-center'
 import { Route as AuthenticatedPosSettingsRouteImport } from './routes/_authenticated/pos.settings'
@@ -888,11 +888,6 @@ const AuthenticatedPettyCashRoute = AuthenticatedPettyCashRouteImport.update({
   path: '/petty-cash',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
-  id: '/pos',
-  path: '/pos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedPosSalesRoute = AuthenticatedPosSalesRouteImport.update({
   id: '/pos-sales',
   path: '/pos-sales',
@@ -1506,23 +1501,28 @@ const AuthenticatedPayrollReportsRoute =
     path: '/reports',
     getParentRoute: () => AuthenticatedPayrollRoute,
   } as any)
+const AuthenticatedPosIndexRoute = AuthenticatedPosIndexRouteImport.update({
+  id: '/pos/',
+  path: '/pos/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPosCommandCenterRoute =
   AuthenticatedPosCommandCenterRouteImport.update({
-    id: '/command-center',
-    path: '/command-center',
-    getParentRoute: () => AuthenticatedPosRoute,
+    id: '/pos/command-center',
+    path: '/pos/command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPosRetailCommandCenterRoute =
   AuthenticatedPosRetailCommandCenterRouteImport.update({
-    id: '/retail-command-center',
-    path: '/retail-command-center',
-    getParentRoute: () => AuthenticatedPosRoute,
+    id: '/pos/retail-command-center',
+    path: '/pos/retail-command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPosSettingsRoute =
   AuthenticatedPosSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedPosRoute,
+    id: '/pos/settings',
+    path: '/pos/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPropertyCollectionsRoute =
   AuthenticatedPropertyCollectionsRouteImport.update({
@@ -2317,7 +2317,6 @@ export interface FileRoutesByFullPath {
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/pos': typeof AuthenticatedPosRouteWithChildren
   '/pos-sales': typeof AuthenticatedPosSalesRoute
   '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
@@ -2541,6 +2540,7 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/learn/': typeof AuthenticatedLearnIndexRoute
   '/manager/': typeof AuthenticatedManagerIndexRoute
+  '/pos/': typeof AuthenticatedPosIndexRoute
   '/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/restaurant/': typeof AuthenticatedRestaurantIndexRoute
@@ -2645,7 +2645,6 @@ export interface FileRoutesByTo {
   '/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/period-close': typeof AuthenticatedPeriodCloseRoute
   '/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/pos': typeof AuthenticatedPosRouteWithChildren
   '/pos-sales': typeof AuthenticatedPosSalesRoute
   '/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/posting-centre': typeof AuthenticatedPostingCentreRoute
@@ -2866,6 +2865,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/learn': typeof AuthenticatedLearnIndexRoute
   '/manager': typeof AuthenticatedManagerIndexRoute
+  '/pos': typeof AuthenticatedPosIndexRoute
   '/quotes': typeof AuthenticatedQuotesIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/restaurant': typeof AuthenticatedRestaurantIndexRoute
@@ -2976,7 +2976,6 @@ export interface FileRoutesById {
   '/_authenticated/payroll-transactions': typeof AuthenticatedPayrollTransactionsRoute
   '/_authenticated/period-close': typeof AuthenticatedPeriodCloseRoute
   '/_authenticated/petty-cash': typeof AuthenticatedPettyCashRoute
-  '/_authenticated/pos': typeof AuthenticatedPosRouteWithChildren
   '/_authenticated/pos-sales': typeof AuthenticatedPosSalesRoute
   '/_authenticated/pos-workers': typeof AuthenticatedPosWorkersRoute
   '/_authenticated/posting-centre': typeof AuthenticatedPostingCentreRoute
@@ -3200,6 +3199,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/learn/': typeof AuthenticatedLearnIndexRoute
   '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
+  '/_authenticated/pos/': typeof AuthenticatedPosIndexRoute
   '/_authenticated/quotes/': typeof AuthenticatedQuotesIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/restaurant/': typeof AuthenticatedRestaurantIndexRoute
@@ -3309,7 +3309,6 @@ export interface FileRouteTypes {
     | '/payroll-transactions'
     | '/period-close'
     | '/petty-cash'
-    | '/pos'
     | '/pos-sales'
     | '/pos-workers'
     | '/posting-centre'
@@ -3533,6 +3532,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/learn/'
     | '/manager/'
+    | '/pos/'
     | '/quotes/'
     | '/reports/'
     | '/restaurant/'
@@ -3637,7 +3637,6 @@ export interface FileRouteTypes {
     | '/payroll-transactions'
     | '/period-close'
     | '/petty-cash'
-    | '/pos'
     | '/pos-sales'
     | '/pos-workers'
     | '/posting-centre'
@@ -3858,6 +3857,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/learn'
     | '/manager'
+    | '/pos'
     | '/quotes'
     | '/reports'
     | '/restaurant'
@@ -3967,7 +3967,6 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll-transactions'
     | '/_authenticated/period-close'
     | '/_authenticated/petty-cash'
-    | '/_authenticated/pos'
     | '/_authenticated/pos-sales'
     | '/_authenticated/pos-workers'
     | '/_authenticated/posting-centre'
@@ -4191,6 +4190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/'
     | '/_authenticated/learn/'
     | '/_authenticated/manager/'
+    | '/_authenticated/pos/'
     | '/_authenticated/quotes/'
     | '/_authenticated/reports/'
     | '/_authenticated/restaurant/'
@@ -4921,13 +4921,6 @@ declare module '@tanstack/react-router' {
       path: '/petty-cash'
       fullPath: '/petty-cash'
       preLoaderRoute: typeof AuthenticatedPettyCashRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pos': {
-      id: '/_authenticated/pos'
-      path: '/pos'
-      fullPath: '/pos'
-      preLoaderRoute: typeof AuthenticatedPosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos-sales': {
@@ -5679,26 +5672,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPayrollReportsRouteImport
       parentRoute: typeof AuthenticatedPayrollRoute
     }
+    '/_authenticated/pos/': {
+      id: '/_authenticated/pos/'
+      path: '/pos'
+      fullPath: '/pos/'
+      preLoaderRoute: typeof AuthenticatedPosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pos/command-center': {
       id: '/_authenticated/pos/command-center'
-      path: '/command-center'
+      path: '/pos/command-center'
       fullPath: '/pos/command-center'
       preLoaderRoute: typeof AuthenticatedPosCommandCenterRouteImport
-      parentRoute: typeof AuthenticatedPosRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos/retail-command-center': {
       id: '/_authenticated/pos/retail-command-center'
-      path: '/retail-command-center'
+      path: '/pos/retail-command-center'
       fullPath: '/pos/retail-command-center'
       preLoaderRoute: typeof AuthenticatedPosRetailCommandCenterRouteImport
-      parentRoute: typeof AuthenticatedPosRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos/settings': {
       id: '/_authenticated/pos/settings'
-      path: '/settings'
+      path: '/pos/settings'
       fullPath: '/pos/settings'
       preLoaderRoute: typeof AuthenticatedPosSettingsRouteImport
-      parentRoute: typeof AuthenticatedPosRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/property/collections': {
       id: '/_authenticated/property/collections'
@@ -6683,22 +6683,6 @@ const AuthenticatedPayrollRouteChildren: AuthenticatedPayrollRouteChildren = {
 const AuthenticatedPayrollRouteWithChildren =
   AuthenticatedPayrollRoute._addFileChildren(AuthenticatedPayrollRouteChildren)
 
-interface AuthenticatedPosRouteChildren {
-  AuthenticatedPosCommandCenterRoute: typeof AuthenticatedPosCommandCenterRoute
-  AuthenticatedPosRetailCommandCenterRoute: typeof AuthenticatedPosRetailCommandCenterRoute
-  AuthenticatedPosSettingsRoute: typeof AuthenticatedPosSettingsRoute
-}
-
-const AuthenticatedPosRouteChildren: AuthenticatedPosRouteChildren = {
-  AuthenticatedPosCommandCenterRoute: AuthenticatedPosCommandCenterRoute,
-  AuthenticatedPosRetailCommandCenterRoute:
-    AuthenticatedPosRetailCommandCenterRoute,
-  AuthenticatedPosSettingsRoute: AuthenticatedPosSettingsRoute,
-}
-
-const AuthenticatedPosRouteWithChildren =
-  AuthenticatedPosRoute._addFileChildren(AuthenticatedPosRouteChildren)
-
 interface AuthenticatedPropertyRouteChildren {
   AuthenticatedPropertyCollectionsRoute: typeof AuthenticatedPropertyCollectionsRoute
   AuthenticatedPropertyLeasesRoute: typeof AuthenticatedPropertyLeasesRoute
@@ -7085,7 +7069,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollTransactionsRoute: typeof AuthenticatedPayrollTransactionsRoute
   AuthenticatedPeriodCloseRoute: typeof AuthenticatedPeriodCloseRoute
   AuthenticatedPettyCashRoute: typeof AuthenticatedPettyCashRoute
-  AuthenticatedPosRoute: typeof AuthenticatedPosRouteWithChildren
   AuthenticatedPosSalesRoute: typeof AuthenticatedPosSalesRoute
   AuthenticatedPosWorkersRoute: typeof AuthenticatedPosWorkersRoute
   AuthenticatedPostingCentreRoute: typeof AuthenticatedPostingCentreRoute
@@ -7156,9 +7139,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLearnQuickStartRoute: typeof AuthenticatedLearnQuickStartRoute
   AuthenticatedLearnReportsRoute: typeof AuthenticatedLearnReportsRoute
   AuthenticatedLearnVatZraRoute: typeof AuthenticatedLearnVatZraRoute
+  AuthenticatedPosCommandCenterRoute: typeof AuthenticatedPosCommandCenterRoute
+  AuthenticatedPosRetailCommandCenterRoute: typeof AuthenticatedPosRetailCommandCenterRoute
+  AuthenticatedPosSettingsRoute: typeof AuthenticatedPosSettingsRoute
   AuthenticatedPurchaseOrderDetailIdRoute: typeof AuthenticatedPurchaseOrderDetailIdRoute
   AuthenticatedInventoryIndexRoute: typeof AuthenticatedInventoryIndexRoute
   AuthenticatedLearnIndexRoute: typeof AuthenticatedLearnIndexRoute
+  AuthenticatedPosIndexRoute: typeof AuthenticatedPosIndexRoute
   AuthenticatedJournalEntryEditIdRoute: typeof AuthenticatedJournalEntryEditIdRoute
 }
 
@@ -7254,7 +7241,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollTransactionsRoute: AuthenticatedPayrollTransactionsRoute,
   AuthenticatedPeriodCloseRoute: AuthenticatedPeriodCloseRoute,
   AuthenticatedPettyCashRoute: AuthenticatedPettyCashRoute,
-  AuthenticatedPosRoute: AuthenticatedPosRouteWithChildren,
   AuthenticatedPosSalesRoute: AuthenticatedPosSalesRoute,
   AuthenticatedPosWorkersRoute: AuthenticatedPosWorkersRoute,
   AuthenticatedPostingCentreRoute: AuthenticatedPostingCentreRoute,
@@ -7336,10 +7322,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLearnQuickStartRoute: AuthenticatedLearnQuickStartRoute,
   AuthenticatedLearnReportsRoute: AuthenticatedLearnReportsRoute,
   AuthenticatedLearnVatZraRoute: AuthenticatedLearnVatZraRoute,
+  AuthenticatedPosCommandCenterRoute: AuthenticatedPosCommandCenterRoute,
+  AuthenticatedPosRetailCommandCenterRoute:
+    AuthenticatedPosRetailCommandCenterRoute,
+  AuthenticatedPosSettingsRoute: AuthenticatedPosSettingsRoute,
   AuthenticatedPurchaseOrderDetailIdRoute:
     AuthenticatedPurchaseOrderDetailIdRoute,
   AuthenticatedInventoryIndexRoute: AuthenticatedInventoryIndexRoute,
   AuthenticatedLearnIndexRoute: AuthenticatedLearnIndexRoute,
+  AuthenticatedPosIndexRoute: AuthenticatedPosIndexRoute,
   AuthenticatedJournalEntryEditIdRoute: AuthenticatedJournalEntryEditIdRoute,
 }
 

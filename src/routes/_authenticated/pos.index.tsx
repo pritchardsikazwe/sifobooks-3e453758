@@ -34,7 +34,7 @@ import { savePrintQueueJob } from "@/services/printQueue";
 import { zraSubmitPosSaleFn } from "@/lib/zra/server";
 import { POSFullscreenButton } from "@/components/pos/POSFullscreenButton";
 
-export const Route = createFileRoute("/_authenticated/pos")({
+export const Route = createFileRoute("/_authenticated/pos/")({
   head: () => ({
     meta: [
       { title: "Retail POS Terminal — SifoPOS" },
