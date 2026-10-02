@@ -28,7 +28,24 @@ async function insert(table: string, rows: any[]) {
 
 // One run per edition at a time: screens that load together must not seed twice.
 const inFlight = new Map<Edition, Promise<any>>();
+const DEMO_MODE_KEY = "sifobooks-demo-mode";
+
+export function isStandaloneDemoModeEnabled(): boolean {
+  try { return typeof window !== "undefined" && window.localStorage.getItem(DEMO_MODE_KEY) === "enabled"; }
+  catch { return false; }
+}
+
+export function setStandaloneDemoMode(enabled: boolean): void {
+  try {
+    if (enabled) window.localStorage.setItem(DEMO_MODE_KEY, "enabled");
+    else window.localStorage.removeItem(DEMO_MODE_KEY);
+  } catch {}
+}
+
 export function ensureStandaloneDemo(edition: Edition) {
+  // Demo data is never injected into a real workspace automatically.
+  // Operators explicitly enable Demo Mode from the standalone shell first.
+  if (!isStandaloneDemoModeEnabled()) return Promise.resolve({ seeded: false, reason: "DEMO_MODE_DISABLED" });
   const running = inFlight.get(edition);
   if (running) return running;
   const p = runStandaloneDemo(edition).finally(() => inFlight.delete(edition));
@@ -37,13 +54,6 @@ export function ensureStandaloneDemo(edition: Edition) {
 }
 
 async function runStandaloneDemo(edition: Edition) {
-  // Restaurant demo data is opt-in. The restaurant workspace must open with
-  // an empty real menu so operators never mistake sample dishes for live stock.
-  // A deliberate "Load demo data" action can still call the existing seed path.
-  if (edition === "restaurant") {
-    return { seeded: false, reason: "RESTAURANT_DEMO_REQUIRES_EXPLICIT_ACTION" };
-  }
-
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   if (!uid) return { seeded: false, reason: "NOT_SIGNED_IN" };
