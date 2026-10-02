@@ -69,6 +69,23 @@ function ReceiveStockPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return toast.error("Not signed in");
     setSaving(true);
+    if (import.meta.env.VITE_SIFOBOOKS_BACKEND !== "local") {
+      // Online: record one purchase movement per line in a single insert; the
+      // database updates on-hand stock and location balances from these.
+      const reference = supplierInvoice.trim() || `RCV-${receiptDate}`;
+      const { error } = await supabase.from("stock_movements").insert(lines.map(l => ({
+        user_id: u.user!.id, item_id: l.itemId, movement_type: "purchase", quantity: l.quantity,
+        unit_cost: l.unitCost, total_cost: l.quantity * l.unitCost, reference,
+        note: "Stock received", location_id: locationId, transaction_date: receiptDate,
+        source_type: "stock_receipt", source_id: supplierId || null, created_by: u.user!.id,
+      })) as any);
+      setSaving(false);
+      if (error) return toast.error(`Stock was not received: ${error.message}`);
+      toast.success(`Stock received — ${reference}`);
+      setLines([]);
+      setSupplierInvoice("");
+      return;
+    }
     const { data, error } = await supabase.rpc("receive_purchase" as any, {
       _uid: u.user.id,
       _supplier_id: supplierId || null,
