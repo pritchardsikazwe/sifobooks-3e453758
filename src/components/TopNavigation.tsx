@@ -19,6 +19,23 @@ const iconFor = (name?: string) => {
   return (Icons as any)[name] ?? (Icons as any)[name.replace("Icon", "")] ?? Icons.Circle;
 };
 
+const menuTheme: Record<string, { iconBg: string; iconText: string; activeBg: string }> = {
+  Home: { iconBg: "bg-[#EAF6F0]", iconText: "text-[#07834F]", activeBg: "bg-[#EAF6F0]" },
+  Customers: { iconBg: "bg-[#EEF5FF]", iconText: "text-[#2563EB]", activeBg: "bg-[#EEF5FF]" },
+  Suppliers: { iconBg: "bg-[#FFF5E8]", iconText: "text-[#C77700]", activeBg: "bg-[#FFF5E8]" },
+  Sales: { iconBg: "bg-[#EAFBF4]", iconText: "text-[#059669]", activeBg: "bg-[#EAFBF4]" },
+  Purchases: { iconBg: "bg-[#FFF1F2]", iconText: "text-[#E11D48]", activeBg: "bg-[#FFF1F2]" },
+  Inventory: { iconBg: "bg-[#F3F0FF]", iconText: "text-[#7C3AED]", activeBg: "bg-[#F3F0FF]" },
+  Banking: { iconBg: "bg-[#ECFDF5]", iconText: "text-[#047857]", activeBg: "bg-[#ECFDF5]" },
+  Accounting: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#1D4ED8]", activeBg: "bg-[#EFF6FF]" },
+  POS: { iconBg: "bg-[#FFF7ED]", iconText: "text-[#EA580C]", activeBg: "bg-[#FFF7ED]" },
+  Manufacturing: { iconBg: "bg-[#F5F3FF]", iconText: "text-[#6D28D9]", activeBg: "bg-[#F5F3FF]" },
+  "HR & Payroll": { iconBg: "bg-[#FDF2F8]", iconText: "text-[#BE185D]", activeBg: "bg-[#FDF2F8]" },
+  Reports: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#0369A1]", activeBg: "bg-[#EFF6FF]" },
+  Company: { iconBg: "bg-[#F8FAFC]", iconText: "text-[#475569]", activeBg: "bg-[#F8FAFC]" },
+  Administration: { iconBg: "bg-[#F1F5F9]", iconText: "text-[#334155]", activeBg: "bg-[#F1F5F9]" },
+};
+
 function useNavigationMenus(): Menu[] {
   const { installed } = useInstalledModules();
   const { canView, isStaff, isSuperAdmin } = usePermissions();
@@ -112,22 +129,7 @@ function useNavigationMenus(): Menu[] {
     ["Users & Roles", "Administration", "Audit Logs", "Approval Centre", "Approvals", "System Health"]
   );
 
-  const menuTheme: Record<string, { iconBg: string; iconText: string; activeBg: string }> = {
-  Home: { iconBg: "bg-[#EAF6F0]", iconText: "text-[#07834F]", activeBg: "bg-[#EAF6F0]" },
-  Customers: { iconBg: "bg-[#EEF5FF]", iconText: "text-[#2563EB]", activeBg: "bg-[#EEF5FF]" },
-  Suppliers: { iconBg: "bg-[#FFF5E8]", iconText: "text-[#C77700]", activeBg: "bg-[#FFF5E8]" },
-  Sales: { iconBg: "bg-[#EAFBF4]", iconText: "text-[#059669]", activeBg: "bg-[#EAFBF4]" },
-  Purchases: { iconBg: "bg-[#FFF1F2]", iconText: "text-[#E11D48]", activeBg: "bg-[#FFF1F2]" },
-  Inventory: { iconBg: "bg-[#F3F0FF]", iconText: "text-[#7C3AED]", activeBg: "bg-[#F3F0FF]" },
-  Banking: { iconBg: "bg-[#ECFDF5]", iconText: "text-[#047857]", activeBg: "bg-[#ECFDF5]" },
-  Accounting: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#1D4ED8]", activeBg: "bg-[#EFF6FF]" },
-  POS: { iconBg: "bg-[#FFF7ED]", iconText: "text-[#EA580C]", activeBg: "bg-[#FFF7ED]" },
-  Manufacturing: { iconBg: "bg-[#F5F3FF]", iconText: "text-[#6D28D9]", activeBg: "bg-[#F5F3FF]" },
-  "HR & Payroll": { iconBg: "bg-[#FDF2F8]", iconText: "text-[#BE185D]", activeBg: "bg-[#FDF2F8]" },
-  Reports: { iconBg: "bg-[#EFF6FF]", iconText: "text-[#0369A1]", activeBg: "bg-[#EFF6FF]" },
-  Company: { iconBg: "bg-[#F8FAFC]", iconText: "text-[#475569]", activeBg: "bg-[#F8FAFC]" },
-  Administration: { iconBg: "bg-[#F1F5F9]", iconText: "text-[#334155]", activeBg: "bg-[#F1F5F9]" },
-};
+
 
   const menus = [
     { label: "Home", icon: "Home", items: match(["/dashboard", "/notifications", "/approvals"], ["Home", "Notifications", "Approvals"]) },
