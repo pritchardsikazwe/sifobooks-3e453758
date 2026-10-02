@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Edit2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -496,10 +497,14 @@ export function SimpleCrud({
           saveLabel={editing ? "Save changes" : `Create ${title.toLowerCase()}`}
         >
           {groupNames.map((g, gi) => (
-            <SifoFormSection key={g} title={g}>
-              {fields.filter(f => (f.group ?? DEFAULT_GROUP) === g).map(renderField)}
-              {gi === groupNames.length - 1 && extras}
-            </SifoFormSection>
+            <Fragment key={g}>
+              <SifoFormSection title={g}>
+                {fields.filter(f => (f.group ?? DEFAULT_GROUP) === g).map(renderField)}
+              </SifoFormSection>
+              {gi === 0 && (accountFields?.length || previewLines) ? (
+                <SifoFormSection title="Accounts & posting">{extras}</SifoFormSection>
+              ) : null}
+            </Fragment>
           ))}
         </SifoFormPage>
       </div>

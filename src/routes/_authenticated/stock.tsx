@@ -14,6 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
+import { AccountSelector } from "@/components/selectors/AccountSelector";
+import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
 import { SifoFilterBar, SifoKpiCard, SifoHubTabs, SifoModuleHeader, SifoPage } from "@/components/sifo";
 
@@ -244,6 +248,36 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [locations, setLocations] = useState<Array<{ id: string; name: string; is_default: boolean }>>([]);
   const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [itemType, setItemType] = useState("product");
+  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
+  const [barcode, setBarcode] = useState("");
+  const [description, setDescription] = useState("");
+  const [wholesale, setWholesale] = useState(0);
+  const [minStock, setMinStock] = useState(0);
+  const [maxStock, setMaxStock] = useState(0);
+  const [supplierId, setSupplierId] = useState("none");
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
+  const [trackBatches, setTrackBatches] = useState(false);
+  const [trackSerials, setTrackSerials] = useState(false);
+  const [trackExpiry, setTrackExpiry] = useState(false);
+  const { accounts, defaultFor } = useCoaAccounts();
+  const [acct, setAcct] = useState<Record<string, string | null>>({});
+  const isStock = itemType === "product";
+
+  useEffect(() => {
+    if (!accounts.length) return;
+    setAcct(prev => ({
+      sales: prev.sales ?? defaultFor("4000")?.id ?? null,
+      cogs: prev.cogs ?? defaultFor("5000")?.id ?? null,
+      inventory: prev.inventory ?? defaultFor("1300")?.id ?? null,
+      purchase: prev.purchase ?? null,
+    }));
+  }, [accounts]);
+
+  useEffect(() => {
+    void supabase.from("suppliers").select("id,name").order("name").then(({ data }: any) => setSuppliers(data ?? []));
+  }, []);
 
   useEffect(() => {
     void supabase.from("inventory_locations").select("id,name,is_default").eq("is_active", true).order("is_default", { ascending: false }).order("name").then(({ data }: any) => {
@@ -261,7 +295,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
   const submit = async () => {
     if (!name.trim()) return toast.error("Name is required");
-    if (qty > 0 && !locationId) return toast.error("Choose a stock location before recording opening stock");
+    if (isStock && qty > 0 && !locationId) return toast.error("Choose a stock location before recording opening stock");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
@@ -276,10 +310,24 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         tax_category: taxCategory,
         vat_rate: vatRate,
         unit,
-        base_unit: unit,
         sales_unit: unit,
         purchase_unit: unit,
-        track_stock: 1,
+        item_type: itemType,
+        category: category.trim() || null,
+        brand: brand.trim() || null,
+        barcode: barcode.trim() || null,
+        description: description.trim() || null,
+        preferred_supplier_id: supplierId === "none" ? null : supplierId,
+        sales_account_id: acct.sales ?? null,
+        cogs_account_id: isStock ? acct.cogs ?? null : null,
+        inventory_account_id: isStock ? acct.inventory ?? null : null,
+        purchase_account_id: acct.purchase ?? null,
+        wholesale_price: wholesale || null,
+        min_stock: isStock ? minStock : 0,
+        max_stock: isStock ? maxStock : 0,
+        track_batches: isStock && trackBatches,
+        track_serials: isStock && trackSerials,
+        track_expiry: isStock && trackExpiry,
         cost_price: cost,
         sell_price: price,
         quantity_on_hand: 0,
@@ -288,7 +336,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       .select("id")
       .single();
     if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
-    if (qty > 0) {
+    if (isStock && qty > 0) {
       const reference = `OPEN-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(created.id).slice(0, 8).toUpperCase()}`;
       const isLocalBackend = import.meta.env.VITE_SIFOBOOKS_BACKEND === "local";
       let openingError: any = null;
@@ -339,7 +387,45 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       <SifoFormSection title="Item details">
         <SifoField label="Name" required wide><Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Portland cement 50kg" /></SifoField>
         <SifoField label="SKU (optional)"><Input value={sku} onChange={e => setSku(e.target.value)} placeholder="CEM-50" /></SifoField>
-        <SifoField label="Unit"><Input value={unit} onChange={e => setUnit(e.target.value)} placeholder="each, kg, box…" /></SifoField>
+        <SifoField label="Item type" required>
+          <Select value={itemType} onValueChange={setItemType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="product">Stock item (tracked quantity)</SelectItem>
+              <SelectItem value="non_stock">Non-stock item</SelectItem>
+              <SelectItem value="service">Service</SelectItem>
+            </SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Unit">
+          <Select value={unit} onValueChange={setUnit}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["each","pcs","kg","g","litre","ml","box","pack","carton","bag","dozen","metre","pair","hour","day"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+              {!["each","pcs","kg","g","litre","ml","box","pack","carton","bag","dozen","metre","pair","hour","day"].includes(unit) && <SelectItem value={unit}>{unit}</SelectItem>}
+            </SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Category"><Input value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. Building materials" /></SifoField>
+        <SifoField label="Brand"><Input value={brand} onChange={e => setBrand(e.target.value)} /></SifoField>
+        <SifoField label="Barcode"><Input value={barcode} onChange={e => setBarcode(e.target.value)} placeholder="Scan or type" /></SifoField>
+        <SifoField label="Preferred supplier">
+          <Select value={supplierId} onValueChange={setSupplierId}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No preferred supplier</SelectItem>
+              {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </SifoField>
+        <SifoField label="Description" wide><Textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} /></SifoField>
+      </SifoFormSection>
+
+      <SifoFormSection title="Accounts">
+        <AccountSelector label="Sales / income account" accounts={accounts} types={["revenue","income"]} value={acct.sales ?? null} onChange={v => setAcct(a => ({ ...a, sales: v }))} recentKey="item-sales" />
+        <AccountSelector label="Purchase / expense account" accounts={accounts} types={["expense","cost_of_sales"]} value={acct.purchase ?? null} onChange={v => setAcct(a => ({ ...a, purchase: v }))} recentKey="item-purchase" />
+        {isStock && <AccountSelector label="Inventory (asset) account" accounts={accounts} types={["asset"]} value={acct.inventory ?? null} onChange={v => setAcct(a => ({ ...a, inventory: v }))} recentKey="item-inventory" />}
+        {isStock && <AccountSelector label="Cost of sales account" accounts={accounts} types={["expense","cost_of_sales"]} value={acct.cogs ?? null} onChange={v => setAcct(a => ({ ...a, cogs: v }))} recentKey="item-cogs" />}
       </SifoFormSection>
 
       <SifoFormSection title="ZRA HS code & tax">
@@ -381,10 +467,21 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       <SifoFormSection title="Pricing & stock">
         <SifoField label="Cost price"><Input type="number" min={0} step="0.01" value={cost} onChange={e => setCost(Number(e.target.value))} /></SifoField>
         <SifoField label="Sell price"><Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(Number(e.target.value))} /></SifoField>
-        <SifoField label="Opening quantity"><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>
-        {qty > 0 && <SifoField label="Opening stock location" required><Select value={locationId} onValueChange={setLocationId}><SelectTrigger><SelectValue placeholder="Select store or warehouse" /></SelectTrigger><SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name}{location.is_default ? " (Default)" : ""}</SelectItem>)}</SelectContent></Select></SifoField>}
-        <SifoField label="Reorder level"><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></SifoField>
+        <SifoField label="Wholesale price"><Input type="number" min={0} step="0.01" value={wholesale} onChange={e => setWholesale(Number(e.target.value))} /></SifoField>
+        {isStock && <SifoField label="Opening quantity"><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>}
+        {isStock && qty > 0 && <SifoField label="Opening stock location" required><Select value={locationId} onValueChange={setLocationId}><SelectTrigger><SelectValue placeholder="Select store or warehouse" /></SelectTrigger><SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name}{location.is_default ? " (Default)" : ""}</SelectItem>)}</SelectContent></Select></SifoField>}
+        {isStock && <SifoField label="Reorder level"><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></SifoField>}
+        {isStock && <SifoField label="Minimum stock"><Input type="number" min={0} value={minStock} onChange={e => setMinStock(Number(e.target.value))} /></SifoField>}
+        {isStock && <SifoField label="Maximum stock"><Input type="number" min={0} value={maxStock} onChange={e => setMaxStock(Number(e.target.value))} /></SifoField>}
       </SifoFormSection>
+
+      {isStock && (
+        <SifoFormSection title="Tracking">
+          <SifoField label="Track batches"><Switch checked={trackBatches} onCheckedChange={setTrackBatches} /></SifoField>
+          <SifoField label="Track serial numbers"><Switch checked={trackSerials} onCheckedChange={setTrackSerials} /></SifoField>
+          <SifoField label="Track expiry dates"><Switch checked={trackExpiry} onCheckedChange={setTrackExpiry} /></SifoField>
+        </SifoFormSection>
+      )}
     </SifoFormPage>
   );
 }
