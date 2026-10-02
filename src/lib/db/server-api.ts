@@ -926,7 +926,18 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
         };
       }
       case "receive_purchase": {
-        return { data: receivePurchase({ ...args, userId: String(args._uid || "") }), error: null };
+        const uid = String(args._uid || "");
+        return { data: receivePurchase({
+          userId: uid,
+          supplierId: args._supplier_id ?? args.supplierId ?? null,
+          poId: args._po_id ?? args.poId ?? null,
+          branchId: args._branch_id ?? args.branchId ?? null,
+          warehouseId: args._warehouse_id ?? args.warehouseId ?? null,
+          locationId: String(args._location_id ?? args.locationId ?? ""),
+          receiptDate: String(args._receipt_date ?? args.receiptDate ?? new Date().toISOString().slice(0, 10)),
+          supplierInvoiceNumber: args._supplier_invoice_number ?? args.supplierInvoiceNumber ?? null,
+          items: Array.isArray(args._items) ? args._items : [],
+        }), error: null };
       }
       case "transfer_stock": {
         return { data: transferStock({ ...args, userId: String(args._uid || "") }), error: null };
