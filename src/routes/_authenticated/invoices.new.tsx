@@ -19,6 +19,7 @@ import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { salesInvoiceLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { zraSubmitInvoiceFn } from "@/lib/zra/server";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -243,6 +244,14 @@ function NewInvoicePage() {
           : m.startsWith("NO_LOCATION") ? "No stock location is set up for this warehouse or company."
           : m || "Invoice could not be posted";
         return toast.error(why);
+      }
+      if (!IS_LOCAL_BACKEND) {
+        // Online invoice fiscalization is not wired yet; the Windows-only
+        // submit step reads the local database and must not run on hosted.
+        setSaving(false);
+        toast.success(`Invoice ${number} posted`);
+        navigate({ to: "/invoices" });
+        return;
       }
       try {
         const fiscal = await zraSubmitInvoiceFn({
