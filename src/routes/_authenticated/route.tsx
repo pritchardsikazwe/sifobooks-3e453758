@@ -14,6 +14,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
+import { TopNavigation } from "@/components/TopNavigation";
 import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
 import { toast } from "sonner";
 
@@ -178,10 +179,7 @@ function Shell() {
               </DropdownMenu>
             </div>
           </header>
-
-
-
-
+          <TopNavigation />
 
           <OfflineBanner />
           <main className="flex-1 min-w-0 pb-24 md:pb-0">
