@@ -136,6 +136,21 @@ run("payroll", () => {
   ok(x.total_gross===8000 && x.total_net===7000,"payroll gross/net reconcile");
 });
 
+// Butchery: receiving → processing/yield → saleable stock
+run("butchery", () => {
+  const uid = "qa-user";
+  db.query("INSERT INTO stock_items (id,user_id,name,sku,cost_price,sell_price,quantity_on_hand) VALUES (?,?,?,?,?,?,?)")
+    .run("qa-beef", uid, "QA Whole Beef", "QA-BEEF", 80, 120, 100);
+  db.query("INSERT INTO butchery_products (id,user_id,item_id,animal_type,cut_name,unit,price_per_kg) VALUES (?,?,?,?,?,?,?)")
+    .run("qa-butchery-product", uid, "qa-beef", "beef", "Whole Beef", "kg", 120);
+  db.query("INSERT INTO butchery_processing_batches (id,user_id,reference,source_item_id,input_qty,input_unit,input_cost,saleable_qty,waste_qty,status) VALUES (?,?,?,?,?,?,?,?,?,?)")
+    .run("qa-batch", uid, "BCH-QA-001", "qa-beef", 100, "kg", 8000, 92, 8, "posted");
+  db.query("INSERT INTO butchery_yield_lines (id,user_id,batch_id,output_name,output_qty,unit,yield_percent) VALUES (?,?,?,?,?,?,?)")
+    .run("qa-yield", uid, "qa-batch", "QA Saleable Cuts", 92, "kg", 92);
+  const x:any = db.query("SELECT input_qty,saleable_qty,waste_qty,status FROM butchery_processing_batches WHERE id=?").get("qa-batch");
+  ok(x.input_qty === 100 && x.saleable_qty === 92 && x.waste_qty === 8 && x.status === "posted", "butchery processing preserves input/yield/waste");
+});
+
 // Module posting → ledger → audit → reversal integrity
 run("module posting and reversal", () => {
   const uid = "qa-user";
