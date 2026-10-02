@@ -13,7 +13,7 @@ export const MODULE_CATALOG: CatalogModule[] = [
   { moduleKey: "hotel_erp", label: "Hotel Management", emoji: "🏨", includes: ["Rooms", "Reservations", "Guests", "Front Desk", "Check-in / Check-out", "Hotel billing", "Hotel reports"] },
   { moduleKey: "restaurant", label: "Restaurant", emoji: "🍽️", includes: ["Restaurant POS", "Tables", "Kitchen", "Menu", "Recipes"] },
   { moduleKey: "school_erp", label: "School Management", emoji: "🏫", includes: ["Students", "Classes", "Fees", "Attendance", "School reports"] },
-  { moduleKey: null, label: "Microfinance", emoji: "💰", includes: ["Borrowers", "Loans", "Repayments", "Portfolio reports"] },
+  { moduleKey: "loans", extraKeys: ["borrowers", "repayments", "portfolio"], label: "Microfinance", emoji: "💰", includes: ["Borrowers", "Loans", "Repayments", "Portfolio reports"] },
   { moduleKey: "property_management", label: "Property Management", emoji: "🏢", includes: ["Properties", "Units", "Tenants", "Leases", "Rent billing"] },
   { moduleKey: "hr_payroll", label: "Payroll", emoji: "👥", includes: ["Employees", "Pay runs", "Payslips", "PAYE, NAPSA, NHIMA"] },
   { moduleKey: "retail_pos", label: "Retail POS", emoji: "🛒", includes: ["Shop till", "Cashier shifts", "Sales history", "Returns"] },
