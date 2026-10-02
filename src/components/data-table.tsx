@@ -277,7 +277,7 @@ export function DataTable<T extends Record<string, any>>({
   const rowPad = density === "compact" ? "py-2" : "py-3.5";
 
   return (
-    <div className={cn("rounded-lg border border-border bg-card shadow-sm overflow-hidden", className)}>
+    <div className={cn("overflow-hidden rounded-xl border border-border bg-card shadow-sm", className)}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2.5 bg-card">
         <div className="flex items-center gap-2 flex-1 min-w-0">

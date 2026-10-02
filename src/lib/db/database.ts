@@ -27,20 +27,22 @@ function getDatabaseConstructor(): any {
   }
   return DatabaseConstructorCache;
 }
-import { readFileSync, mkdirSync, existsSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-import { readdirSync } from "fs";
-import { gunzipSync } from "zlib";
+// Namespace imports, read lazily inside functions: a named import of a Node
+// built-in is evaluated at module load and crashes any browser page whose
+// import chain reaches this file (e.g. via @/lib/zra/server).
+import * as fs from "fs";
+import * as path from "path";
+import * as url from "url";
+import * as zlib from "zlib";
 
 let db: Database | null = null;
-const DB_PATH = process.env.DATABASE_PATH || join(process.cwd(), "data", "sifobooks.db");
+const dbPath = () => process.env.DATABASE_PATH || path.join(process.cwd(), "data", "sifobooks.db");
 
 export function getDb(): Database {
   if (!db) {
-    mkdirSync(dirname(DB_PATH), { recursive: true });
+    fs.mkdirSync(path.dirname(dbPath()), { recursive: true });
     const DatabaseConstructor = getDatabaseConstructor();
-    db = new DatabaseConstructor(DB_PATH);
+    db = new DatabaseConstructor(dbPath());
     db.exec("PRAGMA journal_mode = WAL;");
     db.exec("PRAGMA foreign_keys = ON;");
     initSchema(db);
@@ -52,21 +54,21 @@ export function getDb(): Database {
 
 function findSchemaSql(): string {
   // Dev mode: schema.sql next to the source file
-  const sourceDir = dirname(fileURLToPath(import.meta.url));
-  const devPath = join(sourceDir, "schema.sql");
-  if (existsSync(devPath)) return readFileSync(devPath, "utf8");
+  const sourceDir = path.dirname(url.fileURLToPath(import.meta.url));
+  const devPath = path.join(sourceDir, "schema.sql");
+  if (fs.existsSync(devPath)) return fs.readFileSync(devPath, "utf8");
 
   // Protected desktop package: compressed schema is intentionally not exposed as raw SQL.
-  const protectedPath = join(process.cwd(), ".sifobooks-schema.bin");
-  if (existsSync(protectedPath)) return gunzipSync(readFileSync(protectedPath)).toString("utf8");
+  const protectedPath = path.join(process.cwd(), ".sifobooks-schema.bin");
+  if (fs.existsSync(protectedPath)) return zlib.gunzipSync(fs.readFileSync(protectedPath)).toString("utf8");
 
   // Desktop development/fallback mode: schema.sql next to the executable.
-  const desktopPath = join(process.cwd(), "schema.sql");
-  if (existsSync(desktopPath)) return readFileSync(desktopPath, "utf8");
+  const desktopPath = path.join(process.cwd(), "schema.sql");
+  if (fs.existsSync(desktopPath)) return fs.readFileSync(desktopPath, "utf8");
 
   // Desktop mode: schema.sql in the data directory
-  const dataPath = join(process.cwd(), "data", "schema.sql");
-  if (existsSync(dataPath)) return readFileSync(dataPath, "utf8");
+  const dataPath = path.join(process.cwd(), "data", "schema.sql");
+  if (fs.existsSync(dataPath)) return fs.readFileSync(dataPath, "utf8");
 
   throw new Error("schema.sql not found. Expected next to source, executable, or in data/ directory.");
 }
@@ -497,12 +499,12 @@ export function getSchemaStatus(): { schemaVersion: string | null; appliedCount:
     applied = (database.prepare("SELECT id FROM schema_migrations ORDER BY id").all() as any[]).map((r) => String(r.id));
   } catch { applied = []; }
   const known = new Set<string>();
-  const protectedMigrations = join(process.cwd(), ".sifobooks-migrations.bin");
-  if (existsSync(protectedMigrations)) {
-    try { for (const e of JSON.parse(gunzipSync(readFileSync(protectedMigrations)).toString("utf8"))) known.add(e.name); } catch { /* reported via pending */ }
+  const protectedMigrations = path.join(process.cwd(), ".sifobooks-migrations.bin");
+  if (fs.existsSync(protectedMigrations)) {
+    try { for (const e of JSON.parse(zlib.gunzipSync(fs.readFileSync(protectedMigrations)).toString("utf8"))) known.add(e.name); } catch { /* reported via pending */ }
   }
-  const dir = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")].find((c) => existsSync(c));
-  if (dir) for (const n of readdirSync(dir)) if (/^\d+_.*\.sql$/.test(n)) known.add(n);
+  const dir = [path.join(process.cwd(), "src", "lib", "db", "migrations"), path.join(process.cwd(), "migrations")].find((c) => fs.existsSync(c));
+  if (dir) for (const n of fs.readdirSync(dir)) if (/^\d+_.*\.sql$/.test(n)) known.add(n);
   const appliedSet = new Set(applied);
   const pendingMigrations = [...known].filter((n) => !appliedSet.has(n)).sort();
   return { schemaVersion: applied.length ? applied[applied.length - 1] : null, appliedCount: applied.length, pendingMigrations };
@@ -515,14 +517,14 @@ function runSqlMigrations(database: Database) {
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     );`,
   );
-  const protectedMigrations = join(process.cwd(), ".sifobooks-migrations.bin");
+  const protectedMigrations = path.join(process.cwd(), ".sifobooks-migrations.bin");
   let bundled: { name: string; sql: string }[] = [];
-  if (existsSync(protectedMigrations)) {
-    try { bundled = JSON.parse(gunzipSync(readFileSync(protectedMigrations)).toString("utf8")); }
+  if (fs.existsSync(protectedMigrations)) {
+    try { bundled = JSON.parse(zlib.gunzipSync(fs.readFileSync(protectedMigrations)).toString("utf8")); }
     catch (error) { console.error("[db] Protected migration bundle could not be opened:", error); throw error; }
   }
-  const candidates = [join(process.cwd(), "src", "lib", "db", "migrations"), join(process.cwd(), "migrations")];
-  const dir = candidates.find((candidate) => existsSync(candidate));
+  const candidates = [path.join(process.cwd(), "src", "lib", "db", "migrations"), path.join(process.cwd(), "migrations")];
+  const dir = candidates.find((candidate) => fs.existsSync(candidate));
   if (!dir && bundled.length === 0) return;
   const applied = new Set(
     (database.prepare("SELECT id FROM schema_migrations").all() as any[]).map((row) => String(row.id)),
@@ -531,8 +533,8 @@ function runSqlMigrations(database: Database) {
   // Always merge both sources so an existing portable database receives newly
   // added compatibility columns instead of remaining on the old bundle.
   const sourceEntries = dir
-    ? readdirSync(dir).filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
-      .map((name) => ({ name, sql: readFileSync(join(dir!, name), "utf8") }))
+    ? fs.readdirSync(dir).filter((name) => /^\d+_.*\.sql$/.test(name)).sort()
+      .map((name) => ({ name, sql: fs.readFileSync(path.join(dir!, name), "utf8") }))
     : [];
   const bundledEntries = bundled.map((entry) => ({ name: entry.name, sql: entry.sql }));
   const migrationMap = new Map<string, string>();

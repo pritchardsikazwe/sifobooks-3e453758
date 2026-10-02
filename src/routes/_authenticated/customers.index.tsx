@@ -15,9 +15,10 @@ import { DataTable, type DTColumn } from "@/components/data-table";
 import { DetailDrawer, DrawerField, DrawerSection } from "@/components/DetailDrawer";
 import { ExportMenu } from "@/lib/exports";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
+import { SifoPage, SifoStatusBadge } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/customers/")({
-  head: () => ({ meta: [{ title: "Customers — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Customers — SifoBooks" }, { name: "description", content: "Manage customers, balances and credit terms in SifoBooks." }, { property: "og:title", content: "Customers — SifoBooks" }, { property: "og:description", content: "Manage customers, balances and credit terms in SifoBooks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: CustomersPage,
 });
 
@@ -204,7 +205,7 @@ function CustomersPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <SifoPage className="space-y-4">
 
       <SifoModuleHeader
         module="sales"
@@ -276,7 +277,7 @@ function CustomersPage() {
         subtitle={drawer?.contact_person ?? undefined}
         meta={drawer && (
           <>
-            <Badge variant={drawer.active ? "default" : "secondary"}>{drawer.active ? "Active" : "Inactive"}</Badge>
+            <SifoStatusBadge status={drawer.active ? "Active" : "Inactive"} tone={drawer.active ? "paid" : "neutral"} />
             {drawer.tpin && <span className="text-xs text-muted-foreground">TPIN {drawer.tpin}</span>}
           </>
         )}
@@ -326,7 +327,7 @@ function CustomersPage() {
         )}
       </DetailDrawer>
 
-    </div>
+    </SifoPage>
   );
 }
 

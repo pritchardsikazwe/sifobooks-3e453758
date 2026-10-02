@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
+import { SifoPage } from "@/components/sifo";
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 
 import { fmtMoney } from "@/lib/format";
@@ -30,7 +31,7 @@ import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "description", content: "Your SifoBooks business overview, priorities and financial activity." }, { property: "og:title", content: "Dashboard — SifoBooks" }, { property: "og:description", content: "Your SifoBooks business overview, priorities and financial activity." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: DashboardGate,
 });
 
@@ -549,7 +550,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+      <SifoPage>
         {/* Header — greeting + dominant primary action */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
@@ -606,9 +607,6 @@ function DashboardPage() {
         </motion.div>
 
 
-        {/* Live work queue — only real outstanding actions appear here */}
-        <SifoWorkQueue currency={currency} />
-
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
 
@@ -634,7 +632,7 @@ function DashboardPage() {
             </SortableContext>
           </DndContext>
         )}
-      </div>
+      </SifoPage>
     </div>
   );
 }
@@ -655,7 +653,7 @@ const tooltipStyle = {
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5", className)}>
+    <div className={cn("rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between mb-3">
           <div>

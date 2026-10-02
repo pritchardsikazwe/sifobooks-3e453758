@@ -79,7 +79,7 @@ export function AppSidebar() {
   const [name, setName] = useState("Account");
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
-  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: false, retail_pos: false, restaurant: false, hr_payroll: true });
+  const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: true, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
 
@@ -100,13 +100,18 @@ export function AppSidebar() {
       cid = (cm?.[0]?.company_id as string | undefined) ?? null;
     }
     if (cid) {
-      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
+      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode, industry").eq("id", cid).maybeSingle();
       if (c) {
         setCompanyName(c.trading_name || c.name);
         const mode = (c as any).workspace_mode as string | null;
         setWorkspaceModeState(mode);
         const industry = (c as any).industry as string | null;
-        if (industry) setCapabilities(await loadBusinessCapabilityState(cid, industry));
+        const caps = await loadBusinessCapabilityState(cid, industry);
+        // Items/Stock are core ERP menus: keep them unless the company has
+        // explicitly switched Inventory off (unknown industries used to hide them).
+        const { data: off } = await supabase.from("company_modules").select("module_key").eq("company_id", cid).eq("module_key", "__off__:inventory").limit(1);
+        caps.inventory = !(off && off.length);
+        setCapabilities(caps);
         setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
       }
     }
@@ -214,7 +219,7 @@ export function AppSidebar() {
       )),
       make("Inventory", byUrl(
         ["/inventory", "/stock", "/inventory/transfers", "/stock-counts", "/inventory/reconciliation", "/inventory-control-centre", "/inventory/stock-card", "/stock-adjustments", "/inventory/locations", "/stock-batches", "/stock-serials", "/inventory/production", "/inventory/cashier-records", "/inventory-sheets", "/restaurant/items-stock"],
-        ["Items", "Items & Stock", "Transfers", "Stock Counts", "Reconciliation", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
+        ["Items", "Items & Stock", "Transfers", "Stock Counts", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
       )),
       make("Accounting", byUrl(
         ["/chart-of-accounts", "/journal-entries", "/opening-balances", "/period-close", "/fixed-assets", "/budgets", "/fx-rates", "/posting-wizard"],

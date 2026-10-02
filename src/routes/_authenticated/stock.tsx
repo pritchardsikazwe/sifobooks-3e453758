@@ -15,11 +15,17 @@ import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
+import { SifoFilterBar, SifoKpiCard } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
     meta: [
       { title: "Stock — SifoBooks" },
+      { name: "description", content: "Manage items, products and stock levels in SifoBooks." },
+      { property: "og:title", content: "Items and Products — SifoBooks" },
+      { property: "og:description", content: "Manage items, products and stock levels in SifoBooks." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -128,20 +134,20 @@ function StockPage() {
       }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <ItemKpi label="Total items" value={items.length.toLocaleString()} caption="Active product catalogue" icon={<Package className="h-5 w-5" />} />
-        <ItemKpi label="Stock value" value={money(stockValue)} caption="Current inventory at cost" icon={<ArrowUpRight className="h-5 w-5" />} />
-        <ItemKpi label="Low stock" value={low.length.toLocaleString()} caption="Items at or below reorder level" tone={low.length ? "warning" : "normal"} icon={<AlertTriangle className="h-5 w-5" />} />
-        <ItemKpi label="Categories" value={categoryCount.toLocaleString()} caption={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={<Sliders className="h-5 w-5" />} />
+        <SifoKpiCard module="inventory" label="Total items" value={items.length.toLocaleString()} hint="Active product catalogue" icon={Package} />
+        <SifoKpiCard module="inventory" label="Stock value" value={money(stockValue)} hint="Current inventory at cost" icon={ArrowUpRight} />
+        <SifoKpiCard module="inventory" label="Low stock" value={low.length.toLocaleString()} hint="At or below reorder level" icon={AlertTriangle} positive={false} />
+        <SifoKpiCard module="inventory" label="Categories" value={categoryCount.toLocaleString()} hint={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={Sliders} />
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <CardHeader className="border-b bg-card/95 p-3 sm:p-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative min-w-0 flex-1 xl:max-w-xl">
-              <Package className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search items, SKU, barcode or description…" className="h-11 rounded-xl pl-9" />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+      <Card className="overflow-hidden">
+        <CardHeader className="p-3 sm:p-4">
+          <SifoFilterBar
+            search={q}
+            onSearchChange={setQ}
+            searchPlaceholder="Search items, SKU, barcode or description…"
+            className="border-0 p-0 shadow-none"
+            filters={<>
               <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Category filter">
                 <option value="all">All categories</option>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -155,8 +161,8 @@ function StockPage() {
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
                 <Link to="/inventory/transfers">Stock transfers</Link>
               </Button>
-            </div>
-          </div>
+            </>}
+          />
         </CardHeader>
         <CardContent className="p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -167,19 +173,6 @@ function StockPage() {
         </CardContent>
       </Card>
     </SifoWorkspaceShell>
-  );
-}
-
-function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {
-  return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-        <span className={tone === "warning" ? "text-amber-600" : "text-primary"}>{icon}</span>
-      </div>
-      <div className="mt-2 truncate text-xl font-black tracking-tight sm:text-2xl">{value}</div>
-      <div className="mt-1 truncate text-[11px] text-muted-foreground">{caption}</div>
-    </div>
   );
 }
 
@@ -309,7 +302,17 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [price, setPrice] = useState(0);
   const [qty, setQty] = useState(0);
   const [reorder, setReorder] = useState(0);
+  const [locations, setLocations] = useState<Array<{ id: string; name: string; is_default: boolean }>>([]);
+  const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void supabase.from("inventory_locations").select("id,name,is_default").eq("is_active", true).order("is_default", { ascending: false }).order("name").then(({ data }: any) => {
+      const rows = data ?? [];
+      setLocations(rows);
+      setLocationId((current) => current || rows[0]?.id || "");
+    });
+  }, []);
 
   const pickHs = (code: string) => {
     setHsCode(code);
@@ -319,18 +322,34 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
   const submit = async () => {
     if (!name.trim()) return toast.error("Name is required");
+    if (qty > 0 && !locationId) return toast.error("Choose a stock location before recording opening stock");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
     const finalHs = hsMode === "list" ? (hsCode || null) : (customHs.trim() || null);
-    const { error } = await supabase.from("stock_items").insert({
+    const { data: created, error } = await supabase.from("stock_items").insert({
       user_id: u.user.id, name: name.trim(), sku: sku.trim() || null,
       hs_code: finalHs, tax_category: taxCategory, vat_rate: vatRate,
       unit, base_unit: unit, sales_unit: unit, track_stock: 1,
       cost_price: cost, sell_price: price, quantity_on_hand: qty, reorder_level: reorder,
     });
+      unit, cost_price: cost, sell_price: price, quantity_on_hand: 0, reorder_level: reorder,
+    }).select("id").single();
+    if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
+    if (qty > 0) {
+      const reference = `OPEN-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(created.id).slice(0, 8).toUpperCase()}`;
+      const { error: openingError } = await supabase.from("stock_movements").insert({
+        user_id: u.user.id, item_id: created.id, movement_type: "opening", quantity: qty,
+        unit_cost: cost, total_cost: qty * cost, reference, note: "Opening stock", location_id: locationId,
+        source_type: "opening_stock", source_id: created.id, created_by: u.user.id,
+      });
+      if (openingError) {
+        await supabase.from("stock_items").delete().eq("id", created.id);
+        setSaving(false);
+        return toast.error(`Opening stock was not recorded: ${openingError.message}`);
+      }
+    }
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success("Item added");
     onCreated();
   };
@@ -392,6 +411,7 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         <SifoField label="Cost price"><Input type="number" min={0} step="0.01" value={cost} onChange={e => setCost(Number(e.target.value))} /></SifoField>
         <SifoField label="Sell price"><Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(Number(e.target.value))} /></SifoField>
         <SifoField label="Opening quantity"><Input type="number" min={0} step="1" value={qty} onChange={e => setQty(Number(e.target.value))} /></SifoField>
+        {qty > 0 && <SifoField label="Opening stock location" required><Select value={locationId} onValueChange={setLocationId}><SelectTrigger><SelectValue placeholder="Select store or warehouse" /></SelectTrigger><SelectContent>{locations.map(location => <SelectItem key={location.id} value={location.id}>{location.name}{location.is_default ? " (Default)" : ""}</SelectItem>)}</SelectContent></Select></SifoField>}
         <SifoField label="Reorder level"><Input type="number" min={0} step="1" value={reorder} onChange={e => setReorder(Number(e.target.value))} /></SifoField>
       </SifoFormSection>
     </SifoFormPage>

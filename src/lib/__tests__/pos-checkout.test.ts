@@ -36,6 +36,10 @@ describe("checkout error messages", () => {
   });
   it("explains a store that is not assigned", () => {
     expect(posErrorMessage("NO_LOCATION")).toMatch(/location|store/i);
+    expect(posErrorMessage("POS_LOCATION_REQUIRED")).toMatch(/opening stock|store/i);
+  });
+  it("explains an unavailable selected store", () => {
+    expect(posErrorMessage("POS_LOCATION_NOT_FOUND:location-id")).toMatch(/active store/i);
   });
   it("names the item that is short", () => {
     expect(posErrorMessage("INSUFFICIENT_STOCK:Breakfast Meal")).toMatch(/Breakfast Meal/);
@@ -70,5 +74,12 @@ describe("the browser is not the accounting authority", () => {
   });
   it("carries the shift so offline sales land on the right shift", () => {
     expect(source).toMatch(/shift_id:draft\.shiftId/);
+  });
+  it("carries the till so the server can resolve the till's stock location", () => {
+    expect(source).toMatch(/register_id:draft\.registerId/);
+  });
+  it("preserves server error codes until the checkout screen translates them", () => {
+    expect(source).toMatch(/throw new Error\(error\.message\)/);
+    expect(source).not.toMatch(/throw new Error\(posErrorMessage\(error\.message\)\)/);
   });
 });

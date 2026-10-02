@@ -4,6 +4,7 @@ import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AvailableModules } from "@/components/billing/AvailableModules";
 import { fmtMoney } from "@/lib/format";
 import { activatePayrollOnly, upgradeFromPayrollOnly, isPayrollOnly } from "@/lib/payroll-product";
 import { activateHotelOnly, upgradeFromHotelOnly, isHotelOnly } from "@/lib/hotel-product";
@@ -119,7 +120,7 @@ function SubscriptionPage() {
           <div className="rounded-lg border bg-white p-4 flex items-center justify-between flex-wrap gap-3">
             <div>
               <div className="text-xs text-muted-foreground uppercase tracking-wide">Current plan</div>
-              <div className="text-lg font-semibold">{current.subscription_plans?.name} · <span className="text-emerald-700">{current.status}</span></div>
+              <div className="text-lg font-semibold">{current.subscription_plans?.name} · <span className="text-emerald-700">{current.status}</span> <span className="ml-1 rounded-full border px-2 py-0.5 text-xs font-medium">{current.status === "trialing" || current.status === "trial" ? "Trial" : current.status === "active" ? "Paid" : current.status}</span></div>
               <div className="text-xs text-muted-foreground">Renews {new Date(current.current_period_end).toLocaleDateString()}</div>
             </div>
             <div className="text-2xl font-bold">{fmtMoney(current.subscription_plans?.price_monthly, current.subscription_plans?.currency)}/mo</div>
@@ -219,6 +220,8 @@ function SubscriptionPage() {
             </div>
           </div>
         </div>
+
+        <AvailableModules companyId={company?.id ?? null} userId={userId} />
 
         <div className="text-xs text-muted-foreground text-center pt-2">
           Prices in ZMW. Billing integration coming soon — activate to preview limits.

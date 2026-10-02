@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { SifoModuleHeader } from "@/components/sifo/SifoModuleHeader";
@@ -41,7 +42,7 @@ function LocationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: "", code: "", location_type: "warehouse", address: "", notes: "" });
+  const [form, setForm] = useState({ name: "", code: "", location_type: "warehouse", address: "", notes: "", is_default: false });
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -73,14 +74,19 @@ function LocationsPage() {
     setBusy(true);
     try {
       const uid = await currentUserId();
+      const makeDefault = form.is_default || locations.length === 0;
+      if (makeDefault && locations.some((location) => location.is_default)) {
+        const { error: clearError } = await supabase.from("inventory_locations").update({ is_default: false } as never).eq("is_default", true);
+        if (clearError) throw clearError;
+      }
       const { error } = await supabase.from("inventory_locations").insert({
         user_id: uid, name: form.name.trim(), code: form.code.trim() || null,
-        location_type: form.location_type, address: form.address || null, notes: form.notes || null,
+        location_type: form.location_type, address: form.address || null, notes: form.notes || null, is_default: makeDefault,
       } as never);
       if (error) throw error;
       toast.success("Location added");
       setOpen(false);
-      setForm({ name: "", code: "", location_type: "warehouse", address: "", notes: "" });
+      setForm({ name: "", code: "", location_type: "warehouse", address: "", notes: "", is_default: false });
       load();
     } catch (e: any) { toast.error(e.message ?? "Could not save location"); }
     finally { setBusy(false); }
@@ -157,6 +163,10 @@ function LocationsPage() {
             <div className="space-y-2 sm:col-span-2">
               <Label>Notes</Label>
               <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+            <div className="flex items-center justify-between gap-4 sm:col-span-2">
+              <div><Label htmlFor="default-location">Company default store</Label><p className="text-xs text-muted-foreground">Used when a till, cashier or branch has no assigned store.</p></div>
+              <Switch id="default-location" checked={form.is_default || locations.length === 0} onCheckedChange={(checked) => setForm((f) => ({ ...f, is_default: checked }))} disabled={locations.length === 0} />
             </div>
           </div>
           <DialogFooter>
