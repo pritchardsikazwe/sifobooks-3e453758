@@ -16,7 +16,7 @@ export function AvailableModules({ companyId, userId }: { companyId: string | nu
     if (!companyId || !m.moduleKey) return toast.error("Set up your company first");
     setBusy(true);
     try {
-      await addCatalogModule({ userId, companyId, moduleKey: m.moduleKey });
+      await addCatalogModule({ userId, companyId, moduleKey: m.moduleKey, extraKeys: m.extraKeys });
       setEnabled((s) => new Set(s).add(m.moduleKey!));
       toast.success(`${m.label} activated successfully`);
       setDetail(null);
