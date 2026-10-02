@@ -63,6 +63,7 @@
   --color-action-report: #7C3AED;
   --color-action-warn: #CA8A04;
   --color-action-delete: #DC2626;
+  --color-action-foreground: oklch(0.99 0 0);
 
   /* Retail till palette — fixed, high-contrast keys for touch operation */
   --color-till-tile: #1D4ED8;
