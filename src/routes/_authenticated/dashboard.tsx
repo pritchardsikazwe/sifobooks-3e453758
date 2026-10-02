@@ -606,9 +606,6 @@ function DashboardPage() {
         </motion.div>
 
 
-        {/* Live work queue — only real outstanding actions appear here */}
-        <SifoWorkQueue currency={currency} />
-
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
 
