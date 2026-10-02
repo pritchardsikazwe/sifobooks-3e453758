@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 /** Add-on modules shown on Subscription & Billing. `moduleKey` is the existing company_modules key. */
 export type CatalogModule = {
   moduleKey: string | null; // null = not yet available
+  extraKeys?: string[]; // companion company_modules keys enabled together with moduleKey
   label: string;
   emoji: string;
   includes: string[];
