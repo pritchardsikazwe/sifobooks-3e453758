@@ -15,11 +15,17 @@ import { ZRA_HS_CODES, findHsCode } from "@/lib/zra-hs-codes";
 import { toast } from "sonner";
 import { SifoFormPage, SifoFormSection, SifoField } from "@/components/sifo/SifoFormPage";
 import { SifoWorkspaceShell } from "@/components/sifo/SifoWorkspaceShell";
+import { SifoFilterBar, SifoKpiCard } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/stock")({
   head: () => ({
     meta: [
       { title: "Stock — SifoBooks" },
+      { name: "description", content: "Manage items, products and stock levels in SifoBooks." },
+      { property: "og:title", content: "Items and Products — SifoBooks" },
+      { property: "og:description", content: "Manage items, products and stock levels in SifoBooks." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -128,20 +134,20 @@ function StockPage() {
       }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <ItemKpi label="Total items" value={items.length.toLocaleString()} caption="Active product catalogue" icon={<Package className="h-5 w-5" />} />
-        <ItemKpi label="Stock value" value={money(stockValue)} caption="Current inventory at cost" icon={<ArrowUpRight className="h-5 w-5" />} />
-        <ItemKpi label="Low stock" value={low.length.toLocaleString()} caption="Items at or below reorder level" tone={low.length ? "warning" : "normal"} icon={<AlertTriangle className="h-5 w-5" />} />
-        <ItemKpi label="Categories" value={categoryCount.toLocaleString()} caption={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={<Sliders className="h-5 w-5" />} />
+        <SifoKpiCard module="inventory" label="Total items" value={items.length.toLocaleString()} hint="Active product catalogue" icon={Package} />
+        <SifoKpiCard module="inventory" label="Stock value" value={money(stockValue)} hint="Current inventory at cost" icon={ArrowUpRight} />
+        <SifoKpiCard module="inventory" label="Low stock" value={low.length.toLocaleString()} hint="At or below reorder level" icon={AlertTriangle} positive={false} />
+        <SifoKpiCard module="inventory" label="Categories" value={categoryCount.toLocaleString()} hint={outOfStock ? `${outOfStock} out of stock` : "Product categories"} icon={Sliders} />
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <CardHeader className="border-b bg-card/95 p-3 sm:p-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative min-w-0 flex-1 xl:max-w-xl">
-              <Package className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search items, SKU, barcode or description…" className="h-11 rounded-xl pl-9" />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+      <Card className="overflow-hidden">
+        <CardHeader className="p-3 sm:p-4">
+          <SifoFilterBar
+            search={q}
+            onSearchChange={setQ}
+            searchPlaceholder="Search items, SKU, barcode or description…"
+            className="border-0 p-0 shadow-none"
+            filters={<>
               <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm font-medium" aria-label="Category filter">
                 <option value="all">All categories</option>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -155,8 +161,8 @@ function StockPage() {
               <Button variant="outline" size="sm" className="h-10 rounded-xl" asChild>
                 <Link to="/inventory/transfers">Stock transfers</Link>
               </Button>
-            </div>
-          </div>
+            </>}
+          />
         </CardHeader>
         <CardContent className="p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -167,19 +173,6 @@ function StockPage() {
         </CardContent>
       </Card>
     </SifoWorkspaceShell>
-  );
-}
-
-function ItemKpi({ label, value, caption, icon, tone = "normal" }: { label: string; value: string; caption: string; icon: React.ReactNode; tone?: "normal" | "warning" }) {
-  return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-        <span className={tone === "warning" ? "text-amber-600" : "text-primary"}>{icon}</span>
-      </div>
-      <div className="mt-2 truncate text-xl font-black tracking-tight sm:text-2xl">{value}</div>
-      <div className="mt-1 truncate text-[11px] text-muted-foreground">{caption}</div>
-    </div>
   );
 }
 
