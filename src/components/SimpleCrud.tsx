@@ -524,7 +524,7 @@ export function SimpleCrud({
           module={module}
           icon={Icon}
           title={editing ? `Edit ${title}` : `New ${title}`}
-          subtitle={${description ?? ""}${dirty ? " · Unsaved changes" : ""}}
+          subtitle={`${description ?? ""}${dirty ? " · Unsaved changes" : ""}`}
           onCancel={() => { if (!dirty || confirm("Discard unsaved changes?")) setOpen(false); }}
           onSave={save}
           saving={saving}
