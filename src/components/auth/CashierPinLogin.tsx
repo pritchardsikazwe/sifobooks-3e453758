@@ -52,7 +52,7 @@ export function CashierPinLogin({ onBack }: { onBack: () => void }) {
         setBusy(false);
         return setError(res.error);
       }
-      const { error: sessionErr } = await supabase.auth.setSession({ access_token: res.access_token });
+      const { error: sessionErr } = await supabase.auth.setSession({ access_token: res.access_token, refresh_token: res.refresh_token ?? "" } as any);
       if (sessionErr) {
         setBusy(false);
         setPin("");

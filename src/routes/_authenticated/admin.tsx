@@ -126,7 +126,16 @@ function AdminPage() {
     if (resetPassword.length < 8) return toast.error("Password must be at least 8 characters");
     if (resetPassword !== resetConfirm) return toast.error("Passwords do not match");
     setResetting(true);
-    const result = await supabase.auth.adminResetPassword(resetTarget.user_id, resetPassword, forceChange, resetReason);
+    let result: any;
+    if (import.meta.env.VITE_SIFOBOOKS_BACKEND === "local") {
+      result = await supabase.auth.adminResetPassword(resetTarget.user_id, resetPassword, forceChange, resetReason);
+    } else {
+      try {
+        const { adminResetMemberPassword } = await import("@/lib/cashier-auth.functions");
+        const r = await adminResetMemberPassword({ data: { targetUserId: resetTarget.user_id, newPassword: resetPassword, forceChange, reason: resetReason } });
+        result = r.ok ? {} : { error: { message: r.error } };
+      } catch (e: any) { result = { error: { message: e?.message } }; }
+    }
     setResetting(false);
     if (result?.error) return toast.error(result.error.message || "Password reset failed");
     toast.success(`Password reset for ${resetTarget.profiles?.full_name || resetTarget.profiles?.email || "user"}`);

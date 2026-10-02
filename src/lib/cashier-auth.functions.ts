@@ -28,7 +28,7 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: perms } = await supabaseAdmin
       .from("employee_pos_permissions")
-      .select("id, full_name, display_name, pos_role, email, cashier_code, pin_set_at, pin_disabled")
+      .select("id, full_name, display_name, pos_role, email, cashier_code, pin_set_at, pin_disabled, worker_user_id")
       .eq("cashier_code", data.cashier_code)
       .eq("is_active", true)
       .order("pin_set_at", { ascending: false, nullsFirst: false });
@@ -46,10 +46,29 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
       lastError = out?.error ?? null;
     }
     if (!perm) return { ok: false as const, error: lastError ?? "Incorrect cashier ID or PIN" };
-    const accessToken = perm.worker_user_id ? await createSessionTokenForUser(String(perm.worker_user_id)) : null;
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+    if (perm.worker_user_id && import.meta.env.VITE_SIFOBOOKS_BACKEND === "local") {
+      accessToken = await createSessionTokenForUser(String(perm.worker_user_id));
+    } else if (perm.worker_user_id) {
+      // Hosted: mint a normal session for the cashier's own login via a one-time server-side link.
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(String(perm.worker_user_id));
+      const email = u?.user?.email;
+      if (email) {
+        const { data: link } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+        const hashed = link?.properties?.hashed_token;
+        if (hashed) {
+          const { createClient } = await import("@supabase/supabase-js");
+          const anon = createClient(process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+          const { data: v } = await anon.auth.verifyOtp({ token_hash: hashed, type: "magiclink" });
+          accessToken = v?.session?.access_token ?? null;
+          refreshToken = v?.session?.refresh_token ?? null;
+        }
+      }
+    }
     if (!accessToken) return { ok: false as const, error: "Cashier login is not available. Ask your manager." };
     return {
-      ok: true as const, access_token: accessToken, full_name: (perm.display_name ?? perm.full_name ?? perm.cashier_code) as string | null,
+      ok: true as const, access_token: accessToken, refresh_token: refreshToken, full_name: (perm.display_name ?? perm.full_name ?? perm.cashier_code) as string | null,
       cashier_code: perm.cashier_code as string | null, pos_role: (perm.pos_role as string | null) ?? "cashier",
     };
   });
@@ -132,4 +151,35 @@ export const createCashier = createServerFn({ method: "POST" })
       return { ok: false as const, error: pinError?.message ?? out?.error ?? "Could not set cashier PIN" };
     }
     return { ok: true as const, cashier: perm };
+  });
+
+/** Hosted admin reset of a team member's password (owner/admin of a shared company only). */
+export const adminResetMemberPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { targetUserId: string; newPassword: string; forceChange?: boolean; reason?: string }) => {
+    const targetUserId = String(input?.targetUserId ?? "");
+    const newPassword = String(input?.newPassword ?? "");
+    if (!/^[0-9a-f-]{36}$/i.test(targetUserId)) throw new Error("Invalid user");
+    if (newPassword.length < 8) throw new Error("Password must be at least 8 characters");
+    return { targetUserId, newPassword, forceChange: input?.forceChange !== false, reason: String(input?.reason ?? "Administrator password reset").slice(0, 200) };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin.from("profiles").select("active_company_id").eq("id", context.userId).maybeSingle();
+    const companyId = profile?.active_company_id;
+    if (!companyId) return { ok: false as const, error: "No active company" };
+    const { data: company } = await supabaseAdmin.from("companies").select("user_id").eq("id", companyId).maybeSingle();
+    const { data: me } = await supabaseAdmin.from("company_members").select("role").eq("company_id", companyId).eq("user_id", context.userId).maybeSingle();
+    const allowed = company?.user_id === context.userId || ["owner","admin","administrator"].includes(String(me?.role ?? "").toLowerCase());
+    if (!allowed) return { ok: false as const, error: "Only the company owner or administrator can reset passwords" };
+    const { data: target } = await supabaseAdmin.from("company_members").select("user_id").eq("company_id", companyId).eq("user_id", data.targetUserId).maybeSingle();
+    if (!target && company?.user_id !== data.targetUserId) return { ok: false as const, error: "That user is not a member of this company" };
+    const { data: existing } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.targetUserId, {
+      password: data.newPassword,
+      user_metadata: { ...(existing?.user?.user_metadata ?? {}), must_change_password: data.forceChange },
+    });
+    if (error) return { ok: false as const, error: "Password reset failed" };
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "admin_password_reset", entity_type: "user", entity_id: data.targetUserId, details: { company_id: companyId, reason: data.reason, force_change: data.forceChange } }).then(() => {}, () => {});
+    return { ok: true as const };
   });
