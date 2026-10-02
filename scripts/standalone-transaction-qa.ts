@@ -136,6 +136,50 @@ run("payroll", () => {
   ok(x.total_gross===8000 && x.total_net===7000,"payroll gross/net reconcile");
 });
 
+// Module posting → ledger → audit → reversal integrity
+run("module posting and reversal", () => {
+  const uid = "qa-user";
+  const modules = [
+    { ref: "HOTEL_PAYMENT:qa-hotel", description: "Hotel payment" },
+    { ref: "SCHOOL_FEE_PAYMENT:qa-school", description: "School fee payment" },
+    { ref: "PROPERTY_PAYMENT:qa-property", description: "Property payment" },
+  ];
+  for (const [i, m] of modules.entries()) {
+    const entryId = "qa-module-je-" + i;
+    db.query("INSERT INTO journal_entries (id,user_id,entry_number,reference,description,status,total_debit,total_credit) VALUES (?,?,?,?,?,?,?,?,?)")
+      .run(entryId, uid, "QA-MOD-" + i, m.ref, m.description, "posted", 100, 100);
+    db.query("INSERT INTO journal_lines (id,user_id,entry_id,account_id,debit,credit) VALUES (?,?,?,?,?,?)")
+      .run("qa-module-dr-" + i, uid, entryId, "1000", 100, 0);
+    db.query("INSERT INTO journal_lines (id,user_id,entry_id,account_id,debit,credit) VALUES (?,?,?,?,?,?)")
+      .run("qa-module-cr-" + i, uid, entryId, "4000", 0, 100);
+    db.query("INSERT INTO audit_logs (id,user_id,action,entity_type,entity_id,details) VALUES (?,?,?,?,?,?)")
+      .run("qa-module-audit-" + i, uid, "JOURNAL_POSTED", "journal_entry", entryId, JSON.stringify({ reference: m.ref }));
+  }
+  const count:any = db.query("SELECT COUNT(*) count FROM journal_entries WHERE user_id=? AND reference LIKE '%_PAYMENT:qa-%'").get(uid);
+  ok(count.count === 3, "hotel/school/property postings exist");
+  const audit:any = db.query("SELECT COUNT(*) count FROM audit_logs WHERE user_id=? AND action='JOURNAL_POSTED'").get(uid);
+  ok(audit.count === 3, "module postings are audited");
+
+  const original = "qa-module-je-0";
+  const reversal = "qa-module-reversal";
+  db.query("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,reversal_of,reversal_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run(reversal, uid, "QA-REV-001", "2026-10-02", "REV:HOTEL_PAYMENT:qa-hotel", "Reversal of QA-MOD-0", "posted", 100, 100, original, "QA reversal");
+  db.query("UPDATE journal_entries SET status='reversed',reversed_by=?,reversal_reason=? WHERE id=? AND user_id=?")
+    .run(reversal, "QA reversal", original, uid);
+  const state:any = db.query("SELECT status,reversed_by,reversal_reason FROM journal_entries WHERE id=?").get(original);
+  ok(state.status === "reversed" && state.reversed_by === reversal && state.reversal_reason === "QA reversal", "original posting is linked to its reversal");
+});
+
+// Legacy-schema compatibility: an older journal table can accept the additive reversal linkage.
+run("legacy schema compatibility", () => {
+  const legacy = new Database(":memory:");
+  legacy.exec("CREATE TABLE journal_entries (id TEXT PRIMARY KEY,user_id TEXT NOT NULL,entry_number TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',total_debit REAL DEFAULT 0,total_credit REAL DEFAULT 0,reversal_of TEXT,reversal_reason TEXT)");
+  legacy.exec('ALTER TABLE "journal_entries" ADD COLUMN "reversed_by" TEXT');
+  const cols:any[] = legacy.query('PRAGMA table_info("journal_entries")').all();
+  ok(cols.some((c:any) => c.name === "reversed_by"), "legacy journal receives additive reversed_by column");
+  legacy.close();
+});
+
 // Enterprise smoke: common business masters exist
 run("enterprise", () => {
   ok(hasTable("customers") && hasTable("suppliers") && hasTable("stock_items") && hasTable("journal_entries"),"enterprise core accounting/operations tables available");
