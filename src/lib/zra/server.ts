@@ -4,12 +4,6 @@ import { getDb, generateUUID } from "../db/database";
 import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  cloudListDevices, cloudSaveDevice, cloudGetConfig, cloudSaveConfig, cloudInitializeDevice,
-  cloudGetStandardCodes, cloudGetItemClasses, cloudSyncCatalog, cloudListInventory,
-  cloudSearchItemClasses, cloudListStandardCodes, cloudMapInventoryItem, cloudRegisterInventoryItem,
-  cloudSubmitPosSale, cloudSubmitCorrection, cloudSelectInvoice, cloudSaveStockItems, cloudSaveStockMaster,
-  cloudSaveItem,
-} from "./cloud.server";
   cloudSaveItemFn, cloudSubmitPosSaleFn, cloudSubmitCorrectionFn, cloudSelectInvoiceFn,
   cloudSaveStockItemsFn, cloudSaveStockMasterFn, cloudListDevicesFn, cloudSaveDeviceFn,
   cloudGetConfigFn, cloudSaveConfigFn, cloudInitializeDeviceFn, cloudGetStandardCodesFn,
