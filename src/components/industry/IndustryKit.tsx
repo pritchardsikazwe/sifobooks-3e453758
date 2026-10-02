@@ -37,8 +37,8 @@ export function IndustryShell({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-5 rounded-[24px] bg-[#F5FAF8]/70 p-1">
-      <div className="rounded-[22px] border border-[#DCE9E5] bg-white shadow-sm overflow-hidden">
+    <div className="space-y-3 rounded-[20px] bg-[#F5FAF8]/70 p-0">
+      <div className="rounded-[18px] border border-[#DCE9E5] bg-white shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 border-b border-[#EEF4F2] px-4 py-3 sm:px-5">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#07834F] text-white font-black">S</div>
           <div className="min-w-0">
@@ -50,7 +50,7 @@ export function IndustryShell({
             <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 sm:inline-flex">● Online</span>
           </div>
         </div>
-        <div className="px-4 py-4 sm:px-5">
+        <div className="px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0">
             <div className="text-[10px] font-black uppercase tracking-[.18em] text-[#07834F]">{product} · Standalone workspace</div>
@@ -86,7 +86,7 @@ export function IndustryShell({
 
 export function StatGrid({ items }: { items: { label: string; value: string; hint?: string }[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       {items.map((s) => (
         <Card key={s.label} className="rounded-2xl p-4">
           <div className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</div>
@@ -100,7 +100,7 @@ export function StatGrid({ items }: { items: { label: string; value: string; hin
 
 export function Board({ title, hint, right, children }: { title: string; hint?: string; right?: ReactNode; children: ReactNode }) {
   return (
-    <Card className="rounded-[22px] border-[#D9E6E3] bg-white shadow-[0_6px_20px_rgba(23,59,58,.055)]">
+    <Card className="rounded-xl border-[#D9E6E3] bg-white shadow-[0_5px_16px_rgba(23,59,58,.045)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
         <div>
           <h2 className="font-semibold">{title}</h2>
@@ -134,7 +134,7 @@ export function RecordTable({
   rows: { key: string; cells: ReactNode[]; to?: string; params?: Record<string, string> }[];
   empty?: string;
 }) {
-  if (rows.length === 0) return <div className="p-10 text-center text-sm text-muted-foreground">{empty}</div>;
+  if (rows.length === 0) return <div className="p-6 text-center text-sm text-muted-foreground">{empty}</div>;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] text-left text-sm">
@@ -145,7 +145,7 @@ export function RecordTable({
           {rows.map((r) => (
             <tr key={r.key} className="border-t transition-colors hover:bg-muted/40">
               {r.cells.map((cell, i) => (
-                <td key={i} className="px-4 py-3">
+                <td key={i} className="px-3 py-2.5">
                   {i === 0 && r.to ? (
                     <Link to={r.to as never} params={r.params as never} className="font-medium text-primary hover:underline">
                       {cell}
@@ -292,7 +292,7 @@ export function Tile({
 }
 
 export function TileGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-3 xl:grid-cols-4">{children}</div>;
+  return <div className="grid grid-cols-2 gap-2 p-3 md:grid-cols-3 xl:grid-cols-4">{children}</div>;
 }
 
 /** Kanban-style operational board: columns of cards grouped by status. */
@@ -303,9 +303,9 @@ export function KanbanBoard({
   empty?: string;
 }) {
   const total = columns.reduce((s, c) => s + c.cards.length, 0);
-  if (total === 0) return <div className="p-10 text-center text-sm text-muted-foreground">{empty}</div>;
+  if (total === 0) return <div className="p-6 text-center text-sm text-muted-foreground">{empty}</div>;
   return (
-    <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-2 p-3 md:grid-cols-2 xl:grid-cols-4">
       {columns.map((col) => (
         <div key={col.key} className="rounded-2xl border bg-muted/30 p-3">
           <div className="mb-2 flex items-center justify-between">
@@ -326,7 +326,7 @@ export function KanbanBoard({
 
 /** Vertical activity timeline — folio charges, payment history, fee history. */
 export function Timeline({ items, empty = "No activity recorded." }: { items: { key: string; when: string; title: ReactNode; detail?: ReactNode; amount?: ReactNode }[]; empty?: string }) {
-  if (items.length === 0) return <div className="p-10 text-center text-sm text-muted-foreground">{empty}</div>;
+  if (items.length === 0) return <div className="p-6 text-center text-sm text-muted-foreground">{empty}</div>;
   return (
     <ol className="space-y-0 p-4">
       {items.map((i, idx) => (
