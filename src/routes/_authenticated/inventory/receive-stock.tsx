@@ -100,7 +100,7 @@ function ReceiveStockPage() {
           <CardHeader><CardTitle>Receipt details</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2"><Label>Stock location *</Label><Select value={locationId} onValueChange={setLocationId}><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger><SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>Supplier</Label><Select value={supplierId} onValueChange={setSupplierId}><SelectTrigger><SelectValue placeholder="Optional supplier" /></SelectTrigger><SelectContent><SelectItem value="">No supplier</SelectItem>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>Supplier</Label><Select value={supplierId || "none"} onValueChange={v => setSupplierId(v === "none" ? "" : v)}><SelectTrigger><SelectValue placeholder="Optional supplier" /></SelectTrigger><SelectContent><SelectItem value="none">No supplier</SelectItem>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>Receipt date</Label><Input type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} /></div>
             <div className="space-y-2"><Label>Supplier invoice / delivery note</Label><Input value={supplierInvoice} onChange={e => setSupplierInvoice(e.target.value)} placeholder="Optional reference" /></div>
           </CardContent>
