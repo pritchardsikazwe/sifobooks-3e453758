@@ -351,11 +351,30 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
     if (qty > 0) {
       const reference = `OPEN-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(created.id).slice(0, 8).toUpperCase()}`;
-      const { error: openingError } = await supabase.from("stock_movements").insert({
-        user_id: u.user.id, item_id: created.id, movement_type: "opening", quantity: qty,
-        unit_cost: cost, total_cost: qty * cost, reference, note: "Opening stock", location_id: locationId,
-        source_type: "opening_stock", source_id: created.id, created_by: u.user.id,
-      });
+      const isLocalBackend = import.meta.env.VITE_SIFOBOOKS_BACKEND === "local";
+      let openingError: any = null;
+
+      if (isLocalBackend) {
+        const { error } = await supabase.rpc("post_opening_stock" as any, {
+          _uid: u.user.id,
+          _company_id: null,
+          _branch_id: null,
+          _location_id: locationId,
+          _warehouse_id: null,
+          _opening_date: new Date().toISOString().slice(0, 10),
+          _reference: reference,
+          _items: [{ itemId: created.id, quantity: qty, unitCost: cost }],
+        } as any);
+        openingError = error;
+      } else {
+        const { error } = await supabase.from("stock_movements").insert({
+          user_id: u.user.id, item_id: created.id, movement_type: "opening", quantity: qty,
+          unit_cost: cost, total_cost: qty * cost, reference, note: "Opening stock", location_id: locationId,
+          source_type: "opening_stock", source_id: created.id, created_by: u.user.id,
+        });
+        openingError = error;
+      }
+
       if (openingError) {
         await supabase.from("stock_items").delete().eq("id", created.id);
         setSaving(false);
