@@ -695,7 +695,7 @@ function executeRestaurantCheckout(args: Record<string, any>) {
       orderNo = existingOrder.order_no;
     } else {
       db.prepare(
-        "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO restaurant_orders (id,user_id,order_no,client_ref,business_date,table_id,order_type,guests,subtotal,discount,tax,service_charge,gratuity,delivery_fee,total,server_name,customer_name,status,payment_method,amount_paid,closed_at,journal_entry_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       ).run(
         orderId, uid, orderNo, clientRef, businessDate, sale.table_id ?? null, sale.order_type ?? "DINE-IN",
         Number(sale.guests || 1), subtotal, discount, tax, serviceCharge, gratuity, deliveryFee, total,
