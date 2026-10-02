@@ -119,6 +119,8 @@ export const HUBS: HubDef[] = [
       {
         label: "Stock flow",
         items: [
+          { title: "Receive Stock", url: "/inventory/receive-stock", module: "inventory", iconName: "PackagePlus", primary: true, hint: "Receive delivered stock into a warehouse or store." },
+          { title: "Opening Stock", url: "/inventory/opening-stock", module: "inventory", iconName: "ClipboardPlus", primary: true, hint: "Enter stock already on hand at the start of a new company or location." },
           { title: "Control Center", url: "/inventory-control-centre", module: "inventory", iconName: "Gauge" },
           { title: "Stock Card / History", url: "/inventory/stock-card", module: "inventory", iconName: "ScrollText" },
           { title: "Stock Adjustments", url: "/stock-adjustments", module: "inventory", iconName: "ClipboardEdit" },
