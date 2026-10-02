@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Boxes, PackageCheck, PackageX, AlertTriangle, Layers, Coins, ScanLine, Plus,
-  Warehouse as WarehouseIcon, ArrowDownRight, ArrowUpRight, Search, Sparkles,
+  Warehouse as WarehouseIcon, ArrowDownRight, ArrowUpRight, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

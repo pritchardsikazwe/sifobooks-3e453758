@@ -369,7 +369,7 @@ function NewInvoicePage() {
         </div>
 
         {/* Invoice Information */}
-        <Section title="INVOICE INFORMATION" action={<button className="text-xs text-primary font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+        <Section title="INVOICE INFORMATION" action={<Button variant="ghost" size="sm"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></Button>}>
           <Field label="Invoice Number">
             <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-muted/40" />
           </Field>
@@ -400,7 +400,7 @@ function NewInvoicePage() {
             </Field>
             <Field label="Currency">
               <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-muted/40" />
-              <div className="text-right"><button className="text-xs text-primary font-medium underline mt-1">Set Exchange Rate</button></div>
+              <div className="text-right"><Button variant="link" size="sm" className="h-auto p-0">Set Exchange Rate</Button></div>
             </Field>
           </div>
         </Section>
@@ -558,7 +558,7 @@ function NewInvoicePage() {
         </div>
 
         {/* Bank Details */}
-        <Section title="BANK DETAILS" action={<button className="text-xs text-primary font-medium">Edit</button>}>
+        <Section title="BANK DETAILS" action={<Button variant="ghost" size="sm">Edit</Button>}>
           <div className="text-sm text-muted-foreground space-y-1">
             <div>Account Name: {company?.name ?? "—"}</div>
             <div>Account Number: {company?.bank_account_number ?? "—"}</div>

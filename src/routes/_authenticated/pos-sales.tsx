@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { ExportMenu } from "@/lib/exports";
 import { fmtMoney } from "@/lib/format";
@@ -75,9 +74,9 @@ function PosSales() {
     { key: "cost_total", header: "Cost of sale", align: "right", defaultHidden: true, accessor: r => Number(r.cost_total), cell: r => fmtMoney(Number(r.cost_total)) },
     {
       key: "posted", header: "Ledger", cell: r => r.journal_entry_id
-        ? <SifoStatusBadge status="Posted" tone="success" />
+        ? <SifoStatusBadge status="Posted" tone="paid" />
         : r.status === "void" ? <span className="text-xs text-muted-foreground">Voided</span>
-        : <SifoStatusBadge status="Not posted" tone="warning" />,
+        : <SifoStatusBadge status="Not posted" tone="pending" />,
     },
     {
       key: "actions", header: "", cell: r => (
