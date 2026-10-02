@@ -327,14 +327,27 @@ function NewItemForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setSaving(false); return toast.error("Not signed in"); }
     const finalHs = hsMode === "list" ? (hsCode || null) : (customHs.trim() || null);
-    const { data: created, error } = await supabase.from("stock_items").insert({
-      user_id: u.user.id, name: name.trim(), sku: sku.trim() || null,
-      hs_code: finalHs, tax_category: taxCategory, vat_rate: vatRate,
-      unit, base_unit: unit, sales_unit: unit, track_stock: 1,
-      cost_price: cost, sell_price: price, quantity_on_hand: qty, reorder_level: reorder,
-    });
-      unit, cost_price: cost, sell_price: price, quantity_on_hand: 0, reorder_level: reorder,
-    }).select("id").single();
+    const { data: created, error } = await supabase
+      .from("stock_items")
+      .insert({
+        user_id: u.user.id,
+        name: name.trim(),
+        sku: sku.trim() || null,
+        hs_code: finalHs,
+        tax_category: taxCategory,
+        vat_rate: vatRate,
+        unit,
+        base_unit: unit,
+        sales_unit: unit,
+        purchase_unit: unit,
+        track_stock: 1,
+        cost_price: cost,
+        sell_price: price,
+        quantity_on_hand: 0,
+        reorder_level: reorder,
+      })
+      .select("id")
+      .single();
     if (error || !created) { setSaving(false); return toast.error(error?.message ?? "Item could not be added"); }
     if (qty > 0) {
       const reference = `OPEN-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(created.id).slice(0, 8).toUpperCase()}`;
