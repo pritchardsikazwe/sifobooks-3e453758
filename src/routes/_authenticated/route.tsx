@@ -133,7 +133,7 @@ function Shell() {
               <span className="text-muted-foreground">{crumb}</span>
             </div>
             {canSwitchCompany ? (
-              <div className="flex min-w-0 items-center gap-1 rounded-xl bg-[#F7FBF9] p-1 border border-[#E4EEE9]"><CompanySwitcher /><WorkspaceSwitch /></div>
+              <div className="flex min-w-0 sm:shrink-0 items-center gap-1 rounded-xl bg-[#F7FBF9] p-1 border border-[#E4EEE9]"><CompanySwitcher /><WorkspaceSwitch /></div>
             ) : (
               <div className="hidden sm:flex min-w-0 items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground truncate">
                 {access?.role_name}{access?.branch_name ? ` · ${access.branch_name}` : ""}

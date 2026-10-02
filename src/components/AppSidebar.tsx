@@ -100,13 +100,13 @@ export function AppSidebar() {
       cid = (cm?.[0]?.company_id as string | undefined) ?? null;
     }
     if (cid) {
-      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode").eq("id", cid).maybeSingle();
+      const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode, industry").eq("id", cid).maybeSingle();
       if (c) {
         setCompanyName(c.trading_name || c.name);
         const mode = (c as any).workspace_mode as string | null;
         setWorkspaceModeState(mode);
         const industry = (c as any).industry as string | null;
-        if (industry) setCapabilities(await loadBusinessCapabilityState(cid, industry));
+        setCapabilities(await loadBusinessCapabilityState(cid, industry));
         setSubtitle(`${c.base_currency || "ZMW"} · ${mode === "payroll_only" ? "SifoPayroll" : SIFOBOOKS_EDITION === "enterprise" ? "Accounting ERP" : SIFOBOOKS_PRODUCT_NAME}`);
       }
     }
@@ -209,7 +209,7 @@ export function AppSidebar() {
       )),
       make("Inventory", byUrl(
         ["/inventory", "/stock", "/inventory/transfers", "/stock-counts", "/inventory/reconciliation", "/inventory-control-centre", "/inventory/stock-card", "/stock-adjustments", "/inventory/locations", "/stock-batches", "/stock-serials", "/inventory/production", "/inventory/cashier-records", "/inventory-sheets", "/restaurant/items-stock"],
-        ["Items", "Items & Stock", "Transfers", "Stock Counts", "Reconciliation", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
+        ["Items", "Items & Stock", "Transfers", "Stock Counts", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
       )),
       make("Accounting", byUrl(
         ["/chart-of-accounts", "/journal-entries", "/opening-balances", "/period-close", "/fixed-assets", "/budgets", "/fx-rates", "/posting-wizard"],
