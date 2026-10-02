@@ -19,6 +19,7 @@ import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { salesInvoiceLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
 import { zraSubmitInvoiceFn } from "@/lib/zra/server";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
   head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -202,6 +203,16 @@ function NewInvoicePage() {
     if (!u.user) { setSaving(false); return; }
 
     if (targetStatus === "sent") {
+      // No warehouse/location picked on a stock line: send the location that
+      // actually holds this item's stock, so posting does not depend on a
+      // company default store being configured. The server still falls back
+      // till → cashier → branch → company default when nothing is sent.
+      const needLoc = [...new Set(valid.filter(i => i.stockItemId && !i.warehouseId && !i.locationId).map(i => i.stockItemId as string))];
+      const stockedAt: Record<string, string> = {};
+      if (needLoc.length) {
+        const { data: bal } = await supabase.from("stock_balances").select("item_id, location_id, quantity").in("item_id", needLoc).gt("quantity", 0).order("quantity", { ascending: false });
+        for (const b of (bal ?? []) as any[]) if (!stockedAt[b.item_id]) stockedAt[b.item_id] = b.location_id;
+      }
       const rpcItems = valid.map(i => {
         const gross = i.qty * i.price;
         const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
@@ -213,7 +224,7 @@ function NewInvoicePage() {
           discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
           vat_rate: i.vatRate,
           warehouse_id: i.warehouseId ?? null,
-          location_id: i.locationId ?? null,
+          location_id: i.locationId ?? (i.stockItemId && !i.warehouseId ? stockedAt[i.stockItemId] ?? null : null),
         };
       });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
@@ -240,9 +251,17 @@ function NewInvoicePage() {
           : m.startsWith("UNSUPPORTED_TAX_SCHEME") ? "Posting is available for VAT invoices only for now. Save as draft instead."
           : m.startsWith("INSUFFICIENT_STOCK:") ? `Not enough stock for ${m.split(":")[1]}.`
           : m.startsWith("NO_COST:") ? `${m.split(":")[1]} has no cost price yet.`
-          : m.startsWith("NO_LOCATION") ? "No stock location is set up for this warehouse or company."
+          : m.startsWith("NO_LOCATION") ? "This item has no stock location. Pick a warehouse on the line, or set a default store under Inventory → Locations."
           : m || "Invoice could not be posted";
         return toast.error(why);
+      }
+      if (!IS_LOCAL_BACKEND) {
+        // Online invoice fiscalization is not wired yet; the Windows-only
+        // submit step reads the local database and must not run on hosted.
+        setSaving(false);
+        toast.success(`Invoice ${number} posted`);
+        navigate({ to: "/invoices" });
+        return;
       }
       try {
         const fiscal = await zraSubmitInvoiceFn({
