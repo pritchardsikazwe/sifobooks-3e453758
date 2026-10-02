@@ -193,6 +193,33 @@ function SystemHealthPage() {
         detail: missing.length ? missing.map((c: any) => c.name).join(", ") : undefined,
         fixTo: "/setup", fixLabel: "Company setup",
       });
+
+      // 12 · Standalone SQLite health — available on Windows standalone/network server builds.
+      // Hosted/cloud environments simply do not expose this local endpoint.
+      try {
+        const response = await fetch("/api/network/health", { cache: "no-store" });
+        if (response.ok) {
+          const payload = await response.json();
+          const db = payload?.database;
+          if (db) {
+            const healthy = db.status === "healthy";
+            out.push({
+              key: "local-sqlite",
+              title: "Standalone SQLite health",
+              icon: Database,
+              description: "Checks the local SQLite file, schema version and foreign-key integrity before daily use.",
+              severity: healthy ? "pass" : "fail",
+              metric: healthy ? "Database healthy" : "Database check failed",
+              detail: `quick_check: ${db.quickCheck ?? "n/a"} · foreign-key violations: ${db.foreignKeyViolations ?? 0} · tables: ${db.tableCount ?? "n/a"} · schema: ${db.schemaVersion ?? 0}`,
+              fixTo: "/network-setup",
+              fixLabel: "Open network setup",
+            });
+          }
+        }
+      } catch {
+        // Not a standalone build; no warning is shown for hosted/cloud deployments.
+      }
+
     } catch (e: any) {
       toast.error(e?.message ?? "Health checks failed");
     }
