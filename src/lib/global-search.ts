@@ -27,11 +27,13 @@ export type SearchHit = {
 const money = (v: unknown) =>
   v === null || v === undefined ? undefined : `K${Number(v).toLocaleString("en-ZM", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const like = (term: string) => `%${term.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+// Characters with meaning in the filter syntax (commas, brackets, quotes, colons,
+// backslashes, wildcards) are removed so malformed input can never break the query.
+const like = (term: string) => `%${term.replace(/[,()"'\\:*%_]/g, " ").replace(/\s+/g, " ").trim()}%`;
 
 /** Each table is searched over the columns a user would actually type. */
 export async function searchRecords(term: string, limitPer = 5): Promise<SearchHit[]> {
-  const q = term.trim();
+  const q = String(term ?? "").replace(/[,()"'\\:*%_]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
   if (q.length < 2) return [];
   const p = like(q);
   const L = limitPer;

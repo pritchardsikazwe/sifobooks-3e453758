@@ -28,7 +28,7 @@ function DemoIndex() {
         </Link>
         <h1 className="mt-4 text-4xl font-black tracking-tight">Explore SifoBooks by product</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Three complete sample businesses you can click through right now. No sign-up, no card, and none of the figures
+          Complete sample businesses you can click through right now. No sign-up, no card, and none of the figures
           belong to a real business.
         </p>
 
@@ -54,6 +54,12 @@ function DemoIndex() {
                   Start your own
                 </Link>
               </div>
+            </div>
+          ))}
+          {["Retail", "Microfinance", "Accounting"].map((name) => (
+            <div key={name} className="flex flex-col rounded-2xl border border-dashed border-border bg-card/50 p-6">
+              <h2 className="text-xl font-bold text-muted-foreground">SifoBooks {name}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Demo coming soon.</p>
             </div>
           ))}
         </div>

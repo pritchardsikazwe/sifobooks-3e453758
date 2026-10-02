@@ -1,15 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { DataTable, type DTColumn } from "@/components/data-table";
 import { ExportMenu } from "@/lib/exports";
 import { fmtMoney } from "@/lib/format";
 import { LedgerImpactSheet, type LedgerTarget } from "@/components/accounting/LedgerImpactSheet";
 import { BookOpen } from "lucide-react";
+import { SifoModuleHeader, SifoPage, SifoStatusBadge } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/pos-sales")({
   head: () => ({
@@ -19,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/pos-sales")({
       { property: "og:title", content: "POS Sales History — SifoBooks" },
       { property: "og:description", content: "Review, filter and export retail POS sales and check their ledger impact." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: PosSales,
@@ -67,16 +67,16 @@ function PosSales() {
     { key: "sale_no", header: "Sale", cell: r => <span className="font-mono text-xs">{r.sale_no ?? r.id.slice(0, 8)}</span> },
     { key: "sold_at", header: "Date", accessor: r => r.sold_at, cell: r => new Date(r.sold_at).toLocaleString() },
     { key: "customer_name", header: "Customer" },
-    { key: "status", header: "Status", cell: r => <Badge variant={r.status === "void" ? "destructive" : "secondary"}>{r.status}</Badge> },
+    { key: "status", header: "Status", cell: r => <SifoStatusBadge status={r.status} /> },
     { key: "subtotal", header: "Subtotal", align: "right", accessor: r => Number(r.subtotal), cell: r => fmtMoney(Number(r.subtotal)) },
     { key: "tax", header: "VAT", align: "right", accessor: r => Number(r.tax), cell: r => fmtMoney(Number(r.tax)) },
     { key: "total", header: "Total", align: "right", accessor: r => Number(r.total), cell: r => <span className="font-semibold">{fmtMoney(Number(r.total))}</span> },
     { key: "cost_total", header: "Cost of sale", align: "right", defaultHidden: true, accessor: r => Number(r.cost_total), cell: r => fmtMoney(Number(r.cost_total)) },
     {
       key: "posted", header: "Ledger", cell: r => r.journal_entry_id
-        ? <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Posted</Badge>
+        ? <SifoStatusBadge status="Posted" tone="paid" />
         : r.status === "void" ? <span className="text-xs text-muted-foreground">Voided</span>
-        : <Badge variant="outline" className="text-amber-700">Not posted</Badge>,
+        : <SifoStatusBadge status="Not posted" tone="pending" />,
     },
     {
       key: "actions", header: "", cell: r => (
@@ -97,21 +97,18 @@ function PosSales() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="mr-auto">
-          <h1 className="text-2xl font-semibold tracking-tight">POS sales history</h1>
-          <p className="text-sm text-muted-foreground">
-            {shown.length} sales · {fmtMoney(shown.filter(r => r.status !== "void").reduce((s, r) => s + Number(r.total || 0), 0))}
-            {unpostedCount > 0 && <span className="text-amber-700"> · {unpostedCount} not posted</span>}
-          </p>
-        </div>
-        <Input type="date" className="w-40" value={from} onChange={e => setFrom(e.target.value)} />
-        <Input type="date" className="w-40" value={to} onChange={e => setTo(e.target.value)} />
-        <Button variant={onlyUnposted ? "default" : "outline"} onClick={() => setOnlyUnposted(v => !v)}>
-          Not posted{unpostedCount > 0 ? ` (${unpostedCount})` : ""}
-        </Button>
-        <ExportMenu
+    <SifoPage className="space-y-4">
+      <SifoModuleHeader
+        module="sales"
+        icon={BookOpen}
+        title="POS sales history"
+        description={`${shown.length} sales · ${fmtMoney(shown.filter(r => r.status !== "void").reduce((s, r) => s + Number(r.total || 0), 0))}${unpostedCount > 0 ? ` · ${unpostedCount} not posted` : ""}`}
+        breadcrumbs={[{ label: "Sales", to: "/invoices" }, { label: "POS sales" }]}
+        actions={<>
+          <Input type="date" className="w-36" value={from} onChange={e => setFrom(e.target.value)} />
+          <Input type="date" className="w-36" value={to} onChange={e => setTo(e.target.value)} />
+          <Button variant={onlyUnposted ? "default" : "outline"} onClick={() => setOnlyUnposted(v => !v)}>Not posted{unpostedCount > 0 ? ` (${unpostedCount})` : ""}</Button>
+          <ExportMenu
           filename={`pos-sales-${from}_${to}`}
           title="POS sales"
           rows={shown.map(r => ({
@@ -119,11 +116,11 @@ function PosSales() {
             Subtotal: Number(r.subtotal), VAT: Number(r.tax), Discount: Number(r.discount),
             Total: Number(r.total), Cost: Number(r.cost_total), Posted: r.journal_entry_id ? "Yes" : "No",
           }))}
-        />
-      </div>
+          />
+        </>}
+      />
 
-      <Card className="rounded-2xl p-2">
-        <DataTable
+      <DataTable
           tableId="pos-sales-history"
           columns={columns}
           data={shown}
@@ -135,10 +132,9 @@ function PosSales() {
             tax: fmtMoney(rs.reduce((s, r) => s + Number(r.tax ?? 0), 0)),
             total: fmtMoney(rs.reduce((s, r) => s + Number(r.total ?? 0), 0)),
           })}
-        />
-      </Card>
+      />
 
       <LedgerImpactSheet target={target} onOpenChange={open => { if (!open) setTarget(null); }} />
-    </div>
+    </SifoPage>
   );
 }

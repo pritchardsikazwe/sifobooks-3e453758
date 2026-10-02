@@ -394,6 +394,16 @@ export type StoreLocation = { id: string; name: string; code: string | null };
  */
 export async function resolveStoreLocation(a: CashierAssignment | null): Promise<StoreLocation | null> {
   if (!a) return null;
+  // Online: the database applies the approved order till -> cashier -> branch -> company default store.
+  if (import.meta.env.VITE_SIFOBOOKS_BACKEND !== "local") {
+    try {
+      const { data: locId, error } = await supabase.rpc("pos_resolve_location" as never, { _register: a.registerId ?? null, _hint: null } as never);
+      if (!error && locId) {
+        const { data: l } = await supabase.from("inventory_locations").select("id,name,code").eq("id", locId as unknown as string).maybeSingle();
+        if (l) return { id: (l as any).id, name: (l as any).name ?? "Store", code: (l as any).code ?? null };
+      }
+    } catch { /* fall back below */ }
+  }
   const { data } = await supabase
     .from("inventory_locations")
     .select("id,name,code,location_type,is_active")

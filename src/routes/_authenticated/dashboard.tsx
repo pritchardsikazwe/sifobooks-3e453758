@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
+import { SifoPage } from "@/components/sifo";
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
 
 import { fmtMoney } from "@/lib/format";
@@ -30,7 +31,7 @@ import { StandaloneReports } from "@/components/industry/StandaloneReports";
 import type { Access } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — SifoBooks" }, { name: "description", content: "Your SifoBooks business overview, priorities and financial activity." }, { property: "og:title", content: "Dashboard — SifoBooks" }, { property: "og:description", content: "Your SifoBooks business overview, priorities and financial activity." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: DashboardGate,
 });
 
@@ -211,7 +212,7 @@ function DashboardPage() {
 
   const dateLabel = new Date().toLocaleDateString("en-ZM", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const defaultWidgets = ["quick-bar", "kpis", "today-pulse", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "compliance", "recent-activity"];
+  const defaultWidgets = ["todo-list", "kpis", "today-pulse", "banking", "compliance", "quick-bar", "operational-intelligence", "management-insights", "sales-chart", "income-vs-expenses", "cash-flow", "revenue-categories", "quick-actions", "snapshot", "recent-activity"];
   const { layout, ready, move, hide, show, reset } = useDashboardLayout(defaultWidgets);
   const [editMode, setEditMode] = useState(false);
 
@@ -225,6 +226,7 @@ function DashboardPage() {
   };
 
   const spans: Record<string, string> = {
+    "todo-list": "col-span-12 lg:col-span-6",
     "quick-bar": "col-span-12",
     "kpis": "col-span-12",
     "today-pulse": "col-span-12",
@@ -235,12 +237,14 @@ function DashboardPage() {
     "cash-flow": "col-span-12 lg:col-span-3",
     "revenue-categories": "col-span-12 lg:col-span-4",
     "quick-actions": "col-span-12 lg:col-span-4",
+    "banking": "col-span-12 lg:col-span-3",
     "snapshot": "col-span-12 lg:col-span-4",
-    "compliance": "col-span-12 lg:col-span-4",
+    "compliance": "col-span-12 lg:col-span-3",
     "recent-activity": "col-span-12",
   };
 
   const WIDGET_LABELS: Record<string, string> = {
+    "todo-list": "To Do List",
     "quick-bar": "Quick action bar",
     "kpis": "KPI strip",
     "today-pulse": "Today's business pulse",
@@ -251,6 +255,7 @@ function DashboardPage() {
     "cash-flow": "Cash flow",
     "revenue-categories": "Revenue categories",
     "quick-actions": "Quick actions",
+    "banking": "Banking",
     "snapshot": "Module snapshot",
     "compliance": "Compliance",
     "recent-activity": "Recent activity",
@@ -258,6 +263,10 @@ function DashboardPage() {
 
 
   const widgetContent: Record<string, React.ReactNode> = {
+    "todo-list": (
+      <SifoWorkQueue currency={currency} />
+    ),
+
     "quick-bar": (
       <div className="rounded-3xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5">
         <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
@@ -422,6 +431,31 @@ function DashboardPage() {
       </Panel>
     ),
 
+    "banking": (
+      <Panel title="Banking" subtitle="Cash position and latest movement" action={<Link to="/banking" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <PulseTile label="Bank movement" value={money(stats.cashAtBank)} tone={stats.cashAtBank >= 0 ? "positive" : "negative"} />
+          <PulseTile label="Today in" value={money(stats.todayIn)} tone="positive" />
+        </div>
+        {recent.length === 0 ? (
+          <EmptyState label="No bank transactions yet" cta="Open banking" to="/banking" />
+        ) : (
+          <div className="space-y-1">
+            {recent.slice(0, 4).map(t => (
+              <Link key={t.id} to="/banking" className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-medium">{t.description}</div>
+                  <div className="text-[10px] text-muted-foreground">{new Date(t.txn_date).toLocaleDateString("en-ZM", { day: "numeric", month: "short" })}</div>
+                </div>
+                <span className={cn("shrink-0 text-xs font-bold tabular-nums", t.amount >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  {t.amount >= 0 ? "+" : "-"}{money(Math.abs(t.amount))}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+    ),
     "snapshot": (
       <Panel title="Snapshot" subtitle="Key modules">
         <div className="space-y-1">
@@ -438,8 +472,9 @@ function DashboardPage() {
       </Panel>
     ),
     "compliance": (
-      <Panel title="Compliance" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
+      <Panel title="Compliance Center" subtitle="Zambian statutory obligations" action={<Link to="/compliance" className="text-xs font-semibold text-primary hover:underline">Open →</Link>}>
         <div className="space-y-1">
+          <Row icon={ShieldCheck} label="ZRA Smart Invoice" value="Open" to="/zra-smart-invoice" />
           <Row icon={ShieldCheck} label="VAT Return" value="View" to="/reports/vat-return" />
           <Row icon={ShieldCheck} label="ZRA Pending" value={String(zraQueue.pending)} to="/compliance" />
           <Row icon={ShieldCheck} label="ZRA Failed" value={String(zraQueue.failed)} to="/compliance" />
@@ -515,7 +550,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+      <SifoPage>
         {/* Header — greeting + dominant primary action */}
         <motion.div
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
@@ -572,9 +607,6 @@ function DashboardPage() {
         </motion.div>
 
 
-        {/* Live work queue — only real outstanding actions appear here */}
-        <SifoWorkQueue currency={currency} />
-
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
 
@@ -600,7 +632,7 @@ function DashboardPage() {
             </SortableContext>
           </DndContext>
         )}
-      </div>
+      </SifoPage>
     </div>
   );
 }
@@ -621,7 +653,7 @@ const tooltipStyle = {
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(20,50,40,0.05)] sm:p-5", className)}>
+    <div className={cn("rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between mb-3">
           <div>

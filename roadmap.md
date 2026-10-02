@@ -1,6 +1,7 @@
 # SifoBooks roadmap
 
 ## In progress
+- [ ] Verify and fix the complete sales day flow: Create Item → Opening Stock → POS Shift → POS Sale → Invoice → Accounting → ZRA/VSDC → Shift Close → End of Day.
 - [x] Premium Hotel & Restaurant demo UX: dedicated workspace shell, accent identity, floor/room maps, kitchen & housekeeping boards, charts, menu tiles, screen actions, mobile nav.
 - [x] Landing-page demo cards with visual previews and strong CTAs.
 

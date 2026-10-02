@@ -1263,6 +1263,8 @@ CREATE TABLE IF NOT EXISTS "invoice_items" (
   "quantity" REAL NOT NULL DEFAULT 1,
   "unit_price" REAL NOT NULL DEFAULT 0,
   "vat_rate" REAL NOT NULL DEFAULT 16,
+  "discount_amount" REAL NOT NULL DEFAULT 0,
+  "discount_type" TEXT NOT NULL DEFAULT 'amount',
   "line_total" REAL NOT NULL DEFAULT 0
 );
 
@@ -1786,8 +1788,37 @@ CREATE TABLE IF NOT EXISTS "pos_registers" (
   "user_id" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "branch" TEXT,
+  "location_id" TEXT,
   "is_active" INTEGER NOT NULL DEFAULT 1,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now')),
   "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS "item_unit_conversions" (
+  "id" TEXT PRIMARY KEY,
+  "user_id" TEXT NOT NULL,
+  "item_id" TEXT NOT NULL,
+  "from_unit" TEXT NOT NULL,
+  "to_unit" TEXT NOT NULL,
+  "multiplier" REAL NOT NULL DEFAULT 1,
+  "is_active" INTEGER NOT NULL DEFAULT 1,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+  "updated_at" TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_item_unit_conversions_lookup
+  ON "item_unit_conversions"("user_id","item_id","from_unit","to_unit","is_active");
+
+CREATE TABLE IF NOT EXISTS "item_unit_conversion_audit" (
+  "id" TEXT PRIMARY KEY,
+  "user_id" TEXT NOT NULL,
+  "item_id" TEXT NOT NULL,
+  "conversion_id" TEXT,
+  "action" TEXT NOT NULL,
+  "from_unit" TEXT,
+  "to_unit" TEXT,
+  "multiplier" REAL,
+  "actor_id" TEXT,
+  "created_at" TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS "pos_reversal_actions" (
@@ -2700,6 +2731,10 @@ CREATE TABLE IF NOT EXISTS "stock_items" (
   "tax_category" TEXT NOT NULL DEFAULT 'standard',
   "vat_rate" REAL NOT NULL DEFAULT 16,
   "unit" TEXT NOT NULL DEFAULT 'each',
+  "base_unit" TEXT NOT NULL DEFAULT 'each',
+  "sales_unit" TEXT,
+  "purchase_unit" TEXT,
+  "track_stock" INTEGER NOT NULL DEFAULT 1,
   "cost_price" REAL NOT NULL DEFAULT 0,
   "sell_price" REAL NOT NULL DEFAULT 0,
   "quantity_on_hand" REAL NOT NULL DEFAULT 0,

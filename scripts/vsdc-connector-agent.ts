@@ -20,10 +20,25 @@ async function api(cfg:Config,path:string,body:any){
  const raw=await res.text(); let data:any; try{data=JSON.parse(raw)}catch{throw new Error("Cloud returned non-JSON HTTP "+res.status);}
  if(!res.ok) throw new Error(data.error||"Cloud HTTP "+res.status); return data;
 }
+// Safe diagnostic: reports only reachability, HTTP status, version and circuit breaker.
+async function vsdcHealth(cfg:Config){
+ const root=cfg.vsdcUrl.replace(/\/$/,""); const out:any={reachable:false};
+ try{const r=await fetch(root,{signal:AbortSignal.timeout(8000)});out.reachable=true;out.httpStatus=r.status;
+  const m=(await r.text()).match(/version[^0-9]{0,30}(\d+(?:\.\d+){1,3})/i); if(m) out.version=m[1];
+ }catch(e:any){out.error=String(e?.message||e).slice(0,200);return out;}
+ try{const r=await fetch(root+"/monitor/metrics",{signal:AbortSignal.timeout(8000)});const j:any=await r.json();
+  out.healthy=typeof j.healthy==="boolean"?j.healthy:null;
+  const cb=j.circuitBreaker; out.circuitBreaker=typeof cb==="string"?cb:(cb?.state??cb?.status??null);
+  if(!out.version&&j.version) out.version=String(j.version);
+  if(typeof j.tenants==="number") out.tenants=j.tenants; else if(Array.isArray(j.tenants)) out.tenants=j.tenants.length;
+ }catch{/* metrics optional */}
+ return out;
+}
 async function execute(cfg:Config,command:any){
  const p=command.payload||{}; const local={baseUrl:cfg.vsdcUrl};
  switch(String(command.command_type)){
   case "test_connection": return vsdcPost(DEFAULT_PATHS.testEcho,p,local);
+  case "vsdc_health": return vsdcHealth(cfg);
   case "initialize": return initializeDevice(p,local);
   case "server_time": return vsdcPost(DEFAULT_PATHS.serverTime,p,local);
   case "taxpayer_info": return vsdcPost(DEFAULT_PATHS.taxpayerInfo,p,local);
@@ -41,8 +56,8 @@ async function main(){
  const cfg=load(); console.log("SifoBooks VSDC Connector starting:",cfg.connectorId,cfg.environment||"test");
  while(true){
   try{
-   const capabilities=["test_connection","initialize","server_time","taxpayer_info","standard_codes","item_classes","register_item","submit_sale","retrieve_invoice","stock_items","stock_master"];
-   await api(cfg,"/api/connector/heartbeat",{connectorId:cfg.connectorId,credential:cfg.credential,capabilities,metadata:{agent:"sifobooks-vsdc-connector",version:"1.0.0",environment:cfg.environment||"test"}});
+   const capabilities=["test_connection","vsdc_health","initialize","server_time","taxpayer_info","standard_codes","item_classes","register_item","submit_sale","retrieve_invoice","stock_items","stock_master"];
+   await api(cfg,"/api/connector/heartbeat",{connectorId:cfg.connectorId,credential:cfg.credential,capabilities,metadata:{agent:"sifobooks-vsdc-connector",version:"1.1.0",environment:cfg.environment||"test"}});
    const result=await api(cfg,"/api/connector/poll",{connectorId:cfg.connectorId,credential:cfg.credential,limit:10});
    for(const command of result.commands||[]){
     try{

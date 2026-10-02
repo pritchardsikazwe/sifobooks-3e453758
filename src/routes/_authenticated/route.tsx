@@ -8,13 +8,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SifoAssistantButton } from "@/components/SifoAssistantPanel";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
-import { QuickCreate } from "@/components/QuickCreate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ConnectionIndicator } from "@/components/ConnectionIndicator";
 import { SifoMobileNav } from "@/components/sifo/SifoMobileNav";
 import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
+import { TopNavigation } from "@/components/TopNavigation";
 import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
 import { toast } from "sonner";
 
@@ -51,6 +51,9 @@ export const Route = createFileRoute("/_authenticated")({
         const { data: s } = await supabase.auth.getSession();
         if (s.session) return { user: s.session.user, ...(await enforceRoute(location.pathname)) };
       }
+      // The server rejected the stored session. Clear it locally so /auth does
+      // not see a stale session and bounce straight back here (sign-in loop).
+      if (error) { try { await supabase.auth.signOut({ scope: "local" }); } catch { /* ignore */ } }
       throw redirect({ to: "/auth" });
     } catch (e: any) {
       if (e?.isRedirect || e?.to) throw e;
@@ -80,7 +83,6 @@ function Shell() {
   const { access } = Route.useRouteContext() as { access?: Access | null };
   const isStaff = Boolean(access && !access.is_owner && !access.is_super_admin);
   const canSettings = !isStaff || hasPerm(access, "settings.manage");
-  const canCreate = !isStaff || hasPerm(access, "accounting.manage");
   const canSwitchCompany = !isStaff;
 
   useEffect(() => {
@@ -133,7 +135,7 @@ function Shell() {
               <span className="text-muted-foreground">{crumb}</span>
             </div>
             {canSwitchCompany ? (
-              <div className="flex min-w-0 items-center gap-1 rounded-xl bg-[#F7FBF9] p-1 border border-[#E4EEE9]"><CompanySwitcher /><WorkspaceSwitch /></div>
+              <div className="flex min-w-0 sm:shrink-0 items-center gap-1 rounded-xl bg-[#F7FBF9] p-1 border border-[#E4EEE9]"><CompanySwitcher /><WorkspaceSwitch /></div>
             ) : (
               <div className="hidden sm:flex min-w-0 items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground truncate">
                 {access?.role_name}{access?.branch_name ? ` · ${access.branch_name}` : ""}
@@ -156,10 +158,12 @@ function Shell() {
                 <SifoAssistantButton />
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"><Bell className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" title="Help" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted hidden md:inline-flex"><HelpCircle className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end"><DropdownMenuLabel>Help</DropdownMenuLabel><DropdownMenuItem asChild><Link to="/demo">Demo Center</Link></DropdownMenuItem></DropdownMenuContent>
+                </DropdownMenu>
                 {canSettings && <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted" asChild><Link to="/setup"><SettingsIcon className="h-4 w-4" /></Link></Button>}
               </div>
-              {canCreate && <QuickCreate />}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted" title="Account">
@@ -178,10 +182,7 @@ function Shell() {
               </DropdownMenu>
             </div>
           </header>
-
-
-
-
+          <TopNavigation />
 
           <OfflineBanner />
           <main className="flex-1 min-w-0 pb-24 md:pb-0">

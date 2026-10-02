@@ -17,12 +17,12 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         /* Semantic ERP actions — one colour per intent, system-wide */
-        save: "bg-action-save text-white shadow-sm hover:brightness-110 hover:shadow-md",
-        update: "bg-action-update text-white shadow-sm hover:brightness-110 hover:shadow-md",
-        approve: "bg-action-approve text-white shadow-sm hover:brightness-110 hover:shadow-md",
-        report: "bg-action-report text-white shadow-sm hover:brightness-110 hover:shadow-md",
-        warn: "bg-action-warn text-white shadow-sm hover:brightness-110 hover:shadow-md",
-        delete: "bg-action-delete text-white shadow-sm hover:brightness-110 hover:shadow-md",
+        save: "bg-action-save text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
+        update: "bg-action-update text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
+        approve: "bg-action-approve text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
+        report: "bg-action-report text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
+        warn: "bg-action-warn text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
+        delete: "bg-action-delete text-action-foreground shadow-sm hover:brightness-110 hover:shadow-md",
         cancel: "bg-muted text-muted-foreground border border-border hover:bg-secondary",
       },
       size: {

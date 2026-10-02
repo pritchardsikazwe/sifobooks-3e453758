@@ -770,7 +770,7 @@ console.log("");
 
 setTimeout(() => createStartupBackup(), 2500);
 
-if (HOST === "127.0.0.1" || HOST === "localhost" || isNetworkServer) {
+if (!process.env.SIFOBOOKS_NO_BROWSER && (HOST === "127.0.0.1" || HOST === "localhost" || isNetworkServer)) {
   const browserUrl = `http://localhost:${PORT}`;
   setTimeout(async () => {
     for (let attempt = 0; attempt < 15; attempt++) {

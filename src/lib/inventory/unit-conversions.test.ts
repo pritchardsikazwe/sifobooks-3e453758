@@ -4,7 +4,7 @@ import { convertToBaseUnit, normalizeUnit } from "@/lib/inventory/unit-conversio
 describe("inventory unit conversion", () => {
   test("normalizes unit names", () => {
     expect(normalizeUnit("  Carton ")).toBe("carton");
-    expect(normalizeUnit("")).toBe("unit");
+    expect(normalizeUnit("")).toBe("each");
   });
 
   test("converts transaction quantity to base units", () => {
@@ -24,7 +24,7 @@ describe("inventory unit conversion", () => {
 
     expect(result.quantity).toBe(72);
     expect(result.multiplier).toBe(24);
-    expect(result.baseUnit).toBe("piece");
+    expect(result.baseUnit).toBe("each");
   });
 
   test("does not require a conversion for base-unit transactions", () => {

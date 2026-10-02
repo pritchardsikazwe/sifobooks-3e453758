@@ -1062,6 +1062,7 @@ function ShiftDialog({ open, onOpenChange, shift, register, onOpened, onClosed }
   const [cashier, setCashier] = useState("");
   const [float_, setFloat] = useState("0");
   const [actual, setActual] = useState("");
+  const [reason, setReason] = useState("");
   const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
@@ -1096,9 +1097,12 @@ function ShiftDialog({ open, onOpenChange, shift, register, onOpened, onClosed }
             <Row label="Expected cash" value={fmtMoney(expected)} />
             <div><Label>Actual cash counted</Label><Input value={actual} onChange={(e) => setActual(e.target.value)} inputMode="decimal" /></div>
             <Row label="Variance" value={fmtMoney(Number(actual || 0) - expected)} />
+            <div><Label>Reason for any difference</Label><Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Required if counted cash differs" /></div>
             <Button variant="destructive" className="h-12 w-full" onClick={async () => {
-              await closeShift(shift.id, Number(actual || 0), expected);
-              onClosed(); toast.success("Shift closed"); onOpenChange(false);
+              try {
+                await closeShift(shift.id, Number(actual || 0), expected, reason.trim() || null);
+                onClosed(); toast.success("Shift closed and sent for review"); onOpenChange(false);
+              } catch (e: any) { toast.error(e?.message || "The shift could not be closed"); }
             }}>Close shift</Button>
           </div>
         )}

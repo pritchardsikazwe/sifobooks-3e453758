@@ -195,6 +195,23 @@ function WarehousesPage() {
 
     setSaving(false);
     if (error) return toast.error(error.message);
+
+    // Every core warehouse gets a default inventory stock location.
+    // This keeps Sales, POS, Purchasing and Inventory on the same location model.
+    const { error: locationError } = await supabase.from("inventory_locations").insert({
+      id: crypto.randomUUID(),
+      user_id: u.user.id,
+      company_id: companyId,
+      warehouse_id: row.id,
+      name: form.name.trim() + " Stock",
+      code: (form.code.trim() || "MAIN") + "-STOCK",
+      location_type: "warehouse",
+      is_active: true,
+    } as never);
+    if (locationError && !/duplicate|unique/i.test(String(locationError.message ?? ""))) {
+      toast.warning("Warehouse created, but its default stock location could not be created. Open Inventory → Locations to finish setup.");
+    }
+
     const branchName = branches.find(b => b.id === selectedBranchId)?.name ?? "selected branch";
     toast.success(form.name.trim() + " created in " + branchName);
     setCreateOpen(false);
@@ -249,7 +266,7 @@ function WarehousesPage() {
         columns={columns}
         loading={loading}
         error={error}
-        onRetry={() => void load()}
+        onRetry={() => void loadContextAndWarehouses()}
         tableId="warehouses"
         searchPlaceholder="Search by code, name, location or manager…"
         onRowClick={r => setSelected(r)}

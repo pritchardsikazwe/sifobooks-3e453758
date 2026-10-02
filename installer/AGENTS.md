@@ -1,0 +1,3 @@
+- Windows writable data lives in %ProgramData%\SifoBooks (SIFOBOOKS_DATA_DIR or portable.flag override); legacy {app}\data copied once, never moved/deleted. Why: Program Files is read-only and replaced on upgrade.
+- Single instance per data dir (desktop-port.txt); shutdown only via token-protected POST /api/desktop/shutdown; Linux builds patch PE subsystem 3→2 to hide console. Why: one server per SQLite DB; Bun can't hide console cross-compiling.
+- Installer: SifoBooks.nsi built on Linux with makensis → installer-dist/SifoBooks-enterprise-Windows-Setup.exe; Inno template kept for Windows hosts. Why: NSIS cross-builds.

@@ -18,9 +18,12 @@ import { AccountSelector } from "@/components/selectors/AccountSelector";
 import { PostingPreview, isBalanced } from "@/components/PostingPreview";
 import { salesInvoiceLines } from "@/lib/posting-lines";
 import { useCoaAccounts } from "@/hooks/useCoaAccounts";
+import { zraSubmitInvoiceFn } from "@/lib/zra/server";
+import { IS_LOCAL_BACKEND } from "@/lib/platform/backend-mode";
+import { SifoModuleHeader, SifoPage, SifoSection } from "@/components/sifo";
 
 export const Route = createFileRoute("/_authenticated/invoices/new")({
-  head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Invoice Generator — SifoBooks" }, { name: "description", content: "Create and post a customer invoice in SifoBooks." }, { property: "og:title", content: "Invoice Generator — SifoBooks" }, { property: "og:description", content: "Create and post a customer invoice in SifoBooks." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: NewInvoicePage,
 });
 
@@ -28,6 +31,7 @@ type Line = {
   stockItemId?: string | null;
   description: string;
   warehouseId?: string | null;
+  locationId?: string | null;
   qty: number;
   price: number;
   discount: number;
@@ -91,7 +95,7 @@ function NewInvoicePage() {
     (async () => {
       const [{ data: cs }, { data: si }, { data: wh }, { data: co }, { count }] = await Promise.all([
         supabase.from("customers").select("id, name, tpin, payment_terms_days, address, phone, email").eq("active", true).order("name"),
-        supabase.from("stock_items").select("id, name, sku, unit, vat_rate, sell_price, quantity_on_hand, reserved_qty").order("name"),
+        supabase.from("stock_items").select("id, name, sku, unit, vat_rate, sell_price, quantity_on_hand, reserved_qty, warehouse_id").order("name"),
         supabase.from("warehouses").select("id, name, code, location, manager").order("name"),
         supabase.from("companies").select("*").maybeSingle(),
         supabase.from("invoices").select("*", { count: "exact", head: true }),
@@ -176,8 +180,12 @@ function NewInvoicePage() {
     const s = stock.find(x => x.id === stockId);
     if (!s) return;
     setItems(prev => prev.map((it, i) => i === idx ? {
-      ...it, stockItemId: s.id, description: s.name,
-      price: Number(s.sell_price), vatRate: Number(s.vat_rate ?? 16),
+      ...it,
+      stockItemId: s.id,
+      description: s.name,
+      price: Number(s.sell_price),
+      vatRate: Number(s.vat_rate ?? 16),
+      warehouseId: it.warehouseId ?? s.warehouse_id ?? null,
     } : it));
   };
 
@@ -196,14 +204,30 @@ function NewInvoicePage() {
     if (!u.user) { setSaving(false); return; }
 
     if (targetStatus === "sent") {
-      const rpcItems = valid.map(i => ({
-        stock_item_id: i.stockItemId ?? null,
-        description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
-        quantity: i.qty,
-        unit_price: i.price,
-        vat_rate: i.vatRate,
-        location_id: i.warehouseId ?? null,
-      }));
+      // No warehouse/location picked on a stock line: send the location that
+      // actually holds this item's stock, so posting does not depend on a
+      // company default store being configured. The server still falls back
+      // till → cashier → branch → company default when nothing is sent.
+      const needLoc = [...new Set(valid.filter(i => i.stockItemId && !i.locationId).map(i => i.stockItemId as string))];
+      const stockedAt: Record<string, string> = {};
+      if (needLoc.length) {
+        const { data: bal } = await supabase.from("stock_balances").select("item_id, location_id, quantity").in("item_id", needLoc).gt("quantity", 0).order("quantity", { ascending: false });
+        for (const b of (bal ?? []) as any[]) if (!stockedAt[b.item_id]) stockedAt[b.item_id] = b.location_id;
+      }
+      const rpcItems = valid.map(i => {
+        const gross = i.qty * i.price;
+        const disc = i.discountType === "%" ? gross * (i.discount / 100) : i.discount;
+        return {
+          stock_item_id: i.stockItemId ?? null,
+          description: i.description || stock.find(s => s.id === i.stockItemId)?.name || "",
+          quantity: i.qty,
+          unit_price: i.price,
+          discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
+          vat_rate: i.vatRate,
+          warehouse_id: i.warehouseId ?? null,
+          location_id: i.locationId ?? (i.stockItemId ? stockedAt[i.stockItemId] ?? null : null),
+        };
+      });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
         _invoice: {
           customer_id: customerId,
@@ -212,6 +236,8 @@ function NewInvoicePage() {
           due_date: dueDate,
           currency,
           tax_inclusive: taxInclusive,
+          tax_scheme: taxScheme,
+          expected_total: Math.round((totals.subtotal + totals.tax) * 100) / 100,
           seller_tpin: company?.tpin ?? null,
           buyer_tpin: buyerTpin || null,
           notes,
@@ -221,10 +247,38 @@ function NewInvoicePage() {
       } as any);
       if (postError || !posted) {
         setSaving(false);
-        return toast.error(postError?.message ?? "Invoice could not be posted");
+        const m = postError?.message ?? "";
+        const why = m.startsWith("TOTAL_MISMATCH") ? "The posted total would differ from the total shown. Nothing was posted — please check the lines."
+          : m.startsWith("UNSUPPORTED_TAX_SCHEME") ? "Posting is available for VAT invoices only for now. Save as draft instead."
+          : m.startsWith("INSUFFICIENT_STOCK:") ? `Not enough stock for ${m.split(":")[1]}.`
+          : m.startsWith("NO_COST:") ? `${m.split(":")[1]} has no cost price yet.`
+          : m.startsWith("NO_LOCATION") ? "This item has no stock location. Pick a warehouse on the line, or set a default store under Inventory → Locations."
+          : m || "Invoice could not be posted";
+        return toast.error(why);
       }
-      setSaving(false);
-      toast.success(`Invoice ${number} posted — journal, receivable, stock and ZRA queue updated`);
+      if (!IS_LOCAL_BACKEND) {
+        // Online invoice fiscalization is not wired yet; the Windows-only
+        // submit step reads the local database and must not run on hosted.
+        setSaving(false);
+        toast.success(`Invoice ${number} posted`);
+        navigate({ to: "/invoices" });
+        return;
+      }
+      try {
+        const fiscal = await zraSubmitInvoiceFn({
+          data: { userId: u.user.id, invoiceId: posted.invoice_id },
+        } as any);
+        setSaving(false);
+        if (fiscal?.fiscalState === "FISCALIZED") {
+          const receiptNo = fiscal?.response?.data?.receipt?.rcptNo ?? fiscal?.response?.data?.rcptNo;
+          toast.success(`Invoice ${number} posted and fiscalized by ZRA${receiptNo ? ` — Receipt ${receiptNo}` : ""}`);
+        } else {
+          toast.warning(`Invoice ${number} was posted to accounting, but ZRA did not accept it. The invoice remains in the ZRA queue for retry.`);
+        }
+      } catch (zraError: any) {
+        setSaving(false);
+        toast.warning(`Invoice ${number} was posted to accounting, but ZRA submission needs attention: ${zraError?.message ?? "VSDC submission failed"}`);
+      }
       navigate({ to: "/invoices" });
       return;
     }
@@ -290,26 +344,15 @@ function NewInvoicePage() {
       <Button variant="outline" onClick={() => submit("draft")} disabled={saving}>Save as Draft</Button>
       <Button variant="outline" onClick={() => previewPdf(buildPdfDoc())}>Preview Invoice</Button>
       <Button variant="outline" onClick={() => downloadPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> PDF</Button>
-      <Button onClick={() => submit("sent")} disabled={saving} className="bg-emerald-700 hover:bg-emerald-800 text-white">Post Invoice</Button>
+       <Button onClick={() => submit("sent")} disabled={saving} variant="approve">Post Invoice</Button>
     </div>
   );
 
 
   return (
-    <div className="min-h-screen bg-muted/40 pb-28 lg:pb-0">
-      <div className="bg-card border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={() => router.history.back()} className="gap-1"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
-        <div className="hidden lg:flex">{ActionButtons}</div>
-        <div className="lg:hidden flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => previewPdf(buildPdfDoc())} className="gap-1"><Download className="h-4 w-4" /> Preview</Button>
-        </div>
-      </div>
-
-
-      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h1 className="text-lg font-semibold">Invoice Generator</h1>
-        </div>
+    <div className="min-h-full bg-muted/40 pb-28 lg:pb-0">
+      <SifoPage className="max-w-6xl">
+        <SifoModuleHeader module="sales" icon={CalIcon} title="Invoice Generator" description="Create, review and post a customer invoice." breadcrumbs={[{label:"Sales",to:"/invoices"},{label:"Invoices",to:"/invoices"},{label:"New invoice"}]} actions={<><Button variant="outline" size="sm" onClick={() => router.history.back()}><ArrowLeft className="h-4 w-4" /> Go back</Button><div className="hidden lg:flex">{ActionButtons}</div><div className="lg:hidden"><Button variant="outline" size="sm" onClick={() => previewPdf(buildPdfDoc())}><Download className="h-4 w-4" /> Preview</Button></div></>} />
 
 
         <div>
@@ -326,7 +369,7 @@ function NewInvoicePage() {
         </div>
 
         {/* Invoice Information */}
-        <Section title="INVOICE INFORMATION" action={<button className="text-xs text-primary font-medium inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></button>}>
+        <Section title="INVOICE INFORMATION" action={<Button variant="ghost" size="sm"><Plus className="h-3 w-3" /> Add More Fields <Info className="h-3 w-3 opacity-60" /></Button>}>
           <Field label="Invoice Number">
             <Input value={number} onChange={e => setNumber(e.target.value)} className="bg-muted/40" />
           </Field>
@@ -357,7 +400,7 @@ function NewInvoicePage() {
             </Field>
             <Field label="Currency">
               <Input value={`Zambian Kwacha (${currency})`} readOnly className="bg-muted/40" />
-              <div className="text-right"><button className="text-xs text-primary font-medium underline mt-1">Set Exchange Rate</button></div>
+              <div className="text-right"><Button variant="link" size="sm" className="h-auto p-0">Set Exchange Rate</Button></div>
             </Field>
           </div>
         </Section>
@@ -395,13 +438,13 @@ function NewInvoicePage() {
         </Section>
 
         {/* Recurring toggle strip */}
-        <div className="bg-card rounded-lg border px-4 py-3 flex items-center justify-between">
+        <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-sm flex items-center justify-between">
           <span className="text-sm font-medium">Make this a recurring invoice?</span>
           <Switch checked={recurring} onCheckedChange={setRecurring} />
         </div>
 
         {/* Invoice Items */}
-        <div className="bg-card rounded-lg border">
+         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between px-4 py-3 border-b flex-wrap gap-2">
             <span className="text-xs font-semibold text-muted-foreground tracking-wide">INVOICE ITEMS</span>
             <label className="flex items-center gap-2 text-xs">
@@ -451,13 +494,14 @@ function NewInvoicePage() {
                         </SelectContent>
                       </Select>
                       {stockOptions.length === 0 && (
-                        <button
+                           <Button
+                             variant="link"
                           type="button"
                           onClick={() => toast.info("No inventory items are available for this user yet. Create the item in Stock first.")}
-                          className="mt-1 text-[11px] text-muted-foreground underline"
+                             className="mt-1 h-auto p-0 text-[11px] text-muted-foreground"
                         >
                           No existing items found — create one in Stock
-                        </button>
+                           </Button>
                       )}
                     </td>
                     <td className="p-2"><Input value={it.description} onChange={e => updateRow(idx, { description: e.target.value })} className="h-9" /></td>
@@ -507,15 +551,14 @@ function NewInvoicePage() {
             </table>
           </div>
           <div className="px-4 py-3 border-t">
-            <button onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}
-              className="text-sm text-primary font-medium inline-flex items-center gap-1">
+             <Button variant="ghost" size="sm" onClick={() => setItems(p => [...p, { description: "", qty: 1, price: 0, discount: 0, discountType: "%", taxCode: "A", vatRate: 16 }])}>
               <Plus className="h-4 w-4" /> Add Item
-            </button>
+             </Button>
           </div>
         </div>
 
         {/* Bank Details */}
-        <Section title="BANK DETAILS" action={<button className="text-xs text-primary font-medium">Edit</button>}>
+        <Section title="BANK DETAILS" action={<Button variant="ghost" size="sm">Edit</Button>}>
           <div className="text-sm text-muted-foreground space-y-1">
             <div>Account Name: {company?.name ?? "—"}</div>
             <div>Account Number: {company?.bank_account_number ?? "—"}</div>
@@ -524,7 +567,7 @@ function NewInvoicePage() {
         </Section>
 
         {/* Notes */}
-        <div className="bg-card rounded-lg border p-4">
+         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-2">NOTES</div>
           <textarea
             value={notes}
@@ -569,7 +612,7 @@ function NewInvoicePage() {
         </Section>
 
         {/* Summary */}
-        <div className="bg-card rounded-lg border p-4">
+         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">SUMMARY</div>
           <SummaryRow label="Subtotal (excl. VAT)" value={fmtMoney(totals.subtotal, currency)} />
           <SummaryRow label={`VAT ${taxInclusive ? "(inclusive)" : "(exclusive)"}`} value={fmtMoney(totals.tax, currency)} />
@@ -613,12 +656,12 @@ function NewInvoicePage() {
 
 
         <div className="hidden lg:flex justify-end pt-2">{ActionButtons}</div>
-      </div>
+      </SifoPage>
 
       {/* Sticky action bar on mobile & tablet — guarantees Post Invoice is always reachable */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t shadow-lg px-3 py-2 flex items-center gap-2">
         <Button variant="outline" onClick={() => submit("draft")} disabled={saving} className="flex-1">Save Draft</Button>
-        <Button onClick={() => submit("sent")} disabled={saving} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white">
+         <Button onClick={() => submit("sent")} disabled={saving} variant="approve" className="flex-1">
           {saving ? "Posting…" : "Post Invoice"}
         </Button>
       </div>
@@ -627,15 +670,7 @@ function NewInvoicePage() {
 }
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
-  return (
-    <div className="bg-card rounded-lg border p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-muted-foreground tracking-wide">{title}</div>
-        {action}
-      </div>
-      {children}
-    </div>
-  );
+  return <SifoSection title={title} action={action}>{children}</SifoSection>;
 }
 
 function Field({ label, children, action }: { label: string; children: React.ReactNode; action?: React.ReactNode }) {

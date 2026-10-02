@@ -23,7 +23,7 @@ export const PRICE_LEVELS: { key: PriceLevel; label: string; factor: number }[] 
 ];
 export const priceFactor = (level: PriceLevel) => PRICE_LEVELS.find((l) => l.key === level)?.factor ?? 1;
 
-export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; warehouse_id?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
+export type PosProduct = { id:string; name:string; sku:string|null; barcode:string|null; category:string|null; unit:string|null; sales_unit?:string|null; base_unit?:string|null; track_stock?:boolean; warehouse_id?:string|null; price:number; cost:number; stock:number; reorder_level:number; is_active:boolean };
 export type PosCustomer = { id:string; name:string; phone:string|null; code:string|null; price_level?:PriceLevel };
 export type PosSettings = { show_images:boolean; show_stock:boolean; show_sku:boolean; products_per_row:number; enable_fast_sellers:boolean; enable_quick_qty:boolean; enable_quick_discounts:boolean; allow_price_change:boolean; allow_negative_stock:boolean; default_customer:string; default_price_level:PriceLevel; default_payment:string; tax_rate:number; tax_inclusive:boolean; auto_new_sale:boolean; auto_print_receipt:boolean; silent_print:boolean; receipt_footer:string|null };
 export const DEFAULT_SETTINGS: PosSettings = { show_images:true, show_stock:true, show_sku:true, products_per_row:4, enable_fast_sellers:true, enable_quick_qty:true, enable_quick_discounts:true, allow_price_change:true, allow_negative_stock:false, default_customer:"Walk-in Customer", default_price_level:"normal", default_payment:"cash", tax_rate:16, tax_inclusive:true, auto_new_sale:true, auto_print_receipt:false, silent_print:false, receipt_footer:null };
@@ -33,9 +33,9 @@ const n = (v:any) => Number(v ?? 0);
 
 export async function loadProducts(locationId?:string|null):Promise<PosProduct[]> {
   try {
-    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
+    const {data,error}=await supabase.from("stock_items").select("id,name,sku,barcode,category,unit,sales_unit,base_unit,track_stock,item_type,warehouse_id,sell_price,cost_price,quantity_on_hand,reorder_level,is_active").order("name").limit(2000);
     if(error)throw error;
-    const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[];
+    const rows=(data??[]).map((r:any)=>({id:r.id,name:r.name,sku:r.sku??null,barcode:r.barcode??null,category:r.category??null,unit:r.unit??null,price:n(r.sell_price),cost:n(r.cost_price),stock:n(r.quantity_on_hand),sales_unit:r.sales_unit??r.unit??null,base_unit:r.base_unit??r.unit??null,warehouse_id:r.warehouse_id??null,reorder_level:n(r.reorder_level),is_active:r.is_active!==false})) as PosProduct[];
     if(locationId){
       const {data:balances,error:be}=await supabase.from("stock_balances").select("item_id,quantity").eq("location_id",locationId);
       if(!be){
@@ -75,11 +75,21 @@ export async function ensureRegister():Promise<{id:string;name:string;branch:str
 export async function currentShift(registerId?:string|null){ const {data}=await supabase.from("pos_shifts").select("*").eq("status","open").order("opened_at",{ascending:false}).limit(1); const row=(data??[])[0] as any; if(row)return row; if(!registerId)return null; return null; }
 export async function openShift(registerId:string|null,cashier:string,float_:number){ const {data}=await supabase.from("pos_shifts").insert({register_id:registerId,cashier_name:cashier,opening_float:float_} as any).select("*").maybeSingle(); return data as any; }
 export async function shiftSummary(shiftId:string){ const {data:sales}=await supabase.from("pos_sales").select("id,total,status").eq("shift_id",shiftId); const ids=(sales??[]).map((s:any)=>s.id); let byMethod:Record<string,number>={}; if(ids.length){const {data:pays}=await supabase.from("pos_payments").select("method,amount").in("sale_id",ids);(pays??[]).forEach((p:any)=>{byMethod[p.method]=(byMethod[p.method]??0)+n(p.amount);});} const completed=(sales??[]).filter((s:any)=>s.status==="completed"); const voided=(sales??[]).filter((s:any)=>s.status==="voided"); const refunds=(sales??[]).filter((s:any)=>s.status==="refunded"); return {transactions:completed.length,salesTotal:completed.reduce((a:number,s:any)=>a+n(s.total),0),voids:voided.length,refunds:refunds.length,byMethod}; }
-export async function closeShift(shiftId:string,actualCash:number,expectedCash:number){
-  const {data:authUser}=await supabase.auth.getUser();
-  const {data,error}=await supabase.rpc("close_pos_shift" as any,{_uid:authUser.user?.id??null,_shift_id:shiftId,_actual_cash:actualCash,_expected_cash:expectedCash} as any);
+/** Windows (local SQLite) RPCs take the caller id explicitly; the online database reads it from the session. */
+const IS_LOCAL_BACKEND = import.meta.env.VITE_SIFOBOOKS_BACKEND === "local";
+export async function closeShift(shiftId:string,actualCash:number,expectedCash:number,reason?:string|null){
+  if(IS_LOCAL_BACKEND){
+    const {data:authUser}=await supabase.auth.getUser();
+    const {data,error}=await supabase.rpc("close_pos_shift" as any,{_uid:authUser.user?.id??null,_shift_id:shiftId,_actual_cash:actualCash,_expected_cash:expectedCash} as any);
+    if(error) throw new Error(error.message);
+    return data as any;
+  }
+  // Online: the existing cash-up operation recomputes expected cash from recorded payments.
+  const {data,error}=await supabase.rpc("submit_cashier_shift" as any,{_shift_id:shiftId,_actual_cash:actualCash,_reason:reason??null,_denominations:null} as any);
   if(error) throw new Error(error.message);
-  return data as any;
+  const out=data as any;
+  if(out&&out.ok===false) throw new Error(out.error||"The shift could not be closed");
+  return out;
 }
 export function computeTotals(lines:CartLine[],saleDiscountPct:number,s:PosSettings):PosTotals{let gross=0,lineDiscount=0,cost=0,items=0;for(const l of lines){const g=l.qty*l.price;gross+=g;lineDiscount+=(g*(l.discount_pct||0))/100;cost+=l.qty*l.unit_cost;items+=l.qty;}const afterLine=gross-lineDiscount;const saleDiscount=(afterLine*(saleDiscountPct||0))/100;const net=Math.max(afterLine-saleDiscount,0);const rate=n(s.tax_rate)/100;const tax=s.tax_inclusive?net-net/(1+rate):net*rate;const subtotal=s.tax_inclusive?net-tax:net;const total=s.tax_inclusive?net:net+tax;return {gross,lineDiscount,saleDiscount,subtotal:round2(subtotal),tax:round2(tax),total:round2(total),cost:round2(cost),items};}
 export const round2=(v:number)=>Math.round((Number(v)||0)*100)/100;
@@ -109,14 +119,17 @@ export async function completeSale(draft:SaleDraft,payments:SalePayment[],change
   // checks stock at the selling location before anything is posted.
   // shift_id travels with the sale so a queued offline sale still posts to the
   // shift it was rung on, even after that shift has been closed.
-  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,location_id:draft.locationId??null,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
+  const salePayload:any={sale_no,client_ref,shift_id:draft.shiftId??null,register_id:draft.registerId??null,customer_id:draft.customer?.id??null,customer_name:draft.customerName||"Walk-in Customer",price_level:draft.priceLevel,location_id:draft.locationId??null,sale_discount_pct:draft.saleDiscountPct??0,note:draft.note??null,sold_at:new Date().toISOString()};
   const itemRows=draft.lines.map((l)=>({item_id:l.item_id,qty:l.qty,unit:l.unit??null,price:l.price,discount_pct:l.discount_pct??0,note:l.note??null}));
-  const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const {data:authUser}=await supabase.auth.getUser(); const args={_uid:authUser.user?.id??null,_sale:salePayload,_items:itemRows,_payments:payRows};
+  const payRows=payments.map((p)=>({method:p.method,amount:round2(p.amount),reference:p.reference??null})); const {data:authUser}=await supabase.auth.getUser(); const args:any=IS_LOCAL_BACKEND?{_uid:authUser.user?.id??null,_sale:salePayload,_items:itemRows,_payments:payRows}:{_sale:salePayload,_items:itemRows,_payments:payRows};
   const stash=async()=>{await queueRpc("pos_checkout",args,client_ref);await cacheRow("pos_transactions",{id:client_ref,sale_no,client_ref,customer_name:salePayload.customer_name,total:draft.totals.total,status:"completed",sold_at:salePayload.sold_at,__offline:true});void adjustCachedStock(draft.lines);return {ok:true as const,offline:true,sale_no,id:null};};
   if(!isOnline())return stash();
   try{
     const {data,error}=await supabase.rpc("pos_checkout" as any,args as any);
-    if(error){if(isNetworkError(error.message))return stash();throw new Error(posErrorMessage(error.message));}
+    // Keep the database error code intact. The screen translates it once so a
+    // specific stock, location, shift or unit problem is never replaced by the
+    // generic fallback message.
+    if(error){if(isNetworkError(error.message))return stash();throw new Error(error.message);}
     const res=data as any;
     return {ok:true as const,offline:false,sale_no:res?.sale_no??sale_no,id:(res?.sale_id??null) as string|null,duplicate:Boolean(res?.duplicate)};
   }catch(e:any){if(e?.message&&!isNetworkError(e.message))throw e;return stash();}
@@ -127,7 +140,9 @@ export function posErrorMessage(raw:string):string{
   const m=String(raw||"");
   if(/NO_ACTIVE_SHIFT/.test(m))return "No open shift. Open your shift before selling.";
   if(/NO_REGISTER/.test(m))return "Your shift is not linked to a till. Ask a manager to assign your register.";
-  if(/NO_LOCATION/.test(m))return "No selling location is set for this till. Ask a manager to assign your store.";
+  if(/NO_LOCATION|POS_LOCATION_REQUIRED|INVENTORY_LOCATION_REQUIRED/.test(m))return "No stock location is configured. Complete opening stock at a real store, or ask a manager to set that store on this till, the cashier, the branch, or as the company default.";
+  if(/LOCATION_NOT_FOUND|LOCATION_INACTIVE/.test(m))return "The selected stock location is unavailable. Choose an active store before completing the sale.";
+  if(/UNIT_CONVERSION_MISSING:(.*)/.test(m)){const [prod,sold,base]=(m.split("UNIT_CONVERSION_MISSING:")[1]||"").split(/["']/)[0].split("|");return `${(prod||"This product").trim()} is sold in "${(sold||"?").trim()}" but its stock unit is "${(base||"?").trim()}", and no conversion is set up. Sell it in "${(base||"?").trim()}" or ask a manager to set the conversion. Nothing was posted.`;}
   if(/INSUFFICIENT_STOCK:(.*)/.test(m))return `Not enough stock for ${m.split("INSUFFICIENT_STOCK:")[1]?.split(/["']/)[0]?.trim()||"an item"} at this store. A manager can authorise it.`;
   if(/NO_COST:(.*)/.test(m))return `${m.split("NO_COST:")[1]?.split(/["']/)[0]?.trim()||"An item"} has no cost price set, so profit cannot be worked out. Ask a manager to set its cost.`;
   if(/PAYMENT_SHORT/.test(m))return "The payment is less than the amount due.";
