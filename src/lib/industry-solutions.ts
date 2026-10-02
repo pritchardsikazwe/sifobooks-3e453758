@@ -159,7 +159,7 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/lending", presetId: "lending",
   },
   {
-    id: "hospitality", label: "Hospitality", emoji: "🏨", status: "coming_soon",
+    id: "hospitality", label: "Hospitality", emoji: "🏨", status: "available",
     tagline: "Rooms, bookings, folios and guest billing.",
     suites: CORE_SUITES,
     features: [],
@@ -167,7 +167,7 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/dashboard",
   },
   {
-    id: "education", label: "Education", emoji: "🎓", status: "coming_soon",
+    id: "education", label: "Education", emoji: "🎓", status: "available",
     tagline: "Students, classes, exams, fees and school finance.",
     suites: CORE_SUITES,
     features: [],
