@@ -59,7 +59,7 @@ export const cashierPinLogin = createServerFn({ method: "POST" })
         const hashed = link?.properties?.hashed_token;
         if (hashed) {
           const { createClient } = await import("@supabase/supabase-js");
-          const anon = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+          const anon = createClient(process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
           const { data: v } = await anon.auth.verifyOtp({ token_hash: hashed, type: "magiclink" });
           accessToken = v?.session?.access_token ?? null;
           refreshToken = v?.session?.refresh_token ?? null;
@@ -180,6 +180,6 @@ export const adminResetMemberPassword = createServerFn({ method: "POST" })
       user_metadata: { ...(existing?.user?.user_metadata ?? {}), must_change_password: data.forceChange },
     });
     if (error) return { ok: false as const, error: "Password reset failed" };
-    await supabaseAdmin.from("audit_logs").insert({ company_id: companyId, user_id: context.userId, action: "admin_password_reset", entity_type: "user", entity_id: data.targetUserId, details: { reason: data.reason, force_change: data.forceChange } }).then(() => {}, () => {});
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "admin_password_reset", entity_type: "user", entity_id: data.targetUserId, details: { company_id: companyId, reason: data.reason, force_change: data.forceChange } }).then(() => {}, () => {});
     return { ok: true as const };
   });
