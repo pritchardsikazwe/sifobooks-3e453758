@@ -208,7 +208,7 @@ function NewInvoicePage() {
       // actually holds this item's stock, so posting does not depend on a
       // company default store being configured. The server still falls back
       // till → cashier → branch → company default when nothing is sent.
-      const needLoc = [...new Set(valid.filter(i => i.stockItemId && !i.warehouseId && !i.locationId).map(i => i.stockItemId as string))];
+      const needLoc = [...new Set(valid.filter(i => i.stockItemId && !i.locationId).map(i => i.stockItemId as string))];
       const stockedAt: Record<string, string> = {};
       if (needLoc.length) {
         const { data: bal } = await supabase.from("stock_balances").select("item_id, location_id, quantity").in("item_id", needLoc).gt("quantity", 0).order("quantity", { ascending: false });
@@ -225,7 +225,7 @@ function NewInvoicePage() {
           discount_amount: Math.round(Math.min(Math.max(disc, 0), gross) * 100) / 100,
           vat_rate: i.vatRate,
           warehouse_id: i.warehouseId ?? null,
-          location_id: i.locationId ?? (i.stockItemId && !i.warehouseId ? stockedAt[i.stockItemId] ?? null : null),
+          location_id: i.locationId ?? (i.stockItemId ? stockedAt[i.stockItemId] ?? null : null),
         };
       });
       const { data: posted, error: postError } = await supabase.rpc("post_sales_invoice", {
