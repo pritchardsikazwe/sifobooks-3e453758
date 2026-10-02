@@ -11,7 +11,10 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ExportMenu } from "@/lib/exports";
 import { ORDER_TYPES, uid } from "@/lib/restaurant";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, ChefHat, ReceiptText, Settings2 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/restaurant/menu")({
   head: () => ({
@@ -37,7 +40,11 @@ function Menu() {
   const [stock, setStock] = useState<any[]>([]);
   const [q, setQ] = useState("");
 
-  const [item, setItem] = useState({ name: "", category: "Mains", price: 0, cost: 0, station: "Kitchen" });
+  const [item, setItem] = useState({
+    name: "", category: "Mains", price: 0, cost: 0, station: "Kitchen",
+    description: "", active: true, is_86: false, prices: {} as Record<string, number>,
+  });
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [group, setGroup] = useState({ name: "", required: false, min_select: 0, max_select: 1 });
   const [mod, setMod] = useState({ group_id: "", name: "", price: 0 });
   const [rec, setRec] = useState({ menu_item_id: "", stock_item_id: "", quantity: 1, unit: "" });
@@ -57,8 +64,15 @@ function Menu() {
   };
   useEffect(() => { load(); }, []);
 
+  const resetItem = () => setItem({
+    name: "", category: "Mains", price: 0, cost: 0, station: "Kitchen",
+    description: "", active: true, is_86: false, prices: {},
+  });
+
   const addItem = async () => {
     if (!item.name.trim()) return toast.error("Item name is required");
+    if (!(Number(item.price) >= 0)) return toast.error("Selling price must be zero or greater");
+    if (!(Number(item.cost) >= 0)) return toast.error("Cost must be zero or greater");
     const u = await uid();
     if (!u) return toast.error("You are not signed in.");
     const id = crypto.randomUUID();
@@ -66,20 +80,29 @@ function Menu() {
       id,
       user_id: u,
       ...item,
-      active: true,
-      is_86: false,
-      prices: {},
+      price: Number(item.price),
+      cost: Number(item.cost),
+      active: Boolean(item.active),
+      is_86: Boolean(item.is_86),
+      prices: item.prices ?? {},
     };
     const { error } = await db.from("restaurant_menu_items").insert(row);
     if (error) return toast.error(error.message);
-    // Update the local menu immediately. This keeps the manager screen in sync
-    // even when a legacy/local database returns no inserted row payload.
     setItems((current) => [...current, row].sort((a, b) =>
       String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name))
     ));
-    setItem({ ...item, name: "", price: 0, cost: 0 });
-    toast.success("Menu item added — available on POS after refresh.");
+    resetItem();
+    setItemDialogOpen(false);
+    toast.success("Menu item added — ready for POS.");
     void load();
+  };
+
+  const setNewItemChannelPrice = (key: string, value: number) => {
+    setItem((current) => {
+      const prices = { ...(current.prices ?? {}) };
+      if (value > 0) prices[key] = value; else delete prices[key];
+      return { ...current, prices };
+    });
   };
 
   const patchItem = async (id: string, patch: any) => {
@@ -169,14 +192,117 @@ function Menu() {
         </TabsList>
 
         <TabsContent value="items" className="space-y-3">
-          <Card className="p-4 rounded-2xl grid gap-2 md:grid-cols-6">
-            <Input placeholder="Item name" value={item.name} onChange={(e) => setItem({ ...item, name: e.target.value })} />
-            <Input placeholder="Category" value={item.category} onChange={(e) => setItem({ ...item, category: e.target.value })} />
-            <Input placeholder="Station" value={item.station} onChange={(e) => setItem({ ...item, station: e.target.value })} />
-            <Input type="number" placeholder="Price" value={item.price} onChange={(e) => setItem({ ...item, price: Number(e.target.value) })} />
-            <Input type="number" placeholder="Cost" value={item.cost} onChange={(e) => setItem({ ...item, cost: Number(e.target.value) })} />
-            <Button onClick={addItem}><Plus className="h-4 w-4 mr-1" /> Add item</Button>
-          </Card>
+          <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-10 rounded-xl bg-[#07834f] px-4 font-bold hover:bg-[#066f44]">
+                <Plus className="mr-2 h-4 w-4" /> Add restaurant item
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-3xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf5f0] text-[#07834f]">
+                    <UtensilsCrossed className="h-5 w-5" />
+                  </span>
+                  Add menu item
+                </DialogTitle>
+                <DialogDescription>
+                  Create a real restaurant item once, then use it in POS, recipes, kitchen routing and reports.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-[#d8e6e1] bg-[#f7faf8] p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-black text-[#173b3a]">
+                    <ReceiptText className="h-4 w-4 text-[#07834f]" /> Item details
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Item name *</label>
+                      <Input autoFocus placeholder="e.g. Chicken Burger & Chips" value={item.name}
+                        onChange={(e) => setItem({ ...item, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Category *</label>
+                      <Input placeholder="Mains, Drinks, Sides..." value={item.category}
+                        onChange={(e) => setItem({ ...item, category: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Kitchen / service station *</label>
+                      <Select value={item.station} onValueChange={(v) => setItem({ ...item, station: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select station" /></SelectTrigger>
+                        <SelectContent>
+                          {["Kitchen", "Hot Kitchen", "Grill", "Bar", "Bakery", "Dessert", "Pass"].map((v) => (
+                            <SelectItem key={v} value={v}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Selling price (ZMW) *</label>
+                      <Input type="number" min="0" step="0.01" value={item.price}
+                        onChange={(e) => setItem({ ...item, price: Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Base cost (ZMW)</label>
+                      <Input type="number" min="0" step="0.01" value={item.cost}
+                        onChange={(e) => setItem({ ...item, cost: Number(e.target.value) })} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-1.5 block text-xs font-bold text-muted-foreground">Description</label>
+                      <Input placeholder="Optional description shown to staff..." value={item.description}
+                        onChange={(e) => setItem({ ...item, description: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-black">
+                    <ChefHat className="h-4 w-4 text-[#07834f]" /> POS & service settings
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex items-center justify-between rounded-xl border bg-muted/20 px-3 py-3">
+                      <span><span className="block text-sm font-semibold">Available on POS</span><span className="text-xs text-muted-foreground">Show this item to cashiers</span></span>
+                      <Switch checked={item.active} onCheckedChange={(v) => setItem({ ...item, active: v })} />
+                    </label>
+                    <label className="flex items-center justify-between rounded-xl border bg-muted/20 px-3 py-3">
+                      <span><span className="block text-sm font-semibold">86 this item</span><span className="text-xs text-muted-foreground">Temporarily hide from selling</span></span>
+                      <Switch checked={item.is_86} onCheckedChange={(v) => setItem({ ...item, is_86: v })} />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-1 flex items-center gap-2 text-sm font-black">
+                    <Settings2 className="h-4 w-4 text-[#07834f]" /> Channel pricing
+                  </div>
+                  <p className="mb-3 text-xs text-muted-foreground">Leave blank to use the main selling price.</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {ORDER_TYPES.slice(0, 4).map((ot) => (
+                      <label key={ot.key} className="text-xs font-semibold text-muted-foreground">
+                        {ot.label} price
+                        <Input type="number" min="0" step="0.01" className="mt-1.5"
+                          value={(item.prices ?? {})[ot.key] ?? ""}
+                          placeholder={String(item.price || 0)}
+                          onChange={(e) => setNewItemChannelPrice(ot.key, Number(e.target.value))} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-[#eef7f3] px-4 py-3 text-xs text-[#315f5b]">
+                  <strong>Next step:</strong> after saving, open <strong>Recipes</strong> to link ingredients and enable automatic stock consumption when the item is sold.
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => { resetItem(); setItemDialogOpen(false); }}>Cancel</Button>
+                <Button className="bg-[#07834f] font-bold hover:bg-[#066f44]" onClick={addItem}>
+                  <Plus className="mr-2 h-4 w-4" /> Save item
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {shown.map((i) => (
             <Card key={i.id} className="p-3 rounded-2xl">
