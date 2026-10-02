@@ -53,6 +53,17 @@ async function postJournal(input: {
     await supabase.from("journal_entries").delete().eq("id", je.data.id).eq("user_id", userId);
     return { ok: false, error: jl.error.message };
   }
+  try {
+    await supabase.from("audit_logs").insert({
+      user_id: userId,
+      action: "JOURNAL_POSTED",
+      entity_type: "journal_entry",
+      entity_id: je.data.id,
+      details: JSON.stringify({ reference: input.reference, entryNumber: je.data.entry_number, totalDebit, totalCredit }),
+    });
+  } catch {
+    // Audit failure must not silently roll back an otherwise balanced posting.
+  }
   return { ok: true, journalId: je.data.id, number: je.data.entry_number };
 }
 
