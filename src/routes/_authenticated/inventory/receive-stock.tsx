@@ -73,14 +73,29 @@ function ReceiveStockPage() {
       // Online: record one purchase movement per line in a single insert; the
       // database updates on-hand stock and location balances from these.
       const reference = supplierInvoice.trim() || `RCV-${receiptDate}`;
+      const ids = [...new Set(lines.map(l => l.itemId))];
+      const { data: before } = await supabase.from("stock_items").select("id,quantity_on_hand,cost_price").in("id", ids);
       const { error } = await supabase.from("stock_movements").insert(lines.map(l => ({
         user_id: u.user!.id, item_id: l.itemId, movement_type: "purchase", quantity: l.quantity,
         unit_cost: l.unitCost, total_cost: l.quantity * l.unitCost, reference,
         note: "Stock received", location_id: locationId, transaction_date: receiptDate,
         source_type: "stock_receipt", source_id: supplierId || null, created_by: u.user!.id,
       })) as any);
+      if (error) { setSaving(false); return toast.error(`Stock was not received: ${error.message}`); }
+      // Weighted-average cost: blend existing stock value with what was received.
+      for (const id of ids) {
+        const b: any = (before ?? []).find((r: any) => r.id === id);
+        const oldQty = Math.max(0, Number(b?.quantity_on_hand ?? 0));
+        const oldCost = Number(b?.cost_price ?? 0);
+        const recv = lines.filter(l => l.itemId === id);
+        const q = recv.reduce((s, l) => s + l.quantity, 0);
+        const v = recv.reduce((s, l) => s + l.quantity * l.unitCost, 0);
+        if (oldQty + q > 0) {
+          const avg = Math.round(((oldQty * oldCost + v) / (oldQty + q)) * 10000) / 10000;
+          await supabase.from("stock_items").update({ cost_price: avg } as any).eq("id", id);
+        }
+      }
       setSaving(false);
-      if (error) return toast.error(`Stock was not received: ${error.message}`);
       toast.success(`Stock received — ${reference}`);
       setLines([]);
       setSupplierInvoice("");

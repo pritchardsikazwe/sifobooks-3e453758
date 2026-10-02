@@ -46,12 +46,25 @@ function OpeningStockPage() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return toast.error("Not signed in");
     setSaving(true);
-    const payload = {
-      _uid: u.user.id, _company_id: null, _branch_id: null, _location_id: locationId,
-      _warehouse_id: null, _opening_date: openingDate, _reference: reference.trim() || null,
-      _items: [{ itemId, quantity, unitCost }],
-    };
-    const { data, error } = await supabase.rpc("post_opening_stock" as any, payload as any);
+    let data: any = null, error: any = null;
+    if (import.meta.env.VITE_SIFOBOOKS_BACKEND !== "local") {
+      // Online: one opening movement; the database updates on-hand and location balance.
+      const ref = reference.trim() || `OPEN-${openingDate}`;
+      ({ error } = await supabase.from("stock_movements").insert({
+        user_id: u.user.id, item_id: itemId, movement_type: "opening", quantity,
+        unit_cost: unitCost, total_cost: quantity * unitCost, reference: ref,
+        note: "Opening stock", location_id: locationId, transaction_date: openingDate,
+        source_type: "opening_stock", source_id: itemId, created_by: u.user.id,
+      } as any));
+      data = { reference: ref };
+    } else {
+      const payload = {
+        _uid: u.user.id, _company_id: null, _branch_id: null, _location_id: locationId,
+        _warehouse_id: null, _opening_date: openingDate, _reference: reference.trim() || null,
+        _items: [{ itemId, quantity, unitCost }],
+      };
+      ({ data, error } = await supabase.rpc("post_opening_stock" as any, payload as any));
+    }
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(`Opening stock posted — ${(data?.reference ?? reference) || "posted"}`);
