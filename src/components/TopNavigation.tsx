@@ -70,7 +70,7 @@ function useNavigationMenus(): Menu[] {
 
   const inventory = match(
     ["/inventory", "/stock", "/warehouses", "/stock-counts", "/stock-adjustments", "/stock-batches", "/stock-serials", "/inventory/"],
-    ["Items", "Overview", "Transfers", "Stock Counts", "Reconciliation", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
+    ["Items", "Overview", "Transfers", "Stock Counts", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
   );
 
   const banking = match(
@@ -117,15 +117,12 @@ function useNavigationMenus(): Menu[] {
 
   const menus = [
     { label: "Home", icon: "Home", items: match(["/dashboard", "/notifications", "/approvals"], ["Home", "Notifications", "Approvals"]) },
-    { label: "Customers", icon: "Users", items: take(customers) },
-    { label: "Suppliers", icon: "Truck", items: take(suppliers) },
-    { label: "Sales", icon: "TrendingUp", items: sales },
-    { label: "Purchases", icon: "ShoppingCart", items: purchases },
-    { label: "Items", icon: "Boxes", items: take(inventory) },
+    { label: "Customers", icon: "Users", items: take([...customers, ...sales]) },
+    { label: "Suppliers", icon: "Truck", items: take([...suppliers, ...purchases]) },
+    { label: "Items", icon: "Boxes", items: take([...inventory, ...manufacturing]) },
     { label: "Banking", icon: "Landmark", items: take(banking) },
     { label: "Accounts", icon: "BookOpen", items: take(accounting) },
     { label: "POS", icon: "ShoppingBag", items: take(pos) },
-    { label: "Manufacturing", icon: "Factory", items: take(manufacturing) },
     { label: "HR & Payroll", icon: "UsersRound", items: take(payroll) },
     { label: "Reports", icon: "BarChart3", items: take(reports) },
     { label: "Company", icon: "Building2", items: take(company) },
