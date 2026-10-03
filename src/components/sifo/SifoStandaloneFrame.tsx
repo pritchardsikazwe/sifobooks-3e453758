@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Bell, HelpCircle, Search, Settings2, Wifi, Database, FlaskConical } from "lucide-react";
 import { isStandaloneDemoModeEnabled, setStandaloneDemoMode } from "@/lib/standalone-demo";
@@ -24,6 +24,7 @@ export function SifoStandaloneFrame({
   className?: string;
 }) {
   const [demoMode, setDemoMode] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => setDemoMode(isStandaloneDemoModeEnabled()), []);
 
   const toggleDemoMode = () => {
@@ -66,10 +67,10 @@ export function SifoStandaloneFrame({
         {nav.length > 0 && (
           <nav className="flex gap-1 overflow-x-auto border-t border-[#EEF4F2] px-4 py-2 sm:px-6">
             {nav.map((n) => (
-              <Link key={n.to} to={n.to as never} className={cn(
+              <button key={n.to} type="button" onClick={() => navigate({ to: n.to as never })} className={cn(
                 "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition",
                 n.active ? "bg-[#07834F] text-white shadow-sm" : "text-[#58716B] hover:bg-[#EAF5F1] hover:text-[#07834F]",
-              )}>{n.label}</Link>
+              )}>{n.label}</button>
             ))}
           </nav>
         )}
