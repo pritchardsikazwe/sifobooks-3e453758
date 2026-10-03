@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Info, Search } from "lucide-react";
@@ -36,6 +36,8 @@ export function IndustryShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-3 rounded-[20px] bg-[#F5FAF8]/70 p-0">
       <div className="rounded-[18px] border border-[#DCE9E5] bg-white shadow-sm overflow-hidden">
@@ -62,9 +64,10 @@ export function IndustryShell({
           {nav.map((n) => {
             const isActive = n.to === active;
             return (
-              <Link
+              <button
                 key={n.to}
-                to={n.to as never}
+                type="button"
+                onClick={() => navigate({ to: n.to as never })}
                 className={cn(
                   "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
                   isActive ? "bg-[#07834F] text-white shadow-sm" : "text-[#526865] hover:bg-[#EAF5F1] hover:text-[#07834F]",
@@ -73,7 +76,7 @@ export function IndustryShell({
                 <n.icon className="h-4 w-4" />
                 {n.label}
                 {n.supported === false && !isActive ? <span className="text-[10px] uppercase opacity-70">soon</span> : null}
-              </Link>
+              </button>
             );
           })}
         </nav>
