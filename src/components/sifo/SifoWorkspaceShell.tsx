@@ -29,7 +29,7 @@ export function SifoWorkspaceShell({
   className?: string;
 }) {
   return (
-    <SifoPage className={cn("space-y-4", className)}>
+    <SifoPage className={cn("space-y-3", className)}>
       {breadcrumbs.length > 0 && (
         <nav className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
           {breadcrumbs.map((b, i) => (
@@ -45,7 +45,7 @@ export function SifoWorkspaceShell({
         </nav>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {Icon && (
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -60,7 +60,7 @@ export function SifoWorkspaceShell({
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
 
-      {kpis && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{kpis}</div>}
+      {kpis && <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{kpis}</div>}
       {tabs}
       {children}
     </SifoPage>

@@ -551,11 +551,18 @@ function startServer() {
       let database = { status: "missing", sizeBytes: 0 };
       try {
         const db = new Database(dbPath);
-        const row = db.query("PRAGMA quick_check").get() as { quick_check?: string } | null;
+        const row = db.query("PRAGMA quick_check(20)").get() as { quick_check?: string } | null;
+        const fkRows = db.query("PRAGMA foreign_key_check").all() as any[];
+        const schema = db.query("PRAGMA user_version").get() as { user_version?: number } | null;
+        const tableCountRow = db.query("SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").get() as { count?: number } | null;
         db.close();
         database = {
-          status: row?.quick_check === "ok" ? "healthy" : "check_failed",
+          status: row?.quick_check === "ok" && fkRows.length === 0 ? "healthy" : "check_failed",
           sizeBytes: existsSync(dbPath) ? statSync(dbPath).size : 0,
+          quickCheck: row?.quick_check || "unknown",
+          foreignKeyViolations: fkRows.length,
+          schemaVersion: Number(schema?.user_version || 0),
+          tableCount: Number(tableCountRow?.count || 0),
         };
       } catch {
         database = { status: "error", sizeBytes: existsSync(dbPath) ? statSync(dbPath).size : 0 };

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /** Canonical content width and vertical rhythm for SifoBooks 2026 workspaces. */
 export function SifoPage({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("page-enter mx-auto w-full max-w-[1600px] space-y-5 p-4 sm:p-6 lg:px-8", className)}>{children}</div>;
+  return <div className={cn("page-enter mx-auto w-full max-w-[1600px] space-y-4 p-3 sm:p-4 lg:px-5", className)}>{children}</div>;
 }
 
 /** One consistent responsive action/filter surface above operational tables. */

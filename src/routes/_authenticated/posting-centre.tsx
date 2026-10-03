@@ -60,6 +60,11 @@ const SOURCES: { key: string; label: string; prefixes: string[] }[] = [
   { key: "stock", label: "Inventory", prefixes: ["STK:", "COUNT:"] },
   { key: "asset", label: "Fixed Assets", prefixes: ["DEP:", "DISP:"] },
   { key: "grant", label: "Grants / Funds", prefixes: ["GRANT:", "TUCK:", "IMP:", "ALLOW:"] },
+  { key: "hotel", label: "Hotel", prefixes: ["HOTEL_PAYMENT:"] },
+  { key: "school", label: "School", prefixes: ["SCHOOL_FEE_PAYMENT:"] },
+  { key: "property", label: "Property", prefixes: ["PROPERTY_CHARGE:", "PROPERTY_PAYMENT:"] },
+  { key: "butchery", label: "Butchery", prefixes: ["BUTCHERY:", "BCH:"] },
+  { key: "lending", label: "Lending", prefixes: ["LOAN:", "LENDING:", "REPAY:"] },
 ];
 
 function sourceOf(e: Entry) {

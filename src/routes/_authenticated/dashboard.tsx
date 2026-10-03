@@ -572,7 +572,7 @@ function DashboardPage() {
             >
               <Link to="/posting-wizard"><Plus className="mr-1.5 h-5 w-5" /> New Transaction</Link>
             </Button>
-            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/reports">Reports</Link></Button>
+            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/reports">Reports</Link></Button>\n            <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-border bg-card px-3.5 text-[14px] font-semibold"><Link to="/module-audit"><ClipboardList className="mr-1.5 h-4 w-4" /> Module audit</Link></Button>
             <Button asChild variant="outline" className="h-11 shrink-0 rounded-xl border-primary/30 bg-primary/5 px-3.5 text-[14px] font-semibold text-primary"><Link to="/demo-centre">SifoDemo</Link></Button>
             <Button
               variant={editMode ? "default" : "outline"}
@@ -616,7 +616,7 @@ function DashboardPage() {
         {ready && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={layout.order} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-12 gap-4">
+              <div className="grid grid-cols-12 gap-3">
                 {layout.order.map(id => (
                   <SortableWidget
                     key={id}
@@ -653,7 +653,7 @@ const tooltipStyle = {
 
 function Panel({ children, title, subtitle, action, className }: { children: React.ReactNode; title?: string; subtitle?: string; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5", className)}>
+    <div className={cn("rounded-xl border border-border bg-card p-3.5 shadow-sm sm:p-4", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between mb-3">
           <div>
@@ -705,7 +705,7 @@ function Row({ icon: Icon, label, value, to }: { icon: any; label: string; value
 
 function EmptyState({ label, cta, to }: { label: string; cta?: string; to?: string }) {
   return (
-    <div className="py-8 text-center">
+    <div className="py-5 text-center">
       <div className="text-sm text-muted-foreground">{label}</div>
       {cta && to && (
         <Button asChild size="sm" variant="outline" className="mt-3">

@@ -1027,6 +1027,39 @@ function executeRpc(name: string, args: Record<string, any>): { data: any; error
         void recordAuditEvent({userId:uid,action:action==="refund"?"REFUND_CREATED":"SALE_CANCELLED",entityType:"pos_sale",entityId:saleId,newValue:{reason,reversalId:transaction}});
         return {data:transaction,error:null};
       }
+      case "safe_reverse_journal_entry": {
+        const uid = String(args._uid || "");
+        const entryId = String(args._entry_id || "");
+        const reason = String(args._reason || "").trim();
+        const reversalDate = String(args._reversal_date || new Date().toISOString().slice(0, 10));
+        if (!uid) throw new Error("NOT_SIGNED_IN");
+        if (!entryId) throw new Error("JOURNAL_ENTRY_REQUIRED");
+        if (reason.length < 4) throw new Error("REVERSAL_REASON_REQUIRED");
+        const original = db.prepare("SELECT * FROM journal_entries WHERE id=? AND user_id=? LIMIT 1").get(entryId, uid) as any;
+        if (!original) throw new Error("JOURNAL_ENTRY_NOT_FOUND");
+        if (String(original.status || "").toLowerCase() !== "posted") throw new Error("ONLY_POSTED_ENTRIES_CAN_BE_REVERSED");
+        if (original.reversal_of) throw new Error("REVERSAL_ENTRY_CANNOT_BE_REVERSED");
+        if (original.reversed_by) throw new Error("JOURNAL_ENTRY_ALREADY_REVERSED");
+        const lines = db.prepare("SELECT * FROM journal_lines WHERE entry_id=? AND user_id=? ORDER BY rowid").all(entryId, uid) as any[];
+        if (!lines.length) throw new Error("JOURNAL_ENTRY_HAS_NO_LINES");
+        const dr = lines.reduce((n: number, l: any) => n + Number(l.debit || 0), 0);
+        const cr = lines.reduce((n: number, l: any) => n + Number(l.credit || 0), 0);
+        if (Math.abs(dr - cr) > 0.005) throw new Error("UNBALANCED_JOURNAL_CANNOT_BE_REVERSED");
+        const reversalId = generateUUID();
+        const reversalNumber = "REV-" + String(Date.now()).slice(-8);
+        db.transaction(() => {
+          db.prepare("INSERT INTO journal_entries (id,user_id,entry_number,entry_date,reference,description,status,total_debit,total_credit,reversal_of,reversal_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+            .run(reversalId, uid, reversalNumber, reversalDate, "REV:" + String(original.reference || original.entry_number), "Reversal of " + String(original.entry_number), "posted", cr, dr, entryId, reason);
+          for (const line of lines) {
+            db.prepare("INSERT INTO journal_lines (id,user_id,entry_id,account_id,description,debit,credit) VALUES (?,?,?,?,?,?,?)")
+              .run(generateUUID(), uid, reversalId, line.account_id ?? null, "Reversal · " + String(line.description || ""), Number(line.credit || 0), Number(line.debit || 0));
+          }
+          db.prepare("UPDATE journal_entries SET status='reversed', reversed_by=?, reversal_reason=?, updated_at=datetime('now') WHERE id=? AND user_id=?")
+            .run(reversalId, reason, entryId, uid);
+        })();
+        void recordAuditEvent({userId: uid, action: "JOURNAL_REVERSED", entityType: "journal_entry", entityId: entryId, newValue: { reversalId, reversalNumber, reason, reversalDate }});
+        return { data: { ok: true, reversal_id: reversalId, entry_number: reversalNumber }, error: null };
+      }
       case "run_accounting_integrity_reconciliation": {
         const uid=String(args._uid||"");
         if(!uid) throw new Error("NOT_SIGNED_IN");

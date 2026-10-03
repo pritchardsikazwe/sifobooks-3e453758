@@ -1,9 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { ModuleSettingsCentre } from "@/components/sifo/ModuleSettingsCentre";
 
-// Modules are no longer a plugin store. Business configuration now lives on the
-// Industry & Business page (business type, industry solution, suites, features).
 export const Route = createFileRoute("/_authenticated/modules")({
-  beforeLoad: () => {
-    throw redirect({ to: "/industry" });
-  },
+  head: () => ({ meta: [{ title: "Module Settings — SifoBooks" }, { name: "robots", content: "noindex" }] }),
+  component: ModuleSettingsCentre,
 });

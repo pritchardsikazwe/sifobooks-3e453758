@@ -9,6 +9,7 @@ import {
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   BedDouble, CalendarCheck, ClipboardCheck, CreditCard, House, LayoutDashboard, Boxes,
   ReceiptText, UtensilsCrossed, Wrench, BarChart3, Wallet, DoorOpen, Moon, ShieldCheck,
@@ -24,6 +25,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { getWorkspaceMode } from "@/lib/workspace";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
+import { postHotelPaymentToLedger } from "@/lib/operationalPosting";
 
 const db: any = supabase;
 
@@ -91,6 +93,7 @@ export function HotelWorkspace({ screen }: { screen: string }) {
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
   const [hotelOnly, setHotelOnly] = useState(false);
+  const [postingId, setPostingId] = useState<string | null>(null);
   const { roles, access } = usePermissions();
   const hotelRole = useMemo(
     () => hotelRoleFor([...(roles ?? []), (access as any)?.role_key ?? "", (access as any)?.is_owner ? "owner" : ""].filter(Boolean)),
@@ -147,6 +150,12 @@ export function HotelWorkspace({ screen }: { screen: string }) {
     .filter((r: any) => r.receipt_date === new Date().toISOString().slice(0, 10) && r.status !== "reversed")
     .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
 
+  const postHotelPayment = async (payment: any) => {
+    setPostingId(payment.id);
+    try { const result = await postHotelPaymentToLedger(payment); if (!result.ok) throw new Error(result.error); toast.success(result.number ? `Posted ${result.number}` : "Already posted"); }
+    catch (e: any) { toast.error(e?.message ?? "Could not post hotel payment"); }
+    finally { setPostingId(null); }
+  };
   const [title, subtitle] = TITLES[screen] ?? ["Hotel", "Hotel operations workspace."];
 
   const body = () => {
@@ -374,6 +383,17 @@ export function HotelWorkspace({ screen }: { screen: string }) {
                 />
               </Board>
             </div>
+            <Board title="Accounting posting control" hint="Post guest receipts into the general ledger. Duplicate clicks are protected by the receipt source reference.">
+              <div className="space-y-2">
+                {rows.slice(0, 15).map((r: any) => (
+                  <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5">
+                    <div className="min-w-0 flex-1"><div className="font-medium">{nameOf.get(r.customer_id) ?? r.payer_name ?? "Guest"}</div><div className="text-xs text-muted-foreground">{r.receipt_date} · {r.number} · {r.method ?? "—"} · {fmtMoney(Number(r.amount))}</div></div>
+                    <Button size="sm" variant="outline" disabled={postingId===r.id} onClick={()=>postHotelPayment(r)}>{postingId===r.id ? "Posting…" : "Post to GL"}</Button>
+                  </div>
+                ))}
+                {!rows.length && <div className="p-4 text-center text-sm text-muted-foreground">No guest receipts to post.</div>}
+              </div>
+            </Board>
           </div>
         );
       }

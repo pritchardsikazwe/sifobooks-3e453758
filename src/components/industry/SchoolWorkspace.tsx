@@ -9,10 +9,13 @@ import {
 } from "@/components/industry/IndustryKit";
 import { cn } from "@/lib/utils";
 import { ensureStandaloneDemo } from "@/lib/standalone-demo";
+import { toast } from "sonner";
 import { StandaloneReports } from "@/components/industry/StandaloneReports";
+import { postSchoolFeePaymentToLedger } from "@/lib/operationalPosting";
 import { SchoolOperationsPanel } from "@/components/industry/SchoolOperationsPanel";
 import { SchoolFeaturePage } from "@/components/industry/SchoolFeaturePage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   BarChart3, BookOpen, CalendarCheck, GraduationCap, LayoutDashboard, ReceiptText,
   Users, Wallet, WalletCards,
@@ -79,6 +82,7 @@ function SchoolWorkspaceInner({ screen }: { screen: string }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [data, setData] = useState<Record<string, any[]>>({});
+  const [postingId, setPostingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +158,16 @@ function SchoolWorkspaceInner({ screen }: { screen: string }) {
   const collected = fees.reduce((s: number, f: any) => s + Number(f.amount_paid || 0), 0);
   const arrears = fees.reduce((s: number, f: any) => s + Number(f.balance || 0), 0);
 
+  const postFeePayment = async (payment: any) => {
+    setPostingId(payment.id);
+    try {
+      const result = await postSchoolFeePaymentToLedger(payment);
+      if (!result.ok) throw new Error(result.error);
+      toast.success(result.number ? `Posted ${result.number}` : "Already posted");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not post fee payment");
+    } finally { setPostingId(null); }
+  };
   const [title, subtitle] = TITLES[screen] ?? ["School", "School operations workspace."];
 
   const body = () => {
@@ -430,6 +444,17 @@ function SchoolWorkspaceInner({ screen }: { screen: string }) {
                 </Board>
               </div>
             </div>
+            <Board title="Accounting posting control" hint="Post school fee collections into the general ledger. Each payment uses an idempotent source reference.">
+              <div className="space-y-2">
+                {rows.slice(0, 15).map((p: any) => (
+                  <div key={p.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5">
+                    <div className="min-w-0 flex-1"><div className="font-medium">{studentName.get(p.student_id) ?? "Learner"}</div><div className="text-xs text-muted-foreground">{p.payment_date} · {p.receipt_no ?? "No receipt"} · {p.method ?? "—"} · {fmtMoney(Number(p.amount))}</div></div>
+                    <Button size="sm" variant="outline" disabled={postingId===p.id} onClick={()=>postFeePayment(p)}>{postingId===p.id ? "Posting…" : "Post to GL"}</Button>
+                  </div>
+                ))}
+                {!rows.length && <div className="p-4 text-center text-sm text-muted-foreground">No fee payments to post.</div>}
+              </div>
+            </Board>
           </div>
         );
       }
