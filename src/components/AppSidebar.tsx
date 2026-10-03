@@ -209,7 +209,7 @@ export function AppSidebar() {
       ["School Dashboard","/school","School"],["Preschool","/school/preschool","Baby"],["Admissions","/school/admissions","UserPlus"],["Students","/school/students","GraduationCap"],["Student Profile","/school/student-profile","UserRound"],["Parents","/school/parents","Users"],["Academics","/school/academics","BookOpen"],["Timetable","/school/timetable","CalendarDays"],["Attendance","/school/attendance","ClipboardCheck"],["Exams","/school/exams","FileQuestion"],["Report Cards","/school/report-cards","FileText"],["Fees & Billing","/school/fees-billing","Receipt"],["Fees","/school/fees","BadgeDollarSign"],["Payments","/school/payments","CreditCard"],["Scholarships","/school/scholarships","Award"],["Boarding","/school/boarding","BedDouble"],["Transport","/school/transport","Bus"],["Library","/school/library","Library"],["Meals","/school/meals","Utensils"],["Discipline","/school/discipline","ShieldAlert"],["Health","/school/health","HeartPulse"],["Communications","/school/communications","MessageSquare"],["Staff","/school/staff","UsersRound"],["Parent Portal","/school/parent-portal","ExternalLink"],["Student Portal","/school/student-portal","ExternalLink"],["School Reports","/school/reports","BarChart3"],["Compliance","/school/compliance","ShieldCheck"],["School Settings","/school/settings","Settings"],
       ["Property Dashboard","/property","Building2"],["Tenants","/property/tenants","Users"],["Leases","/property/leases","FileText"],["Collections","/property/collections","Wallet"],["Maintenance","/property/maintenance","Wrench"],["Property Reports","/property/reports","BarChart3"],
       ["Lending Dashboard","/lending","Landmark"],["Borrowers","/lending/borrowers","Users"],["Applications","/lending/applications","FileText"],["Credit Assessment","/lending/credit-assessment","ShieldCheck"],["Loan Products","/lending/products","Package"],["Portfolio","/lending/portfolio","PieChart"],["Disbursements","/lending/disbursements","Send"],["Repayments","/lending/repayments","CreditCard"],["Collections","/lending/collections","Wallet"],["Field Collections","/lending/field-collections","MapPin"],["Arrears","/lending/arrears","AlertTriangle"],["Promises","/lending/promises","Handshake"],["Guarantors","/lending/guarantors","UsersRound"],["Collateral","/lending/collateral","LockKeyhole"],["Group Lending","/lending/group-lending","Users"],["Savings","/lending/savings","PiggyBank"],["Investors","/lending/investors","Landmark"],["Mobile Money","/lending/mobile-money","Smartphone"],["Restructuring","/lending/restructuring","RefreshCw"],["Write-offs","/lending/writeoffs","Archive"],["Risk & Fraud","/lending/risk-fraud","ShieldAlert"],["Communications","/lending/communications","MessageSquare"],["Documents","/lending/documents","FileText"],["Customer Portal","/lending/customer-portal","ExternalLink"],["Investor Portal","/lending/investor-portal","ExternalLink"],["Lending Accounting","/lending/accounting","BookOpen"],["Lending Reports","/lending/reports","BarChart3"],["Lending Compliance","/lending/compliance","ShieldCheck"],["Branches","/lending/branches","GitBranch"],["Lending Settings","/lending/settings","Settings"],
-      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
+      ["Boarding House Dashboard","/boarding-house","Home"],["Boarding Houses","/boarding-houses","Building2"],["Boarding Rooms","/boarding-rooms","BedDouble"],["Boarding Students","/boarding-students","GraduationCap"],["Boarding Fees","/boarding-fees","Wallet"],["Boarding Attendance","/boarding-attendance","CalendarCheck"],["Boarding Leave","/boarding-leave","LogOut"],["Boarding Maintenance","/boarding-maintenance","Wrench"],["Boarding Discipline","/boarding-discipline","ShieldAlert"],["Boarding Visitors","/boarding-visitors","Users"],["Boarding Meals","/boarding-meals","Utensils"],["Boarding Reports","/boarding-reports","FileBarChart"],      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
       ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail.butchery-products","Beef"],["Receiving","/retail.butchery-receiving","PackagePlus"],["Processing & Yield","/retail.butchery-processing","Scissors"],["Scale","/retail.butchery-scale","Scale"],["Labels","/retail.butchery-labels","Tags"],["Prices","/retail.butchery-prices","Tag"],["Inventory","/retail.butchery-inventory","Boxes"],["Sales","/retail.butchery-sales","Receipt"],["Reports","/retail.butchery-reports","BarChart3"],["Invoice","/retail.butchery-invoice","FileText"],
     ];
     for (const [title,url,icon] of industryItems) if (!seen.has(url)) { seen.add(url); collected.push({title,url,icon:iconFor(icon)}); }
@@ -221,7 +221,7 @@ export function AppSidebar() {
         ["Company Setup", "Branches & Warehouses", "Users & Roles", "Administration", "Documents & Branding", "Audit Logs"]
       )),
       make("Sales & POS", byUrl(
-        ["/pos", "/pos-sales", "/invoices", "/quotes", "/customers", "/receipts", "/credit-notes", "/returns", "/restaurant/pos", "/restaurant/orders"],
+        ["/pos", "/pos-sales", "/invoices", "/quotes", "/customers", "/receipts", "/credit-notes", "/returns"],
         ["Retail POS", "POS Sales History", "Invoices", "Quotes", "Customers", "Receive Payments", "Credit Notes", "Returns"]
       )),
       make("Purchases", byUrl(
@@ -229,7 +229,7 @@ export function AppSidebar() {
         ["Bills", "Purchase Orders", "Suppliers", "Expenses", "Supplier Payments", "Goods Receipts"]
       )),
       make("Inventory", byUrl(
-        ["/inventory", "/stock", "/inventory/transfers", "/stock-counts", "/inventory/reconciliation", "/inventory-control-centre", "/inventory/stock-card", "/stock-adjustments", "/inventory/locations", "/stock-batches", "/stock-serials", "/inventory/production", "/inventory/cashier-records", "/inventory-sheets", "/restaurant/items-stock"],
+        ["/inventory", "/stock", "/inventory/transfers", "/stock-counts", "/inventory/reconciliation", "/inventory-control-centre", "/inventory/stock-card", "/stock-adjustments", "/inventory/locations", "/stock-batches", "/stock-serials", "/inventory/production", "/inventory/cashier-records", "/inventory-sheets"],
         ["Items", "Items & Stock", "Transfers", "Stock Counts", "Control Center", "Stock Card / History", "Stock Adjustments", "Locations", "Warehouses", "Batches & Expiry", "Serial Numbers"]
       )),
       make("Accounting", byUrl(
@@ -252,15 +252,13 @@ export function AppSidebar() {
         ["/reports"],
         ["Reports Centre", "Trial Balance", "Annual Financial Statements", "Customer Statement", "Supplier Statement", "Inventory Flow & Audit"]
       )),
-      make("Business Modules", byUrl(
-        ["/school", "/hotel", "/property", "/public-services", "/restaurant", "/retail", "/industry"],
-        ["School Management", "Hotel Management", "Property & Tenancy", "Public Services"]
-      )),
-      make("Lending", byUrl(
-        ["/lending"],
-        ["Lending", "Borrowers", "Loan Applications", "Repayments", "Collections", "Loan Portfolio", "Lending Reports"]
-      )),
-      make("All Business Workspaces", industryItems.map(([title,url,icon]) => ({ title, url, icon: iconFor(icon) }))),
+      make("Hotel", byUrl(["/hotel"])),
+      make("School ERP", byUrl(["/school"])),
+      make("Property", byUrl(["/property"])),
+      make("Lending", byUrl(["/lending"])),
+      make("Restaurant", byUrl(["/restaurant"])),
+      make("Boarding House", byUrl(["/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"])),
+      make("Butchery", byUrl(["/retail/butchery", "/retail/butchery-pos", "/retail.butchery-"])),
       make("Settings", byUrl(
         ["/modules", "/subscription", "/learn"],
         ["Settings", "Modules", "Subscription", "Learn Centre", "New Company Setup", "Accounting Basics"]
@@ -324,10 +322,14 @@ export function AppSidebar() {
                             className="mx-1 my-0.5 min-h-10 rounded-xl text-[#526B65] transition-all duration-200 hover:bg-white hover:text-[#07834F] data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#07834F] data-[active=true]:shadow-[0_4px_14px_rgba(7,131,79,.07)]"
                             tooltip={item.title}
                           >
-                            <Link to={item.url}>
+                            <button
+                              type="button"
+                              onClick={() => navigate({ to: item.url as never })}
+                              className="flex w-full items-center gap-2"
+                            >
                               <Icon className="h-[17px] w-[17px] shrink-0 stroke-[1.8]" />
                               <span>{item.title}</span>
-                            </Link>
+                            </button>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -364,10 +366,14 @@ export function AppSidebar() {
                               className={`group relative mx-1 my-0.5 min-h-10 rounded-xl text-[#526B65] transition-all duration-200 hover:translate-x-0.5 hover:bg-white hover:text-[#07834F] hover:shadow-[0_3px_12px_rgba(23,59,58,.045)] data-[active=true]:font-bold data-[active=true]:bg-white data-[active=true]:text-[#07834F] data-[active=true]:shadow-[0_4px_14px_rgba(7,131,79,.07)] data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-2 data-[active=true]:before:bottom-2 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-[#07834F]`}
                               tooltip={item.title}
                             >
-                              <Link to={item.url}>
+                              <button
+                                type="button"
+                                onClick={() => navigate({ to: item.url as never })}
+                                className="flex w-full items-center gap-2"
+                              >
                                 <Icon className="h-[17px] w-[17px] shrink-0 stroke-[1.8]" />
                                 <span>{item.title}</span>
-                              </Link>
+                              </button>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
                         );
