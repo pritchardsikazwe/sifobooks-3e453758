@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi, UtensilsCrossed, Printer, Boxes, LayoutDashboard, KeyRound, RefreshCw } from "lucide-react";
+import { UserCog, ShieldCheck, Bell, Building2, Users2, Sparkles, Trash2, UserPlus, Loader2, Wifi, UtensilsCrossed, Printer, Boxes, LayoutDashboard, KeyRound, RefreshCw, ArrowRightLeft, Mail, UserX } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,10 @@ function AdminPage() {
   const [forceChange, setForceChange] = useState(true);
   const [resetReason, setResetReason] = useState("Administrator password reset");
   const [resetting, setResetting] = useState(false);
+  const [actionTarget, setActionTarget] = useState<any | null>(null);
+  const [actionMode, setActionMode] = useState<"email" | "transfer" | "delete" | null>(null);
+  const [actionValue, setActionValue] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
 
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -74,6 +78,26 @@ function AdminPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const runAdminAction = async () => {
+    if (!actionTarget || !actionMode) return;
+    setActionBusy(true);
+    try {
+      const fns = await import("@/lib/cashier-auth.functions");
+      let result: any;
+      if (actionMode === "email") result = await fns.changeUserEmail({ data: { targetUserId: actionTarget.user_id, email: actionValue } });
+      if (actionMode === "transfer") result = await fns.transferCompanyOwnership({ data: { companyId: company.id, targetUserId: actionTarget.user_id } });
+      if (actionMode === "delete") result = await fns.deleteManagedUser({ data: { targetUserId: actionTarget.user_id, confirmation: actionValue } });
+      if (!result?.ok) throw new Error(result?.error || "Action failed");
+      toast.success(actionMode === "email" ? "Email changed — company data and access remain attached." : actionMode === "transfer" ? "Company ownership transferred." : "User deleted.");
+      setActionTarget(null); setActionMode(null); setActionValue(""); await load();
+    } catch (e: any) { toast.error(e?.message || "Action failed"); }
+    setActionBusy(false);
+  };
+
+  const openAdminAction = (member: any, mode: "email" | "transfer" | "delete") => {
+    setActionTarget(member); setActionMode(mode); setActionValue("");
+  };
 
   const invite = async () => {
     if (!company) return toast.error("Set up your company first");
@@ -243,7 +267,7 @@ function AdminPage() {
                         </Select>
                       </td>
                       <td className="py-2 text-right">
-                        <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Reset password" onClick={() => openReset(m)} disabled={m.role === "owner" && !members.some((x: any) => x.user_id === userId && x.role === "owner")}><KeyRound className="h-4 w-4 text-amber-600" /></Button><Button size="icon" variant="ghost" title="Remove member" onClick={() => remove(m.id)} disabled={m.role === "owner"}><Trash2 className="h-4 w-4" /></Button></div>
+                        <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Change email" onClick={() => openAdminAction(m, "email")}><Mail className="h-4 w-4 text-blue-600" /></Button><Button size="icon" variant="ghost" title="Transfer company ownership to this user" onClick={() => openAdminAction(m, "transfer")} disabled={m.role === "owner"}><ArrowRightLeft className="h-4 w-4 text-emerald-700" /></Button><Button size="icon" variant="ghost" title="Delete user" onClick={() => openAdminAction(m, "delete")} disabled={m.role === "owner" || m.user_id === userId}><UserX className="h-4 w-4 text-destructive" /></Button><Button size="icon" variant="ghost" title="Reset password" onClick={() => openReset(m)} disabled={m.role === "owner" && !members.some((x: any) => x.user_id === userId && x.role === "owner")}><KeyRound className="h-4 w-4 text-amber-600" /></Button><Button size="icon" variant="ghost" title="Remove member" onClick={() => remove(m.id)} disabled={m.role === "owner"}><Trash2 className="h-4 w-4" /></Button></div>
                       </td>
                     </tr>
                   ))}
@@ -253,6 +277,30 @@ function AdminPage() {
           </>
         )}
       </Card>
+
+
+      <Dialog open={!!actionTarget} onOpenChange={(open) => !open && (setActionTarget(null), setActionMode(null), setActionValue(""))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {actionMode === "email" ? <Mail className="h-5 w-5 text-blue-600" /> : actionMode === "transfer" ? <ArrowRightLeft className="h-5 w-5 text-emerald-700" /> : <UserX className="h-5 w-5 text-destructive" />}
+              {actionMode === "email" ? "Change user email" : actionMode === "transfer" ? "Transfer company ownership" : "Delete user"}
+            </DialogTitle>
+            <DialogDescription>
+              {actionMode === "email" && "Changes only the login email. The user's company membership, permissions and business records remain attached."}
+              {actionMode === "transfer" && "Make this existing company member the company owner. Business records, branches and settings stay with the company."}
+              {actionMode === "delete" && "Permanently removes this user's login and company membership. Company financial records are not deleted."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-xl border bg-muted/30 p-3 text-sm"><strong>{actionTarget?.profiles?.full_name || "User"}</strong><div className="text-muted-foreground">{actionTarget?.profiles?.email}</div></div>
+            {actionMode === "email" && <div className="grid gap-2"><Label>New email</Label><Input type="email" value={actionValue} onChange={e => setActionValue(e.target.value)} placeholder="newadmin@company.com" /></div>}
+            {actionMode === "transfer" && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">After transfer, the current owner becomes an administrator. You can transfer ownership back later.</div>}
+            {actionMode === "delete" && <div className="grid gap-2"><Label>Type DELETE USER to confirm</Label><Input value={actionValue} onChange={e => setActionValue(e.target.value)} placeholder="DELETE USER" /></div>}
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setActionTarget(null)}>Cancel</Button><Button onClick={runAdminAction} disabled={actionBusy || (actionMode === "email" && !actionValue.includes("@")) || (actionMode === "delete" && actionValue !== "DELETE USER")} variant={actionMode === "delete" ? "destructive" : "default"}>{actionBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{actionMode === "email" ? "Change email" : actionMode === "transfer" ? "Transfer ownership" : "Delete user"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!resetTarget} onOpenChange={(open) => !open && setResetTarget(null)}>
         <DialogContent>
