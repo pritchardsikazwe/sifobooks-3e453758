@@ -183,3 +183,85 @@ export const adminResetMemberPassword = createServerFn({ method: "POST" })
     await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "admin_password_reset", entity_type: "user", entity_id: data.targetUserId, details: { company_id: companyId, reason: data.reason, force_change: data.forceChange } }).then(() => {}, () => {});
     return { ok: true as const };
   });
+
+
+/** Administration: transfer a company to another existing member. */
+export const transferCompanyOwnership = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { companyId: string; targetUserId: string }) => {
+    const companyId = String(input?.companyId ?? "");
+    const targetUserId = String(input?.targetUserId ?? "");
+    if (!/^[0-9a-f-]{36}$/i.test(companyId) || !/^[0-9a-f-]{36}$/i.test(targetUserId)) throw new Error("Invalid company or user");
+    return { companyId, targetUserId };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin.from("companies").select("id,user_id,name").eq("id", data.companyId).maybeSingle();
+    if (!company) return { ok: false as const, error: "Company not found" };
+    const { data: me } = await supabaseAdmin.from("company_members").select("role").eq("company_id", data.companyId).eq("user_id", context.userId).maybeSingle();
+    if (company.user_id !== context.userId && !["owner","admin","administrator"].includes(String(me?.role ?? "").toLowerCase()))
+      return { ok: false as const, error: "Only the company owner or administrator can transfer ownership" };
+    const { data: target } = await supabaseAdmin.from("company_members").select("id,user_id").eq("company_id", data.companyId).eq("user_id", data.targetUserId).maybeSingle();
+    if (!target) return { ok: false as const, error: "The new owner must already be a member of this company" };
+    const { error: companyError } = await supabaseAdmin.from("companies").update({ user_id: data.targetUserId }).eq("id", data.companyId);
+    if (companyError) return { ok: false as const, error: companyError.message };
+    await supabaseAdmin.from("company_members").update({ role: "admin" }).eq("company_id", data.companyId).eq("user_id", context.userId);
+    await supabaseAdmin.from("company_members").update({ role: "owner" }).eq("company_id", data.companyId).eq("user_id", data.targetUserId);
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "company_ownership_transferred", entity_type: "company", entity_id: data.companyId, details: { target_user_id: data.targetUserId } }).then(() => {}, () => {});
+    return { ok: true as const };
+  });
+
+/** Administration: change a member's login email without changing their company/data. */
+export const changeUserEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { targetUserId: string; email: string }) => {
+    const targetUserId = String(input?.targetUserId ?? "");
+    const email = String(input?.email ?? "").trim().toLowerCase();
+    if (!/^[0-9a-f-]{36}$/i.test(targetUserId)) throw new Error("Invalid user");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email");
+    return { targetUserId, email };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: me } = await supabaseAdmin.from("company_members").select("company_id,role").eq("user_id", context.userId).in("role", ["owner","admin","administrator"]).limit(1).maybeSingle();
+    if (!me) return { ok: false as const, error: "Only a company owner or administrator can change user emails" };
+    const { data: targetMember } = await supabaseAdmin.from("company_members").select("user_id").eq("company_id", me.company_id).eq("user_id", data.targetUserId).maybeSingle();
+    if (!targetMember && data.targetUserId !== context.userId) return { ok: false as const, error: "That user is not in your company" };
+    const { data: existing } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    if (!existing?.user) return { ok: false as const, error: "User not found" };
+    const { data: conflict } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const duplicate = conflict?.users?.find((u: any) => u.email?.toLowerCase() === data.email && u.id !== data.targetUserId);
+    if (duplicate) return { ok: false as const, error: "That email is already registered. Delete or use the existing account first." };
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.targetUserId, { email: data.email, email_confirm: true });
+    if (error) return { ok: false as const, error: error.message };
+    await supabaseAdmin.from("profiles").update({ email: data.email }).eq("id", data.targetUserId);
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "admin_email_changed", entity_type: "user", entity_id: data.targetUserId, details: { company_id: me.company_id, new_email: data.email } }).then(() => {}, () => {});
+    return { ok: true as const };
+  });
+
+/** Administration: permanently delete a user after ownership checks. */
+export const deleteManagedUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { targetUserId: string; confirmation: string }) => {
+    const targetUserId = String(input?.targetUserId ?? "");
+    const confirmation = String(input?.confirmation ?? "");
+    if (!/^[0-9a-f-]{36}$/i.test(targetUserId)) throw new Error("Invalid user");
+    if (confirmation !== "DELETE USER") throw new Error("Type DELETE USER to confirm");
+    return { targetUserId, confirmation };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.targetUserId === context.userId) return { ok: false as const, error: "You cannot delete your own account from this screen" };
+    const { data: me } = await supabaseAdmin.from("company_members").select("company_id,role").eq("user_id", context.userId).in("role", ["owner","admin","administrator"]).limit(1).maybeSingle();
+    if (!me) return { ok: false as const, error: "Only a company owner or administrator can delete users" };
+    const { data: target } = await supabaseAdmin.from("company_members").select("id,role").eq("company_id", me.company_id).eq("user_id", data.targetUserId).maybeSingle();
+    if (!target) return { ok: false as const, error: "That user is not a member of your company" };
+    if (target.role === "owner") return { ok: false as const, error: "Transfer company ownership before deleting the owner" };
+    const { data: owned } = await supabaseAdmin.from("companies").select("id").eq("user_id", data.targetUserId).limit(2);
+    if ((owned ?? []).length) return { ok: false as const, error: "This user owns another company. Transfer those companies first." };
+    await supabaseAdmin.from("company_members").delete().eq("company_id", me.company_id).eq("user_id", data.targetUserId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
+    if (error) return { ok: false as const, error: error.message };
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: "admin_user_deleted", entity_type: "user", entity_id: data.targetUserId, details: { company_id: me.company_id } }).then(() => {}, () => {});
+    return { ok: true as const };
+  });
