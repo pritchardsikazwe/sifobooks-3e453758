@@ -1,7 +1,7 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import { useEffect, useMemo, useState } from "react";
 import { ModuleGate } from "@/components/ModuleGate";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/format";
 import {
@@ -585,6 +585,8 @@ function LendingWorkspaceInner({ screen }: { screen: Screen }) {
     </Card>
   </div>;
 
+  const navigate = useNavigate();
+
   const body =
     screen === "/lending" ? dashboard :
     screen === "/lending/borrowers" ? borrowersView :
@@ -624,8 +626,12 @@ function LendingWorkspaceInner({ screen }: { screen: Screen }) {
 
       <div className="lending-2026-nav">
         {LENDING_NAV.filter((n)=>isSimple ? ["Dashboard","Borrowers","Applications","Repayments","Collections","Reports"].includes(n.label) : true).map(n=>(
-          n.to === "/lending" ? <Link key={n.to} to="/lending" className={cn("lending-nav-item",screen==="/lending"&&"active")}><n.icon className="h-4 w-4"/>{n.label}</Link> :
-          <Link key={n.to} to={n.to as never} className={cn("lending-nav-item",screen===n.to&&"active")}><n.icon className="h-4 w-4"/>{n.label}</Link>
+          <button
+            key={n.to}
+            type="button"
+            onClick={() => navigate({ to: n.to as never })}
+            className={cn("lending-nav-item", screen === n.to && "active")}
+          ><n.icon className="h-4 w-4"/>{n.label}</button>
         ))}
         <button type="button" onClick={()=>setMode(isSimple?"professional":"simple")} className="ml-auto shrink-0 rounded-xl border border-[#D9E6E3] bg-white px-3 py-2 text-xs font-bold text-[#173B3A]">{isSimple?"Switch to Professional":"Switch to Simple"}</button>
       </div>
