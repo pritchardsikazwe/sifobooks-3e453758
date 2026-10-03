@@ -53,6 +53,13 @@ const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> 
   "Banking":            { dot: "bg-mod-banking",       text: "text-mod-banking",       soft: "bg-mod-banking/10" },
   "Tax & Compliance":   { dot: "bg-destructive",       text: "text-destructive",       soft: "bg-destructive/10" },
   "Business Modules":   { dot: "bg-mod-learning",      text: "text-mod-learning",      soft: "bg-mod-learning/10" },
+  "Hotel":              { dot: "bg-emerald-600",       text: "text-emerald-700",       soft: "bg-emerald-50" },
+  "School ERP":         { dot: "bg-teal-600",           text: "text-teal-700",           soft: "bg-teal-50" },
+  "Property":           { dot: "bg-amber-500",          text: "text-amber-700",          soft: "bg-amber-50" },
+  "Lending":            { dot: "bg-indigo-600",         text: "text-indigo-700",        soft: "bg-indigo-50" },
+  "Restaurant":         { dot: "bg-orange-500",         text: "text-orange-700",        soft: "bg-orange-50" },
+  "Boarding House":     { dot: "bg-violet-600",         text: "text-violet-700",        soft: "bg-violet-50" },
+  "Butchery":           { dot: "bg-rose-600",           text: "text-rose-700",          soft: "bg-rose-50" },
   "Settings":           { dot: "bg-mod-admin",         text: "text-mod-admin",         soft: "bg-mod-admin/10" },
 };
 
