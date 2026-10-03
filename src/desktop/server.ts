@@ -46,6 +46,14 @@ process.env.SIFOBOOKS_DATA_ROOT = dataRoot;
 const dataDir = join(dataRoot, "data");
 const backupsDir = join(dataRoot, "backups");
 const logsDir = join(dataRoot, "logs");
+const STARTUP_LOG = join(logsDir, "desktop-startup.log");
+
+function writeStartupLog(message: string) {
+  try {
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\\r\\n`, { flag: "a" });
+  } catch {}
+}
 const networkConfigPath = join(dataRoot, "config", "network.json");
 const serverIdentityPath = join(dataRoot, "config", "server-identity.json");
 const networkDevicesPath = join(dataRoot, "config", "network-devices.json");
@@ -67,7 +75,7 @@ if (dataRoot !== baseDir && !existsSync(join(dataDir, "sifobooks.db")) && exists
     for (const d of ["data", "config", "backups"]) copyTreeIfMissing(join(baseDir, d), join(dataRoot, d));
     console.log(`[data] Copied existing company data from ${baseDir} to ${dataRoot} (originals kept).`);
   } catch (error) {
-    console.error("[data] Legacy data copy failed; originals untouched:", error);
+    writeStartupLog(`DATA MIGRATION FAILED: ${error instanceof Error ? error.stack || error.message : String(error)}`);
   }
 }
 
@@ -124,7 +132,7 @@ function readNetworkConfig(): any | null {
     if (!existsSync(networkConfigPath)) return null;
     return JSON.parse(readFileSync(networkConfigPath, "utf8"));
   } catch (error) {
-    console.error("[network] Invalid config/network.json:", error);
+    writeStartupLog(`NETWORK CONFIG INVALID: ${error instanceof Error ? error.stack || error.message : String(error)}`);
     return null;
   }
 }
@@ -165,9 +173,9 @@ function createStartupBackup() {
     for (const old of backups.slice(30)) {
       try { unlinkSync(join(backupsDir, old)); } catch {}
     }
-    console.log(`[backup] Created ${destination}`);
+    writeStartupLog(`BACKUP CREATED: ${destination}`);
   } catch (error) {
-    console.error("[backup] Startup backup failed:", error);
+    writeStartupLog(`BACKUP FAILED: ${error instanceof Error ? error.stack || error.message : String(error)}`);
   }
 }
 
@@ -191,9 +199,9 @@ process.chdir(baseDir);
 if (!isCloudDatabaseConfigured()) {
   try {
     getDb();
-    console.log("[db] Local SQLite database ready before browser launch.");
+    writeStartupLog("LOCAL SQLITE DATABASE READY.");
   } catch (error) {
-    console.error("[db] Local SQLite warm-up failed:", error);
+    writeStartupLog(`LOCAL SQLITE WARM-UP FAILED: ${error instanceof Error ? error.stack || error.message : String(error)}`);
   }
 }
 
@@ -362,14 +370,6 @@ function openBrowser(url: string) {
 }
 
 const configuredPort = parseInt(process.env.PORT || String(networkConfig?.server?.port || "3000"), 10);
-const STARTUP_LOG = join(logsDir, "desktop-startup.log");
-
-function writeStartupLog(message: string) {
-  try {
-    writeFileSync(STARTUP_LOG, `[${new Date().toISOString()}] ${message}\r\n`, { flag: "a" });
-  } catch {}
-}
-
 process.on("uncaughtException", (error) => {
   writeStartupLog(`UNCAUGHT EXCEPTION: ${error instanceof Error ? error.stack || error.message : String(error)}`);
 });
@@ -695,7 +695,6 @@ function startServer() {
       }
       return response;
     } catch (error) {
-      console.error("[desktop] Server error:", error);
       writeStartupLog(`REQUEST ERROR: ${error instanceof Error ? error.stack || error.message : String(error)}`);
       return new Response("Internal Server Error", { status: 500 });
     }
@@ -766,14 +765,7 @@ if (isPosClient && configuredServerUrl) {
   setTimeout(() => process.exit(0), 250);
 } else {
 
-console.log("");
-console.log("  ╔══════════════════════════════════════════╗");
-console.log("  ║  SifoBooks Desktop / Network Server       ║");
-console.log(`  ║  Running at http://${HOST}:${PORT}       ║`);
-console.log(`  ║  Mode: ${isNetworkServer ? "NETWORK SERVER" : "STANDALONE"}              ║`);
-console.log(`  ║  Licence enforcement: ${LICENSE_ENFORCEMENT ? "ON" : "OFF"}          ║`);
-console.log("  ╚══════════════════════════════════════════╝");
-console.log("");
+writeStartupLog(`SIFOBOOKS STARTED: mode=${isNetworkServer ? "network-server" : isPosClient ? "pos-client" : "standalone"}; port=${PORT}; licenseEnforcement=${LICENSE_ENFORCEMENT}`);
 
 setTimeout(() => createStartupBackup(), 2500);
 
