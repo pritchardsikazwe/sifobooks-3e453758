@@ -51,7 +51,7 @@ run("retail", () => {
     .run(item,uid,"QA Retail Item",10,20,10);
   db.query("INSERT INTO pos_sales (id,user_id,sale_no,total,paid,status) VALUES (?,?,?,?,?,?)")
     .run(sale,uid,"QA-001",40,40,"completed");
-  db.query("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,qty,price,unit_cost,line_total) VALUES (?,?,?,?,?,?,?,?,?)")
+  db.query("INSERT INTO pos_sale_items (id,user_id,sale_id,item_id,name,qty,price,unit_cost,line_total) VALUES (?,?,?,?,?,?,?,?)")
     .run("qa-sale-line",uid,sale,item,"QA Retail Item",2,20,10,40);
   db.query("INSERT INTO pos_payments (id,user_id,sale_id,amount,method) VALUES (?,?,?,?,?)")
     .run("qa-pay",uid,sale,40,"cash");
