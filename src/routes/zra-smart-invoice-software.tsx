@@ -10,7 +10,7 @@ const solution: SeoSolution = {
   heading: "ZRA Smart Invoice and tax workflows in SifoBooks.",
   intro: "Keep sales, VAT, invoices and compliance records connected so tax work starts from the transactions that created the figures.",
   features: ["ZRA Smart Invoice workflow support","VAT reporting and reconciliation","Invoice and credit/debit note controls","Tax audit trail","Accounting and compliance in one system"],
-  related: [["/accounting-software-zambia","Accounting software"],["/payroll-software-zambia","Payroll software"],["/pos-software-zambia","POS software"]].map(([path, label]) => ({ path, label })),
+  related: [["/accounting-software-zambia","Accounting software"],["/pos-software-zambia","POS software"],["/inventory-software-zambia","Inventory software"],["/erp-software-zambia","ERP software"]].map(([path, label]) => ({ path, label })),
 };
 
 export const Route = createFileRoute("/zra-smart-invoice-software")({
