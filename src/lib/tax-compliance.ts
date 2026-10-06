@@ -1,7 +1,7 @@
 // Zambia tax compliance engine — shared by VAT reports, compliance dashboard and Windows/web.
 // This module prepares/reconciles tax data; it never claims a government submission succeeded.
 
-export type TaxAdjustmentType = "credit_note" | "debit_note";
+export type TaxAdjustmentType = "credit_note" | "debit_note" | "bad_debt_relief" | "import_vat" | "other";
 export type TaxAdjustmentDirection = "issued" | "received";
 export type TaxAdjustmentStatus = "draft" | "posted" | "voided";
 
@@ -30,8 +30,8 @@ const n = (v: unknown) => {
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
 export function adjustmentSign(a: Pick<TaxAdjustment, "document_type" | "direction">) {
-  // A credit reduces the side it belongs to; a debit increases it.
-  return a.document_type === "credit_note" ? -1 : 1;
+  // Credit notes and bad-debt relief reduce the affected tax side; debit notes increase it.
+  return a.document_type === "credit_note" || a.document_type === "bad_debt_relief" ? -1 : 1;
 }
 
 export function applyVatAdjustments(
