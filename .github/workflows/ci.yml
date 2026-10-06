@@ -134,7 +134,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SifoBooks-${{ matrix.edition }}-Windows-Setup
-          path: installer-dist/SifoBooks-${{ matrix.edition }}-Windows-Setup.exe
+          path: installer-dist/*-Windows-Setup.exe
           if-no-files-found: error
           retention-days: 7
 
