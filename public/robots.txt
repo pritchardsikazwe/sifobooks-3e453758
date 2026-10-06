@@ -5,4 +5,12 @@ Disallow: /_authenticated/
 Disallow: /reset-password
 Disallow: /lovable/
 
+# OpenAI ChatGPT Search
+User-agent: OAI-SearchBot
+Allow: /
+
+# OpenAI training crawler
+User-agent: GPTBot
+Allow: /
+
 Sitemap: https://sifobooks.com/sitemap.xml
