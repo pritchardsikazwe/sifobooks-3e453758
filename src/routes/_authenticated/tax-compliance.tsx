@@ -198,7 +198,7 @@ function TaxCompliancePage() {
             <CardHeader><CardTitle className="text-base">Add credit / debit note</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Type"><Select value={form.document_type} onValueChange={v => setForm({...form, document_type:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="credit_note">Credit note</SelectItem><SelectItem value="debit_note">Debit note</SelectItem></SelectContent></Select></Field>
+                <Field label="Type"><Select value={form.document_type} onValueChange={v => setForm({...form, document_type:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="credit_note">Credit note</SelectItem><SelectItem value="debit_note">Debit note</SelectItem><SelectItem value="bad_debt_relief">Bad debt relief</SelectItem><SelectItem value="import_vat">Import VAT adjustment</SelectItem><SelectItem value="other">Other VAT adjustment</SelectItem></SelectContent></Select></Field>
                 <Field label="Direction"><Select value={form.direction} onValueChange={v => setForm({...form, direction:v, original_id:""})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="issued">Issued to customer</SelectItem><SelectItem value="received">Received from supplier</SelectItem></SelectContent></Select></Field>
               </div>
               <Field label={form.direction === "issued" ? "Original invoice" : "Original supplier bill"}>
@@ -218,7 +218,7 @@ function TaxCompliancePage() {
           <CardHeader><CardTitle className="text-base">Tax adjustment audit register</CardTitle></CardHeader>
           <CardContent>
             <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Date</th><th className="p-2">Type</th><th className="p-2">Direction</th><th className="p-2">Reference</th><th className="p-2">Reason</th><th className="p-2 text-right">VAT</th></tr></thead><tbody>
-              {adjustments.map(a => <tr key={a.id} className="border-b"><td className="p-2">{a.adjustment_date}</td><td className="p-2">{a.document_type.replace("_"," ")}</td><td className="p-2">{a.direction}</td><td className="p-2 font-mono">{a.reference}</td><td className="p-2">{a.reason}</td><td className="p-2 text-right">{fmt(num(a.vat_amount) * (a.document_type === "credit_note" ? -1 : 1))}</td></tr>)}
+              {adjustments.map(a => <tr key={a.id} className="border-b"><td className="p-2">{a.adjustment_date}</td><td className="p-2">{a.document_type.replace("_"," ")}</td><td className="p-2">{a.direction}</td><td className="p-2 font-mono">{a.reference}</td><td className="p-2">{a.reason}</td><td className="p-2 text-right">{fmt(num(a.vat_amount) * ((a.document_type === "credit_note" || a.document_type === "bad_debt_relief") ? -1 : 1))}</td></tr>)}
               {!adjustments.length && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">{loading ? "Loading…" : "No adjustments for this period."}</td></tr>}
             </tbody></table></div>
           </CardContent>
