@@ -116,8 +116,17 @@ export function AppSidebar() {
         setWorkspaceModeState(mode);
         const industry = (c as any).industry as string | null;
         setWorkspaceIndustry(industry);
-        const { data: moduleRows } = await supabase.from("company_modules").select("module_key").eq("company_id", cid);
-        setEnabledModules(new Set((moduleRows ?? []).map((r: any) => String(r.module_key)).filter((k: string) => !k.startsWith("__off__:"))));
+        const { data: moduleRows } = await supabase.from("company_modules").select("module_key, config").eq("company_id", cid);
+        // Legacy clients may still have old vertical-module rows from the previous
+        // onboarding model. Only a current subscription/catalog activation should
+        // count as an explicit add-on; the active industry solution is handled below.
+        const catalogActivated = new Set(
+          (moduleRows ?? [])
+            .filter((r: any) => r.config?.source === "subscription_add_module")
+            .map((r: any) => String(r.module_key))
+            .filter((k: string) => !k.startsWith("__off__:")),
+        );
+        setEnabledModules(catalogActivated);
         const caps = await loadBusinessCapabilityState(cid, industry);
         // Items/Stock are core ERP menus: keep them unless the company has
         // explicitly switched Inventory off (unknown industries used to hide them).
@@ -177,7 +186,8 @@ export function AppSidebar() {
       lending: ["lending", "loans", "borrowers", "repayments", "portfolio"],
       butchery: ["butchery"],
     };
-    const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "lending", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
+    const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);
+    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "lending", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
     const verticalModuleAllowed = (module?: string) => {
       if (!module || !verticalModules.has(module)) return true;
       return activeIndustryModules.has(module) || enabledModules.has(module);
