@@ -42,3 +42,15 @@ export function resolveInstalledModules({
 export function gatedDefaultOff(key: string): boolean {
   return (OPTIONAL_WHEN_GATED as readonly string[]).includes(key);
 }
+
+
+export function moduleKeyForPath(pathname: string): string | null {
+  if (pathname === "/hotel" || pathname.startsWith("/hotel/")) return "hotel_erp";
+  if (pathname === "/school" || pathname.startsWith("/school/")) return "school_erp";
+  if (pathname === "/property" || pathname.startsWith("/property/")) return "property_management";
+  if (pathname === "/lending" || pathname.startsWith("/lending/")) return "lending";
+  if (pathname === "/boarding-house" || pathname.startsWith("/boarding-")) return "boarding_house";
+  if (pathname === "/restaurant" || pathname.startsWith("/restaurant/")) return "restaurant";
+  if (pathname === "/retail/butchery" || pathname.startsWith("/retail/butchery-")) return "butchery";
+  return null;
+}
