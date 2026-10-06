@@ -6,7 +6,7 @@
  * data, not separate accounting systems.
  */
 
-export type IndustryEdition = "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending" | "enterprise";
+export type IndustryEdition = "accounting" | "retail" | "restaurant" | "hotel" | "school" | "property" | "lending" | "butchery" | "enterprise";
 
 export type StarterModule = {
   key: string;
@@ -193,6 +193,21 @@ const editions: IndustryStarter[] = [
     demoPassword: "Demo2026",
   },
   {
+    edition: "butchery", industry: "Butchery",
+    about: "SifoBooks Butchery is configured for weighted meat sales, cuts, receiving, processing and yield, scale sales, labels, cold-room stock, inventory, purchasing, POS and accounting.",
+    modules: [
+      ...baseAccountingModules,
+      M("pos", "Retail POS", "Weighted meat sales, cashiers, receipts and returns.", ["ZRA", "SMART_INVOICE"]),
+      M("cashiers", "Cashiers & Till Control", "Cashier users, shifts, cash-up and audit trail.", []),
+      M("butchery", "Butchery Operations", "Cuts, receiving, processing, carcass yield, scales, labels and cold-room stock.", ["ZRA", "SMART_INVOICE"]),
+    ],
+    compliance: commonCompliance,
+    roles: [
+      ...roles,
+      R("butchery_manager", "Butchery Manager", "Manage products, receiving, processing, pricing, stock and reports.", ["butchery", "inventory", "sales", "purchasing", "reports"], "manager"),
+      R("butcher", "Butcher / Processor", "Receiving, cutting, processing, yield and production records.", ["butchery", "processing", "inventory"], "butcher"),
+      R("cashier", "Cashier", "Weighted sales, receipts, till operations and cash-up.", ["pos", "payments", "cash_drawer"], "cashier1"),
+    ],
     edition: "enterprise", industry: "Enterprise / Multi-Department",
     tagline: "Full SifoBooks across finance, inventory, HR, procurement, sales and operations.",
     about: "SifoBooks Enterprise enables the complete business suite with branches, warehouses, accounting, procurement, inventory, sales, HR, payroll, assets, banking, compliance and industry extensions.",
