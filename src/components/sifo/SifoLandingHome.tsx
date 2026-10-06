@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { submitSalesLead, trackMarketingEvent, trackMarketingVisit } from "@/lib/marketing-analytics";
 import {
   ArrowRight, BarChart3, Building2, BriefcaseBusiness, CheckCircle2, ChefHat, CircleDollarSign,
   ClipboardCheck, FileText, GraduationCap, Hotel, Landmark, Menu, Package, PlayCircle, ReceiptText,
@@ -17,6 +18,17 @@ const modules = [
   ["All-in-One", "One subscription, multiple businesses", Zap],
 ] as const;
 
+const industryPath: Record<string, string> = {
+  "Retail & POS": "/pos-software-zambia",
+  Restaurant: "/restaurant-pos-zambia",
+  Hotel: "/hotel-management-software-zambia",
+  School: "/school-management-software-zambia",
+  Property: "/erp-software-zambia",
+  Microfinance: "/erp-software-zambia",
+  Manufacturing: "/inventory-software-zambia",
+  Services: "/erp-software-zambia",
+};
+
 const industries = [
   ["Retail & POS", "Shops & Supermarkets", ShoppingCart, "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85"],
   ["Restaurant", "Cafés & Bars", Utensils, "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85"],
@@ -29,6 +41,8 @@ const industries = [
 ] as const;
 
 export function SifoLandingHome() {
+  useEffect(() => { void trackMarketingVisit(); }, []);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
       <style>{`
@@ -219,8 +233,10 @@ function IndustryGrid() {
         </div>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
           {industries.map(([name, sub, Icon, image], index) => (
-            <div
+            <Link
               key={name}
+              to={(industryPath[name] || "/erp-software-zambia") as any}
+              onClick={() => void trackMarketingEvent("industry_click", name, { destination: industryPath[name] || "/erp-software-zambia" })}
               className="group relative min-h-[142px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
@@ -239,7 +255,7 @@ function IndustryGrid() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
