@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { submitSalesLead, trackMarketingEvent, trackMarketingVisit } from "@/lib/marketing-analytics";
 import {
   ArrowRight, BarChart3, Building2, BriefcaseBusiness, CheckCircle2, ChefHat, CircleDollarSign,
   ClipboardCheck, FileText, GraduationCap, Hotel, Landmark, Menu, Package, PlayCircle, ReceiptText,
@@ -17,6 +18,17 @@ const modules = [
   ["All-in-One", "One subscription, multiple businesses", Zap],
 ] as const;
 
+const industryPath: Record<string, string> = {
+  "Retail & POS": "/pos-software-zambia",
+  Restaurant: "/restaurant-pos-zambia",
+  Hotel: "/hotel-management-software-zambia",
+  School: "/school-management-software-zambia",
+  Property: "/erp-software-zambia",
+  Microfinance: "/erp-software-zambia",
+  Manufacturing: "/inventory-software-zambia",
+  Services: "/erp-software-zambia",
+};
+
 const industries = [
   ["Retail & POS", "Shops & Supermarkets", ShoppingCart, "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85"],
   ["Restaurant", "Cafés & Bars", Utensils, "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85"],
@@ -29,6 +41,8 @@ const industries = [
 ] as const;
 
 export function SifoLandingHome() {
+  useEffect(() => { void trackMarketingVisit(); }, []);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
       <style>{`
@@ -219,8 +233,10 @@ function IndustryGrid() {
         </div>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
           {industries.map(([name, sub, Icon, image], index) => (
-            <div
+            <Link
               key={name}
+              to={(industryPath[name] || "/erp-software-zambia") as any}
+              onClick={() => void trackMarketingEvent("industry_click", name, { destination: industryPath[name] || "/erp-software-zambia" })}
               className="group relative min-h-[142px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
@@ -239,7 +255,7 @@ function IndustryGrid() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -443,9 +459,52 @@ function MobileGallery() {
 }
 
 function FinalCta() {
-  return <section className="relative overflow-hidden bg-[#06265f] py-14 text-white sm:py-18"><div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/><div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr]"><div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7"><div className="text-amber-300">★★★★★</div><p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p><div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div></div><div className="flex flex-col justify-center"><div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Built for Zambia</div><h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Bring your business into one place.</h2><p className="mt-4 max-w-xl text-blue-50/80">Start with the tools you need today and add more as your business grows.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/auth" search={{tab:"signup"}} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950">Start Free Trial <ArrowRight className="h-4 w-4"/></Link><a href="mailto:sales@sifobooks.com" className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-bold">Contact Sales</a></div></div></div></section>;
-}
+  const [sent, setSent] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", industry: "General", interest: "Demo request" });
 
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const { error } = await submitSalesLead(form);
+    setSaving(false);
+    if (error) return;
+    setSent(true);
+  };
+
+  return <section className="relative overflow-hidden bg-[#06265f] py-14 text-white sm:py-18">
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_100%,rgba(37,99,235,.35),transparent_35%)]"/>
+    <div className="relative mx-auto grid max-w-[1400px] sifo-reveal gap-8 px-5 sm:px-8 lg:grid-cols-[.85fr_1.15fr]">
+      <div className="rounded-3xl border border-blue-300/20 bg-blue-950/45 p-7">
+        <div className="text-amber-300">★★★★★</div>
+        <p className="mt-4 text-lg font-semibold leading-7">“SifoBooks brings our sales, stock, payroll and accounts together in one place.”</p>
+        <div className="mt-5 text-xs text-blue-100/70">SifoBooks customer · Zambia</div>
+        <div className="mt-8 grid grid-cols-2 gap-2 text-xs text-blue-50/75">
+          {["Visitors tracked", "Traffic sources", "Product clicks", "Sales leads"].map(x => <div key={x} className="rounded-lg border border-white/10 px-3 py-2">✓ {x}</div>)}
+        </div>
+      </div>
+      <div>
+        <div className="text-xs font-extrabold uppercase tracking-[.18em] text-amber-300">Talk to SifoBooks</div>
+        <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Turn visitors into customers.</h2>
+        <p className="mt-4 max-w-xl text-blue-50/80">Request a demo, pricing or an industry setup. Your enquiry is captured with the page and campaign that brought you here.</p>
+        {sent ? <div className="mt-7 rounded-2xl bg-emerald-500/20 p-5 font-bold">Thank you. Your enquiry has been received.</div> : <form onSubmit={submit} className="mt-7 grid gap-3 sm:grid-cols-2">
+          <input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Your name" className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+          <input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="Email address" className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+          <input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="Phone / WhatsApp" className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+          <input value={form.company} onChange={e=>setForm({...form,company:e.target.value})} placeholder="Company name" className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+          <select value={form.industry} onChange={e=>setForm({...form,industry:e.target.value})} className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none">
+            {["General","Retail & POS","Restaurant","Hotel","School","Property","Microfinance","Manufacturing","Services"].map(x=><option key={x}>{x}</option>)}
+          </select>
+          <select value={form.interest} onChange={e=>setForm({...form,interest:e.target.value})} className="rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-slate-900 outline-none">
+            {["Demo request","Pricing","Industry setup","ZRA Smart Invoice","POS","Payroll","Inventory","Accounting"].map(x=><option key={x}>{x}</option>)}
+          </select>
+          <button disabled={saving} className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 disabled:opacity-60">{saving ? "Sending…" : "Request a demo"} <ArrowRight className="h-4 w-4"/></button>
+        </form>}
+        <div className="mt-3 text-xs text-blue-100/55">Prefer email? sales@sifobooks.com</div>
+      </div>
+    </div>
+  </section>;
+}
 function Footer() {
   return <footer className="bg-[#061b46] py-10 text-white"><div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-center md:justify-between"><div><div className="text-xl font-black">SifoBooks</div><div className="mt-1 text-xs text-blue-100/60">Accounting · POS · Business Management</div></div><div className="flex flex-wrap gap-5 text-xs font-semibold text-blue-100/70"><a href="#features">Features</a><a href="#industries">Industries</a><a href="#compliance">Compliance</a><a href="#screens">Screens</a><Link to="/auth">Sign in</Link></div><div className="text-xs text-blue-100/50">© {new Date().getFullYear()} SifoBooks</div></div></footer>;
 }
