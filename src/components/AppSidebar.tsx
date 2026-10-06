@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SifoBooksLogo } from "@/components/SifoBooksLogo";
 import { hubsForMode, visibleHubGroups } from "@/lib/nav-hubs";
-import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
+import { loadBusinessCapabilityState, getSolution, type BusinessCapabilityKey } from "@/lib/industry-solutions";
 
 
 import { useInstalledModules } from "@/hooks/useInstalledModules";
@@ -86,6 +86,7 @@ export function AppSidebar() {
   const [name, setName] = useState("Account");
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
+  const [workspaceIndustry, setWorkspaceIndustry] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: true, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
@@ -113,6 +114,7 @@ export function AppSidebar() {
         const mode = (c as any).workspace_mode as string | null;
         setWorkspaceModeState(mode);
         const industry = (c as any).industry as string | null;
+        setWorkspaceIndustry(industry);
         const caps = await loadBusinessCapabilityState(cid, industry);
         // Items/Stock are core ERP menus: keep them unless the company has
         // explicitly switched Inventory off (unknown industries used to hide them).
@@ -210,7 +212,24 @@ export function AppSidebar() {
       return unique.length ? { label, items: unique } : null;
     };
 
-    // Explicit module navigation keeps every implemented workspace screen clickable.
+    // Industry workspaces are opt-in. During first-time setup (no industry selected)
+    // do not expose every vertical module to the client. The company chooses its
+    // primary industry from /industry; optional verticals can be enabled later.
+    const activeIndustry = getSolution(workspaceIndustry)?.id ?? null;
+    const industryPrefixes: Record<string, string[]> = {
+      hospitality: ["/hotel"],
+      education: ["/school", "/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"],
+      lending: ["/lending"],
+      restaurant: ["/restaurant"],
+      property: ["/property"],
+      butchery: ["/retail/butchery", "/retail.butchery-"],
+    };
+    const allowedIndustryPrefixes = activeIndustry ? (industryPrefixes[activeIndustry] ?? []) : [];
+    const showIndustryRoute = (url: string) =>
+      allowedIndustryPrefixes.some(prefix => url === prefix || url.startsWith(prefix + "/") || url.startsWith(prefix));
+
+    // Explicit module navigation keeps every implemented workspace screen clickable,
+    // but only for the company's selected/activated industry.
     const industryItems: Array<[string,string,string]> = [
       ["Hotel Dashboard","/hotel","Hotel"],["Front Desk","/hotel/front-desk","LayoutDashboard"],["Reservations","/hotel/reservations","CalendarCheck"],["Booking Engine","/hotel/booking","CalendarRange"],["Room Rack","/hotel/room-rack","BedDouble"],["Rooms","/hotel/rooms","DoorOpen"],["Rates","/hotel/rates","Tag"],["Channels","/hotel/channels","Globe2"],["Guests","/hotel/guests","Users"],["Pre-arrival","/hotel/pre-arrival","ClipboardCheck"],["Check In / Out","/hotel/check-in-out","DoorOpen"],["Housekeeping","/hotel/housekeeping","Sparkles"],["Folios","/hotel/folios","ReceiptText"],["Payments","/hotel/payments","CreditCard"],["Hotel POS","/hotel/pos","UtensilsCrossed"],["Restaurant","/hotel/restaurant","Utensils"],["Events","/hotel/events","PartyPopper"],["Maintenance","/hotel/maintenance","Wrench"],["Inventory","/hotel/inventory","Boxes"],["Night Audit","/hotel/night-audit","Moon"],["Accounting","/hotel/accounting","Wallet"],["Reports","/hotel/reports","BarChart3"],["Compliance","/hotel/compliance","ShieldCheck"],["Guest Portal","/hotel/guest-portal","ExternalLink"],["Hotel Settings","/hotel/settings","Settings"],
       ["School Dashboard","/school","School"],["Preschool","/school/preschool","Baby"],["Admissions","/school/admissions","UserPlus"],["Students","/school/students","GraduationCap"],["Student Profile","/school/student-profile","UserRound"],["Parents","/school/parents","Users"],["Academics","/school/academics","BookOpen"],["Timetable","/school/timetable","CalendarDays"],["Attendance","/school/attendance","ClipboardCheck"],["Exams","/school/exams","FileQuestion"],["Report Cards","/school/report-cards","FileText"],["Fees & Billing","/school/fees-billing","Receipt"],["Fees","/school/fees","BadgeDollarSign"],["Payments","/school/payments","CreditCard"],["Scholarships","/school/scholarships","Award"],["Boarding","/school/boarding","BedDouble"],["Transport","/school/transport","Bus"],["Library","/school/library","Library"],["Meals","/school/meals","Utensils"],["Discipline","/school/discipline","ShieldAlert"],["Health","/school/health","HeartPulse"],["Communications","/school/communications","MessageSquare"],["Staff","/school/staff","UsersRound"],["Parent Portal","/school/parent-portal","ExternalLink"],["Student Portal","/school/student-portal","ExternalLink"],["School Reports","/school/reports","BarChart3"],["Compliance","/school/compliance","ShieldCheck"],["School Settings","/school/settings","Settings"],
@@ -219,7 +238,13 @@ export function AppSidebar() {
       ["Boarding House Dashboard","/boarding-house","Home"],["Boarding Houses","/boarding-houses","Building2"],["Boarding Rooms","/boarding-rooms","BedDouble"],["Boarding Students","/boarding-students","GraduationCap"],["Boarding Fees","/boarding-fees","Wallet"],["Boarding Attendance","/boarding-attendance","CalendarCheck"],["Boarding Leave","/boarding-leave","LogOut"],["Boarding Maintenance","/boarding-maintenance","Wrench"],["Boarding Discipline","/boarding-discipline","ShieldAlert"],["Boarding Visitors","/boarding-visitors","Users"],["Boarding Meals","/boarding-meals","Utensils"],["Boarding Reports","/boarding-reports","FileBarChart"],      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
       ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail.butchery-products","Beef"],["Receiving","/retail.butchery-receiving","PackagePlus"],["Processing & Yield","/retail.butchery-processing","Scissors"],["Scale","/retail.butchery-scale","Scale"],["Labels","/retail.butchery-labels","Tags"],["Prices","/retail.butchery-prices","Tag"],["Inventory","/retail.butchery-inventory","Boxes"],["Sales","/retail.butchery-sales","Receipt"],["Reports","/retail.butchery-reports","BarChart3"],["Invoice","/retail.butchery-invoice","FileText"],
     ];
-    for (const [title,url,icon] of industryItems) if (!seen.has(url)) { seen.add(url); collected.push({title,url,icon:iconFor(icon)}); }
+    for (const [title,url,icon] of industryItems) {
+      if (!showIndustryRoute(url)) continue;
+      if (!seen.has(url)) {
+        seen.add(url);
+        collected.push({title,url,icon:iconFor(icon)});
+      }
+    }
 
     const groups = [
       make("Home", byUrl(["/dashboard", "/approvals", "/notifications", "/industry"])),
@@ -273,7 +298,7 @@ export function AppSidebar() {
     ];
 
     return groups.filter(Boolean) as { label: string; items: NavItem[] }[];
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, capabilities]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, workspaceIndustry, capabilities]);
 
 
   const isOpen = (label: string) => {
