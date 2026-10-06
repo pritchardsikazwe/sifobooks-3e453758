@@ -22,6 +22,8 @@ $display = (Get-Culture).TextInfo.ToTitleCase($Edition)
 $displayNameMap = @{ enterprise="SifoBooks"; accounting="SifoBooks-Accounting"; retail="SifoBooks-Retail"; restaurant="SifoBooks-Restaurant"; hotel="SifoBooks-Hotel"; school="SifoBooks-School"; property="SifoBooks-RealEstate"; lending="SifoBooks-Microfinance"; payroll="SifoBooks-Payroll"; butchery="SifoBooks-Butchery POS" }
 $product = $displayNameMap[$Edition]
 $exe = "$product.exe"
+$outputNameMap = @{ enterprise="SifoBooks-enterprise-Windows-Setup"; accounting="SifoBooks-accounting-Windows-Setup"; retail="SifoBooks-retail-Windows-Setup"; restaurant="SifoBooks-restaurant-Windows-Setup"; hotel="SifoBooks-hotel-Windows-Setup"; school="SifoBooks-school-Windows-Setup"; property="SifoBooks-property-Windows-Setup"; lending="SifoBooks-lending-Windows-Setup"; payroll="SifoBooks-payroll-Windows-Setup"; butchery="SifoBooks-Butchery POS-Windows-Setup" }
+$outputBaseFilename = $outputNameMap[$Edition]
 $guidMap = @{
   enterprise="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE001"
   accounting="B1B65D0E-5C58-4D30-A6D2-9C10B7DCE002"
@@ -38,7 +40,7 @@ $template = Get-Content (Join-Path $PSScriptRoot "SifoBooks.iss.template") -Raw
 $appVersion = "2026.9.28"
 $versionFile = Join-Path $PSScriptRoot "..\desktop-dist\version.json"
 if (Test-Path $versionFile) { $appVersion = (Get-Content $versionFile -Raw | ConvertFrom-Json).version }
-$template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__",$appVersion)
+$template = $template.Replace("__EDITION__",$Edition).Replace("__PRODUCT_NAME__",$product).Replace("__EXE_NAME__",$exe).Replace("__OUTPUT_FILENAME__",$outputBaseFilename).Replace("__APP_ID__",$guidMap[$Edition]).Replace("__APP_VERSION__",$appVersion)
 $outDir = Join-Path $root "installer-dist"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $null = 0
@@ -52,7 +54,7 @@ if (!(Test-Path $iscc)) { throw "Inno Setup 6 ISCC.exe not found." }
 & $iscc $outIss
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }
 
-$setupName = if ($Edition -eq "butchery") { "SifoBooks-Butchery POS-Windows-Setup.exe" } else { "SifoBooks-$Edition-Windows-Setup.exe" }
+$setupName = "$outputBaseFilename.exe"
 $setup = Join-Path $outDir $setupName
 if (!(Test-Path $setup)) { throw "Installer output not found: $setup" }
 Write-Host "Created $setup"

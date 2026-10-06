@@ -7,6 +7,8 @@ import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import { hubsForMode, visibleHubGroups, type HubItem } from "@/lib/nav-hubs";
 import { SIFOBOOKS_EDITION } from "@/lib/edition";
+import { loadBusinessCapabilityState } from "@/lib/industry-solutions";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type Menu = {
@@ -24,6 +26,39 @@ function useNavigationMenus(): Menu[] {
   const { installed } = useInstalledModules();
   const { canView, isStaff, isSuperAdmin } = usePermissions();
   const pathname = useRouterState({ select: r => r.location.pathname });
+  const [retailPosEnabled, setRetailPosEnabled] = useState(SIFOBOOKS_EDITION === "butchery");
+  const [activeIndustry, setActiveIndustry] = useState<string | null>(SIFOBOOKS_EDITION === "butchery" ? "butchery" : null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadWorkspace = async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
+      let companyId = (p?.active_company_id as string | null) ?? null;
+      if (!companyId) {
+        const { data: cs } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
+        companyId = cs?.[0]?.id ?? null;
+      }
+      if (!companyId) return;
+      const { data: c } = await supabase.from("companies").select("industry").eq("id", companyId).maybeSingle();
+      const industry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (c?.industry as string | null);
+      const capabilities = await loadBusinessCapabilityState(companyId, industry);
+      if (!cancelled) {
+        setActiveIndustry(industry);
+        setRetailPosEnabled(Boolean(capabilities.retail_pos));
+      }
+    };
+    void loadWorkspace();
+    const handler = () => { void loadWorkspace(); };
+    window.addEventListener("sifobooks:workspace-changed", handler);
+    window.addEventListener("sifobooks:modules-changed", handler);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("sifobooks:workspace-changed", handler);
+      window.removeEventListener("sifobooks:modules-changed", handler);
+    };
+  }, []);
 
   const hubs = hubsForMode(undefined, SIFOBOOKS_EDITION);
   const all: HubItem[] = [];
@@ -33,6 +68,7 @@ function useNavigationMenus(): Menu[] {
     for (const group of visibleHubGroups(hub, installed, canView)) {
       for (const item of group.items) {
         if ((item as any).superAdminOnly && !isSuperAdmin) continue;
+        if (item.module === "retail_pos" && !retailPosEnabled) continue;
         if (seen.has(item.url)) continue;
         seen.add(item.url);
         all.push(item);
@@ -88,6 +124,20 @@ function useNavigationMenus(): Menu[] {
     ["Retail POS", "POS Sales History", "SifoPOS Hub", "Worker Access & Roles", "POS Control Centre"]
   );
 
+  const butchery = activeIndustry === "butchery" ? [
+    { title: "Butchery Dashboard", url: "/retail/butchery", module: "butchery", iconName: "Beef" },
+    { title: "Butchery POS", url: "/retail/butchery-pos", module: "butchery", iconName: "ShoppingBag" },
+    { title: "Products & Cuts", url: "/retail/butchery-products", module: "butchery", iconName: "Beef" },
+    { title: "Receiving", url: "/retail/butchery-receiving", module: "butchery", iconName: "PackagePlus" },
+    { title: "Processing & Yield", url: "/retail/butchery-processing", module: "butchery", iconName: "Scissors" },
+    { title: "Scale", url: "/retail/butchery-scale", module: "butchery", iconName: "Scale" },
+    { title: "Labels", url: "/retail/butchery-labels", module: "butchery", iconName: "Tags" },
+    { title: "Prices", url: "/retail/butchery-prices", module: "butchery", iconName: "Tag" },
+    { title: "Inventory", url: "/retail/butchery-inventory", module: "butchery", iconName: "Boxes" },
+    { title: "Sales", url: "/retail/butchery-sales", module: "butchery", iconName: "Receipt" },
+    { title: "Reports", url: "/retail/butchery-reports", module: "butchery", iconName: "BarChart3" },
+  ] : [];
+
   const manufacturing = match(
     ["/inventory/production"],
     ["Production Batches", "Manufacturing"]
@@ -123,6 +173,7 @@ function useNavigationMenus(): Menu[] {
     { label: "Banking", icon: "Landmark", items: take(banking) },
     { label: "Accounts", icon: "BookOpen", items: take(accounting) },
     { label: "POS", icon: "ShoppingBag", items: take(pos) },
+    { label: "Butchery", icon: "Beef", items: take(butchery) },
     { label: "HR & Payroll", icon: "UsersRound", items: take(payroll) },
     { label: "Reports", icon: "BarChart3", items: take(reports) },
     { label: "Company", icon: "Building2", items: take(company) },

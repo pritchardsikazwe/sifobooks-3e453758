@@ -177,14 +177,14 @@ export function AppSidebar() {
     const collected: NavItem[] = [];
     const seen = new Set<string>();
 
-    const activeIndustry = getSolution(workspaceIndustry)?.id ?? workspaceIndustry ?? null;
+    const activeIndustry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (getSolution(workspaceIndustry)?.id ?? workspaceIndustry ?? null);
     const industryModuleGroups: Record<string, string[]> = {
       hospitality: ["hotel_erp"],
       education: ["school_erp"],
       property: ["property_management"],
       restaurant: ["restaurant"],
       lending: ["lending", "loans", "borrowers", "repayments", "portfolio"],
-      butchery: ["butchery"],
+      butchery: ["butchery", "retail_pos"],
     };
     const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);
     const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "lending", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
@@ -210,7 +210,7 @@ export function AppSidebar() {
           const cap = capabilityByModule[item.module];
           // Inventory and Retail POS are core operational modules. They remain
           // available independently of vertical industry selection.
-          if (cap && !capabilities[cap] && !["inventory", "retail_pos", "restaurant"].includes(item.module)) continue;
+          if (cap && !capabilities[cap]) continue;
 
           if (seen.has(item.url)) continue;
           seen.add(item.url);
