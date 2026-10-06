@@ -45,10 +45,11 @@ export function getModule(key: string): ModuleDef | undefined {
 }
 
 /** Installed = core, or explicitly enabled for the company, or installed by default. */
-export function isModuleInstalled(key: string, explicit: Set<string>): boolean {
+export function isModuleInstalled(key: string, explicit: Set<string>, gatingActive = false): boolean {
   const m = getModule(key);
   if (!m) return false;
   if (m.core) return true;
   if (explicit.has(key)) return true;
+  if (gatingActive && (["property_management", "public_services"] as readonly string[]).includes(key)) return false;
   return !!m.defaultInstalled;
 }
