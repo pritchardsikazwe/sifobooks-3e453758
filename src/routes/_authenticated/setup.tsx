@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -79,6 +79,23 @@ function SetupPage() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Company Setup</h1>
         <p className="text-sm text-slate-500 mt-1">Configure everything your business needs before running daily operations.</p>
       </div>
+
+      {!company.industry && (
+        <Card className="mb-5 border-emerald-200 bg-emerald-50/60">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-emerald-950">Welcome to SifoBooks — choose your business type first</div>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-emerald-900/80">
+                Start with your business type so SifoBooks shows the right workspace and menus.
+                You can add or change business capabilities later without deleting your accounting data.
+              </p>
+            </div>
+            <Button asChild variant="save" className="shrink-0">
+              <Link to="/industry">Choose Business Type</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1">
