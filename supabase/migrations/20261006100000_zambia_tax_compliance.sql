@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.tax_adjustments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
   company_id uuid,
-  document_type text NOT NULL CHECK (document_type IN ('credit_note','debit_note')),
+  document_type text NOT NULL CHECK (document_type IN ('credit_note','debit_note','bad_debt_relief','import_vat','other')),
   direction text NOT NULL CHECK (direction IN ('issued','received')),
   original_invoice_id uuid,
   original_bill_id uuid,
