@@ -66,10 +66,12 @@ Name: "{app}\config"; Permissions: users-modify
 Name: "{app}\logs"; Permissions: users-modify
 
 [Icons]
-Name: "{group}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
+; Launch through the hidden VBS host so Windows never exposes the Bun/server console.
+; The server remains running independently; closing the browser does not stop SifoBooks.
+Name: "{group}\{#ProductName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
 Name: "{group}\Stop SifoBooks"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\Stop-SifoBooks.ps1"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"
-Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
-Name: "{userstartup}\{#ProductName}"; Filename: "{app}\{#ExeName}"; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
+Name: "{userdesktop}\{#ProductName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userstartup}\{#ProductName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; IconFilename: "{app}\SifoBooks.ico"; WorkingDir: "{app}"; Tasks: startup
 
 [Run]
 Filename: "{sys}\wscript.exe"; Parameters: """{app}\Start-SifoBooks.vbs"""; Description: "Launch {#ProductName}"; Flags: nowait postinstall skipifsilent; Tasks: launch
