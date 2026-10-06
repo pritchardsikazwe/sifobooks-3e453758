@@ -87,6 +87,7 @@ export function AppSidebar() {
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
   const [workspaceMode, setWorkspaceModeState] = useState<string | null>(null);
   const [workspaceIndustry, setWorkspaceIndustry] = useState<string | null>(null);
+  const [enabledModules, setEnabledModules] = useState<Set<string>>(new Set());
   const [capabilities, setCapabilities] = useState<Record<BusinessCapabilityKey, boolean>>({ inventory: true, retail_pos: false, restaurant: false, hr_payroll: true });
 
   useEffect(() => { setOpenState(loadOpenState()); }, []);
@@ -115,6 +116,8 @@ export function AppSidebar() {
         setWorkspaceModeState(mode);
         const industry = (c as any).industry as string | null;
         setWorkspaceIndustry(industry);
+        const { data: moduleRows } = await supabase.from("company_modules").select("module_key").eq("company_id", cid);
+        setEnabledModules(new Set((moduleRows ?? []).map((r: any) => String(r.module_key)).filter((k: string) => !k.startsWith("__off__:")));
         const caps = await loadBusinessCapabilityState(cid, industry);
         // Items/Stock are core ERP menus: keep them unless the company has
         // explicitly switched Inventory off (unknown industries used to hide them).
@@ -165,10 +168,29 @@ export function AppSidebar() {
     const collected: NavItem[] = [];
     const seen = new Set<string>();
 
+    const activeIndustry = getSolution(workspaceIndustry)?.id ?? workspaceIndustry ?? null;
+    const industryModuleGroups: Record<string, string[]> = {
+      hospitality: ["hotel_erp"],
+      education: ["school_erp"],
+      property: ["property_management"],
+      restaurant: ["restaurant"],
+      lending: ["loans", "borrowers", "repayments", "portfolio"],
+      butchery: ["butchery"],
+    };
+    const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);
+    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
+    const verticalModuleAllowed = (module?: string) => {
+      if (!module || !verticalModules.has(module)) return true;
+      return activeIndustryModules.has(module) || enabledModules.has(module);
+    };
+
     for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
       for (const group of visibleHubGroups(hub, installed, canView)) {
         for (const item of group.items) {
           if ((item as any).superAdminOnly && !isSuperAdmin) continue;
+          // Optional industry modules must be explicitly activated or selected by
+          // the company's industry. defaultInstalled alone is not enough.
+          if (!verticalModuleAllowed(item.module)) continue;
 
           const capabilityByModule: Record<string, BusinessCapabilityKey | undefined> = {
             inventory: "inventory",
@@ -212,24 +234,31 @@ export function AppSidebar() {
       return unique.length ? { label, items: unique } : null;
     };
 
-    // Industry workspaces are opt-in. During first-time setup (no industry selected)
-    // do not expose every vertical module to the client. The company chooses its
-    // primary industry from /industry; optional verticals can be enabled later.
-    const activeIndustry = getSolution(workspaceIndustry)?.id ?? null;
-    const industryPrefixes: Record<string, string[]> = {
-      hospitality: ["/hotel"],
-      education: ["/school", "/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"],
-      lending: ["/lending"],
-      restaurant: ["/restaurant"],
-      property: ["/property"],
-      butchery: ["/retail/butchery", "/retail.butchery-"],
+    // Explicit industry navigation for deep operational routes that are not
+    // represented completely by the central module registry.
+    const industryRouteGroup: Record<string, string> = {
+      hotel: "hotel_erp",
+      school: "school_erp",
+      property: "property_management",
+      lending: "loans",
+      restaurant: "restaurant",
+      boarding: "school_erp",
+      butchery: "butchery",
     };
-    const allowedIndustryPrefixes = activeIndustry ? (industryPrefixes[activeIndustry] ?? []) : [];
-    const showIndustryRoute = (url: string) =>
-      allowedIndustryPrefixes.some(prefix => url === prefix || url.startsWith(prefix + "/") || url.startsWith(prefix));
+    const showIndustryRoute = (url: string) => {
+      const group =
+        url.startsWith("/hotel") ? "hotel" :
+        url.startsWith("/school") || url.startsWith("/boarding-") ? "school" :
+        url.startsWith("/property") ? "property" :
+        url.startsWith("/lending") ? "lending" :
+        url.startsWith("/restaurant") ? "restaurant" :
+        url.startsWith("/retail/butchery") || url.startsWith("/retail.butchery-") ? "butchery" :
+        null;
+      if (!group) return false;
+      const module = industryRouteGroup[group];
+      return activeIndustry === ({hotel_erp:"hospitality",school_erp:"education",property_management:"property",loans:"lending",restaurant:"restaurant",butchery:"butchery"} as Record<string,string>)[module] || enabledModules.has(module);
+    };
 
-    // Explicit module navigation keeps every implemented workspace screen clickable,
-    // but only for the company's selected/activated industry.
     const industryItems: Array<[string,string,string]> = [
       ["Hotel Dashboard","/hotel","Hotel"],["Front Desk","/hotel/front-desk","LayoutDashboard"],["Reservations","/hotel/reservations","CalendarCheck"],["Booking Engine","/hotel/booking","CalendarRange"],["Room Rack","/hotel/room-rack","BedDouble"],["Rooms","/hotel/rooms","DoorOpen"],["Rates","/hotel/rates","Tag"],["Channels","/hotel/channels","Globe2"],["Guests","/hotel/guests","Users"],["Pre-arrival","/hotel/pre-arrival","ClipboardCheck"],["Check In / Out","/hotel/check-in-out","DoorOpen"],["Housekeeping","/hotel/housekeeping","Sparkles"],["Folios","/hotel/folios","ReceiptText"],["Payments","/hotel/payments","CreditCard"],["Hotel POS","/hotel/pos","UtensilsCrossed"],["Restaurant","/hotel/restaurant","Utensils"],["Events","/hotel/events","PartyPopper"],["Maintenance","/hotel/maintenance","Wrench"],["Inventory","/hotel/inventory","Boxes"],["Night Audit","/hotel/night-audit","Moon"],["Accounting","/hotel/accounting","Wallet"],["Reports","/hotel/reports","BarChart3"],["Compliance","/hotel/compliance","ShieldCheck"],["Guest Portal","/hotel/guest-portal","ExternalLink"],["Hotel Settings","/hotel/settings","Settings"],
       ["School Dashboard","/school","School"],["Preschool","/school/preschool","Baby"],["Admissions","/school/admissions","UserPlus"],["Students","/school/students","GraduationCap"],["Student Profile","/school/student-profile","UserRound"],["Parents","/school/parents","Users"],["Academics","/school/academics","BookOpen"],["Timetable","/school/timetable","CalendarDays"],["Attendance","/school/attendance","ClipboardCheck"],["Exams","/school/exams","FileQuestion"],["Report Cards","/school/report-cards","FileText"],["Fees & Billing","/school/fees-billing","Receipt"],["Fees","/school/fees","BadgeDollarSign"],["Payments","/school/payments","CreditCard"],["Scholarships","/school/scholarships","Award"],["Boarding","/school/boarding","BedDouble"],["Transport","/school/transport","Bus"],["Library","/school/library","Library"],["Meals","/school/meals","Utensils"],["Discipline","/school/discipline","ShieldAlert"],["Health","/school/health","HeartPulse"],["Communications","/school/communications","MessageSquare"],["Staff","/school/staff","UsersRound"],["Parent Portal","/school/parent-portal","ExternalLink"],["Student Portal","/school/student-portal","ExternalLink"],["School Reports","/school/reports","BarChart3"],["Compliance","/school/compliance","ShieldCheck"],["School Settings","/school/settings","Settings"],
@@ -298,7 +327,7 @@ export function AppSidebar() {
     ];
 
     return groups.filter(Boolean) as { label: string; items: NavItem[] }[];
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, workspaceIndustry, capabilities]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, workspaceIndustry, enabledModules, capabilities]);
 
 
   const isOpen = (label: string) => {
