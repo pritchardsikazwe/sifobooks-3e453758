@@ -17,27 +17,60 @@
 
 export type PayeBand = { upTo: number | null; rate: number };
 
-export const DEFAULT_PAYE_BANDS: PayeBand[] = [
-  { upTo: 5100, rate: 0 },
-  { upTo: 7100, rate: 0.20 },
-  { upTo: 9200, rate: 0.30 },
-  { upTo: null, rate: 0.37 },
+export type StatutoryTaxRules = {
+  effectiveFrom: string;
+  payeBands: PayeBand[];
+  napsaRate: number;
+  napsaCap: number;
+  nhimaRate: number;
+  wcfRate: number;
+  sdlRate: number;
+};
+
+export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
+  {
+    effectiveFrom: "2026-01-01",
+    payeBands: [
+      { upTo: 5100, rate: 0 },
+      { upTo: 7100, rate: 0.20 },
+      { upTo: 9200, rate: 0.30 },
+      { upTo: null, rate: 0.37 },
+    ],
+    napsaRate: 0.05,
+    napsaCap: 1861.80,
+    nhimaRate: 0.01,
+    wcfRate: 0.015,
+    sdlRate: 0.005,
+  },
+  {
+    effectiveFrom: "2025-01-01",
+    payeBands: [
+      { upTo: 5100, rate: 0 },
+      { upTo: 7100, rate: 0.20 },
+      { upTo: 9200, rate: 0.30 },
+      { upTo: null, rate: 0.37 },
+    ],
+    napsaRate: 0.05,
+    napsaCap: 1708.20,
+    nhimaRate: 0.01,
+    wcfRate: 0.015,
+    sdlRate: 0.005,
+  },
 ];
 
+export function statutoryTaxRulesFor(date = new Date()): StatutoryTaxRules {
+  const iso = date.toISOString().slice(0, 10);
+  return STATUTORY_TAX_RULES.find(r => iso >= r.effectiveFrom) ?? STATUTORY_TAX_RULES[STATUTORY_TAX_RULES.length - 1];
+}
+
+export const DEFAULT_PAYE_BANDS: PayeBand[] = STATUTORY_TAX_RULES[0].payeBands;
+
 export const NAPSA_RATE = 0.05;
-/** 2025 NAPSA monthly ceiling on the employee contribution (K1,708.20). */
-export const NAPSA_CAP = 1708.20;
+/** 2026 NAPSA monthly ceiling on the employee contribution. */
+export const NAPSA_CAP = 1861.80;
 export const NHIMA_RATE = 0.01;
 export const WCF_RATE = 0.015;
 export const SDL_RATE = 0.005;
-/** Housing allowance exempt up to this % of basic (ZRA practice). */
-export const HOUSING_EXEMPT_PCT = 0.30;
-/** Standard working hours per month for hourly conversion. */
-export const STD_HOURS_PER_MONTH = 176;
-export const OVERTIME_WEEKDAY = 1.5;
-export const OVERTIME_WEEKEND = 2.0;
-export const OVERTIME_HOLIDAY = 2.0;
-
 export function calcPaye(taxable: number, bands: PayeBand[] = DEFAULT_PAYE_BANDS): number {
   if (taxable <= 0) return 0;
   let tax = 0;
@@ -51,10 +84,10 @@ export function calcPaye(taxable: number, bands: PayeBand[] = DEFAULT_PAYE_BANDS
   }
   return round2(tax);
 }
-export function calcNapsa(gross: number): number { return round2(Math.min(gross * NAPSA_RATE, NAPSA_CAP)); }
-export function calcNhima(basic: number): number { return round2(basic * NHIMA_RATE); }
-export function calcWcf(gross: number): number { return round2(gross * WCF_RATE); }
-export function calcSdl(gross: number): number { return round2(gross * SDL_RATE); }
+export function calcNapsa(gross: number, rules = statutoryTaxRulesFor()): number { return round2(Math.min(gross * rules.napsaRate, rules.napsaCap)); }
+export function calcNhima(basic: number, rules = statutoryTaxRulesFor()): number { return round2(basic * rules.nhimaRate); }
+export function calcWcf(gross: number, rules = statutoryTaxRulesFor()): number { return round2(gross * rules.wcfRate); }
+export function calcSdl(gross: number, rules = statutoryTaxRulesFor()): number { return round2(gross * rules.sdlRate); }
 /** Total employer cost on top of net pay: employer NAPSA match + employer NHIMA + WCF + SDL. */
 export function calcEmployerOncost(gross: number, basic: number): number {
   return round2(calcNapsa(gross) + calcNhima(basic) + calcWcf(gross) + calcSdl(gross));
@@ -148,7 +181,7 @@ export type PayslipComputed = {
  *   overtime, shift differential and any `other_earnings` are fully taxable.
  */
 export function computePayslip(i: PayslipInput): PayslipComputed {
-  const basic = num(i.basic);
+  const basic = num(i.basic);\n  const taxDate = i.tax_date instanceof Date ? i.tax_date : i.tax_date ? new Date(i.tax_date) : new Date();\n  const rules = statutoryTaxRulesFor(taxDate);
   const overtime = num(i.overtime);
   const shift = num(i.shift_differential);
   const bonus = num(i.bonus);
@@ -192,11 +225,11 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
     otherEarnings.filter(l => (l.taxable ?? true)).reduce((s, l) => s + num(l.amount), 0)
   );
 
-  const paye = i.paye_applies === false ? 0 : calcPaye(taxable);
-  const napsa = i.napsa_applies === false ? 0 : calcNapsa(gross);
-  const nhima = i.nhima_applies === false ? 0 : calcNhima(basic);
-  const wcf = calcWcf(gross);
-  const sdl = calcSdl(gross);
+  const paye = i.paye_applies === false ? 0 : calcPaye(taxable, rules.payeBands);
+  const napsa = i.napsa_applies === false ? 0 : calcNapsa(gross, rules);
+  const nhima = i.nhima_applies === false ? 0 : calcNhima(basic, rules);
+  const wcf = calcWcf(gross, rules);
+  const sdl = calcSdl(gross, rules);
   const employer_napsa = napsa;
   const employer_oncost = round2(employer_napsa + nhima + wcf + sdl);
 
