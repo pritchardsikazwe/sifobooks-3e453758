@@ -50,6 +50,6 @@ export function isModuleInstalled(key: string, explicit: Set<string>, gatingActi
   if (!m) return false;
   if (m.core) return true;
   if (explicit.has(key)) return true;
-  if (gatingActive && (["property_management", "public_services"] as readonly string[]).includes(key)) return false;
+  if (gatingActive && (OPTIONAL_WHEN_GATED as readonly string[]).includes(key)) return false;
   return !!m.defaultInstalled;
 }
