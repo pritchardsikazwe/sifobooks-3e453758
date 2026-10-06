@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS public.tax_adjustments (
   total numeric(18,2) NOT NULL DEFAULT 0,
   status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','posted','voided')),
   zra_reference text,
+  zra_document_type text,
+  zra_original_reference text,
+  zra_state text NOT NULL DEFAULT 'READY_FOR_REVIEW',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (total >= 0 AND subtotal >= 0 AND vat_amount >= 0),
@@ -89,3 +92,27 @@ DROP POLICY IF EXISTS tax_audit_events_select_own ON public.tax_audit_events;
 DROP POLICY IF EXISTS tax_audit_events_insert_own ON public.tax_audit_events;
 CREATE POLICY tax_audit_events_select_own ON public.tax_audit_events FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY tax_audit_events_insert_own ON public.tax_audit_events FOR INSERT WITH CHECK (user_id = auth.uid());
+
+
+CREATE TABLE IF NOT EXISTS public.bill_vat_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  bill_id uuid NOT NULL REFERENCES public.bills(id) ON DELETE CASCADE,
+  description text,
+  tax_category text NOT NULL DEFAULT 'standard',
+  vat_rate numeric(8,4) NOT NULL DEFAULT 16,
+  net_amount numeric(18,2) NOT NULL DEFAULT 0,
+  vat_amount numeric(18,2) NOT NULL DEFAULT 0,
+  business_use_percent numeric(6,2) NOT NULL DEFAULT 100,
+  import_vat numeric(18,2) NOT NULL DEFAULT 0,
+  evidence_type text NOT NULL DEFAULT 'tax_invoice',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_bill_vat_lines_bill ON public.bill_vat_lines(bill_id);
+ALTER TABLE public.bill_vat_lines ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS bill_vat_lines_select_own ON public.bill_vat_lines;
+DROP POLICY IF EXISTS bill_vat_lines_insert_own ON public.bill_vat_lines;
+DROP POLICY IF EXISTS bill_vat_lines_update_own ON public.bill_vat_lines;
+CREATE POLICY bill_vat_lines_select_own ON public.bill_vat_lines FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY bill_vat_lines_insert_own ON public.bill_vat_lines FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY bill_vat_lines_update_own ON public.bill_vat_lines FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
