@@ -23,6 +23,7 @@ function TaxCompliancePage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [adjustments, setAdjustments] = useState<TaxAdjustment[]>([]);
+  const [purchaseLine, setPurchaseLine] = useState({ bill_id: "", description: "", tax_category: "standard", vat_rate: "16", net_amount: "", vat_amount: "", business_use_percent: "100", import_vat: "0", evidence_type: "tax_invoice" });
   const [form, setForm] = useState({
     document_type: "credit_note",
     direction: "issued",
@@ -85,6 +86,9 @@ function TaxCompliancePage() {
       status: "posted",
       original_invoice_id: form.direction === "issued" ? (form.original_id || null) : null,
       original_bill_id: form.direction === "received" ? (form.original_id || null) : null,
+      zra_document_type: form.document_type,
+      zra_original_reference: form.direction === "issued" ? (invoices.find(x => x.id === form.original_id)?.number ?? null) : (bills.find(x => x.id === form.original_id)?.bill_number ?? null),
+      zra_state: form.direction === "issued" ? "READY_FOR_SMART_INVOICE" : "PORTAL_REVIEW",
     };
     const { data: created, error } = await supabase.from("tax_adjustments").insert(payload).select("id").single();
     if (error || !created) return;
@@ -149,6 +153,35 @@ function TaxCompliancePage() {
               <div className="flex justify-between"><span className="font-semibold">{f.kind}</span><Badge variant="outline">Due {f.due}</Badge></div>
               <div className="mt-2 text-xs text-muted-foreground">{f.amount === null ? "Prepared from payroll / tax modules" : `VAT amount: ${fmt(Math.abs(f.amount))}`}</div>
             </div>)}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Purchase VAT lines — mixed-rate control</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-4">
+              <Field label="Supplier bill"><Select value={purchaseLine.bill_id} onValueChange={v => setPurchaseLine({...purchaseLine,bill_id:v})}><SelectTrigger><SelectValue placeholder="Select bill" /></SelectTrigger><SelectContent>{bills.slice(0,100).map(b => <SelectItem key={b.id} value={b.id}>{b.bill_number}</SelectItem>)}</SelectContent></Select></Field>
+              <Field label="Tax category"><Select value={purchaseLine.tax_category} onValueChange={v => setPurchaseLine({...purchaseLine,tax_category:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="standard">Standard</SelectItem><SelectItem value="zero_rated">Zero-rated</SelectItem><SelectItem value="exempt">Exempt</SelectItem><SelectItem value="out_of_scope">Out of scope</SelectItem></SelectContent></Select></Field>
+              <Field label="VAT rate %"><Input type="number" value={purchaseLine.vat_rate} onChange={e => setPurchaseLine({...purchaseLine,vat_rate:e.target.value})} /></Field>
+              <Field label="Description"><Input value={purchaseLine.description} onChange={e => setPurchaseLine({...purchaseLine,description:e.target.value})} placeholder="Line / purchase category" /></Field>
+              <Field label="Net amount"><Input type="number" value={purchaseLine.net_amount} onChange={e => setPurchaseLine({...purchaseLine,net_amount:e.target.value})} /></Field>
+              <Field label="VAT amount"><Input type="number" value={purchaseLine.vat_amount} onChange={e => setPurchaseLine({...purchaseLine,vat_amount:e.target.value})} /></Field>
+              <Field label="Business use %"><Input type="number" value={purchaseLine.business_use_percent} onChange={e => setPurchaseLine({...purchaseLine,business_use_percent:e.target.value})} /></Field>
+              <Field label="Evidence"><Select value={purchaseLine.evidence_type} onValueChange={v => setPurchaseLine({...purchaseLine,evidence_type:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tax_invoice">Tax invoice</SelectItem><SelectItem value="import_ce20">Import CE20</SelectItem><SelectItem value="bank_statement">Bank statement</SelectItem><SelectItem value="credit_note">Credit note</SelectItem></SelectContent></Select></Field>
+            </div>
+            <Button onClick={async () => {
+              const { data: user } = await supabase.auth.getUser();
+              if (!user.user || !purchaseLine.bill_id || !purchaseLine.net_amount) return;
+              const { error } = await supabase.from("bill_vat_lines").insert({
+                user_id: user.user.id, bill_id: purchaseLine.bill_id, description: purchaseLine.description,
+                tax_category: purchaseLine.tax_category, vat_rate: Number(purchaseLine.vat_rate) || 0,
+                net_amount: Number(purchaseLine.net_amount) || 0, vat_amount: Number(purchaseLine.vat_amount) || 0,
+                business_use_percent: Number(purchaseLine.business_use_percent) || 0, import_vat: Number(purchaseLine.import_vat) || 0,
+                evidence_type: purchaseLine.evidence_type,
+              });
+              if (!error) { setPurchaseLine(p => ({...p,description:"",net_amount:"",vat_amount:""})); await load(); }
+            }}>Add purchase VAT line</Button>
+            <p className="text-xs text-muted-foreground">ZRA input VAT is restricted to business use, valid supporting evidence and the configured three-month claim window. citeturn2search0</p>
           </CardContent>
         </Card>
 
