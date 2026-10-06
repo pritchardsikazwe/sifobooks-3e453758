@@ -18,10 +18,21 @@ import { useInstalledModules } from "@/hooks/useInstalledModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import { staffNav } from "@/lib/rbac";
 import { SIFOBOOKS_EDITION, SIFOBOOKS_PRODUCT_NAME } from "@/lib/edition";
+import { resolveActiveCompanyId } from "@/lib/active-company";
 
 const LogOut = Icons.LogOut;
 const GraduationCap = Icons.GraduationCap;
 const STORAGE_KEY = "sifobooks.sidebar.groups";
+
+const MODULE_ENTRIES: Array<{ key: string; title: string; url: string; icon: string }> = [
+  { key: "hotel_erp", title: "Hotel", url: "/hotel", icon: "Hotel" },
+  { key: "school_erp", title: "School", url: "/school", icon: "School" },
+  { key: "property_management", title: "Property", url: "/property", icon: "Building2" },
+  { key: "lending", title: "Lending", url: "/lending", icon: "Landmark" },
+  { key: "boarding_house", title: "Boarding House", url: "/boarding-house", icon: "Home" },
+  { key: "restaurant", title: "Restaurant", url: "/restaurant", icon: "Utensils" },
+  { key: "butchery", title: "Butchery", url: "/retail/butchery", icon: "Beef" },
+];
 
 /** Every sidebar section inherits a module identity colour. */
 const CATEGORY_HUE: Record<string, { dot: string; text: string; soft: string }> = {
@@ -98,16 +109,7 @@ export function AppSidebar() {
     setEmail(u.user.email ?? "");
     const n = (u.user.user_metadata as any)?.full_name ?? (u.user.user_metadata as any)?.name;
     setName(n || (u.user.email ?? "").split("@")[0]);
-    const { data: p } = await supabase.from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
-    let cid = (p?.active_company_id as string | null) ?? null;
-    if (!cid) {
-      const { data: cs0 } = await supabase.from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
-      cid = cs0?.[0]?.id ?? null;
-    }
-    if (!cid) {
-      const { data: cm } = await supabase.from("company_members").select("company_id").eq("user_id", u.user.id).order("created_at").limit(1);
-      cid = (cm?.[0]?.company_id as string | undefined) ?? null;
-    }
+    const cid = await resolveActiveCompanyId(u.user.id);
     if (cid) {
       const { data: c } = await supabase.from("companies").select("name, trading_name, base_currency, workspace_mode, industry").eq("id", cid).maybeSingle();
       if (c) {
@@ -156,7 +158,7 @@ export function AppSidebar() {
   };
 
 
-  const { installed } = useInstalledModules();
+  const { installed, gatingActive, gatingFailClosed } = useInstalledModules();
   const { canView, isSuperAdmin, isStaff, access, loading: permsLoading } = usePermissions();
 
   const sections = useMemo(() => {
@@ -187,7 +189,7 @@ export function AppSidebar() {
       butchery: ["butchery", "retail_pos"],
     };
     const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);
-    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "lending", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
+    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "lending", "boarding_house", "restaurant", "butchery", "loans", "borrowers", "repayments", "portfolio"]);
     const verticalModuleAllowed = (module?: string) => {
       if (!module || !verticalModules.has(module)) return true;
       return activeIndustryModules.has(module) || enabledModules.has(module);
@@ -197,6 +199,7 @@ export function AppSidebar() {
       for (const group of visibleHubGroups(hub, installed, canView)) {
         for (const item of group.items) {
           if ((item as any).superAdminOnly && !isSuperAdmin) continue;
+          if ((gatingActive || gatingFailClosed) && item.module && verticalModules.has(item.module)) continue;
           // Optional industry modules must be explicitly activated or selected by
           // the company's industry. defaultInstalled alone is not enough.
           if (!verticalModuleAllowed(item.module)) continue;
@@ -273,13 +276,20 @@ export function AppSidebar() {
       ["Boarding House Dashboard","/boarding-house","Home"],["Boarding Houses","/boarding-houses","Building2"],["Boarding Rooms","/boarding-rooms","BedDouble"],["Boarding Students","/boarding-students","GraduationCap"],["Boarding Fees","/boarding-fees","Wallet"],["Boarding Attendance","/boarding-attendance","CalendarCheck"],["Boarding Leave","/boarding-leave","LogOut"],["Boarding Maintenance","/boarding-maintenance","Wrench"],["Boarding Discipline","/boarding-discipline","ShieldAlert"],["Boarding Visitors","/boarding-visitors","Users"],["Boarding Meals","/boarding-meals","Utensils"],["Boarding Reports","/boarding-reports","FileBarChart"],      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
       ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail/butchery-products","Beef"],["Receiving","/retail/butchery-receiving","PackagePlus"],["Processing & Yield","/retail/butchery-processing","Scissors"],["Scale","/retail/butchery-scale","Scale"],["Labels","/retail/butchery-labels","Tags"],["Prices","/retail/butchery-prices","Tag"],["Inventory","/retail/butchery-inventory","Boxes"],["Sales","/retail/butchery-sales","Receipt"],["Reports","/retail/butchery-reports","BarChart3"],["Invoice","/retail/butchery-invoice","FileText"],
     ];
-    for (const [title,url,icon] of industryItems) {
-      if (!showIndustryRoute(url)) continue;
-      if (!seen.has(url)) {
-        seen.add(url);
-        collected.push({title,url,icon:iconFor(icon)});
+    if (!gatingActive && !gatingFailClosed) {
+      for (const [title,url,icon] of industryItems) {
+        if (!showIndustryRoute(url)) continue;
+        if (!seen.has(url)) {
+          seen.add(url);
+          collected.push({title,url,icon:iconFor(icon)});
+        }
       }
     }
+
+    const businessModules = MODULE_ENTRIES
+      .filter(entry => installed.has(entry.key))
+      .filter(entry => !gatingActive && !gatingFailClosed ? false : true)
+      .map(entry => ({ title: entry.title, url: entry.url, icon: iconFor(entry.icon) }));
 
     const groups = [
       isSuperAdmin ? make("Platform", [
@@ -322,13 +332,13 @@ export function AppSidebar() {
         ["/reports"],
         ["Reports Centre", "Trial Balance", "Annual Financial Statements", "Customer Statement", "Supplier Statement", "Inventory Flow & Audit"]
       )),
-      make("Hotel", byUrl(["/hotel"])),
-      make("School ERP", byUrl(["/school"])),
-      make("Property", byUrl(["/property"])),
-      make("Lending", byUrl(["/lending"])),
-      make("Restaurant", byUrl(["/restaurant"])),
-      make("Boarding House", byUrl(["/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"])),
-      make("Butchery", byUrl(["/retail/butchery", "/retail/butchery-pos", "/retail/butchery-"])),
+      (gatingActive || gatingFailClosed) ? make("Business Modules", businessModules) : make("Hotel", byUrl(["/hotel"])),
+      !(gatingActive || gatingFailClosed) ? make("School ERP", byUrl(["/school"])) : null,
+      !(gatingActive || gatingFailClosed) ? make("Property", byUrl(["/property"])) : null,
+      !(gatingActive || gatingFailClosed) ? make("Lending", byUrl(["/lending"])) : null,
+      !(gatingActive || gatingFailClosed) ? make("Restaurant", byUrl(["/restaurant"])) : null,
+      !(gatingActive || gatingFailClosed) ? make("Boarding House", byUrl(["/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"])) : null,
+      !(gatingActive || gatingFailClosed) ? make("Butchery", byUrl(["/retail/butchery", "/retail/butchery-pos", "/retail/butchery-"])) : null,
       make("Settings", byUrl(
         ["/modules", "/subscription", "/learn"],
         ["Settings", "Modules", "Subscription", "Learn Centre", "New Company Setup", "Accounting Basics"]
@@ -336,7 +346,7 @@ export function AppSidebar() {
     ];
 
     return groups.filter(Boolean) as { label: string; items: NavItem[] }[];
-  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, workspaceIndustry, enabledModules, capabilities]);
+  }, [installed, canView, isSuperAdmin, isStaff, access, permsLoading, workspaceMode, workspaceIndustry, enabledModules, capabilities, gatingActive, gatingFailClosed]);
 
 
   const isOpen = (label: string) => {

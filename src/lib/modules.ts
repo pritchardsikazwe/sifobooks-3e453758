@@ -27,10 +27,13 @@ export const MODULES: ModuleDef[] = [
   { key: "retail_pos", label: "Retail POS", category: "POS", defaultInstalled: true, description: "Fast touchscreen shop till with stock and GL posting.", routes: [{ title: "SifoPOS Hub", url: "/sifopos", iconName: "LayoutGrid" }, { title: "Retail POS", url: "/pos", iconName: "ShoppingBag" }, { title: "POS Sales History", url: "/pos-sales", iconName: "Receipt" }, { title: "Retail Command Center", url: "/pos/retail-command-center", iconName: "Gauge" }, { title: "Worker Command Center", url: "/pos/command-center", iconName: "LayoutGrid" }, { title: "Worker Terminal (POS shell)", url: "/w", iconName: "Monitor" }, { title: "Worker Access & Roles", url: "/pos-workers", iconName: "ShieldCheck" }] },  { key: "restaurant", label: "Restaurant", category: "Restaurant", defaultInstalled: false, description: "Restaurant POS, tables, kitchen, menu, recipes, reservations, shifts and restaurant reports.", routes: [{ title: "Restaurant Dashboard", url: "/restaurant", iconName: "Utensils" }, { title: "Restaurant POS", url: "/restaurant/pos", iconName: "ShoppingBag" }, { title: "Orders", url: "/restaurant/orders", iconName: "Receipt" }, { title: "Kitchen", url: "/restaurant/kitchen", iconName: "ChefHat" }, { title: "Tables", url: "/restaurant/tables", iconName: "LayoutGrid" }, { title: "Menu", url: "/restaurant/menu", iconName: "Utensils" }, { title: "Reservations", url: "/restaurant/reservations", iconName: "CalendarCheck" }, { title: "Restaurant Reports", url: "/restaurant/reports", iconName: "BarChart3" }] },
   { key: "lending", label: "Lending & Microfinance", category: "Platform", defaultInstalled: false, description: "Borrowers, loan products, applications, disbursements, repayments, collections, portfolio and lending reports.", routes: [{ title: "Lending Dashboard", url: "/lending", iconName: "Landmark" }] },
   { key: "butchery", label: "Butchery", category: "POS", defaultInstalled: false, description: "Butchery products, cuts, receiving, processing, scales, labels, prices, stock and sales.", routes: [{ title: "Butchery Dashboard", url: "/retail/butchery", iconName: "Beef" }] },
+  { key: "boarding_house", label: "Boarding House", category: "Platform", defaultInstalled: false, description: "Boarding houses, rooms, residents, fees, attendance, maintenance and reports.", routes: [{ title: "Boarding House Dashboard", url: "/boarding-house", iconName: "Home" }, { title: "Boarding Houses", url: "/boarding-houses", iconName: "Building2" }, { title: "Boarding Rooms", url: "/boarding-rooms", iconName: "BedDouble" }, { title: "Boarding Students", url: "/boarding-students", iconName: "GraduationCap" }, { title: "Boarding Fees", url: "/boarding-fees", iconName: "Wallet" }, { title: "Boarding Attendance", url: "/boarding-attendance", iconName: "CalendarCheck" }, { title: "Boarding Leave", url: "/boarding-leave", iconName: "LogOut" }, { title: "Boarding Maintenance", url: "/boarding-maintenance", iconName: "Wrench" }, { title: "Boarding Discipline", url: "/boarding-discipline", iconName: "ShieldAlert" }, { title: "Boarding Visitors", url: "/boarding-visitors", iconName: "Users" }, { title: "Boarding Meals", url: "/boarding-meals", iconName: "Utensils" }, { title: "Boarding Reports", url: "/boarding-reports", iconName: "FileBarChart" }] },
 
   { key: "learning", label: "Help & Learning", category: "Help & Learning", core: true, defaultInstalled: true, description: "Accounting basics, Dr/Cr rules and Zambian compliance guides.", routes: [{ title: "Learn Centre", url: "/learn", iconName: "GraduationCap" }, { title: "New Company Setup", url: "/learn/new-company", iconName: "ClipboardList" }, { title: "Accounting Basics", url: "/learn/accounting-basics", iconName: "GraduationCap" }] },
   { key: "admin", label: "Administration", category: "Administration", defaultInstalled: true, description: "Company setup, users, roles, approvals and audit controls.", routes: [{ title: "Administration", url: "/admin", iconName: "Settings" }, { title: "Company Setup", url: "/setup", iconName: "Building2" }, { title: "Users & Roles", url: "/roles", iconName: "ShieldCheck" }, { title: "Audit Logs", url: "/audit-logs", iconName: "History" }] },
 ];
+export const OPTIONAL_WHEN_GATED = ["property_management", "public_services"] as const;
+
 export const CATEGORY_ORDER: ModuleCategory[] = [
   "Core", "Sales", "Purchases", "Inventory", "POS", "Restaurant",
   "Finance", "HR & Payroll", "CRM", "Projects & Service", "Reports",
@@ -42,10 +45,11 @@ export function getModule(key: string): ModuleDef | undefined {
 }
 
 /** Installed = core, or explicitly enabled for the company, or installed by default. */
-export function isModuleInstalled(key: string, explicit: Set<string>): boolean {
+export function isModuleInstalled(key: string, explicit: Set<string>, gatingActive = false): boolean {
   const m = getModule(key);
   if (!m) return false;
   if (m.core) return true;
   if (explicit.has(key)) return true;
+  if (gatingActive && (OPTIONAL_WHEN_GATED as readonly string[]).includes(key)) return false;
   return !!m.defaultInstalled;
 }

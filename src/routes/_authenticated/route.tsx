@@ -17,6 +17,9 @@ import { WorkspaceSwitch } from "@/components/WorkspaceSwitch";
 import { TopNavigation } from "@/components/TopNavigation";
 import { loadAccess, canAccessPath, landingFor, hasPerm, clearAccessCache, type Access } from "@/lib/rbac";
 import { toast } from "sonner";
+import { RequireModule } from "@/components/RequireModule";
+import { useInstalledModules } from "@/hooks/useInstalledModules";
+import { moduleKeyForPath } from "@/lib/module-gating";
 
 /** Staff may only open routes their permissions allow — typed URLs included. */
 async function enforceRoute(pathname: string) {
@@ -78,6 +81,9 @@ function Shell() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const crumb = useBreadcrumb();
+  const routePath = useRouterState({ select: r => r.location.pathname });
+  const { gatingActive, gatingFailClosed } = useInstalledModules();
+  const gatedModuleKey = moduleKeyForPath(routePath);
   const pageKey = useRouterState({ select: r => r.location.pathname });
   const router = useRouter();
   const { access } = Route.useRouteContext() as { access?: Access | null };
@@ -187,7 +193,7 @@ function Shell() {
           <OfflineBanner />
           <main className="flex-1 min-w-0 pb-24 md:pb-0">
             <div key={pageKey} className="page-enter sifobooks-2026-page">
-              <Outlet />
+              {(gatingActive || gatingFailClosed) && gatedModuleKey ? <RequireModule moduleKey={gatedModuleKey}><Outlet /></RequireModule> : <Outlet />}
             </div>
           </main>
           <SifoMobileNav />

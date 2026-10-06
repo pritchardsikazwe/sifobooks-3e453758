@@ -1,71 +1,52 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MODULES, isModuleInstalled } from "@/lib/modules";
+import { MODULES } from "@/lib/modules";
 import { SIFOBOOKS_EDITION } from "@/lib/edition";
+import { resolveActiveCompanyId } from "@/lib/active-company";
+import { MODULE_GATE_KEY, isModuleGatingBuildEnabled, resolveInstalledModules } from "@/lib/module-gating";
 
-/**
- * Returns which modules are installed for the current user's active company.
- * "Installed" = row in company_modules OR module.defaultInstalled OR core.
- */
 export function useInstalledModules() {
-  const [installed, setInstalled] = useState<Set<string>>(() => {
-    // Optimistic default: all defaultInstalled + core
-    return new Set(MODULES.filter(m => m.core || m.defaultInstalled).map(m => m.key));
-  });
+  const gatingBuildEnabled = isModuleGatingBuildEnabled();
+  const [installed, setInstalled] = useState<Set<string>>(() =>
+    gatingBuildEnabled ? new Set(MODULES.filter(m => m.core).map(m => m.key)) : new Set(MODULES.filter(m => m.core || m.defaultInstalled).map(m => m.key))
+  );
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [gatingActive, setGatingActive] = useState(false);
+  const [gatingFailClosed, setGatingFailClosed] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setLoading(false); return; }
-    // Prefer the active company from the profile (set by the switcher).
-    const { data: p } = await supabase
-      .from("profiles").select("active_company_id").eq("id", u.user.id).maybeSingle();
-    let cid: string | null = (p?.active_company_id as string | null) ?? null;
-    if (!cid) {
-      const { data: cs } = await supabase
-        .from("companies").select("id").eq("user_id", u.user.id).order("created_at").limit(1);
-      cid = cs?.[0]?.id ?? null;
-    }
-    setCompanyId(cid);
 
+    const cid = await resolveActiveCompanyId(u.user.id);
+    setCompanyId(cid);
     const explicit = new Set<string>();
     const suppressed = new Set<string>();
+    let gateOn = false;
+    let moduleQueryFailed = false;
+
     if (cid) {
-      const { data: rows } = await supabase
-        .from("company_modules").select("module_key").eq("company_id", cid);
-      (rows ?? []).forEach(r => {
+      const { data: rows, error } = await supabase.from("company_modules").select("module_key").eq("company_id", cid);
+      if (error) moduleQueryFailed = true;
+      else (rows ?? []).forEach(r => {
         const k = r.module_key;
-        if (k.startsWith("__off__:")) suppressed.add(k.slice("__off__:".length));
+        if (k === MODULE_GATE_KEY) gateOn = true;
+        else if (k.startsWith("__off__:")) suppressed.add(k.slice("__off__:".length));
         else explicit.add(k);
       });
     }
-    const merged = new Set<string>();
-    MODULES.forEach(m => {
-      if (m.core) { merged.add(m.key); return; }
-      if (suppressed.has(m.key)) return;
-      if (isModuleInstalled(m.key, explicit)) merged.add(m.key);
-    });
-    if (SIFOBOOKS_EDITION === "restaurant") {
-      ["core_home", "sales", "purchases", "inventory", "retail_pos", "restaurant", "reports", "admin", "learning"].forEach(k => merged.add(k));
-    } else if (SIFOBOOKS_EDITION === "retail") {
-      ["core_home", "sales", "purchases", "inventory", "retail_pos", "reports", "admin", "learning"].forEach(k => merged.add(k));
-    } else if (SIFOBOOKS_EDITION === "hotel") {
-      ["core_home", "sales", "purchases", "inventory", "restaurant", "hotel_erp", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
-    } else if (SIFOBOOKS_EDITION === "school") {
-      ["core_home", "sales", "purchases", "inventory", "hr_payroll", "school_erp", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
-    } else if (SIFOBOOKS_EDITION === "accounting") {
-      ["core_home", "sales", "purchases", "inventory", "finance", "fixed_assets", "budgets", "multi_currency", "hr_payroll", "reports", "compliance", "admin", "learning"].forEach(k => merged.add(k));
-    }
-    // Edition defaults never override an explicit business capability being OFF.
-    suppressed.forEach(k => merged.delete(k));
-    setInstalled(merged);
+
+    const active = gatingBuildEnabled && gateOn;
+    const failClosed = gatingBuildEnabled && moduleQueryFailed;
+    setGatingActive(active);
+    setGatingFailClosed(failClosed);
+    setInstalled(resolveInstalledModules({ explicit, suppressed, gatingActive: active, failClosed, edition: SIFOBOOKS_EDITION }));
     setLoading(false);
-  }, []);
+  }, [gatingBuildEnabled]);
 
   useEffect(() => { refresh(); }, [refresh]);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handler = () => { void refresh(); };
@@ -73,5 +54,5 @@ export function useInstalledModules() {
     return () => window.removeEventListener("sifobooks:modules-changed", handler);
   }, [refresh]);
 
-  return { installed, companyId, loading, refresh, isInstalled: (k: string) => installed.has(k) };
+  return { installed, companyId, loading, gatingActive, gatingFailClosed, refresh, isInstalled: (k: string) => installed.has(k) };
 }

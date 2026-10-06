@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getIndustry, type Industry } from "@/lib/industries";
+import { getModule, OPTIONAL_WHEN_GATED } from "@/lib/modules";
 
 export type InstallResult = {
   industry: string;
@@ -55,9 +56,18 @@ export async function installIndustry(params: {
     }
   }
 
-  // 3. Install modules (upsert on (company_id, module_key))
+  // 3. Install modules (upsert on (company_id, module_key)).
+  // Re-installing a module also clears its explicit __off__ suppression row.
   let modulesInstalled = 0;
   if (params.moduleKeys.length > 0) {
+    const suppressedKeys = params.moduleKeys.map(k => "__off__:" + k);
+    const { error: clearError } = await supabase
+      .from("company_modules")
+      .delete()
+      .eq("company_id", params.companyId)
+      .in("module_key", suppressedKeys);
+    if (clearError) throw clearError;
+
     const rows = params.moduleKeys.map(k => ({
       user_id: params.userId,
       company_id: params.companyId,
@@ -79,6 +89,25 @@ export async function installIndustry(params: {
 }
 
 export async function uninstallModule(companyId: string, moduleKey: string) {
+  const module = getModule(moduleKey);
+  const gatedDefaultOff =
+    !!module?.defaultInstalled ||
+    (OPTIONAL_WHEN_GATED as readonly string[]).includes(moduleKey);
+
+  if (gatedDefaultOff) {
+    const { data: user } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("company_modules")
+      .upsert({
+        user_id: user.user?.id ?? "",
+        company_id: companyId,
+        module_key: "__off__:" + moduleKey,
+        config: {},
+      }, { onConflict: "company_id,module_key" });
+    if (error) throw error;
+    return;
+  }
+
   const { error } = await supabase
     .from("company_modules")
     .delete()
