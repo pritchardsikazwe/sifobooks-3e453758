@@ -3,7 +3,7 @@ import { evaluateInputVat, applyVatAdjustments, type TaxAdjustment } from "./tax
 
 export const EXCLUDED_STATUSES = ["draft", "voided", "void", "cancelled"];
 export const VAT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,vat_amount,total,status,customers(name),invoice_items(quantity,unit_price,discount_amount,discount_type,vat_rate,line_total)";
-export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,vat_recoverable,vat_claim_date,business_use_percent,import_vat,vat_evidence_type,suppliers(name)";
+export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,vat_recoverable,vat_claim_date,business_use_percent,import_vat,vat_evidence_type,suppliers(name),bill_vat_lines(id,description,tax_category,vat_rate,net_amount,vat_amount,business_use_percent,import_vat,evidence_type)";
 export const TOT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,total,status,customers(name)";
 
 const n = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
@@ -82,21 +82,42 @@ export function computeVatReturn(
   }
 
   const returnEnd = opts.returnEnd ?? new Date().toISOString().slice(0, 10);
-  const eligible = bl.map(b => ({
-    bill: b,
-    decision: evaluateInputVat({
-      taxAmount: b.tax_amount,
-      importVat: b.import_vat,
-      vatDate: b.vat_claim_date ?? b.bill_date,
-      returnEnd,
-      businessUsePercent: b.business_use_percent ?? 100,
-      vatEvidenceType: b.vat_evidence_type ?? "tax_invoice",
-      status: b.status,
-    }),
-  })).filter(x => x.decision.claimable);
-
-  let purchasesNet = eligible.reduce((s, x) => s + n(x.bill.subtotal), 0);
-  let purchasesVat = eligible.reduce((s, x) => s + x.decision.claimableVat, 0);
+  let purchasesNet = 0;
+  let purchasesVat = 0;
+  for (const bill of bl) {
+    const lines = Array.isArray(bill.bill_vat_lines) ? bill.bill_vat_lines : [];
+    if (lines.length) {
+      for (const line of lines) {
+        const decision = evaluateInputVat({
+          taxAmount: line.vat_amount,
+          importVat: line.import_vat,
+          vatDate: bill.vat_claim_date ?? bill.bill_date,
+          returnEnd,
+          businessUsePercent: line.business_use_percent ?? 100,
+          vatEvidenceType: line.evidence_type ?? "tax_invoice",
+          status: bill.status,
+        });
+        if (decision.claimable) {
+          purchasesNet += n(line.net_amount);
+          purchasesVat += decision.claimableVat;
+        }
+      }
+    } else {
+      const decision = evaluateInputVat({
+        taxAmount: bill.tax_amount,
+        importVat: bill.import_vat,
+        vatDate: bill.vat_claim_date ?? bill.bill_date,
+        returnEnd,
+        businessUsePercent: bill.business_use_percent ?? 100,
+        vatEvidenceType: bill.vat_evidence_type ?? "tax_invoice",
+        status: bill.status,
+      });
+      if (decision.claimable) {
+        purchasesNet += n(bill.subtotal);
+        purchasesVat += decision.claimableVat;
+      }
+    }
+  }
 
   if (opts.adjustments && opts.returnStart) {
     const a = applyVatAdjustments(opts.adjustments, opts.returnStart, returnEnd);
