@@ -174,11 +174,11 @@ export function AppSidebar() {
       education: ["school_erp"],
       property: ["property_management"],
       restaurant: ["restaurant"],
-      lending: ["loans", "borrowers", "repayments", "portfolio"],
+      lending: ["lending", "loans", "borrowers", "repayments", "portfolio"],
       butchery: ["butchery"],
     };
     const activeIndustryModules = new Set(industryModuleGroups[activeIndustry ?? ""] ?? []);
-    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
+    const verticalModules = new Set(["hotel_erp", "school_erp", "property_management", "restaurant", "lending", "loans", "borrowers", "repayments", "portfolio", "butchery"]);
     const verticalModuleAllowed = (module?: string) => {
       if (!module || !verticalModules.has(module)) return true;
       return activeIndustryModules.has(module) || enabledModules.has(module);
@@ -199,11 +199,8 @@ export function AppSidebar() {
             hr_payroll: "hr_payroll",
           };
           const cap = capabilityByModule[item.module];
-          // Inventory and Retail POS are core operational modules. They must
-          // remain visible even when a company is still classified as
-          // "general" or has not completed industry setup. Restaurant is also
-          // kept discoverable so an installed till cannot disappear from the
-          // sidebar because of an incomplete industry profile.
+          // Inventory and Retail POS are core operational modules. They remain
+          // available independently of vertical industry selection.
           if (cap && !capabilities[cap] && !["inventory", "retail_pos", "restaurant"].includes(item.module)) continue;
 
           if (seen.has(item.url)) continue;
@@ -240,7 +237,7 @@ export function AppSidebar() {
       hotel: "hotel_erp",
       school: "school_erp",
       property: "property_management",
-      lending: "loans",
+      lending: "lending",
       restaurant: "restaurant",
       boarding: "school_erp",
       butchery: "butchery",
@@ -252,11 +249,11 @@ export function AppSidebar() {
         url.startsWith("/property") ? "property" :
         url.startsWith("/lending") ? "lending" :
         url.startsWith("/restaurant") ? "restaurant" :
-        url.startsWith("/retail/butchery") || url.startsWith("/retail.butchery-") ? "butchery" :
+        url.startsWith("/retail/butchery") ? "butchery" :
         null;
       if (!group) return false;
       const module = industryRouteGroup[group];
-      return activeIndustry === ({hotel_erp:"hospitality",school_erp:"education",property_management:"property",loans:"lending",restaurant:"restaurant",butchery:"butchery"} as Record<string,string>)[module] || enabledModules.has(module);
+      return activeIndustry === ({hotel_erp:"hospitality",school_erp:"education",property_management:"property",lending:"lending",loans:"lending",restaurant:"restaurant",butchery:"butchery"} as Record<string,string>)[module] || enabledModules.has(module) || (group === "lending" && ["loans","borrowers","repayments","portfolio"].some(k => enabledModules.has(k)));
     };
 
     const industryItems: Array<[string,string,string]> = [
@@ -265,7 +262,7 @@ export function AppSidebar() {
       ["Property Dashboard","/property","Building2"],["Tenants","/property/tenants","Users"],["Leases","/property/leases","FileText"],["Collections","/property/collections","Wallet"],["Maintenance","/property/maintenance","Wrench"],["Property Reports","/property/reports","BarChart3"],
       ["Lending Dashboard","/lending","Landmark"],["Borrowers","/lending/borrowers","Users"],["Applications","/lending/applications","FileText"],["Credit Assessment","/lending/credit-assessment","ShieldCheck"],["Loan Products","/lending/products","Package"],["Portfolio","/lending/portfolio","PieChart"],["Disbursements","/lending/disbursements","Send"],["Repayments","/lending/repayments","CreditCard"],["Collections","/lending/collections","Wallet"],["Field Collections","/lending/field-collections","MapPin"],["Arrears","/lending/arrears","AlertTriangle"],["Promises","/lending/promises","Handshake"],["Guarantors","/lending/guarantors","UsersRound"],["Collateral","/lending/collateral","LockKeyhole"],["Group Lending","/lending/group-lending","Users"],["Savings","/lending/savings","PiggyBank"],["Investors","/lending/investors","Landmark"],["Mobile Money","/lending/mobile-money","Smartphone"],["Restructuring","/lending/restructuring","RefreshCw"],["Write-offs","/lending/writeoffs","Archive"],["Risk & Fraud","/lending/risk-fraud","ShieldAlert"],["Communications","/lending/communications","MessageSquare"],["Documents","/lending/documents","FileText"],["Customer Portal","/lending/customer-portal","ExternalLink"],["Investor Portal","/lending/investor-portal","ExternalLink"],["Lending Accounting","/lending/accounting","BookOpen"],["Lending Reports","/lending/reports","BarChart3"],["Lending Compliance","/lending/compliance","ShieldCheck"],["Branches","/lending/branches","GitBranch"],["Lending Settings","/lending/settings","Settings"],
       ["Boarding House Dashboard","/boarding-house","Home"],["Boarding Houses","/boarding-houses","Building2"],["Boarding Rooms","/boarding-rooms","BedDouble"],["Boarding Students","/boarding-students","GraduationCap"],["Boarding Fees","/boarding-fees","Wallet"],["Boarding Attendance","/boarding-attendance","CalendarCheck"],["Boarding Leave","/boarding-leave","LogOut"],["Boarding Maintenance","/boarding-maintenance","Wrench"],["Boarding Discipline","/boarding-discipline","ShieldAlert"],["Boarding Visitors","/boarding-visitors","Users"],["Boarding Meals","/boarding-meals","Utensils"],["Boarding Reports","/boarding-reports","FileBarChart"],      ["Restaurant","/restaurant","Utensils"],["Restaurant Onboarding","/restaurant/onboarding","Rocket"],["Registers","/restaurant/registers","Monitor"],["Restaurant POS","/restaurant/pos","ShoppingBag"],["Orders","/restaurant/orders","ClipboardList"],
-      ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail.butchery-products","Beef"],["Receiving","/retail.butchery-receiving","PackagePlus"],["Processing & Yield","/retail.butchery-processing","Scissors"],["Scale","/retail.butchery-scale","Scale"],["Labels","/retail.butchery-labels","Tags"],["Prices","/retail.butchery-prices","Tag"],["Inventory","/retail.butchery-inventory","Boxes"],["Sales","/retail.butchery-sales","Receipt"],["Reports","/retail.butchery-reports","BarChart3"],["Invoice","/retail.butchery-invoice","FileText"],
+      ["Butchery Dashboard","/retail/butchery","Beef"],["Butchery POS","/retail/butchery-pos","ShoppingBag"],["Products & Cuts","/retail/butchery-products","Beef"],["Receiving","/retail/butchery-receiving","PackagePlus"],["Processing & Yield","/retail/butchery-processing","Scissors"],["Scale","/retail/butchery-scale","Scale"],["Labels","/retail/butchery-labels","Tags"],["Prices","/retail/butchery-prices","Tag"],["Inventory","/retail/butchery-inventory","Boxes"],["Sales","/retail/butchery-sales","Receipt"],["Reports","/retail/butchery-reports","BarChart3"],["Invoice","/retail/butchery-invoice","FileText"],
     ];
     for (const [title,url,icon] of industryItems) {
       if (!showIndustryRoute(url)) continue;
@@ -319,7 +316,7 @@ export function AppSidebar() {
       make("Lending", byUrl(["/lending"])),
       make("Restaurant", byUrl(["/restaurant"])),
       make("Boarding House", byUrl(["/boarding-house", "/boarding-houses", "/boarding-rooms", "/boarding-students", "/boarding-fees", "/boarding-attendance", "/boarding-leave", "/boarding-maintenance", "/boarding-discipline", "/boarding-visitors", "/boarding-meals", "/boarding-reports"])),
-      make("Butchery", byUrl(["/retail/butchery", "/retail/butchery-pos", "/retail.butchery-"])),
+      make("Butchery", byUrl(["/retail/butchery", "/retail/butchery-pos", "/retail/butchery-"])),
       make("Settings", byUrl(
         ["/modules", "/subscription", "/learn"],
         ["Settings", "Modules", "Subscription", "Learn Centre", "New Company Setup", "Accounting Basics"]
