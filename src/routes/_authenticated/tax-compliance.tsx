@@ -23,6 +23,7 @@ function TaxCompliancePage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [adjustments, setAdjustments] = useState<TaxAdjustment[]>([]);
+  const [ledger, setLedger] = useState({ outputVat: 0, inputVat: 0, available: false });
   const [purchaseLine, setPurchaseLine] = useState({ bill_id: "", description: "", tax_category: "standard", vat_rate: "16", net_amount: "", vat_amount: "", business_use_percent: "100", import_vat: "0", evidence_type: "tax_invoice" });
   const [form, setForm] = useState({
     document_type: "credit_note",
@@ -38,6 +39,7 @@ function TaxCompliancePage() {
   const load = async () => {
     setLoading(true);
     const { from, to } = monthRange(month);
+    const { data: auth } = await supabase.auth.getUser();
     const [{ data: inv }, { data: bl }, { data: adj }] = await Promise.all([
       vatInvoicesQuery(supabase, from, to),
       vatBillsQuery(supabase, from, to),
@@ -46,6 +48,23 @@ function TaxCompliancePage() {
     setInvoices((inv ?? []).filter(isCountable));
     setBills((bl ?? []).filter(isCountable));
     setAdjustments((adj ?? []) as TaxAdjustment[]);
+    if (auth.user) {
+      const { data: accounts } = await supabase.from("accounts").select("id,code").eq("user_id", auth.user.id).in("code", ["1310","2100"]);
+      const ids = (accounts ?? []).map((a: any) => a.id);
+      const { data: entries } = await supabase.from("journal_entries").select("id,entry_date").eq("user_id", auth.user.id).eq("status", "posted").gte("entry_date", from).lte("entry_date", to);
+      const entryIds = (entries ?? []).map((e: any) => e.id);
+      if (ids.length && entryIds.length) {
+        const { data: lines } = await supabase.from("journal_lines").select("account_id,debit,credit").eq("user_id", auth.user.id).in("account_id", ids).in("entry_id", entryIds);
+        const byId = new Map((accounts ?? []).map((a: any) => [a.id, a.code]));
+        let outputVat = 0, inputVat = 0;
+        for (const line of lines ?? []) {
+          const code = byId.get(line.account_id);
+          if (code === "2100") outputVat += Number(line.credit || 0) - Number(line.debit || 0);
+          if (code === "1310") inputVat += Number(line.debit || 0) - Number(line.credit || 0);
+        }
+        setLedger({ outputVat: Math.round(outputVat * 100) / 100, inputVat: Math.round(inputVat * 100) / 100, available: true });
+      } else setLedger({ outputVat: 0, inputVat: 0, available: false });
+    }
     setLoading(false);
   };
 
@@ -139,7 +158,20 @@ function TaxCompliancePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Card>
+          <CardHeader><CardTitle className="text-base">VAT ledger reconciliation</CardTitle></CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            <Metric label="VAT Output — ledger" value={ledger.outputVat} />
+            <Metric label="VAT Input — ledger" value={ledger.inputVat} />
+            <div className="rounded-lg border p-4">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Reconciliation difference</div>
+              <div className="mt-1 text-2xl font-bold">{ledger.available ? fmt(Math.abs((totals.salesStandardVat - ledger.outputVat) - (totals.purchasesVat - ledger.inputVat))) : "—"}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{ledger.available ? "VAT source records vs VAT control accounts 2100/1310" : "Ledger control accounts unavailable for this user"}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="Output VAT" value={totals.salesStandardVat} />
           <Metric label="Input VAT" value={totals.purchasesVat} />
           <Metric label="Adjustments — Output" value={adjustmentTotals.outputVat} />
