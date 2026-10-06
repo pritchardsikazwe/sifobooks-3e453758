@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity, AlertTriangle, BarChart3, Bell, Building2, CheckCircle2, ChevronRight,
+  Activity, AlertTriangle, Building2, CheckCircle2, ChevronRight,
   CircleDollarSign, Clock3, Database, Gauge, KeyRound, Loader2, LogIn, Megaphone,
-  Package, Plus, RefreshCw, Search, Server, Settings2, ShieldAlert, Users, Users2,
-  Zap, CreditCard, CalendarClock, LifeBuoy,
+  Plus, RefreshCw, Search, Server, Settings2, ShieldAlert, Users,
+  CreditCard, CalendarClock,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
