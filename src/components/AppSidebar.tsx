@@ -168,7 +168,7 @@ export function AppSidebar() {
     const collected: NavItem[] = [];
     const seen = new Set<string>();
 
-    const activeIndustry = getSolution(workspaceIndustry)?.id ?? null;
+    const activeIndustry = getSolution(workspaceIndustry)?.id ?? workspaceIndustry ?? null;
     const industryModuleGroups: Record<string, string[]> = {
       hospitality: ["hotel_erp"],
       education: ["school_erp"],
