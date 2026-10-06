@@ -181,7 +181,7 @@ function TaxCompliancePage() {
               });
               if (!error) { setPurchaseLine(p => ({...p,description:"",net_amount:"",vat_amount:""})); await load(); }
             }}>Add purchase VAT line</Button>
-            <p className="text-xs text-muted-foreground">ZRA input VAT is restricted to business use, valid supporting evidence and the configured three-month claim window. citeturn2search0</p>
+            <p className="text-xs text-muted-foreground">ZRA input VAT is restricted to business use, valid supporting evidence and the configured three-month claim window.</p>
           </CardContent>
         </Card>
 
