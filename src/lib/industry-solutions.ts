@@ -253,7 +253,7 @@ export function getSolution(id?: string | null): IndustrySolution | undefined {
     hospital: "healthcare", pharmacy: "healthcare",
     hotel: "hospitality", lodge: "hospitality",
     shop: "retail", phone_shop: "retail",
-    law: "professional_services", consulting: "professional_services",\n    property_management: "property", lodge_property: "property",\n    meat_shop: "butchery", butcher: "butchery", butchery_shop: "butchery",
+    law: "professional_services", consulting: "professional_services",    property_management: "property", lodge_property: "property",    meat_shop: "butchery", butcher: "butchery", butchery_shop: "butchery",
   };
   return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
 }
@@ -273,7 +273,7 @@ const INDUSTRY_CAPABILITIES: Record<string, Record<BusinessCapabilityKey, boolea
   restaurant: { inventory: true, retail_pos: false, restaurant: true, hr_payroll: true },
   wholesale: { inventory: true, retail_pos: false, restaurant: false, hr_payroll: true },
   professional_services: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },\n  property: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },\n  butchery: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
+  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  property: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  butchery: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
   other: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
 };
 
