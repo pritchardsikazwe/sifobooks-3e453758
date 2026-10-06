@@ -15,7 +15,7 @@ function requireText(area: string, path: string, needles: string[]) {
   add(area, path, missing.length === 0, missing.length ? "missing: " + missing.join(", ") : "required markers present");
 }
 
-const editions = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property"];
+const editions = ["enterprise", "accounting", "retail", "restaurant", "hotel", "school", "property", "butchery"];
 requireText("Build", "scripts/build-desktop.ts", editions);
 requireText("Build", ".github/workflows/ci.yml", editions);
 requireText("Build", "package.json", ["build:desktop", "test", "qa:production"]);
@@ -49,7 +49,7 @@ requireFile("Installer","installer/SifoBooks.iss.template");
 requireFile("Installer","installer/build-installer.ps1");
 requireFile("Installer","installer/assets/SifoBooks-logo.svg");
 requireText("Installer","installer/SifoBooks.iss.template",["WizardImageFile","SifoBooks-logo.svg","14-Day Trial","Business. Accounting. Growth."]);
-requireText("Installer","installer/build-installer.ps1",["ImageMagick","Inno Setup 6","SifoBooks-$Edition-Windows-Setup.exe"]);
+requireText("Installer","installer/build-installer.ps1",["ImageMagick","Inno Setup 6","outputNameMap","SifoBooks-Butchery POS-Windows-Setup"]);
 requireText("Branding","scripts/build-desktop.ts",["SifoBooks.ico","README-FIRST.txt","license-public-key.pem"]);
 
 const forbidden = ["base" + "44.app","@" + "base44/"];
