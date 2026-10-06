@@ -218,6 +218,23 @@ function SuperAdminPage() {
     toast.success("Ledgers rebuilt");
   };
 
+  const updateLeadStatus = async (leadId: string, status: Lead["status"]) => {
+    const { error } = await supabase.from("sales_leads").update({ status, updated_at: new Date().toISOString() }).eq("id", leadId);
+    if (error) return toast.error(error.message);
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      await supabase.from("site_events").insert({
+        visitor_id: null,
+        event_name: "lead_status_changed",
+        page_path: "/super-admin",
+        target: status,
+        metadata: { lead_id: leadId, email: lead.email, previous_status: lead.status },
+      });
+    }
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
+    toast.success(`Lead marked ${status}`);
+  };
+
   const filteredUsers = useMemo(() => users.filter(u => !q || `${u.email ?? ""} ${u.full_name ?? ""}`.toLowerCase().includes(q.toLowerCase())), [users, q]);
   const filteredCompanies = useMemo(() => companies.filter(c => {
     if (!q) return true;
@@ -390,21 +407,110 @@ function SuperAdminPage() {
           </TabsList>
 
           <TabsContent value="analytics" className="pt-1">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {[
                 ["Unique Visitors", visitors.length],
-                ["Tracked Events", siteEvents.length],
+                ["Product Views", siteEvents.filter(e => e.event_name === "industry_click").length],
                 ["Leads", leads.length],
-                ["New Leads", leads.filter(l => l.status === "new").length],
-              ].map(([label,value]) => <Card key={String(label)} className="rounded-2xl p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-1 text-2xl font-black">{value}</div></Card>)}
+                ["Lead Rate", visitors.length ? `${((leads.length / visitors.length) * 100).toFixed(1)}%` : "0%"],
+                ["Customers", leads.filter(l => l.status === "won").length],
+              ].map(([label, value]) => (
+                <Card key={String(label)} className="rounded-2xl p-4">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="mt-1 text-2xl font-black">{value}</div>
+                </Card>
+              ))}
             </div>
+
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
-              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Traffic sources</h2><div className="space-y-2">{trafficSources.map(([s,n]) => <div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}{!trafficSources.length && <p className="text-sm text-slate-500">No traffic yet.</p>}</div></Card>
-              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Products / industries clicked</h2><div className="space-y-2">{productClicks.map(([s,n]) => <div key={s} className="flex justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}{!productClicks.length && <p className="text-sm text-slate-500">No product clicks yet.</p>}</div></Card>
-              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Devices</h2><div className="space-y-2">{Object.entries(visitors.reduce<Record<string,number>>((a,v)=>{const k=v.device_type||"unknown";a[k]=(a[k]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([s,n])=><div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}</div></Card>
+              <Card className="rounded-2xl p-5">
+                <h2 className="mb-3 font-bold">Traffic sources</h2>
+                <div className="space-y-2">
+                  {trafficSources.map(([s, n]) => <div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}
+                  {!trafficSources.length && <p className="text-sm text-slate-500">No traffic yet.</p>}
+                </div>
+              </Card>
+              <Card className="rounded-2xl p-5">
+                <h2 className="mb-3 font-bold">Products / industries clicked</h2>
+                <div className="space-y-2">
+                  {productClicks.map(([s, n]) => <div key={s} className="flex justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}
+                  {!productClicks.length && <p className="text-sm text-slate-500">No product clicks yet.</p>}
+                </div>
+              </Card>
+              <Card className="rounded-2xl p-5">
+                <h2 className="mb-3 font-bold">Devices</h2>
+                <div className="space-y-2">
+                  {Object.entries(visitors.reduce<Record<string, number>>((a, v) => { const k = v.device_type || "unknown"; a[k] = (a[k] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1]).map(([s, n]) => <div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}
+                </div>
+              </Card>
             </div>
-            <Card className="mt-4 rounded-2xl p-5"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Recent leads</h2><Badge variant="outline">{leads.length} total</Badge></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Lead</th><th>Company</th><th>Industry</th><th>Interest</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody className="divide-y">{leads.slice(0,20).map(l=><tr key={l.id}><td className="py-2 font-semibold">{l.name}<div className="text-xs text-slate-500">{l.email}</div></td><td>{l.company||"—"}</td><td>{l.industry||"—"}</td><td>{l.interest||"—"}</td><td>{l.source||"Direct"}</td><td><Badge variant="outline">{l.status}</Badge></td><td className="text-xs text-slate-500">{new Date(l.created_at).toLocaleString()}</td></tr>)}</tbody></table></div></Card>
-            <Card className="mt-4 rounded-2xl p-5"><h2 className="mb-3 font-bold">Recent visitors</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Last seen</th><th>Landing page</th><th>Source</th><th>Campaign</th><th>Device</th></tr></thead><tbody className="divide-y">{visitors.slice(0,20).map(v=><tr key={v.visitor_id}><td className="py-2 text-xs">{new Date(v.last_seen).toLocaleString()}</td><td>{v.landing_path||"/"}</td><td>{v.utm_source||v.referrer||"Direct"}</td><td>{v.utm_campaign||"—"}</td><td>{v.device_type||"—"}</td></tr>)}</tbody></table></div></Card>
+
+            <Card className="mt-4 rounded-2xl p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div><h2 className="font-bold">Sales funnel</h2><p className="text-xs text-slate-500">Anonymous visitor activity becomes a named lead only after voluntary submission.</p></div>
+                <Badge variant="outline">{leads.filter(l => l.status === "won").length} customers</Badge>
+              </div>
+              <div className="grid gap-2 md:grid-cols-7">
+                {[
+                  ["Visitors", visitors.length],
+                  ["Product views", siteEvents.filter(e => e.event_name === "industry_click").length],
+                  ["Leads", leads.length],
+                  ["Contacted", leads.filter(l => l.status === "contacted").length],
+                  ["Qualified", leads.filter(l => l.status === "qualified").length],
+                  ["Demo requested", siteEvents.filter(e => e.event_name === "demo_requested").length],
+                  ["Customers", leads.filter(l => l.status === "won").length],
+                ].map(([label, value], i) => (
+                  <div key={String(label)} className="relative rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+                    <div className="mt-1 text-xl font-black text-slate-900">{value}</div>
+                    {i < 6 && <ChevronRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-slate-300 md:block" />}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="mt-4 rounded-2xl p-5">
+              <div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Lead pipeline</h2><Badge variant="outline">{leads.length} total</Badge></div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Lead</th><th>Company</th><th>Industry</th><th>Interest</th><th>Source</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody className="divide-y">
+                    {leads.slice(0, 50).map(l => (
+                      <tr key={l.id}>
+                        <td className="py-2 font-semibold">{l.name}<div className="text-xs font-normal text-slate-500">{l.email}{l.phone ? ` · ${l.phone}` : ""}</div></td>
+                        <td>{l.company || "—"}</td>
+                        <td>{l.industry || "—"}</td>
+                        <td>{l.interest || "—"}</td>
+                        <td>{l.source || "Direct"}</td>
+                        <td>
+                          <select
+                            value={l.status}
+                            onChange={e => void updateLeadStatus(l.id, e.target.value as Lead["status"])}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium"
+                          >
+                            {["new", "contacted", "qualified", "won", "lost"].map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        </td>
+                        <td className="text-xs text-slate-500">{new Date(l.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {!leads.length && <p className="py-8 text-center text-sm text-slate-400">No leads yet.</p>}
+              </div>
+            </Card>
+
+            <Card className="mt-4 rounded-2xl p-5">
+              <h2 className="mb-3 font-bold">Recent visitors</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Last seen</th><th>Landing page</th><th>Source</th><th>Campaign</th><th>Device</th></tr></thead>
+                  <tbody className="divide-y">
+                    {visitors.slice(0, 30).map(v => <tr key={v.visitor_id}><td className="py-2 text-xs">{new Date(v.last_seen).toLocaleString()}</td><td>{v.landing_path || "/"}</td><td>{v.utm_source || v.referrer || "Direct"}</td><td>{v.utm_campaign || "—"}</td><td>{v.device_type || "—"}</td></tr>)}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="dashboard" className="pt-1">
