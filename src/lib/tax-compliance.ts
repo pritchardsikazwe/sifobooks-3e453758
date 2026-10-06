@@ -95,8 +95,14 @@ export function evaluateInputVat(opts: {
     return { claimable: false, reason: "No VAT amount recorded.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
   if (!opts.vatEvidenceType)
     return { claimable: false, reason: "Valid VAT evidence has not been recorded.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
-  if (ageDays !== null && (ageDays < 0 || ageDays > 92))
-    return { claimable: false, reason: ageDays < 0 ? "VAT date is after the return period." : "Input VAT is outside the configured three-month claim window.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
+  if (returnEnd && vatDate) {
+    if (vatDate > returnEnd)
+      return { claimable: false, reason: "VAT date is after the return period.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
+    const deadline = new Date(vatDate.getTime());
+    deadline.setMonth(deadline.getMonth() + 3);
+    if (returnEnd > deadline)
+      return { claimable: false, reason: "Input VAT is outside the configured three-month claim window.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
+  }
   if (businessUsePercent <= 0)
     return { claimable: false, reason: "Business-use percentage is zero.", sourceVat, claimableVat: 0, businessUsePercent, ageDays };
 
