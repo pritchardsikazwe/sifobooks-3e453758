@@ -51,8 +51,8 @@ export const NAPSA_CAP = 1446.015;
 export const NHIMA_RATE = 0.01;
 export const WCF_RATE = 0.015;
 export const SDL_RATE = 0.005;
-/** Housing allowance exempt up to this % of basic (ZRA practice). */
-export const HOUSING_EXEMPT_PCT = 0.30;
+/** Cash housing/transport/utility allowances are taxable emoluments; 0 means no automatic PAYE exemption. */
+export const HOUSING_EXEMPT_PCT = 0;
 /** Standard working hours per month for hourly conversion. */
 export const STD_HOURS_PER_MONTH = 176;
 export const OVERTIME_WEEKDAY = 1.5;
@@ -194,9 +194,9 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
 
   const earnings: EarningLine[] = [
     { label: "Basic Pay", amount: basic, taxable: true },
-    ...(utility ? [{ label: "Utility Allowance", amount: utility, taxable: false }] : []),
+    ...(utility ? [{ label: "Utility Allowance", amount: utility, taxable: true }] : []),
     ...(housing ? [{ label: "Housing Allowance", amount: housing, taxable: housingTaxable > 0 }] : []),
-    ...(transport ? [{ label: "Transport Allowance", amount: transport, taxable: false }] : []),
+    ...(transport ? [{ label: "Transport Allowance", amount: transport, taxable: true }] : []),
     ...(overtime ? [{ label: "Overtime", amount: overtime, taxable: true }] : []),
     ...(shift ? [{ label: "Shift Differential", amount: shift, taxable: true }] : []),
     ...(acting ? [{ label: "Acting Allowance", amount: acting, taxable: true }] : []),
@@ -212,8 +212,8 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
   const gross = round2(earnings.reduce((s, l) => s + num(l.amount), 0));
 
   const taxable = round2(
-    basic + overtime + shift + bonus + commission + backpay + leavePay + gratuity +
-    acting + responsibility + housingTaxable +
+    basic + utility + housingTaxable + transport + overtime + shift + bonus + commission + backpay + leavePay + gratuity +
+    acting + responsibility +
     otherEarnings.filter(l => (l.taxable ?? true)).reduce((s, l) => s + num(l.amount), 0)
   );
 
