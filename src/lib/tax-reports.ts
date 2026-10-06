@@ -3,7 +3,7 @@
 // Rules are the ones the screens already used (no new tax rules):
 //  - only issued documents count: drafts are excluded, and voided/cancelled
 //    documents are excluded as the invoice list already treats them as void;
-//  - VAT return boxes: standard-rated = VAT > 0, zero-rated = VAT = 0;
+//  - VAT sales classification prefers invoice-line VAT rates, so mixed-rate invoices are split correctly;\n//    legacy invoices without line data retain the invoice-level fallback.
 //  - Turnover Tax = gross invoiced turnover x rate (default 5%).
 
 export const EXCLUDED_STATUSES = ["draft", "voided", "void", "cancelled"];
