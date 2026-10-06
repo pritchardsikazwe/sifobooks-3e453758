@@ -52,6 +52,7 @@ if (!(Test-Path $iscc)) { throw "Inno Setup 6 ISCC.exe not found." }
 & $iscc $outIss
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }
 
-$setup = Join-Path $outDir "SifoBooks-$Edition-Windows-Setup.exe"
+$setupName = if ($Edition -eq "butchery") { "SifoBooks-Butchery POS-Windows-Setup.exe" } else { "SifoBooks-$Edition-Windows-Setup.exe" }
+$setup = Join-Path $outDir $setupName
 if (!(Test-Path $setup)) { throw "Installer output not found: $setup" }
 Write-Host "Created $setup"
