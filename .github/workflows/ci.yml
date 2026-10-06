@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        edition: [enterprise, accounting, retail, restaurant, hotel, school, property, lending, payroll]
+        edition: [enterprise, accounting, retail, restaurant, hotel, school, property, lending, payroll, butchery]
     runs-on: windows-latest
     env:
       SIFOBOOKS_EDITION: ${{ matrix.edition }}
