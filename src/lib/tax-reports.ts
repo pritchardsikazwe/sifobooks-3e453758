@@ -9,7 +9,7 @@
 export const EXCLUDED_STATUSES = ["draft", "voided", "void", "cancelled"];
 
 export const VAT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,vat_amount,total,status,customers(name)";
-export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,suppliers(name)";
+export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,vat_recoverable,vat_claim_date,business_use_percent,import_vat,vat_evidence_type,suppliers(name)";
 export const TOT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,total,status,customers(name)";
 
 const n = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
@@ -45,12 +45,12 @@ export type VatReturn = {
   invoiceCount: number; billCount: number;
 };
 
-export function computeVatReturn(invoices: any[], bills: any[]): VatReturn {
+import { evaluateInputVat, applyVatAdjustments, type TaxAdjustment } from "./tax-compliance";\n\nexport function computeVatReturn(invoices: any[], bills: any[], opts: { returnEnd?: string; adjustments?: TaxAdjustment[]; returnStart?: string } = {}): VatReturn {
   const inv = (invoices ?? []).filter(isCountable);
   const bl = (bills ?? []).filter(isCountable);
   const std = inv.filter((i) => n(i.vat_amount) > 0);
   const zero = inv.filter((i) => n(i.vat_amount) === 0);
-  const stdIn = bl.filter((b) => n(b.tax_amount) > 0);
+  const returnEnd = opts.returnEnd ?? new Date().toISOString().slice(0, 10);\n  const input = bl.map((b) => ({ bill: b, decision: evaluateInputVat({\n    taxAmount: b.tax_amount, importVat: b.import_vat, vatDate: b.vat_claim_date ?? b.bill_date, returnEnd,\n    businessUsePercent: b.business_use_percent ?? 100, vatEvidenceType: b.vat_evidence_type ?? "tax_invoice", status: b.status,\n  })}));\n  const stdIn = input.filter((x) => x.decision.claimable);
   const out = {
     salesStandardNet: r2(std.reduce((s, r) => s + n(r.subtotal), 0)),
     salesStandardVat: r2(std.reduce((s, r) => s + n(r.vat_amount), 0)),
