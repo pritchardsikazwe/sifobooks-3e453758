@@ -76,6 +76,9 @@ export async function submitSalesLead(input: {
     source: a.utm_source || (a.referrer ? "referral" : "direct"),
     ...a,
   });
-  if (!error) await trackMarketingEvent("lead_submitted", input.interest || "general");
+  if (!error) {
+    await trackMarketingEvent("lead_submitted", input.interest || "general");
+    if (input.interest === "Demo request") await trackMarketingEvent("demo_requested", input.industry || "general");
+  }
   return { error };
 }
