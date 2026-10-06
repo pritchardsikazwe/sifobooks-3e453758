@@ -55,6 +55,8 @@ export function computeVatReturn(
 
   for (const invoice of inv) {
     const lines = Array.isArray(invoice.invoice_items) ? invoice.invoice_items : [];
+    const lineTotalSum = lines.reduce((s: number, line: any) => s + n(line.line_total), 0);
+    const inclusiveLines = Math.abs(lineTotalSum - n(invoice.total)) < 0.01;
     if (lines.length) {
       for (const line of lines) {
         const qty = n(line.quantity);
@@ -66,7 +68,7 @@ export function computeVatReturn(
         const rate = n(line.vat_rate);
         if (rate > 0) {
           salesStandardNet += net;
-          salesStandardVat += n(line.line_total) > 0 ? n(line.line_total) * rate / (100 + rate) : net * rate / 100;
+          salesStandardVat += inclusiveLines ? n(line.line_total) * rate / (100 + rate) : net * rate / 100;
         } else {
           salesZeroRatedNet += net;
         }
