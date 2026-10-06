@@ -233,7 +233,8 @@ function GovernmentCompliancePage() {
           </TabsContent>
         </Tabs>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
+          <QuickLink title="Tax Compliance Centre" description="VAT 3, input VAT, credit/debit notes, reconciliation and filing exports." href="/tax-compliance" />
           <QuickLink title="Existing compliance calendar" description="Detailed obligations, filing status and due-date control." href="/compliance" />
           <QuickLink title="ZRA Smart Invoice" description="Existing VSDC configuration and ZRA item mapping tools." href="/zra-smart-invoice" />
           <QuickLink title="Audit logs" description="Review the existing SifoBooks audit trail and controlled changes." href="/audit-logs" />

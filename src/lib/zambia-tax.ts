@@ -32,13 +32,13 @@ export const INCOME_TAX = {
 export const FILING_CALENDAR = [
   { body: "NAPSA",   obligation: "Employer & employee contributions", frequency: "Monthly", dueDay: 10 },
   { body: "NHIMA",   obligation: "Health insurance contributions",    frequency: "Monthly", dueDay: 10 },
-  { body: "ZRA",     obligation: "PAYE return & remittance",          frequency: "Monthly", dueDay: 14 },
+  { body: "ZRA",     obligation: "PAYE return & remittance",          frequency: "Monthly", dueDay: 10 },
   { body: "ZRA",     obligation: "VAT return (VAT 3)",                frequency: "Monthly", dueDay: 18 },
   { body: "ZRA",     obligation: "Withholding tax return",            frequency: "Monthly", dueDay: 14 },
   { body: "ZRA",     obligation: "Turnover tax return",               frequency: "Monthly", dueDay: 14 },
-  { body: "TEVETA",  obligation: "Skills Development Levy",           frequency: "Monthly", dueDay: 20 },
+  { body: "TEVETA",  obligation: "Skills Development Levy",           frequency: "Monthly", dueDay: 10 },
   { body: "ZRA",     obligation: "Provisional Income Tax return",     frequency: "Quarterly", dueDay: 10 },
-  { body: "ZRA",     obligation: "Annual Income Tax return (ITF12)",  frequency: "Annual",  dueDay: 30 /* June */ },
+  { body: "ZRA",     obligation: "Annual Income Tax return (ITF12)",  frequency: "Annual",  dueDay: 21 /* June */ },
   { body: "WCFCB",   obligation: "Workers' comp assessment return",   frequency: "Annual",  dueDay: 31 /* March */ },
   { body: "PACRA",   obligation: "Annual return & B.O. filing",       frequency: "Annual",  dueDay: 30 },
 ];

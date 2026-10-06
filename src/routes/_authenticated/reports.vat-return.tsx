@@ -16,21 +16,23 @@ function VatReturnPage() {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
+  const [adjustments, setAdjustments] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       const { from, to } = monthRange(month);
-      const [{ data: inv }, { data: bl }] = await Promise.all([
+      const [{ data: inv }, { data: bl }, { data: adj }] = await Promise.all([
         vatInvoicesQuery(supabase, from, to),
         vatBillsQuery(supabase, from, to),
+        supabase.from("tax_adjustments").select("*").gte("adjustment_date", from).lte("adjustment_date", to),
       ]);
-      setInvoices((inv ?? []).filter(isCountable)); setBills((bl ?? []).filter(isCountable));
+      setInvoices((inv ?? []).filter(isCountable)); setBills((bl ?? []).filter(isCountable)); setAdjustments(adj ?? []);
       setLoading(false);
     })();
   }, [month]);
 
-  const totals = useMemo(() => computeVatReturn(invoices, bills), [invoices, bills]);
+  const totals = useMemo(() => { const { from, to } = monthRange(month); return computeVatReturn(invoices, bills, { returnStart: from, returnEnd: to, adjustments }); }, [invoices, bills, adjustments, month]);
 
   const netVat = totals.netVat;
 

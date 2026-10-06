@@ -58,10 +58,40 @@ export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
   },
 ];
 
+export type StatutoryTaxRules = {
+  effectiveFrom: string;
+  payeBands: PayeBand[];
+  napsaRate: number;
+  napsaCap: number;
+  nhimaRate: number;
+  wcfRate: number;
+  sdlRate: number;
+};
+
+/** Effective-dated statutory parameters. NAPSA 2026 reflects the current NAPSA contribution ceiling of K28,920.30, i.e. K1,446.015 per employee/employer side. */
+export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
+  { effectiveFrom: "2026-01-01", payeBands: DEFAULT_PAYE_BANDS, napsaRate: 0.05, napsaCap: 1446.015, nhimaRate: 0.01, wcfRate: 0.015, sdlRate: 0.005 },
+  { effectiveFrom: "2025-01-01", payeBands: DEFAULT_PAYE_BANDS, napsaRate: 0.05, napsaCap: 1708.20, nhimaRate: 0.01, wcfRate: 0.015, sdlRate: 0.005 },
+];
+
 export function statutoryTaxRulesFor(date = new Date()): StatutoryTaxRules {
   const iso = date.toISOString().slice(0, 10);
   return STATUTORY_TAX_RULES.find(r => iso >= r.effectiveFrom) ?? STATUTORY_TAX_RULES[STATUTORY_TAX_RULES.length - 1];
 }
+
+export const NAPSA_RATE = 0.05;
+/** 2026 NAPSA monthly maximum employee contribution; employer matches it. */
+export const NAPSA_CAP = 1446.015;
+export const NHIMA_RATE = 0.01;
+export const WCF_RATE = 0.015;
+export const SDL_RATE = 0.005;
+/** Cash housing/transport/utility allowances are taxable emoluments; 0 means no automatic PAYE exemption. */
+export const HOUSING_EXEMPT_PCT = 0;
+/** Standard working hours per month for hourly conversion. */
+export const STD_HOURS_PER_MONTH = 176;
+export const OVERTIME_WEEKDAY = 1.5;
+export const OVERTIME_WEEKEND = 2.0;
+export const OVERTIME_HOLIDAY = 2.0;
 
 export const DEFAULT_PAYE_BANDS: PayeBand[] = STATUTORY_TAX_RULES[0].payeBands;
 
@@ -154,6 +184,8 @@ export type PayslipInput = {
   paye_applies?: boolean;
   /** Override housing exemption percentage (default 30%). */
   housing_exempt_pct?: number;
+  /** Tax period date used to select effective-dated statutory rules. */
+  tax_date?: string | Date;
 };
 
 export type PayslipComputed = {
@@ -181,6 +213,9 @@ export type PayslipComputed = {
  *   overtime, shift differential and any `other_earnings` are fully taxable.
  */
 export function computePayslip(i: PayslipInput): PayslipComputed {
+  const basic = num(i.basic);
+  const taxDate = i.tax_date instanceof Date ? i.tax_date : i.tax_date ? new Date(i.tax_date) : new Date();
+  const rules = statutoryTaxRulesFor(taxDate);
   const basic = num(i.basic);\n  const taxDate = i.tax_date instanceof Date ? i.tax_date : i.tax_date ? new Date(i.tax_date) : new Date();\n  const rules = statutoryTaxRulesFor(taxDate);
   const overtime = num(i.overtime);
   const shift = num(i.shift_differential);
@@ -202,9 +237,9 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
 
   const earnings: EarningLine[] = [
     { label: "Basic Pay", amount: basic, taxable: true },
-    ...(utility ? [{ label: "Utility Allowance", amount: utility, taxable: false }] : []),
+    ...(utility ? [{ label: "Utility Allowance", amount: utility, taxable: true }] : []),
     ...(housing ? [{ label: "Housing Allowance", amount: housing, taxable: housingTaxable > 0 }] : []),
-    ...(transport ? [{ label: "Transport Allowance", amount: transport, taxable: false }] : []),
+    ...(transport ? [{ label: "Transport Allowance", amount: transport, taxable: true }] : []),
     ...(overtime ? [{ label: "Overtime", amount: overtime, taxable: true }] : []),
     ...(shift ? [{ label: "Shift Differential", amount: shift, taxable: true }] : []),
     ...(acting ? [{ label: "Acting Allowance", amount: acting, taxable: true }] : []),
@@ -220,8 +255,8 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
   const gross = round2(earnings.reduce((s, l) => s + num(l.amount), 0));
 
   const taxable = round2(
-    basic + overtime + shift + bonus + commission + backpay + leavePay + gratuity +
-    acting + responsibility + housingTaxable +
+    basic + utility + housingTaxable + transport + overtime + shift + bonus + commission + backpay + leavePay + gratuity +
+    acting + responsibility +
     otherEarnings.filter(l => (l.taxable ?? true)).reduce((s, l) => s + num(l.amount), 0)
   );
 

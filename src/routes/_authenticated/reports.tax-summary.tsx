@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportShell } from "@/components/ReportShell";
 import { fmt, num, monthRange } from "@/lib/reports";
 import { Input } from "@/components/ui/input";
+import { computeVatReturn, vatBillsQuery, vatInvoicesQuery } from "@/lib/tax-reports";
 
 export const Route = createFileRoute("/_authenticated/reports/tax-summary")({
   head: () => ({ meta: [{ title: "Tax Summary — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -15,29 +16,27 @@ function TaxSummaryPage() {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
+  const [adjustments, setAdjustments] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       const { from, to } = monthRange(month);
-      const [{ data: inv }, { data: bl }] = await Promise.all([
-        supabase.from("invoices").select("number,issue_date,subtotal,vat_amount,total,status,customers(name)")
-          .gte("issue_date", from).lte("issue_date", to).neq("status", "draft"),
-        supabase.from("bills").select("bill_number,bill_date,subtotal,tax_amount,total,status,suppliers(name)")
-          .gte("bill_date", from).lte("bill_date", to).neq("status", "draft"),
+      const [{ data: inv }, { data: bl }, { data: adj }] = await Promise.all([
+        vatInvoicesQuery(supabase, from, to),
+        vatBillsQuery(supabase, from, to),
+        supabase.from("tax_adjustments").select("*").gte("adjustment_date", from).lte("adjustment_date", to),
       ]);
-      setInvoices(inv ?? []); setBills(bl ?? []);
+      setInvoices(inv ?? []); setBills(bl ?? []); setAdjustments(adj ?? []);
       setLoading(false);
     })();
   }, [month]);
 
-  const { outputVat, inputVat, salesNet, purchasesNet } = useMemo(() => {
-    const outputVat = invoices.reduce((s, r) => s + num(r.vat_amount), 0);
-    const inputVat = bills.reduce((s, r) => s + num(r.tax_amount), 0);
-    const salesNet = invoices.reduce((s, r) => s + num(r.subtotal), 0);
-    const purchasesNet = bills.reduce((s, r) => s + num(r.subtotal), 0);
-    return { outputVat, inputVat, salesNet, purchasesNet };
-  }, [invoices, bills]);
+  const totals = useMemo(() => { const { from, to } = monthRange(month); return computeVatReturn(invoices, bills, { returnStart: from, returnEnd: to, adjustments }); }, [invoices, bills, adjustments, month]);
+  const outputVat = totals.salesStandardVat;
+  const inputVat = totals.purchasesVat;
+  const salesNet = totals.salesStandardNet;
+  const purchasesNet = totals.purchasesNet;
 
   const netPayable = outputVat - inputVat;
 

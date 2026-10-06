@@ -20,6 +20,8 @@ export type PayrollExportRow = {
   paye: number;
   napsa: number;
   nhima: number;
+  wcf?: number;
+  sdl?: number;
   net: number;
 };
 
@@ -76,6 +78,23 @@ export function exportNhima(rows: PayrollExportRow[], period: string): string {
       money(r.nhima),
       money(r.nhima),
     ]),
+  ]);
+}
+
+
+/** Employer-only Workers' Compensation schedule. Rate/base remains configurable by assessment. */
+export function exportWcf(rows: PayrollExportRow[], period: string): string {
+  return csv([
+    ["Employee Code", "NRC", "Employee Name", "Period", "Gross", "WCF Employer"],
+    ...rows.map(r => [r.employee_code ?? "", r.national_id ?? "", `${r.first_name} ${r.last_name}`, period, money(r.gross), money(r.wcf ?? 0)]),
+  ]);
+}
+
+/** Employer Skills Development Levy schedule. */
+export function exportSdl(rows: PayrollExportRow[], period: string): string {
+  return csv([
+    ["Employee Code", "NRC", "Employee Name", "Period", "Gross", "SDL Employer"],
+    ...rows.map(r => [r.employee_code ?? "", r.national_id ?? "", `${r.first_name} ${r.last_name}`, period, money(r.gross), money(r.sdl ?? 0)]),
   ]);
 }
 
