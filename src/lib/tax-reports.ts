@@ -3,12 +3,12 @@
 // Rules are the ones the screens already used (no new tax rules):
 //  - only issued documents count: drafts are excluded, and voided/cancelled
 //    documents are excluded as the invoice list already treats them as void;
-//  - VAT return boxes: standard-rated = VAT > 0, zero-rated = VAT = 0;
+//  - VAT sales classification prefers invoice-line VAT rates, so mixed-rate invoices are split correctly;\n//    legacy invoices without line data retain the invoice-level fallback.
 //  - Turnover Tax = gross invoiced turnover x rate (default 5%).
 
 export const EXCLUDED_STATUSES = ["draft", "voided", "void", "cancelled"];
 
-export const VAT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,vat_amount,total,status,customers(name)";
+export const VAT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,vat_amount,total,status,customers(name),invoice_items(quantity,unit_price,discount_amount,discount_type,vat_rate,line_total)";
 export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,suppliers(name)";
 export const TOT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,total,status,customers(name)";
 
@@ -48,13 +48,40 @@ export type VatReturn = {
 export function computeVatReturn(invoices: any[], bills: any[]): VatReturn {
   const inv = (invoices ?? []).filter(isCountable);
   const bl = (bills ?? []).filter(isCountable);
-  const std = inv.filter((i) => n(i.vat_amount) > 0);
-  const zero = inv.filter((i) => n(i.vat_amount) === 0);
+
+  // Prefer invoice-line tax classification when line data is available. This
+  // fixes mixed-rate invoices: an invoice is not classified wholly by its
+  // invoice-level VAT amount. Legacy invoices without lines retain the old
+  // invoice-level fallback so historical data remains reportable.
+  let salesStandardNet = 0;
+  let salesStandardVat = 0;
+  let salesZeroRatedNet = 0;
+
+  for (const invoice of inv) {
+    if (hasLines(invoice)) {
+      for (const line of invoice.invoice_items as InvoiceLine[]) {
+        const rate = n(line.vat_rate);
+        const net = invoiceLineNet(line);
+        if (rate > 0) {
+          salesStandardNet += net;
+          salesStandardVat += invoiceLineVat(line);
+        } else {
+          salesZeroRatedNet += net;
+        }
+      }
+    } else if (n(invoice.vat_amount) > 0) {
+      salesStandardNet += n(invoice.subtotal);
+      salesStandardVat += n(invoice.vat_amount);
+    } else {
+      salesZeroRatedNet += n(invoice.subtotal);
+    }
+  }
+
   const stdIn = bl.filter((b) => n(b.tax_amount) > 0);
   const out = {
-    salesStandardNet: r2(std.reduce((s, r) => s + n(r.subtotal), 0)),
-    salesStandardVat: r2(std.reduce((s, r) => s + n(r.vat_amount), 0)),
-    salesZeroRatedNet: r2(zero.reduce((s, r) => s + n(r.subtotal), 0)),
+    salesStandardNet: r2(salesStandardNet),
+    salesStandardVat: r2(salesStandardVat),
+    salesZeroRatedNet: r2(salesZeroRatedNet),
     purchasesNet: r2(stdIn.reduce((s, r) => s + n(r.subtotal), 0)),
     purchasesVat: r2(stdIn.reduce((s, r) => s + n(r.tax_amount), 0)),
     netVat: 0, invoiceCount: inv.length, billCount: bl.length,
