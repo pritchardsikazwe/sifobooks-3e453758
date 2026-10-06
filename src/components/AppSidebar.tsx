@@ -282,6 +282,9 @@ export function AppSidebar() {
     }
 
     const groups = [
+      isSuperAdmin ? make("Platform", [
+        { title: "SaaS SuperAdmin", url: "/super-admin", icon: iconFor("ShieldCheck") },
+      ]) : null,
       make("Home", byUrl(["/dashboard", "/approvals", "/notifications", "/industry"])),
       make("Company Setup", byUrl(
         ["/setup", "/warehouses", "/roles", "/admin", "/documents-branding", "/audit-logs"],
