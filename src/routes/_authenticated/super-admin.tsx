@@ -32,7 +32,7 @@ type Company = {
 type Profile = { id: string; email: string | null; full_name: string | null; created_at: string; active_company_id?: string | null };
 type Plan = { id: string; code: string; name: string; price_monthly: number; currency: string; max_users: number | null; max_invoices: number | null; is_active: boolean; sort_order: number };
 type AuditRow = { id: string; user_id: string | null; action: string; entity_type: string | null; entity_id: string | null; created_at: string; details: any };
-type Sub = { id: string; company_id: string; plan_id: string; status: string; current_period_end: string | null; created_at?: string | null };
+type Sub = { id: string; company_id: string; plan_id: string; status: string; current_period_end: string | null; created_at?: string | null };\ntype Visitor = { visitor_id: string; first_seen: string; last_seen: string; landing_path: string | null; referrer: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; device_type: string | null };\ntype SiteEvent = { visitor_id: string; event_name: string; page_path: string | null; target: string | null; created_at: string; metadata: any };\ntype Lead = { id: string; name: string; email: string; phone: string | null; company: string | null; industry: string | null; interest: string | null; source: string | null; status: string; created_at: string };
 
 const money = (n: number, currency = "ZMW") =>
   new Intl.NumberFormat("en-ZM", { style: "currency", currency, maximumFractionDigits: 0 }).format(n || 0);
@@ -55,7 +55,7 @@ function SuperAdminPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
-  const [roleMap, setRoleMap] = useState<Record<string, string[]>>({});
+  const [roleMap, setRoleMap] = useState<Record<string, string[]>>({});\n  const [visitors, setVisitors] = useState<Visitor[]>([]);\n  const [siteEvents, setSiteEvents] = useState<SiteEvent[]>([]);\n  const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [tab, setTab] = useState("dashboard");
@@ -70,7 +70,7 @@ function SuperAdminPage() {
     setAllowed(ok);
     if (!ok) { setChecking(false); return; }
 
-    const [f, c, p, pl, sb, al, ur] = await Promise.all([
+    const [f, c, p, pl, sb, al, ur, sv, se, ld] = await Promise.all([
       supabase.from("feature_flags").select("*").order("category").order("label"),
       supabase.from("companies").select("id,name,trading_name,base_currency,tpin,user_id,created_at,industry,email").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id,email,full_name,created_at,active_company_id").order("created_at", { ascending: false }).limit(500),
@@ -78,6 +78,9 @@ function SuperAdminPage() {
       supabase.from("company_subscriptions").select("id,company_id,plan_id,status,current_period_end,created_at"),
       supabase.from("audit_logs").select("id,user_id,action,entity_type,entity_id,created_at,details").order("created_at", { ascending: false }).limit(100),
       supabase.from("user_roles").select("user_id,role"),
+      supabase.from("site_visitors").select("visitor_id,first_seen,last_seen,landing_path,referrer,utm_source,utm_medium,utm_campaign,device_type").order("last_seen", { ascending: false }).limit(1000),
+      supabase.from("site_events").select("visitor_id,event_name,page_path,target,created_at,metadata").order("created_at", { ascending: false }).limit(2000),
+      supabase.from("sales_leads").select("id,name,email,phone,company,industry,interest,source,status,created_at").order("created_at", { ascending: false }).limit(500),
     ]);
 
     setFlags((f.data ?? []) as any);
@@ -86,6 +89,9 @@ function SuperAdminPage() {
     setPlans((pl.data ?? []) as any);
     setSubs((sb.data ?? []) as any);
     setAudit((al.data ?? []) as any);
+    setVisitors((sv.data ?? []) as any);
+    setSiteEvents((se.data ?? []) as any);
+    setLeads((ld.data ?? []) as any);
     const rm: Record<string, string[]> = {};
     (ur.data ?? []).forEach((r: any) => { (rm[r.user_id] ||= []).push(r.role); });
     setRoleMap(rm);
@@ -119,6 +125,21 @@ function SuperAdminPage() {
     .filter(s => s.current_period_end && ["active", "trial"].includes(s.status))
     .sort((a, b) => new Date(a.current_period_end!).getTime() - new Date(b.current_period_end!).getTime())
     .slice(0, 5);
+
+  const trafficSources = useMemo(() => {
+    const counts: Record<string, number> = {};
+    visitors.forEach(v => {
+      let source = v.utm_source || "Direct";
+      if (!v.utm_source && v.referrer) { try { source = new URL(v.referrer).hostname; } catch { source = "Referral"; } }
+      counts[source] = (counts[source] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,8);
+  }, [visitors]);
+  const productClicks = useMemo(() => {
+    const counts: Record<string, number> = {};
+    siteEvents.filter(e => e.event_name === "industry_click").forEach(e => { if (e.target) counts[e.target] = (counts[e.target] || 0) + 1; });
+    return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,8);
+  }, [siteEvents]);
 
   const toggle = async (key: string, next: boolean) => {
     setBusy(key);
@@ -357,6 +378,7 @@ function SuperAdminPage() {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex h-auto flex-wrap gap-1 bg-white p-1 shadow-sm">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="analytics">Marketing</TabsTrigger>
             <TabsTrigger value="tenants">Clients</TabsTrigger>
             <TabsTrigger value="users">Users & Roles</TabsTrigger>
             <TabsTrigger value="accounts">Accounts</TabsTrigger>
@@ -366,6 +388,24 @@ function SuperAdminPage() {
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="pt-1">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {[
+                ["Unique Visitors", visitors.length],
+                ["Tracked Events", siteEvents.length],
+                ["Leads", leads.length],
+                ["New Leads", leads.filter(l => l.status === "new").length],
+              ].map(([label,value]) => <Card key={String(label)} className="rounded-2xl p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-1 text-2xl font-black">{value}</div></Card>)}
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Traffic sources</h2><div className="space-y-2">{trafficSources.map(([s,n]) => <div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}{!trafficSources.length && <p className="text-sm text-slate-500">No traffic yet.</p>}</div></Card>
+              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Products / industries clicked</h2><div className="space-y-2">{productClicks.map(([s,n]) => <div key={s} className="flex justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}{!productClicks.length && <p className="text-sm text-slate-500">No product clicks yet.</p>}</div></Card>
+              <Card className="rounded-2xl p-5"><h2 className="mb-3 font-bold">Devices</h2><div className="space-y-2">{Object.entries(visitors.reduce<Record<string,number>>((a,v)=>{const k=v.device_type||"unknown";a[k]=(a[k]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([s,n])=><div key={s} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"><span>{s}</span><b>{n}</b></div>)}</div></Card>
+            </div>
+            <Card className="mt-4 rounded-2xl p-5"><div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Recent leads</h2><Badge variant="outline">{leads.length} total</Badge></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Lead</th><th>Company</th><th>Industry</th><th>Interest</th><th>Source</th><th>Status</th><th>Date</th></tr></thead><tbody className="divide-y">{leads.slice(0,20).map(l=><tr key={l.id}><td className="py-2 font-semibold">{l.name}<div className="text-xs text-slate-500">{l.email}</div></td><td>{l.company||"—"}</td><td>{l.industry||"—"}</td><td>{l.interest||"—"}</td><td>{l.source||"Direct"}</td><td><Badge variant="outline">{l.status}</Badge></td><td className="text-xs text-slate-500">{new Date(l.created_at).toLocaleString()}</td></tr>)}</tbody></table></div></Card>
+            <Card className="mt-4 rounded-2xl p-5"><h2 className="mb-3 font-bold">Recent visitors</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs uppercase text-slate-500"><tr><th className="py-2">Last seen</th><th>Landing page</th><th>Source</th><th>Campaign</th><th>Device</th></tr></thead><tbody className="divide-y">{visitors.slice(0,20).map(v=><tr key={v.visitor_id}><td className="py-2 text-xs">{new Date(v.last_seen).toLocaleString()}</td><td>{v.landing_path||"/"}</td><td>{v.utm_source||v.referrer||"Direct"}</td><td>{v.utm_campaign||"—"}</td><td>{v.device_type||"—"}</td></tr>)}</tbody></table></div></Card>
+          </TabsContent>
 
           <TabsContent value="dashboard" className="pt-1">
             <Card className="rounded-2xl border-slate-200 bg-white p-5 shadow-sm">
