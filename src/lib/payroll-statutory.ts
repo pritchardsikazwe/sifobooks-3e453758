@@ -11,12 +11,14 @@
 // iCARE happens on those portals unless a certified connection exists.
 // ============================================================
 
-export type FilingType = "paye" | "napsa" | "nhima";
+export type FilingType = "paye" | "napsa" | "nhima" | "wcf" | "sdl";
 
 export const FILING_LABELS: Record<FilingType, string> = {
   paye: "PAYE (ZRA)",
   napsa: "NAPSA contributions",
   nhima: "NHIMA contributions",
+  wcf: "Workers' Compensation",
+  sdl: "Skills Development Levy",
 };
 
 /** Statuses shown in the statutory centre. */
@@ -38,6 +40,8 @@ export type SlipRow = {
   napsa?: number | null;
   nhima?: number | null;
   net_pay?: number | null;
+  wcf?: number | null;
+  sdl?: number | null;
 };
 
 export type EmployeeRow = {
@@ -72,16 +76,17 @@ export type FilingFigures = {
  * PAYE is an employee tax the employer only remits.
  */
 export function filingFigures(slips: SlipRow[], type: FilingType): FilingFigures {
-  const amount = (s: SlipRow) => (type === "paye" ? n(s.paye) : type === "napsa" ? n(s.napsa) : n(s.nhima));
+  const amount = (s: SlipRow) => type === "paye" ? n(s.paye) : type === "napsa" ? n(s.napsa) : type === "nhima" ? n(s.nhima) : type === "wcf" ? n(s.wcf) : n(s.sdl);
   const contributing = slips.filter((s) => amount(s) > 0);
   const employeeAmount = r2(contributing.reduce((t, s) => t + amount(s), 0));
-  const employerAmount = type === "paye" ? 0 : employeeAmount;
+  const employerAmount = type === "paye" || type === "napsa" || type === "nhima" ? (type === "paye" ? 0 : employeeAmount) : employeeAmount;
+  const employeeSide = type === "wcf" || type === "sdl" ? 0 : employeeAmount;
   return {
     type,
     employees: contributing.length,
-    employeeAmount,
+    employeeAmount: employeeSide,
     employerAmount,
-    total: r2(employeeAmount + employerAmount),
+    total: r2(employeeSide + employerAmount),
   };
 }
 
@@ -124,6 +129,7 @@ export function filingExceptions(
       if (!e.national_id?.trim()) missing.push("NRC");
       if (n(s.napsa) <= 0) continue;
     }
+    if (type === "wcf" || type === "sdl") continue;
     if (type === "nhima") {
       if (!e.nhima_number?.trim()) missing.push("NHIMA number");
       if (n(s.nhima) <= 0) continue;
