@@ -42,7 +42,7 @@ function useNavigationMenus(): Menu[] {
       }
       if (!companyId) return;
       const { data: c } = await supabase.from("companies").select("industry").eq("id", companyId).maybeSingle();
-      const industry = (c?.industry as string | null) ?? (SIFOBOOKS_EDITION === "butchery" ? "butchery" : null);
+      const industry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (c?.industry as string | null);
       const capabilities = await loadBusinessCapabilityState(companyId, industry);
       if (!cancelled) {
         setActiveIndustry(industry);
