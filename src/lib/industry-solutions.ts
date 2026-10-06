@@ -175,6 +175,33 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/dashboard", presetId: "school",
   },
   {
+    id: "property", label: "Property Management", emoji: "🏘️", status: "available",
+    tagline: "Properties, units, tenants, leases, rent, deposits and maintenance.",
+    suites: ["Property Management", "Finance & Accounting", "Reports", "Administration"],
+    features: [
+      F("property.rent", "Rent & Receivables"),
+      F("property.leases", "Lease Management"),
+      F("property.maintenance", "Maintenance"),
+      F("property.utilities", "Utilities & Metering", false),
+    ],
+    areas: ["Properties", "Units", "Tenants", "Leases", "Rent", "Collections", "Deposits", "Maintenance", "Reports", "Finance"],
+    landing: "/property", presetId: "property",
+  },
+  {
+    id: "butchery", label: "Butchery", emoji: "🥩", status: "available",
+    tagline: "Butchery POS, meat cuts, receiving, processing, yield, stock and sales.",
+    suites: ["Retail POS", "Inventory", "Sales", "Purchases", "Finance & Accounting", "Reports", "Administration"],
+    features: [
+      F("butchery.weighted_sales", "Weighted / Scale Sales"),
+      F("butchery.cuts", "Cuts & Products"),
+      F("butchery.yield", "Carcass Yield & Processing"),
+      F("butchery.labels", "Labels & Pricing"),
+      F("butchery.cold_room", "Cold-Room Stock Control"),
+    ],
+    areas: ["Butchery POS", "Products & Cuts", "Receiving", "Processing & Yield", "Scales", "Labels", "Prices", "Inventory", "Sales", "Reports", "Finance"],
+    landing: "/retail/butchery", presetId: "retail",
+  },
+  {
     id: "ngo", label: "NGO / Non-Profit", emoji: "🤝", status: "coming_soon",
     tagline: "Donors, grants, restricted funds and programme reporting.",
     suites: CORE_SUITES,
@@ -226,7 +253,7 @@ export function getSolution(id?: string | null): IndustrySolution | undefined {
     hospital: "healthcare", pharmacy: "healthcare",
     hotel: "hospitality", lodge: "hospitality",
     shop: "retail", phone_shop: "retail",
-    law: "professional_services", consulting: "professional_services",
+    law: "professional_services", consulting: "professional_services",\n    property_management: "property", lodge_property: "property",\n    meat_shop: "butchery", butcher: "butchery", butchery_shop: "butchery",
   };
   return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
 }
@@ -246,7 +273,7 @@ const INDUSTRY_CAPABILITIES: Record<string, Record<BusinessCapabilityKey, boolea
   restaurant: { inventory: true, retail_pos: false, restaurant: true, hr_payroll: true },
   wholesale: { inventory: true, retail_pos: false, restaurant: false, hr_payroll: true },
   professional_services: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },\n  property: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },\n  butchery: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
   other: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
 };
 

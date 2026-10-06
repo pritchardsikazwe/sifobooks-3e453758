@@ -273,6 +273,15 @@ export const INDUSTRIES: Industry[] = [
     ],
   },
   {
+    id: "butchery", label: "Butchery", emoji: "🥩", tagline: "Weighted meat sales, cuts, processing and stock.",
+    modules: [M("butchery", "Butchery", "Products, cuts, receiving, processing, scales, labels and sales.")],
+    coa: [
+      { account_code: "4100", account_name: "Butchery Sales", account_type: "revenue" },
+      { account_code: "5100", account_name: "Butchery Cost of Goods Sold", account_type: "expense" },
+      { account_code: "5110", account_name: "Processing & Wastage", account_type: "expense" },
+    ],
+  },
+  {
     id: "restaurant", label: "Restaurant", emoji: "🍽️", tagline: "Kitchen orders, tables, recipes.",
     modules: [
       M("rest_orders", "Orders", "Table and takeaway orders."),
