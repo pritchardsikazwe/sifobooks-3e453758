@@ -5,7 +5,7 @@ ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS vat_recoverable boolean NOT NU
 ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS vat_claim_date date;
 ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS business_use_percent numeric(6,2) NOT NULL DEFAULT 100;
 ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS import_vat numeric(18,2) NOT NULL DEFAULT 0;
-ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS vat_evidence_type text;
+ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS vat_evidence_type text NOT NULL DEFAULT 'tax_invoice';
 ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS vat_notes text;
 
 CREATE TABLE IF NOT EXISTS public.tax_adjustments (
