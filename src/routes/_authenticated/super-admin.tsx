@@ -224,7 +224,7 @@ function SuperAdminPage() {
     const lead = leads.find(l => l.id === leadId);
     if (lead) {
       await supabase.from("site_events").insert({
-        visitor_id: null,
+        visitor_id: `superadmin:${me?.id || "platform"}`,
         event_name: "lead_status_changed",
         page_path: "/super-admin",
         target: status,
