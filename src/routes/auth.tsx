@@ -14,10 +14,12 @@ import { CashierPinLogin } from "@/components/auth/CashierPinLogin";
 import { landingFor, loadAccess } from "@/lib/rbac";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { next?: string; tab?: "signin" | "signup" } => {
+  validateSearch: (s: Record<string, unknown>): { next?: string; tab?: "signin" | "signup"; industry?: string } => {
     const n = typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined;
     const tab = s.tab === "signin" || s.tab === "signup" ? s.tab : undefined;
-    return { ...(n ? { next: n } : {}), ...(tab ? { tab } : {}) };
+    const allowedIndustries = new Set(["general", "retail", "restaurant", "hospitality", "education", "property", "lending", "manufacturing", "professional_services", "butchery"]);
+    const industry = typeof s.industry === "string" && allowedIndustries.has(s.industry) ? s.industry : undefined;
+    return { ...(n ? { next: n } : {}), ...(tab ? { tab } : {}), ...(industry ? { industry } : {}) };
   },
   head: () => ({
     meta: [
@@ -74,7 +76,7 @@ function AuthClientGate() {
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { next, tab: initialTab } = Route.useSearch();
+  const { next, tab: initialTab, industry: selectedIndustry } = Route.useSearch();
   const [mode, setMode] = useState<LoginMode | null>(initialTab ? "admin" : null);
   const [tab, setTab] = useState<"signin" | "signup" | "reset">(initialTab ?? "signup");
   const [loading, setLoading] = useState(false);
@@ -96,6 +98,15 @@ function AuthPage() {
     if (!userData.user) return;
     if ((userData.user.user_metadata as any)?.must_change_password) { navigate({ to: "/reset-password", search: { forced: true } as any }); return; }
     if (next) { window.location.href = next; return; }
+    // A product shortcut only preselects the workspace for a new account.
+    // Existing users retain their current company and workspace when signing in.
+    if (selectedIndustry) {
+      const { count, error } = await supabase.from("companies").select("id", { count: "exact", head: true }).eq("user_id", userData.user.id);
+      if (!error && (count ?? 0) === 0) {
+        navigate({ to: "/setup", search: { industry: selectedIndustry } as any });
+        return;
+      }
+    }
     // One universal entry point: /launch resolves company + product + role +
     // operational context before deciding where to go.
     navigate({ to: "/launch" });
@@ -221,7 +232,7 @@ function AuthPage() {
               </TabsContent>
 
               <TabsContent value="signup">
-                <SignupWizard onDone={routeAfterAuth} setGlobalError={setError} setGlobalNotice={setNotice} setTab={setTab} />
+                <SignupWizard onDone={routeAfterAuth} selectedIndustry={selectedIndustry} setGlobalError={setError} setGlobalNotice={setNotice} setTab={setTab} />
                 {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
                 {notice && <p className="mt-3 text-sm text-emerald-700">{notice}</p>}
               </TabsContent>
@@ -250,8 +261,9 @@ function AuthPage() {
   );
 }
 
-function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
+function SignupWizard({ onDone, selectedIndustry, setGlobalError, setGlobalNotice, setTab }: {
   onDone: () => Promise<void>;
+  selectedIndustry?: string;
   setGlobalError: (v: string | null) => void;
   setGlobalNotice: (v: string | null) => void;
   setTab: (v: "signin" | "signup" | "reset") => void;
@@ -272,8 +284,12 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
         supabase.auth.signUp({
           email: f.email.trim(), password: f.password,
           options: {
-            emailRedirectTo: signupNext ? window.location.origin + signupNext : window.location.origin + "/launch",
-            data: { full_name: f.name.trim() },
+            emailRedirectTo: signupNext
+              ? window.location.origin + signupNext
+              : selectedIndustry
+                ? window.location.origin + `/setup?industry=${encodeURIComponent(selectedIndustry)}`
+                : window.location.origin + "/launch",
+            data: { full_name: f.name.trim(), ...(selectedIndustry ? { selected_industry: selectedIndustry } : {}) },
           },
         }),
         new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Registration is taking too long. Please check that SifoBooks is still running, then try again.")), 30000)),
@@ -291,7 +307,7 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
       // A newly registered account has no company yet. Go directly to company
       // setup instead of sending a fresh account through /launch.
       setSaving(false);
-      navigate({ to: "/setup" });
+      navigate({ to: "/setup", search: selectedIndustry ? { industry: selectedIndustry } as any : {} as any });
     } catch (e: any) {
       setSaving(false);
       setErr(String(e?.message || "Registration failed. Please retry."));
@@ -307,8 +323,8 @@ function SignupWizard({ onDone, setGlobalError, setGlobalNotice, setTab }: {
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><Building2 className="h-4 w-4" /></div>
       </div>
       <div className="mb-5 text-center">
-        <div className="text-base font-semibold">Register your SifoBooks account</div>
-        <div className="text-xs text-muted-foreground">After registration, SifoBooks will take you directly into the company setup screens.</div>
+        <div className="text-base font-semibold">{selectedIndustry ? `Start your ${selectedIndustry.replace(/_/g, " ")} workspace` : "Register your SifoBooks account"}</div>
+        <div className="text-xs text-muted-foreground">After registration, SifoBooks will open company setup for your selected software. You can add other modules later.</div>
       </div>
       <div className="space-y-3">
         <div className="space-y-2"><Label>Full name</Label><Input value={f.name} onChange={e => set("name", e.target.value)} placeholder="Pritchard Sikazwe" autoComplete="name" /></div>
