@@ -18,15 +18,14 @@ const modules = [
   ["All-in-One", "One subscription, multiple businesses", Zap],
 ] as const;
 
-const industryPath: Record<string, string> = {
-  "Retail & POS": "/pos-software-zambia",
-  Restaurant: "/restaurant-pos-zambia",
-  Hotel: "/hotel-management-software-zambia",
-  School: "/school-management-software-zambia",
-  Property: "/erp-software-zambia",
-  Microfinance: "/erp-software-zambia",
-  Manufacturing: "/inventory-software-zambia",
-  Services: "/erp-software-zambia",
+const industrySignup: Record<string, string> = {
+  "Retail & POS": "retail", Restaurant: "restaurant", Hotel: "hospitality",
+  School: "education", Property: "property", Microfinance: "lending",
+  Manufacturing: "manufacturing", Services: "professional_services",
+};
+const moduleSignup: Record<string, string> = {
+  Accounting: "general", POS: "retail", Restaurant: "restaurant", Payroll: "general",
+  "ZRA Compliance": "general", Inventory: "general", Consultants: "professional_services", "All-in-One": "general",
 };
 
 const industries = [
@@ -199,9 +198,12 @@ function ModuleGrid() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-8">
           {modules.map(([name, sub, Icon], index) => (
-            <div
+            <Link
               key={name}
-              className="group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,23,42,.055)] transition duration-500 hover:-translate-y-2 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(37,99,235,.13)] sifo-reveal"
+              to="/auth"
+              search={{ tab: "signup", industry: moduleSignup[name] || "general" } as any}
+              onClick={() => void trackMarketingEvent("module_signup_click", name, { industry: moduleSignup[name] || "general" })}
+              className="group relative block overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 text-center shadow-[0_8px_30px_rgba(15,23,42,.055)] transition duration-500 hover:-translate-y-2 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(37,99,235,.13)] sifo-reveal"
               style={{ animationDelay: `${index * 70}ms` }}
             >
               <div className="absolute inset-x-8 -top-12 h-20 rounded-full bg-blue-100/60 blur-2xl opacity-0 transition duration-500 group-hover:opacity-100" />
@@ -211,7 +213,8 @@ function ModuleGrid() {
               <div className="relative mt-4 text-[13px] font-extrabold">{name}</div>
               <div className="relative mt-1.5 min-h-8 text-[9px] leading-4 text-slate-500">{sub}</div>
               <div className="mx-auto mt-3 h-0.5 w-0 rounded-full bg-amber-400 transition-all duration-500 group-hover:w-8" />
-            </div>
+              <div className="relative mt-3 text-[10px] font-extrabold text-blue-700">Get started <ArrowRight className="ml-1 inline h-3 w-3" /></div>
+            </Link>
           ))}
         </div>
       </div>
@@ -235,8 +238,9 @@ function IndustryGrid() {
           {industries.map(([name, sub, Icon, image], index) => (
             <Link
               key={name}
-              to={(industryPath[name] || "/erp-software-zambia") as any}
-              onClick={() => void trackMarketingEvent("industry_click", name, { destination: industryPath[name] || "/erp-software-zambia" })}
+              to="/auth"
+              search={{ tab: "signup", industry: industrySignup[name] || "general" } as any}
+              onClick={() => void trackMarketingEvent("industry_signup_click", name, { industry: industrySignup[name] || "general" })}
               className="group relative min-h-[142px] overflow-hidden rounded-2xl border border-blue-900/10 bg-blue-950 text-white shadow-lg transition duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,59,50,.28)] sifo-reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
