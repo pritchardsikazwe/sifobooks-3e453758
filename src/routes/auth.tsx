@@ -85,13 +85,21 @@ function AuthPage() {
 
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        if (next) { window.location.href = next; return; }
-        navigate({ to: "/launch" });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      if (next) { window.location.href = next; return; }
+      // If an already-authenticated first-time user taps a module shortcut,
+      // preserve that choice; established users continue to their normal launch.
+      if (selectedIndustry) {
+        const { count, error } = await supabase.from("companies").select("id", { count: "exact", head: true }).eq("user_id", data.session.user.id);
+        if (!error && (count ?? 0) === 0) {
+          navigate({ to: "/setup", search: { industry: selectedIndustry } as any });
+          return;
+        }
       }
+      navigate({ to: "/launch" });
     });
-  }, [navigate, next]);
+  }, [navigate, next, selectedIndustry]);
 
   const routeAfterAuth = async () => {
     const { data: userData } = await supabase.auth.getUser();
