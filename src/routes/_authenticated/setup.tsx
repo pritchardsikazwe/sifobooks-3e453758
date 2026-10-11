@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,8 +14,13 @@ import { Building2, MapPin, Users, Wallet, CalendarRange, Percent, BriefcaseBusi
 import { toast } from "sonner";
 import { monthName } from "@/lib/format";
 import { AdministratorEmailCard } from "@/components/company/AdministratorEmailCard";
+import { applyIndustrySolution, getSolution } from "@/lib/industry-solutions";
 
 export const Route = createFileRoute("/_authenticated/setup")({
+  validateSearch: (search: Record<string, unknown>): { industry?: string } => {
+    const allowed = new Set(["general", "retail", "restaurant", "hospitality", "education", "property", "lending", "manufacturing", "professional_services", "butchery"]);
+    return { ...(typeof search.industry === "string" && allowed.has(search.industry) ? { industry: search.industry } : {}) };
+  },
   // Company setup uses browser/local-auth state and must not be rendered on the server.
   ssr: false,
   head: () => ({ meta: [{ title: "Company Setup — SifoBooks" }, { name: "robots", content: "noindex" }] }),
@@ -31,9 +36,11 @@ function SetupClientGate() {
   return <SetupPage />;
 }
 
-type Company = { id: string; user_id: string; name: string; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string; payslip_header: string | null; payslip_footer: string | null };
+type Company = { id: string; user_id: string; name: string; industry?: string | null; workspace_mode?: string | null; trading_name: string | null; tpin: string | null; vat_number: string | null; vat_registered: boolean; address: string | null; city: string | null; country: string | null; phone: string | null; email: string | null; website: string | null; logo_url: string | null; financial_year_start_month: number; base_currency: string; timezone: string; payslip_header: string | null; payslip_footer: string | null };
 
 function SetupPage() {
+  const { industry: selectedIndustry } = Route.useSearch();
+  const industryApplied = useRef(false);
   const [userId, setUserId] = useState<string>("");
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +76,23 @@ function SetupPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (loading || !company || !userId || !selectedIndustry || industryApplied.current) return;
+    const solution = getSolution(selectedIndustry);
+    if (!solution || company.industry) return;
+    industryApplied.current = true;
+    (async () => {
+      try {
+        await applyIndustrySolution({ userId, companyId: company.id, solutionId: solution.id });
+        setCompany(current => current ? { ...current, industry: solution.id, workspace_mode: ["general", "retail", "restaurant"].includes(solution.id) ? solution.id : current.workspace_mode } : current);
+        toast.success(`${solution.label} workspace selected`, { description: "Your company setup is ready for this software. You can add modules later." });
+      } catch (error: any) {
+        industryApplied.current = false;
+        toast.error(error?.message ?? "Could not apply the selected workspace. Please choose it from Industry & Business.");
+      }
+    })();
+  }, [loading, company, userId, selectedIndustry]);
+
   if (loading || !company) {
     return <div className="p-8 flex items-center gap-2 text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading setup…</div>;
   }
@@ -84,10 +108,9 @@ function SetupPage() {
         <Card className="mb-5 border-emerald-200 bg-emerald-50/60">
           <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-semibold text-emerald-950">Welcome to SifoBooks — choose your business type first</div>
+              <div className="text-sm font-semibold text-emerald-950">{selectedIndustry ? "Finish setting up your selected workspace" : "Welcome to SifoBooks — choose your business type first"}</div>
               <p className="mt-1 max-w-2xl text-xs leading-5 text-emerald-900/80">
-                Start with your business type so SifoBooks shows the right workspace and menus.
-                You can add or change business capabilities later without deleting your accounting data.
+                {selectedIndustry ? "Your selected software is being applied to this company. Complete the company profile, then open your workspace." : "Start with your business type so SifoBooks shows the right workspace and menus. You can add or change business capabilities later without deleting your accounting data."}
               </p>
             </div>
             <Button asChild variant="save" className="shrink-0">
