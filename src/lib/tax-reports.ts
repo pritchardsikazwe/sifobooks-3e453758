@@ -90,7 +90,9 @@ export function computeVatReturn(
     if (lines.length) {
       for (const line of lines) {
         const rate = n(line?.vat_rate);
-        const net = invoiceLineNet(line);
+        const net = inclusiveLines && rate > 0
+          ? (n(line?.line_total) * 100) / (100 + rate)
+          : invoiceLineNet(line);
         if (rate > 0) {
           salesStandardNet += net;
           salesStandardVat += inclusiveLines
