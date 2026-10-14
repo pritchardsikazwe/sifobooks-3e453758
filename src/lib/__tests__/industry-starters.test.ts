@@ -4,7 +4,7 @@ import { getModuleCompliance } from "@/lib/industry-compliance";
 import { getZambiaCoreCoa } from "@/lib/zambia-coa";
 
 describe("SifoBooks industry starter foundation", () => {
-  it("defines all eight Windows editions", () => {
+  it("defines all nine industry editions", () => {
     expect(INDUSTRY_STARTERS.map((x) => x.edition)).toEqual([
       "accounting", "retail", "restaurant", "hotel", "school", "property", "lending", "butchery", "enterprise",
     ]);
