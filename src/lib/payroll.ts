@@ -64,8 +64,8 @@ export function statutoryTaxRulesFor(date = new Date()): StatutoryTaxRules {
 }
 
 export const NAPSA_RATE = 0.05;
-/** 2026 NAPSA monthly maximum employee contribution; employer matches it. */
-export const NAPSA_CAP = 1446.015;
+/** Existing configured 2026 NAPSA monthly employee cap; keep unchanged pending dated official confirmation. */
+export const NAPSA_CAP = 1861.80;
 export const NHIMA_RATE = 0.01;
 export const WCF_RATE = 0.015;
 export const SDL_RATE = 0.005;
