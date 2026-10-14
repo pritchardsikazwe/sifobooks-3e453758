@@ -194,7 +194,7 @@ export function computePayslip(i: PayslipInput): PayslipComputed {
   const basic = num(i.basic);
   const taxDate = i.tax_date instanceof Date ? i.tax_date : i.tax_date ? new Date(i.tax_date) : new Date();
   const rules = statutoryTaxRulesFor(taxDate);
-  const basic = num(i.basic);\n  const taxDate = i.tax_date instanceof Date ? i.tax_date : i.tax_date ? new Date(i.tax_date) : new Date();\n  const rules = statutoryTaxRulesFor(taxDate);
+
   const overtime = num(i.overtime);
   const shift = num(i.shift_differential);
   const bonus = num(i.bonus);
