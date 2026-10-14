@@ -86,7 +86,7 @@ export function computeVatReturn(
     const lines = Array.isArray(invoice?.invoice_items) ? invoice.invoice_items : [];
     const lineTotalSum = lines.reduce((sum: number, line: any) => sum + n(line?.line_total), 0);
     const invoiceGross = n(invoice?.total) || n(invoice?.subtotal);
-    const inclusiveLines = lines.length > 0 && Math.abs(lineTotalSum - invoiceGross) < 0.01;
+    const inclusiveLines = lineTotalSum > 0 && Math.abs(lineTotalSum - invoiceGross) < 0.01;
 
     if (lines.length) {
       for (const line of lines) {
