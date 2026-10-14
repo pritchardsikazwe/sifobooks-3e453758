@@ -208,6 +208,18 @@ const editions: IndustryStarter[] = [
       R("butcher", "Butcher / Processor", "Receiving, cutting, processing, yield and production records.", ["butchery", "processing", "inventory"], "butcher"),
       R("cashier", "Cashier", "Weighted sales, receipts, till operations and cash-up.", ["pos", "payments", "cash_drawer"], "cashier1"),
     ],
+    tagline: "Weighted meat sales, processing, yield and stock control for butchers.",
+    coaAccounts: [
+      { code: "4100", name: "Meat Sales", type: "revenue" },
+      { code: "4110", name: "By-product Sales", type: "revenue" },
+      { code: "5000", name: "Cost of Meat Sales", type: "expense" },
+      { code: "5030", name: "Processing Wastage", type: "expense" },
+    ],
+    demoCompanyName: "SifoBooks Demo Butchery",
+    demoUsername: "SifoBooksdemo",
+    demoPassword: "Demo2026",
+  },
+  {
     edition: "enterprise", industry: "Enterprise / Multi-Department",
     tagline: "Full SifoBooks across finance, inventory, HR, procurement, sales and operations.",
     about: "SifoBooks Enterprise enables the complete business suite with branches, warehouses, accounting, procurement, inventory, sales, HR, payroll, assets, banking, compliance and industry extensions.",
