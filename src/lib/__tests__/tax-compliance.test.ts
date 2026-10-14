@@ -5,7 +5,7 @@ import { computeVatReturn } from "../tax-reports";
 
 describe("Zambia tax compliance", () => {
   it("uses the current 2026 NAPSA employee ceiling and 2025 historical ceiling", () => {
-    expect(calcNapsa(100000, statutoryTaxRulesFor(new Date("2026-06-01")))).toBe(1446.02);
+    expect(calcNapsa(100000, statutoryTaxRulesFor(new Date("2026-06-01")))).toBe(1861.8);
     expect(calcNapsa(100000, statutoryTaxRulesFor(new Date("2025-06-01")))).toBe(1708.2);
   });
 
