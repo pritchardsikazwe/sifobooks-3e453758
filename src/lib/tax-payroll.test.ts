@@ -4,7 +4,7 @@ import { computeVatReturn } from "./tax-reports";
 
 describe("Zambian statutory tax rules", () => {
   it("uses the 2026 NAPSA employee ceiling", () => {
-    expect(calcNapsa(50000)).toBe(1446.02);
+    expect(calcNapsa(50000)).toBe(1861.8);
   });
 
   it("keeps the 2025 NAPSA ceiling for historical payslips", () => {
@@ -14,7 +14,7 @@ describe("Zambian statutory tax rules", () => {
   });
 
   it("uses the 2026 rules for current payslips", () => {
-    expect(computePayslip({ basic: 50000, tax_date: "2026-01-01" }).napsa).toBe(1446.02);
+    expect(computePayslip({ basic: 50000, tax_date: "2026-01-01" }).napsa).toBe(1861.8);
   });
 });
 
