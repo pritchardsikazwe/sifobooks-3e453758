@@ -32,7 +32,10 @@ type Company = {
 type Profile = { id: string; email: string | null; full_name: string | null; created_at: string; active_company_id?: string | null };
 type Plan = { id: string; code: string; name: string; price_monthly: number; currency: string; max_users: number | null; max_invoices: number | null; is_active: boolean; sort_order: number };
 type AuditRow = { id: string; user_id: string | null; action: string; entity_type: string | null; entity_id: string | null; created_at: string; details: any };
-type Sub = { id: string; company_id: string; plan_id: string; status: string; current_period_end: string | null; created_at?: string | null };\ntype Visitor = { visitor_id: string; first_seen: string; last_seen: string; landing_path: string | null; referrer: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; device_type: string | null };\ntype SiteEvent = { visitor_id: string; event_name: string; page_path: string | null; target: string | null; created_at: string; metadata: any };\ntype Lead = { id: string; name: string; email: string; phone: string | null; company: string | null; industry: string | null; interest: string | null; source: string | null; status: string; created_at: string };
+type Sub = { id: string; company_id: string; plan_id: string; status: string; current_period_end: string | null; created_at?: string | null };
+type Visitor = { visitor_id: string; first_seen: string; last_seen: string; landing_path: string | null; referrer: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; device_type: string | null };
+type SiteEvent = { visitor_id: string; event_name: string; page_path: string | null; target: string | null; created_at: string; metadata: any };
+type Lead = { id: string; name: string; email: string; phone: string | null; company: string | null; industry: string | null; interest: string | null; source: string | null; status: string; created_at: string };
 
 const money = (n: number, currency = "ZMW") =>
   new Intl.NumberFormat("en-ZM", { style: "currency", currency, maximumFractionDigits: 0 }).format(n || 0);
@@ -55,7 +58,10 @@ function SuperAdminPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
-  const [roleMap, setRoleMap] = useState<Record<string, string[]>>({});\n  const [visitors, setVisitors] = useState<Visitor[]>([]);\n  const [siteEvents, setSiteEvents] = useState<SiteEvent[]>([]);\n  const [leads, setLeads] = useState<Lead[]>([]);
+  const [roleMap, setRoleMap] = useState<Record<string, string[]>>({});
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [siteEvents, setSiteEvents] = useState<SiteEvent[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [tab, setTab] = useState("dashboard");
