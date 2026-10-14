@@ -3,7 +3,7 @@ import { evaluateInputVat, applyVatAdjustments, type TaxAdjustment } from "./tax
 
 export const EXCLUDED_STATUSES = ["draft", "voided", "void", "cancelled"];
 export const VAT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,vat_amount,total,status,customers(name),invoice_items(quantity,unit_price,discount_amount,discount_type,vat_rate,line_total)";
-export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,suppliers(name)";
+export const VAT_BILL_COLUMNS = "id,bill_number,bill_date,subtotal,tax_amount,total,status,vat_recoverable,vat_claim_date,business_use_percent,import_vat,vat_evidence_type,suppliers(name),bill_vat_lines(id,description,tax_category,vat_rate,net_amount,vat_amount,business_use_percent,import_vat,evidence_type)";
 export const TOT_INVOICE_COLUMNS = "id,number,issue_date,subtotal,total,status,customers(name)";
 
 const n = (v: unknown) => {
@@ -84,13 +84,18 @@ export function computeVatReturn(
 
   for (const invoice of inv) {
     const lines = Array.isArray(invoice?.invoice_items) ? invoice.invoice_items : [];
+    const lineTotalSum = lines.reduce((sum: number, line: any) => sum + n(line?.line_total), 0);
+    const inclusiveLines = lines.length > 0 && Math.abs(lineTotalSum - n(invoice?.total)) < 0.01;
+
     if (lines.length) {
       for (const line of lines) {
         const rate = n(line?.vat_rate);
         const net = invoiceLineNet(line);
         if (rate > 0) {
           salesStandardNet += net;
-          salesStandardVat += invoiceLineVat(line);
+          salesStandardVat += inclusiveLines
+            ? (n(line?.line_total) * rate) / (100 + rate)
+            : invoiceLineVat(line);
         } else {
           salesZeroRatedNet += net;
         }
