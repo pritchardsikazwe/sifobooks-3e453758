@@ -37,7 +37,7 @@ export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
       { upTo: null, rate: 0.37 },
     ],
     napsaRate: 0.05,
-    napsaCap: 1446.015,
+    napsaCap: 1861.80,
     nhimaRate: 0.01,
     wcfRate: 0.015,
     sdlRate: 0.005,
