@@ -37,7 +37,7 @@ export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
       { upTo: null, rate: 0.37 },
     ],
     napsaRate: 0.05,
-    napsaCap: 1861.80,
+    napsaCap: 1446.015,
     nhimaRate: 0.01,
     wcfRate: 0.015,
     sdlRate: 0.005,
@@ -56,22 +56,6 @@ export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
     wcfRate: 0.015,
     sdlRate: 0.005,
   },
-];
-
-export type StatutoryTaxRules = {
-  effectiveFrom: string;
-  payeBands: PayeBand[];
-  napsaRate: number;
-  napsaCap: number;
-  nhimaRate: number;
-  wcfRate: number;
-  sdlRate: number;
-};
-
-/** Effective-dated statutory parameters. NAPSA 2026 reflects the current NAPSA contribution ceiling of K28,920.30, i.e. K1,446.015 per employee/employer side. */
-export const STATUTORY_TAX_RULES: StatutoryTaxRules[] = [
-  { effectiveFrom: "2026-01-01", payeBands: DEFAULT_PAYE_BANDS, napsaRate: 0.05, napsaCap: 1446.015, nhimaRate: 0.01, wcfRate: 0.015, sdlRate: 0.005 },
-  { effectiveFrom: "2025-01-01", payeBands: DEFAULT_PAYE_BANDS, napsaRate: 0.05, napsaCap: 1708.20, nhimaRate: 0.01, wcfRate: 0.015, sdlRate: 0.005 },
 ];
 
 export function statutoryTaxRulesFor(date = new Date()): StatutoryTaxRules {
@@ -95,12 +79,6 @@ export const OVERTIME_HOLIDAY = 2.0;
 
 export const DEFAULT_PAYE_BANDS: PayeBand[] = STATUTORY_TAX_RULES[0].payeBands;
 
-export const NAPSA_RATE = 0.05;
-/** 2026 NAPSA monthly ceiling on the employee contribution. */
-export const NAPSA_CAP = 1861.80;
-export const NHIMA_RATE = 0.01;
-export const WCF_RATE = 0.015;
-export const SDL_RATE = 0.005;
 export function calcPaye(taxable: number, bands: PayeBand[] = DEFAULT_PAYE_BANDS): number {
   if (taxable <= 0) return 0;
   let tax = 0;
