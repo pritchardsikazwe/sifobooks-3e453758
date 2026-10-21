@@ -245,7 +245,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
           { title: "POS Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
-          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "ChartNoAxesCombined", hint: "Compare sales performance by item." },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3", hint: "Compare sales performance by item." },
           { title: "Retail Command Center", url: "/pos/retail-command-center", module: "retail_pos", iconName: "Gauge", primary: true, hint: "Shifts, cash and cashier activity." },
         ],
       },
@@ -290,8 +290,8 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Customer Statement", url: "/reports/customer-statement", module: "reports", iconName: "Users" },
           { title: "Supplier Statement", url: "/reports/supplier-statement", module: "reports", iconName: "Truck" },
-          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "ChartNoAxesCombined" },
-          { title: "Profit & Loss", url: "/reports/pnl", module: "reports", iconName: "ChartNoAxesCombined" },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3" },
+          { title: "Profit & Loss", url: "/reports/pnl", module: "reports", iconName: "BarChart3" },
           { title: "Stock Movement", url: "/reports/stock-movement", module: "reports", iconName: "ArrowLeftRight" },
           { title: "Stock Reconciliation", url: "/reports/stock-reconciliation", module: "reports", iconName: "Scale" },
           { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Coins" },
