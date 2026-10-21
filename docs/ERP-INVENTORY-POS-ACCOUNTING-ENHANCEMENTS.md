@@ -140,3 +140,17 @@ For every report, confirm the source of truth, date basis, branch/warehouse filt
 - EMI schedule math, rounding, partial payment, early/late payment, overdue balance, duplicate receipt prevention and reminder delivery status.
 - Sales/purchase return linkage and stock/account reversal; service income/expense posting; manufacturing input/output balancing; payroll totals and statutory outputs.
 - Every report reconciles to posted accounting or inventory records for the same filters.
+
+
+## Existing-code enhancement pass (navigation wiring)
+
+The following existing route-backed workflows have been surfaced in the current navigation rather than recreated:
+- Service Tickets, Job Cards and Workshops.
+- Supplier Invoice Control.
+- Warehouse management and Production Batches.
+- Balance Sheet, Cash Flow, General Ledger and Account Transactions.
+- Tax Summary and VAT reporting.
+- Aged Receivables, Aged Payables, Bank Reconciliation, Expense and Payroll Summary reports.
+- Existing Item Master, Stock Count, Stock Movement, Stock Reconciliation, Inventory Valuation, Sales by Item and Profit & Loss shortcuts remain included.
+
+A repository route-tree check confirmed the above newly linked paths exist in the branch. This verifies route-file presence only; it does not prove that every workflow's database behavior, permissions or accounting results are correct. The changes in this pass are navigation changes, not implementations of missing EMI, multi-unit or IMEI functionality. No schema migration, production data change or deployment was performed. Build/tests still need to be run in the project environment.
