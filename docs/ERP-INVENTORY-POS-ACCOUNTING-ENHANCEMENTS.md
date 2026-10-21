@@ -85,3 +85,58 @@ Incrementally enhance the existing SifoBooks application using the workflow idea
 - Journals balance; reports reconcile to posted ledger and stock movements.
 - Tests cover company/branch/location scoping, permissions, transaction rollback, duplicate submission, period locks, and SQLite/PostgreSQL behavior.
 - Provide a completion matrix marking each feature as implemented, partial, blocked, or not started, with evidence and test results.
+
+
+## Expanded product requirements supplied by the owner
+
+These requirements extend the scope above. They are a specification for audit and staged implementation, not a claim that every feature already exists.
+
+### A. Core business controls
+- **Multi-branch:** company-scoped branches with branch-specific users/permissions, document numbering where configured, sales/purchases, reports and transfer approvals. All records must remain company-isolated; branch-level access must be enforced in queries and server-side mutations.
+- **Multi-warehouse:** warehouses and locations per branch; stock transfers must support dispatch, in-transit/pending receipt, partial receipt if supported, receive confirmation, discrepancy handling and complete transfer history. Never duplicate stock during retry.
+- **Multi-unit products:** base unit plus alternative purchase/sales/stock units and explicit conversion factors (e.g. box to piece). Validate positive factors and unit compatibility. Preserve transaction-time unit and conversion snapshots so historical quantities/costs are not rewritten by later edits.
+- **IMEI/serial tracking:** optional serial/IMEI tracking by product; unique identifiers within the appropriate scope, capture at receiving and sale/return/service, traceability to invoice/customer/warranty/service history, and permissioned lookup. Do not require IMEI for ordinary non-serialized goods.
+- **EMI/installment payments:** configurable deposit/down payment, financed amount, installment frequency, schedule, due dates, payment allocation, outstanding principal, late/overdue status, reminder queue and EMI reminder report. Define interest/fees only when explicitly configured; show the calculation basis and rounding. Link each agreement and receipt to customer, source sale, and ledger; prevent over-allocation and duplicate receipts. Do not represent reminders as sent unless a delivery provider confirms it.
+
+### B. Business modules and workflow inventory
+1. **Sales & POS:** Sales Entry, Sales Return Entry, Sales Voucher, Sales Return Voucher, Sales Record, Sales Return Record. Support tax/discount/payment splits, cashier and branch, stock reservation/depletion rules, receipt printing, and the existing POS/hardware/offline behavior.
+2. **Service:** Service Entry, Service Expense Entry, Service Voucher, Service Expense Voucher, Service Record and Service Expense Record. Link service income/expense to customers, technicians where available, parts used, and ledger posting without treating service-only work as stock sales.
+3. **Orders:** Sales Order Entry, Purchase Order Entry, Sales Order Voucher, Purchase Order Voucher, Sales Order Record and Purchase Order Record. Track draft/approved/partially fulfilled/fulfilled/cancelled states; convert to invoice/bill without duplicate posting.
+4. **Quotations:** Quotation Entry and Quotation Record; support expiry, status, customer, items, taxes/discounts and conversion to sales order/invoice while preserving the original quote.
+5. **Manufacturing:** Manufacturing Journal Entry, Manufacturing Journal Voucher and Manufacturing Journal Record. Audit BOM/recipe, input material, output quantity/yield, waste/by-products where supported, costing and stock effects. Post stock and ledger effects atomically.
+6. **Purchases:** Purchase Entry, Purchase Return Entry, Purchase Voucher, Purchase Return Voucher, Purchase Record and Purchase Return Record. Include supplier, tax, warehouse, receipt matching where available, payment status and return linkage.
+7. **Inventory:** Item Stock Report, Item Ledger, Item Transfer Entry, Item Adjustment Entry, Adjustment Record, Transfer Record, Transfer Pending Record and Transfer Receive Record. Keep the existing shared Inventory Core as the sole source of stock movements.
+8. **Accounts:** Journal Entry, Contra Entry, Creditor Payment Entry, Debtor Receipt Entry, Expense Entry, Income Entry and Account Entry. All forms must call existing posting services, respect closed periods and produce traceable balanced entries.
+9. **HR & Payroll:** Salary Payment Entry, Attendance Entry, Employee Entry, Department Entry, Designation Entry, Salary Report, Monthly Salary Report and Employee Salary. Reuse existing payroll calculations and Zambia statutory rules; do not invent rates or post salary twice.
+10. **Reports:** provide the report catalogue below using existing routes/services where possible.
+
+### C. Required report catalogue
+
+**Financial statements and balances**
+- Balance Sheet; Trial Balance; Profit & Loss; Cash & Bank Balance; Debtor Balance; Creditor Balance; Capital Accounts Balance; Loan Accounts Balance; Fixed Assets; Stock Report; Expense Report; Income Report.
+
+**Ledgers and transaction registers**
+- Cash & Bank Ledger; Capital Account Ledger; Debtor Account Ledger; Creditor Account Ledger; Daily Ledger; Sales Account Ledger; Purchase Account Ledger; Service Expense Ledger; Service Income Ledger; Sales Return Ledger; Purchase Return Ledger; Tax Account Ledger.
+- Journal Record; Contra Record; Sales Record; Sales Return Record; Purchase Record; Purchase Return Record; Manufacturing Record.
+
+**Receipts, payments, payroll and instalments**
+- Debtor Receipt Report; Creditor Payment Report; Salary Report; Monthly Salary Report; EMI Reminder Report.
+
+**Inventory and operations**
+- Item Stock Report; Item Ledger; Low Stock; Stock Movement; Stock Reconciliation; Stock Valuation; Item Adjustment Record; Transfer Record; Transfer Pending Record; Transfer Receive Record; Variance Dashboard; Variance Summary; Variance vs Stock Movement; Adjustment History; Sales Detailed Report.
+
+For every report, confirm the source of truth, date basis, branch/warehouse filters, account/party/item filters, opening/closing logic, status inclusion, totals and drill-down. Financial reports must use posted ledger entries and exclude drafts/voids; stock reports must use the Inventory Core movement ledger. Reconcile totals to the underlying records. Exports/prints must respect access controls and active filters.
+
+### D. Module navigation and route integrity
+- Audit the current route registry before adding new pages. Reuse existing pages for invoices, returns, service, orders, quotes, manufacturing, payroll and reports where they already cover the workflow.
+- Build a feature-to-route-to-service-to-table matrix before schema changes. Mark each item as existing/working, existing/broken, partial, missing, or blocked.
+- Do not create duplicate pages or menu entries merely because the requested business label differs from the current SifoBooks label. Add aliases/shortcuts only when they point to a real compatible workflow.
+- A feature is not complete merely because a sidebar link exists: verify read, create, edit-draft, approve/post, reverse/return, print/export, permissions and audit history as applicable.
+
+### E. Additional acceptance tests
+- Branch and warehouse isolation; authorized transfer across branches; dispatch/pending/receive transitions; retry idempotency.
+- Unit conversion round-trip and fractional quantities; historical conversion snapshot remains unchanged after product setup edits.
+- IMEI uniqueness, return/service traceability and non-IMEI item sales.
+- EMI schedule math, rounding, partial payment, early/late payment, overdue balance, duplicate receipt prevention and reminder delivery status.
+- Sales/purchase return linkage and stock/account reversal; service income/expense posting; manufacturing input/output balancing; payroll totals and statutory outputs.
+- Every report reconciles to posted accounting or inventory records for the same filters.
