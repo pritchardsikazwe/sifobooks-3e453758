@@ -111,6 +111,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Overview", url: "/inventory", module: "inventory", iconName: "LayoutDashboard", primary: true, hint: "Stock value, movement and alerts." },
           { title: "Items", url: "/stock", module: "inventory", iconName: "Boxes", primary: true, hint: "Products, costs and selling prices." },
+          { title: "Item Master", url: "/item-master", module: "inventory", iconName: "Package", hint: "Maintain item codes, categories and stock settings." },
           { title: "Transfers", url: "/inventory/transfers", module: "inventory", iconName: "ArrowLeftRight", primary: true, hint: "Move stock between warehouse and outlets." },
           { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true, hint: "Count, review variance, approve, post." },
           { title: "Reconciliation", url: "/inventory/reconciliation", module: "inventory", iconName: "Scale", primary: true, hint: "Opening, movement and closing per location." },
@@ -126,6 +127,9 @@ export const HUBS: HubDef[] = [
           { title: "Stock Adjustments", url: "/stock-adjustments", module: "inventory", iconName: "ClipboardEdit" },
           { title: "Inventory → GL Reconciliation", url: "/inventory/gl-reconciliation", module: "inventory", iconName: "Scale" },
           { title: "Inventory Flow & Audit", url: "/reports/inventory-flow-audit", module: "reports", iconName: "FileBarChart" },
+          { title: "Stock Movement Report", url: "/reports/stock-movement", module: "reports", iconName: "ArrowLeftRight" },
+          { title: "Stock Reconciliation Report", url: "/reports/stock-reconciliation", module: "reports", iconName: "Scale" },
+          { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Coins" },
         ],
       },
       {
@@ -143,6 +147,7 @@ export const HUBS: HubDef[] = [
           { title: "Production Batches", url: "/inventory/production", module: "inventory", iconName: "Factory" },
           { title: "Cashier Records", url: "/inventory/cashier-records", module: "inventory", iconName: "NotebookPen" },
           { title: "Inventory Sheets", url: "/inventory-sheets", module: "inventory", iconName: "ClipboardList" },
+          { title: "Stock Count & Variance", url: "/stock-counts", module: "inventory", iconName: "ClipboardCheck", hint: "Review physical counts and stock differences." },
         ],
       },
     ],
@@ -240,6 +245,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
           { title: "POS Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "ChartNoAxesCombined", hint: "Compare sales performance by item." },
           { title: "Retail Command Center", url: "/pos/retail-command-center", module: "retail_pos", iconName: "Gauge", primary: true, hint: "Shifts, cash and cashier activity." },
         ],
       },
