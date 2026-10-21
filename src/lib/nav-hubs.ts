@@ -290,6 +290,11 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Customer Statement", url: "/reports/customer-statement", module: "reports", iconName: "Users" },
           { title: "Supplier Statement", url: "/reports/supplier-statement", module: "reports", iconName: "Truck" },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "ChartNoAxesCombined" },
+          { title: "Profit & Loss", url: "/reports/pnl", module: "reports", iconName: "ChartNoAxesCombined" },
+          { title: "Stock Movement", url: "/reports/stock-movement", module: "reports", iconName: "ArrowLeftRight" },
+          { title: "Stock Reconciliation", url: "/reports/stock-reconciliation", module: "reports", iconName: "Scale" },
+          { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Coins" },
           { title: "Inventory Flow & Audit", url: "/reports/inventory-flow-audit", module: "reports", iconName: "FileBarChart" },
         ],
       },
