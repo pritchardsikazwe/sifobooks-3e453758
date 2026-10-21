@@ -154,3 +154,12 @@ The following existing route-backed workflows have been surfaced in the current 
 - Existing Item Master, Stock Count, Stock Movement, Stock Reconciliation, Inventory Valuation, Sales by Item and Profit & Loss shortcuts remain included.
 
 A repository route-tree check confirmed the above newly linked paths exist in the branch. This verifies route-file presence only; it does not prove that every workflow's database behavior, permissions or accounting results are correct. The changes in this pass are navigation changes, not implementations of missing EMI, multi-unit or IMEI functionality. No schema migration, production data change or deployment was performed. Build/tests still need to be run in the project environment.
+
+
+## Implementation pass 2 — serial registration guard and EMI schema foundation
+
+- Serial registration now normalizes duplicate detection for a single pasted/scanned entry, rejects overly long serial identifiers, checks for existing serial-number conflicts before insert/update, and records a sold date for newly registered records entered in sold status. Database-level uniqueness should still be enforced by the deployment schema to handle simultaneous requests safely.
+- Added an additive migration `20261021120000_sales_emi_contracts.sql` defining sales EMI contracts, instalment schedules, receipt references, payment allocations, idempotency keys, owner RLS policies, and cross-user relationship guards.
+- The EMI migration intentionally does not create accounting journal entries, mutate invoice balances, or alter existing sales records. The user must apply migrations only after reviewing the SQL and testing against a non-production database.
+- Not yet complete: EMI contract/schedule UI, schedule generation and rounding policy, atomic payment-allocation RPC with overpayment prevention, ageing/reminder report, invoice integration, unit-conversion transactions, and full branch-level server enforcement. Do not describe these as production-ready until implemented and tested.
+- Verification status: GitHub changes committed; no local build/test suite or database migration execution was available in this pass. Production deployment was not performed.
