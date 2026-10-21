@@ -62,6 +62,15 @@ export const HUBS: HubDef[] = [
           { title: "Customers", url: "/customers", module: "sales", iconName: "Users", primary: true, hint: "Who you sell to, and their balances." },
           { title: "Receive Payments", url: "/receipts", module: "sales", iconName: "CreditCard", primary: true, hint: "Record money received against invoices." },
           { title: "Credit Notes", url: "/credit-notes", module: "sales", iconName: "Undo2", hint: "Reverse or reduce an invoice properly." },
+          { title: "Sales Returns", url: "/credit-notes", module: "sales", iconName: "RotateCcw", hint: "Record customer returns through the existing credit-note workflow." },
+        ],
+      },
+      {
+        label: "Service & work orders",
+        items: [
+          { title: "Service Tickets", url: "/service-tickets", module: "sales", iconName: "LifeBuoy", hint: "Track service requests, priority and resolution." },
+          { title: "Job Cards", url: "/job-cards", module: "sales", iconName: "ClipboardList", hint: "Track work jobs and their progress." },
+          { title: "Workshops", url: "/workshops", module: "sales", iconName: "Wrench", hint: "Manage workshop activity using the existing workflow." },
         ],
       },
       {
@@ -94,6 +103,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Quotation Comparison", url: "/quotation-comparison", module: "purchases", iconName: "FileSearch", hint: "Compare supplier quotes side by side." },
           { title: "Goods Receipts", url: "/goods-receipts", module: "purchases", iconName: "PackageCheck" },
+          { title: "Supplier Invoice Control", url: "/supplier-invoice-control", module: "purchases", iconName: "ShieldCheck", hint: "Review supplier invoice control and matching exceptions." },
           { title: "Expense Categories", url: "/expense-rules", module: "purchases", iconName: "Tags" },
           { title: "Supplier Statement", url: "/reports/supplier-statement", module: "reports", iconName: "FileBarChart" },
         ],
@@ -111,6 +121,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Overview", url: "/inventory", module: "inventory", iconName: "LayoutDashboard", primary: true, hint: "Stock value, movement and alerts." },
           { title: "Items", url: "/stock", module: "inventory", iconName: "Boxes", primary: true, hint: "Products, costs and selling prices." },
+          { title: "Item Master", url: "/item-master", module: "inventory", iconName: "Package", hint: "Maintain item codes, categories and stock settings." },
           { title: "Transfers", url: "/inventory/transfers", module: "inventory", iconName: "ArrowLeftRight", primary: true, hint: "Move stock between warehouse and outlets." },
           { title: "Stock Counts", url: "/stock-counts", module: "inventory", iconName: "ClipboardList", primary: true, hint: "Count, review variance, approve, post." },
           { title: "Reconciliation", url: "/inventory/reconciliation", module: "inventory", iconName: "Scale", primary: true, hint: "Opening, movement and closing per location." },
@@ -126,13 +137,16 @@ export const HUBS: HubDef[] = [
           { title: "Stock Adjustments", url: "/stock-adjustments", module: "inventory", iconName: "ClipboardEdit" },
           { title: "Inventory → GL Reconciliation", url: "/inventory/gl-reconciliation", module: "inventory", iconName: "Scale" },
           { title: "Inventory Flow & Audit", url: "/reports/inventory-flow-audit", module: "reports", iconName: "FileBarChart" },
+          { title: "Stock Movement Report", url: "/reports/stock-movement", module: "reports", iconName: "ArrowLeftRight" },
+          { title: "Stock Reconciliation Report", url: "/reports/stock-reconciliation", module: "reports", iconName: "Scale" },
+          { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Coins" },
         ],
       },
       {
         label: "Locations & valuation",
         items: [
           { title: "Locations", url: "/inventory/locations", module: "inventory", iconName: "Warehouse" },
-          { title: "Warehouses", url: "/warehouses", module: "inventory", iconName: "Warehouse" },
+          { title: "Warehouses", url: "/warehouses", module: "inventory", iconName: "Warehouse", primary: true, hint: "Maintain warehouse locations and inspect stock and movement." },
           { title: "Batches & Expiry", url: "/stock-batches", module: "inventory", iconName: "Layers" },
           { title: "Serial Numbers", url: "/stock-serials", module: "inventory", iconName: "Barcode" },
         ],
@@ -140,9 +154,10 @@ export const HUBS: HubDef[] = [
       {
         label: "More tools",
         items: [
-          { title: "Production Batches", url: "/inventory/production", module: "inventory", iconName: "Factory" },
+          { title: "Production Batches", url: "/inventory/production", module: "inventory", iconName: "Factory", primary: true, hint: "Record production batches and trace output into stock." },
           { title: "Cashier Records", url: "/inventory/cashier-records", module: "inventory", iconName: "NotebookPen" },
           { title: "Inventory Sheets", url: "/inventory-sheets", module: "inventory", iconName: "ClipboardList" },
+          { title: "Stock Count & Variance", url: "/stock-counts", module: "inventory", iconName: "ClipboardCheck", hint: "Review physical counts and stock differences." },
         ],
       },
     ],
@@ -240,6 +255,7 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Retail POS", url: "/pos", module: "retail_pos", iconName: "ShoppingBag", primary: true, hint: "Sell at the counter." },
           { title: "POS Sales History", url: "/pos-sales", module: "retail_pos", iconName: "Receipt", primary: true },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3", hint: "Compare sales performance by item." },
           { title: "Retail Command Center", url: "/pos/retail-command-center", module: "retail_pos", iconName: "Gauge", primary: true, hint: "Shifts, cash and cashier activity." },
         ],
       },
@@ -268,6 +284,10 @@ export const HUBS: HubDef[] = [
           { title: "Reports Centre", url: "/reports", module: "reports", iconName: "BarChart3", primary: true, hint: "Ask a question, get the right report." },
           { title: "Trial Balance", url: "/reports/trial-balance", module: "reports", iconName: "BookText", primary: true },
           { title: "Annual Financial Statements", url: "/reports/afs", module: "reports", iconName: "Sparkles", primary: true },
+          { title: "Balance Sheet", url: "/reports/balance-sheet", module: "reports", iconName: "Scale", primary: true },
+          { title: "Cash Flow", url: "/reports/cash-flow", module: "reports", iconName: "Wallet" },
+          { title: "General Ledger", url: "/reports/general-ledger", module: "reports", iconName: "BookOpen" },
+          { title: "Account Transactions", url: "/reports/account-transactions", module: "reports", iconName: "ListTree" },
         ],
       },
       {
@@ -276,6 +296,8 @@ export const HUBS: HubDef[] = [
           { title: "VAT Return (VAT 3)", url: "/reports/vat-return", module: "reports", iconName: "Receipt" },
           { title: "Income Tax Computation", url: "/reports/income-tax", module: "reports", iconName: "Receipt" },
           { title: "Turnover Tax", url: "/reports/turnover-tax", module: "reports", iconName: "Receipt" },
+          { title: "Tax Summary", url: "/reports/tax-summary", module: "reports", iconName: "Calculator" },
+          { title: "VAT Report", url: "/reports/vat", module: "reports", iconName: "ReceiptText" },
           { title: "Compliance", url: "/compliance", module: "compliance", iconName: "ShieldCheck", primary: true },
         ],
       },
@@ -284,6 +306,16 @@ export const HUBS: HubDef[] = [
         items: [
           { title: "Customer Statement", url: "/reports/customer-statement", module: "reports", iconName: "Users" },
           { title: "Supplier Statement", url: "/reports/supplier-statement", module: "reports", iconName: "Truck" },
+          { title: "Aged Receivables", url: "/reports/aged-receivables", module: "reports", iconName: "Users" },
+          { title: "Aged Payables", url: "/reports/aged-payables", module: "reports", iconName: "Truck" },
+          { title: "Bank Reconciliation Report", url: "/reports/bank-reconciliation", module: "reports", iconName: "Landmark" },
+          { title: "Expense Report", url: "/reports/expenses", module: "reports", iconName: "Receipt" },
+          { title: "Payroll Summary", url: "/reports/payroll-summary", module: "reports", iconName: "Banknote" },
+          { title: "Sales by Item", url: "/reports/sales-by-item", module: "reports", iconName: "BarChart3" },
+          { title: "Profit & Loss", url: "/reports/pnl", module: "reports", iconName: "BarChart3" },
+          { title: "Stock Movement", url: "/reports/stock-movement", module: "reports", iconName: "ArrowLeftRight" },
+          { title: "Stock Reconciliation", url: "/reports/stock-reconciliation", module: "reports", iconName: "Scale" },
+          { title: "Inventory Valuation", url: "/reports/inventory-valuation", module: "reports", iconName: "Coins" },
           { title: "Inventory Flow & Audit", url: "/reports/inventory-flow-audit", module: "reports", iconName: "FileBarChart" },
         ],
       },

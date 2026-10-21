@@ -89,10 +89,33 @@ function SerialsPage() {
   };
 
   const save = async () => {
+    // Normalize scans/pastes before validation; serials are identifiers, not quantities.
     const list = form.serials.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
     if (!form.item_id || !list.length) { toast.error("Item and at least one serial number are required"); return; }
+    const normalized = list.map(s => s.toLocaleUpperCase());
+    if (new Set(normalized).size !== normalized.length) {
+      toast.error("Duplicate serial numbers in this entry. Remove duplicates before saving.");
+      return;
+    }
+    if (list.some(s => s.length > 200)) {
+      toast.error("A serial number cannot exceed 200 characters.");
+      return;
+    }
     setBusy(true);
     try {
+      // Check existing records as a friendly preflight. Database uniqueness remains
+      // the final concurrency guard; never silently overwrite another serial record.
+      const { data: existing, error: lookupError } = await supabase
+        .from("stock_serials")
+        .select("id,serial_no")
+        .in("serial_no", list);
+      if (lookupError) throw lookupError;
+      const conflicts = (existing ?? []).filter((row: any) => !editing || row.id !== editing.id);
+      if (conflicts.length) {
+        const conflictList = conflicts.map((row: any) => row.serial_no).slice(0, 5).join(", ");
+        toast.error(`Serial already registered: ${conflictList}${conflicts.length > 5 ? "…" : ""}`);
+        return;
+      }
       const base = {
         item_id: form.item_id,
         batch_id: form.batch_id || null,
@@ -103,11 +126,22 @@ function SerialsPage() {
         note: form.note || null,
       };
       if (editing) {
-        const { error } = await supabase.from("stock_serials").update({ ...base, serial_no: list[0], sold_date: form.status === "sold" ? (editing.sold_date ?? new Date().toISOString().slice(0, 10)) : null }).eq("id", editing.id);
+        const { error } = await supabase.from("stock_serials").update({
+          ...base,
+          serial_no: list[0],
+          sold_date: form.status === "sold"
+            ? (editing.sold_date ?? new Date().toISOString().slice(0, 10))
+            : null,
+        }).eq("id", editing.id);
         if (error) throw error;
         toast.success("Serial updated");
       } else {
-        const { error } = await supabase.from("stock_serials").insert(list.map(sn => ({ ...base, serial_no: sn })));
+        const payload = list.map(sn => ({
+          ...base,
+          serial_no: sn,
+          sold_date: form.status === "sold" ? new Date().toISOString().slice(0, 10) : null,
+        }));
+        const { error } = await supabase.from("stock_serials").insert(payload);
         if (error) throw error;
         toast.success(`${list.length} serial(s) registered`);
       }
