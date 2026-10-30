@@ -3,7 +3,7 @@ import { BedDouble, CalendarDays, CheckCircle2, ClipboardList, CreditCard, DoorO
 import { requireSupabase, supabase, supabaseReady } from "./lib/supabase";
 
 type Row = Record<string, any>;
-type Tab = "overview" | "rooms" | "guests" | "reservations" | "housekeeping" | "folios" | "maintenance" | "settings";
+type Tab = "overview" | "rooms" | "guests" | "reservations" | "housekeeping" | "folios" | "maintenance" | "night_audit" | "settings";
 const tabs: { id: Tab; label: string; icon: typeof Hotel }[] = [
   { id: "overview", label: "Overview", icon: Hotel },
   { id: "rooms", label: "Rooms", icon: BedDouble },
