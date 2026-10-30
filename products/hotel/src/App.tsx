@@ -96,13 +96,10 @@ export function App() {
       const client = requireSupabase();
       const user = (await client.auth.getUser()).data.user;
       if (!user) throw new Error("Please sign in again.");
-      const { data: created, error: createError } = await client.from("hotels").insert({
-        owner_user_id: user.id, name: hotelName.trim(), country: "Zambia", currency_code: "ZMW", timezone: "Africa/Lusaka",
-      }).select("*").single();
+      const { data: created, error: createError } = await client.rpc("create_hotel_for_current_user", { p_name: hotelName.trim() });
       if (createError) throw createError;
-      const { error: memberError } = await client.from("hotel_memberships").insert({ hotel_id: created.id, user_id: user.id, role: "owner", active: true });
-      if (memberError) throw memberError;
-      setHotel(created); setNotice("Hotel workspace created.");
+      if (!created || typeof created !== "object") throw new Error("Hotel setup returned no property record.");
+      setHotel(created as Row); setNotice("Hotel workspace created.");
     } catch (e) { setError(errorMessage(e)); }
     finally { setBusy(false); }
   };
