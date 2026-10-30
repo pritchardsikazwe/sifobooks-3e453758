@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { BedDouble, CalendarDays, CheckCircle2, ClipboardList, CreditCard, DoorOpen, Hotel, LogOut, Plus, RefreshCw, Users, Wallet, Wrench } from "lucide-react";
+import { BedDouble, CalendarDays, ClipboardList, CreditCard, DoorOpen, Hotel, LogOut, Moon, Plus, RefreshCw, Users, Wallet, Wrench } from "lucide-react";
 import { requireSupabase, supabase, supabaseReady } from "./lib/supabase";
 
 type Row = Record<string, any>;
@@ -12,6 +12,7 @@ const tabs: { id: Tab; label: string; icon: typeof Hotel }[] = [
   { id: "housekeeping", label: "Housekeeping", icon: ClipboardList },
   { id: "folios", label: "Folios & payments", icon: Wallet },
   { id: "maintenance", label: "Maintenance", icon: Wrench },
+  { id: "night_audit", label: "Night audit", icon: Moon },
   { id: "settings", label: "Hotel settings", icon: DoorOpen },
 ];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -161,6 +162,25 @@ export function App() {
         if (error) throw error;
         if (v.room_id && v.blocks_room_sale !== "false") await client.from("rooms").update({ status: "maintenance" }).eq("id", v.room_id).eq("hotel_id", hotel.id);
         setNotice("Maintenance request created.");
+      } else if (tab === "night_audit") {
+        const businessDate = v.business_date || today();
+        const existingAudit = data.night_audits.find((a) => a.business_date === businessDate);
+        if (existingAudit) throw new Error("A night audit already exists for this business date.");
+        const chargesForDay = data.folio_items.filter((i) => i.service_date === businessDate);
+        const roomRevenue = chargesForDay.filter((i) => i.item_type === "room_charge").reduce((s, i) => s + Number(i.amount || 0), 0);
+        const otherRevenue = chargesForDay.filter((i) => i.item_type !== "room_charge" && i.item_type !== "discount").reduce((s, i) => s + Number(i.amount || 0), 0);
+        const receiptsForDay = data.payments.filter((p) => p.status === "posted" && p.received_at?.slice(0, 10) === businessDate);
+        const paymentsTotal = receiptsForDay.reduce((s, p) => s + Number(p.amount || 0), 0);
+        const expectedCash = receiptsForDay.filter((p) => p.method === "cash").reduce((s, p) => s + Number(p.amount || 0), 0);
+        const countedCash = Number(v.cash_counted || 0);
+        const { error } = await client.from("night_audits").insert({
+          hotel_id: hotel.id, business_date: businessDate, status: "closed", room_revenue: roomRevenue,
+          other_revenue: otherRevenue, payments_total: paymentsTotal, variance: countedCash - expectedCash,
+          checklist: { cash_expected: expectedCash, cash_counted: countedCash, cash_variance: countedCash - expectedCash, reconciled: true },
+          notes: v.notes || null, opened_by: session.user.id, closed_by: session.user.id, closed_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+        setNotice(`Night audit closed for ${businessDate}. Cash variance: ${money(countedCash - expectedCash)}.`);
       } else if (tab === "settings") {
         const { error } = await client.from("hotels").update({ name: v.name.trim(), legal_name: v.legal_name || null, email: v.email || null, phone: v.phone || null, address: v.address || null, city: v.city || null, tax_registration_number: v.tax_registration_number || null, vat_enabled: v.vat_enabled === "true", vat_rate: Number(v.vat_rate || 0) }).eq("id", hotel.id);
         if (error) throw error;
@@ -272,6 +292,11 @@ export function App() {
     case "maintenance":
       content = <><div className="panel"><h2>Report maintenance issue</h2>{submitForm(<>{field("title", "Issue title")}{select("room_id", "Room (optional)", data.rooms.map((r) => ({value:r.id,label:r.room_number})), false)}{select("priority", "Priority", [{value:"low",label:"Low"},{value:"normal",label:"Normal"},{value:"high",label:"High"},{value:"urgent",label:"Urgent"}])}{select("blocks_room_sale", "Block room sales?", [{value:"true",label:"Yes — mark room unavailable"},{value:"false",label:"No"}])}{field("description", "Details", "text", false)}{submitButton("Create maintenance ticket")}</>)}</div><div className="panel"><h2>Maintenance log</h2>{table(["Issue", "Room", "Priority", "Status", "Reported"], data.maintenance_requests.map((m) => [m.title, roomName(m.room_id), badge(m.priority), badge(m.status), new Date(m.created_at).toLocaleDateString()]))}</div></>;
       break;
+    case "night_audit": {
+      const auditedToday = data.night_audits.find((a) => a.business_date === today());
+      content = <><div className="panel"><h2>Night audit · Daily close</h2><p className="muted">Reconcile today's room charges, other charges, receipts and physical cash before closing the business date. This does not post to an external accounting ledger.</p>{auditedToday ? <div className="alert success"><CheckCircle2 size={18} />Audit closed for {auditedToday.business_date}. Cash variance: {money(auditedToday.variance)}.</div> : submitForm(<>{field("business_date", "Business date", "date", true, {defaultValue:today(),max:today()})}{field("cash_counted", "Physical cash counted (ZMW)", "number", true, {min:0,step:"0.01",defaultValue:"0"})}{field("notes", "Closing notes", "text", false)}{submitButton("Reconcile and close day")}</>)}</div><div className="panel"><h2>Previous night audits</h2>{table(["Business date", "Room revenue", "Other revenue", "Payments", "Cash variance", "Status"], data.night_audits.map((a) => [a.business_date, money(a.room_revenue), money(a.other_revenue), money(a.payments_total), money(a.variance), badge(a.status)]))}</div></>;
+      break;
+    }
     case "settings":
       content = <div className="panel"><h2>Property settings</h2><p className="muted">Zambia defaults: ZMW, Africa/Lusaka, with VAT disabled until configured by the hotel.</p>{submitForm(<>{field("name", "Hotel name", "text", true, {defaultValue:hotel.name})}{field("legal_name", "Registered legal name", "text", false, {defaultValue:hotel.legal_name ?? ""})}{field("email", "Business email", "email", false, {defaultValue:hotel.email ?? ""})}{field("phone", "Phone", "tel", false, {defaultValue:hotel.phone ?? ""})}{field("address", "Address", "text", false, {defaultValue:hotel.address ?? ""})}{field("city", "City", "text", false, {defaultValue:hotel.city ?? ""})}{field("tax_registration_number", "Tax registration number", "text", false, {defaultValue:hotel.tax_registration_number ?? ""})}{select("vat_enabled", "VAT enabled?", [{value:"false",label:"No"},{value:"true",label:"Yes"}], true)}{field("vat_rate", "VAT rate (%)", "number", true, {min:0,max:100,step:"0.01",defaultValue:String(hotel.vat_rate ?? 0)})}{submitButton("Save settings")}</>)}</div>;
       break;
