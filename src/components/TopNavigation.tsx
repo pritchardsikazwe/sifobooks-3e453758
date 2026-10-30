@@ -67,6 +67,7 @@ function useNavigationMenus(): Menu[] {
   for (const hub of hubs) {
     for (const group of visibleHubGroups(hub, installed, canView)) {
       for (const item of group.items) {
+        if (item.url === "/hotel" || item.url.startsWith("/hotel/") || item.module === "hotel_erp") continue;
         if ((item as any).superAdminOnly && !isSuperAdmin) continue;
         if (item.module === "retail_pos" && !retailPosEnabled) continue;
         if (seen.has(item.url)) continue;
