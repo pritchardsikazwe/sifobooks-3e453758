@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { BedDouble, CalendarDays, CheckCircle2, ClipboardList, CreditCard, DoorOpen, Hotel, LogOut, Plus, RefreshCw, Users, Wallet, Wrench } from "lucide-react";
 import { requireSupabase, supabase, supabaseReady } from "./lib/supabase";
 
@@ -73,7 +73,7 @@ export function App() {
   useEffect(() => { if (session) loadHotel().catch((e) => setError(errorMessage(e))); }, [session, loadHotel]);
   useEffect(() => { if (hotel?.id) refresh(); }, [hotel?.id, refresh]);
 
-  const submitAuth = async (event: React.FormEvent) => {
+  const submitAuth = async (event: FormEvent) => {
     event.preventDefault(); setError(""); setNotice(""); setBusy(true);
     try {
       const client = requireSupabase();
@@ -90,7 +90,7 @@ export function App() {
     finally { setBusy(false); }
   };
 
-  const createHotel = async (event: React.FormEvent) => {
+  const createHotel = async (event: FormEvent) => {
     event.preventDefault(); setError(""); setBusy(true);
     try {
       const client = requireSupabase();
@@ -107,7 +107,7 @@ export function App() {
     finally { setBusy(false); }
   };
 
-  const save = async (event: React.FormEvent) => {
+  const save = async (event: FormEvent) => {
     event.preventDefault(); if (!hotel) return;
     setError(""); setNotice(""); setSaving(true);
     const client = requireSupabase();
@@ -245,12 +245,12 @@ export function App() {
   const field = (name: string, label: string, type = "text", required = true, extra: Record<string, any> = {}) => <label key={name}>{label}<input type={type} required={required} value={form[name] ?? extra.defaultValue ?? ""} onChange={(e) => setForm((s) => ({ ...s, [name]: e.target.value }))} {...Object.fromEntries(Object.entries(extra).filter(([k]) => k !== "defaultValue"))} /></label>;
   const select = (name: string, label: string, options: { value: string; label: string }[], required = true) => <label key={name}>{label}<select required={required} value={form[name] ?? ""} onChange={(e) => setForm((s) => ({ ...s, [name]: e.target.value }))}><option value="">Select…</option>{options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>;
   const submitButton = (label: string) => <button className="primary" disabled={saving}><Plus size={16} />{saving ? "Saving…" : label}</button>;
-  const submitForm = (children: React.ReactNode) => <form className="form-grid" onSubmit={save}>{children}</form>;
-  const table = (headers: string[], rows: (string | React.ReactNode)[][]) => <div className="table-scroll"><table><thead><tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length ? rows.map((row, i) => <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>) : <tr><td colSpan={headers.length} className="empty">No records yet. Add your first record above.</td></tr>}</tbody></table></div>;
+  const submitForm = (children: ReactNode) => <form className="form-grid" onSubmit={save}>{children}</form>;
+  const table = (headers: string[], rows: (string | ReactNode)[][]) => <div className="table-scroll"><table><thead><tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length ? rows.map((row, i) => <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>) : <tr><td colSpan={headers.length} className="empty">No records yet. Add your first record above.</td></tr>}</tbody></table></div>;
   const badge = (status: string) => <span className={`badge ${status}`}>{status?.replaceAll("_", " ")}</span>;
   const reservationActions = (r: Row) => <div className="actions">{r.status === "confirmed" && <button className="small" onClick={() => updateReservation(r, "checkin")}>Check in</button>}{r.status === "checked_in" && <button className="small" onClick={() => updateReservation(r, "checkout")}>Check out</button>}{["pending", "confirmed"].includes(r.status) && <button className="small danger" onClick={() => updateReservation(r, "cancel")}>Cancel</button>}</div>;
 
-  let content: React.ReactNode;
+  let content: ReactNode;
   switch (tab) {
     case "overview":
       content = <><div className="metrics"><Metric title="Sellable rooms" value={totals.rooms} icon={<BedDouble />} /><Metric title="Occupied" value={totals.occupied} icon={<DoorOpen />} /><Metric title="Arrivals today" value={totals.arrivals} icon={<CalendarDays />} /><Metric title="Departures today" value={totals.departures} icon={<LogOut />} /><Metric title="Revenue charged today" value={money(totals.revenue)} icon={<Wallet />} /><Metric title="Received today" value={money(totals.paid)} icon={<CreditCard />} /><Metric title="Open folio balance" value={money(totals.outstanding)} icon={<Users />} /></div><div className="panel"><div className="panel-head"><div><h2>Today's arrivals</h2><p>Confirmed reservations due to check in today.</p></div><button className="small" onClick={() => setTab("reservations")}>Open reservations</button></div>{table(["Reservation", "Guest", "Room", "Dates", "Status"], data.reservations.filter((r) => r.check_in_date === today()).map((r) => [r.reservation_number, guestName(r.guest_id), roomName(r.room_id), `${r.check_in_date} → ${r.check_out_date}`, badge(r.status)]))}</div></>;
@@ -281,6 +281,6 @@ export function App() {
   return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark"><Hotel /></span><div><strong>SifoBooks</strong><small>Hotel Management</small></div></div><div className="property-label">PROPERTY</div><div className="property-name">{hotel.name}</div><nav>{tabs.map((item) => <button key={item.id} className={tab === item.id ? "nav-item active" : "nav-item"} onClick={() => { setTab(item.id); setForm({}); setError(""); setNotice(""); }}><item.icon size={18} />{item.label}</button>)}</nav><div className="sidebar-bottom"><span>{session.user.email}</span><button className="nav-item" onClick={() => requireSupabase().auth.signOut()}><LogOut size={18} />Sign out</button></div></aside><main className="main"><header className="topbar"><div><span className="eyebrow">SIFOBOOKS HOTEL PMS</span><h1>{tabs.find((t) => t.id === tab)?.label}</h1><p>{hotel.city ? `${hotel.city}, ${hotel.country}` : hotel.country} · {hotel.currency_code} · {new Date().toLocaleDateString()}</p></div><button className="secondary" onClick={() => refresh()} disabled={loading}><RefreshCw size={16} className={loading ? "spin" : ""} />Refresh</button></header>{error && <div className="alert error">{error}<button onClick={() => setError("")}>×</button></div>}{notice && <div className="alert success">{notice}<button onClick={() => setNotice("")}>×</button></div>}{loading && <div className="loading-line">Syncing hotel records…</div>}{content}<footer>Private hotel workspace · Row-level security enabled · {hotel.timezone}</footer></main></div>;
 }
 
-function Metric({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
+function Metric({ title, value, icon }: { title: string; value: ReactNode; icon: ReactNode }) {
   return <div className="metric"><span className="metric-icon">{icon}</span><span className="metric-label">{title}</span><strong>{value}</strong></div>;
 }
