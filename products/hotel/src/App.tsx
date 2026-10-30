@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { BedDouble, CalendarDays, ClipboardList, CreditCard, DoorOpen, Hotel, LogOut, Moon, Plus, RefreshCw, Users, Wallet, Wrench } from "lucide-react";
+import { BedDouble, CalendarDays, CheckCircle2, ClipboardList, CreditCard, DoorOpen, Hotel, LogOut, Moon, Plus, RefreshCw, Users, Wallet, Wrench } from "lucide-react";
 import { requireSupabase, supabase, supabaseReady } from "./lib/supabase";
 
 type Row = Record<string, any>;
