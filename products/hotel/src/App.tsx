@@ -182,7 +182,7 @@ export function App() {
         if (error) throw error;
         setNotice(`Night audit closed for ${businessDate}. Cash variance: ${money(countedCash - expectedCash)}.`);
       } else if (tab === "settings") {
-        const { error } = await client.from("hotels").update({ name: (v.name ?? hotel.name).trim(), legal_name: v.legal_name || null, email: v.email || null, phone: v.phone || null, address: v.address || null, city: v.city || null, tax_registration_number: v.tax_registration_number || null, vat_enabled: v.vat_enabled === "true", vat_rate: Number(v.vat_rate ?? hotel.vat_rate ?? 0) }).eq("id", hotel.id);
+        const { error } = await client.from("hotels").update({ name: (v.name ?? hotel.name).trim(), legal_name: v.legal_name ?? hotel.legal_name ?? null, email: v.email ?? hotel.email ?? null, phone: v.phone ?? hotel.phone ?? null, address: v.address ?? hotel.address ?? null, city: v.city ?? hotel.city ?? null, tax_registration_number: v.tax_registration_number ?? hotel.tax_registration_number ?? null, vat_enabled: (v.vat_enabled ?? String(hotel.vat_enabled)) === "true", vat_rate: Number(v.vat_rate ?? hotel.vat_rate ?? 0) }).eq("id", hotel.id);
         if (error) throw error;
         setHotel({ ...hotel, ...v });
         setNotice("Hotel settings saved.");
