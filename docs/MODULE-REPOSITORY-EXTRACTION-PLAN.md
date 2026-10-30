@@ -1,93 +1,36 @@
-# SifoBooks Module Repository Separation Plan
+# SifoBooks Independent Repository Plan
 
-Status: planning only. The existing monolith remains the production source of truth until each extracted repository is built, configured, tested, and migrated.
+Updated scope (user-confirmed):
 
 ## Target repositories
 
-Create these repositories under `pritchardsikazwe`:
+1. `sifobooks-platform` — central customer portal, module catalogue, subscriptions/billing, entitlement checks, support and launch links.
+2. `sifobooks-hotel` — hotel management as a standalone application and dedicated Supabase project.
+3. `sifobooks-restaurant` — restaurant management as a standalone application and dedicated Supabase project.
+4. `sifobooks-property` — property/real-estate management as a standalone application and dedicated Supabase project.
+5. `sifobooks-school` — school management as a standalone application and dedicated Supabase project.
+6. `sifobooks-business-suite` — one combined application and dedicated Supabase project for Butchery + POS + Accounting. These three remain integrated in this suite because sales, stock movements, till operations and financial postings must reconcile.
 
-- `sifobooks-platform` — central landing page, tenant/customer records, module catalogue, subscriptions, billing, access entitlements, shared navigation and support.
-- `sifobooks-hotel` — standalone hotel operations and hotel-specific database migrations.
-- `sifobooks-accounting` — general ledger, journals, posting engine, financial reports and accounting migrations.
-- `sifobooks-pos` — till/register workflows, checkout, receipts, cashier controls and POS migrations.
-- `sifobooks-inventory` — stock, warehouses/locations, stock movements, inventory reports and inventory migrations.
-- `sifobooks-restaurant` — restaurant tables/checks, orders, kitchen workflow and restaurant migrations.
-- `sifobooks-shared-contracts` — versioned API contracts, shared types and integration events only; no operational database.
+## Extraction order
 
-## Existing source locations identified
+1. Hotel
+2. Restaurant
+3. Property
+4. School
+5. Butchery + POS + Accounting suite
+6. Central platform launch/subscription integration
 
-### Hotel
-- `src/routes/_authenticated/hotel.tsx`
-- `src/routes/_authenticated/hotel/**`
-- `src/components/industry/Hotel*.tsx`
-- `src/lib/hotel-*.ts`
-- `src/lib/demo/hotel.ts`
-- `src/lib/__tests__/hotel-*.test.ts`
-- Hotel-related entries in `docs/SIFOBOOKS_HOTEL_SCHOOL_ERP_STANDARD_2026.md`
+## Guardrails
 
-### POS
-- `src/routes/_authenticated/pos*`
-- `src/pages/pos/**`
-- `src/components/pos/**`
-- `src/lib/pos*.ts`, `src/lib/worker-pos.ts`
-- `src/lib/__tests__/pos-*.test.ts`
-- POS migrations under `cloud/migrations/`, `drizzle/migrations/` and `src/lib/db/migrations/`
+- The current `sifobooks-3e453758` repository remains intact until extracted applications are built, tested and approved for cutover.
+- Each standalone application gets its own Supabase project, migrations, RLS policies, environment configuration, backups, CI and deployment.
+- The Butchery + POS + Accounting suite shares one database and coordinated transactional logic; do not split these into separate products at this stage.
+- Platform subscription/entitlement checks must be enforced server-side; hiding navigation alone is not security.
+- Never commit production secrets, service-role keys or customer database dumps.
+- Preserve tenant isolation, audit logs, IDs/data mappings, migration rollback and reconciliation tests.
+- Independent modules must remain usable without buying other modules. Cross-product integrations are optional and use authenticated, versioned APIs/webhooks.
+- Do not claim repositories or Supabase projects are created until they are actually provisioned and verified.
 
-### Inventory
-- `src/routes/_authenticated/inventory*`
-- `src/routes/_authenticated/inventory/**`
-- `src/core/inventory/**`
-- `src/lib/inventory*.ts`, `src/lib/inventory/**`
-- Inventory-related migrations and QA scripts
+## Current state
 
-### Accounting
-- `src/core/accounting/**`
-- `src/lib/posting*.ts`, `src/lib/operationalPosting.ts`, `src/lib/bank-posting.ts`, `src/lib/payroll-posting.ts`
-- `src/platform/windows/accounting*.ts`
-- Accounting-related migrations and posting tests
-
-### Restaurant
-- `src/routes/_authenticated/restaurant*`
-- `src/components/restaurant/**`
-- `src/lib/restaurant*.ts`, `src/lib/restaurant/**`
-- Restaurant-related migrations and tests
-
-## Mandatory architecture rules
-
-1. Keep the current `sifobooks-3e453758` repository intact during extraction. Do not delete module code or migrations from it until each new repository is validated and deployed.
-2. Each extracted module gets its own Supabase project, environment variables, database migrations, RLS policies, storage configuration, CI checks and deployment instructions.
-3. Never copy production secrets, service-role keys, real customer data, or database dumps into Git.
-4. The platform owns customer subscription/entitlement decisions. Modules verify signed/authenticated entitlements server-side; hiding UI is not authorization.
-5. Modules communicate through authenticated, versioned APIs/webhooks. Do not directly query another module's database.
-6. Accounting, POS and Inventory have important transactional dependencies. Define idempotent events and reconciliation before enabling cross-module posting.
-7. Hotel must operate without Accounting/POS/Inventory subscriptions. Optional integrations must fail safely without blocking hotel reservations, check-in/out or hotel reports.
-8. Keep tenant isolation and per-tenant authorization enforced in every module's database/RLS policies and server endpoints.
-9. Migrate schema first, then controlled data, then test reconciliation. Preserve IDs or provide explicit ID mapping.
-10. Run tests and production build for each extracted app before routing real users to it.
-
-## Recommended extraction order
-
-1. Hotel first (clearest standalone product); establish its independent Supabase project and deployment.
-2. Restaurant as standalone or a Hotel add-on, with an explicit optional integration contract.
-3. Inventory.
-4. POS.
-5. Accounting and posting integrations.
-6. Central platform module catalogue and subscription-driven launch links.
-
-## Completion checklist for each repository
-
-- [ ] Repository created and access permissions confirmed
-- [ ] Application source extracted without importing unrelated monolith-only routes
-- [ ] Dependencies and environment variables documented
-- [ ] Dedicated Supabase project configured
-- [ ] Migrations, RLS, functions and storage policies reviewed
-- [ ] Authentication and tenant isolation tested
-- [ ] API contracts and optional integrations tested
-- [ ] Unit/integration tests and production build pass
-- [ ] Backup/restore and rollback procedure documented
-- [ ] Deployment URL and central-platform launch configuration tested
-- [ ] Existing monolith remains functional until cutover is approved
-
-## Current limitation
-
-This plan documents source boundaries and safe extraction sequencing. Repository creation and Supabase project provisioning are separate administrative actions; do not claim a module has been extracted or isolated until its new repository and database are actually created and verified.
+This document records the intended separation architecture. It does not itself create the target repositories or Supabase projects, and no existing application source is removed by this plan.
