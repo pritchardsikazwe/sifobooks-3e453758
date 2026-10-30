@@ -1,5 +1,9 @@
 name: Hotel Product Build
 
+concurrency:
+  group: hotel-product-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [product-separation-foundation]
