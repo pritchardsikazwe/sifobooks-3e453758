@@ -25,7 +25,6 @@ const GraduationCap = Icons.GraduationCap;
 const STORAGE_KEY = "sifobooks.sidebar.groups";
 
 const MODULE_ENTRIES: Array<{ key: string; title: string; url: string; icon: string }> = [
-  { key: "hotel_erp", title: "Hotel", url: "/hotel", icon: "Hotel" },
   { key: "school_erp", title: "School", url: "/school", icon: "School" },
   { key: "property_management", title: "Property", url: "/property", icon: "Building2" },
   { key: "lending", title: "Lending", url: "/lending", icon: "Landmark" },
@@ -181,7 +180,6 @@ export function AppSidebar() {
 
     const activeIndustry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (getSolution(workspaceIndustry)?.id ?? workspaceIndustry ?? null);
     const industryModuleGroups: Record<string, string[]> = {
-      hospitality: ["hotel_erp"],
       education: ["school_erp"],
       property: ["property_management"],
       restaurant: ["restaurant"],
@@ -198,6 +196,7 @@ export function AppSidebar() {
     for (const hub of hubsForMode(workspaceMode, SIFOBOOKS_EDITION)) {
       for (const group of visibleHubGroups(hub, installed, canView)) {
         for (const item of group.items) {
+          if (item.url === "/hotel" || item.url.startsWith("/hotel/") || item.module === "hotel_erp") continue;
           if ((item as any).superAdminOnly && !isSuperAdmin) continue;
           if ((gatingActive || gatingFailClosed) && item.module && verticalModules.has(item.module)) continue;
           // Optional industry modules must be explicitly activated or selected by
@@ -246,7 +245,6 @@ export function AppSidebar() {
     // Explicit industry navigation for deep operational routes that are not
     // represented completely by the central module registry.
     const industryRouteGroup: Record<string, string> = {
-      hotel: "hotel_erp",
       school: "school_erp",
       property: "property_management",
       lending: "lending",
@@ -256,8 +254,7 @@ export function AppSidebar() {
     };
     const showIndustryRoute = (url: string) => {
       const group =
-        url.startsWith("/hotel") ? "hotel" :
-        url.startsWith("/school") || url.startsWith("/boarding-") ? "school" :
+          url.startsWith("/school") || url.startsWith("/boarding-") ? "school" :
         url.startsWith("/property") ? "property" :
         url.startsWith("/lending") ? "lending" :
         url.startsWith("/restaurant") ? "restaurant" :
@@ -269,7 +266,6 @@ export function AppSidebar() {
     };
 
     const industryItems: Array<[string,string,string]> = [
-      ["Hotel Dashboard","/hotel","Hotel"],["Front Desk","/hotel/front-desk","LayoutDashboard"],["Reservations","/hotel/reservations","CalendarCheck"],["Booking Engine","/hotel/booking","CalendarRange"],["Room Rack","/hotel/room-rack","BedDouble"],["Rooms","/hotel/rooms","DoorOpen"],["Rates","/hotel/rates","Tag"],["Channels","/hotel/channels","Globe2"],["Guests","/hotel/guests","Users"],["Pre-arrival","/hotel/pre-arrival","ClipboardCheck"],["Check In / Out","/hotel/check-in-out","DoorOpen"],["Housekeeping","/hotel/housekeeping","Sparkles"],["Folios","/hotel/folios","ReceiptText"],["Payments","/hotel/payments","CreditCard"],["Hotel POS","/hotel/pos","UtensilsCrossed"],["Restaurant","/hotel/restaurant","Utensils"],["Events","/hotel/events","PartyPopper"],["Maintenance","/hotel/maintenance","Wrench"],["Inventory","/hotel/inventory","Boxes"],["Night Audit","/hotel/night-audit","Moon"],["Accounting","/hotel/accounting","Wallet"],["Reports","/hotel/reports","BarChart3"],["Compliance","/hotel/compliance","ShieldCheck"],["Guest Portal","/hotel/guest-portal","ExternalLink"],["Hotel Settings","/hotel/settings","Settings"],
       ["School Dashboard","/school","School"],["Preschool","/school/preschool","Baby"],["Admissions","/school/admissions","UserPlus"],["Students","/school/students","GraduationCap"],["Student Profile","/school/student-profile","UserRound"],["Parents","/school/parents","Users"],["Academics","/school/academics","BookOpen"],["Timetable","/school/timetable","CalendarDays"],["Attendance","/school/attendance","ClipboardCheck"],["Exams","/school/exams","FileQuestion"],["Report Cards","/school/report-cards","FileText"],["Fees & Billing","/school/fees-billing","Receipt"],["Fees","/school/fees","BadgeDollarSign"],["Payments","/school/payments","CreditCard"],["Scholarships","/school/scholarships","Award"],["Boarding","/school/boarding","BedDouble"],["Transport","/school/transport","Bus"],["Library","/school/library","Library"],["Meals","/school/meals","Utensils"],["Discipline","/school/discipline","ShieldAlert"],["Health","/school/health","HeartPulse"],["Communications","/school/communications","MessageSquare"],["Staff","/school/staff","UsersRound"],["Parent Portal","/school/parent-portal","ExternalLink"],["Student Portal","/school/student-portal","ExternalLink"],["School Reports","/school/reports","BarChart3"],["Compliance","/school/compliance","ShieldCheck"],["School Settings","/school/settings","Settings"],
       ["Property Dashboard","/property","Building2"],["Tenants","/property/tenants","Users"],["Leases","/property/leases","FileText"],["Collections","/property/collections","Wallet"],["Maintenance","/property/maintenance","Wrench"],["Property Reports","/property/reports","BarChart3"],
       ["Lending Dashboard","/lending","Landmark"],["Borrowers","/lending/borrowers","Users"],["Applications","/lending/applications","FileText"],["Credit Assessment","/lending/credit-assessment","ShieldCheck"],["Loan Products","/lending/products","Package"],["Portfolio","/lending/portfolio","PieChart"],["Disbursements","/lending/disbursements","Send"],["Repayments","/lending/repayments","CreditCard"],["Collections","/lending/collections","Wallet"],["Field Collections","/lending/field-collections","MapPin"],["Arrears","/lending/arrears","AlertTriangle"],["Promises","/lending/promises","Handshake"],["Guarantors","/lending/guarantors","UsersRound"],["Collateral","/lending/collateral","LockKeyhole"],["Group Lending","/lending/group-lending","Users"],["Savings","/lending/savings","PiggyBank"],["Investors","/lending/investors","Landmark"],["Mobile Money","/lending/mobile-money","Smartphone"],["Restructuring","/lending/restructuring","RefreshCw"],["Write-offs","/lending/writeoffs","Archive"],["Risk & Fraud","/lending/risk-fraud","ShieldAlert"],["Communications","/lending/communications","MessageSquare"],["Documents","/lending/documents","FileText"],["Customer Portal","/lending/customer-portal","ExternalLink"],["Investor Portal","/lending/investor-portal","ExternalLink"],["Lending Accounting","/lending/accounting","BookOpen"],["Lending Reports","/lending/reports","BarChart3"],["Lending Compliance","/lending/compliance","ShieldCheck"],["Branches","/lending/branches","GitBranch"],["Lending Settings","/lending/settings","Settings"],
