@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
 import { ChevronDown } from "lucide-react";
@@ -41,7 +42,7 @@ function useNavigationMenus(): Menu[] {
       }
       if (!companyId) return;
       const { data: c } = await supabase.from("companies").select("industry").eq("id", companyId).maybeSingle();
-      const industry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (c?.industry as string | null);
+      const industry = c?.industry as string | null;
       const capabilities = await loadBusinessCapabilityState(companyId, industry);
       if (!cancelled) {
         setRetailPosEnabled(Boolean(capabilities.retail_pos));
