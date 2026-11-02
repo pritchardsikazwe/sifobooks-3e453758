@@ -124,14 +124,7 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
 
 export function getSolution(id?: string | null): IndustrySolution | undefined {
   if (!id) return undefined;
-  const direct = INDUSTRY_SOLUTIONS.find(s => s.id === id);
-  if (direct) return direct;
-  // Legacy industry-preset ids stored on companies.industry map onto solutions.
-  const legacy: Record<string, string> = {
-    school: "education", college: "education", university: "education",
-    hospital: "healthcare", pharmacy: "healthcare",
-  };
-  return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
+  return INDUSTRY_SOLUTIONS.find(s => s.id === id);
 }
 
 export type BusinessCapabilityKey = "inventory" | "retail_pos" | "hr_payroll";
