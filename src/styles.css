@@ -1457,3 +1457,110 @@
 .standalone-2026-shell .standalone-action-primary:hover {
   background: #066b40;
 }
+
+
+/* SifoBooks accounting workspace — QuickBooks-inspired, no permanent sidebar. */
+.sifobooks-2026-app {
+  --workspace-ink: #173b3a;
+  --workspace-muted: #647b75;
+  --workspace-line: #dce9e5;
+  --workspace-soft: #f3f8f5;
+  background: #f5f8f7;
+}
+.sifobooks-2026-app > div { min-width: 0; }
+.sifobooks-2026-app header {
+  border-color: var(--workspace-line);
+}
+.sifobooks-2026-page {
+  width: 100%;
+  min-width: 0;
+  color: var(--workspace-ink);
+}
+.sifobooks-2026-page [role="tablist"] {
+  display: flex;
+  max-width: 100%;
+  gap: .35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--workspace-line);
+  padding: 0 .15rem;
+}
+.sifobooks-2026-page [role="tablist"]::-webkit-scrollbar { display: none; }
+.sifobooks-2026-page [role="tab"] {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding-inline: .9rem;
+  border-radius: .7rem .7rem 0 0;
+  white-space: nowrap;
+}
+.sifobooks-2026-page [role="tab"][data-state="active"],
+.sifobooks-2026-page [role="tab"][aria-selected="true"] {
+  color: #087a4b;
+  border-bottom: 2px solid #087a4b;
+  background: #edf8f1;
+}
+.sifobooks-2026-page .rounded-xl.border,
+.sifobooks-2026-page .rounded-2xl.border {
+  border-color: var(--workspace-line);
+}
+.sifobooks-2026-page input,
+.sifobooks-2026-page select,
+.sifobooks-2026-page textarea {
+  min-height: 40px;
+  border-radius: .65rem;
+}
+.sifobooks-2026-page button,
+.sifobooks-2026-page a[role="button"] {
+  touch-action: manipulation;
+}
+.sifobooks-2026-page table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.sifobooks-2026-page thead th {
+  color: #60766f;
+  background: #f6faf8;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.sifobooks-2026-page tbody tr:hover { background: #f7fbf9; }
+.sifobooks-2026-page td,
+.sifobooks-2026-page th { padding: .75rem .85rem; }
+@media (max-width: 767px) {
+  .sifobooks-2026-app header {
+    height: 3.75rem;
+    padding-inline: .65rem;
+  }
+  .sifobooks-2026-page {
+    padding-inline: .75rem;
+    padding-top: .85rem;
+    padding-bottom: 1.25rem;
+  }
+  .sifobooks-2026-page h1 { line-height: 1.2; }
+  .sifobooks-2026-page [role="tablist"] {
+    margin-inline: -.75rem;
+    padding-inline: .75rem;
+  }
+  .sifobooks-2026-page table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  .sifobooks-2026-page .grid.grid-cols-2 { gap: .65rem; }
+  .sifobooks-2026-page .rounded-2xl { border-radius: 1rem; }
+}
+@media (min-width: 768px) {
+  .sifobooks-2026-page { padding-inline: clamp(1.25rem, 2vw, 2rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sifobooks-2026-app *, .sifobooks-2026-app *::before, .sifobooks-2026-app *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
