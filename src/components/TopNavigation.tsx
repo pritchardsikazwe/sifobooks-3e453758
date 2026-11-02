@@ -26,8 +26,7 @@ function useNavigationMenus(): Menu[] {
   const { installed } = useInstalledModules();
   const { canView, isStaff, isSuperAdmin } = usePermissions();
   const pathname = useRouterState({ select: r => r.location.pathname });
-  const [retailPosEnabled, setRetailPosEnabled] = useState(SIFOBOOKS_EDITION === "butchery");
-  const [activeIndustry, setActiveIndustry] = useState<string | null>(SIFOBOOKS_EDITION === "butchery" ? "butchery" : null);
+  const [retailPosEnabled, setRetailPosEnabled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +44,6 @@ function useNavigationMenus(): Menu[] {
       const industry = SIFOBOOKS_EDITION === "butchery" ? "butchery" : (c?.industry as string | null);
       const capabilities = await loadBusinessCapabilityState(companyId, industry);
       if (!cancelled) {
-        setActiveIndustry(industry);
         setRetailPosEnabled(Boolean(capabilities.retail_pos));
       }
     };
@@ -124,20 +122,6 @@ function useNavigationMenus(): Menu[] {
     ["/pos", "/pos-sales", "/sifopos", "/pos-workers", "/pos/"],
     ["Retail POS", "POS Sales History", "SifoPOS Hub", "Worker Access & Roles", "POS Control Centre"]
   );
-
-  const butchery: HubItem[] = activeIndustry === "butchery" ? [
-    { title: "Butchery Dashboard", url: "/retail/butchery", module: "butchery", iconName: "Beef" },
-    { title: "Butchery POS", url: "/retail/butchery-pos", module: "butchery", iconName: "ShoppingBag" },
-    { title: "Products & Cuts", url: "/retail/butchery-products", module: "butchery", iconName: "Beef" },
-    { title: "Receiving", url: "/retail/butchery-receiving", module: "butchery", iconName: "PackagePlus" },
-    { title: "Processing & Yield", url: "/retail/butchery-processing", module: "butchery", iconName: "Scissors" },
-    { title: "Scale", url: "/retail/butchery-scale", module: "butchery", iconName: "Scale" },
-    { title: "Labels", url: "/retail/butchery-labels", module: "butchery", iconName: "Tags" },
-    { title: "Prices", url: "/retail/butchery-prices", module: "butchery", iconName: "Tag" },
-    { title: "Inventory", url: "/retail/butchery-inventory", module: "butchery", iconName: "Boxes" },
-    { title: "Sales", url: "/retail/butchery-sales", module: "butchery", iconName: "Receipt" },
-    { title: "Reports", url: "/retail/butchery-reports", module: "butchery", iconName: "BarChart3" },
-  ] : [];
 
   const manufacturing = match(
     ["/inventory/production"],
