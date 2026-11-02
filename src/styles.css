@@ -1555,7 +1555,6 @@
   .sifobooks-2026-page .rounded-2xl { border-radius: 1rem; }
 }
 @media (min-width: 768px) {
-  .sifobooks-2026-page { padding-inline: clamp(1.25rem, 2vw, 2rem); }
 }
 @media (prefers-reduced-motion: reduce) {
   .sifobooks-2026-app *, .sifobooks-2026-app *::before, .sifobooks-2026-app *::after {
