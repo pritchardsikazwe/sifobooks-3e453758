@@ -1,7 +1,5 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { Search, Bell, HelpCircle, Settings as SettingsIcon, Command, ArrowLeft, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
@@ -120,12 +118,9 @@ function Shell() {
   }, []);
 
   return (
-    <SidebarProvider style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "3.25rem" } as React.CSSProperties}>
-      <div className="sifobooks-2026-app min-h-screen flex w-full bg-background text-foreground">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+    <div className="sifobooks-2026-app min-h-screen flex w-full flex-col bg-background text-foreground">
+        <div className="flex min-h-screen flex-1 flex-col min-w-0">
           <header className="h-16 w-full min-w-0 border-b border-[#DDEBE6] bg-white/95 backdrop-blur-xl flex items-center gap-1.5 sm:gap-3 px-2 sm:px-5 sticky top-0 z-20 shadow-[0_1px_0_rgba(23,59,58,0.04)]">
-            <SidebarTrigger className="shrink-0 text-muted-foreground hover:text-foreground" />
             <Button
               variant="ghost"
               size="icon"
@@ -200,7 +195,6 @@ function Shell() {
         </div>
 
         <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
-      </div>
-    </SidebarProvider>
+    </div>
   );
 }
