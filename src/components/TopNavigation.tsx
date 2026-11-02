@@ -125,7 +125,7 @@ function useNavigationMenus(): Menu[] {
     ["Retail POS", "POS Sales History", "SifoPOS Hub", "Worker Access & Roles", "POS Control Centre"]
   );
 
-  const butchery = activeIndustry === "butchery" ? [
+  const butchery: HubItem[] = activeIndustry === "butchery" ? [
     { title: "Butchery Dashboard", url: "/retail/butchery", module: "butchery", iconName: "Beef" },
     { title: "Butchery POS", url: "/retail/butchery-pos", module: "butchery", iconName: "ShoppingBag" },
     { title: "Products & Cuts", url: "/retail/butchery-products", module: "butchery", iconName: "Beef" },
@@ -174,7 +174,6 @@ function useNavigationMenus(): Menu[] {
     { label: "Banking", icon: "Landmark", items: take(banking) },
     { label: "Accounts", icon: "BookOpen", items: take(accounting) },
     { label: "POS", icon: "ShoppingBag", items: take(pos) },
-    { label: "Butchery", icon: "Beef", items: take(butchery) },
     { label: "HR & Payroll", icon: "UsersRound", items: take(payroll) },
     { label: "Reports", icon: "BarChart3", items: take(reports) },
     { label: "Company", icon: "Building2", items: take(company) },
