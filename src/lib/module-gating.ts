@@ -28,12 +28,8 @@ export function resolveInstalledModules({
     if (isModuleInstalled(m.key, explicit, gatingActive)) merged.add(m.key);
   });
 
-  if (!gatingActive) {
-    if (edition === "restaurant") ["core_home","sales","purchases","inventory","retail_pos","restaurant","reports","admin","learning"].forEach(k => merged.add(k));
-    else if (edition === "retail") ["core_home","sales","purchases","inventory","retail_pos","reports","admin","learning"].forEach(k => merged.add(k));
-    else if (edition === "hotel") ["core_home","sales","purchases","inventory","restaurant","hotel_erp","reports","compliance","admin","learning"].forEach(k => merged.add(k));
-    else if (edition === "school") ["core_home","sales","purchases","inventory","hr_payroll","school_erp","reports","compliance","admin","learning"].forEach(k => merged.add(k));
-    else if (edition === "accounting") ["core_home","sales","purchases","inventory","finance","fixed_assets","budgets","multi_currency","hr_payroll","reports","compliance","admin","learning"].forEach(k => merged.add(k));
+  if (!gatingActive && edition === "accounting") {
+    ["core_home","sales","purchases","inventory","finance","fixed_assets","budgets","multi_currency","retail_pos","reports","compliance","admin","learning"].forEach(k => merged.add(k));
     suppressed.forEach(k => merged.delete(k));
   }
   return merged;
