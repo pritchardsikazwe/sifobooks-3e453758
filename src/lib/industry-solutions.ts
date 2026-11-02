@@ -77,26 +77,6 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/pos", presetId: "retail",
   },
   {
-    id: "restaurant", label: "Restaurant", emoji: "🍽️", status: "available",
-    tagline: "Table service, kitchen display, delivery and bar operations.",
-    suites: ["Restaurant POS", ...CORE_SUITES],
-    features: [
-      F("restaurant.tables", "Tables"),
-      F("restaurant.floor_plans", "Floor Plans"),
-      F("restaurant.reservations", "Reservations"),
-      F("restaurant.kitchen", "Kitchen Display"),
-      F("restaurant.modifiers", "Modifiers"),
-      F("restaurant.delivery", "Delivery"),
-      F("restaurant.bar", "Bar"),
-      F("restaurant.gift_cards", "Gift Cards", false),
-      F("restaurant.loyalty", "Loyalty", false),
-      F("restaurant.call_center", "Call Center", false),
-      F("restaurant.online_ordering", "Online Ordering", false),
-    ],
-    areas: ["Restaurant POS", "Inventory", "Sales", "Purchases", "Finance & Accounting", "HR & Payroll", "Reports"],
-    landing: "/restaurant", presetId: "restaurant",
-  },
-  {
     id: "pos_accounting", label: "POS + Accounting", emoji: "🧾", status: "available",
     tagline: "Point of sale first, with the full accounting engine available.",
     suites: ["Retail POS", ...CORE_SUITES],
@@ -133,107 +113,6 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/dashboard", presetId: "general",
   },
   {
-    id: "lending", label: "Microfinance / Money Lender", emoji: "💰", status: "available",
-    tagline: "Simple loans for small lenders, with a path to full microfinance operations.",
-    suites: ["Lending & Collections", "Mobile Money", "Finance & Accounting", "Reports", "Administration"],
-    features: [
-      F("lending.credit_scoring", "Explainable Credit Scoring"),
-      F("lending.kyc", "KYC & Borrower Verification"),
-      F("lending.mobile_money", "Mobile Money Reconciliation"),
-      F("lending.field_collections", "Field Collections"),
-      F("lending.group_lending", "Group Lending"),
-      F("lending.savings", "Savings"),
-      F("lending.investors", "Investor Management"),
-      F("lending.customer_portal", "Borrower Portal"),
-      F("lending.investor_portal", "Investor Portal"),
-      F("lending.risk_fraud", "Risk & Fraud Controls"),
-      F("lending.whatsapp", "SMS / WhatsApp Notifications"),
-      F("lending.restructuring", "Loan Restructuring"),
-      F("lending.writeoffs", "Write-offs & Recoveries"),
-      F("lending.guarantors", "Guarantors & Collateral"),
-      F("lending.documents", "Digital KYC Documents"),
-      F("lending.branches", "Branches & Staff"),
-      F("lending.offline", "Windows Offline Mode"),
-    ],
-    areas: ["Borrowers", "Applications", "Credit Assessment", "Loan Products", "Portfolio", "Disbursements", "Repayments", "Collections", "Arrears", "Mobile Money", "Accounting", "Reports", "Zambia Compliance"],
-    landing: "/lending", presetId: "lending",
-  },
-  {
-    id: "hospitality", label: "Hospitality", emoji: "🏨", status: "available",
-    tagline: "Rooms, bookings, folios and guest billing.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Dashboard", "Rooms", "Bookings", "Guests", "Folios", "Housekeeping", "Restaurant", "Billing", "Reports", "Finance", "Payroll"],
-    landing: "/dashboard",
-  },
-  {
-    id: "education", label: "Education", emoji: "🎓", status: "available",
-    tagline: "Students, classes, exams, fees and school finance.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Dashboard", "Students", "Admissions", "Classes", "Teachers", "Subjects", "Exams", "Attendance", "Fees", "Student Statements", "Transport", "Library", "Reports", "Finance", "Payroll", "Administration"],
-    landing: "/dashboard", presetId: "school",
-  },
-  {
-    id: "property", label: "Property Management", emoji: "🏘️", status: "available",
-    tagline: "Properties, units, tenants, leases, rent, deposits and maintenance.",
-    suites: ["Property Management", "Finance & Accounting", "Reports", "Administration"],
-    features: [
-      F("property.rent", "Rent & Receivables"),
-      F("property.leases", "Lease Management"),
-      F("property.maintenance", "Maintenance"),
-      F("property.utilities", "Utilities & Metering", false),
-    ],
-    areas: ["Properties", "Units", "Tenants", "Leases", "Rent", "Collections", "Deposits", "Maintenance", "Reports", "Finance"],
-    landing: "/property", presetId: "property",
-  },
-  {
-    id: "butchery", label: "Butchery", emoji: "🥩", status: "available",
-    tagline: "Butchery POS, meat cuts, receiving, processing, yield, stock and sales.",
-    suites: ["Retail POS", "Inventory", "Sales", "Purchases", "Finance & Accounting", "Reports", "Administration"],
-    features: [
-      F("butchery.weighted_sales", "Weighted / Scale Sales"),
-      F("butchery.cuts", "Cuts & Products"),
-      F("butchery.yield", "Carcass Yield & Processing"),
-      F("butchery.labels", "Labels & Pricing"),
-      F("butchery.cold_room", "Cold-Room Stock Control"),
-    ],
-    areas: ["Butchery POS", "Products & Cuts", "Receiving", "Processing & Yield", "Scales", "Labels", "Prices", "Inventory", "Sales", "Reports", "Finance"],
-    landing: "/retail/butchery", presetId: "retail",
-  },
-  {
-    id: "ngo", label: "NGO / Non-Profit", emoji: "🤝", status: "coming_soon",
-    tagline: "Donors, grants, restricted funds and programme reporting.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Dashboard", "Donors", "Donations", "Pledges", "Fundraising", "Grants", "Restricted Funds", "Projects", "Programs", "Beneficiaries", "Budgets", "Expenditure", "Reports", "Finance", "Compliance"],
-    landing: "/dashboard", presetId: "ngo",
-  },
-  {
-    id: "mining", label: "Mining", emoji: "⛏️", status: "coming_soon",
-    tagline: "Sites, licences, production, royalties and cost control.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Dashboard", "Mining Sites", "Licences", "Claims", "Production", "Minerals", "Stock", "Equipment", "Contractors", "Purchasing", "Sales", "Customers", "Suppliers", "Logistics", "Royalties", "Production Costs", "Reports", "Finance", "Compliance"],
-    landing: "/dashboard", presetId: "mining",
-  },
-  {
-    id: "healthcare", label: "Healthcare", emoji: "🏥", status: "coming_soon",
-    tagline: "Patients, appointments, wards, pharmacy and claims.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Dashboard", "Patients", "Appointments", "Doctors", "Departments", "Wards", "Billing", "Pharmacy", "Inventory", "Insurance", "Reports", "Finance", "Payroll"],
-    landing: "/dashboard", presetId: "hospital",
-  },
-  {
-    id: "manufacturing", label: "Manufacturing", emoji: "🏭", status: "coming_soon",
-    tagline: "BOM, production orders, work centres and costing.",
-    suites: CORE_SUITES,
-    features: [],
-    areas: ["Products", "Bill of Materials", "Raw Materials", "Production Orders", "Work Centres", "Production Planning", "Stock", "Quality Control", "Waste", "Purchasing", "Sales", "Costing", "Reports", "Finance"],
-    landing: "/dashboard", presetId: "manufacturing",
-  },
-  {
     id: "other", label: "Other", emoji: "✳️", status: "available",
     tagline: "Not listed? Start on General Business and configure as you go.",
     suites: CORE_SUITES,
@@ -245,36 +124,24 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
 
 export function getSolution(id?: string | null): IndustrySolution | undefined {
   if (!id) return undefined;
-  const direct = INDUSTRY_SOLUTIONS.find(s => s.id === id);
-  if (direct) return direct;
-  // Legacy industry-preset ids stored on companies.industry map onto solutions.
-  const legacy: Record<string, string> = {
-    school: "education", college: "education", university: "education",
-    hospital: "healthcare", pharmacy: "healthcare",
-    hotel: "hospitality", lodge: "hospitality",
-    shop: "retail", phone_shop: "retail",
-    law: "professional_services", consulting: "professional_services",    property_management: "property", lodge_property: "property",    meat_shop: "butchery", butcher: "butchery", butchery_shop: "butchery",
-  };
-  return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
+  return INDUSTRY_SOLUTIONS.find(s => s.id === id);
 }
 
-export type BusinessCapabilityKey = "inventory" | "retail_pos" | "restaurant" | "hr_payroll";
+export type BusinessCapabilityKey = "inventory" | "retail_pos" | "hr_payroll";
 
 export const BUSINESS_CAPABILITIES: Array<{ key: BusinessCapabilityKey; label: string; description: string }> = [
   { key: "inventory", label: "Inventory & Stock", description: "Items, locations, transfers, stock counts and valuation." },
   { key: "retail_pos", label: "Retail Point of Sale", description: "Shop till, cashier shifts, sales history and retail controls." },
-  { key: "restaurant", label: "Restaurant Operations", description: "Restaurant POS, tables, kitchen, menu, recipes and restaurant reports." },
   { key: "hr_payroll", label: "People & Payroll", description: "Employees, attendance, leave and payroll." },
 ];
 
 const INDUSTRY_CAPABILITIES: Record<string, Record<BusinessCapabilityKey, boolean>> = {
-  general: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  retail: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
-  restaurant: { inventory: true, retail_pos: false, restaurant: true, hr_payroll: true },
-  wholesale: { inventory: true, retail_pos: false, restaurant: false, hr_payroll: true },
-  professional_services: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  property: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  butchery: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
-  other: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  general: { inventory: false, retail_pos: false, hr_payroll: false },
+  retail: { inventory: true, retail_pos: true, hr_payroll: false },
+  pos_accounting: { inventory: true, retail_pos: true, hr_payroll: false },
+  wholesale: { inventory: true, retail_pos: false, hr_payroll: false },
+  professional_services: { inventory: false, retail_pos: false, hr_payroll: false },
+  other: { inventory: false, retail_pos: false, hr_payroll: false },
 };
 
 export function getBusinessCapabilities(solutionId?: string | null): Record<BusinessCapabilityKey, boolean> {

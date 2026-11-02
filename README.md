@@ -1,6 +1,6 @@
 # SifoBooks
 
-SifoBooks is a standalone accounting, POS, inventory and business-management platform designed for Zambia and other African markets.
+SifoBooks is a focused accounting and point-of-sale platform designed for Zambia and other African markets. It includes the accounting ledger, sales, purchases, inventory required by POS, banking, statutory compliance and financial reporting. Payroll is an optional module.
 
 The application is designed to run **without Base44**. It can run locally as a Windows desktop/offline POS application and can also be deployed as a self-hosted web application.
 
@@ -130,7 +130,8 @@ The application contains modules and foundations for:
 - ZRA Smart Invoice integration
 - Banking and reconciliation
 - Multi-company / branch structures
-- Restaurant and sector-specific ERP features
+- Optional HR & Payroll module
+- Industry-specific products such as Hotel, School, Property and Restaurant are developed and deployed independently; they are not part of SifoBooks
 - Reports and exports
 
 ZRA credentials, API secrets and other production credentials must be supplied through server-side environment variables or a secure secrets manager.
