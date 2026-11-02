@@ -866,13 +866,9 @@ export const RESTAURANT_HUBS: HubDef[] = [
 ];
 
 /** Which hub set to present for a company's workspace mode or edition. */
-export function hubsForMode(mode: string | null | undefined, edition?: string | null): HubDef[] {
+export function hubsForMode(mode: string | null | undefined, _edition?: string | null): HubDef[] {
+  // SifoBooks is the accounting + POS product. Industry-specific workspaces
+  // live in their own independent applications and are not selectable here.
   if (mode === "payroll_only") return PAYROLL_HUBS;
-  if (mode === "hotel_only" || edition === "hotel" || mode === "hotel") return HOTEL_HUBS;
-  if (edition === "restaurant" || mode === "restaurant") return RESTAURANT_HUBS;
-  if (edition === "retail" || mode === "retail") return RETAIL_HUBS;
-  if (edition === "school" || mode === "school") return SCHOOL_HUBS;
-  if (edition === "property" || mode === "property") return PROPERTY_HUBS;
-  if (edition === "lending" || mode === "lending") return LENDING_HUBS;
   return HUBS;
 }
