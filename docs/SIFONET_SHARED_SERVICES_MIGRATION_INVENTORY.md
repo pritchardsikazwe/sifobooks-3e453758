@@ -261,7 +261,7 @@ For every product:
 At the time of this audit, GitHub metadata showed:
 - `pritchardsikazwe/sifobooks-3e453758`: populated source repository, default branch `main`.
 - `pritchardsikazwe/sifobooks-hotel-`: separate repository.
-- `pritchardsikazwe/sifoproperty` and `pritchardsikazwe/sifoschool-`: repositories exist, but GitHub repository metadata reported size 0 at audit time. Verify their current contents before treating previous UI work as present.
+- `pritchardsikazwe/sifoproperty` and `pritchardsikazwe/sifoschool-`: GitHub metadata reported size 0 at audit time, but direct file retrieval confirms both contain their React/Vite frontend foundations. Treat the size metadata as stale/inaccurate; current source files are present.
 - No verified SifoRestaurant, SifoBoarding, SifoButchery or SifoLending standalone repositories were confirmed in this audit.
 
 This document is an architecture and source inventory only. It does not migrate data, alter production schemas, copy credentials, create production databases, or claim that any product is certified or production-ready.
