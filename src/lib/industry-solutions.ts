@@ -77,26 +77,6 @@ export const INDUSTRY_SOLUTIONS: IndustrySolution[] = [
     landing: "/pos", presetId: "retail",
   },
   {
-    id: "restaurant", label: "Restaurant", emoji: "🍽️", status: "available",
-    tagline: "Table service, kitchen display, delivery and bar operations.",
-    suites: ["Restaurant POS", ...CORE_SUITES],
-    features: [
-      F("restaurant.tables", "Tables"),
-      F("restaurant.floor_plans", "Floor Plans"),
-      F("restaurant.reservations", "Reservations"),
-      F("restaurant.kitchen", "Kitchen Display"),
-      F("restaurant.modifiers", "Modifiers"),
-      F("restaurant.delivery", "Delivery"),
-      F("restaurant.bar", "Bar"),
-      F("restaurant.gift_cards", "Gift Cards", false),
-      F("restaurant.loyalty", "Loyalty", false),
-      F("restaurant.call_center", "Call Center", false),
-      F("restaurant.online_ordering", "Online Ordering", false),
-    ],
-    areas: ["Restaurant POS", "Inventory", "Sales", "Purchases", "Finance & Accounting", "HR & Payroll", "Reports"],
-    landing: "/restaurant", presetId: "restaurant",
-  },
-  {
     id: "pos_accounting", label: "POS + Accounting", emoji: "🧾", status: "available",
     tagline: "Point of sale first, with the full accounting engine available.",
     suites: ["Retail POS", ...CORE_SUITES],
@@ -154,7 +134,7 @@ export function getSolution(id?: string | null): IndustrySolution | undefined {
   return INDUSTRY_SOLUTIONS.find(s => s.id === legacy[id]);
 }
 
-export type BusinessCapabilityKey = "inventory" | "retail_pos" | "restaurant" | "hr_payroll";
+export type BusinessCapabilityKey = "inventory" | "retail_pos" | "hr_payroll";
 
 export const BUSINESS_CAPABILITIES: Array<{ key: BusinessCapabilityKey; label: string; description: string }> = [
   { key: "inventory", label: "Inventory & Stock", description: "Items, locations, transfers, stock counts and valuation." },
@@ -163,13 +143,12 @@ export const BUSINESS_CAPABILITIES: Array<{ key: BusinessCapabilityKey; label: s
 ];
 
 const INDUSTRY_CAPABILITIES: Record<string, Record<BusinessCapabilityKey, boolean>> = {
-  general: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  retail: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
-  restaurant: { inventory: true, retail_pos: false, restaurant: true, hr_payroll: true },
-  wholesale: { inventory: true, retail_pos: false, restaurant: false, hr_payroll: true },
-  professional_services: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
-  lending: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  property: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },  butchery: { inventory: true, retail_pos: true, restaurant: false, hr_payroll: true },
-  other: { inventory: false, retail_pos: false, restaurant: false, hr_payroll: true },
+  general: { inventory: false, retail_pos: false, hr_payroll: false },
+  retail: { inventory: true, retail_pos: true, hr_payroll: false },
+  pos_accounting: { inventory: true, retail_pos: true, hr_payroll: false },
+  wholesale: { inventory: true, retail_pos: false, hr_payroll: false },
+  professional_services: { inventory: false, retail_pos: false, hr_payroll: false },
+  other: { inventory: false, retail_pos: false, hr_payroll: false },
 };
 
 export function getBusinessCapabilities(solutionId?: string | null): Record<BusinessCapabilityKey, boolean> {
