@@ -83,6 +83,34 @@ const statusStyle: Record<Product["status"], string> = {
   Planned: "bg-slate-100 text-slate-600",
 };
 
+
+function ProductCard({ product }: { product: Product }) {
+  const Icon = product.icon;
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${product.tone} text-white shadow-sm`}>
+          <Icon className="h-5 w-5" />
+        </span>
+        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${statusStyle[product.status]}`}>{product.status}</span>
+      </div>
+      <div className="mt-3">
+        <p className="text-[10px] font-bold uppercase tracking-[.12em] text-muted-foreground">{product.category}</p>
+        <h3 className="mt-1 text-base font-bold text-[#173B3A]">{product.name}</h3>
+        <p className="mt-1.5 min-h-[58px] text-xs leading-5 text-[#61756F]">{product.description}</p>
+      </div>
+      <div className="mt-4 flex items-center justify-between border-t border-[#E7EFEB] pt-3 text-xs font-bold text-[#087A4B]">
+        <span>{product.status === "Current workspace" ? "Open accounting" : product.status === "Live product" ? "Open application" : product.status === "In development" ? "Build in progress" : "Coming soon"}</span>
+        {(product.status === "Current workspace" || product.status === "Live product") && <ArrowUpRight className="h-4 w-4" />}
+      </div>
+    </>
+  );
+  const classes = "flex min-w-0 flex-col rounded-2xl border border-[#DCE9E5] bg-white p-3.5 text-left shadow-[0_3px_14px_rgba(20,55,45,.045)] transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-[0_12px_28px_rgba(20,55,45,.10)]";
+  if (product.status === "Current workspace") return <a href={product.url} className={classes}>{content}</a>;
+  if (product.status === "Live product") return <a href={product.url} target="_blank" rel="noopener noreferrer" className={classes}>{content}</a>;
+  return <div aria-disabled="true" className={`${classes} cursor-default opacity-90`}>{content}</div>;
+}
+
 export function SifoProductSuite() {
   return (
     <section aria-labelledby="sifo-suite-title" className="overflow-hidden rounded-[22px] border border-[#D7E8DF] bg-gradient-to-br from-[#F4FBF7] via-white to-[#F1F7F5] p-4 shadow-[0_8px_30px_rgba(20,55,45,.06)] sm:p-5">
