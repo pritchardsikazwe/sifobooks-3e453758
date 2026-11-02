@@ -20,6 +20,7 @@ import { useDashboardLayout } from "@/components/dashboard/useDashboardLayout";
 import { SifoModuleStrip, SifoKpiCard, SifoQuickAction } from "@/components/sifo";
 import { SifoPage } from "@/components/sifo";
 import { SifoWorkQueue } from "@/components/sifo/SifoWorkQueue";
+import { SifoProductSuite } from "@/components/sifo/SifoProductSuite";
 
 import { fmtMoney } from "@/lib/format";
 import { loadBusinessCapabilityState, type BusinessCapabilityKey } from "@/lib/industry-solutions";
@@ -609,6 +610,8 @@ function DashboardPage() {
 
         {/* Colour-coded module strip */}
         <SifoModuleStrip />
+
+        <SifoProductSuite />
 
 
 
