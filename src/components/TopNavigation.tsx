@@ -193,9 +193,9 @@ export function TopNavigation() {
   return (
     <nav
       aria-label="Main navigation"
-      className="hidden border-b border-border bg-card px-2 md:block sm:px-4"
+      className="sticky top-16 z-30 hidden border-b border-[#DCE9E5] bg-white/95 px-2 shadow-[0_2px_12px_rgba(20,55,45,.04)] backdrop-blur-xl md:block sm:px-4"
     >
-      <div className="mx-auto flex h-10 max-w-[1800px] items-stretch overflow-x-auto no-scrollbar">
+      <div className="mx-auto flex h-12 max-w-[1800px] items-stretch gap-1 overflow-x-auto no-scrollbar">
         {menus.map(menu => {
           const active = menu.items.some(i => pathname === i.url || pathname.startsWith(i.url + "/"));
           const columnBreak = Math.ceil(menu.items.length / 2);
@@ -209,10 +209,10 @@ export function TopNavigation() {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "group h-full shrink-0 gap-1 rounded-none border-b-2 border-transparent px-2.5 text-xs font-medium text-muted-foreground shadow-none",
-                    "hover:border-primary hover:bg-muted/60 hover:text-foreground",
+                    "group h-[38px] self-center shrink-0 gap-1.5 rounded-xl border border-transparent px-3 text-[12px] font-semibold text-[#53665F] shadow-none",
+                    "hover:border-[#DCE9E5] hover:bg-[#F3F8F5] hover:text-[#087A4B]",
                     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                    active && "border-primary bg-muted/50 text-primary"
+                    active && "border-[#CDE8D9] bg-[#EDF8F1] text-[#087A4B]"
                   )}
                 >
                   <span>{menu.label}</span>
@@ -222,7 +222,7 @@ export function TopNavigation() {
               <DropdownMenuContent
                 align="start"
                 sideOffset={1}
-                className="z-50 w-[min(640px,calc(100vw-16px))] rounded-md border-border bg-popover p-1.5 shadow-elevated"
+                className="z-50 w-[min(680px,calc(100vw-16px))] rounded-2xl border-[#DCE9E5] bg-white p-2 shadow-[0_18px_50px_rgba(20,55,45,.16)]"
               >
                 <DropdownMenuLabel className="px-2.5 py-2 text-xs font-semibold text-foreground">
                   {menu.label}
@@ -242,8 +242,8 @@ export function TopNavigation() {
                             key={item.url}
                             asChild
                             className={cn(
-                              "min-h-11 cursor-pointer rounded px-2.5 py-2 focus:bg-muted",
-                              itemActive && "bg-muted text-primary"
+                              "min-h-12 cursor-pointer rounded-xl px-3 py-2.5 focus:bg-[#F3F8F5]",
+                              itemActive && "bg-[#EDF8F1] text-primary"
                             )}
                           >
                             <Link to={item.url} className="flex min-w-0 items-start gap-2.5">
