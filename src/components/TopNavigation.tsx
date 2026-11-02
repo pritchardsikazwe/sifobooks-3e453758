@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
 import { ChevronDown } from "lucide-react";
