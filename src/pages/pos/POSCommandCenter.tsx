@@ -166,6 +166,17 @@ export default function POSCommandCenter() {
   const submitPayment = async () => {
     if (!cart.length || posting) return;
     if (!shift) { toast.error("No open shift. Open your shift before selling."); return; }
+    if (paymentMethod === "CASH") {
+      const received = Number(cashReceived);
+      if (!Number.isFinite(received) || received <= 0) {
+        toast.error("Enter the cash received from the customer.");
+        return;
+      }
+      if (received + 0.0001 < total) {
+        toast.error("Cash received is less than the amount due.");
+        return;
+      }
+    }
     setPosting(true);
     try {
       const lines: CartLine[] = cart.map((item, index) => ({
@@ -181,7 +192,7 @@ export default function POSCommandCenter() {
       }));
       const totals = computeTotals(lines, 0, settings);
       const method = paymentMethod === "CASH" ? "cash" : paymentMethod === "CARD" ? "card" : "momo";
-      const tendered = paymentMethod === "CASH" ? Math.max(Number(cashReceived || 0), totals.total) : totals.total;
+      const tendered = paymentMethod === "CASH" ? Number(cashReceived) : totals.total;
       const result = await completeSale(
         {
           lines,
@@ -363,6 +374,7 @@ export default function POSCommandCenter() {
           setCashReceived={setCashReceived}
           change={change}
           submitPayment={submitPayment}
+          posting={posting}
           close={() => setPaymentOpen(false)}
         />
       )}
@@ -808,14 +820,14 @@ function EndDayScreen() {
   );
 }
 
-function PaymentModal({ total, method, setMethod, cashReceived, setCashReceived, change, submitPayment, close }: any) {
+function PaymentModal({ total, method, setMethod, cashReceived, setCashReceived, change, submitPayment, posting, close }: any) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm">
       <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-[#163f3f] shadow-2xl">
         <div className="flex justify-between border-b border-white/10 p-5">
           <div>
-            <div className="text-xl font-black">CASH TRANSACTION</div>
-            <div className="text-xs text-white/40">Select payment method</div>
+            <div className="text-xl font-black">COMPLETE SALE</div>
+            <div className="text-xs text-white/40">Choose how the customer will pay</div>
           </div>
           <button onClick={close}>
             <X />
@@ -853,7 +865,8 @@ function PaymentModal({ total, method, setMethod, cashReceived, setCashReceived,
                   autoFocus
                   inputMode="decimal"
                   value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
+                  onChange={(e) => setCashReceived(e.target.value.replace(/[^0-9.]/g, ""))}
+                  placeholder="0.00"
                   className="mt-1 w-full rounded-xl border border-white/10 bg-white/10 p-4 text-2xl outline-none"
                 />
                 <div className="mt-3 flex justify-between">
@@ -876,9 +889,13 @@ function PaymentModal({ total, method, setMethod, cashReceived, setCashReceived,
                 </button>
               ))}
             </div>
-            <button onClick={submitPayment} className="mt-3 w-full rounded-xl bg-[#16a34a] p-5 text-xl font-black">
+            <button
+              onClick={submitPayment}
+              disabled={posting || !Number.isFinite(Number(cashReceived)) || (method === "CASH" && Number(cashReceived) < total)}
+              className="mt-3 w-full rounded-xl bg-[#16a34a] p-5 text-xl font-black disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <CheckCircle2 size={22} className="mr-2 inline" />
-              COMPLETE PAYMENT
+              {posting ? "POSTING SALE…" : "COMPLETE PAYMENT"}
             </button>
           </div>
         </div>
