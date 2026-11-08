@@ -270,7 +270,7 @@ export default function POSCommandCenter() {
   const canSeeEndDay = role === "manager";
 
   return (
-    <div className="absolute inset-0 flex overflow-hidden bg-[#102f2f] text-white text-sm">
+    <div className="absolute inset-0 flex overflow-hidden bg-[#f4f7f5] text-slate-800 text-sm">
       {/* MOBILE MENU */}
       {mobileMenu && (
         <div className="absolute inset-0 z-50 bg-[#0b2424] lg:hidden">
@@ -297,11 +297,11 @@ export default function POSCommandCenter() {
       )}
 
       {/* DESKTOP SIDE BAR */}
-      <aside className="hidden w-[76px] flex-col border-r border-white/10 bg-[#123838] lg:flex xl:w-[84px]">
-        <div className="flex h-14 items-center justify-center border-b border-white/10">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#087f5b] text-xs font-black">SF</div>
+      <aside className="hidden w-[76px] flex-col border-r border-slate-200 bg-white lg:flex xl:w-[84px]">
+        <div className="flex h-14 items-center justify-center border-b border-slate-100">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-xs font-black text-white shadow-sm">SF</div>
         </div>
-        <div className="flex-1 space-y-1 overflow-y-auto p-1.5">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           <POSNavButton active={screen === "POS"} icon={<ShoppingCart size={18} />} label="POS" onClick={() => setScreen("POS")} />
           {role !== "kitchen" && (
             <POSNavButton active={screen === "TABLES"} icon={<Utensils size={18} />} label="TABLES" onClick={() => setScreen("TABLES")} />
@@ -322,7 +322,7 @@ export default function POSCommandCenter() {
             <POSNavButton active={screen === "END_DAY"} icon={<Lock size={18} />} label="END DAY" onClick={() => setScreen("END_DAY")} />
           )}
         </div>
-        <button className="m-1.5 rounded-lg bg-red-600 p-2 transition hover:bg-red-500" onClick={() => window.history.back()}>
+        <button className="m-1.5 rounded-lg p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600" onClick={() => window.history.back()}>
           <LogOut size={17} className="mx-auto" />
           <span className="mt-0.5 block text-[9px]">EXIT</span>
         </button>
@@ -330,19 +330,19 @@ export default function POSCommandCenter() {
 
       {/* MAIN */}
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#163f3f] px-2.5 lg:px-4">
-          <button className="shrink-0 rounded-lg bg-white/10 p-2 lg:hidden" onClick={() => setMobileMenu(true)}>
+        <header className="grid h-16 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-slate-200 bg-white px-2.5 lg:px-5">
+          <button className="shrink-0 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileMenu(true)}>
             <Menu size={19} />
           </button>
           <div className="hidden min-w-0 sm:block">
-            <div className="truncate text-sm font-black">SifoBooks Worker Command Center</div>
-            <div className="text-xs text-white/45">My Company • Restaurant</div>
+            <div className="truncate text-sm font-bold text-slate-800">SifoBooks POS</div>
+            <div className="text-xs text-slate-500">My Company • Restaurant</div>
           </div>
           <div className="col-start-3 flex shrink-0 items-center gap-1.5">
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="h-9 rounded-lg border border-white/10 bg-[#214d4d] px-2 text-xs outline-none"
+              className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-emerald-600"
             >
               <option value="cashier">Cashier</option>
               <option value="waiter">Waiter</option>
@@ -350,11 +350,11 @@ export default function POSCommandCenter() {
               <option value="manager">Manager</option>
               <option value="kitchen">Kitchen</option>
             </select>
-            <div className={`hidden h-9 items-center gap-1.5 rounded-lg px-2 md:flex ${isOnline ? "bg-white/5" : "bg-amber-500/15"}`} title={pendingQueueCount ? `${pendingQueueCount} transaction(s) waiting to sync` : undefined}>
-              <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-400" : "bg-amber-400"}`} />
+            <div className={`hidden h-9 items-center gap-1.5 rounded-lg px-3 md:flex ${isOnline ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} title={pendingQueueCount ? `${pendingQueueCount} transaction(s) waiting to sync` : undefined}>
+              <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-emerald-500" : "bg-amber-500"}`} />
               <span className="text-xs">{isOnline ? "ONLINE" : "OFFLINE"}{pendingQueueCount > 0 ? ` · ${pendingQueueCount} PENDING` : ""}</span>
             </div>
-            <button className="rounded-lg bg-white/5 p-2">
+            <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
               <Lock size={17} />
             </button>
           </div>
@@ -418,13 +418,13 @@ export default function POSCommandCenter() {
 
 function POSScreen(props: any) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col xl:flex-row">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 bg-[#f4f7f5] p-3 xl:flex-row">
       {/* ORDER */}
-      <section className="flex min-h-[40vh] flex-col bg-[#f5f7f6] text-slate-900 xl:min-h-0 xl:w-[350px] 2xl:w-[390px]">
-        <div className="bg-[#183f3f] px-3 py-2 text-white">
+      <section className="flex min-h-[42vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm xl:min-h-0 xl:w-[390px] 2xl:w-[420px]">
+        <div className="border-b border-slate-100 bg-white px-4 py-3 text-slate-800">
           <div className="flex items-center justify-between">
             <div className="font-black">NEW {props.orderType.replace("_", " ")} ORDER</div>
-            <span className="text-xs text-white/50">ORDER #00128</span>
+            <span className="text-xs font-medium text-slate-400">ORDER #00128</span>
           </div>
         </div>
 
@@ -440,8 +440,8 @@ function POSScreen(props: any) {
             <button
               key={type}
               onClick={() => props.setOrderType(type)}
-              className={`rounded-lg border px-2 py-1.5 text-[9px] font-bold transition ${
-                props.orderType === type ? "border-[#087f5b] bg-[#087f5b] text-white" : "bg-white hover:bg-slate-50"
+              className={`rounded-lg border px-2 py-2 text-[10px] font-semibold transition ${
+                props.orderType === type ? "border-emerald-700 bg-emerald-700 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50"
               }`}
             >
               <Icon size={15} className="mx-auto mb-0.5" />
@@ -524,7 +524,7 @@ function POSScreen(props: any) {
             </div>
           )}
           {props.cart.map((item: CartItem) => (
-            <div key={item.id} className="flex items-center gap-1.5 rounded-lg border bg-white p-1.5">
+            <div key={item.id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
               <div className="flex h-8 w-8 items-center justify-center rounded-md font-black text-white" style={{ background: item.color }}>
                 {item.quantity}
               </div>
@@ -545,7 +545,7 @@ function POSScreen(props: any) {
           ))}
         </div>
 
-        <div className="border-t bg-white p-2.5">
+        <div className="border-t border-slate-100 bg-white p-4">
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
             <b>{currency(props.subtotal)}</b>
@@ -584,29 +584,29 @@ function POSScreen(props: any) {
       </section>
 
       {/* MENU */}
-      <section className="flex min-w-0 flex-1 flex-col bg-[#102f2f]">
-        <div className="flex gap-1.5 border-b border-white/10 p-2">
+      <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm">
+        <div className="flex gap-2 border-b border-slate-100 p-4">
           <div className="relative flex-1">
             <Search size={18} className="absolute left-3 top-3 text-white/40" />
             <input
               value={props.search}
               onChange={(e) => props.setSearch(e.target.value)}
               placeholder="Search menu..."
-              className="h-10 w-full rounded-lg border border-white/10 bg-white/10 px-9 outline-none placeholder:text-white/40"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-9 text-slate-700 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white"
             />
           </div>
-          <button onClick={() => props.setSearch("")} className="rounded-lg bg-white/10 px-3">
+          <button onClick={() => props.setSearch("")} className="rounded-xl border border-slate-200 bg-white px-3 text-slate-500 hover:bg-slate-50">
             <RotateCcw size={18} />
           </button>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto p-2">
+        <div className="flex gap-2 overflow-x-auto border-b border-slate-100 px-4 py-3">
           {props.categories.map((cat: string) => (
             <button
               key={cat}
               onClick={() => props.setCategory(cat)}
               className={`whitespace-nowrap rounded-lg px-3 py-2 text-[10px] font-bold transition ${
-                props.category === cat ? "bg-[#087f5b] text-white" : "bg-white/10 text-white/70 hover:bg-white/15"
+                props.category === cat ? "bg-emerald-700 text-white shadow-sm" : "border border-slate-200 bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
               }`}
             >
               {cat}
@@ -614,23 +614,23 @@ function POSScreen(props: any) {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="flex-1 overflow-y-auto bg-slate-50/70 p-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5">
             {props.filteredProducts.map((product: Product) => (
               <button
                 key={product.id}
                 onClick={() => props.addItem(product)}
                 disabled={product.stock <= 0}
-                className="group min-h-[104px] overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left transition hover:bg-white/10 active:scale-95 disabled:opacity-30"
+                className="group min-h-[124px] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-emerald-300 hover:shadow-md active:scale-[0.99] disabled:opacity-40"
               >
                 <div className="flex h-14 items-center justify-center text-base font-black text-white" style={{ background: product.color }}>
                   {product.name.split(" ").map((x) => x[0]).join("").slice(0, 3)}
                 </div>
-                 <div className="p-1.5">
+                 <div className="p-3">
                   <div className="truncate text-sm font-bold">{product.name}</div>
                   <div className="mt-1 flex items-center justify-between">
-                    <span className="font-black text-[#6ee7b7]">{currency(product.price)}</span>
-                    <span className="text-[10px] text-white/40">{product.stock} left</span>
+                    <span className="font-bold text-emerald-700">{currency(product.price)}</span>
+                    <span className="text-[10px] text-slate-400">{product.stock} left</span>
                   </div>
                 </div>
               </button>
