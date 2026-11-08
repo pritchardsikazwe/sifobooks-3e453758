@@ -156,6 +156,20 @@ export default function POSCommandCenter() {
     if (!cart.length) return;
     setHeldOrders((current) => [...current, cart]);
     setCart([]);
+    toast.success("Order placed on hold.");
+  };
+
+  // Recalling a held basket preserves the active basket by placing it on hold first.
+  const recallHeldOrder = (index: number) => {
+    setHeldOrders((current) => {
+      const selected = current[index];
+      if (!selected) return current;
+      const remaining = current.filter((_, itemIndex) => itemIndex !== index);
+      if (cart.length) remaining.push(cart);
+      setCart(selected);
+      return remaining;
+    });
+    toast.success("Held order recalled.");
   };
 
   const clearOrder = () => {
@@ -347,6 +361,7 @@ export default function POSCommandCenter() {
             holdOrder={holdOrder}
             clearOrder={clearOrder}
             heldOrders={heldOrders}
+            recallHeldOrder={recallHeldOrder}
             setCart={setCart}
             setPaymentOpen={setPaymentOpen}
             selectedTable={selectedTable}
@@ -452,6 +467,35 @@ function POSScreen(props: any) {
           </div>
         )}
 
+        {props.heldOrders.length > 0 && (
+          <div className="border-b bg-[#eef4f1] p-2">
+            <div className="mb-1.5 flex items-center justify-between text-xs font-black text-slate-700">
+              <span>HELD ORDERS</span>
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-orange-700">{props.heldOrders.length}</span>
+            </div>
+            <div className="max-h-28 space-y-1 overflow-y-auto">
+              {props.heldOrders.map((held: CartItem[], index: number) => {
+                const heldTotal = held.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const heldUnits = held.reduce((sum, item) => sum + item.quantity, 0);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => props.recallHeldOrder(index)}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-orange-200 bg-white px-2.5 py-2 text-left hover:bg-orange-50"
+                    title="Recall this order"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-bold text-slate-800">Held order {index + 1}</span>
+                      <span className="block text-[10px] text-slate-500">{heldUnits} item(s) · Tap to recall</span>
+                    </span>
+                    <span className="shrink-0 text-xs font-black text-[#087f5b]">{currency(heldTotal)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 space-y-1 overflow-y-auto p-1.5">
           {!props.cart.length && (
             <div className="flex h-full flex-col items-center justify-center text-slate-400">
@@ -496,7 +540,7 @@ function POSScreen(props: any) {
             <span className="text-[#087f5b]">{currency(props.total)}</span>
           </div>
           <div className="mt-2 grid grid-cols-4 gap-1.5">
-            <button onClick={props.holdOrder} className="rounded-lg bg-orange-500 p-2 text-[10px] font-bold text-white">
+            <button onClick={props.holdOrder} disabled={!props.cart.length} className="rounded-lg bg-orange-500 p-2 text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">
               <Pause size={17} className="mx-auto" />
               HOLD
             </button>
