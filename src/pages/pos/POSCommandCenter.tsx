@@ -1,6 +1,7 @@
 // @ts-nocheck -- loosely typed after local-database port; see AGENTS.md
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { countQueue, subscribeQueue } from "@/lib/offline-queue";
 import {
   loadProducts, loadSettings, currentShift, completeSale, computeTotals, posErrorMessage,
   DEFAULT_SETTINGS, type PosSettings, type CartLine,
@@ -85,6 +86,24 @@ export default function POSCommandCenter() {
   const [settings, setSettings] = useState<PosSettings>(DEFAULT_SETTINGS);
   const [shift, setShift] = useState<any | null>(null);
   const [posting, setPosting] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
+  const [pendingQueueCount, setPendingQueueCount] = useState(0);
+
+  // Keep the till connection indicator and pending offline count live.
+  useEffect(() => {
+    const refreshQueue = async () => setPendingQueueCount(await countQueue());
+    const refreshConnection = () => setIsOnline(typeof navigator === "undefined" ? true : navigator.onLine);
+    refreshConnection();
+    void refreshQueue();
+    const unsubscribe = subscribeQueue(() => { void refreshQueue(); });
+    window.addEventListener("online", refreshConnection);
+    window.addEventListener("offline", refreshConnection);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("online", refreshConnection);
+      window.removeEventListener("offline", refreshConnection);
+    };
+  }, []);
 
   // Live catalogue, till settings and the cashier's open shift.
   useEffect(() => {
@@ -331,9 +350,9 @@ export default function POSCommandCenter() {
               <option value="manager">Manager</option>
               <option value="kitchen">Kitchen</option>
             </select>
-            <div className="hidden h-9 items-center gap-1.5 rounded-lg bg-white/5 px-2 md:flex">
-              <span className="h-2 w-2 rounded-full bg-green-400" />
-              <span className="text-xs">ONLINE</span>
+            <div className={`hidden h-9 items-center gap-1.5 rounded-lg px-2 md:flex ${isOnline ? "bg-white/5" : "bg-amber-500/15"}`} title={pendingQueueCount ? `${pendingQueueCount} transaction(s) waiting to sync` : undefined}>
+              <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-400" : "bg-amber-400"}`} />
+              <span className="text-xs">{isOnline ? "ONLINE" : "OFFLINE"}{pendingQueueCount > 0 ? ` · ${pendingQueueCount} PENDING` : ""}</span>
             </div>
             <button className="rounded-lg bg-white/5 p-2">
               <Lock size={17} />
